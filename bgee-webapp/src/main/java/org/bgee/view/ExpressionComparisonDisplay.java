@@ -1,9 +1,9 @@
 package org.bgee.view;
 
+import org.bgee.model.SearchResult;
 import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
-
-import java.util.List;
+import org.bgee.model.gene.Gene;
 
 /**
  * Interface defining methods to be implemented by views related to expression comparison.
@@ -22,24 +22,27 @@ public interface ExpressionComparisonDisplay {
     /**
      * Displays information about a search of expression comparison with an error.
      *
-     * @param geneList  A {@code List} of {@code String}s that are the gene IDs provided by the user.
-     * @param erroMsg   A {@code String} that is the error message to be displayed.
+     * @param erroMsg       A {@code String} that is the error message to be displayed.
      */
-    public void displayExpressionComparison(List<String> geneList, String erroMsg);
+    public void displayExpressionComparison(String erroMsg);
     
     /**
      * Displays information about a search of expression comparison in a single-species.
-     * 
-     * @param geneList  A {@code List} of {@code String}s that are the gene IDs provided by the user.
-     * @param analysis  A {@code SingleSpeciesExprAnalysis} that is the result to be displayed.
+     *
+     * @param searchResult  A {@code SearchResult} storing the requested gene IDs,
+     *                      the genes that were found, and the requested gene IDs not found.
+     * @param analysis      A {@code SingleSpeciesExprAnalysis} that is the result to be displayed.
      */
-    void displayExpressionComparison(List<String> geneList, SingleSpeciesExprAnalysis analysis);
+    void displayExpressionComparison(SearchResult<String, Gene> searchResult,
+            SingleSpeciesExprAnalysis analysis);
 
     /**
      * Displays information about a search of expression comparison in multi species.
      *
-     * @param geneList  A {@code List} of {@code String}s that are the gene IDs provided by the user.
-     * @param analysis  A {@code MultiSpeciesExprAnalysis} that is the result to be displayed.
+     * @param searchResult  A {@code SearchResult} storing the requested gene IDs,
+     *                      the genes that were found, and the requested gene IDs not found.
+     * @param analysis      A {@code MultiSpeciesExprAnalysis} that is the result to be displayed.
      */
-    void displayExpressionComparison(List<String> geneList, MultiSpeciesExprAnalysis analysis);
+    void displayExpressionComparison(SearchResult<String, Gene> searchResult,
+            MultiSpeciesExprAnalysis analysis);
 }

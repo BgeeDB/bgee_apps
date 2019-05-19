@@ -23,6 +23,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
 import org.bgee.model.ElementGroupFromListSpliterator;
 import org.bgee.model.Entity;
 import org.bgee.model.Service;
@@ -63,7 +64,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, May 2016
  */
-public class MultiSpeciesCallService extends Service {
+public class MultiSpeciesCallService extends CommonService {
     private static final Logger log = LogManager.getLogger(MultiSpeciesCallService.class.getName());
 
     public static enum Attribute implements Service.Attribute {
@@ -737,7 +738,10 @@ public class MultiSpeciesCallService extends Service {
     			Collections.singleton(new ConditionFilter(expressionCallAEntities, expressionCallDevStage)), 
     			filter.getDataTypeFilters(), callObservedData, true, true);
     }
-    
+
+    //TODO: once the method accepting ExpressionCallFilter will be ready, change this method
+    //to accept Genes rather than GeneFilters, to parallel the methods loadMultiSpeciesExprAnalysis
+    //and the equivalent methods in CallService
     /**
      * Retrieves similar expression calls from the provided {@code geneFilter},
      * {@code conditionFilter}, and {@code onlyTrusted}.
@@ -934,37 +938,20 @@ public class MultiSpeciesCallService extends Service {
         return log.exit(similarityExpressionCallStream);
     }
 
-    //TODO: in a future version, this method should accept a Map<Integer, Collection<String>>,
-    //where keys are species IDs, and values are the gene IDs, any IDs. This would allow to retrieve
-    //the genes by calling GeneService.loadGenesByAnyId, knowing for which species we need to retrieve
-    //the gene associated to an ID. This would also allow to use bonobo gene IDs, as as of Bgee 14,
-    //we use chimp genome for bonobo, and their genes have the same IDs.
-    //TODO: equivalent method accepting GeneFilters
-    public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
-        log.entry(requestedGeneIds);
-        if (requestedGeneIds == null || requestedGeneIds.isEmpty()) {
+    //TODO: equivalent method accepting ExpressionCallFilter
+    public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
+        log.entry(requestedGenes);
+        if (requestedGenes == null || requestedGenes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
         }
-        Set<String> clonedGeneIds = new HashSet<>(requestedGeneIds);
-        Set<Gene> genes = this.getServiceFactory().getGeneService()
-                .loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
-        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
-                .collect(Collectors.toSet());
-        Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
-        geneIdsNotFound.removeAll(geneIdsFound);
+        Set<Gene> clonedGenes = new HashSet<>(requestedGenes);
 
-        Set<Species> species = genes.stream().map(g -> g.getSpecies()).collect(Collectors.toSet());
+        Set<Species> species = clonedGenes.stream().map(g -> g.getSpecies()).collect(Collectors.toSet());
         if (species.size() <= 1) {
             throw log.throwing(new IllegalArgumentException(
                     "This method is for comparing the expression of genes between several species"));
         }
-        Set<GeneFilter> geneFilters = genes.stream()
-                //Returns a Map<speciesId, Set<ensemblGeneId>>
-                .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
-                        Collectors.mapping(g -> g.getEnsemblGeneId(), Collectors.toSet())))
-                //Produces one GeneFilter for each Entry (= each species)
-                .entrySet().stream().map(e -> new GeneFilter(e.getKey(), e.getValue()))
-                .collect(Collectors.toSet());
+        Set<GeneFilter> geneFilters = convertGenesToGeneFilters(clonedGenes);
         int lcaId = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(
                 species.stream().map(s -> s.getId()).collect(Collectors.toSet())
                 ).getId();
@@ -987,7 +974,7 @@ public class MultiSpeciesCallService extends Service {
                                     c -> new HashSet<>(Arrays.asList(c.getGene())),
                                     (v1, v2) -> {v1.addAll(v2); return v1;}));
                     Set<Gene> genesWithData = list.stream().map(c -> c.getGene()).collect(Collectors.toSet());
-                    Set<Gene> genesWithNoData = new HashSet<>(genes);
+                    Set<Gene> genesWithNoData = new HashSet<>(clonedGenes);
                     genesWithNoData.removeAll(genesWithData);
                     return new AbstractMap.SimpleEntry<>(e.getKey(),
                             new MultiGeneExprCounts(callTypeToGenes, genesWithNoData));
@@ -995,6 +982,9 @@ public class MultiSpeciesCallService extends Service {
                 //And we create the final Map condToCounts
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        return log.exit(new MultiSpeciesExprAnalysis(clonedGeneIds, geneIdsNotFound, genes, condToCounts));
+        return log.exit(new MultiSpeciesExprAnalysis(clonedGenes, condToCounts));
     }
+    //TODO: Once the method loadSimilarityExpressionCalls accepting an ExpressionCallFiter
+    //will be ready, add a method to accept an ExpressionCallFilter rather than geneFilters,
+    //as in CallService
 }

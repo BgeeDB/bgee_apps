@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
@@ -74,18 +75,18 @@ public class CommandExpressionComparison extends CommandParent {
             log.exit(); return;
         }
         if (userGeneList.size() == 1) {
-            display.displayExpressionComparison(userGeneList, "At least two Ensembl IDs should be provided.");
+            display.displayExpressionComparison("At least two Ensembl IDs should be provided.");
             log.exit(); return;
         }
 
         // FIXME to be removed when mock is removed
-        Set<Gene> genes = serviceFactory.getGeneService()
-                .loadGenesByEnsemblIds(userGeneList).collect(Collectors.toSet());
-        Set<Species> species = serviceFactory.getGeneService()
-                .loadGenesByEnsemblIds(userGeneList).map(Gene::getSpecies).collect(Collectors.toSet());
+        SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
+                .searchGenesByEnsemblIds(userGeneList);
+        Set<Species> species = searchResult.getResults().stream()
+                .map(Gene::getSpecies).collect(Collectors.toSet());
 
         if (species.isEmpty()) {
-            display.displayExpressionComparison(userGeneList, "No gene from species presents in Bgee are detected.");
+            display.displayExpressionComparison("No gene from species presents in Bgee are detected.");
             log.exit(); return;
         }
 
@@ -125,10 +126,12 @@ public class CommandExpressionComparison extends CommandParent {
             
             MultiGeneExprCounts counts = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g4));
             condToCounts.put(new Condition(anatEntity, null, sp1), counts);
+            searchResult = new SearchResult<>(userGeneList,
+                    Arrays.asList("ENSG11000125746", "ENSG11000125740"), searchResult.getResults());
             SingleSpeciesExprAnalysis singleSpeciesExprAnalysis = new SingleSpeciesExprAnalysis(
-                    userGeneList, Arrays.asList("ENSG11000125746", "ENSG11000125740"), genes, condToCounts);
+                    searchResult.getResults(), condToCounts);
             
-            display.displayExpressionComparison(userGeneList, singleSpeciesExprAnalysis);
+            display.displayExpressionComparison(searchResult, singleSpeciesExprAnalysis);
             log.exit(); return;
         }
 
@@ -147,11 +150,13 @@ public class CommandExpressionComparison extends CommandParent {
         MultiGeneExprCounts counts = new MultiGeneExprCounts(callTypeToGenes, 
                 Arrays.asList(g7, g13, g14, g15, g16));
         globalCondToCounts.put(new MultiSpeciesCondition(aeSim1, null), counts);
+        searchResult = new SearchResult<>(userGeneList,
+                Arrays.asList("ENSMUSG10000027465"), searchResult.getResults());
         MultiSpeciesExprAnalysis multiSpeciesExprAnalysis = new MultiSpeciesExprAnalysis(
-                userGeneList, Arrays.asList("ENSMUSG10000027465"), genes, globalCondToCounts);
+                searchResult.getResults(), globalCondToCounts);
 
 
 //        MultiSpeciesExprAnalysis multiSpeciesExprAnalysis = serviceFactory.getMultiSpeciesCallService().loadMultiSpeciesExprAnalysis(userGeneList);
-        display.displayExpressionComparison(userGeneList, multiSpeciesExprAnalysis);
+        display.displayExpressionComparison(searchResult, multiSpeciesExprAnalysis);
     }
 }

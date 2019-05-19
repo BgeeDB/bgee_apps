@@ -21,11 +21,9 @@ import java.util.Map;
  */
 public class MultiSpeciesExprAnalysis extends MultiGeneExprAnalysis<MultiSpeciesCondition> {
 
-    public MultiSpeciesExprAnalysis(Collection<String> requestedPublicGeneIds,
-                                    Collection<String> requestedPublicGeneIdsNotFound,
-                                    Collection<Gene> genes,
+    public MultiSpeciesExprAnalysis(Collection<Gene> genes,
                                     Map<MultiSpeciesCondition, MultiGeneExprCounts> condToCounts) {
-        super(requestedPublicGeneIds, requestedPublicGeneIdsNotFound, genes, condToCounts);
+        super(genes, condToCounts);
     }
 
     @Override

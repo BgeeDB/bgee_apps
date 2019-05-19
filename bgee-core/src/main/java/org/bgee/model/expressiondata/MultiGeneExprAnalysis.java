@@ -64,14 +64,6 @@ public abstract class MultiGeneExprAnalysis<T> {
     // INSTANCE ATTRIBUTES AND METHODS
     //***************************************
     /**
-     * @see #getRequestedPublicGeneIds()
-     */
-    private final Set<String> requestedPublicGeneIds;
-    /**
-     * @see #getRequestedPublicGeneIdsNotFound()
-     */
-    private final Set<String> requestedPublicGeneIdsNotFound;
-    /**
      * @see #getGenes()
      */
     private final Set<Gene> genes;
@@ -81,37 +73,12 @@ public abstract class MultiGeneExprAnalysis<T> {
      */
     private final Map<T, MultiGeneExprCounts> condToCounts;
 
-    public MultiGeneExprAnalysis(Collection<String> requestedPublicGeneIds,
-                                 Collection<String> requestedPublicGeneIdsNotFound,
-                                 Collection<Gene> genes, Map<T, MultiGeneExprCounts> condToCounts) {
-        this.requestedPublicGeneIds = Collections.unmodifiableSet(
-                requestedPublicGeneIds == null? new HashSet<>(): new HashSet<>(requestedPublicGeneIds));
-        this.requestedPublicGeneIdsNotFound = Collections.unmodifiableSet(
-                requestedPublicGeneIdsNotFound == null? new HashSet<>(): new HashSet<>(requestedPublicGeneIdsNotFound));
+    public MultiGeneExprAnalysis(Collection<Gene> genes, Map<T, MultiGeneExprCounts> condToCounts) {
         this.genes =  Collections.unmodifiableSet(genes == null? new HashSet<>(): new HashSet<>(genes));
         this.condToCounts = Collections.unmodifiableMap(
                 condToCounts == null? new HashMap<>(): new HashMap<>(condToCounts));
     }
 
-    /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the public IDs
-     *          of genes requested for expression comparison. Genes that were retrieved
-     *          can be retrieved by calling {@link #getGenes()}. IDs that did not correspond
-     *          to genes in Bgee are listed by {@link #getRequestedPublicGeneIdsNotFound()}.
-     * @see #getGenes()
-     * @see #getRequestedPublicGeneIdsNotFound()
-     */
-    public Set<String> getRequestedPublicGeneIds() {
-        return requestedPublicGeneIds;
-    }
-    /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the requested public gene IDs,
-     *          among {@link #getRequestedPublicGeneIds()}, that were not found in Bgee.
-     * @see #getRequestedPublicGeneIds()
-     */
-    public Set<String> getRequestedPublicGeneIdsNotFound() {
-        return requestedPublicGeneIdsNotFound;
-    }
     /**
      * @return  An unmodifiable {@code Set} of {@code Gene}s that are the genes that were retrieved
      *          based on the requested public gene IDs (see {@link #getRequestedPublicGeneIds()}).
@@ -136,9 +103,6 @@ public abstract class MultiGeneExprAnalysis<T> {
         int result = 1;
         result = prime * result + ((condToCounts == null) ? 0 : condToCounts.hashCode());
         result = prime * result + ((genes == null) ? 0 : genes.hashCode());
-        result = prime * result + ((requestedPublicGeneIds == null) ? 0 : requestedPublicGeneIds.hashCode());
-        result = prime * result
-                + ((requestedPublicGeneIdsNotFound == null) ? 0 : requestedPublicGeneIdsNotFound.hashCode());
         return result;
     }
     @Override
@@ -167,31 +131,15 @@ public abstract class MultiGeneExprAnalysis<T> {
         } else if (!genes.equals(other.genes)) {
             return false;
         }
-        if (requestedPublicGeneIds == null) {
-            if (other.requestedPublicGeneIds != null) {
-                return false;
-            }
-        } else if (!requestedPublicGeneIds.equals(other.requestedPublicGeneIds)) {
-            return false;
-        }
-        if (requestedPublicGeneIdsNotFound == null) {
-            if (other.requestedPublicGeneIdsNotFound != null) {
-                return false;
-            }
-        } else if (!requestedPublicGeneIdsNotFound.equals(other.requestedPublicGeneIdsNotFound)) {
-            return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("[requestedPublicGeneIds=").append(requestedPublicGeneIds)
-                .append(", requestedPublicGeneIdsNotFound=").append(requestedPublicGeneIdsNotFound)
-                .append(", genes=").append(genes)
-                .append(", condToCounts=").append(condToCounts)
-                .append("]");
+        builder.append("[genes=").append(genes)
+               .append(", condToCounts=").append(condToCounts)
+               .append("]");
         return builder.toString();
     }
 }

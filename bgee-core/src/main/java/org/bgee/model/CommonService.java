@@ -368,6 +368,18 @@ public class CommonService extends Service {
 
         return log.exit(new AbstractMap.SimpleEntry<>(geneIdFilter, speciesIds));
     }
+    protected static Set<GeneFilter> convertGenesToGeneFilters(Collection<Gene> genes) {
+        log.entry(genes);
+        if (genes == null || genes.isEmpty()) {
+            return log.exit(new HashSet<>());
+        }
+        return log.exit(genes.stream()
+                .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
+                        Collectors.mapping(g -> g.getEnsemblGeneId(), Collectors.toSet())))
+                .entrySet().stream()
+                .map(e -> new GeneFilter(e.getKey(), e.getValue()))
+                .collect(Collectors.toSet()));
+    }
 
     /**
      * 

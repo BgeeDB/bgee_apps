@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
+import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -134,6 +135,34 @@ public class GeneService extends CommonService {
     public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds) {
         log.entry(ensemblGeneIds);
         return log.exit(this.loadGenesByEnsemblIds(ensemblGeneIds, false));
+    }
+    /**
+     * Retrieves genes from their Ensembl IDs as a {@code SearchResult}. {@code SearchResult} allows
+     * also to retrieve the IDs that were <strong>not</strong> found in the database.
+     * The {@code Gene}s retrieved are the same as a call to {@link #loadGenesByEnsemblIds(Collection)}
+     * would return (except that this method does not accept {@code null} or empty argument).
+     *
+     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
+     *                          of genes to retrieve. Cannot be {@code null} or emty, otherwise
+     *                          an {@code IllegalArgumentException} is thrown.
+     * @return                  A {@code SearchResult} holding the requested IDs, the {@code Gene}s
+     *                          retrieved, and the IDs that could not be found in Bgee.
+     * @see #loadGenesByEnsemblIds(Collection)
+     * @throws IllegalArgumentException If {@code ensemblGeneIds} is {@code null} or empty.
+     */
+    public SearchResult<String, Gene> searchGenesByEnsemblIds(Collection<String> ensemblGeneIds)
+    throws IllegalArgumentException {
+        log.entry(ensemblGeneIds);
+        if (ensemblGeneIds == null || ensemblGeneIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
+        }
+        Set<String> clonedGeneIds = new HashSet<>(ensemblGeneIds);
+        Set<Gene> genes = this.loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
+        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
+                .collect(Collectors.toSet());
+        Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
+        geneIdsNotFound.removeAll(geneIdsFound);
+        return log.exit(new SearchResult<>(clonedGeneIds, geneIdsNotFound, genes));
     }
 
     /**

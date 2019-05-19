@@ -623,38 +623,39 @@ public class CallService extends CommonService {
         return log.exit(callsByAnatEntity);
     }
 
-    //TODO: in a future version, this method should accept a Map<Integer, Collection<String>>,
-    //where keys are species IDs, and values are the gene IDs, any IDs. This would allow to retrieve
-    //the genes by calling GeneService.loadGenesByAnyId, knowing for which species we need to retrieve
-    //the gene associated to an ID. This would also allow to use bonobo gene IDs, as as of Bgee 14,
-    //we use chimp genome for bonobo, and their genes have the same IDs.
-    //TODO: equivalent method accepting GeneFilters
-    public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<String> requestedGeneIds) {
-        log.entry(requestedGeneIds);
-        if (requestedGeneIds == null || requestedGeneIds.isEmpty()) {
+    public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
+        log.entry(requestedGenes);
+        if (requestedGenes == null || requestedGenes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
         }
-        Set<String> clonedGeneIds = new HashSet<>(requestedGeneIds);
-        Set<Gene> genes = this.getServiceFactory().getGeneService()
-                .loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
-        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
-                .collect(Collectors.toSet());
-        Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
-        geneIdsNotFound.removeAll(geneIdsFound);
+        Set<Gene> clonedGenes = new HashSet<>(requestedGenes);
 
-        Set<Species> species = genes.stream().map(g -> g.getSpecies()).collect(Collectors.toSet());
-        if (species.size() != 1) {
-            throw log.throwing(new IllegalArgumentException(
-                    "This method is for comparing the expression of genes in a single species"));
-        }
-        GeneFilter geneFilter = new GeneFilter(species.iterator().next().getId(), geneIdsFound);
+        Set<GeneFilter> geneFilters = convertGenesToGeneFilters(clonedGenes);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(
                 null,                              //we want both present and absent calls, of any quality
-                Collections.singleton(geneFilter), //requested genes
+                geneFilters,                       //requested genes
                 null,                              //any condition
                 null,                              //any data type
                 null, null, null                   //both observed and propagated calls
                 );
+        return log.exit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
+    }
+    public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter) {
+        log.entry(callFilter);
+        if (callFilter.getGeneFilters().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
+        }
+        Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters())
+                .collect(Collectors.toSet());
+        return log.exit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
+    }
+    private SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter,
+            Set<Gene> genes) {
+        log.entry(callFilter, genes);
+        if (callFilter.getGeneFilters().size() != 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "This method is for comparing the expression of genes in a single species"));
+        }
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
                 Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
@@ -689,7 +690,7 @@ public class CallService extends CommonService {
         //And we create the final Map condToCounts
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        return log.exit(new SingleSpeciesExprAnalysis(clonedGeneIds, geneIdsNotFound, genes, condToCounts));
+        return log.exit(new SingleSpeciesExprAnalysis(genes, condToCounts));
     }
 
     //*************************************************************************

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.SearchResult;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
@@ -69,38 +70,38 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         log.exit();
     }
     
-    public void displayExpressionComparison(List<String> geneList, String errorMsg) {
-        log.entry(geneList, errorMsg);
+    public void displayExpressionComparison(String errorMsg) {
+        log.entry(errorMsg);
 
-        this.displayExpressionComparison(geneList, null, null, null, errorMsg);
+        this.displayExpressionComparison(null, null, null, null, errorMsg);
 
         log.exit();
     }
     
     @Override
-    public void displayExpressionComparison(List<String> geneList, SingleSpeciesExprAnalysis result) {
-        log.entry(geneList, result);
+    public void displayExpressionComparison(SearchResult<String, Gene> searchResult, SingleSpeciesExprAnalysis result) {
+        log.entry(searchResult, result);
 
         Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
-        this.displayExpressionComparison(geneList, result, fun, false, null);
+        this.displayExpressionComparison(searchResult, result, fun, false, null);
 
         log.exit();
     }
 
     @Override
-    public void displayExpressionComparison(List<String> geneList, MultiSpeciesExprAnalysis result) {
-        log.entry(geneList, result);
+    public void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiSpeciesExprAnalysis result) {
+        log.entry(searchResult, result);
 
         Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
-        this.displayExpressionComparison(geneList, result, fun, true, null);
+        this.displayExpressionComparison(searchResult, result, fun, true, null);
 
         log.exit();
     }
 
-    private <T> void displayExpressionComparison(List<String> userEnsemblIds, MultiGeneExprAnalysis<T> result,
+    private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
                                                  Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies,
                                                  String errorMsg) {
-        log.entry(userEnsemblIds, result, function, isMultiSpecies, errorMsg);
+        log.entry(searchResult, result, function, isMultiSpecies, errorMsg);
         
 
         this.startDisplay("Expression comparison page");
@@ -113,14 +114,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("</div>");
 
-        this.writeln(this.getForm(userEnsemblIds, errorMsg));
+        this.writeln(this.getForm(errorMsg));
 
         if (result != null) {
             if (isMultiSpecies == null) {
                 throw log.throwing(new IllegalArgumentException(
                         "If the result should be displayed, we should know if it concerns single or multiple species."));
             }
-            this.writeln(this.getResult(result, function, isMultiSpecies));
+            this.writeln(this.getResult(searchResult, result, function, isMultiSpecies));
         }
 
         this.endDisplay();
@@ -128,8 +129,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         log.exit();
     }
 
-    private String getForm(List<String> userEnsemblIds, String errorMsg) {
-        log.entry(userEnsemblIds, errorMsg);
+    private String getForm(String errorMsg) {
+        log.entry(errorMsg);
 
         StringBuilder sb = new StringBuilder();
 
@@ -149,7 +150,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append("' value='1' />");
 
         // Gene ID list
-        String idsText = userEnsemblIds == null ? "" : htmlEntities(String.join("\n", userEnsemblIds));
+        String idsText = this.getRequestParameters().getGeneList() == null ? "" :
+            htmlEntities(String.join("\n", this.getRequestParameters().getGeneList()));
         sb.append("            <div class='form-group'>");
         sb.append("                <label for='bgee_gene_list' class='group-title'>" +
                 "                       Gene list</label>");
@@ -178,8 +180,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         return log.exit(sb.toString());
     }
 
-    private <T> String getResult(MultiGeneExprAnalysis<T> result, Function<T, Set<AnatEntity>> function,
-                                 boolean isMultiSpecies) {
+    private <T> String getResult(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
+            Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
         log.entry(result, function, isMultiSpecies);
 
         StringBuilder sb = new StringBuilder();
@@ -211,9 +213,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("    </table>");
         sb.append("</div>");
 
-        if (!result.getRequestedPublicGeneIdsNotFound().isEmpty()) {
+        if (searchResult != null && !searchResult.getRequestElementsNotFound().isEmpty()) {
             sb.append("<p>Unknown Ensembl IDs: ");
-            sb.append(result.getRequestedPublicGeneIdsNotFound().stream()
+            sb.append(searchResult.getRequestElementsNotFound().stream()
                     .sorted()
                     .map(gId -> "'" + htmlEntities(gId) + "'")
                     .collect(Collectors.joining(" - ")));

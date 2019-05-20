@@ -689,10 +689,10 @@ public class CallService extends CommonService {
                             c -> new HashSet<>(Arrays.asList(c.getGene())),
                             (v1, v2) -> {v1.addAll(v2); return v1;}));
             //Store rank info for each Gene with data
-            Map<Gene, BigDecimal> geneToRank = list.stream()
+            Map<Gene, ExpressionLevelInfo> geneToRank = list.stream()
             //Collectors.toMap does not accept null values,
             //see https://stackoverflow.com/a/24634007/1768736
-            .collect(HashMap::new, (m, v) -> m.put(v.getGene(), v.getMeanRank()), Map::putAll);
+            .collect(HashMap::new, (m, v) -> m.put(v.getGene(), v.getExpressionLevelInfo()), Map::putAll);
             Set<Gene> genesWithNoData = new HashSet<>(genes);
             genesWithNoData.removeAll(geneToRank.keySet());
             return new AbstractMap.SimpleEntry<>(list.iterator().next().getCondition(),

@@ -1868,8 +1868,8 @@ public class CallServiceTest extends TestAncestor {
         //Counts in acond1
         Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = new HashMap<>();
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1, g2));
-        Map<Gene, BigDecimal> geneToMinRank = new HashMap<>();
-        geneToMinRank.put(g1, new BigDecimal("1.0"));
+        Map<Gene, ExpressionLevelInfo> geneToMinRank = new HashMap<>();
+        geneToMinRank.put(g1, new ExpressionLevelInfo(new BigDecimal("1.0")));
         geneToMinRank.put(g2, null);
         MultiGeneExprCounts count = new MultiGeneExprCounts(callTypeToGenes, null, geneToMinRank);
         condToCounts.put(cond1, count);
@@ -1878,15 +1878,15 @@ public class CallServiceTest extends TestAncestor {
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
         callTypeToGenes.put(ExpressionSummary.NOT_EXPRESSED, Arrays.asList(g2));
         geneToMinRank = new HashMap<>();
-        geneToMinRank.put(g1, new BigDecimal("1.0"));
-        geneToMinRank.put(g2, new BigDecimal("2.0"));
+        geneToMinRank.put(g1, new ExpressionLevelInfo(new BigDecimal("1.0")));
+        geneToMinRank.put(g2, new ExpressionLevelInfo(new BigDecimal("2.0")));
         count = new MultiGeneExprCounts(callTypeToGenes, null, geneToMinRank);
         condToCounts.put(cond2, count);
         //counts in cond3
         callTypeToGenes = new HashMap<>();
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
         geneToMinRank = new HashMap<>();
-        geneToMinRank.put(g1, new BigDecimal("1.0"));
+        geneToMinRank.put(g1, new ExpressionLevelInfo(new BigDecimal("1.0")));
         count = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g2), geneToMinRank);
         condToCounts.put(cond3, count);
         SingleSpeciesExprAnalysis expectedResult = new SingleSpeciesExprAnalysis(Arrays.asList(g1, g2),

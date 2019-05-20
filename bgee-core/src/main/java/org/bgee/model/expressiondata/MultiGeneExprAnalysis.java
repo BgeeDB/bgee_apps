@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 
@@ -37,10 +38,10 @@ public abstract class MultiGeneExprAnalysis<T> {
 
         private final Map<ExpressionSummary, Set<Gene>> callTypeToGenes;
         private final Set<Gene> genesWithNoData;
-        private final Map<Gene, BigDecimal> geneToMinRank;
+        private final Map<Gene, ExpressionLevelInfo> geneToMinRank;
 
         public MultiGeneExprCounts(Map<ExpressionSummary, Collection<Gene>> callTypeToGenes,
-                Collection<Gene> genesWithNoData, Map<Gene, BigDecimal> geneToMinRank) {
+                Collection<Gene> genesWithNoData, Map<Gene, ExpressionLevelInfo> geneToMinRank) {
 
             this.callTypeToGenes = Collections.unmodifiableMap(
                     callTypeToGenes == null? new HashMap<>():
@@ -64,10 +65,10 @@ public abstract class MultiGeneExprAnalysis<T> {
         }
         /**
          * @return  An unmodifiable {@code Map} where keys are {@code Gene}s with data, the associated value
-         *          being a {@code BigDecimal} that is the gene min rank in the condition, if any
+         *          being a {@code ExpressionLevelInfo} containing the gene min rank in the condition, if any
          *          (can be {@code null} if no rank available for the gene).
          */
-        public Map<Gene, BigDecimal> getGeneToMinRank() {
+        public Map<Gene, ExpressionLevelInfo> getGeneToMinRank() {
             return geneToMinRank;
         }
 

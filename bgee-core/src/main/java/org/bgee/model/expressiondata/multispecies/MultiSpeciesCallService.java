@@ -40,6 +40,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -987,15 +988,15 @@ public class MultiSpeciesCallService extends CommonService {
                     genesWithNoData.removeAll(genesWithData);
 
                     //For each gene with a rank, we find the min rank
-                    Map<Gene, Optional<BigDecimal>> geneToMinRankOptional = list.stream()
+                    Map<Gene, Optional<ExpressionLevelInfo>> geneToMinRankOptional = list.stream()
                     .flatMap(sc -> sc.getCalls().stream())
                     .filter(c -> c.getMeanRank() != null)
                     .collect(Collectors.groupingBy(c -> c.getGene(),
-                            Collectors.mapping(c -> c.getMeanRank(),
+                            Collectors.mapping(c -> c.getExpressionLevelInfo(),
                                     //Need a compiler hint with my local version of Java
-                                    Collectors.<BigDecimal>minBy(Comparator.naturalOrder()))));
+                                    Collectors.minBy(Comparator.comparing(eli -> eli.getRank())))));
                     //We insert in the Map all genes with data, with a null rank if they don't have one
-                    Map<Gene, BigDecimal> geneToMinRank = genesWithData.stream()
+                    Map<Gene, ExpressionLevelInfo> geneToMinRank = genesWithData.stream()
                     .map(g -> new AbstractMap.SimpleEntry<>(g, geneToMinRankOptional.containsKey(g)? geneToMinRankOptional.get(g).get(): null))
                     //Collectors.toMap does not accept null values,
                     //see https://stackoverflow.com/a/24634007/1768736

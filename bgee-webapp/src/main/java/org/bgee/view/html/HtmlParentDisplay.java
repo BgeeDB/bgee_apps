@@ -57,7 +57,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} that is the page name of the 'R packages' resources page.
      */
-    protected final static String R_PACKAGES_PAGE_NAME = "R Packages";
+    protected final static String R_PACKAGES_PAGE_NAME = "R packages";
     /**
      * A {@code String} that is the page name of the 'Source code' resources page.
      */
@@ -544,7 +544,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
         .append("'>SPARQL endpoint</a></li>");
         navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
-                .append("Anatomical similarities</a></li>");
+                .append("Anatomical homology</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 

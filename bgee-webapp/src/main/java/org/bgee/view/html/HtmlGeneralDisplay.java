@@ -150,16 +150,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
-        RequestParameters urlDownload = this.getNewRequestParameters();
-        urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
+        RequestParameters urlExprComp = this.getNewRequestParameters();
+        urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
         
         this.writeln("<div id='" + divId + "'>");
+        this.writeln("<a href='"+ urlExprComp.getRequestURL() +
+                "'><span class='glyphicon glyphicon-th-list'></span>Expression comparison</a>");
         this.writeln("<a href='"+ urlTopAnat.getRequestURL() + 
                 "'><span class='glyphicon glyphicon-stats'></span>Expression enrichment analysis</a>");
         this.writeln("<a href='"+ urlGeneSearch.getRequestURL() + 
                 "'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
-        this.writeln("<a href='"+ urlDownload.getRequestURL() + 
-                "'><span class='glyphicon glyphicon-download'></span>Download</a>");
         this.writeln("</div>"); // close start_buttons
         
         log.exit();

@@ -10,6 +10,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
@@ -20,10 +21,15 @@ import org.bgee.view.JsonHelper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -185,6 +191,15 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         StringBuilder sb = new StringBuilder();
 
+        if (searchResult != null && !searchResult.getRequestElementsNotFound().isEmpty()) {
+            sb.append("<p>Unknown Ensembl IDs: ");
+            sb.append(searchResult.getRequestElementsNotFound().stream()
+                    .sorted()
+                    .map(gId -> "'" + htmlEntities(gId) + "'")
+                    .collect(Collectors.joining(" - ")));
+            sb.append("</p>");
+        }
+
         sb.append("<h2>Results</h2>");
 
         sb.append("<div class='table-container'>");
@@ -193,13 +208,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("        <thead>");
         sb.append("            <tr>");
         sb.append("                <th>Anatomical entities</th>");
-        sb.append("                <th>Genes count with presence of expression</th>");
-        sb.append("                <th>Gene count with absence of expression</th>");
-        sb.append("                <th>Gene count with no data</th>");
+        sb.append("                <th>Score</th>");
+        sb.append("                <th>Minimum rank</th>");
+        sb.append("                <th>Genes with presence of expression</th>");
+        sb.append("                <th>Genes with absence of expression</th>");
+        sb.append("                <th>Genes with no data</th>");
         if (isMultiSpecies) {
-            sb.append("            <th>Species count with presence of expression</th>");
-            sb.append("            <th>Species count with absence of expression</th>");
-            sb.append("            <th>Species count with no data</th>");
+            sb.append("            <th>Species with presence of expression</th>");
+            sb.append("            <th>Species with absence of expression</th>");
         }
         sb.append("                <th>See details</th>");
         sb.append("            </tr>");
@@ -211,15 +227,6 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("        </tbody>");
         sb.append("    </table>");
         sb.append("</div>");
-
-        if (searchResult != null && !searchResult.getRequestElementsNotFound().isEmpty()) {
-            sb.append("<p>Unknown Ensembl IDs: ");
-            sb.append(searchResult.getRequestElementsNotFound().stream()
-                    .sorted()
-                    .map(gId -> "'" + htmlEntities(gId) + "'")
-                    .collect(Collectors.joining(" - ")));
-            sb.append("</p>");
-        }
 
         return log.exit(sb.toString());
 
@@ -235,28 +242,54 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         row.append("    <td>");
         row.append(function.apply(condToCounts.getKey()).stream()
                 .sorted(Comparator.comparing(AnatEntity::getName))
-                .map(ae -> getAnatEntityUrl(ae, ae.getName() + " (" + ae.getId() + ")"))
+                .map(ae -> getAnatEntityUrl(ae, ae.getName()))
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");
 
         Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
         Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
+        if (expressedGenes == null) {
+            expressedGenes = new HashSet<>();
+        }
         Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
+        if (notExpressedGenes == null) {
+            notExpressedGenes = new HashSet<>();
+        }
+
+        // Score
+        double score = (double) Math.abs(expressedGenes.size() - notExpressedGenes.size())
+                / ((double) expressedGenes.size() + notExpressedGenes.size());
+        row.append("<td>").append(String.format(Locale.US, "%.2f", score)).append("</td>");
         
+        // Min rank 
+        Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToMinRank().values().stream()
+                .filter(Objects::nonNull)
+                .min(Comparator.comparing(ExpressionLevelInfo::getRank,
+                        Comparator.nullsLast(BigDecimal::compareTo)));
+        
+        row.append("<td>").append(collect.isPresent()? collect.get().getFormattedRank(): "").append("</td>");
+
+        // Counts
         row.append(this.getGeneCountCell(expressedGenes));
         row.append(this.getGeneCountCell(notExpressedGenes));
         row.append(this.getGeneCountCell(condToCounts.getValue().getGenesWithNoData()));
         if (isMultiSpecies) {
             row.append(this.getSpeciesCountCell(expressedGenes));
             row.append(this.getSpeciesCountCell(notExpressedGenes));
-            row.append(this.getSpeciesCountCell(condToCounts.getValue().getGenesWithNoData()));
         }
         
+        // Expand details
         row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
         row.append("</tr>");
         return log.exit(row.toString());
     }
 
+    /**
+     * Get table cell for a gene count as a HTML 'td' element.
+     *
+     * @param genes     A {@code Set} of {@code Gene}s that are the genes to be displayed. 
+     * @return          The {@code String} that is the HTML of the cell.
+     */
     private String getGeneCountCell(Set<Gene> genes) {
         log.entry(genes);
 
@@ -265,7 +298,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             geneUrl.setPage(RequestParameters.PAGE_GENE);
             geneUrl.setGeneId(g.getEnsemblGeneId());
             geneUrl.setSpeciesId(g.getSpecies().getId());
-            return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>";
+            return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>" 
+                    + (StringUtils.isBlank(g.getName())? "": " " + htmlEntities(g.getName()));
         };
 
         //Need a compiler hint of generic type for my Java version
@@ -273,9 +307,16 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                         .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
                         .collect(Collectors.toList()),
                 "gene" + (genes.size() > 1? "s": ""),
-                f, g -> StringUtils.isBlank(g.getName())? "": htmlEntities(g.getName())));
+                f));
     }
 
+    /**
+     * Get table cell for a species count as a HTML 'td' element.
+     *
+     * @param genes     A {@code Set} of {@code Gene}s that are the genes for which
+     *                  the species should to be displayed. 
+     * @return          The {@code String} that is the HTML of the cell.
+     */
     private String getSpeciesCountCell(Set<Gene> genes) {
         log.entry(genes);
         //Need a compiler hint of generic type for my Java version
@@ -284,25 +325,33 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
                         .collect(Collectors.toList()),
-                "species", s -> String.valueOf(s.getId()),
-                s -> "<em>" + htmlEntities(s.getScientificName()) + "</em>"));
+                "species", s -> "<em>" + htmlEntities(s.getScientificName()) + "</em>"));
     }
-    
-    private <T> String getCell(List<T> set, String text, Function<T, String> getMainText,
-                               Function<T, String> getOptionalText) {
-        log.entry(set, text, getMainText, getOptionalText);
+
+    /**
+     * Get table cell as a HTML 'td' element.
+     * 
+     * @param set           A {@code List} of {@code T}s that are the elements to be diplayed. 
+     * @param mainText      A {@code String} that is the main text of the cell.
+     * @param getDetailText A {@code Function }accepting a {@code T} that is, in our case,
+     *                      a {@code Gene} or a {@code Species}, and returning
+     *                      a {@code String} to retrieve the text of details to be displayed.
+     * @param <T>           The type of elements in {@code set}.
+     * @return              The {@code String} that is the HTML of the cell.
+     */
+    private <T> String getCell(List<T> set, String mainText, Function<T, String> getDetailText) {
+        log.entry(set, mainText, getDetailText);
 
         StringBuilder cell = new StringBuilder();
 
         cell.append("<td>");
-        cell.append(     set.size()).append(" ").append(text);
+        cell.append(     set.size()).append(" ").append(mainText);
         cell.append("    <ul class='masked'>");
         for (T element: set) {
-            String optional = getOptionalText.apply(element);
             cell.append("    <li class='gene'>");
             cell.append("        <span class='details small'>")
-                    .append(getMainText.apply(element)).append("</span>")
-                    .append(StringUtils.isBlank(optional)? "": " " + optional);
+                    .append(         getDetailText.apply(element))
+                    .append(    "</span>");
             cell.append("    </li>");
         }
         cell.append("    </ul>");

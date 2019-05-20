@@ -31,9 +31,9 @@ $( document ).ready( function(){
             .attr("alt", 'Loading'));
     });
     
+    // If you change any option of this table, take care to also change it for the single-species table
     $('table.expr_comp.multi-sp').DataTable( {
-    	//enable ordering but apply no ordering during initialization
-    	"order": [],
+        "order": [[ 1, 'desc' ], [ 5, 'asc' ], [ 2, 'asc' ]],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.childRowImmediate,
@@ -63,29 +63,31 @@ $( document ).ready( function(){
         },
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 1, targets: 0 }, // Anatomical entities
-           { responsivePriority: 2, targets: 1 }, // Gene count with presence of expression
-           { responsivePriority: 2, targets: 2 }, // Gene count with absence of expression
-           { responsivePriority: 2, targets: 3 }, // Gene count with no data
-           { responsivePriority: 3, targets: 4 }, // Species count with presence of expression
-           { responsivePriority: 3, targets: 5 }, // Species count with absence of expression
-           { responsivePriority: 3, targets: 6 }, // Species count with no data
-           { responsivePriority: 1, targets: 7 }  // Details
+           { responsivePriority: 1, targets: 1 }, // Score
+           { responsivePriority: 1, targets: 2 }, // Min rank
+           { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+           { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+           { responsivePriority: 2, targets: 5 }, // Gene count with no data
+           { responsivePriority: 3, targets: 6 }, // Species count with presence of expression
+           { responsivePriority: 3, targets: 7 }, // Species count with absence of expression
+           { responsivePriority: 2, targets: 8 }  // Details
         ],
         columns: [ // sorting definition
            { "orderable": true }, // Anatomical entities
+           { "orderable": true }, // Score
+           { "orderable": true }, // Min rank
            { "orderable": true }, // Gene count with presence of expression
            { "orderable": true }, // Gene count with absence of expression
            { "orderable": true }, // Gene count with no data
            { "orderable": true }, // Species count with presence of expression
            { "orderable": true }, // Species count with absence of expression
-           { "orderable": true }, // Species count with no data
            { "orderable": false } // Details
         ]
     });
 
+    // If you change any option of this table, take care to also change it for the multi-species table
     $('table.expr_comp.single-sp').DataTable( {
-        //enable ordering but apply no ordering during initialization
-        "order": [],
+        "order": [[ 1, 'desc' ], [ 5, 'asc' ], [ 2, 'asc' ]],
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.childRowImmediate,
@@ -115,13 +117,17 @@ $( document ).ready( function(){
         },
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
             { responsivePriority: 1, targets: 0 }, // Anatomical entities
-            { responsivePriority: 2, targets: 1 }, // Gene count with presence of expression
-            { responsivePriority: 2, targets: 2 }, // Gene count with absence of expression
-            { responsivePriority: 2, targets: 3 }, // Gene count with no data
-            { responsivePriority: 1, targets: 4 }  // Details
+            { responsivePriority: 1, targets: 1 }, // Score
+            { responsivePriority: 1, targets: 2 }, // Min rank
+            { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+            { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+            { responsivePriority: 2, targets: 5 }, // Gene count with no data
+            { responsivePriority: 2, targets: 6 }   // Details
         ],
         columns: [ // sorting definition
             { "orderable": true }, // Anatomical entities
+            { "orderable": true }, // Score
+            { "orderable": true }, // Min rank
             { "orderable": true }, // Gene count with presence of expression
             { "orderable": true }, // Gene count with absence of expression
             { "orderable": true }, // Gene count with no data

@@ -343,6 +343,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlCollaborations = this.getNewRequestParameters();
         urlCollaborations.setPage(RequestParameters.PAGE_COLLABORATIONS);
 
+        RequestParameters urlExprComp = this.getNewRequestParameters();
+        urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+
+        RequestParameters urlAnatSim = this.getNewRequestParameters();
+        urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
+
         this.writeln("<div id='bgee_news' class='panel panel-default'>");
         this.writeln("<div class='panel-heading'>");
         this.writeln("<span class='panel-title'>News"
@@ -354,6 +360,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeOneNews("2019-05",
                 "<ul>" +
+                "    <li>New <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +
+                        "expression comparison</a> page.</li>" +
+                "    <li>New <a href='" + urlAnatSim.getRequestURL() + "' title='Anatomical homology'>" +
+                        "anatomical homology</a> page.</li>" +
                 "    <li>New resource pages: " +
                         "<a href='" + urlResourcesRPackages.getRequestURL() + "' title='R packages'>" + 
                         R_PACKAGES_PAGE_NAME + "</a>, " +

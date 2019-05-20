@@ -1807,7 +1807,7 @@ public class CallServiceTest extends TestAncestor {
         Gene g1 = new Gene("1", spe1, biotype);
         Gene g2 = new Gene("2", spe1, biotype);
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.
@@ -1833,7 +1833,7 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall(g1, cond1,
                 new DataPropagation(PropagationState.SELF, null, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
-                null, null),
+                null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
                 new ExpressionCall(g2, cond1,
                 new DataPropagation(PropagationState.DESCENDANT, null, false),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
@@ -1842,16 +1842,16 @@ public class CallServiceTest extends TestAncestor {
                 new ExpressionCall(g1, cond2,
                 new DataPropagation(PropagationState.SELF, null, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
-                null, null),
+                null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
                 new ExpressionCall(g2, cond2,
                 new DataPropagation(PropagationState.SELF, null, true),
                 ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
-                null, null),
+                null, new ExpressionLevelInfo(new BigDecimal("2.0"))),
                 //Only one gene with data
                 new ExpressionCall(g1, cond3,
                 new DataPropagation(PropagationState.SELF, null, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
-                null, null),
+                null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
                 //The 2 genes are expressed, but no observed data for none of them,
                 //should be discarded
                 new ExpressionCall(g1, cond4,
@@ -1868,18 +1868,26 @@ public class CallServiceTest extends TestAncestor {
         //Counts in acond1
         Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = new HashMap<>();
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1, g2));
-        MultiGeneExprCounts count = new MultiGeneExprCounts(callTypeToGenes, null);
+        Map<Gene, BigDecimal> geneToMinRank = new HashMap<>();
+        geneToMinRank.put(g1, new BigDecimal("1.0"));
+        geneToMinRank.put(g2, null);
+        MultiGeneExprCounts count = new MultiGeneExprCounts(callTypeToGenes, null, geneToMinRank);
         condToCounts.put(cond1, count);
         //counts in cond2
         callTypeToGenes = new HashMap<>();
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
         callTypeToGenes.put(ExpressionSummary.NOT_EXPRESSED, Arrays.asList(g2));
-        count = new MultiGeneExprCounts(callTypeToGenes, null);
+        geneToMinRank = new HashMap<>();
+        geneToMinRank.put(g1, new BigDecimal("1.0"));
+        geneToMinRank.put(g2, new BigDecimal("2.0"));
+        count = new MultiGeneExprCounts(callTypeToGenes, null, geneToMinRank);
         condToCounts.put(cond2, count);
         //counts in cond3
         callTypeToGenes = new HashMap<>();
         callTypeToGenes.put(ExpressionSummary.EXPRESSED, Arrays.asList(g1));
-        count = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g2));
+        geneToMinRank = new HashMap<>();
+        geneToMinRank.put(g1, new BigDecimal("1.0"));
+        count = new MultiGeneExprCounts(callTypeToGenes, Arrays.asList(g2), geneToMinRank);
         condToCounts.put(cond3, count);
         SingleSpeciesExprAnalysis expectedResult = new SingleSpeciesExprAnalysis(Arrays.asList(g1, g2),
                 condToCounts);

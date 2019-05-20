@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,10 +35,12 @@ public abstract class MultiGeneExprAnalysis<T> {
     //***************************************
     public static final class MultiGeneExprCounts {
 
-        private Map<ExpressionSummary, Set<Gene>> callTypeToGenes;
-        private Set<Gene> genesWithNoData;
+        private final Map<ExpressionSummary, Set<Gene>> callTypeToGenes;
+        private final Set<Gene> genesWithNoData;
+        private final Map<Gene, BigDecimal> geneToMinRank;
 
-        public MultiGeneExprCounts(Map<ExpressionSummary, Collection<Gene>> callTypeToGenes, Collection<Gene> genesWithNoData) {
+        public MultiGeneExprCounts(Map<ExpressionSummary, Collection<Gene>> callTypeToGenes,
+                Collection<Gene> genesWithNoData, Map<Gene, BigDecimal> geneToMinRank) {
 
             this.callTypeToGenes = Collections.unmodifiableMap(
                     callTypeToGenes == null? new HashMap<>():
@@ -49,6 +52,8 @@ public abstract class MultiGeneExprAnalysis<T> {
 
             this.genesWithNoData = Collections.unmodifiableSet(
                     genesWithNoData == null? new HashSet<>(): new HashSet<>(genesWithNoData));
+            this.geneToMinRank = Collections.unmodifiableMap(
+                    geneToMinRank == null? new HashMap<>(): new HashMap<>(geneToMinRank));
         }
 
         public Map<ExpressionSummary, Set<Gene>> getCallTypeToGenes() {
@@ -57,6 +62,14 @@ public abstract class MultiGeneExprAnalysis<T> {
         public Set<Gene> getGenesWithNoData() {
             return genesWithNoData;
         }
+        /**
+         * @return  An unmodifiable {@code Map} where keys are {@code Gene}s with data, the associated value
+         *          being a {@code BigDecimal} that is the gene min rank in the condition, if any
+         *          (can be {@code null} if no rank available for the gene).
+         */
+        public Map<Gene, BigDecimal> getGeneToMinRank() {
+            return geneToMinRank;
+        }
 
         @Override
         public int hashCode() {
@@ -64,6 +77,7 @@ public abstract class MultiGeneExprAnalysis<T> {
             int result = 1;
             result = prime * result + ((callTypeToGenes == null) ? 0 : callTypeToGenes.hashCode());
             result = prime * result + ((genesWithNoData == null) ? 0 : genesWithNoData.hashCode());
+            result = prime * result + ((geneToMinRank == null) ? 0 : geneToMinRank.hashCode());
             return result;
         }
         @Override
@@ -92,6 +106,13 @@ public abstract class MultiGeneExprAnalysis<T> {
             } else if (!genesWithNoData.equals(other.genesWithNoData)) {
                 return false;
             }
+            if (geneToMinRank == null) {
+                if (other.geneToMinRank != null) {
+                    return false;
+                }
+            } else if (!geneToMinRank.equals(other.geneToMinRank)) {
+                return false;
+            }
             return true;
         }
 
@@ -100,6 +121,7 @@ public abstract class MultiGeneExprAnalysis<T> {
             StringBuilder builder = new StringBuilder();
             builder.append("MultiGeneExprCounts [callTypeToGenes=").append(callTypeToGenes)
                    .append(", genesWithNoData=") .append(genesWithNoData)
+                   .append(", geneToMinRank=") .append(geneToMinRank)
                    .append("]");
             return builder.toString();
         }

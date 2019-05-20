@@ -663,7 +663,7 @@ public class CallService extends CommonService {
                     "This method is for comparing the expression of genes in a single species"));
         }
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.
@@ -688,11 +688,15 @@ public class CallService extends CommonService {
                             c -> c.getSummaryCallType(),
                             c -> new HashSet<>(Arrays.asList(c.getGene())),
                             (v1, v2) -> {v1.addAll(v2); return v1;}));
-            Set<Gene> genesWithData = list.stream().map(c -> c.getGene()).collect(Collectors.toSet());
+            //Store rank info for each Gene with data
+            Map<Gene, BigDecimal> geneToRank = list.stream()
+            //Collectors.toMap does not accept null values,
+            //see https://stackoverflow.com/a/24634007/1768736
+            .collect(HashMap::new, (m, v) -> m.put(v.getGene(), v.getMeanRank()), Map::putAll);
             Set<Gene> genesWithNoData = new HashSet<>(genes);
-            genesWithNoData.removeAll(genesWithData);
+            genesWithNoData.removeAll(geneToRank.keySet());
             return new AbstractMap.SimpleEntry<>(list.iterator().next().getCondition(),
-                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData));
+                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToRank));
         })
         //And we create the final Map condToCounts
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));

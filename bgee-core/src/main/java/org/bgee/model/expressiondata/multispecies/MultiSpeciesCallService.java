@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,7 +40,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -819,7 +820,8 @@ public class MultiSpeciesCallService extends CommonService {
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
                 expressionCallFilter,
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CALL_TYPE),
+                        CallService.Attribute.CALL_TYPE, CallService.Attribute.OBSERVED_DATA,
+                        CallService.Attribute.MEAN_RANK),
                 serviceOrdering);
 
         Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
@@ -968,6 +970,9 @@ public class MultiSpeciesCallService extends CommonService {
                 .collect(Collectors.groupingBy(c -> c.getMultiSpeciesCondition()))
                 //streaming Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 .entrySet().stream()
+                //Keep only conditions where at least one gene has observed data in it
+                .filter(e -> e.getValue().stream().anyMatch(sc -> sc.getCalls().stream()
+                        .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData()))))
                 //mapping Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 //to Entry<MultiSpeciesCondition, MultiGeneExprCounts>
                 .map(e -> {
@@ -980,8 +985,24 @@ public class MultiSpeciesCallService extends CommonService {
                     Set<Gene> genesWithData = list.stream().map(c -> c.getGene()).collect(Collectors.toSet());
                     Set<Gene> genesWithNoData = new HashSet<>(clonedGenes);
                     genesWithNoData.removeAll(genesWithData);
+
+                    //For each gene with a rank, we find the min rank
+                    Map<Gene, Optional<BigDecimal>> geneToMinRankOptional = list.stream()
+                    .flatMap(sc -> sc.getCalls().stream())
+                    .filter(c -> c.getMeanRank() != null)
+                    .collect(Collectors.groupingBy(c -> c.getGene(),
+                            Collectors.mapping(c -> c.getMeanRank(),
+                                    //Need a compiler hint with my local version of Java
+                                    Collectors.<BigDecimal>minBy(Comparator.naturalOrder()))));
+                    //We insert in the Map all genes with data, with a null rank if they don't have one
+                    Map<Gene, BigDecimal> geneToMinRank = genesWithData.stream()
+                    .map(g -> new AbstractMap.SimpleEntry<>(g, geneToMinRankOptional.containsKey(g)? geneToMinRankOptional.get(g).get(): null))
+                    //Collectors.toMap does not accept null values,
+                    //see https://stackoverflow.com/a/24634007/1768736
+                    .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), Map::putAll);
+ 
                     return new AbstractMap.SimpleEntry<>(e.getKey(),
-                            new MultiGeneExprCounts(callTypeToGenes, genesWithNoData));
+                            new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToMinRank));
                 })
                 //And we create the final Map condToCounts
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));

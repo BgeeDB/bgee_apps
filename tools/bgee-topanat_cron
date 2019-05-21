@@ -1,0 +1,26 @@
+#!/usr/bin/env perl
+
+# Perl embedded modules
+use strict;
+use warnings;
+use diagnostics;
+
+use Mail::Send;
+
+
+my $user_email = 'smoretti@unil.ch'; # Comma-separated if several ones
+
+if ( system("R -e 'library(\"rJava\")' >/dev/null 2>/tmp/bgee-topanat_failure")!=0 ){
+    my $host = $ENV{'HOSTNAME'} || `hostname`; chomp $host;
+    my $msg = new Mail::Send Subject=>"[BGEE-TOPANAT: service failure] from $host", To=>"$user_email";
+    $msg->add('From', 'Bgee@sib.swiss');
+    $msg->add('X-Mailer', "Mail::Send ($Mail::Send::VERSION) Perl module");
+    my $fh  = $msg->open;
+    print {$fh} `cat /tmp/bgee-topanat_failure`;
+    $fh->close; # complete the message and send it
+}
+
+unlink '/tmp/bgee-topanat_failure';
+
+exit 0;
+

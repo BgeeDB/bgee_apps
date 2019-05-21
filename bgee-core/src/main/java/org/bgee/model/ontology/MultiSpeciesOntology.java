@@ -24,12 +24,12 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * 
  * @author  Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 14 Mar 2019
  * @since   Bgee 13, July 2016
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
 */
-public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, U>, U> 
+public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> 
     extends OntologyBase<T, U> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesOntology.class.getName());
@@ -59,9 +59,23 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * the associated value being a {@code Set} of {@code T}s present in {@link #getElements()},
      * valid in the related species.
      * <p>
-     * A {@code null} key means: entities valid in any species.
+     * A {@code null} key means: entities valid in any Bgee species.
+     * <p>
+     * This attribute is the reverse {@code Map} of {@link #elementToSpeciesIds},
+     * for faster data retrieval.
      */
     private final Map<Integer, Set<T>> speciesIdToElements;
+    /**
+     * A {@code Map} where keys are {@code T}s representing elements of this ontology,
+     * the associated value being a {@code Set} of {@code Integer}s that are the IDs of the species
+     * the element is valid in.
+     * <p>
+     * A {@code null} value means: entity valid in any Bgee species.
+     * <p>
+     * This attribute is the reverse {@code Map} of {@link #speciesIdToElements},
+     * for faster data retrieval.
+     */
+    private final Map<T, Set<Integer>> elementToSpeciesIds;
 
     /**
      * @see #getSpeciesIds()
@@ -88,7 +102,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      * @param type                      A {@code Class<T>} that is the type of {@code elements} 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
-    protected MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
+    public MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
             Collection<RelationTO<U>> relations, Collection<TaxonConstraint<U>> taxonConstraints, 
             Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
             Collection<RelationType> relationTypes,
@@ -129,12 +143,42 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         this.speciesIdToElements = Collections.unmodifiableMap(
                 entitiesBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
-                            e -> Collections.unmodifiableSet((e.getValue())))));
-        log.trace("Entities by speciesId: {}", this.speciesIdToElements);
+                            e -> Collections.unmodifiableSet(e.getValue()))));
+        log.debug("Entities by speciesId: {}", this.speciesIdToElements);
+
+        //We also reverse this Map for easier retrieval of taxon constraints per element.
+        //Collectors.toMap does not accept null value (see https://stackoverflow.com/a/24634007/1768736),
+        //and the code is less readable when using the Collectors.collect method, so we do a regular loop.
+        //TODO: implement unit test using taxon constraints with a null species ID for testing this logic.
+        Map<T, Set<Integer>> tmpElementToSpeciesIds = new HashMap<>();
+        for (Entry<Integer, Set<T>> e: this.speciesIdToElements.entrySet()) {
+            Integer speciesId = e.getKey();
+            for (T element: e.getValue()) {
+                //The associated value can be null, so we need to use 'containsKey'
+                if (tmpElementToSpeciesIds.containsKey(element)) {
+                    Set<Integer> existingValue = tmpElementToSpeciesIds.get(element);
+                    if (existingValue == null || speciesId == null) {
+                        throw log.throwing(new IllegalStateException(
+                                "There shouldn't be any key collision with a null species ID."));
+                    }
+                    existingValue.add(speciesId);
+                } else {
+                    tmpElementToSpeciesIds.put(element,
+                            speciesId == null? null: new HashSet<>(Arrays.asList(speciesId)));
+                }
+            }
+        }
+        //Collectors.toMap does not accept null value (see https://stackoverflow.com/a/24634007/1768736)
+        this.elementToSpeciesIds = Collections.unmodifiableMap(tmpElementToSpeciesIds
+                .entrySet().stream().collect(
+                        HashMap::new,
+                        (m, e) -> m.put(e.getKey(),
+                                e.getValue() == null? null: Collections.unmodifiableSet(e.getValue())),
+                        HashMap::putAll));
         
         Map<Integer, Set<RelationTO<U>>> relationsBySpeciesId = null;
         if (this.relationTaxonConstraints.isEmpty()) {
-            log.trace("Inferring relation taxon constraints from entity taxon constraints");
+            log.debug("Inferring relation taxon constraints from entity taxon constraints");
             //no relation taxon constraints provided, so we'll try to use the entity taxon constraints:
             //both the source and the target need to be valid in a species for the relation to be valid
             //in that species.
@@ -154,7 +198,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                                     m1.merge(e2.getKey(), e2.getValue(), (v1, v2) -> {v1.addAll(v2); return v1;});
                                 }
                             });
-            log.trace("Species IDs by entity ID: {}", entityIdToSpeciesIds);
+            log.debug("Species IDs by entity ID: {}", entityIdToSpeciesIds);
             
             //Sadly, Collectors.groupingBy methods do not accept null keys, so we use toMap
             relationsBySpeciesId = this.getRelations().stream()
@@ -194,7 +238,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             ));
             
         } else {
-            log.trace("Retrieving relation taxon constraints from data source.");
+            log.debug("Retrieving relation taxon constraints from data source.");
             //first, build a Map to easily retrieve a relation from its ID
             final Map<Integer, RelationTO<U>> relMap = this.getRelations().stream()
                     .collect(Collectors.toMap(r -> r.getId(), r -> r));
@@ -216,7 +260,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                             (v1, v2) -> {v1.addAll(v2); return v1;}
                     ));
         }
-        log.trace("Relations by species ID: {}", relationsBySpeciesId);
+        log.debug("Relations by species ID: {}", relationsBySpeciesId);
         this.relationsBySpeciesId = Collections.unmodifiableMap(
                 relationsBySpeciesId.entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey(), 
@@ -232,6 +276,26 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<Integer> getSpeciesIds() {
         return speciesIds;
+    }
+    /**
+     * Retrieve in which species an element is valid.
+     *
+     * @param element   The element for which we want to know the IDs of the species it is valid in.
+     * @return          A {@code Set} of {@code Integer}s that are the IDs of the species
+     *                  which {@code element} is valid in. If the returned value is {@code null},
+     *                  it means that {@code element} is valid in all Bgee species.
+     */
+    public Set<Integer> getSpeciesIdsWithElementValidIn(T element) {
+        log.entry(element);
+        if (element == null) {
+            throw log.throwing(new IllegalArgumentException("Element cannot be null"));
+        }
+        if (!elementToSpeciesIds.containsKey(element)) {
+            log.debug("Elements in the ontology: {}", elementToSpeciesIds.keySet());
+            throw log.throwing(new IllegalArgumentException("Element is not present in the ontology: "
+                               + element));
+        }
+        return log.exit(elementToSpeciesIds.get(element));
     }
 
     /**
@@ -431,5 +495,63 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
         return log.exit(new Ontology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
                 this.getRelations(Arrays.asList(speciesId)), this.getRelationTypes(),
                 this.getServiceFactory(), this.getType()));
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((entityTaxonConstraints == null) ? 0 : entityTaxonConstraints.hashCode());
+        result = prime * result + ((relationTaxonConstraints == null) ? 0 : relationTaxonConstraints.hashCode());
+        result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        MultiSpeciesOntology<?, ?> other = (MultiSpeciesOntology<?, ?>) obj;
+        if (entityTaxonConstraints == null) {
+            if (other.entityTaxonConstraints != null) {
+                return false;
+            }
+        } else if (!entityTaxonConstraints.equals(other.entityTaxonConstraints)) {
+            return false;
+        }
+        if (relationTaxonConstraints == null) {
+            if (other.relationTaxonConstraints != null) {
+                return false;
+            }
+        } else if (!relationTaxonConstraints.equals(other.relationTaxonConstraints)) {
+            return false;
+        }
+        if (speciesIds == null) {
+            if (other.speciesIds != null) {
+                return false;
+            }
+        } else if (!speciesIds.equals(other.speciesIds)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("MultiSpeciesOntology [speciesIds=").append(speciesIds)
+               .append(", getElements()=").append(getElements())
+               .append(", getRelations()=").append(getRelations())
+               .append(", getRelationTypes()=").append(getRelationTypes())
+               .append(", relationTaxonConstraints=").append(relationTaxonConstraints)
+               .append(", entityTaxonConstraints=").append(entityTaxonConstraints)
+               .append(", getType()=").append(getType()).append("]");
+        return builder.toString();
     }
 }

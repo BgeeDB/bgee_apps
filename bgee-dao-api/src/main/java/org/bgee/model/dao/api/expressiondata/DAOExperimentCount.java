@@ -83,6 +83,7 @@ public class DAOExperimentCount {
     }
 
     @Override
+    //TODO: remove count from hashCode/equals after reactivating unit tests
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -93,6 +94,7 @@ public class DAOExperimentCount {
         return result;
     }
     @Override
+    //TODO: remove count from hashCode/equals after reactivating unit tests
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

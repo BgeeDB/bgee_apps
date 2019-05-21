@@ -23,9 +23,9 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @since Bgee 14 Mar. 2017
  */
 public enum DAOPropagationState implements EnumDAOField {
-    ALL("all"), SELF("self"), ANCESTOR("ancestor"), DESCENDANT("descendant"),
-    SELF_AND_ANCESTOR("self and ancestor"), SELF_AND_DESCENDANT("self and descendant"),
-    ANCESTOR_AND_DESCENDANT("ancestor and descendant");
+    ALL("all", true), SELF("self", true), ANCESTOR("ancestor", false), DESCENDANT("descendant", false),
+    SELF_AND_ANCESTOR("self and ancestor", true), SELF_AND_DESCENDANT("self and descendant", true),
+    ANCESTOR_AND_DESCENDANT("ancestor and descendant", false);
     private final static Logger log = LogManager.getLogger(DAOPropagationState.class.getName());
 
     /**
@@ -44,6 +44,7 @@ public enum DAOPropagationState implements EnumDAOField {
         return log.exit(TransferObject.convert(DAOPropagationState.class, representation));
     }
 
+    private final boolean observedState;
     /**
      * See {@link #getStringRepresentation()}
      */
@@ -53,9 +54,19 @@ public enum DAOPropagationState implements EnumDAOField {
      * Constructor providing the {@code String} representation of this {@code DAOPropagationState}.
      * 
      * @param stringRepresentation  A {@code String} corresponding to this {@code DAOPropagationState}.
+     * @param observedState         See {@link #getObservedState()}.
      */
-    private DAOPropagationState(String stringRepresentation) {
+    private DAOPropagationState(String stringRepresentation, boolean observedState) {
         this.stringRepresentation = stringRepresentation;
+        this.observedState = observedState;
+    }
+    /**
+     * @return  A {@code boolean} defining whether this {@code DAOPropagationState} is a state
+     *          <strong>including</strong> observed data. If {@code true} it includes observed data,
+     *          if {@code false} it does not include observed data.
+     */
+    public boolean getObservedState() {
+        return observedState;
     }
     @Override
     public String getStringRepresentation() {

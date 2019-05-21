@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +35,7 @@ import org.bgee.model.species.Taxon;
  * @param <T>   The type of element in this ontology or sub-graph.
  * @param <U>   The type of ID of the elements in this ontology or sub-graph.
  */
-public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T, U>, U> {
+public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>> {
 
     private static final Logger log = LogManager.getLogger(OntologyBase.class.getName());
     
@@ -262,7 +263,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      * Get ancestors of {@code element} in this ontology based on relations of types {@code relationTypes}.
      * 
      * @param element       A {@code T} that is the element for which ancestors are retrieved.
-     * @param relationTypes A {@code Set} of {@code RelationType}s that are the relation
+     * @param relationTypes A {@code Collection} of {@code RelationType}s that are the relation
      *                      types to consider.
      * @return              A {@code Set} of {@code T}s that are the ancestors
      *                      of {@code element} in this ontology. Can be empty if {@code element} 
@@ -598,6 +599,95 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     }
 
     /**
+     * Retrieve the least common ancestors of the provided elements. If this ontology is a tree
+     * (each element has only one parent, and there is only one root to the ontology),
+     * the returned {@code Set} is guaranteed to contain one and only one element. If this ontology
+     * accepts several roots and elements can have several parents, the returned {@code Set}
+     * can contain 0 or several elements.
+     *
+     * @param elements      A {@code Collection} of {@code T}s that are the elements to retrieve
+     *                      least common ancestor for.
+     * @param relationTypes A {@code Collection} of {@code RelationType}s that are the relation
+     *                      types to consider.
+     * @return              A {@code Set} of {@code T}s that are the least common ancestors
+     *                      of the provided elements.
+     * @throws IllegalArgumentException     If {@code elements} is {@code null} or contains less than
+     *                                      2 elements, or if some of the elements are parent-child.
+     */
+    public Set<T> getLeastCommonAncestors(Collection<T> elements, Collection<RelationType> relationTypes)
+            throws IllegalArgumentException {
+        log.entry(elements, relationTypes);
+        if (elements == null || elements.size() < 2) {
+            throw log.throwing(new IllegalArgumentException(
+                    "At least 2 elements must be provided to retrieve least common ancestors"));
+        }
+        Set<T> clonedElements = new HashSet<>(elements);
+        //First, we retrieve the ancestors for each of the requested elements
+        //and keep only those in common
+        Set<T> ancestors = clonedElements.stream()
+                .collect(Collectors.reducing(null,
+                        e -> {
+                            Set<T> ancs = this.getAncestors(e, relationTypes);
+                            if (!Collections.disjoint(ancs, clonedElements)) {
+                                throw log.throwing(new IllegalArgumentException(
+                                        "Some elements are parent-child, elements requested: "
+                                        + clonedElements + ", ancestors of element " + e + ": "
+                                        + ancs));
+                            }
+                            return ancs;
+                        },
+                        (s1, s2) -> {
+                            if (s1 == null) {
+                                return s2;
+                            }
+                            if (s2 == null) {
+                                return s1;
+                            }
+                            s1.retainAll(s2);
+                            return s1;
+                        }));
+        if (ancestors == null || ancestors.isEmpty()) {
+            //means that the provided elements have no ancestors in common,
+            //it can happen if the ontology has several roots, the elements belong to
+            //completely independent branches
+            return log.exit(new HashSet<>());
+        }
+        //Now, we discard any ancestor that is itself an ancestor of an ancestor
+        Iterator<T> ancestorIterator = ancestors.iterator();
+        Set<T> discardedAncestors = new HashSet<>();
+        while (ancestorIterator.hasNext() && discardedAncestors.size() < ancestors.size() - 1) {
+            discardedAncestors.addAll(this.getAncestors(ancestorIterator.next(), relationTypes));
+        }
+        ancestors.removeAll(discardedAncestors);
+        return log.exit(ancestors);
+    }
+
+    /**
+     * Retrieve the elements that are not descendants of other terms among {@code elements}.
+     * For instance, if C is_a B, B is_a A, if {@code elements} contains A, B, and C,
+     * this method will return A.
+     *
+     * @param elements      A {@code Collection} of {@code T}s for which we want to identify the elements
+     *                      that are not descendants of other elements in the {@code Collection}.
+     *                      If {@code null} or empty, this method returns an empty {@code Set}.
+     * @param relationTypes A {@code Collection} of {@code RelationType}s to specify the types of relations
+     *                      to consider for identify ancestors/descendants. If {@code null} or empty,
+     *                      all relation types present in this ontology are considered.
+     * @return              A {@code Set} of {@code T}s that are the elements that are not the descendants
+     *                      of other elements in {@code elements}.
+     */
+    public Set<T> getAncestorsAmongElements(Collection<T> elements, Collection<RelationType> relationTypes) {
+        log.entry(elements, relationTypes);
+        if (elements == null || elements.isEmpty()) {
+            return log.exit(new HashSet<>());
+        }
+        Set<T> clonedElements = new HashSet<>(elements);
+        return log.exit(clonedElements.stream()
+                .filter(e -> Collections.disjoint(clonedElements, this.getAncestors(e, relationTypes)))
+                .collect(Collectors.toSet()));
+    }
+
+    /**
      * Convert a {@code RelationType} from {@code OntologyBase} to a {@code RelationType} 
      * from {@code RelationTO}.
      * 
@@ -629,7 +719,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -665,8 +754,11 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
 
     @Override
     public String toString() {
-        return "Elements: " + elements + " - Relations: " + relations +
-                " - Relation types: " + relationTypes +
-                " - Type: " + type;
+        StringBuilder builder = new StringBuilder();
+        builder.append("OntologyBase [elements=").append(elements)
+               .append(", relations=").append(relations)
+               .append(", relationTypes=").append(relationTypes)
+               .append(", type=").append(type).append("]");
+        return builder.toString();
     }
 }

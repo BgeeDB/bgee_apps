@@ -58,14 +58,11 @@ public class CommandDownload extends CommandParent {
         log.entry();
 
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
-        if (this.requestParameters.getAction() == null) {
-
-            display.displayDownloadHomePage();
-
-        } else if (this.requestParameters.getAction().equals(
+        if (this.requestParameters.getAction() != null && (
+                this.requestParameters.getAction().equals(
                 RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES) || 
                    this.requestParameters.getAction().equals(
-                RequestParameters.ACTION_DOWLOAD_CALL_FILES)) {
+                RequestParameters.ACTION_DOWLOAD_CALL_FILES))) {
 
             List<SpeciesDataGroup> groups = getAllSpeciesDataGroup();
             Map<Integer, Set<String>> speciesIdsToTerms = getSpeciesRelatedTerms(groups);
@@ -75,7 +72,11 @@ public class CommandDownload extends CommandParent {
             } else {
                 display.displayGeneExpressionCallDownloadPage(groups, speciesIdsToTerms);
             }
-        } else {
+        } else if (this.requestParameters.getAction() != null && 
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS)) {
+            display.displayMysqlDumpsPage();
+        }
+        else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
                 " parameter value."));
@@ -107,8 +108,7 @@ public class CommandDownload extends CommandParent {
      * and short names (for instance, "M. musculus"), as well as alternative names (e.g., "mice") 
      * retrieved from a {@code KeywordService}. 
      * 
-     * @param species   A {@code Set} of {@code Species} to retrieve information from. 
-     *                  They should be all {@code Species} used in {@code SpeciesDataGroup}s.
+     * @param groups    A {@code Set} of {@code SpeciesDataGroup} to retrieve information from. 
      * @return          A {@code Map} where keys are {@code Integer}s that are species IDs, 
      *                  the associated values being a {@code Set} of {@code String}s that are 
      *                  related terms.

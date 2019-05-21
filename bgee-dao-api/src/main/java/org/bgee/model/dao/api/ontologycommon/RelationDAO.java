@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14 Mar. 2019
  * @since   Bgee 13
  * @see RelationTO
  */
@@ -208,6 +208,12 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      * @param relationStatus        A {@code Collection} of {@code RelationStatus} that are the status
      *                              allowing to filter the relations to retrieve.
      *                              Can be {@code null} or empty.
+     * @param lca                   A {@code boolean} specifying if {@code true} to only retrieve
+     *                              relations connecting the requested taxa in {@code sourceTaxIds}
+     *                              and {@code targetTaxIds} to taxa that are
+     *                              least common ancestors of species in Bgee. The relations linking
+     *                              some {@code sourceTaxIds} to some {@code targetTaxIds} are always
+     *                              retrieved.
      * @param attributes            A {@code Collection} of {@code RelationDAO.Attribute}s 
      *                              defining the attributes to populate in the returned 
      *                              {@code RelationTO}s. If {@code null} or empty, 
@@ -218,7 +224,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      */
     public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
         Collection<Integer> targetTaxIds, Boolean sourceOrTarget, Collection<RelationStatus> relationStatus, 
-        Collection<RelationDAO.Attribute> attributes);
+        boolean lca, Collection<RelationDAO.Attribute> attributes);
     
 
     /**
@@ -540,61 +546,5 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
                     " - Relation type: " + this.getRelationType() + 
                     " - Relation status: " + this.getRelationStatus();
         }
-
-        //FIXME: I thought TOs never implement hashCode and equals
-        //(we use the TOComparator instead for tests)
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((this.getSourceId() == null) ? 0 : this.getSourceId().hashCode());
-            result = prime * result + ((this.getTargetId() == null) ? 0 : this.getTargetId().hashCode());
-            result = prime * result + ((this.getRelationType() == null) ? 0 : this.getRelationType().hashCode());
-            result = prime * result + ((this.getRelationStatus() == null) ? 0 : this.getRelationStatus().hashCode());
-            return result;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            RelationTO<?> other = (RelationTO<?>) obj;
-            if (this.getSourceId() == null) {
-                if (other.getSourceId() != null) {
-                    return false;
-                }
-            } else if (!this.getSourceId().equals(other.getSourceId())) {
-                return false;
-            }
-            if (this.getTargetId() == null) {
-                if (other.getTargetId() != null) {
-                    return false;
-                }
-            } else if (!this.getTargetId().equals(other.getTargetId())) {
-                return false;
-            }
-            if (this.getRelationType() == null) {
-                if (other.getRelationType() != null) {
-                    return false;
-                }
-            } else if (!this.getRelationType().equals(other.getRelationType())) {
-                return false;
-            }
-            if (this.getRelationStatus() == null) {
-                if (other.getRelationStatus() != null) {
-                    return false;
-                }
-            } else if (!this.getRelationStatus().equals(other.getRelationStatus())) {
-                return false;
-            }
-            return true;
-        }
     }
-
 }

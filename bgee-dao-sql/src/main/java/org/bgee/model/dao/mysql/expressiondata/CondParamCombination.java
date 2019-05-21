@@ -46,22 +46,22 @@ public enum CondParamCombination {
      * A {@code String} that is the raw expression table name containing original calls 
      * when all condition parameters are used.
      */
-    public static String ORIGINAL_RAW_EXPR_TABLE = "expression";
+    public static final String ORIGINAL_RAW_EXPR_TABLE = "expression";
     /**
      * A {@code String} that is the expression ID field name in the raw expression table 
      * containing original calls when all condition parameters are used.
      */
-    public static String ORIGINAL_RAW_EXPR_ID_FIELD = "expressionId";
+    public static final String ORIGINAL_RAW_EXPR_ID_FIELD = "expressionId";
     /**
      * A {@code String} that is the raw condition table name containing original conditions 
      * when all condition parameters are used.
      */
-    public static String ORIGINAL_RAW_COND_TABLE = "cond";
+    public static final String ORIGINAL_RAW_COND_TABLE = "cond";
     /**
      * A {@code String} that is the condition ID field name in the raw condition table 
      * containing original conditions when all condition parameters are used.
      */
-    public static String ORIGINAL_RAW_COND_ID_FIELD = "conditionId";
+    public static final String ORIGINAL_RAW_COND_ID_FIELD = "conditionId";
 
     /**
      * Retrieve the {@code CondParamCombination} corresponding to the provided combination of 

@@ -68,68 +68,6 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         super(response, requestParameters, prop, jsonHelper, factory);
     }
 
-    @Override
-    //TODO: use a different ID than 'feature_list', to provide a different look, 
-    //notably with much larger elements, to provide more text below the figures.
-    public void displayDownloadHomePage() {
-        log.entry();
-        
-        this.startDisplay("Bgee download overview");
-
-        this.writeln("<h1>Download overview</h1>");
-
-        RequestParameters urlDownloadProcExprValuesGenerator = this.getNewRequestParameters();
-        urlDownloadProcExprValuesGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadProcExprValuesGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-
-        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
-        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-
-        this.writeln("<h2>Bgee data</h2>");
-
-        this.writeln("<div class='feature_list'>");
-
-        this.writeln(this.getFeatureDownloadLogos());
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_R_PACKAGE_URL,
-                true, "BgeeDB R package", "R package",
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
-                "A package for the annotation and gene expression data download from Bgee database, "
-                        + "and TopAnat analysis."));
-
-        this.writeln("</div>"); // close feature_list
-
-        this.writeln("<h2>Developer corner</h2>");
-
-        this.writeln("<div class='feature_list'>");
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEE_GITHUB_URL,
-                true, "GitHub of the Bgee project", "GitHub",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "github_logo.png",
-                "Retrieve the source code of the Bgee pipeline, our annotations of homology between anatomical structures, "
-                        + "as well as the Confidence Information Ontology (CIO) "
-                        + "and the Homology Ontology (HOM), from our GitHub repository."));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
-                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
-
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
-                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                        + "all the data used to generate the information displayed on this website."));
-
-        this.writeln("</div>"); // close feature_list
-
-        this.endDisplay();
-
-        log.exit();
-
-    }
     
     @Override
     public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
@@ -216,6 +154,36 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.endDisplay();
         
+        log.exit();
+    }
+    
+    @Override
+    public void displayMysqlDumpsPage() {
+        
+        log.entry();
+        
+        this.startDisplay("Bgee MySQL dumps download");
+        
+        this.writeln("<h1>Bgee MySQL dumps</h1>");
+        
+        this.writeln("<div class='feature_list'>");
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the complete dump of the MySQL Bgee database, that contains "
+                        + "all the data used to generate the information displayed on this website."));
+
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
+                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+        
+        this.writeln("</div>"); // close feature_list
+
+        this.endDisplay();
+
         log.exit();
     }
     

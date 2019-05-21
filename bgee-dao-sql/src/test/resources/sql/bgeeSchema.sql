@@ -473,6 +473,8 @@ create table gene (
     geneName varchar(255) not null default '' COMMENT 'Gene name',
     geneDescription TEXT COMMENT 'Gene description',
     speciesId mediumint unsigned not null COMMENT 'NCBI species taxon id this gene belongs to',
+-- TODO: check if we should add 'not null' to geneBioTypeId.
+-- This depends on pipeline. If we update biotype after insertion of gene, it's not possible to set 'not null'.
     geneBioTypeId smallint unsigned COMMENT 'Gene BioType id (type of gene)',
 -- can be null if the gene does not belong to a hierarchical group
 -- a gene can belong to one and only one group
@@ -947,12 +949,12 @@ create table rnaSeqLibraryDiscarded (
 create table rnaSeqResult (
     rnaSeqLibraryId varchar(70) not null,
     bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
-    fpkm decimal(16, 6) not null,
-    tpm decimal(16, 6) not null,
+    fpkm decimal(16, 6) not null COMMENT 'FPKM values, NOT log transformed',
+    tpm decimal(16, 6) not null COMMENT 'TPM values, NOT log transformed',
 -- rank is not "not null" because we update this information afterwards
     rank decimal(9, 2) unsigned,
 -- for information, measure not normalized for reads or genes lengths
-    readsCount decimal(16, 6) unsigned not null,
+    readsCount decimal(16, 6) unsigned not null COMMENT 'As of Bgee 14, read counts are "estimated counts" produced using the Kallisto software. They are not normalized for read or gene lengths.',
     expressionId int unsigned,
     detectionFlag enum('undefined', 'absent', 'present') default 'undefined',
 -- Warning, qualities must be ordered, the index in the enum is used in many queries.

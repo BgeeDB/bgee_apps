@@ -107,17 +107,9 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
 
-                COL: for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
+                for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
-                    //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
-                    //with ConditionDAO.Attributes (we don't use all rank columns)
-                    //FIXME: reuse getAttributeFromColName when rank columns will be removed from
-                    //raw expression table
-                    RawExpressionCallDAO.Attribute attr = colToAttrMap.get(columnName);
-                    if (attr == null) {
-                        continue COL;
-                    }
-//                    RawExpressionCallDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
+                    RawExpressionCallDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
                     switch (attr) {
                         case ID:
                             id = currentResultSet.getInt(columnName);

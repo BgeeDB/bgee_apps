@@ -242,7 +242,6 @@ modify globalConditionId mediumint unsigned not null auto_increment primary key,
 -- not a primary key as for table cond, because some field can be null
 add unique(anatEntityId, stageId, speciesId, sex, strain);
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
-
 /*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
 alter table globalCondToCond
 -- we set up this primary key using conditionRelationOrigin to benefit from the clustered index

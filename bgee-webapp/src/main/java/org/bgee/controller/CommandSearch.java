@@ -41,13 +41,10 @@ public class CommandSearch extends CommandParent {
      *                                  to use.
      * @param viewFactory               A {@code ViewFactory} that provides the display type to be used.
      * @param serviceFactory            A {@code ServiceFactory} that provides bgee services.
-     * @param geneMatchResultService    A {@code GeneMatchResultService} instance allowing to 
-     *                                  use the search engine for a gene.
      */
 	public CommandSearch(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
-            GeneMatchResultService geneMatchResultService) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, geneMatchResultService);
+            BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory);
     }
 
     @Override
@@ -55,17 +52,18 @@ public class CommandSearch extends CommandParent {
         log.entry();
         
         SearchDisplay display = this.viewFactory.getSearchDisplay();
+        GeneMatchResultService geneMatchService = serviceFactory.getGeneMatchResultService(this.prop);
         
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             String searchTerm = this.getSearchTerm();
-            List<String> result = this.geneMatchResultService.autocomplete(searchTerm, 20);
+            List<String> result = geneMatchService.autocomplete(searchTerm, 20);
             display.displayMatchesForGeneCompletion(result);
             
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_EXPASY_RESULT)) {
             String searchTerm = this.getSearchTerm();
-            GeneMatchResult result = this.geneMatchResultService.searchByTerm(searchTerm, null, 0, 1);
+            GeneMatchResult result = geneMatchService.searchByTerm(searchTerm, null, 0, 1);
             display.displayExpasyResult(result.getTotalMatchCount(), searchTerm);
 
         } else {

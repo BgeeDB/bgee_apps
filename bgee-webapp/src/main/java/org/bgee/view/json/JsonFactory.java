@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, July 2015
  */
 public class JsonFactory extends ViewFactory { 
@@ -95,9 +95,24 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
+    public CollaborationDisplay getCollaborationDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
 	public GeneDisplay getGeneDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
+
+    @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
@@ -109,6 +124,10 @@ public class JsonFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
 	}
+	@Override
+    public SparqlDisplay getSparqlDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
     @Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
@@ -133,6 +152,16 @@ public class JsonFactory extends ViewFactory {
 
     @Override
     public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 }

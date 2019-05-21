@@ -13,7 +13,7 @@ import java.io.IOException;
  * This class is the HTML implementation of the {@code FaqDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 14, June 2018
  */
 public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
@@ -40,6 +40,8 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+        RequestParameters urlCollab = this.getNewRequestParameters();
+        urlCollab.setPage(RequestParameters.PAGE_COLLABORATIONS);
         
         this.writeln("<h1>Frequently asked questions (FAQ)</h1>");
 
@@ -47,7 +49,9 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         this.writeln("<p>Got questions? We’ve got answers! Here, you can find Bgee team answers " +
                 "in response to the most frequently asked questions. " +
                 "If you don't find answers here, please do not hesitate to contact us, " +
-                "using " + getObfuscateBgeeEmail() + ".</p>");
+                "using " + getObfuscateBgeeEmail() + ". And maybe a new collaboration will " +
+                "take place as it has already been (see the <a href='" + urlCollab.getRequestURL() +
+                "' title='Collaboration page'>collaboration page</a>)</p>");
         this.writeln("</div>");
 
         this.writeln("<div id='faq-list' class='panel-group' role='tablist' aria-multiselectable='true'>");

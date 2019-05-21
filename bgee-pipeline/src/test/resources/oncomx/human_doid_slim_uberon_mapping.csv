@@ -1,0 +1,27 @@
+Slim,UBERON_doid.owl,UBERON_name_ontobee,Notes
+DOID:1785 / pituitary cancer,UBERON_0000007,pituitary gland,
+DOID:4362 / cervical cancer,UBERON_0000002,uterine cervix,
+Paratesticular tumour,N/A,,No DOID - closest is DOID:10207 / paratesticular lipoma
+DOID:2531 / hematologic cancer,N/A,,subclass
+DOID:4606 / bile duct cancer,N/A,,subclass
+DOID:9256 / colorectal cancer,N/A,,subclass
+DOID:9253 / gastrointestinal stromal tumor,N/A,,subclass
+DOID:3070 / malignant glioma,N/A,,subclass
+DOID:1192 / peripheral nervous system neoplasm,N/A,,subclass
+DOID:11934 / head and neck cancer,N/A,,subclass
+DOID:169 / neuroendocrine tumor,N/A,,subclass
+DOID:3355 / fibrosarcoma,N/A,,subclass
+DOID:3565 / meningioma,N/A,,subclass
+DOID:3939 / lipomatous cancer,N/A,,subclass
+DOID:4231 / histiocytoma,N/A,,subclass
+DOID:5158 / pleural cancer,N/A,,subclass
+DOID:5875 / retroperitoneal cancer,N/A,,subclass
+DOID:8632 / Kaposi's sarcoma,N/A,,subclass
+DOID:1909 / melanoma,N/A,,subclass
+DOID:1790 / malignant mesothelioma,N/A,,subclass
+DOID:3371 / chondrosarcoma,N/A,,subclass
+DOID:0080189 / malignant hemangioma,N/A,,subclass
+DOID:200 / giant cell tumor,N/A,,subclass
+DOID:2994 / germ cell cancer,N/A,,subclass; equivalent class
+DOID:4706 / brain cancer,N/A,,subclass; infratentorial cancer
+DOID:175 / vascular cancer,N/A,,subclass

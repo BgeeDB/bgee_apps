@@ -7,18 +7,24 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraintService;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
+import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
+import org.sphx.api.SphinxClient;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -120,11 +126,27 @@ public class ServiceFactory implements AutoCloseable {
     }
 
     /**
+     * @return  A newly instantiated {@code RawDataService}
+     */
+    public RawDataService getRawDataService() {
+        log.entry();
+        return log.exit(new RawDataService(this));
+    }
+
+    /**
      * @return  A newly instantiated {@code DevStageService}
      */
     public DevStageService getDevStageService() {
         log.entry();
         return log.exit(new DevStageService(this));
+    }
+
+    /**
+     * @return  A newly instantiated {@code DevStageSimilarityService}
+     */
+    public DevStageSimilarityService getDevStageSimilarityService() {
+        log.entry();
+        return log.exit(new DevStageSimilarityService(this));
     }
 
     /**
@@ -174,6 +196,14 @@ public class ServiceFactory implements AutoCloseable {
         log.entry();
         return log.exit(new AnatEntityService(this));
     }
+
+    /**
+     * @return A newly instantiated {@code AnatEntitySimilarityService}
+     */
+    public AnatEntitySimilarityService getAnatEntitySimilarityService() {
+        log.entry();
+        return log.exit(new AnatEntitySimilarityService(this));
+    }
     
     /**
      * @return A newly instantiated {@code OntologyService}
@@ -213,6 +243,27 @@ public class ServiceFactory implements AutoCloseable {
     public ConditionService getConditionService() {
         log.entry();
         return log.exit(new ConditionService(this));
+    }
+
+    /**
+     * @return A newly instantiated {@code ConditionGraphService}
+     */
+    public ConditionGraphService getConditionGraphService() {
+        log.entry();
+        return log.exit(new ConditionGraphService(this));
+    }
+
+    //XXX: is there a way to get the BgeeProperties from the instantiation of the ServiceFactory?
+    //Maybe the ServiceFactory could store BgeeProperties after a call to BgeeProperties.getBgeeProperties(prop),
+    //If it was mandatory to provide properties at instantiation?
+    //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
+    public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
+        log.entry(props);
+        return log.exit(new GeneMatchResultService(props, this));
+    }
+    public GeneMatchResultService getGeneMatchResultService(SphinxClient sphinxClient) {
+        log.entry(sphinxClient);
+        return log.exit(new GeneMatchResultService(sphinxClient, this));
     }
 
     /**

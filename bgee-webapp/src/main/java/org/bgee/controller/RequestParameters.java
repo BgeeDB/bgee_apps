@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -131,10 +131,22 @@ public class RequestParameters {
     public static final String PAGE_DOWNLOAD = "download";
 
     /**
+    * A {@code String} that is the value taken by the {@code page} parameter 
+    * (see {@link URLParameters#getParamPage()}) when a resources page is requested.
+    */
+    public static final String PAGE_RESOURCES = "resources";
+    
+    /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a download page is requested.
      */
     public static final String PAGE_DOCUMENTATION = "doc";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to SPARQL is requested.
+     */
+    public static final String PAGE_SPARQL = "sparql";
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -153,6 +165,14 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to topAnat is requested.
      */
     public static final String PAGE_TOP_ANAT = "top_anat";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to
+     * anatomical similarities is requested.
+     */
+    public static final String PAGE_ANAT_SIM = "anat_similarities";
+
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to job management is requested.
@@ -178,6 +198,19 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to a gene is requested.
      */
     public static final String PAGE_GENE = "gene";
+
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to expression comparison is requested.
+     */
+    public static final String PAGE_EXPR_COMPARISON = "expression_comparison";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
+     */
+    public static final String PAGE_RAW_DATA = "raw_data";
+
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to sources is requested.
@@ -193,6 +226,11 @@ public class RequestParameters {
      * (see {@link URLParameters#getParamPage()}) when a page related to privacy policy is requested.
      */
     public static final String PAGE_PRIVACY_POLICY = "privacy_policy";
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a page related to collaborations is requested.
+     */
+    public static final String PAGE_COLLABORATIONS = "collaborations";
     /**
      * A {@code String} that encapsulates the value of the gene id parameter for the gene page.
      */
@@ -214,6 +252,14 @@ public class RequestParameters {
      */
     public static final String ACTION_DOWLOAD_PROC_VALUE_FILES = "proc_values";
 
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when download page about mysql dumps
+     * is requested. Value of the parameter page should be 
+     * {@link #PAGE_DOWNLOAD}.
+     */
+    public static final String ACTION_DOWNLOAD_MYSQL_DUMPS = "mysql_dumps";
+    
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when documentation about download files 
@@ -301,6 +347,30 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_EXPASY_RESULT = "expasy_result";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about R packages
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_R_PACKAGES = "r_packages";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about annotations
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_ANNOTATIONS = "annotations";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about ontologies
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_ONTOLOGIES = "ontologies";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter 
+     * (see {@link URLParameters#getParamAction()}) when resources page about source code
+     * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
+     */
+    public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -1002,7 +1072,9 @@ public class RequestParameters {
             storageFile = new File(prop.getRequestParametersStorageDirectory() 
                     + this.getFirstValue(this.getKeyParam()));
             if (storageFile.exists()) {
-                storageFile.delete();
+                if (!storageFile.delete()) {
+                    log.error("The file was not deleted before before throwing the exception");
+                }
             }
             throw new RequestParametersNotStorableException(
                     "An error occurred and it was not possible to store the parameters.");
@@ -1234,6 +1306,10 @@ public class RequestParameters {
             for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()){
                 if (targetedParams != null && !targetedParams.isEmpty() && !targetedParams.contains(parameter)) {
                     log.trace("Skipping parameter because not targeted: {}", parameter);
+                    continue;
+                }
+                if (parameter.equals(this.urlParametersInstance.getParamPostFormSubmit())) {
+                    log.trace("Skipping parameter because internal parameter not to be displayed: {}", parameter);
                     continue;
                 }
                 //if a split between parameters in search and hash parts has been requested 
@@ -1996,6 +2072,25 @@ public class RequestParameters {
         this.resetValues(this.getUrlParametersInstance().getParamAction());
         this.addValue(this.getUrlParametersInstance().getParamAction(), action);
     }
+
+    /**
+     * @return the post_form_submit parameter
+     */
+    public Boolean getPostFormSubmit() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamPostFormSubmit());
+    }
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamPostFormSubmit()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     *
+     * @param isPostFormSubmit  A {@code String} that is the value of the {@code post_form_submit}
+     *                          URL parameter to set.
+     */
+    public void setPostFormSubmit(Boolean isPostFormSubmit) {
+        this.resetValues(this.getUrlParametersInstance().getParamPostFormSubmit());
+        this.addValue(this.getUrlParametersInstance().getParamPostFormSubmit(), isPostFormSubmit);
+    }
     /**
      * Convenient method to retrieve value of the parameter returned by 
      * {@link URLParameters#getParamData()}. Equivalent to calling 
@@ -2028,6 +2123,31 @@ public class RequestParameters {
     }
 
     /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamGeneList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code gene_list} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getGeneList() {
+        return this.getValues(this.getUrlParametersInstance().getParamGeneList());
+    }
+
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamGeneList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     *
+     * @param geneList  A {@code List} of {@code String}s that is the value
+     *                  of the {@code gene_id} URL parameter to set.
+     */
+    public void setGeneList(List<String> geneList){
+        this.resetValues(this.getUrlParametersInstance().getParamGeneList());
+        this.addValues(this.getUrlParametersInstance().getParamGeneList(), geneList);
+    }
+    
+    /**
      * @return the species_id parameter
      */
     public Integer getSpeciesId() {
@@ -2050,7 +2170,7 @@ public class RequestParameters {
      * @return the query parameter for a search
      */
     public String getQuery() {
-    	return this.getFirstValue(this.getUrlParametersInstance().getQuery());
+        return this.getFirstValue(this.getUrlParametersInstance().getParamQuery());
     }
     /**
      * Convenient method to set value of the parameter returned by 
@@ -2061,8 +2181,8 @@ public class RequestParameters {
      *                      URL parameter to set.
      */
     public void setQuery(String queryTerm) {
-        this.resetValues(this.getUrlParametersInstance().getQuery());
-        this.addValue(this.getUrlParametersInstance().getQuery(), queryTerm);
+        this.resetValues(this.getUrlParametersInstance().getParamQuery());
+        this.addValue(this.getUrlParametersInstance().getParamQuery(), queryTerm);
     }
 
     /**
@@ -2116,14 +2236,20 @@ public class RequestParameters {
     public List<Integer> getSpeciesList(){
         return this.getValues(this.getUrlParametersInstance().getParamSpeciesList());
     }
+    
     /**
-     * Convenient method to retrieve values of the parameter returned by 
-     * {@link URLParameters#getParamForegroundList()}. Equivalent to calling 
-     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamSpeciesList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
      * 
-     * @return  A {@code List} of {@code String}s that are the values of 
-     *          the {@code fg_list} URL parameter. Can be {@code null}. 
+     * @param speciesList   A {@code List} of {@code Integer}s that is the value
+     *                      of the {@code gene_id} URL parameter to set.
      */
+    public void setSpeciesList(List<Integer> speciesList){
+        this.resetValues(this.getUrlParametersInstance().getParamSpeciesList());
+        this.addValues(this.getUrlParametersInstance().getParamSpeciesList(), speciesList);
+    }
+    
     public List<String> getForegroundList() {
         return this.getValues(this.getUrlParametersInstance().getParamForegroundList());
     }
@@ -2203,6 +2329,17 @@ public class RequestParameters {
      */
     public List<String> getDevStage() {
         return this.getValues(this.getUrlParametersInstance().getParamDevStage());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntity()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  The {@code List} of {@code String}s that are the values of 
+     *          the {@code anat_entity} URL parameter. Can be {@code null}. 
+     */
+    public List<String> getAnatEntity() {
+        return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
     }
     /**
      * Convenient method to retrieve value of the parameter returned by 
@@ -2292,6 +2429,31 @@ public class RequestParameters {
     public String getApiKey() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamApiKey());
     }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntityList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code ae_list} URL parameter. Can be {@code null}.
+     */
+    public List<String> getAnatEntityList() {
+        return this.getValues(this.getUrlParametersInstance().getParamAnatEntityList());
+    }
+    
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamAnatEntityList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     * 
+     * @param anatEntityList    A {@code List} of {@code String}s that is the value
+     *                          of the {@code gene_id} URL parameter to set.
+     */
+    public void setAnatEntityList(List<String> anatEntityList){
+        this.resetValues(this.getUrlParametersInstance().getParamAnatEntityList());
+        this.addValues(this.getUrlParametersInstance().getParamAnatEntityList(), 
+                anatEntityList);
+    }
 
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2372,6 +2534,27 @@ public class RequestParameters {
     }
 
     /**
+     * Allow to know if this request has been performed through a POST form. 
+     *
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return      {@code true} if this request was performed through a POST form.
+     * @implNote    Note that this parameter is never present in the URL returned 
+     *              by the {@code getRequestURL...} methods (see 
+     *              {@link RequestParameters#generateParametersQuery(
+     *              Set, boolean, boolean, String, Collection, boolean)}) 
+     */
+    public boolean isPostFormSubmit() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit())) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
      * 
@@ -2446,6 +2629,22 @@ public class RequestParameters {
     }
     
     /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "collaborations"
+     */
+    public boolean isAcollaborationsPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_COLLABORATIONS)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * @return  A {@code boolean} to tell whether the request is related to job management.
      */
     public boolean isAJobPageCategory() {
@@ -2475,6 +2674,32 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "resources".
+     */
+    public boolean isAResourcesPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "sparql".
+     */
+    public boolean isASparqlPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPARQL)) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -2612,6 +2837,21 @@ public class RequestParameters {
         }
         return log.exit(false);
     }
+
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request is related to anat. similarity page.
+     */
+    public boolean isAAnatSimilarityPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ANAT_SIM)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
      * consistent as much as possible if the method evolves.
@@ -2677,6 +2917,38 @@ public class RequestParameters {
         return log.exit(false);
     }
     
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "expression_comparison"
+     */
+    public boolean isAExprComparisonPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_EXPR_COMPARISON)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
+     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
+     * consistent as much as possible if the method evolves.
+     *
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     *          category "raw_data"
+     */
+    public boolean isARawDataPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
     /**
      * 
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the

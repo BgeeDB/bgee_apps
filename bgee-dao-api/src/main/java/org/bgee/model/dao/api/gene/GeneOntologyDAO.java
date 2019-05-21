@@ -176,61 +176,6 @@ public interface GeneOntologyDAO extends DAO<GeneOntologyDAO.Attribute> {
                     " - Domain: " + this.getDomain() + 
                     ((this.getAltIds().isEmpty()) ? "" : " - AltIds: " + this.getAltIds());
         }
-
-        //FIXME: I thought TOs never implement hashCode and equals
-        //(we use the TOComparator instead for tests)
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((this.getId() == null) ? 0 : this.getId().hashCode());
-            result = prime * result + ((this.getName() == null) ? 0 : this.getName().hashCode());
-            result = prime * result + ((this.getDomain() == null) ? 0 : this.getDomain().hashCode());
-            result = prime * result + ((this.getAltIds() == null) ? 0 : this.getAltIds().hashCode());
-            return result;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            GOTermTO other = (GOTermTO) obj;
-            if (this.getId() == null) {
-                if (other.getId() != null) {
-                    return false;
-                }
-            } else if (!this.getId().equals(other.getId())) {
-                return false;
-            }
-            if (this.getName() == null) {
-                if (other.getName() != null) {
-                    return false;
-                }
-            } else if (!this.getName().equals(other.getName())) {
-                return false;
-            }
-            if (this.getDomain() == null) {
-                if (other.getDomain() != null) {
-                    return false;
-                }
-            } else if (!this.getDomain().equals(other.getDomain())) {
-                return false;
-            }
-            if (this.getAltIds() == null) {
-                if (other.getAltIds() != null) {
-                    return false;
-                }
-            } else if (!this.getAltIds().equals(other.getAltIds())) {
-                return false;
-            }
-            return true;
-        }
     }
 
 }

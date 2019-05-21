@@ -17,10 +17,6 @@ import java.util.Set;
  */
 public interface DownloadDisplay {
     
-	/**
-	 * Display the download page.
-	 */
-	 void displayDownloadHomePage();
 	
     /**
      * Display the download page of processed raw data files.
@@ -45,5 +41,10 @@ public interface DownloadDisplay {
      */
      void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups,
     		                                    Map<Integer, Set<String>> keywords);
+     
+     /**
+      * Display the download page of the MYSQL Dumps.
+      */
+      void displayMysqlDumpsPage();
 
 }

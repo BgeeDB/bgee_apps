@@ -375,7 +375,6 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         this.endDisplay();
 
         log.exit();
-
     }
 
     //*******************************************************

@@ -14,7 +14,7 @@ import org.bgee.view.*;
  * {@code ViewFactory} returning objects generating XML views.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, July 2014
  */
 public class XmlFactory extends ViewFactory {
@@ -62,6 +62,12 @@ public class XmlFactory extends ViewFactory {
     }
 
     @Override
+    public CollaborationDisplay getCollaborationDisplay() {
+        log.entry();
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
     public TopAnatDisplay getTopAnatDisplay() {
         log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
@@ -73,8 +79,17 @@ public class XmlFactory extends ViewFactory {
 	}
 
     @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
     public SpeciesDisplay getSpeciesDisplay() {
-        log.entry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
@@ -84,6 +99,11 @@ public class XmlFactory extends ViewFactory {
 		return log.exit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 
+	@Override
+    public SparqlDisplay getSparqlDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+	
     @Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
@@ -109,6 +129,16 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public FaqDisplay getFaqDisplay() {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 }

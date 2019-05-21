@@ -57,9 +57,7 @@ public class BgeeDBUtils {
     public static List<Integer> getSpeciesIdsFromDb(SpeciesDAO speciesDAO) throws DAOException {
         log.entry(speciesDAO);
 
-        speciesDAO.setAttributes(SpeciesDAO.Attribute.ID);
-        
-        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies()) {
+        try (SpeciesTOResultSet rsSpecies = speciesDAO.getAllSpecies(EnumSet.of(SpeciesDAO.Attribute.ID))) {
             List<Integer> speciesIdsInBgee = new ArrayList<>();
             while (rsSpecies.next()) {
                 speciesIdsInBgee.add(rsSpecies.getTO().getId());
@@ -330,7 +328,7 @@ public class BgeeDBUtils {
      * @throws IllegalArgumentException If {@code rs} does not allow to retrieve EntityTO IDs.
      * @throws IllegalStateException	If several TOs associated to a same ID.
      */
-    private static <U, T extends EntityTO<U>> Map<U, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
+    private static <U extends Comparable<U>, T extends EntityTO<U>> Map<U, T> generateTOsByIdsMap(DAOResultSet<T> rs) {
         log.entry(rs);
         
         Map<U, T> tosByIds = new HashMap<>();
@@ -374,7 +372,7 @@ public class BgeeDBUtils {
     //XXX: Currently, we keep specific methods to be able to store and restore specific attributes.
     //     This could be generic using Java 8, but we are just lazy to implement it now.
 
-    private static <U, T extends NamedEntityTO<U>> Map<U, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
+    private static <U extends Comparable<U>, T extends NamedEntityTO<U>> Map<U, String> generateNamesByIdsMap(DAOResultSet<T> rs) 
     		throws IllegalArgumentException, IllegalStateException {
         log.entry(rs);
         

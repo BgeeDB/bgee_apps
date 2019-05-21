@@ -14,7 +14,7 @@ import org.bgee.controller.TestURLParameters;
  * cases.
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Aug. 2018
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, Aug. 2014
  */
 public class FakeFactory extends ViewFactory {
@@ -92,6 +92,16 @@ public class FakeFactory extends ViewFactory {
     }
 
     @Override
+    public CollaborationDisplay getCollaborationDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                        .getParamTestString()).equals("test")){
+            return new FakeCollaborationDisplay(this.response, this.requestParameters, prop, this);
+        }
+        return null;
+    }
+
+    @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
                 ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
@@ -105,6 +115,16 @@ public class FakeFactory extends ViewFactory {
 	public GeneDisplay getGeneDisplay() throws IOException {
 		return null;
 	}
+
+    @Override
+    public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
+    public RawDataDisplay getRawCallDisplay() throws IOException {
+        return null;
+    }
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
@@ -153,6 +173,26 @@ public class FakeFactory extends ViewFactory {
     
     @Override
     public FaqDisplay getFaqDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
+    public SparqlDisplay getSparqlDisplay() throws IOException {
+        return null;
+    }
+
+    @Override
+    public ResourcesDisplay getResourceDisplay() throws IOException {
+        if(prop.getUrlMaxLength() == 9999 && this.requestParameters.getFirstValue(
+                ((TestURLParameters)this.requestParameters.getUrlParametersInstance())
+                .getParamTestString()).equals("test")){
+            return new FakeResourcesDisplay(this.response, this.requestParameters, prop, this);
+        }
+        return null;
+    }
+
+    @Override
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
         return null;
     }
 }

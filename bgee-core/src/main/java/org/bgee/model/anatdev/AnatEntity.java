@@ -11,16 +11,6 @@ import org.bgee.model.ontology.OntologyElement;
  *
  */
 public class AnatEntity extends NamedEntity<String> implements OntologyElement<AnatEntity, String> {
-
-    /**
-     * Default constructor not public, an ID must always be provided, 
-     * see {@link #AnatEntity(String)}.
-     */
-    //Constructor not public on purpose, suppress warnings
-    @SuppressWarnings("unused")
-    private AnatEntity() {
-        this(null);
-    }
     /**
      * Constructor providing the ID of this {@code AnatEntity}. 
      * {@code id} cannot be blank, otherwise an {@code IllegalArgumentException} is thrown. 

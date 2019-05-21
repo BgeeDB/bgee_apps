@@ -12,7 +12,7 @@ package org.bgee.model.dao.api;
  * 
  * @param <T> The type of ID of this {@code NamedEntityTO}.
  */
-public class NamedEntityTO<T> extends EntityTO<T> {
+public class NamedEntityTO<T extends Comparable<T>> extends EntityTO<T> {
     private static final long serialVersionUID = 8075426392002069067L;
     
     private final String name;

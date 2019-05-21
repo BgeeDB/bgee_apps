@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
@@ -16,7 +15,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 14, Sep. 2018
  * @since   Bgee 14, Feb. 2017
  * @see ConditionTO
  */
@@ -27,13 +26,11 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * obtained from this {@code ConditionDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link ConditionTO#getId()}.
-     * <li>{@code EXPR_MAPPED_CONDITION_ID}: corresponds to {@link ConditionTO#getExprMappedConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ConditionTO#getStageId()}.
-     * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
      * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
-     * <li>{@code SEX_INFERRED}: corresponds to {@link ConditionTO#getSexInferred()}.
      * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
+     * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
      * </ul>
      */
     //XXX: retrieval of GlobalConditionMaxRanksTOs associated to a ConditionTO not yet implemented,
@@ -44,7 +41,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true);
 
         /**
-         * A {@code String} that is the corresponding field name in {@code AnatEntityTO} class.
+         * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
          * @see {@link Attribute#getTOFieldName()}
          */
         private final String fieldName;
@@ -70,22 +67,6 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             return this.conditionParameter;
         }
     }
-    
-    /**
-     * Retrieves raw conditions used to annotate data and used in the "raw" expression table,
-     * where data are not propagated nor precomputed.
-     *
-     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
-     *                              allowing to filter the conditions to retrieve. If {@code null}
-     *                              or empty, condition for all species are retrieved.
-     * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              attributes to populate in the returned {@code ConditionTO}s.
-     *                              If {@code null} or empty, all attributes are populated. 
-     * @return
-     * @throws DAOException
-     */
-    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds, 
-            Collection<Attribute> attributes) throws DAOException;
     
     /**
      * Retrieves global conditions belonging to the provided {@code speciesIds} with parameters defined
@@ -114,9 +95,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              attributes to populate in the returned {@code ConditionTO}s.
      *                              If {@code null} or empty, all attributes are populated. 
-     * @return                      An {@code ConditionTOResultSet} containing all conditions 
-     *                              from data source.
-     * @throws DAOException If an error occurred when accessing the data source.
+     * @return                      A {@code ConditionTOResultSet} containing the requested conditions
+     *                              retrieved from the data source.
+     * @throws DAOException If an error occurred while accessing the data source.
      * @throws IllegalArgumentException If {@code conditionParameters} is {@code null}, empty,
      *                                  or one of the {@code Attribute}s in {@code conditionParameters}
      *                                  is not a condition parameter attributes (see 
@@ -186,70 +167,27 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     }
 
     /**
-     * {@code EntityTO} representing a condition in the Bgee database.
-     * It can represent either a "raw" condition or a "global" condition (see
-     * {@link #getRawConditionsBySpeciesIds(Collection, Collection)} and
-     * {@link #getGlobalConditionsBySpeciesIds(Collection, Collection, Collection)}.
+     * {@code BaseConditionTO} representing a global condition in the Bgee database.
      * 
      * @author  Valentine Rech de Laval
      * @author Frederic Bastian
-     * @version Bgee 14, Mar. 2017
+     * @version Bgee 14, Sep. 2018
      * @since   Bgee 14, Feb. 2017
      */
-    public class ConditionTO extends EntityTO<Integer> {
-
+    public class ConditionTO extends BaseConditionTO {
         private static final long serialVersionUID = -1057540315343857464L;
-
-        private final Integer exprMappedConditionId;
-        private final String anatEntityId;
-        private final String stageId;
-        private final Integer speciesId;
         
-        public ConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
-            String stageId, Integer speciesId) {
-            super(id);
-            this.exprMappedConditionId = exprMappedConditionId;
-            this.anatEntityId = anatEntityId;
-            this.stageId = stageId;
-            this.speciesId = speciesId;
-        }
-        
-        /**
-         * @return  The {@code Integer} that is the condition ID that should be used for insertion
-         *          into the expression table: too-granular conditions (e.g., 43 yo human stage,
-         *          or sexInferred=1) are mapped to less granular conditions for summary.
-         *          Equal to {@code #getId()} if condition is not too granular.
-         */
-        public Integer getExprMappedConditionId() {
-            return exprMappedConditionId;
-        }
-        /**
-         * @return  The {@code String} that is the Uberon anatomical entity ID.
-         */
-        public String getAnatEntityId() {
-            return anatEntityId;
-        }
-        /**
-         * @return  The {@code String} that is the Uberon stage ID.
-         */
-        public String getStageId() {
-            return stageId;
-        }
-        /**
-         * @return  The {@code String} that is the NCBI species taxon ID.
-         */
-        public Integer getSpeciesId() {
-            return speciesId;
+        public ConditionTO(Integer id, String anatEntityId, String stageId, Integer speciesId) {
+            super(id, anatEntityId, stageId, null, null, speciesId);
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("ConditionTO [id=").append(getId())
-                   .append(", exprMappedConditionId=").append(exprMappedConditionId)
-                   .append(", anatEntityId=").append(anatEntityId)
-                   .append(", stageId=").append(stageId)
-                   .append(", speciesId=").append(speciesId).append("]");
+                   .append(", anatEntityId=").append(getAnatEntityId())
+                   .append(", stageId=").append(getStageId())
+                   .append(", speciesId=").append(getSpeciesId()).append("]");
             return builder.toString();
         }
     }

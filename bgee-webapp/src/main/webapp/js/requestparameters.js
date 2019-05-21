@@ -175,6 +175,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
         return pagePrivacyPolicy;
     }
     /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when a collaboration page is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #PAGE_COLLABORATIONS()} (to get the behavior of a public final parameter).
+     */
+    var pageCollaborations = 'collaborations';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when an collaborations page is requested.
+     */
+    this.PAGE_COLLABORATIONS = function() {
+        return pageCollaborations;
+    }
+    /**
      * A {@code String} that is the value taken by the {@code page} parameter  
      * (see {@link #getParamPage()}) when a gene page is requested.
      * This parameter will then be provided outside of this class through the method 
@@ -187,6 +201,20 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.PAGE_GENE = function() {
     	return pageGene;
+    }
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when a raw data page is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #PAGE_RAW_DATA()} (to get the behavior of a public final parameter).
+     */
+    var pageRawData = 'raw_data';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter
+     * (see {@link #getParamPage()}) when a raw data page is requested.
+     */
+    this.PAGE_RAW_DATA = function() {
+        return pageRawData;
     }
     /**
      * A {@code String} that is the value taken by the {@code page} parameter  
@@ -1162,6 +1190,18 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
     {
         if (this.getFirstValue(urlParameters.getParamPage()) != null &&
             this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_PRIVACY_POLICY()) {
+            return true;
+        }
+        return false;
+    };
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "collaborations"
+     */
+    this.isACollaborationPageCategory = function()
+    {
+        if (this.getFirstValue(urlParameters.getParamPage()) != null &&
+            this.getFirstValue(urlParameters.getParamPage()) == this.PAGE_COLLABORATIONS()) {
             return true;
         }
         return false;

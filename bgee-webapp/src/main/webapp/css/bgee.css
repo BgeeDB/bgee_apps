@@ -294,6 +294,11 @@ nav img.social-img {
     padding-right: 13px;
 }
 
+. copyable-url {
+    font-family: Monaco, monospace;
+    font-size: 0.9em;
+}
+
 figure img {
     margin: 0 auto 3px auto;
 }
@@ -405,6 +410,34 @@ div.bgee_search button {
 
 img.ajax_waiting {
     height: 15px;
+}
+
+/* TODO to be refactor with gene.css when anat-sim-page branch will be merged into develop */
+span.errorMessage {
+    color: #E2011B;
+    font-weight: bold;
+}
+
+/**** container of a table ****/
+/* TODO to be refactor with gene.css when anat-sim-page branch will be merged into develop */
+div.table-container {
+    margin-left: 2%;
+}
+
+div.table-container table {
+    width: 100% !important;
+}
+
+div.table-container label {
+    font-weight: normal;
+}
+
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > td:first-child::before {
+    text-indent: 4px;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before {
+    background-color: #920209;
 }
 
 /**** FOOTER ****/
@@ -674,6 +707,15 @@ div.bgee_download_section figure.selected {
 #bgee_data figure.selected p,
 #bgee_uniq_species figure.selected p {
     color: #282828;
+}
+
+/****BGEE TABLES****/
+span.expandable {
+    cursor: pointer;
+}
+
+.masked {
+    display: none;
 }
 
 /****BGEE CREATIVE COMMONS****/

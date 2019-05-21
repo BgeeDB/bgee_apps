@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.species;
 
-import java.util.Set;
+import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -11,7 +11,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * DAO defining queries using or retrieving {@link SpeciesTO}s. 
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Mar 2019
  * @see SpeciesTO
  * @since Bgee 01
  */
@@ -30,7 +30,6 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
      * <li>{@code GENOME_VERSION}: corresponds to {@link SpeciesTO#getGenomeVersion()}.
      * <li>{@code DATA_SOURCE_ID}: corresponds to {@link SpeciesTO#getDataSourceId()}.
      * <li>{@code GENOME_SPECIES_ID}: corresponds to {@link SpeciesTO#getGenomeSpeciesId()}.
-     * <li>{@code FAKE_GENE_ID_PREFIX}: corresponds to {@link SpeciesTO#getFakeGeneIdPrefix()}.
      * <li>{@code DISPLAY_ORDER}: corresponds to {@link SpeciesTO#getDisplayOrder()}.
      * </ul>
      * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
@@ -41,8 +40,7 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
         ID("id"), COMMON_NAME("name"), GENUS("genus"), SPECIES_NAME("speciesName"),
         PARENT_TAXON_ID("parentTaxonId"), GENOME_FILE_PATH("genomeFilePath"),
         GENOME_VERSION("genomeVersion"), DATA_SOURCE_ID("dataSourceId"),
-        GENOME_SPECIES_ID("genomeSpeciesId"), FAKE_GENE_ID_PREFIX("fakeGeneIdPrefix"),
-        DISPLAY_ORDER("speciesDisplayOrder");
+        GENOME_SPECIES_ID("genomeSpeciesId"), DISPLAY_ORDER("speciesDisplayOrder");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RelationTO} class.
@@ -63,38 +61,63 @@ public interface SpeciesDAO extends DAO<SpeciesDAO.Attribute> {
     /**
      * Retrieve all species from data source.
      * <p>
-     * The species are retrieved and returned as a {@code SpeciesTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once
      * results are retrieved.
-     * 
+     *
+     * @param attributes        A {@code Collection} of {@code Attribute}s representing the attributes
+     *                          to populate in the returned {@code SpeciesTO}s.
      * @return A {@code SpeciesTOResultSet} containing all species from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public SpeciesTOResultSet getAllSpecies() throws DAOException;
+    public SpeciesTOResultSet getAllSpecies(Collection<Attribute> attributes) throws DAOException;
     
     /**
      * Retrieve from the data source the species matching the provided IDs. 
      * If {@code speciesIds} is {@code null} or empty, this equivalent to calling 
      * {@link #getAllSpecies()}.
      * <p>
-     * The species are retrieved and returned as a {@code SpeciesTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once 
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once
      * results are retrieved.
      * 
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs 
+     * @param speciesIds    A {@code Set} of {@code Integer}s that are the NCBI IDs
      *                      of the requested species (for instance, {@code 9606} for human).
+     * @param attributes    A {@code Collection} of {@code Attribute}s representing the attributes
+     *                      to populate in the returned {@code SpeciesTO}s.
      * @return A {@code SpeciesTOResultSet} containing all species from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
+     * @throws DAOException If an error occurred while accessing the data source. 
      */
-    public SpeciesTOResultSet getSpeciesByIds(Set<Integer> speciesIds) throws DAOException;
+    public SpeciesTOResultSet getSpeciesByIds(Collection<Integer> speciesIds,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * Retrieve from the data source the species existing in the requested taxa.
+     * <p>
+     * The species are retrieved and returned as a {@code SpeciesTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once
+     * results are retrieved.
+     *
+     * @param taxonIds          A {@code Collection} of {@code Integer}s that are the IDs
+     *                          of the taxa which we want to retrieve species for.
+     * @param attributes        A {@code Collection} of {@code Attribute}s representing the attributes
+     *                          to populate in the returned {@code SpeciesTO}s.
+     * @return                  A {@code SpeciesTOResultSet} containing the requested {@code SpeciesTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
      * Retrieve all the species that are part of any data group.
-     * @return A {@link org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet} containing all the species
-     * that are part of at least one species data group.
-     * @throws DAOException
+     *
+     * @param attributes    A {@code Collection} of {@code Attribute}s representing the attributes
+     *                      to populate in the returned {@code SpeciesTO}s.
+     * @return              A {@link org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet}
+     *                      containing all the species that are part of at least one species data group.
+     * @throws DAOException If an error occurred while accessing the data source.
      */
-    public SpeciesTOResultSet getSpeciesFromDataGroups() throws DAOException;
+    public SpeciesTOResultSet getSpeciesFromDataGroups(Collection<Attribute> attributes) throws DAOException;
     /**
      * {@code DAOResultSet} specifics to {@code SpeciesTO}s
      * 

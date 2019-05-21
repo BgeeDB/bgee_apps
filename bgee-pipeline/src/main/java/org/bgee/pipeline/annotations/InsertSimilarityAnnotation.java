@@ -260,7 +260,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
         }
         this.similarityAnnotIdGenerator++;
         return log.exit(new SummarySimilarityAnnotationTO(
-                Integer.toString(this.similarityAnnotIdGenerator), 
+                this.similarityAnnotIdGenerator, 
                 summaryAnnot.getNcbiTaxonId(), summaryAnnot.isNegated(), 
                 summaryAnnot.getCioId()));
     }
@@ -270,7 +270,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      * the similarity annotation ID {@code annotId}, one for each entity ID in
      * {@code entityIds}.
      * 
-     * @param annotId       A {@code String} that is the ID of a summary similarity annotation.
+     * @param annotId       An {@code Integer} that is the ID of a summary similarity annotation.
      * @param entityIds     A {@code Collection} of {@code String}s that are the IDs 
      *                      of the anatomical entities associated in the similarity annotation 
      *                      with ID {@code annotId}.
@@ -281,11 +281,11 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      *                                  is {@code null} or empty, or an element in 
      *                                  {@code entityIds} is blank.
      */
-    private Set<SimAnnotToAnatEntityTO> getSummaryAnnotToAnatEntitiesTOs(String annotId, 
+    private Set<SimAnnotToAnatEntityTO> getSummaryAnnotToAnatEntitiesTOs(Integer annotId, 
             Collection<String> entityIds) throws IllegalArgumentException {
         log.entry(annotId, entityIds);
         
-        if (StringUtils.isBlank(annotId)) {
+        if (annotId == null || annotId < 1) {
             throw log.throwing(new IllegalArgumentException("Incorrect annot ID provided."));
         }
         if (entityIds == null || entityIds.isEmpty()) {
@@ -308,7 +308,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      * the similarity annotation ID {@code annotId}, one for each {@code RawAnnotationBean} 
      * in {@code rawAnnots}.
      * 
-     * @param annotId       A {@code String} that is the ID of a summary similarity annotation.
+     * @param annotId       An {@code Integer} that is the ID of a summary similarity annotation.
      * @param rawAnnots     A {@code Collection} of {@code RawAnnotationBean}s that are 
      *                      the annotations used to produce the summary annotation with ID 
      *                      {@code annotId}.
@@ -319,11 +319,11 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      *                                  is {@code null} or empty, or an element in 
      *                                  {@code rawAnnots} is {@code null} or invalid.
      */
-    private Collection<RawSimilarityAnnotationTO> getRawTOs(String annotId, 
+    private Collection<RawSimilarityAnnotationTO> getRawTOs(Integer annotId, 
             Collection<RawAnnotationBean> rawAnnots) throws IllegalArgumentException {
         log.entry(annotId, rawAnnots);
         
-        if (StringUtils.isBlank(annotId)) {
+        if (annotId == null || annotId < 1) {
             throw log.throwing(new IllegalArgumentException("Incorrect annot ID provided."));
         }
         if (rawAnnots == null || rawAnnots.isEmpty()) {

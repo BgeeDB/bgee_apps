@@ -21,9 +21,9 @@ import org.bgee.model.expressiondata.CallService;
 //TODO: sanity checks
 public class DownloadFile {
 
-	/**
-	 * This enum contains all the different categories of files:
-	 * <ul>
+    /**
+     * This enum contains all the different categories of files:
+     * <ul>
      *   <li>{@code EXPR_CALLS_SIMPLE} a simple expression calls file</li>
      *   <li>{@code EXPR_CALLS_COMPLETE} a complete expression calls file</li>
      *   <li>{@code DIFF_EXPR_ANAT_SIMPLE} a simple differential expression across anatomy file</li>
@@ -35,13 +35,13 @@ public class DownloadFile {
      *   <li>{@code AFFY_DATA} corresponds to an Affymetrix signal intensities file</li>
      *   <li>{@code RNASEQ_ANNOT} corresponds to RNA-Seq annotations file</li>
      *   <li>{@code RNASEQ_DATA} corresponds toRNA-Seq data file</li>
-	 * </ul>
-	 *
-	 * @author  Philippe Moret
-	 * @author  Valentine Rech de Laval
-	 * @version Bgee 14, Apr. 2017
-	 * @since   Bgee 13
-	 */
+     * </ul>
+     *
+     * @author  Philippe Moret
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Apr. 2017
+     * @since   Bgee 13
+     */
     public enum CategoryEnum implements BgeeEnumField {
         EXPR_CALLS_SIMPLE("expr_simple", false),
         EXPR_CALLS_COMPLETE("expr_advanced", false),
@@ -173,7 +173,8 @@ public class DownloadFile {
      * @param size                 A {@code Long} representing the file size in bytes.
      * @param speciesDataGroupId   A {@code Integer} representing the species data group that owns this file.
      * @param conditionParameters  A {@code Set} of {@code ConditionParameter} thats are the
-     *                             condition parameters used to generate this file.
+     *                             condition parameters used to generate this file. Can be {@code null}
+     *                             if not relevant to this {@code DownloadFile}.
      * @throws IllegalArgumentException If any of the argument is {@code null}.
      */
     public DownloadFile(String path, String name, CategoryEnum category, Long size,
@@ -235,7 +236,8 @@ public class DownloadFile {
      * Gets the condition parameters.
      *
      * @return  A {@code Set} of {@code CallService.Attribute} that are the
-     *          condition parameters used to generate this file.
+     *          condition parameters used to generate this file. Can be {@code null}
+     *          if not relevant to this {@code DownloadFile}.
      */
     public Set<CallService.Attribute> getConditionParameters() {
         return conditionParameters;
@@ -259,71 +261,71 @@ public class DownloadFile {
         return category.isDiffExpr();
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((category == null) ? 0 : category.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((path == null) ? 0 : path.hashCode());
-		result = prime * result + (int) (size ^ (size >>> 32));
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((category == null) ? 0 : category.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((path == null) ? 0 : path.hashCode());
+        result = prime * result + (int) (size ^ (size >>> 32));
         result = prime * result + ((speciesDataGroupId == null) ? 0 : speciesDataGroupId.hashCode());
         result = prime * result + ((conditionParameters == null) ? 0 : conditionParameters.hashCode());
-		return result;
-	}
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return "DownloadFile [path=" + path + ", name=" + name + ", category=" + category + ", speciesDataGroupId="
-		        + speciesDataGroupId + ", size=" + size + ", conditionParameters=" + conditionParameters + "]";
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        DownloadFile other = (DownloadFile) obj;
+        if (category != other.category) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (path == null) {
+            if (other.path != null) {
+                return false;
+            }
+        } else if (!path.equals(other.path)) {
+            return false;
+        }
+        if (size != other.size) {
+            return false;
+        }
+        if (speciesDataGroupId == null) {
+            if (other.speciesDataGroupId != null) {
+                return false;
+            }
+        } else if (!speciesDataGroupId.equals(other.speciesDataGroupId)) {
+            return false;
+        }
+        if (conditionParameters == null) {
+            if (other.conditionParameters != null) {
+                return false;
+            }
+        } else if (!conditionParameters.equals(other.conditionParameters)) {
+            return false;
+        }
+        return true;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		DownloadFile other = (DownloadFile) obj;
-		if (category != other.category) {
-			return false;
-		}
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
-			return false;
-		}
-		if (path == null) {
-			if (other.path != null) {
-				return false;
-			}
-		} else if (!path.equals(other.path)) {
-			return false;
-		}
-		if (size != other.size) {
-			return false;
-		}
-		if (speciesDataGroupId == null) {
-			if (other.speciesDataGroupId != null) {
-				return false;
-			}
-		} else if (!speciesDataGroupId.equals(other.speciesDataGroupId)) {
-			return false;
-		}
-		if (conditionParameters == null) {
-		    if (other.conditionParameters != null) {
-		        return false;
-		    }
-		} else if (!conditionParameters.equals(other.conditionParameters)) {
-		    return false;
-		}
-		return true;
-	}
+    @Override
+    public String toString() {
+        return "DownloadFile [path=" + path + ", name=" + name + ", category=" + category + ", speciesDataGroupId="
+                + speciesDataGroupId + ", size=" + size + ", conditionParameters=" + conditionParameters + "]";
+    }
 }

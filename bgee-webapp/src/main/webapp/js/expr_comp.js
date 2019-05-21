@@ -33,7 +33,7 @@ $( document ).ready( function(){
     
     // If you change any option of this table, take care to also change it for the single-species table
     $('table.expr_comp.multi-sp').DataTable( {
-        "order": [[ 1, 'desc' ], [ 5, 'asc' ], [ 2, 'asc' ]],
+        "order": [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']], //  score desc, expressed genes desc, rank asc
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.childRowImmediate,
@@ -87,7 +87,7 @@ $( document ).ready( function(){
 
     // If you change any option of this table, take care to also change it for the multi-species table
     $('table.expr_comp.single-sp').DataTable( {
-        "order": [[ 1, 'desc' ], [ 5, 'asc' ], [ 2, 'asc' ]],
+        "order": [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']], //  score desc, expressed genes desc, rank asc
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.childRowImmediate,

@@ -9,11 +9,11 @@ use Mail::Send;
 
 
 my $user_email = 'bgee_team@unil.ch'; # Comma-separated if several ones
-my $log        = '/tmp/bgee-topanat_failure';
+my $log        = '/tmp/bgee-ftp_failure';
 
-if ( system("R -e 'library(\"rJava\")' >/dev/null 2> $log")!=0 ){
+if ( system("wget -S -O /dev/null 'ftp://ftp.bgee.org' 2> $log")!=0 ){
     my $host = $ENV{'HOSTNAME'} || `hostname`; chomp $host;
-    my $msg = new Mail::Send Subject=>"[BGEE-TOPANAT: service failure] from $host", To=>"$user_email";
+    my $msg = new Mail::Send Subject=>"[BGEE-FTP: service failure] from $host", To=>"$user_email";
     $msg->add('From', 'Bgee@sib.swiss');
     $msg->add('X-Mailer', "Mail::Send ($Mail::Send::VERSION) Perl module");
     my $fh  = $msg->open;

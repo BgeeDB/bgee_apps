@@ -135,8 +135,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}e</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}e</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}f</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}f</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify

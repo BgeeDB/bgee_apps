@@ -4,8 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.controller.URLParameters;
-import org.bgee.controller.URLParameters.Parameter;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
@@ -17,7 +15,6 @@ import org.bgee.view.AnatomicalSimilarityDisplay;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -190,8 +187,14 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append(", <a href='").append(urlExample.getRequestURL()).append("'>T Cell in human and zebrafish</a>");
         
         urlExample.setAnatEntityList(Collections.singletonList("UBERON:0001987"));
-        sb.append(", <a href='").append(urlExample.getRequestURL()).append("'>Placenta in human and zebrafish</a>");
-        
+        urlExample.setSpeciesList(Arrays.asList(9606, 9598));
+        sb.append(", Placenta <a href='").append(urlExample.getRequestURL()).append("'>in human and chimpanzee</a>")
+          .append(" (homologous structure), or ");
+        urlExample.setSpeciesList(Arrays.asList(9606, 7955));
+        sb.append("<a href='").append(urlExample.getRequestURL()).append("'>in human and zebrafish</a>")
+          .append(" (no homologous structure)");
+
+
         sb.append("            </span>");
         
         sb.append("        </form>");

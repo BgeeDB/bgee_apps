@@ -2133,6 +2133,19 @@ public class RequestParameters {
     public List<String> getGeneList() {
         return this.getValues(this.getUrlParametersInstance().getParamGeneList());
     }
+
+    /**
+     * Convenient method to set value of the parameter returned by 
+     * {@link URLParameters#getParamGeneList()}. Equivalent to calling 
+     * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.
+     *
+     * @param geneList  A {@code List} of {@code String}s that is the value
+     *                  of the {@code gene_id} URL parameter to set.
+     */
+    public void setGeneList(List<String> geneList){
+        this.resetValues(this.getUrlParametersInstance().getParamGeneList());
+        this.addValues(this.getUrlParametersInstance().getParamGeneList(), geneList);
+    }
     
     /**
      * @return the species_id parameter
@@ -2157,7 +2170,7 @@ public class RequestParameters {
      * @return the query parameter for a search
      */
     public String getQuery() {
-    	return this.getFirstValue(this.getUrlParametersInstance().getQuery());
+        return this.getFirstValue(this.getUrlParametersInstance().getParamQuery());
     }
     /**
      * Convenient method to set value of the parameter returned by 
@@ -2168,8 +2181,8 @@ public class RequestParameters {
      *                      URL parameter to set.
      */
     public void setQuery(String queryTerm) {
-        this.resetValues(this.getUrlParametersInstance().getQuery());
-        this.addValue(this.getUrlParametersInstance().getQuery(), queryTerm);
+        this.resetValues(this.getUrlParametersInstance().getParamQuery());
+        this.addValue(this.getUrlParametersInstance().getParamQuery(), queryTerm);
     }
 
     /**

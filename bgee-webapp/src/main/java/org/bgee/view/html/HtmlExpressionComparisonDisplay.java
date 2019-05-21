@@ -22,6 +22,7 @@ import org.bgee.view.JsonHelper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -142,6 +143,18 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         RequestParameters action = this.getNewRequestParameters();
         action.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
 
+        RequestParameters example1 = this.getNewRequestParameters();
+        example1.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        example1.setGeneList(Arrays.asList("ENSG00000139767", "ENSMUSG00000063919",
+                "ENSPPAG00000028134", "ENSPTRG00000005517", "ENSBTAG00000008676",
+                "ENSRNOG00000001141", "ENSSSCG00000009845", "ENSECAG00000021729",
+                "ENSCAFG00000023113", "ENSOCUG00000004503", "ENSMODG00000015283",
+                "ENSACAG00000004139", "ENSXETG00000019934"));
+        RequestParameters example2 = this.getNewRequestParameters();
+        example2.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        example2.setGeneList(Arrays.asList("ENSDARG00000059263", "ENSG00000170178", 
+                "ENSMUSG00000001823"));
+
         sb.append("<div class='row'>");
         sb.append("    <div id='bgee_expr_comp' class='row well well-sm col-xs-offset-2 col-xs-8 " +
                 "                                  col-lg-offset-4 col-lg-4'>");
@@ -158,8 +171,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         String idsText = this.getRequestParameters().getGeneList() == null ? "" :
             htmlEntities(String.join("\n", this.getRequestParameters().getGeneList()));
         sb.append("            <div class='form-group'>");
-        sb.append("                <label for='bgee_gene_list' class='group-title'>" +
-                "                       Gene list</label>");
+        sb.append("                <label for='bgee_gene_list' class='group-title'>Gene list</label>");
         sb.append("                <textarea id='bgee_gene_list' class='form-control' name='")
                 .append(this.getRequestParameters().getUrlParametersInstance()
                         .getParamGeneList().getName()).append("'" +
@@ -179,6 +191,11 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append(msg).append("</span>");
 
         sb.append("        </form>");
+        sb.append("        <span class='examples col-sm-12'>Examples: ");
+        sb.append("            <a href='").append(example1.getRequestURL()).append("'>SRRM4 (brain specific genes)</a>");
+        sb.append("            <a href='").append(example2.getRequestURL()).append("'>Hoxd12 (development pattern genes)</a>");
+        sb.append("        </span>");
+
         sb.append("    </div>");
         sb.append("</div>");
 
@@ -202,6 +219,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<h2>Results</h2>");
 
+        sb.append("<p>Results are ordered by 'Score', 'Genes with presence of expression' then 'Minimum rank'. " +
+                "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
         sb.append("    <table class='expr_comp stripe compact ").append(tableClass).append("'>");

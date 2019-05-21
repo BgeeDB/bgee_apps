@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.URLParameters;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;
 import org.bgee.model.anatdev.AnatEntity;
@@ -325,11 +326,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         box.append("<div id='bgee_gene_search' class='row well well-sm ").append(bgeeGeneSearchClass).append("'>");
         box.append("    <form method='get'>");
         box.append("        <div class='form'>");
-        box.append("            <input type='hidden' id='page' name='page' value='gene' />");
+        URLParameters urlParameters = this.getRequestParameters().getUrlParametersInstance();
+        box.append("            <input type='hidden' id='page' name='"
+                + htmlEntities(urlParameters.getParamPage().getName()) + "' value='"
+                + htmlEntities(RequestParameters.PAGE_GENE) + "' />");
         box.append("            <label for='bgee_gene_search_completion_box'>Search gene</label>");
         box.append("            <span id='bgee_species_search_msg' class='search_msg'></span>");
         box.append("            <input id='bgee_gene_search_completion_box' class='form-control' " +
-                                    "autocomplete='off' type='text' name='search' autofocus " +
+                                    "autocomplete='off' type='text' name='"
+                + htmlEntities(urlParameters.getParamQuery().getName()) + "' autofocus " +
                                     "maxlength='100' " + value + " />");
         box.append("            <input id='bgee_species_search_submit' type='submit' value='Search' />");
         box.append(             example.toString());

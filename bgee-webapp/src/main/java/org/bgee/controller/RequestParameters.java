@@ -2157,7 +2157,7 @@ public class RequestParameters {
      * @return the query parameter for a search
      */
     public String getQuery() {
-    	return this.getFirstValue(this.getUrlParametersInstance().getQuery());
+        return this.getFirstValue(this.getUrlParametersInstance().getParamQuery());
     }
     /**
      * Convenient method to set value of the parameter returned by 
@@ -2168,8 +2168,8 @@ public class RequestParameters {
      *                      URL parameter to set.
      */
     public void setQuery(String queryTerm) {
-        this.resetValues(this.getUrlParametersInstance().getQuery());
-        this.addValue(this.getUrlParametersInstance().getQuery(), queryTerm);
+        this.resetValues(this.getUrlParametersInstance().getParamQuery());
+        this.addValue(this.getUrlParametersInstance().getParamQuery(), queryTerm);
     }
 
     /**

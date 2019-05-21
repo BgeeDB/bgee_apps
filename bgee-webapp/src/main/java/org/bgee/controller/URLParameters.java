@@ -665,7 +665,7 @@ public class URLParameters {
     /**
      * @return  A {@code Parameter<String>} that contains the search text.
      */
-     public Parameter<String> getQuery() {
+     public Parameter<String> getParamQuery() {
      	return QUERY;
      }    
 

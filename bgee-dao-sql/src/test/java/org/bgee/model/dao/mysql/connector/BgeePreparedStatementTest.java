@@ -179,6 +179,10 @@ public class BgeePreparedStatementTest extends TestAncestor
                 BgeePreparedStatement.generateParameterizedQueryString(1));
         assertEquals("Incorrect parameterized query string generated", "?, ?, ?", 
                 BgeePreparedStatement.generateParameterizedQueryString(3));
+        //Regression test for when size is 0. The method used to throw a NegativeArraySizeException
+        //in that case. It should now return an empty String.
+        assertEquals("Incorrect parameterized query string generated", "", 
+                BgeePreparedStatement.generateParameterizedQueryString(0));
     }
     
     /**

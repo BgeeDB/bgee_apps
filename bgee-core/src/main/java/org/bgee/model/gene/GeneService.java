@@ -2,6 +2,7 @@ package org.bgee.model.gene;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -190,6 +191,10 @@ public class GeneService extends CommonService {
         Set<GeneTO> geneTOs = this.geneDAO
                 .getGenesByEnsemblGeneIds(Collections.singleton(ensemblGeneId))
                 .stream().collect(Collectors.toSet());
+        //In case the ID provided was incorrect/doesn't match any gene in Bgee
+        if (geneTOs == null || geneTOs.isEmpty()) {
+            return log.exit(new HashSet<>());
+        }
         final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(loadSpeciesMap(geneTOs, withSpeciesInfo));
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
@@ -415,12 +420,16 @@ public class GeneService extends CommonService {
      * and Bgee gene IDs of the data source.
      * 
      * @param ids   A {@code Collection} of {@code String}s that are cross-reference IDs
-     *              for which to return the mapping.
+     *              for which to return the mapping. If empty or {@code null}, an empty {@code Map}
+     *              will be returned (and not all Bgee gene IDs in the database)
      * @return      The {@code Map} where keys are {@code String}s corresponding to provided IDs,
      *              and values are {@code Set} of {@code Integers}s that are the associated Bgee gene IDs.
      */
     private Map<String, Set<Integer>> loadMappingXRefIdToBgeeGeneIds(Collection<String> ids) {
         log.entry(ids);
+        if (ids == null || ids.isEmpty()) {
+            return log.exit(new HashMap<>());
+        }
         
         Map<String, Set<Integer>> xRefIdToGeneIds = getDaoManager().getGeneXRefDAO()
                 .getGeneXRefsByXRefIds(ids, Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, 
@@ -430,29 +439,85 @@ public class GeneService extends CommonService {
         return log.exit(xRefIdToGeneIds);
     }
 
+    /**
+     * @param geneTOs   A {@code Collection} of {@code GeneTO}s representing the genes for which
+     *                  we want to retrieve the {@code Species}. If empty or {@code null}, an empty {@code Map}
+     *                  will be returned (and not all {@code Species} in Bgee)
+     * @return          A {@code Map} where keys are {@code Integer}s that are species IDs,
+     *                  corresponding to the provided {@code GeneTO}s, the associated value
+     *                  being the corresponding {@code Species}.
+     */
     private Map<Integer, Species> loadSpeciesMap(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {
         log.entry(geneTOs, withSpeciesInfo);
-        Set<Integer> speciesIds = geneTOs.stream().map(GeneTO::getSpeciesId).collect(Collectors.toSet());
+        if (geneTOs == null || geneTOs.isEmpty()) {
+            return log.exit(new HashMap<>());
+        }
+        Set<Integer> speciesIds = geneTOs.stream()
+                .map(gTO -> {
+                    if (gTO.getSpeciesId() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided GeneTOs must contain species IDs"));
+                    }
+                    return gTO.getSpeciesId();
+                })
+                .collect(Collectors.toSet());
         return log.exit(this.speciesService.loadSpeciesMap(speciesIds, withSpeciesInfo));
     }
-    
+
+    /**
+     * @param geneTOs   A {@code Collection} of {@code GeneTO}s representing the genes for which
+     *                  we want to retrieve synonyms. If empty or {@code null}, an empty {@code Map}
+     *                  will be returned (and not all synonyms for any gene in Bgee)
+     * @return          A {@code Map} where keys are {@code Integer}s that are internal Bgee gene IDs,
+     *                  corresponding to the provided {@code GeneTO}s, the associated value
+     *                  being a {@code Set} of {@code String}s that are the corresponding synonyms.
+     */
     private Map<Integer, Set<String>> loadSynonymsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
         log.entry(geneTOs);
-        Set<Integer> bgeeGeneIds = geneTOs.stream().map(GeneTO::getId).collect(Collectors.toSet());
+        if (geneTOs == null || geneTOs.isEmpty()) {
+            return log.exit(new HashMap<>());
+        }
+        Set<Integer> bgeeGeneIds = geneTOs.stream()
+                .map(gTO -> {
+                    if (gTO.getId() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided GeneTOs must contain Bgee gene IDs"));
+                    }
+                    return gTO.getId();
+                })
+                .collect(Collectors.toSet());
         return log.exit(this.getDaoManager().getGeneNameSynonymDAO()
                 .getGeneNameSynonyms(bgeeGeneIds).stream()
                 .collect(Collectors.groupingBy(GeneNameSynonymTO::getBgeeGeneId,
                         Collectors.mapping(GeneNameSynonymTO::getGeneNameSynonym, Collectors.toSet()))));
     }
 
+    /**
+     * @param geneTOs   A {@code Collection} of {@code GeneTO}s representing the genes for which
+     *                  we want to retrieve XRef. If empty or {@code null}, an empty {@code Map}
+     *                  will be returned (and not all XRefs for any gene in Bgee)
+     * @return          A {@code Map} where keys are {@code Integer}s that are internal Bgee gene IDs,
+     *                  corresponding to the provided {@code GeneTO}s, the associated value
+     *                  being a {@code Set} of {@code GeneXRefTO}s that are the corresponding XRefs.
+     */
     private Map<Integer, Set<GeneXRefTO>> loadXrefTOsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
         log.entry(geneTOs);
+        if (geneTOs == null || geneTOs.isEmpty()) {
+            return log.exit(new HashMap<>());
+        }
 
-        final Map<Integer, GeneTO> geneTOsById = geneTOs.stream()
-                .collect(Collectors.toMap(EntityTO::getId, t -> t));
+        Set<Integer> bgeeGeneIds = geneTOs.stream()
+                .map(gTO -> {
+                    if (gTO.getId() == null) {
+                        throw log.throwing(new IllegalArgumentException(
+                                "The provided GeneTOs must contain Bgee gene IDs"));
+                    }
+                    return gTO.getId();
+                })
+                .collect(Collectors.toSet());
 
         Set<GeneXRefTO> xRefTOs = this.getDaoManager().getGeneXRefDAO()
-                .getGeneXRefsByBgeeGeneIds(geneTOsById.keySet(), null).stream()
+                .getGeneXRefsByBgeeGeneIds(bgeeGeneIds, null).stream()
                 .collect(Collectors.toSet());
 
         return log.exit(xRefTOs.stream()

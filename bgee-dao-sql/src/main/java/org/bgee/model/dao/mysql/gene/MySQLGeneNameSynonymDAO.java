@@ -2,8 +2,10 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +24,8 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @author  Frederic Bastian
+ * @version Bgee 14, Jun. 2019
  * @since   Bgee 13, Feb. 2016
  *
  */
@@ -103,23 +106,29 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
     }
 
     @Override
-    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> bgeeGeneIds) {
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
+        Set<Integer> clonedIds = Collections.unmodifiableSet(
+                bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds));
+
         // Construct sql query
         String sql = this.generateSelectClause(GENE_NAME_SYNONYM_TABLE, COL_NAMES_TO_ATTRS, true);
         sql += " FROM " + GENE_NAME_SYNONYM_TABLE;
-        sql += " WHERE bgeeGeneId IN ("+BgeePreparedStatement.generateParameterizedQueryString(bgeeGeneIds.size())+")";
+        if (!clonedIds.isEmpty()) {
+            sql += " WHERE bgeeGeneId IN ("
+                   + BgeePreparedStatement.generateParameterizedQueryString(clonedIds.size()) + ")";
+        }
         
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            
-            stmt.setIntegers(1, bgeeGeneIds, true);
+            if (!clonedIds.isEmpty()) {
+                stmt.setIntegers(1, bgeeGeneIds, true);
+            }
             // we don't use a try-with-resource, because we return a pointer to the
             // results,
             // not the actual results, so we should not close this
             // BgeePreparedStatement.
-            return log
-                    .exit(new MySQLGeneNameSynonymTOResultSet(stmt));
+            return log.exit(new MySQLGeneNameSynonymTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

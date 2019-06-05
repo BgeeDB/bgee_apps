@@ -103,7 +103,8 @@ public class BgeePreparedStatement implements AutoCloseable {
     /**
      * Returns a {@code String} to be used in a parameterized query with the number of parameters 
      * equals to the given {@code size}. For instance, if {@code size} is equal to {@code 3}, 
-     * the returned {@code String} is: {@code ?, ?, ?}.
+     * the returned {@code String} is: {@code ?, ?, ?}. If {@code size} is 0, an empty {@code String}
+     * is returned.
      * 
      * @param size  An {@code int} that is the number of parameters in the returned {@code String}.
      * @return      A {@code String} to be used in a parameterized query with the number of 
@@ -111,6 +112,9 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     public static String generateParameterizedQueryString(int size) {
         log.entry(size);
+        if (size <= 0) {
+            return log.exit("");
+        }
         
         StringBuilder sb = new StringBuilder((size * 2) - 1);
         for (int i = 0; i < size; i++) {

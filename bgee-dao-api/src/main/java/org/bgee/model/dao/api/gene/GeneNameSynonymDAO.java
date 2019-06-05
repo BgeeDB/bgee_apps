@@ -1,6 +1,6 @@
 package org.bgee.model.dao.api.gene;
 
-import java.util.Set;
+import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -10,7 +10,8 @@ import org.bgee.model.dao.api.TransferObject;
  * DAO defining queries using or retrieving {@link GeneNameSynonymTO}s. 
  * 
  * @author Philippe Moret
- * @version Bgee 13.2
+ * @author Frederic Bastian
+ * @version Bgee 14 Jun. 2019
  * @see GeneNameSynonymTO
  * @since Bgee 13.2
  */
@@ -33,10 +34,11 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
 	
 	/**
 	 * Loads the gene name synonyms for a set of genes
-	 * @param bgeeGeneIds A {@code Set} of gene IDs.
-	 * @return A {@code GeneNameSynonymTOResultSet} encapsulating the result.
+	 * @param bgeeGeneIds  A {@code Collection} of {@code Integer}s that are gene IDs
+	 *                     to retrieve synonyms for.
+	 * @return             A {@code GeneNameSynonymTOResultSet} encapsulating the result.
 	 */
-    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Set<Integer> bgeeGeneIds);
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<Integer> bgeeGeneIds);
 	
     /**
      * {@code DAOResultSet} specifics to {@code GeneNameSynonymTO}s

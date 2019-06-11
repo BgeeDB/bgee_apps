@@ -402,7 +402,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
                 "<tr><th>E</th><td>EST</td></tr>" +
                 "<tr><th>I</th><td>In Situ</td></tr>" +
-                "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
+                "<tr><th>R</th><td>RNA-Seq</td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-3 col-md-offset-0 col-md-12'>"
                 //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
                 //for now we only report presence/absence of data per data type.
@@ -518,6 +518,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                             htmlEntities(source.getName()) + "</a>");
                 }
                 this.writeln(sj.toString());
+                this.writeln("</li>");
             }
             this.writeln("</ul>");
             this.writeln("</div>");
@@ -682,8 +683,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                         .append(getDataTypeSpans(call.getCallData())).append("</li>");
                         return sb2.toString();
                     }).collect(Collectors.joining("\n")))
-                .append("</ul></td>")
-                .append("</td>");
+                .append("</ul></td>");
         
         sb.append("</tr>");
 
@@ -708,7 +708,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getDescription()))).append("</td></tr>");
         table.append("<tr><th scope='row'>Organism</th><td property='bs:taxonomicRange' typeof='bs:Taxon'>")
-                .append(getCompleteSpeciesName(gene));
+                .append(getCompleteSpeciesName(gene)).append("</td></tr>");
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")
                     .append(getSynonymDisplay(gene.getSynonyms()));
@@ -828,7 +828,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             display += "<span id='" + idPrefix + "_content' class='more-content'>, " +
                     String.join(", ", items.subList(MAX_DISPLAYED_ITEMS, items.size())) +
                     "</span>";
-            display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'><span>";
+            display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'></span>";
         }
         return log.exit(display);
     }

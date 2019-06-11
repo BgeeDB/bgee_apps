@@ -98,9 +98,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(searchTerm, result);
         this.startDisplay("Gene information");
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, " +
                 "gene descriptions, synonyms and cross-references.</p>");
         this.writeln("</div>");
@@ -133,6 +133,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -228,9 +229,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         this.startDisplay(titleStart);
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         
         this.writeln("<p>The search gene ID is found in several species. Select the desired gene:<p>");
 
@@ -363,7 +364,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // close div
 
         //page title
-        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'>");
+        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
         this.writeln("<img src='" + this.getSpeciesImageSrc(gene.getSpecies(), true)
                 + "' alt='" + htmlEntities(gene.getSpecies().getShortName()) + "' />");
         this.writeln(htmlEntities(titleStart));
@@ -699,14 +700,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
-        table.append("<table class='info-table'>");
+        table.append("<table class='info-table' typeof='bs:Gene'>");
         table.append("<tr><th scope='row'>Ensembl ID</th><td>")
                 .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
-        table.append("<tr><th scope='row'>Name</th><td>")
+        table.append("<tr><th scope='row'>Name</th><td property='bs:name'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getName()))).append("</td></tr>");
-        table.append("<tr><th scope='row'>Description</th><td>")
+        table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getDescription()))).append("</td></tr>");
-        table.append("<tr><th scope='row'>Organism</th><td>")
+        table.append("<tr><th scope='row'>Organism</th><td property='bs:taxonomicRange' typeof='bs:Taxon'>")
                 .append(getCompleteSpeciesName(gene));
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")

@@ -103,6 +103,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
 
     /**
+     * A {@code String} that are the keywords defining Bgee.
+     */
+    protected static final String BGEE_KEYWORDS =
+            "bgee, gene expression, evolution, ontology, anatomy, development, " +
+            "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
+    
+    /**
+     * A {@code String} that is the description of Bgee.
+     */
+    protected static final String BGEE_DESCRIPTION =
+            "Bgee allows to automatically compare gene expression patterns between species, " +
+                    "by referencing expression data on anatomical ontologies, and designing homology " +
+                    "relationships between them.";
+
+    /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
     protected static final String LICENCE_CC0_URL =
@@ -310,6 +325,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title) {
         log.entry(title);
+        
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -317,14 +333,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
-        this.writeln("<meta name='description' content='Bgee allows to automatically"
-                + " compare gene expression patterns between species, by referencing"
-                + " expression data on anatomical ontologies, and designing homology"
-                + " relationships between them.'/>");
-        this.writeln("<meta name='keywords' content='bgee, gene expression, "
-                + "evolution, ontology, anatomy, development, evo-devo database, "
-                + "anatomical ontology, developmental ontology, gene expression "
-                + "evolution'/>");
+        this.writeln("<meta name='description' content='" + BGEE_DESCRIPTION + "'/>");
+        this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
                 + " UNIL' />");
@@ -350,7 +360,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         this.writeln("</head>");
         
-        this.writeln("<body>");
+        this.writeln("<body prefix='bs: http://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container' class='container-fluid'>");
@@ -358,7 +368,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.displayBgeeHeader();
         this.displayArchiveMessage();
         this.displayWarningMessage();
-        this.writeln("<div id='sib_body'>");
+        this.writeln("<div id='sib_body' typeof='schema:WebPage'>");
+
+        this.writeln("    <meta property='schema:url' content='" +
+                this.getRequestParameters().getRequestURL() + "'/>");
 
         log.exit();
     }

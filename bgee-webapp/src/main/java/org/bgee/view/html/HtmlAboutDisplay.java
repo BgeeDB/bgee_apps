@@ -66,7 +66,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
             title += "release " + version + " ";
         }
         title += "about page";
-        this.startDisplay(title);
+        this.startDisplay(title, "AboutPage");
 
         this.writeln("<h1 property='schema:name'>About</h1>");
 
@@ -119,7 +119,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br>" + this.getAuthors(Arrays.asList("Bastian FB", "Parmentier G", "Roux J",
                     "Moretti S", "Laudet V", "Robinson-Rechavi M"))
                 + "<br>" + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species")
-                + "<br><em>in</em>" + this.getPeriodical("DILS: Data Integration in Life Sciences")
+                + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
                 + " <strong>Lecture Notes in Computer Science</strong>. "
                 + "5109:124-131. [<a href='http://www.springerlink.com/content/92q428161616w8r5/' "
                 + "title='Bgee paper in LNCS' target='_blank' property='schema:url'>url</a>] "
@@ -134,11 +134,12 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "[<a target='_blank' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' " 
                 + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
-        this.writeln("<li>For the use of the BgeeDB R package: "
-                + "<br>Komljenovic A, Roux J, Robinson-Rechavi M and Bastian F."
-                + "<br>BgeeDB, an R package for retrieval of curated expression datasets and "
-                + "for gene list enrichment tests."
-                + "<br><em>in</em> F1000Research. "
+        this.writeln("<li typeof='schema:ScholarlyArticle'>For the use of the BgeeDB R package: "
+                + "<br>" + this.getAuthors(Arrays.asList("Komljenovic A", "Roux J", "Wollbrett J",
+                    "Robinson-Rechavi M", "Bastian F")) 
+                + "<br>" + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
+                + "for gene list enrichment tests")
+                + "<br><em>in</em> " + this.getPeriodical("F1000Research") + " 2018, 5:2748. "
                 + "[<a target='_blank' href='https://f1000research.com/articles/5-2748/v2' " 
                 + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests' property='schema:url'>url</a>] "

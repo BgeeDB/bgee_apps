@@ -362,7 +362,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayFaq() {
         log.entry();
 
-        this.startDisplay("Bgee FAQ");
+        this.startDisplay("Bgee FAQ", "FAQPage");
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");

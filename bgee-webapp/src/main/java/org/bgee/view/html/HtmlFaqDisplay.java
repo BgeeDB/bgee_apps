@@ -180,7 +180,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         log.entry(question, answer, panelIdSuffix);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("  <div class='panel panel-default' typeof='schema:Question'>");
+        sb.append("  <div class='panel panel-default' property='schema:mainEntity' typeof='schema:Question'>");
         sb.append("    <div class='panel-heading' role='tab' id='heading").append(panelIdSuffix).append("Query'>");
         sb.append("      <div class='panel-title' property='schema:name'>");
         sb.append("        <a href='#collapse").append(panelIdSuffix).append("Query' class='collapsed' " +

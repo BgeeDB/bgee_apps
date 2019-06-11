@@ -325,6 +325,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title) {
         log.entry(title);
+        this.startDisplay(title, null);
+        log.exit();
+    }
+
+    /**
+     * Display the start of the HTML page (common to all pages).
+     *
+     * @param title             A {@code String} that is the title to be used for the page. 
+     * @param typeOfSchemaPage  A {@code String} that is the schema.org type of the page.
+     *                          If {@code null}, no property will be set.
+     */
+    protected void startDisplay(String title, String typeOfSchemaPage) {
+        log.entry(title, typeOfSchemaPage);
         
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
@@ -368,10 +381,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.displayBgeeHeader();
         this.displayArchiveMessage();
         this.displayWarningMessage();
-        this.writeln("<div id='sib_body' typeof='schema:WebPage'>");
+        if (StringUtils.isBlank(typeOfSchemaPage)) {
+            this.writeln("<div id='sib_body'>");
+        } else {
+            this.writeln("<div id='sib_body' typeof='schema:" + typeOfSchemaPage + "'>");
+            this.writeln("    <meta property='schema:url' content='" +
+                    this.getRequestParameters().getRequestURL() + "' />");
 
-        this.writeln("    <meta property='schema:url' content='" +
-                this.getRequestParameters().getRequestURL() + "'/>");
+        }
 
         log.exit();
     }
@@ -403,7 +420,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<li><a class='js-tooltip js-copy' " +
                 "data-copy='" + this.getRequestParameters().getStableRequestURL() + "' " +
                 "data-toggle='tooltip' data-placement='top' " +
-                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>");
+                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>" +
+                "</li>");
         this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
         

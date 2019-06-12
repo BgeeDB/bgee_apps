@@ -341,6 +341,17 @@ public class FrontController extends HttpServlet {
                 logLevel = Level.DEBUG;
             }
             log.catching(logLevel, realException);
+            //to know the URL of the error
+            //Retrieve the URL in a try-catch to make sure it cannot create any more problems.
+            //We still use the method 'catching' on the previous line, so that the exception is caught
+            //with the proper log4j2 Marker "CATCHING".
+            try {
+                String url = requestParameters.getRequestURL();
+                log.log(logLevel, "URL requested {} for Exception {}", url, e.getStackTrace());
+            } catch (Exception eUrl) {
+                //We'll just do nothing in that case
+                log.catching(eUrl);
+            }
             
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 

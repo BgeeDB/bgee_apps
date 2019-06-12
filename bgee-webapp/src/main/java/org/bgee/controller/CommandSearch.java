@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.GeneMatchResult;
@@ -48,7 +49,7 @@ public class CommandSearch extends CommandParent {
     }
 
     @Override
-    public void processRequest() throws IOException, PageNotFoundException {
+    public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException {
         log.entry();
         
         SearchDisplay display = this.viewFactory.getSearchDisplay();
@@ -75,10 +76,10 @@ public class CommandSearch extends CommandParent {
         log.exit();
     }
 
-    private String getSearchTerm() {
+    private String getSearchTerm() throws InvalidRequestException {
         String searchTerm = this.requestParameters.getQuery();
         if (StringUtils.isBlank(searchTerm)) {
-            throw log.throwing(new IllegalArgumentException("Blank search term provided."));
+            throw log.throwing(new InvalidRequestException("Blank search term provided."));
         }
         return searchTerm;
     }

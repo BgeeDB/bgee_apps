@@ -78,6 +78,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                                            List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
         log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
 
+        this.addSchemaMarkups();
+
         this.startDisplay("Anatomical homology");
 
         this.writeln("<h1>Anatomical homology</h1>");
@@ -297,6 +299,36 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
         row.append("</tr>");
         return log.exit(row.toString());
+    }
+
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addSchemaMarkups() {
+        log.entry();
+
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_ANAT_SIM);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@type\": \"WebApplication\"," +
+                "  \"@id\": \"" + url.getRequestURL() + "\"," +
+                "  \"name\": \"Anatomical homology\"," +
+                "  \"url\": \"" + url.getRequestURL() + "\"," +
+                "  \"description\": \"Retrieve anatomical homologies from a list of species and a list of Uberon IDs\"," +
+                "  \"offers\": {" +
+                "    \"@type\": \"Offer\"," +
+                "    \"price\": \"0.00\"," +
+                "    \"priceCurrency\": \"CHF\"" +
+                "  }, " +
+                "  \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "}");
+
+        this.writeln("</script>");
+        log.exit();
     }
 
     @Override

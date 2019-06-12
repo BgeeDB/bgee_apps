@@ -48,6 +48,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.startDisplay("Bgee TopAnat page");
         
+        this.addSchemaMarkups();
+        
         RequestParameters urlGenerator = this.getNewRequestParameters();
         urlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
@@ -91,14 +93,42 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 
         //End AngularJS module container
         this.writeln("</div>");
-
-
         
         this.endDisplay();
 
         log.exit();
     }
     
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addSchemaMarkups() {
+        log.entry();
+
+        RequestParameters urlTopAnat = this.getNewRequestParameters();
+        urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@type\": \"WebApplication\"," +
+                "  \"@id\": \"" + urlTopAnat.getRequestURL() + "\"," +
+                "  \"name\": \"TopAnat - Gene Expression Enrichment\"," +
+                "  \"url\": \"" + urlTopAnat.getRequestURL() + "\"," +
+                "  \"description\": \"GO-like enrichment of anatomical terms, mapped to genes by expression patterns\"," +
+                "  \"offers\": {" +
+                "    \"@type\": \"Offer\"," +
+                "    \"price\": \"0.00\"," +
+                "    \"priceCurrency\": \"CHF\"" +
+                "  }, " +
+                "  \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "}");
+
+        this.writeln("</script>");
+        log.exit();
+    }
+
     @Override
     public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));

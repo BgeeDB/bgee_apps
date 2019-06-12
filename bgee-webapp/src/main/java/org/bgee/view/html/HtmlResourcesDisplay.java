@@ -57,6 +57,8 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
+
+        this.addRPackaqeSchemaMarkups();
         
         this.startDisplay("R packages");
 
@@ -251,4 +253,49 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         log.exit();         
     }
 
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addRPackaqeSchemaMarkups() {
+        log.entry();
+
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_RESOURCES);
+        url.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@graph\": [" +
+                "    {" +
+                "       \"@type\": \"SoftwareApplication\"," +
+                "       \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#BgeeDB-R-package\"," +
+                "       \"name\": \"BgeeDB R package\"," +
+                "       \"url\": \"" + url.getRequestURL() + "\"," +
+                "       \"offers\": {" +
+                "          \"@type\": \"Offer\"," +
+                "          \"price\": \"0.00\"," +
+                "          \"priceCurrency\": \"CHF\"" +
+                "       }, " +
+                "       \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "    }, " +
+                "    {" +
+                "       \"@type\": \"SoftwareApplication\"," +
+                "       \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#BgeeCall-R-package\"," +
+                "       \"name\": \"BgeeCall R package\"," +
+                "       \"url\": \"" + url.getRequestURL() + "\"," +
+                "       \"offers\": {" +
+                "          \"@type\": \"Offer\"," +
+                "          \"price\": \"0.00\"," +
+                "          \"priceCurrency\": \"CHF\"" +
+                "       }, " +
+                "       \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "    }" +
+                "  ]" +
+                "}");
+
+        this.writeln("</script>");
+        log.exit();
+    }
 }

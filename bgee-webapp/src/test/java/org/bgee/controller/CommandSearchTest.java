@@ -3,6 +3,7 @@ package org.bgee.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.TestAncestor;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
@@ -42,11 +43,12 @@ public class CommandSearchTest extends TestAncestor {
 
     /**
      * Test {@link CommandSearch#processRequest()}.
+     * @throws InvalidRequestException
      */
     @Test
     //FIXME: no idea how up-to-date this test is
     @Ignore
-    public void shouldProcessRequest() throws IOException, PageNotFoundException {
+    public void shouldProcessRequest() throws IOException, PageNotFoundException, InvalidRequestException {
 
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,7 +24,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, June 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -54,12 +55,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
-        this.addSchemaMarkup();
-
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(
                     "Only single-species groups should be displayed on the home page."));
         }
+        
+        this.addSchemaMarkups(groups);
 
         this.displayHeroUnit();
 
@@ -87,45 +88,104 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     /**
      * Add schema.org markup to the page.
      */
-    private void addSchemaMarkup() {
-        log.entry();
+    private void addSchemaMarkups(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
         
         // We build the RequestParameters without geneId to keep '{' and '}' instead of replace them due to by secureString() 
         RequestParameters urlActionTarget = this.getNewRequestParameters();
         urlActionTarget.setPage(RequestParameters.PAGE_GENE);
+        RequestParameters urlDownloadCalls = this.getNewRequestParameters();
+        urlDownloadCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        RequestParameters urlDownloadProcValues = this.getNewRequestParameters();
+        urlDownloadProcValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        
+        this.writeln("<script type='application/ld+json'>");
 
-        this.writeln("<script type='application/ld+json'>{");
-        this.writeln("  \"@context\": [");
-        this.writeln("    { \"bs\": \"http://bioschemas.org/\" }, \"https://schema.org\"," +
-                "         {\"@base\": \"https://schema.org\"}");
-        this.writeln("  ],");
-        this.writeln("  \"@type\": \"Dataset\",");
-        this.writeln("  \"@id\": \"" + this.getRequestParameters().getRequestURL() + "\",");
-        this.writeln("  \"url\": \"" + this.getRequestParameters().getRequestURL() + "\",");
-        this.writeln("  \"name\": \"Bgee\",");
-        this.writeln("  \"description\": \"" + BGEE_DESCRIPTION + "\",");
-        this.writeln("  \"keywords\": \"" + BGEE_KEYWORDS + "\",");
-        this.writeln("  \"creator\": [");
-        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"Evolutionary Bioinformatics group\"}");
-        this.writeln("  ],");
-        this.writeln("  \"distribution\": [");
-        this.writeln("    {\"@type\": \"DataDownload\", \"contentUrl\": \""+ this.prop.getFTPRootDirectory() + "\"," +
-                "          \"fileFormat\": \"TSV\"}");
-        this.writeln("  ],");
-        this.writeln("  \"funder\": [");
-        this.writeln("    {\"@type\": \"NGO\", \"name\": \"SIB Swiss Institute of Bioinformatics\"}, ");
-        this.writeln("    {\"@type\": \"EducationalOrganization\", \"name\": \"UNIL University of Lausanne\"}");
-        this.writeln("  ],");
-        this.writeln("  \"license\": \"https://creativecommons.org/publicdomain/zero/1.0/\",");
-        this.writeln("  \"version\": \"" + this.getWebAppVersion() + "\",");
-        this.writeln("  \"potentialAction\": {");
-        this.writeln("      \"@type\": \"SearchAction\",");
-        this.writeln("      \"target\": \""+ urlActionTarget.getRequestURL()
-                + "&" + urlActionTarget.getUrlParametersInstance().getParamGeneId() + "={query}\",");
-        this.writeln("      \"query-input\": \"required name=query\"");
-        this.writeln("  }");
+        String datasets = groups.stream()
+                .filter(SpeciesDataGroup::isSingleSpecies)
+                .map(sdg -> {
+                    Species species = sdg.getMembers().get(0);
+                    String formattedName = species.getScientificName().replace(" ", "-").toLowerCase();
+                    Integer sdgId = sdg.getId();
+                    return "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + urlDownloadCalls.getRequestURL() + "#id" + sdgId + "\"," +
+                            "    \"sameAs\": \"" + urlDownloadCalls.getRequestURL() + "#id" + sdgId + "\"" +
+                            "}, " +
+                            "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#proc-values-" + formattedName + "-rna-seq\"," +
+                            "    \"sameAs\": \"" + urlDownloadProcValues.getRequestURL() + "#id" + sdgId + "\"" +
+                            "}," +
+                            "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#proc-values-" + formattedName + "-affymetrix\"," +
+                            "    \"sameAs\": \"" + urlDownloadProcValues.getRequestURL() + "#id" + sdgId + "\"" +
+                            "}";
+                        }
+                )
+                .collect(Collectors.joining(","));
 
-        this.writeln("}</script>");
+        String sibSchema =
+                "{" +
+                "    \"@type\": \"Organization\"," +
+                "    \"name\": \"SIB Swiss Institute of Bioinformatics\"," +
+                "    \"sameAs\": [ \"https://www.sib.swiss\", " +
+                        "\"https://fr.wikipedia.org/wiki/Institut_suisse_de_bioinformatique\" ]" +
+                "}";
+
+        String unilSchema =
+                "{" +
+                "    \"@type\": \"CollegeOrUniversity\"," +
+                "    \"name\": \"UNIL University of Lausanne\"," +
+                "    \"sameAs\": [ \"https://unil.ch/\", " +
+                        "\"https://fr.wikipedia.org/wiki/Universit%C3%A9_de_Lausanne\" ]" +
+                "}";
+
+        String ebGroupSchema =
+                "{" +
+                "    \"@type\": \"EducationalOrganization\"," +
+                "    \"name\": \"Evolutionary Bioinformatics group\"," +
+                "    \"sameAs\": \"https://www.unil.ch/dee/robinson-rechavi-group\"" +
+                "}";
+        
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@graph\": [" +
+                "    {" +
+                "      \"@type\": \"Organization\"," +
+                "      \"name\": \"Bgee - Bring Gene Expression Expertise\"," +
+                "      \"url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"description\": \"The aim of Bgee is to help biologists to use or understand gene expression\"," +
+                "      \"logo\": \""+ this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png\"," +
+                "      \"sameAs\": [ \"https://twitter.com/Bgeedb\", \"https://bgeedb.wordpress.com/\"]," +
+                "      \"parentOrganization\": [" + sibSchema + "," + unilSchema + "," + ebGroupSchema + "]" +
+                "    }," +
+                "    {" +
+                "      \"@type\": \"DataCatalog\"," +
+                "      \"@id\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"name\": \"Bgee gene expression data\"," +
+                "      \"description\": \"" + BGEE_DESCRIPTION + "\"," +
+                "      \"keywords\": \"" + BGEE_KEYWORDS + "\"," +
+                "      \"creator\": [" + ebGroupSchema + "]," +
+                "      \"provider\": [" + sibSchema + "," + unilSchema + "," + ebGroupSchema + "]," +
+                "      \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                "      \"version\": \"" + this.getWebAppVersion() + "\"," +
+                "      \"potentialAction\": {" +
+                "        \"@type\": \"SearchAction\"," +
+                "        \"target\": \"" + urlActionTarget.getRequestURL() + "&" + 
+                            urlActionTarget.getUrlParametersInstance().getParamQuery() +"={query}\"," +
+                "        \"query-input\": \"required name=query\"" +
+                "      }," +
+                "      \"dataset\": [" + datasets + "]" +
+                "    }" +
+                "  ]" +
+                "}");
+
+        this.writeln("</script>");
         log.exit();
     }
 

@@ -27,6 +27,7 @@ import org.bgee.model.species.SpeciesService;
 
 import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 /**
  * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
@@ -538,13 +539,18 @@ public class GeneService extends CommonService {
         if (sourceMap == null) {
             return log.exit(null);
         }
-        Set<GeneXRef> xrefs = xrefTOs == null ? new HashSet<>() : xrefTOs.get(to.getId()).stream()
+        Set<GeneXRef> xrefs = xrefTOs == null || xrefTOs.isEmpty()? new HashSet<>():
+            Optional.ofNullable(xrefTOs.get(to.getId())).orElse(new HashSet<>()).stream()
                 .map(xrefTO -> mapGeneXRefTOToXRef(xrefTO, sourceMap, to, speciesMap))
                 .collect(Collectors.toSet());
         //We add the source genomic database to the XRef
         Species species = speciesMap.get(to.getSpeciesId());
         //(but only if the genome used is indeed the genome of the species considered,
         //and not the genome of a closely related species)
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Species Map does not contain species " + to.getSpeciesId()));
+        }
         if (species.getId().equals(species.getGenomeSpeciesId())) {
             xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
                 species.getScientificName()));

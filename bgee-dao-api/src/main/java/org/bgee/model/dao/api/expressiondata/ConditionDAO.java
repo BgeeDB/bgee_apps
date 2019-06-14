@@ -11,11 +11,13 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
- * DAO defining queries using or retrieving {@link ConditionTO}s. 
+ * DAO defining queries using or retrieving {@link ConditionTO}s, used for expression calls
+ * (see {@link org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO RawDataConditionDAO}
+ * for conditions used in raw data). 
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Sep. 2018
+ * @version Bgee 14, Jun. 2019
  * @since   Bgee 14, Feb. 2017
  * @see ConditionTO
  */
@@ -33,10 +35,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
      * </ul>
      */
-    //XXX: retrieval of GlobalConditionMaxRanksTOs associated to a ConditionTO not yet implemented,
+    //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
     //to be added when needed.
     public enum Attribute implements DAO.Attribute {
-        ID("id", false), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId", false), 
+        ID("id", false), 
         SPECIES_ID("speciesId", false), 
         ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true);
 

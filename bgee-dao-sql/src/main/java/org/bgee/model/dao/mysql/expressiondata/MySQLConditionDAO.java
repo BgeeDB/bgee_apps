@@ -75,7 +75,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     + "contains some Attributes that are not condition parameters: " + condParams));
         }
     
-        final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap(true);
+        final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap();
         return log.exit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " IS "
@@ -91,15 +91,12 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      * @return          A {@code Map} where keys are {@code String}s that are column names, 
      *                  the associated value being the corresponding {@code ConditionDAO.Attribute}.
      */
-    private static Map<String, ConditionDAO.Attribute> getColToAttributesMap(boolean global) {
-        log.entry(global);
+    private static Map<String, ConditionDAO.Attribute> getColToAttributesMap() {
+        log.entry();
         Map<String, ConditionDAO.Attribute> colToAttributesMap = new HashMap<>();
-        colToAttributesMap.put(global? GLOBAL_COND_ID_FIELD: RAW_COND_ID_FIELD, ConditionDAO.Attribute.ID);
+        colToAttributesMap.put(GLOBAL_COND_ID_FIELD, ConditionDAO.Attribute.ID);
         //only the original condition table containing all parameters has the field "exprMappedConditionId", 
         //allowing to map conditions used in annotations to conditions used in expression tables.
-        if (!global) {
-            colToAttributesMap.put("exprMappedConditionId", ConditionDAO.Attribute.EXPR_MAPPED_CONDITION_ID);
-        }
         colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
         colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
@@ -129,34 +126,37 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, conditionParameters, attributes);
-        return log.exit(this.getConditionsBySpeciesIds(true, speciesIds, conditionParameters, attributes));
+        return log.exit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
     }
 
 
-    private ConditionTOResultSet getConditionsBySpeciesIds(boolean global, Collection<Integer> speciesIds,
+    private ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
-        log.entry(global, speciesIds, conditionParameters, attributes);
+        log.entry(speciesIds, conditionParameters, attributes);
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         final Set<ConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-        final String tableName = global? "globalCond": "cond";
+        final String tableName = "globalCond";
 
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(tableName, getColToAttributesMap(global),
+
+        //XXX: ConditionRankInfoTOs will be managed directly by the ConditionTOResultSet if we need it.
+        //Anyway, these maxRanks attributes are not described in ConditionDAO.Attributes
+        //because we abstracted away this database design with enumerated columns
+        //(for a discussion about this design, see http://stackoverflow.com/q/42781299/1768736)
+        sb.append(generateSelectClause(tableName, getColToAttributesMap(),
                 //for global conditions, we are never going to need the DISTINCT clause,
                 //since we are always going to define the NULL/NOT NULL status for
                 //all condition parameters. For raw conditions the table is small,
                 //so we don't bother and always add the DISTINCT clause.
-                !global, 
+                false, 
                 attrs)).append(" FROM ").append(tableName);
-        if (global) {
-            sb.append(" WHERE ")
-              .append(getCondParamCombinationWhereClause(tableName, conditionParameters));
-        }
+        sb.append(" WHERE ")
+          .append(getCondParamCombinationWhereClause(tableName, conditionParameters));
         if (!speIds.isEmpty()) {
-            sb.append(global? " AND ": " WHERE ")
+            sb.append(" AND ")
               .append(tableName).append(".").append(SPECIES_ID).append(" IN (")
               .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
               .append(")");
@@ -166,7 +166,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             if (!speIds.isEmpty()) {
                 stmt.setIntegers(1, speIds, true);
             }
-            return log.exit(new MySQLConditionTOResultSet(stmt, global));
+            return log.exit(new MySQLConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -177,11 +177,11 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         log.entry();
 
         String condIdField = getSelectExprFromAttribute(ConditionDAO.Attribute.ID,
-                getColToAttributesMap(true));
+                getColToAttributesMap());
         String sql = "SELECT MAX(" + condIdField + ") AS " + condIdField + " FROM globalCond";
     
         try (ConditionTOResultSet resultSet = new MySQLConditionTOResultSet(
-                this.getManager().getConnection().prepareStatement(sql), true)) {
+                this.getManager().getConnection().prepareStatement(sql))) {
             
             if (resultSet.next() && resultSet.getTO().getId() != null) {
                 return log.exit(resultSet.getTO().getId());
@@ -235,12 +235,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
 
         Set<ConditionDAO.Attribute> attrs = EnumSet.allOf(ConditionDAO.Attribute.class);
-        //this field is not present in the global condition table
-        attrs.remove(ConditionDAO.Attribute.EXPR_MAPPED_CONDITION_ID);
         //The order of the parameters is important for generating the query and then setting the parameters.
         final List<ConditionDAO.Attribute> toPopulate = new ArrayList<>(attrs);
 
-        final Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap(true);
+        final Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO globalCond (")
            .append(toPopulate.stream()
@@ -350,19 +348,12 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             implements ConditionTOResultSet {
 
         /**
-         * A {@code boolean} defining whether the global conditions (if {@code true}) were targeted,
-         * or the raw conditions (if {@code false}).
-         */
-        private final boolean global;
-        
-        /**
          * @param statement The {@code BgeePreparedStatement}
          * @param global    A {@code boolean} defining whether the global conditions (if {@code true})
          *                  were targeted, or the raw conditions (if {@code false}).
          */
-        private MySQLConditionTOResultSet(BgeePreparedStatement statement, boolean global) {
+        private MySQLConditionTOResultSet(BgeePreparedStatement statement) {
             super(statement);
-            this.global = global;
         }
 
         @Override
@@ -370,13 +361,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             log.entry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer id = null, exprMappedCondId = null, speciesId = null;
+                Integer id = null, speciesId = null;
                 String anatEntityId = null, stageId = null;
-                Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap(this.global);
+                Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
-                //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
-                //with ConditionDAO.Attributes (max rank columns)
                 COL: for (String columnName : this.getColumnLabels().values()) {
+                    //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
+                    //with ConditionDAO.Attributes (max rank columns)
                     ConditionDAO.Attribute attr = colToAttrMap.get(columnName);
                     if (attr == null) {
                         continue COL;
@@ -384,9 +375,6 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     switch (attr) {
                         case ID:
                             id = currentResultSet.getInt(columnName);
-                            break;
-                        case EXPR_MAPPED_CONDITION_ID:
-                            exprMappedCondId = currentResultSet.getInt(columnName);
                             break;
                         case SPECIES_ID:
                             speciesId = currentResultSet.getInt(columnName);
@@ -401,10 +389,9 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                //TODO: check that we shouldn't have exprMappedCondId anymore here?
-                //And then remove the EXPR_MAPPED_CONDITION_ID attribute?
-//                return log.exit(new ConditionTO(id, exprMappedCondId, anatEntityId, stageId, speciesId));
-                return log.exit(new ConditionTO(id, anatEntityId, stageId, speciesId));
+                //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
+                //to be added when needed.
+                return log.exit(new ConditionTO(id, anatEntityId, stageId, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

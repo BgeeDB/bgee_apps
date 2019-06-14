@@ -37,7 +37,7 @@ import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
@@ -114,8 +114,10 @@ public class CallServiceTest extends TestAncestor {
         when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(spe1.getId())), false))
         .thenReturn(speciesById);
 
-        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
+        ConditionRankInfoTO maxRankTO = new ConditionRankInfoTO(new BigDecimal(100),new BigDecimal(100));
+        Map<Integer, ConditionRankInfoTO> maxRankBySpeciesId = new HashMap<>();
+        maxRankBySpeciesId.put(spe1.getId(), maxRankTO);
+        when(this.condDAO.getMaxRanks(null, null)).thenReturn(maxRankBySpeciesId);
 
         getLogger().exit();
     }
@@ -290,9 +292,9 @@ public class CallServiceTest extends TestAncestor {
         when(this.devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
 
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId()),
-                new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId()),
-                new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId())));
+                new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId(), null),
+                new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -723,9 +725,9 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
         DevStage devStage2 = new DevStage("devStage2");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId());
-        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null);
+        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         Condition cond2 = new Condition(anatEntity1, devStage2, spe1);
         Condition cond3 = new Condition(anatEntity2, devStage1, spe1);
@@ -744,9 +746,9 @@ public class CallServiceTest extends TestAncestor {
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
         dataPropagation.put(ConditionDAO.Attribute.STAGE_ID, DAOPropagationState.SELF);
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId()),
-                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId()),
-                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId())));
+                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null),
+                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -980,7 +982,7 @@ public class CallServiceTest extends TestAncestor {
         
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
@@ -1175,8 +1177,8 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         Condition cond2 = new Condition(anatEntity2, devStage1, spe1);
 

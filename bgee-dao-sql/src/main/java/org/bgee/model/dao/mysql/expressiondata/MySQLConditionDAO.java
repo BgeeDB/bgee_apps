@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -20,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -193,33 +193,74 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     }
     
     @Override
-    public GlobalConditionMaxRankTO getMaxRank() throws DAOException {
-        log.entry();
+    public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
+            Collection<DAODataType> dataTypes) throws DAOException {
+        log.entry(speciesIds, dataTypes);
+
+        Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+        Set<DAODataType> clonedDataTypes = Collections.unmodifiableSet(
+                dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class): EnumSet.copyOf(dataTypes));
+
+        StringBuilder rankSb = new StringBuilder();
+        StringBuilder globalRankSb = new StringBuilder();
+        boolean first = true;
+        for (DAODataType dataType: clonedDataTypes) {
+            if (!first) {
+                rankSb.append(", ");
+                globalRankSb.append(", ");
+            }
+            switch(dataType) {
+            case EST:
+                rankSb.append("estMaxRank");
+                globalRankSb.append("estGlobalMaxRank");
+                break;
+            case AFFYMETRIX:
+                rankSb.append("affymetrixMaxRank");
+                globalRankSb.append("affymetrixGlobalMaxRank");
+                break;
+            case IN_SITU:
+                rankSb.append("inSituMaxRank");
+                globalRankSb.append("inSituGlobalMaxRank");
+                break;
+            case RNA_SEQ:
+                rankSb.append("rnaSeqMaxRank");
+                globalRankSb.append("rnaSeqGlobalMaxRank");
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
+            }
+            first = false;
+        }
+        
         StringBuilder sb = new StringBuilder();
-        //XXX: either we should have a ConditionMaxRankResultSet at some point,
-        //or it will be managed directly by the ConditionTOResultSet if we add a 'Set' attribute
-        //to ConditionTO to store one ConditionMaxRankTO per data type.
-        //Anyway, these maxRanks attributes are not described in ConditionDAO.Attributes
-        //because we abstracted away this database design with enumerated columns
-        //(for a discussion about this design, see http://stackoverflow.com/q/42781299/1768736)
-        sb.append("SELECT MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
-          .append("estMaxRank, inSituMaxRank)) AS maxRank, ")
-          // FIXME: Enable usage of global max ranks. Global max ranks were not generated for the bgee v14.0
-//          .append("MAX(GREATEST(affymetrixGlobalMaxRank, rnaSeqGlobalMaxRank, ")
-//          .append("estGlobalMaxRank, inSituGlobalMaxRank)) AS globalMaxRank ")
-          .append("MAX(GREATEST(affymetrixMaxRank, rnaSeqMaxRank, ")
-          .append("estMaxRank, inSituMaxRank)) AS globalMaxRank ")
-          .append("FROM globalCond");
+        sb.append("SELECT ").append(SPECIES_ID)
+          .append(", MAX(GREATEST(").append(rankSb.toString()).append(")) AS maxRank")
+          //Of note, global max ranks were not generated for bgee v14
+          .append(", MAX(GREATEST(").append(globalRankSb.toString()).append(")) AS globalMaxRank")
+          .append(" FROM globalCond");
+        if (!clonedSpeIds.isEmpty()) {
+            sb.append(" WHERE ").append(SPECIES_ID).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()))
+            .append(")");
+        }
+        sb.append(" GROUP BY ").append(SPECIES_ID);
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())) {
+            if (!clonedSpeIds.isEmpty()) {
+                stmt.setIntegers(1, clonedSpeIds, true);
+            }
             try (ResultSet rs = stmt.getRealPreparedStatement().executeQuery()) {
+                Map<Integer, ConditionRankInfoTO> results = new HashMap<>();
+                Integer speciesId = null;
                 BigDecimal maxRank = null, globalMaxRank = null;
-                if (rs.next()) {
+                while (rs.next()) {
+                    speciesId = rs.getInt(SPECIES_ID);
                     maxRank = rs.getBigDecimal("maxRank");
                     globalMaxRank = rs.getBigDecimal("globalMaxRank");
+                    results.put(speciesId, new ConditionRankInfoTO(maxRank, globalMaxRank));
                 }
-                GlobalConditionMaxRankTO rankTO = new GlobalConditionMaxRankTO(maxRank, globalMaxRank);
-                return log.exit(rankTO);
+                return log.exit(results);
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

@@ -22,6 +22,7 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sum
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
@@ -421,22 +422,59 @@ public class TOComparatorTest extends TestAncestor {
     
     /**
      * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
+     * using {@code ConditionRankInfoTO}s.
+     */
+    @Test
+    public void testAreConditionRankInfoTOsEqual() {
+        ConditionRankInfoTO to1 = new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000"), new BigDecimal("10000"));
+        ConditionRankInfoTO to2 = new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000"), new BigDecimal("10000"));
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        //Check with BigDecimals of different scales
+        to2 = new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000.00"), new BigDecimal("10000.00"));
+        assertTrue(TOComparator.areTOsEqual(to1, to2));
+
+        //Check when they are not equal
+        to2 = new ConditionRankInfoTO(DAODataType.EST, new BigDecimal("1000"), new BigDecimal("10000"));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("5000"), new BigDecimal("10000"));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+        
+        to2 = new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000"), new BigDecimal("50000"));
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+    }
+    
+    /**
+     * Test the generic method {@link TOComparator#areTOsEqual(TransferObject, TransferObject, boolean)}
      * using {@code ConditionTO}s.
      */
     @Test
     public void testAreConditionTOsEqual() {
-        ConditionTO to1 = new ConditionTO(1, "anatEntityId1", "stageId1", 99);
-        ConditionTO to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 99);
+        ConditionTO to1 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, null);
+        ConditionTO to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, null);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
-        
-        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 8);
+
+        Collection<ConditionRankInfoTO> rankTOs = Arrays.asList(
+                new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000"), new BigDecimal("10000")),
+                new ConditionRankInfoTO(DAODataType.EST, new BigDecimal("1000"), new BigDecimal("10000")));
+        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, rankTOs);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, rankTOs);
+        assertTrue(TOComparator.areTOsEqual(to1, to2, true));
+        assertTrue(TOComparator.areTOsEqual(to1, to2, false));
+
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to2 = new ConditionTO(1, "anatEntityId2", "stageId1", 99);
+
+        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", 99, null);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", 8, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
-        
-        to2 = new ConditionTO(86, "anatEntityId1", "stageId1", 99);
+
+        to2 = new ConditionTO(1, "anatEntityId2", "stageId1", 99, null);
+        assertFalse(TOComparator.areTOsEqual(to1, to2, true));
+
+        to2 = new ConditionTO(86, "anatEntityId1", "stageId1", 99, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

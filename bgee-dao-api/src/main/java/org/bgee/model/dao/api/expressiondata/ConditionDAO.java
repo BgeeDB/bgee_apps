@@ -2,6 +2,11 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -119,15 +124,31 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public int getMaxGlobalConditionId() throws DAOException;
 
     /**
-     * Retrieve the max ranks and global max ranks over all conditions and data types.
-     * Only the attributes returned by {@link GlobalConditionMaxRankTO#getMaxRank()} and
-     * {@link GlobalConditionMaxRankTO#getGlobalMaxRank()} are populated in the returned
-     * {@code GlobalConditionMaxRankTO}s.
-     * @return                          A {@code GlobalConditionMaxRankTO} allowing to retrieve
-     *                                  the max rank and global max rank.
+     * Retrieve the max ranks and global max ranks over all conditions and over the requested data types
+     * for the requested species.
+     * Only the attributes returned by {@link ConditionRankInfoTO#getMaxRank()} and
+     * {@link ConditionRankInfoTO#getGlobalMaxRank()} are populated in the returned
+     * {@code ConditionRankInfoTO}s.
+     * <p>
+     * Note that these max ranks are used to normalize ranks of expression calls, and to compute
+     * a weighted mean rank for each call. So, most of the time, the max weighted mean rank
+     * of the calls in a given species over all data types is less than the actual max rank
+     * for a given data type, as retrieved in these {@code ConditionRankInfoTO}s.
+     *
+     * @param speciesIds                A {@code Collection} of {@code Integer}s that are the IDs
+     *                                  of the species which we want the max ranks for. If {@code null}
+     *                                  or empty, max ranks for all species are returned.
+     * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
+     *                                  to consider when retrieving the max ranks. If {@code null}
+     *                                  or empty, all data types are considered.
+     * @return                          A {@code Map} where keys are {@code Integer}s representing IDs of species,
+     *                                  the associated value being a {@code ConditionRankInfoTO} allowing to retrieve
+     *                                  the max rank and global max rank over all conditions,
+     *                                  and for the requested data types, in this species.
      * @throws DAOException             If an error occurred when accessing the data source.
      */
-    public GlobalConditionMaxRankTO getMaxRank() throws DAOException;
+    public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
+            Collection<DAODataType> dataTypes) throws DAOException;
 
     /**
      * Insert into the datasource the provided global {@code ConditionTO}s. These global conditions
@@ -173,14 +194,39 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * 
      * @author  Valentine Rech de Laval
      * @author Frederic Bastian
-     * @version Bgee 14, Sep. 2018
+     * @version Bgee 14, Jun. 2019
      * @since   Bgee 14, Feb. 2017
      */
     public class ConditionTO extends BaseConditionTO {
         private static final long serialVersionUID = -1057540315343857464L;
+
+        /**
+         * @see #getRankInfoTOs()
+         */
+        private final Set<ConditionRankInfoTO> rankInfoTOs;
         
-        public ConditionTO(Integer id, String anatEntityId, String stageId, Integer speciesId) {
+        public ConditionTO(Integer id, String anatEntityId, String stageId, Integer speciesId,
+                Collection<ConditionRankInfoTO> rankInfoTOs) {
             super(id, anatEntityId, stageId, null, null, speciesId);
+            if (rankInfoTOs != null) {
+                this.rankInfoTOs = Collections.unmodifiableSet(new HashSet<>(rankInfoTOs));
+            } else {
+                this.rankInfoTOs = null;
+            }
+            //there should be at most one GlobalExpressionCallDataTO per data type.
+            //we simply use Collectors.toMap that throws an exception in case of key collision
+            if (this.rankInfoTOs != null) {
+                this.rankInfoTOs.stream().collect(Collectors.toMap(c -> c.getDataType(), c -> c));
+            }
+        }
+
+        /**
+         * @return  A {@code Set} of {@code ConditionRankInfoTO}s providing information
+         *          about max expression rank in this {@code ConditionTO},
+         *          one for each of the requested {@code DAODataType}.
+         */
+        public Set<ConditionRankInfoTO> getRankInfoTOs() {
+            return rankInfoTOs;
         }
 
         @Override
@@ -195,20 +241,22 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     }
 
     /**
-     * Allows to store the max gene expression ranks in each global condition,
-     * whether by taking into account the conditions itself, or all child conditions.
+     * Allows to store the max gene expression ranks in each global condition, for a specific {@code DAODataType}.
+     * Max ranks are computed either by taking into account the conditions itself (see {@link #getMaxRank()}),
+     * or all child conditions (see {@link #getGlobalMaxRank()}).
+     * <p>
+     * Note that these max ranks are used to normalize ranks of expression calls, and to compute
+     * a weighted mean rank for each call. So, most of the time, the max weighted mean rank
+     * of the calls in a given species over all data types is less than the actual max rank
+     * for a given data type, as retrieved in these {@code ConditionRankInfoTO}s.
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Mar. 2017
+     * @version Bgee 14 Jun. 2019
      * @since Bgee 14 mar. 2017
      */
-    public class GlobalConditionMaxRankTO extends TransferObject {
+    public class ConditionRankInfoTO extends TransferObject {
         private static final long serialVersionUID = 1170648972684653250L;
 
-        /**
-         * @see #getConditionId()
-         */
-        private final Integer conditionId;
         /**
          * @see #getDataType()
          */
@@ -222,24 +270,15 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          */
         private final BigDecimal globalMaxRank;
 
-        public GlobalConditionMaxRankTO(BigDecimal maxRank, BigDecimal globalMaxRank) {
-            this(null, null, maxRank, globalMaxRank);
+        public ConditionRankInfoTO(BigDecimal maxRank, BigDecimal globalMaxRank) {
+            this(null, maxRank, globalMaxRank);
         }
-        public GlobalConditionMaxRankTO(Integer conditionId, DAODataType dataType,
-                BigDecimal maxRank, BigDecimal globalMaxRank) {
-            this.conditionId = conditionId;
+        public ConditionRankInfoTO(DAODataType dataType, BigDecimal maxRank, BigDecimal globalMaxRank) {
             this.dataType = dataType;
             this.maxRank = maxRank;
             this.globalMaxRank = globalMaxRank;
         }
 
-        /**
-         * @return  An {@code Integer} that is the ID of the global condition which the max ranks
-         *          are related to.
-         */
-        public Integer getConditionId() {
-            return conditionId;
-        }
         /**
          * @return  A {@code DAODataType} that is the data type considered to compute
          *          the max ranks.
@@ -265,8 +304,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ConditionMaxRanksTO [conditionId=").append(conditionId)
-                   .append(", dataType=").append(dataType)
+            builder.append("ConditionMaxRanksTO [dataType=").append(dataType)
                    .append(", maxRank=").append(maxRank)
                    .append(", globalMaxRank=").append(globalMaxRank).append("]");
             return builder.toString();

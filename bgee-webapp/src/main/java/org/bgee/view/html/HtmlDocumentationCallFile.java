@@ -1739,12 +1739,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1>Expression call download file documentation</h1>");
+        this.writeln("<h1 property='schema:name'>Expression call download file documentation</h1>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        this.writeln("<div id='bgee_introduction'><p>Bgee provides calls of baseline "
+        this.writeln("<div id='bgee_introduction' property='schema:description'><p>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (orthologous genes "
                 + "in homologous organs). This documentation describes the format of these "

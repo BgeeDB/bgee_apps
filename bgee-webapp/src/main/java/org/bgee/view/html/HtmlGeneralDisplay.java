@@ -52,6 +52,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     @Override
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.entry(groups);
+        
+        this.addSchemaMarkups(groups);
 
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
@@ -60,8 +62,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                     "Only single-species groups should be displayed on the home page."));
         }
         
-        this.addSchemaMarkups(groups);
-
         this.displayHeroUnit();
 
         this.displaySpeciesBanner(groups);

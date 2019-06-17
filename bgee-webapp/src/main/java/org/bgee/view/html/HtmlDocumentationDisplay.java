@@ -287,7 +287,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayCallDownloadFileDocumentation() {
         log.entry();
         
-        this.startDisplay("Expression call download file documentation");
+        this.startDisplay("Expression call download file documentation", "WebPage");
         
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
@@ -305,6 +305,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayRefExprDownloadFileDocumentation() {
         log.entry();
         
+        // TODO add schema.org property "WebPage" when the documentation will be finished
         this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
         
         this.writeln("<div class='row'>");
@@ -324,7 +325,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayTopAnatDocumentation() {
         log.entry();
         
-        this.startDisplay("TopAnat documentation");
+        this.startDisplay("TopAnat documentation", "WebPage");
         
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
@@ -343,7 +344,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     public void displayDataSets() {
         log.entry();
 
-        this.startDisplay("Data sets into Bgee");
+        this.startDisplay("Data sets into Bgee", "WebPage");
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");

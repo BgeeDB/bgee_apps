@@ -448,16 +448,13 @@ public class CommandTopAnat extends CommandParent {
         //we initialize the display only if there is no file to download requested, 
         //otherwise we could not obtain the response outputstream to directly print 
         //the file to send to it.
-        TopAnatDisplay display = null;
-        if (!this.requestParameters.isATopAnatDownloadFile()) {
-            display = this.viewFactory.getTopAnatDisplay();
+        if (this.requestParameters.isATopAnatDownloadFile()) {
+            // Download result zip file
+            this.launchExportDownload();
+            log.exit(); return;
         }
-        
-        if (display == null) {
-            throw log.throwing(new PageNotFoundException("Incorrect "
-                    + this.requestParameters.getUrlParametersInstance().getParamAction()
-                    + " parameter value."));
-        }
+
+        TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
         
         // Gene list validation 
         if (this.requestParameters.isATopAnatGeneUpload()) {
@@ -553,11 +550,6 @@ public class CommandTopAnat extends CommandParent {
             display.sendResultResponse(data, "");
 
 
-         // Download result zip file
-        } else if (this.requestParameters.isATopAnatDownloadFile()) {
-            
-            this.launchExportDownload();
-            
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
             display.displayTopAnatHomePage();

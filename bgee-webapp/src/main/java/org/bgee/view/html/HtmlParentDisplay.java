@@ -3,6 +3,7 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +28,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, May 2019
+ * @version Bgee 14, June 2019
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -79,6 +80,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEEDB_R_PACKAGE_URL = 
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
   
+    /**
+     * A {@code String} that is the URL of the Bioconductor BgeeCall R package.
+     */
+    protected static final String BGEECALL_R_PACKAGE_URL =
+            "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html";
+
     /**
      * A {@code String} that is the URL of the Bgee GitHub.
      */
@@ -1152,5 +1159,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit("<a target='_blank' href='" + UBERON_ID_URL + 
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
                 "</a>");
+    }
+
+    protected String getSchemaMarkupGraph(List<String> properties) {
+        log.entry(properties);
+
+        return log.exit(
+                "<script type='application/ld+json'>" +
+                "    {" +
+                "        \"@context\": \"https://schema.org\"," +
+                "        \"@graph\": [" + String.join(",", properties) + "]" +
+                "    }" +
+                "</script>");
     }
 }

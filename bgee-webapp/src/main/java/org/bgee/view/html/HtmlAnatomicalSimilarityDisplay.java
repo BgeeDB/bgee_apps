@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code AnatomicalSimilarityDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 14, June 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay 
@@ -78,9 +78,9 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                                            List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
         log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
 
-        this.addSchemaMarkups();
-
         this.startDisplay("Anatomical homology");
+
+        this.addSchemaMarkups();
 
         this.writeln("<h1>Anatomical homology</h1>");
 

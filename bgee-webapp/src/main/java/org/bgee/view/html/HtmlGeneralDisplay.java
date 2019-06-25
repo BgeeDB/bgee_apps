@@ -1,6 +1,7 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +54,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.entry(groups);
         
-        this.addSchemaMarkups(groups);
-
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
+        this.addSchemaMarkups(groups);
+        
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(
                     "Only single-species groups should be displayed on the home page."));
@@ -101,8 +102,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlDownloadProcValues.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
         
-        this.writeln("<script type='application/ld+json'>");
-
         String datasets = groups.stream()
                 .filter(SpeciesDataGroup::isSingleSpecies)
                 .map(sdg -> {
@@ -151,9 +150,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "    \"sameAs\": \"https://www.unil.ch/dee/robinson-rechavi-group\"" +
                 "}";
         
-        this.writeln("{" +
-                "  \"@context\": \"https://schema.org\"," +
-                "  \"@graph\": [" +
+        this.writeln(getSchemaMarkupGraph(Arrays.asList(
                 "    {" +
                 "      \"@type\": \"Organization\"," +
                 "      \"name\": \"Bgee - Bring Gene Expression Expertise\"," +
@@ -162,7 +159,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "      \"logo\": \""+ this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png\"," +
                 "      \"sameAs\": [ \"https://twitter.com/Bgeedb\", \"https://bgeedb.wordpress.com/\"]," +
                 "      \"parentOrganization\": [" + sibSchema + "," + unilSchema + "," + ebGroupSchema + "]" +
-                "    }," +
+                "    }",
                 "    {" +
                 "      \"@type\": \"DataCatalog\"," +
                 "      \"@id\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
@@ -181,11 +178,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "        \"query-input\": \"required name=query\"" +
                 "      }," +
                 "      \"dataset\": [" + datasets + "]" +
-                "    }" +
-                "  ]" +
-                "}");
+                "    }")));
 
-        this.writeln("</script>");
         log.exit();
     }
 

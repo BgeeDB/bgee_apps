@@ -2,8 +2,6 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -62,24 +60,29 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 
-        this.addRPackageSchemaMarkups();
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_RESOURCES);
+        url.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
         
         this.startDisplay("R packages");
+
+        this.writeln(getSchemaMarkupGraph( Arrays.asList(
+                getSoftwareApplication("BgeeDB-R-package", "BgeeDB R package",
+                        BGEEDB_DESCRIPTION, BGEEDB_R_PACKAGE_URL),
+                getSoftwareApplication("BgeeCall-R-package", "BgeeCall R package",
+                        BGEECALL_DESCRIPTION, BGEECALL_R_PACKAGE_URL))));
 
         this.writeln("<h1>R packages</h1>");
 
         this.writeln("<div class='feature_list'>");
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(BGEEDB_R_PACKAGE_URL,
-                true, "BgeeDB R package", "BgeeDB R package",
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
-                BGEEDB_DESCRIPTION));
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                BGEEDB_R_PACKAGE_URL, true, "BgeeDB R package", "BgeeDB R package",
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", BGEEDB_DESCRIPTION));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html",
-                true, "BgeeCall R package", "BgeeCall R package",
-                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png",
-                BGEECALL_DESCRIPTION));
+                BGEECALL_R_PACKAGE_URL, true, "BgeeCall R package", "BgeeCall R package",
+                this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", BGEECALL_DESCRIPTION));
         
         this.writeln("</div>"); // close feature_list
 
@@ -111,7 +114,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.startDisplay("Annotation resources");
 
-        this.addSchemaMarkupGraph(Arrays.asList(
+        this.writeln(getSchemaMarkupGraph(Arrays.asList(
                 getCreativeWorkProperty("anatomical-similarity-annotations", "Anatomical similarity annotations",
                         anatSimDesc, anatSimUrl, RequestParameters.ACTION_RESOURCES_ANNOTATIONS),
                 getCreativeWorkProperty("RNA-seq-source-files", "RNA-Seq annotations",
@@ -121,7 +124,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 getCreativeWorkProperty("EST-source-files", "ESTs annotations",
                         estDesc, estSourceFileUrl, RequestParameters.ACTION_RESOURCES_ANNOTATIONS),
                 getCreativeWorkProperty("GTEx-cleaning-file", "GTEx cleaning for Bgee",
-                        gtexUrl, gtexUrl, RequestParameters.ACTION_RESOURCES_ANNOTATIONS)));
+                        gtexUrl, gtexUrl, RequestParameters.ACTION_RESOURCES_ANNOTATIONS))));
 
         this.writeln("<h1>Annotation resources</h1>");
         
@@ -171,13 +174,13 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         String cioUrl = BGEE_GITHUB_URL + "/confidence-information-ontology";
         String homUrl = BGEE_GITHUB_URL + "/homology-ontology";
 
-        this.addSchemaMarkupGraph(Arrays.asList(
+        this.writeln(getSchemaMarkupGraph(Arrays.asList(
                 getCreativeWorkProperty("developmental-stage-ontologies", "Developmental stage ontologies",
                         devStageDesc, devStageUrl, RequestParameters.ACTION_RESOURCES_ONTOLOGIES),
                 getCreativeWorkProperty("confidence-information-ontology", "Confidence Information Ontology (CIO)",
                         cioDesc, cioUrl, RequestParameters.ACTION_RESOURCES_ONTOLOGIES),
                 getCreativeWorkProperty("homology-ontology", "Homology ontology (HOM)",
-                        homDesc, homUrl, RequestParameters.ACTION_RESOURCES_ONTOLOGIES)));
+                        homDesc, homUrl, RequestParameters.ACTION_RESOURCES_ONTOLOGIES))));
 
         this.writeln("<h1>Ontology resources</h1>");
 
@@ -253,7 +256,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         String bgeecallGithubUrl = BGEE_GITHUB_URL + "/BgeeCall";
         String iqRayGithubUrl = BGEE_GITHUB_URL + "/IQRray";
 
-        this.addSchemaMarkupGraph(Arrays.asList(
+        this.writeln(this.getSchemaMarkupGraph(Arrays.asList(
                 getSoftwareSourceCodeProperty("Bgee-pipeline", "Bgee pipeline code",
                         pipelineDesc, pipelineGithubUrl, "Perl, R, and Java"),
                 getSoftwareSourceCodeProperty("BgeeDB-R-package", "BgeeDB R package code",
@@ -261,7 +264,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 getSoftwareSourceCodeProperty("BgeeCall-R-package", "BgeeCall R package code",
                         BGEECALL_DESCRIPTION, bgeecallGithubUrl, "R"),
                 getSoftwareSourceCodeProperty("IQRray", "IQRay code",
-                        iqRayDesc, iqRayGithubUrl, "R")));
+                        iqRayDesc, iqRayGithubUrl, "R"))));
 
         this.writeln("<h1>Source code</h1>");
 
@@ -290,21 +293,6 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         log.exit();         
     }
 
-    private void addSchemaMarkupGraph(List<String> properties) {
-        log.entry(properties);
-
-        this.writeln("<script type='application/ld+json'>");
-
-        this.writeln("{" +
-                "  \"@context\": \"https://schema.org\"," +
-                "  \"@graph\": [" + properties.stream().collect(Collectors.joining(",")) + "]" +
-                "}");
-
-        this.writeln("</script>");
-
-        log.exit();
-    }
-    
     private String getSoftwareSourceCodeProperty(String idSuffix, String name, String description, 
                                          String codeRepository, String programmingLanguage) {
         log.entry(idSuffix, name, description, codeRepository, programmingLanguage);
@@ -342,50 +330,28 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                         "       \"sameAs\": \"" + sameAsUrl + "\"" +
                         "    }");
     }
-    
-    /**
-     * Add schema.org markups to the page.
-     */
-    private void addRPackageSchemaMarkups() {
-        log.entry();
+
+    private String getSoftwareApplication(String idSuffix, String name, String description,
+                                          String sameAs) {
+        log.entry(idSuffix, name, description, sameAs);
 
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
 
-        this.writeln("<script type='application/ld+json'>");
-
-        this.writeln("{" +
-                "  \"@context\": \"https://schema.org\"," +
-                "  \"@graph\": [" +
-                "    {" +
-                "       \"@type\": \"SoftwareApplication\"," +
-                "       \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#BgeeDB-R-package\"," +
-                "       \"name\": \"BgeeDB R package\"," +
-                "       \"url\": \"" + url.getRequestURL() + "\"," +
-                "       \"offers\": {" +
-                "          \"@type\": \"Offer\"," +
-                "          \"price\": \"0.00\"," +
-                "          \"priceCurrency\": \"CHF\"" +
-                "       }, " +
-                "       \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
-                "    }, " +
-                "    {" +
-                "       \"@type\": \"SoftwareApplication\"," +
-                "       \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#BgeeCall-R-package\"," +
-                "       \"name\": \"BgeeCall R package\"," +
-                "       \"url\": \"" + url.getRequestURL() + "\"," +
-                "       \"offers\": {" +
-                "          \"@type\": \"Offer\"," +
-                "          \"price\": \"0.00\"," +
-                "          \"priceCurrency\": \"CHF\"" +
-                "       }, " +
-                "       \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
-                "    }" +
-                "  ]" +
-                "}");
-
-        this.writeln("</script>");
-        log.exit();
+        return log.exit("{" +
+                        "   \"@type\": \"SoftwareApplication\"," +
+                        "   \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#" + idSuffix + "\"," +
+                        "   \"name\": \"" + name + "\"," +
+                        "   \"description\": \"" + description + "\"," +
+                        "   \"url\": \"" + url.getRequestURL() + "\"," +
+                        "   \"offers\": {" +
+                        "      \"@type\": \"Offer\"," +
+                        "      \"price\": \"0.00\"," +
+                        "      \"priceCurrency\": \"CHF\"" +
+                        "   }, " +
+                        "   \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"," + // science software
+                        "   \"sameAs\": \"" + sameAs + "\"" +
+                        "}");
     }
 }

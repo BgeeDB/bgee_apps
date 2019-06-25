@@ -96,7 +96,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
         log.entry(searchTerm, result);
-        this.startDisplay("Gene information");
+        this.startDisplay("Gene information", "WebPage");
         
         this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
@@ -227,7 +227,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
         
-        this.startDisplay(titleStart);
+        this.startDisplay(titleStart, "WebPage");
         
         this.writeln("<h1 property='schema:name'>Gene search</h1>");
 

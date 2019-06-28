@@ -288,7 +288,8 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                 new StrNotNullOrEmpty(), // gene expression cat.
                 new StrNotNullOrEmpty(), // anat. entity expression cat.
                 new StrNotNullOrEmpty(), // call qual.
-                new StrNotNullOrEmpty() // rank score
+                new StrNotNullOrEmpty(), // rank score
+                new StrNotNullOrEmpty()  // expression score
         };
         List<List<Object>> allLines = new ArrayList<>();
         String[] headers;
@@ -308,7 +309,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                 c.getCondition().getDevStage().getId(), c.getCondition().getDevStage().getName(),
                 c.getExpressionLevelInfo().getQualExprLevelRelativeToGene().getExpressionLevelCategory().toString(),
                 c.getExpressionLevelInfo().getQualExprLevelRelativeToAnatEntity().getExpressionLevelCategory().toString(),
-                c.getSummaryQuality().toString(), c.getFormattedMeanRank()))
+                c.getSummaryQuality().toString(), c.getFormattedMeanRank(), c.getFormattedExpressionScore()))
                 .collect(Collectors.toList());
         assertEquals("Inccorect data written in file", expectedLines, allLines);
     }

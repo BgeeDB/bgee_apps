@@ -201,7 +201,7 @@ public class GenerateOncoMXFile {
                 CallService.Attribute.ANAT_ENTITY_ID,
                 CallService.Attribute.DEV_STAGE_ID,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
-                CallService.Attribute.MEAN_RANK,
+                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
                 CallService.Attribute.GENE_QUAL_EXPR_LEVEL,
                 CallService.Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL));
     }
@@ -224,7 +224,7 @@ public class GenerateOncoMXFile {
                     "Developmental stage ID", "Developmental stage name",
                     "Expression level relative to gene",
                     "Expression level relative to anatomical entity",
-                    "Call quality", "Expression rank score" });
+                    "Call quality", "Expression rank score", "Expression score" });
     }
 
     // ************************************
@@ -325,7 +325,8 @@ public class GenerateOncoMXFile {
                         new IsIncludedIn(allowedExpressionCategories), // gene expression cat.
                         new IsIncludedIn(allowedExpressionCategories), // anat. entity expression cat.
                         new IsIncludedIn(allowedCallQualities), // call qual.
-                        new StrNotNullOrEmpty() // rank score
+                        new StrNotNullOrEmpty(), // rank score
+                        new StrNotNullOrEmpty()  // expression score
                 };
 
                 //Write the calls
@@ -349,6 +350,7 @@ public class GenerateOncoMXFile {
                                 .getExpressionLevelCategory().toString());
                         toWrite.add(call.getSummaryQuality().toString());
                         toWrite.add(call.getFormattedMeanRank());
+                        toWrite.add(call.getFormattedExpressionScore());
                     } catch (IllegalArgumentException e) {
                         log.error("Error with call: {}", call);
                         throw log.throwing(e);

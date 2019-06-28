@@ -239,9 +239,25 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ").append(SPECIES_ID)
-          .append(", MAX(GREATEST(").append(rankSb.toString()).append(")) AS maxRank")
+          .append(", MAX(");
+        if (clonedDataTypes.size() > 1) {
+            sb.append("GREATEST(");
+        }
+        sb.append(rankSb.toString());
+        if (clonedDataTypes.size() > 1) {
+            sb.append(")");
+        }
+        sb.append(") AS maxRank")
           //Of note, global max ranks were not generated for bgee v14
-          .append(", MAX(GREATEST(").append(globalRankSb.toString()).append(")) AS globalMaxRank")
+          .append(", MAX(");
+        if (clonedDataTypes.size() > 1) {
+            sb.append("GREATEST(");
+        }
+        sb.append(globalRankSb.toString());
+        if (clonedDataTypes.size() > 1) {
+            sb.append(")");
+        }
+        sb.append(") AS globalMaxRank")
           .append(" FROM globalCond")
           .append(" WHERE ");
         if (!clonedSpeIds.isEmpty()) {

@@ -72,8 +72,44 @@ public class ExpressionLevelInfo {
         }
         return log.exit(formatter);
     }
+    /**
+     * @param number    The {@code BigDecimal} to format.
+     * @return          A {@code String} corresponding to the provided {@code number}, formatted
+     *                  with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3.
+     *                  No value returned will be equal to 0, the smallest value returned will be 0.01
+     */
+    private static final String formatExpressionNumber(BigDecimal number) {
+        log.entry(number);
+        if (number == null) {
+            return log.exit(null);
+        }
+        BigDecimal threshold = new BigDecimal("0.01");
+        BigDecimal numberToFormat = number;
+        if (number.compareTo(threshold) < 0) {
+            numberToFormat = threshold;
+        }
+        NumberFormat formatter = null;
+        //start with values over 1000, more chances to have a match.
+        //And since we are going to round half up, 999.5 will be rounded to 1000
+        //IMPORTANT: if you want to change the rounding etc, you have to change the method getNumberFormat
+        if (numberToFormat.compareTo(new BigDecimal("999.5")) >= 0) {
+            formatter = FORMAT1000;
+        //2 significant digits kept below 10, so 9.995 will be rounded to 10
+        } else if (numberToFormat.compareTo(new BigDecimal("9.995")) < 0) {
+            formatter = FORMAT1;
+        //1 significant digit kept below 100, so 99.95 will be rounded to 100
+        } else if (numberToFormat.compareTo(new BigDecimal("99.95")) < 0) {
+            formatter = FORMAT10;
+        //0 significant digit kept below 1000, so 999.5 will be rounded to 1000
+        } else if (numberToFormat.compareTo(new BigDecimal("999.5")) < 0) {
+            formatter = FORMAT100;
+        }
+        //1E2 to 1e2
+        return log.exit(formatter.format(numberToFormat).toLowerCase(Locale.ENGLISH));
+    }
 
     private final BigDecimal rank;
+    private final BigDecimal expressionScore;
     private final QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene;
     private final QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity;
 
@@ -81,21 +117,29 @@ public class ExpressionLevelInfo {
      * @param rank  See {@link #getRank()}
      */
     public ExpressionLevelInfo(BigDecimal rank) {
-        this(rank, null, null);
+        this(rank, null, null, null);
     }
     /**
      * @param rank                              See {@link #getRank()}
+     * @param expressionScore                   See {@link #getExpressionScore()}
      * @param qualExprLevelRelativeToGene       See {@link #getQualExprLevelRelativeToGene()}
      * @param qualExprLevelRelativeToAnatEntity See {@link #getQualExprLevelRelativeToAnatEntity()}
      */
-    public ExpressionLevelInfo(BigDecimal rank,
+    public ExpressionLevelInfo(BigDecimal rank, BigDecimal expressionScore,
             QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene,
             QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity) {
-        if (rank != null && rank.compareTo(new BigDecimal(0)) <= 0) {
+        if (rank != null && rank.compareTo(new BigDecimal("0")) <= 0) {
             throw log.throwing(new IllegalArgumentException(
                     "The rank cannot be less than or equal to 0."));
         }
+        if (expressionScore != null &&
+                (expressionScore.compareTo(new BigDecimal("0")) <= 0 ||
+                        expressionScore.compareTo(new BigDecimal("100")) > 0)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The expression score must be greater than 0 and less than or equal to 100"));
+        }
         this.rank = rank;
+        this.expressionScore = expressionScore;
         this.qualExprLevelRelativeToGene = qualExprLevelRelativeToGene;
         this.qualExprLevelRelativeToAnatEntity = qualExprLevelRelativeToAnatEntity;
     }
@@ -110,32 +154,41 @@ public class ExpressionLevelInfo {
     }
     /**
      * @return  A {@code String} corresponding to the rank score of this call, formatted
-     *          with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3, ...
+     *          with always 3 digits displayed, e.g.: 1.23, 12.3, 123, 1.23e3.
      * @see #getRank()
      */
     public String getFormattedRank() {
         log.entry();
-        if (this.rank == null) {
-            return log.exit(null);
-        }
-        NumberFormat formatter = null;
-        //start with values over 1000, more chances to have a match.
-        //And since we are going to round half up, 999.5 will be rounded to 1000
-        //IMPORTANT: if you want to change the rounding etc, you have to change the method getNumberFormat
-        if (this.rank.compareTo(new BigDecimal(999.5)) >= 0) {
-            formatter = FORMAT1000;
-        //2 significant digits kept below 10, so 9.995 will be rounded to 10
-        } else if (this.rank.compareTo(new BigDecimal(9.995)) < 0) {
-            formatter = FORMAT1;
-        //1 significant digit kept below 100, so 99.95 will be rounded to 100
-        } else if (this.rank.compareTo(new BigDecimal(99.95)) < 0) {
-            formatter = FORMAT10;
-        //0 significant digit kept below 1000, so 999.5 will be rounded to 1000
-        } else if (this.rank.compareTo(new BigDecimal(999.5)) < 0) {
-            formatter = FORMAT100;
-        }
-        //1E2 to 1e2
-        return log.exit(formatter.format(this.rank).toLowerCase(Locale.ENGLISH));
+        return log.exit(formatExpressionNumber(this.rank));
+    }
+    /**
+     * @return  The {@code BigDecimal} corresponding to the expression score,
+     *          reflecting the expression level of an {@code ExpressionCall}.
+     *          The expression score is:
+     *          <ul>
+     *          <li> a normalization of the rank returned by {@link #getRank()}
+     *          to a value between 1 and 100
+     *          <li>The values are inverted as compared to the rank returned by {@link #getRank()}:
+     *          the higher the expression score, the higher the expression level (for ranks, it is the opposite,
+     *          the lower the rank, the higher the expression level).
+     *          </ul>
+     *          So, the max rank in a species corresponds to an expression score of 1,
+     *          and a rank of 1 corresponds to an expression score of 100.
+     *
+     * @see #getFormattedExpressionScore()
+     * @see #getRank()
+     */
+    public BigDecimal getExpressionScore() {
+        return expressionScore;
+    }
+    /**
+     * @return  A {@code String} corresponding to the expression score of this call, formatted
+     *          with always 3 digits displayed, e.g.: 1.23, 12.3, 100.
+     * @see #getExpressionScore()
+     */
+    public String getFormattedExpressionScore() {
+        log.entry();
+        return log.exit(formatExpressionNumber(this.expressionScore));
     }
     /**
      * @return  {@code QualitativeExpressionLevel} for an {@code ExpressionCall}
@@ -166,6 +219,7 @@ public class ExpressionLevelInfo {
                 + ((qualExprLevelRelativeToAnatEntity == null) ? 0 : qualExprLevelRelativeToAnatEntity.hashCode());
         result = prime * result + ((qualExprLevelRelativeToGene == null) ? 0 : qualExprLevelRelativeToGene.hashCode());
         result = prime * result + ((rank == null) ? 0 : rank.hashCode());
+        result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
         return result;
     }
     @Override
@@ -201,6 +255,13 @@ public class ExpressionLevelInfo {
         } else if (!rank.equals(other.rank)) {
             return false;
         }
+        if (expressionScore == null) {
+            if (other.expressionScore != null) {
+                return false;
+            }
+        } else if (!expressionScore.equals(other.expressionScore)) {
+            return false;
+        }
         return true;
     }
 
@@ -208,6 +269,7 @@ public class ExpressionLevelInfo {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("ExpressionLevelInfo [rank=").append(rank)
+               .append(", expressionScore=").append(expressionScore)
                .append(", qualExprLevelRelativeToGene=").append(qualExprLevelRelativeToGene)
                .append(", qualExprLevelRelativeToAnatEntity=")
                .append(qualExprLevelRelativeToAnatEntity).append("]");

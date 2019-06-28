@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +40,7 @@ import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -109,6 +111,7 @@ public class CallService extends CommonService {
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
      * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
      * <li>{@code MEAN_RANK}: corresponds to {@link ExpressionCall#getMeanRank()}.
+     * <li>{@code EXPRESSION_SCORE}: corresponds to {@link ExpressionCall#getExpressionScore()}.
      * <li>{@code EXPERIMENT_COUNTS}: corresponds to {@link Call#getCallData()} with experiment
      * expression <strong>total</strong> and <strong>self</strong> counts populated per data type
      * for the requested data types.
@@ -130,7 +133,7 @@ public class CallService extends CommonService {
      */
     public static enum Attribute implements Service.Attribute {
         GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CALL_TYPE(false),
-        DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false),
+        DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false), EXPRESSION_SCORE(false),
         EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false),
         GENE_QUAL_EXPR_LEVEL(false), ANAT_ENTITY_QUAL_EXPR_LEVEL(false);
         
@@ -263,6 +266,10 @@ public class CallService extends CommonService {
      */
     private final static Map<Expression, Boolean> OBSERVED_DATA_FOR_RANKS_FILTER =
             Collections.singletonMap(null, true);
+    /**
+     * A {@code BigDecimal} representing the minimum value that can take an expression score.
+     */
+    public final static BigDecimal EXPRESSION_SCORE_MIN_VALUE = new BigDecimal("0.01");
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
@@ -363,6 +370,13 @@ public class CallService extends CommonService {
         // Retrieve species, get a map species ID -> Species
         final Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(),
                 this.getServiceFactory().getSpeciesService());
+        //If several species were requested, it is necessary to request at least GENE or ANAT_ENTITY/DEV_STAGE
+        if (speciesMap.size() > 1 && !clonedAttrs.isEmpty() &&
+                !clonedAttrs.contains(Attribute.GENE) && clonedAttrs.stream().noneMatch(a -> a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "You requested data in several species, you should request in Attributes gene information "
+                    + "or condition parameter information, otherwise you won't be able to distinguish calls from different species."));
+        }
 
         //Retrieve a Map of Bgee gene IDs to Gene. This will throw a GeneNotFoundException
         //if some requested gene IDs were not found in Bgee.
@@ -397,10 +411,19 @@ public class CallService extends CommonService {
         Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks = loadMinMaxRanksPerGene(
                 clonedAttrs, clonedOrderingAttrs, condParamCombination, geneMap, callFilter);
 
+        //Retrieve max rank for the requested species if EXPRESSION_SCORE requested
+        //(the max rank is required to convert mean ranks into expression scores)
+        Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = clonedAttrs.isEmpty() ||
+                clonedAttrs.contains(Attribute.EXPRESSION_SCORE)?
+                        conditionDAO.getMaxRanks(speciesMap.keySet(),
+                                convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
+                                condParamCombination):
+                        null;
+
 
         //All necessary information ready, retrieve ExpressionCalls
         return log.exit(loadExpressionCallStream(callFilter, clonedAttrs, clonedOrderingAttrs,
-                condParamCombination, geneMap, condMap, anatEntityMinMaxRanks, geneMinMaxRanks));
+                condParamCombination, geneMap, condMap, maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks));
     }
 
     public Stream<DiffExpressionCall> loadDiffExpressionCalls(Integer speciesId, 
@@ -866,10 +889,11 @@ public class CallService extends CommonService {
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
             Set<ConditionDAO.Attribute> condParamCombination,
             final Map<Integer, Gene> geneMap, final Map<Integer, Condition> condMap,
+            Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks) {
         log.entry(callFilter, attrs, orderingAttrs, condParamCombination, geneMap, condMap,
-                anatEntityMinMaxRanks, geneMinMaxRanks);
+                maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks);
 
         // Retrieve the Stream<GlobalExpressionCallTO>
         Stream<GlobalExpressionCallTO> toStream = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
@@ -920,7 +944,7 @@ public class CallService extends CommonService {
                             //so, rather than computing CallData and SumaryCall several times,
                             //we directly create ExpressionCalls
                             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter,
-                                    null, null, attrs))
+                                    maxRankPerSpecies, null, null, attrs))
                             .collect(Collectors.toList());
     
                     if (intermediateCalls.isEmpty()) {
@@ -948,7 +972,7 @@ public class CallService extends CommonService {
                             c.getSummaryCallType(),
                             c.getSummaryQuality(),
                             c.getCallData(),
-                            loadExpressionLevelInfo(c.getSummaryCallType(), c.getMeanRank(),
+                            loadExpressionLevelInfo(c.getSummaryCallType(), c.getMeanRank(), c.getExpressionScore(),
                                     anatEntityMinMaxRank != null? anatEntityMinMaxRank:
                                         anatEntityMinMaxRanks.get(c.getCondition().getAnatEntity()),
                                     geneMinMaxRank != null? geneMinMaxRank:
@@ -965,7 +989,7 @@ public class CallService extends CommonService {
         //We thus don't use intermediate steps to create the ExpressionCalls.
         return log.exit(toStream
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter,
-                    anatEntityMinMaxRanks, geneMinMaxRanks, attrs)));
+                    maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks, attrs)));
     }
 
     /**
@@ -1186,10 +1210,11 @@ public class CallService extends CommonService {
                 previousEntity));
     }
 
-    private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary, BigDecimal rank,
+    private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary,
+            BigDecimal rank, BigDecimal expressionScore,
             EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
-        log.entry(exprSummary, rank, anatEntityMinMaxRank, geneMinMaxRank);
-        return log.exit(new ExpressionLevelInfo(rank,
+        log.entry(exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
+        return log.exit(new ExpressionLevelInfo(rank, expressionScore,
                 loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
                 loadQualExprLevel(exprSummary, rank, anatEntityMinMaxRank)));
     }
@@ -1658,6 +1683,7 @@ public class CallService extends CommonService {
                 case OBSERVED_DATA:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVED_DATA);
                 case MEAN_RANK:
+                case EXPRESSION_SCORE:
                 case GENE_QUAL_EXPR_LEVEL:
                 case ANAT_ENTITY_QUAL_EXPR_LEVEL:
                     return Stream.of(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
@@ -1735,11 +1761,11 @@ public class CallService extends CommonService {
     //*************************************************************************
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
-            ExpressionCallFilter callFilter,
+            ExpressionCallFilter callFilter, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks,
             Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, callFilter, anatEntityMinMaxRanks,
+        log.entry(globalCallTO, geneMap, condMap, callFilter, maxRankPerSpecies, anatEntityMinMaxRanks,
                 geneMinMaxRanks, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
@@ -1747,6 +1773,27 @@ public class CallService extends CommonService {
 
         Condition cond = condMap.get(globalCallTO.getConditionId());
         Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
+        assert maxRankPerSpecies == null || maxRankPerSpecies.size() <= 1 || cond != null || gene != null;
+        assert cond == null || gene == null || cond.getSpeciesId() == gene.getSpecies().getId();
+        assert (attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPRESSION_SCORE)) &&
+        maxRankPerSpecies != null && !maxRankPerSpecies.isEmpty() ||
+                attrs != null && !attrs.isEmpty() && !attrs.contains(Attribute.EXPRESSION_SCORE);
+        ConditionRankInfoTO maxRankInfo = null;
+        if (maxRankPerSpecies != null) {
+            if (maxRankPerSpecies.size() == 1) {
+                maxRankInfo = maxRankPerSpecies.values().iterator().next();
+            } else {
+                int speciesId = cond != null? cond.getSpeciesId(): gene.getSpecies().getId();
+                maxRankInfo = maxRankPerSpecies.get(speciesId);
+            }
+            if (maxRankInfo == null) {
+                throw log.throwing(new IllegalStateException("No max rank could be retrieved for call " + globalCallTO));
+            }
+        }
+
+        BigDecimal expressionScore = attrs == null || attrs.isEmpty() || attrs.contains(Attribute.EXPRESSION_SCORE)?
+                //XXX: to reevaluate if we ever use global ranks, we would need to use maxRankInfo.getGlobalMaxRank()
+                computeExpressionScore(globalCallTO.getMeanRank(), maxRankInfo.getMaxRank()): null;
         ExpressionSummary exprSummary = attrs == null || attrs.isEmpty() || attrs.contains(Attribute.CALL_TYPE)?
                 inferSummaryCallType(callData): null;
         return log.exit(new ExpressionCall(
@@ -1763,12 +1810,33 @@ public class CallService extends CommonService {
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO)?
                             callData: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.MEAN_RANK) ||
+            attrs.contains(Attribute.EXPRESSION_SCORE) ||
             attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
             attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)?
-                    loadExpressionLevelInfo(exprSummary, globalCallTO.getMeanRank(),
+                    loadExpressionLevelInfo(exprSummary, globalCallTO.getMeanRank(), expressionScore,
                             anatEntityMinMaxRanks == null? null:
                                 anatEntityMinMaxRanks.get(cond.getAnatEntity()),
                             geneMinMaxRanks == null? null: geneMinMaxRanks.get(gene)): null));
+    }
+
+    private static BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
+        log.entry(rank, maxRank);
+        if (rank == null || maxRank == null ||
+                rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
+            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be null or less than or equal to 0"));
+        }
+        if (rank.compareTo(maxRank) > 0) {
+            throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
+                    + " - maxRank: " + maxRank));
+        }
+
+        BigDecimal invertedRank = maxRank.add(new BigDecimal("1")).subtract(rank);
+        BigDecimal expressionScore = invertedRank.multiply(new BigDecimal("100")).divide(maxRank, 5, RoundingMode.HALF_UP);
+        //We want expression score to be at least greater than EXPRESSION_SCORE_MIN_VALUE
+        if (expressionScore.compareTo(EXPRESSION_SCORE_MIN_VALUE) < 0) {
+            expressionScore = EXPRESSION_SCORE_MIN_VALUE;
+        }
+        return log.exit(expressionScore);
     }
 
     private static Set<ExpressionCallData> mapGlobalCallTOToExpressionCallData(

@@ -911,7 +911,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getRank();
         }
         /**
-         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
          * ExpressionLevelInfo.getFormattedRank()} from {@link #getExpressionLevelInfo()}.
          * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
          *          ExpressionLevelInfo.getFormattedRank()}.
@@ -922,6 +922,31 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             log.entry();
             return log.exit(this.getExpressionLevelInfo() == null? null:
                 this.getExpressionLevelInfo().getFormattedRank());
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getExpressionScore()
+         * ExpressionLevelInfo.getExpressionScore()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getExpressionScore()
+         *          ExpressionLevelInfo.getExpressionScore()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getMeanRank()
+         * @see #getFormattedExpressionScore()
+         */
+        public BigDecimal getExpressionScore() {
+            return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getExpressionScore();
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedExpressionScore()
+         * ExpressionLevelInfo.getFormattedExpressionScore()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedExpressionScore()
+         *          ExpressionLevelInfo.getFormattedExpressionScore()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getExpressionScore()
+         */
+        public String getFormattedExpressionScore() {
+            log.entry();
+            return log.exit(this.getExpressionLevelInfo() == null? null:
+                this.getExpressionLevelInfo().getFormattedExpressionScore());
         }
         
         @Override

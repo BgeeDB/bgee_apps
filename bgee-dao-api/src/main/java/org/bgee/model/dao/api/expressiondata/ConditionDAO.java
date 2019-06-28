@@ -141,6 +141,12 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
      *                                  to consider when retrieving the max ranks. If {@code null}
      *                                  or empty, all data types are considered.
+     * @param conditionParameters       A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                                  condition parameters considered for aggregating the expression data
+     *                                  (see {@link Attribute#isConditionParameter()}).
+     *                                  For instance, to retrieve max ranks over conditions considering
+     *                                  anatomical entities and dev. stages, or max ranks over conditions
+     *                                  considering only anatomical entities.
      * @return                          A {@code Map} where keys are {@code Integer}s representing IDs of species,
      *                                  the associated value being a {@code ConditionRankInfoTO} allowing to retrieve
      *                                  the max rank and global max rank over all conditions,
@@ -148,7 +154,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @throws DAOException             If an error occurred when accessing the data source.
      */
     public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
-            Collection<DAODataType> dataTypes) throws DAOException;
+            Collection<DAODataType> dataTypes, Collection<Attribute> conditionParameters) throws DAOException;
 
     /**
      * Insert into the datasource the provided global {@code ConditionTO}s. These global conditions

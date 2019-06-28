@@ -114,14 +114,16 @@ public class CallServiceTest extends TestAncestor {
         when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(spe1.getId())), false))
         .thenReturn(speciesById);
 
+        //XXX: this needs to be refined I guess
         ConditionRankInfoTO maxRankTO = new ConditionRankInfoTO(new BigDecimal(100),new BigDecimal(100));
         Map<Integer, ConditionRankInfoTO> maxRankBySpeciesId = new HashMap<>();
         maxRankBySpeciesId.put(spe1.getId(), maxRankTO);
-        when(this.condDAO.getMaxRanks(null, null)).thenReturn(maxRankBySpeciesId);
+        when(this.condDAO.getMaxRanks(anyCollectionOf(Integer.class), anyCollectionOf(DAODataType.class),
+                anyCollectionOf(ConditionDAO.Attribute.class))).thenReturn(maxRankBySpeciesId);
 
         getLogger().exit();
     }
-    
+  
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
      * Collection, LinkedHashMap, boolean)}.

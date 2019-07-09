@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.file.DownloadFile;
 import org.bgee.model.species.Species;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
@@ -28,7 +29,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, June 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -139,6 +140,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the name of the 'Bgee Lite' database.
      */
     protected final static String BGEE_LITE_NAME = "'Bgee Lite'";
+
+    /**
+     * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 
+     * with their description.
+     */
+    protected static final String COND_PARAM_DESC_LIST = "<ul class='doc_content'>"
+            + "<li><span class='list_element_title'>anatomical entities only (by default) </span> "
+            + "files contain one expression call for each unique pair of gene and anatomical entity."
+            + "If more than one developmental stage map this unique pair, the resulting expression "
+            + "call correspond to summarized information coming from all developmental stages. "
+            + "</li>"
+            + "<li><span class='list_element_title'>anatomical entities and developmental stages</span> "
+            + "files contain one expression call for each unique gene, anatomical entity and developmental stage. "
+            + "</li>"
+            + "</ul>";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -460,6 +476,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
         
+        RequestParameters urlSpeciesList = this.getNewRequestParameters();
+        urlSpeciesList.setPage(RequestParameters.PAGE_SPECIES);
+
         RequestParameters urlSparql = this.getNewRequestParameters();
         urlSparql.setPage(RequestParameters.PAGE_SPARQL);
 
@@ -579,6 +598,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a title='Species list' href='").append(urlSpeciesList.getRequestURL())
+                .append("'>Species list</a></li>");
         navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
         .append("'>SPARQL endpoint</a></li>");
         navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
@@ -1171,5 +1192,63 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "        \"@graph\": [" + String.join(",", properties) + "]" +
                 "    }" +
                 "</script>");
+    }
+
+    /**
+     * Return the {@code String} representing the species scientific and common names.
+     * The common name, surrounded by brackets, is displayed only if it is defined.
+     *
+     * @param species       A {@code Species} that is the species that should be displayed.
+     * @param hasSchemaTag  A {@code boolean} defining whether the Bioschemas property 'name' should be set.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected static String getCompleteSpeciesName(Species species, boolean hasSchemaTag) {
+        log.entry(species, hasSchemaTag);
+        String schemaTag = hasSchemaTag? "property='bs:name'": "";
+        return log.exit("<em " + schemaTag + ">" + htmlEntities(species.getScientificName()) + "</em>"
+                + (StringUtils.isNotBlank(species.getName()) ? " (" + htmlEntities(species.getName()) + ")" : ""));
+    }
+
+    /**
+     * Return the {@code String} that is the Dataset schema.org id.
+     *
+     * @param speciesId     An {@code Integer} that is the species ID that should be used.
+     * @param category      A {@code Category} that is the type of the Dataset.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected String getDatasetSchemaId(Integer speciesId, DownloadFile.CategoryEnum category) {
+        log.entry(speciesId, category);
+        RequestParameters url = getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_SPECIES);
+        url.setSpeciesId(speciesId);
+        String hash;
+        switch (category) {
+            case EXPR_CALLS_COMPLETE:
+                hash = "expr-calls";
+                break;
+            case AFFY_DATA:
+                hash = "proc-values-affymetrix";
+                break;
+            case RNASEQ_DATA:
+                hash = "proc-values-rna-seq";
+                break;
+            default:
+                throw log.throwing(new IllegalArgumentException(
+                        "CategoryEnum not supported: " + category));
+        }
+        return log.exit(url.getRequestURL() + "#" + hash);
+    }
+    /**
+     * Return the {@code String} that is the Dataset schema.org id.
+     *
+     * @param speciesId     An {@code Integer} that is the species ID that should be used.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected String getDatasetSchemaUrl(Integer speciesId) {
+        log.entry(speciesId);
+        RequestParameters url = getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_SPECIES);
+        url.setSpeciesId(speciesId);
+        return log.exit(url.getRequestURL());
     }
 }

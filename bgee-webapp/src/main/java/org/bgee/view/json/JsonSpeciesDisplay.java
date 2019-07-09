@@ -10,10 +10,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SpeciesDisplay;
 
+/**
+ * This class is the JSON view of the {@code SpeciesDisplay}.
+ *
+ * @author  Frederic Bastian
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, July 2019
+ * @since   Bgee 13, June 2015
+ */
 public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisplay {
 
     private final static Logger log = LogManager.getLogger(JsonSpeciesDisplay.class.getName());
@@ -41,6 +50,11 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
     }
 
     @Override
+    public void displaySpeciesHomePage(List<Species> speciesList) {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
+
+    @Override
     public void sendSpeciesResponse(List<Species> species) {
         log.entry(species);
         
@@ -51,5 +65,10 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
         this.sendResponse("List of requested species", data);
         
         log.exit();
+    }
+
+    @Override
+    public void displaySpecies(Species species, SpeciesDataGroup speciesDataGroup) {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 }

@@ -66,6 +66,8 @@ var urlParameters = {
             this.list.push(this.SEARCH);
             this.GENE_ID = new urlParameters.Parameter('gene_id',false,false,false,128,null,'string');
             this.list.push(this.GENE_ID);
+            this.SPECIES_ID = new urlParameters.Parameter('species_id',false,false,false,128,null,'string');
+            this.list.push(this.SPECIES_ID);
         },
 
         /**
@@ -109,6 +111,12 @@ var urlParameters = {
          */
         getParamGeneId: function(){
             return this.GENE_ID;
+        },
+        /**
+         * @return    The parameter species_id
+         */
+        getParamSpeciesId: function(){
+            return this.SPECIES_ID;
         },
         /**
          * @return An {@code Array} that lists all declared {@code Parameter}

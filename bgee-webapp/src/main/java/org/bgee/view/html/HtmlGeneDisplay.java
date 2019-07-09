@@ -40,7 +40,6 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
-import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -50,7 +49,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -158,7 +157,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getEnsemblGeneId())).append("</td>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
             sb.append("    <td>").append(getStringNotBlankOrDash(htmlEntities(gene.getDescription()))).append("</td>");
-            sb.append("    <td>").append(getCompleteSpeciesName(gene, false)).append("</td>");
+            sb.append("    <td>").append(getCompleteSpeciesName(gene.getSpecies(), false)).append("</td>");
             sb.append("    <td>").append(getMatch(geneMatch, searchTerm)).append("</td>");
             sb.append("</tr>");
         }
@@ -286,7 +285,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         String text = StringUtils.isNotBlank(linkText)? htmlEntities(linkText):
                 htmlEntities(gene.getName() + " - " + gene.getEnsemblGeneId())
-                        + " in " + getCompleteSpeciesName(gene, false);
+                        + " in " + getCompleteSpeciesName(gene.getSpecies(), false);
 
         return log.exit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
     }
@@ -353,7 +352,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         Gene gene = geneResponse.getGene();
         
-        String titleStart = "Gene: " + gene.getName() + " - " + gene.getEnsemblGeneId(); 
+        String titleStart = "Gene: " + htmlEntities(gene.getName()) 
+                + " - " + htmlEntities(gene.getEnsemblGeneId()); 
         this.startDisplay(titleStart, "WebPage");
 
         // Gene search
@@ -368,7 +368,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<img src='" + this.getSpeciesImageSrc(gene.getSpecies(), true)
                 + "' alt='" + htmlEntities(gene.getSpecies().getShortName()) + "' />");
         this.writeln(htmlEntities(titleStart));
-        this.writeln(" - " + getCompleteSpeciesName(gene, false));
+        this.writeln(" - " + getCompleteSpeciesName(gene.getSpecies(), false));
         this.writeln("</h1>");
         
         this.writeln("</div>"); // close row
@@ -712,7 +712,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getDescription()))).append("</td></tr>");
         table.append("<tr><th scope='row'>Organism</th><td property='bs:taxonomicRange' typeof='bs:Taxon'>")
-                .append(getCompleteSpeciesName(gene, true)).append("</td></tr>");
+                .append(getCompleteSpeciesName(gene.getSpecies(), true)).append("</td></tr>");
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")
                     .append(getSynonymDisplay(gene.getSynonyms()));
@@ -835,22 +835,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'></span>";
         }
         return log.exit(display);
-    }
-
-    /**
-     * Return the {@code String} representing the species scientific and common names.
-     * The common name, surrounded by brackets, is displayed only if it is defined.
-     *
-     * @param gene          A {@code Gene} that is the gene for which the species name should be displayed.
-     * @param hasSchemaTag  A {@code boolean} defining whether the Bioschemas property 'name' should be set.
-     * @return              The {@code String} that is the species scientific and common names.
-     */
-    private static String getCompleteSpeciesName(Gene gene, boolean hasSchemaTag) {
-        log.entry(gene, hasSchemaTag);
-        Species sp = gene.getSpecies();
-        String schemaTag = hasSchemaTag? "property='bs:name'": "";
-        return log.exit("<em " + schemaTag + ">" + htmlEntities(sp.getScientificName()) + "</em>" 
-                + (StringUtils.isNotBlank(sp.getName()) ? " (" + htmlEntities(sp.getName()) + ")" : ""));
     }
 
     /**

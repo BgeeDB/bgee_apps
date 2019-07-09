@@ -18,6 +18,10 @@ import org.bgee.model.species.Species;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
+import static org.bgee.model.file.DownloadFile.CategoryEnum.AFFY_DATA;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_DATA;
+
 /**
  * HTML View for the general category display
  * 
@@ -25,7 +29,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, June 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -105,23 +109,21 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         String datasets = groups.stream()
                 .filter(SpeciesDataGroup::isSingleSpecies)
                 .map(sdg -> {
-                    Species species = sdg.getMembers().get(0);
-                    String formattedName = species.getScientificName().replace(" ", "-").toLowerCase();
-                    Integer sdgId = sdg.getId();
+                    Integer spId = sdg.getMembers().get(0).getId();
                     return "{" +
                             "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + urlDownloadCalls.getRequestURL() + "#id" + sdgId + "\"," +
-                            "    \"sameAs\": \"" + urlDownloadCalls.getRequestURL() + "#id" + sdgId + "\"" +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
                             "}, " +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#proc-values-" + formattedName + "-rna-seq\"," +
-                            "    \"sameAs\": \"" + urlDownloadProcValues.getRequestURL() + "#id" + sdgId + "\"" +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#proc-values-" + formattedName + "-affymetrix\"," +
-                            "    \"sameAs\": \"" + urlDownloadProcValues.getRequestURL() + "#id" + sdgId + "\"" +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
                             "}";
                         }
                 )
@@ -342,12 +344,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         banner.append("<div id='bgee_data_selection' class='row'>");
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
-                "title='Close banner' alt='Cross' />");
+        banner.append("<img class='closing_cross' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("cross.png' title='Close banner' alt='Cross' />");
         banner.append("</div>");
 
         // Section on the right of the black banner
-        banner.append("<h1 class='col-xs-12 col-md-4'>"
+        banner.append("<h1 class='col-xs-12 col-lg-3'>"
                 + "<span class='scientificname'></span>"
                 + "<span class='commonname'></span></h1>");
 
@@ -357,15 +360,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
         urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        banner.append("<ul class='col-xs-12 col-md-8 row'>");
-        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-                "<a id='processed_expression_values_link' class='data_page_link' href='" +
-                urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
-                "See RNA-Seq and Affymetrix data</a></li>");
-        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-                "<a id='gene_expression_calls_link' class='data_page_link' href='" +
-                urlGeneExprCalls.getRequestURL() +
-                "' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+        RequestParameters urlSpeciesPage = this.getNewRequestParameters();
+        urlSpeciesPage.setPage(RequestParameters.PAGE_SPECIES);
+
+        banner.append("<ul class='col-xs-12 col-lg-9 row'>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='processed_expression_values_link' class='data_page_link' href='")
+                .append(urlProcExprValues.getRequestURL()).append("' title='Bgee processed expression values'>")
+                .append("See RNA-Seq and Affymetrix data</a></li>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='gene_expression_calls_link' class='data_page_link' href='")
+                .append(urlGeneExprCalls.getRequestURL())
+                .append("' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='species_info_link' class='data_page_link' href='")
+                .append(urlSpeciesPage.getRequestURL())
+                .append("' title='Bgee species information'>See species information</a></li>");
         banner.append("</ul>");
         banner.append("</div>"); // close 
 

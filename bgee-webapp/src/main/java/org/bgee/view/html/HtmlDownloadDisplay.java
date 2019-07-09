@@ -1,7 +1,6 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,17 +12,18 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.JsonHelper;
+
+import static org.bgee.model.file.DownloadFile.CategoryEnum.AFFY_DATA;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_DATA;
 
 /**
  * This class displays the page having the category "download", i.e. with the parameter
@@ -32,7 +32,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, June 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -125,36 +125,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         List<String> datasets = groups.stream()
                 .filter(SpeciesDataGroup::isSingleSpecies)
                 .map(sdg -> {
-                    Species species = sdg.getMembers().get(0);
-                    Integer sdgId = sdg.getId();
-                    String callUrl = null;
-                    for (DownloadFile f: sdg.getDownloadFiles()) {
-                        if (f.getCategory().equals(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE) &&
-                                f.getConditionParameters() != null
-                                && f.getConditionParameters().equals(new HashSet<>(Arrays.asList(
-                                CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID)))) {
-                            callUrl = this.prop.getDownloadRootDirectory() + f.getPath();
-                            break;
-                        }
-                    }
+                    Integer spId = sdg.getMembers().get(0).getId();
                     return "{" +
-                            "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + this.getRequestParameters().getRequestURL() + "#id" + sdgId + "\"," +
-                            "    \"url\": \"" + this.getRequestParameters().getRequestURL() + "#id" + sdgId + "\"," +
-                            "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
-                            "    \"description\": \"" + species.getScientificName() + " calls of baseline presence/absence of expression\"," +
-                            (callUrl == null? "" :
-                            "    \"distribution\": {\"@type\": \"DataDownload\", \"encodingFormat\": \"TSV\", \"contentUrl\": \"" + callUrl + "\"},") +
-                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"keywords\": [\"gene expression\",\"call\",\"" + species.getScientificName() + "\"" + 
-                                    (StringUtils.isBlank(species.getName())? "": ",\"" + species.getName() + "\"") + "]," +
-                            "    \"version\": \"" + this.getWebAppVersion() + "\"," +
-                            "    \"includedInDataCatalog\": {" +
-                            "           \"@type\": \"DataCatalog\"," +
-                            "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
-                            "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
-                            "    }" +
-                            "}";
+                           "    \"@type\": \"Dataset\"," +
+                           "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
+                           "}";
                         }
                 )
                 .collect(Collectors.toList());
@@ -168,56 +144,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         List<String> datasets = groups.stream()
                 .filter(SpeciesDataGroup::isSingleSpecies)
                 .map(sdg -> {
-                    Species species = sdg.getMembers().get(0);
-                    Integer sdgId = sdg.getId();
-                    String speciesForId = species.getScientificName().replace(" ", "-").toLowerCase();
-                    
+                    Integer spId = sdg.getMembers().get(0).getId();
                     return "{" +
                             "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + this.getRequestParameters().getRequestURL() + "#proc-values-"+ speciesForId + "-rna-seq" + "\"," +
-                            "    \"url\": \"" + this.getRequestParameters().getRequestURL() + "#id" + sdgId + "\"," +
-                            "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
-                            "    \"description\": \"Annotations and experiment information " +
-                                        "(e.g., annotations to anatomy and development, " +
-                                        "quality scores used in QCs, library information), " +
-                                        "and processed expression values (e.g., read counts, TPM and FPKM values) " +
-                                        "for " + species.getScientificName() + "\"," +
-                            "    \"distribution\": {\"@type\": \"DataDownload\", \"encodingFormat\": \"TSV\", \"contentUrl\": \"" 
-                                        + this.prop.getDownloadRNASeqProcExprValueFilesRootDirectory() + species.getScientificName().replace(" ", "_") + "\"}," +
-                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"keywords\": [\"annotations\",\"experiment information\",\"processed expression values\"," +
-                            "           \"RNA-Seq\",\"" + species.getScientificName() + "\"" +
-                                        (StringUtils.isBlank(species.getName())? "": ",\"" + species.getName() + "\"") + "]," +
-                            "    \"version\": \"" + this.getWebAppVersion() + "\"," +
-                            "    \"includedInDataCatalog\": {" +
-                            "           \"@type\": \"DataCatalog\"," +
-                            "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
-                            "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
-                            "    }" +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
-                            "    \"@id\": \"" + this.getRequestParameters().getRequestURL() + "#proc-values-"+ speciesForId + "-affymetrix" + "\"," +
-                            "    \"url\": \"" + this.getRequestParameters().getRequestURL() + "#id" + sdgId + "\"," +
-                            "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
-                            "    \"description\": \"Annotations and experiment information " +
-                                        "(e.g., annotations to anatomy and development, " + 
-                                        "quality scores used in QCs, chip information), " +
-                                        "and processed expression values (e.g., log values of " +
-                                        "Affymetrix probeset normalized signal intensities) " +
-                                        "for " + species.getScientificName() + "\"," +
-                            "    \"distribution\": {\"@type\": \"DataDownload\", \"encodingFormat\": \"TSV\", \"contentUrl\": \""
-                            + this.prop.getDownloadAffyProcExprValueFilesRootDirectory() + species.getScientificName().replace(" ", "_") + "\"}," +
-                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"keywords\": [\"annotations\",\"experiment information\",\"processed expression values\"," +
-                            "           \"Affymetrix\",\"" + species.getScientificName() + "\"" +
-                                        (StringUtils.isBlank(species.getName())? "": ",\"" + species.getName() + "\"") + "]," +
-                            "    \"version\": \"" + this.getWebAppVersion() + "\"," +
-                            "    \"includedInDataCatalog\": {" +
-                            "           \"@type\": \"DataCatalog\"," +
-                            "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
-                            "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
-                            "    }" +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
                             "}";
                         }
                 )

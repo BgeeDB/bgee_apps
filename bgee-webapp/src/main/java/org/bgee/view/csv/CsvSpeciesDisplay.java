@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
 import org.bgee.view.SpeciesDisplay;
 import org.bgee.view.ViewFactory;
@@ -29,8 +30,9 @@ import org.supercsv.io.ICsvMapWriter;
  * Implementation of {@code SpeciesDisplay} for CSV/TSV rendering.
  * 
  * @author  Frederic Bastian
- * @version Bgee 13, Sep. 2016
- * @since   Bgee 13 Sep. 2016
+ * @author  Valentine Rech de Laval
+ * @version Bgee 14, July 2019
+ * @since   Bgee 13, Sep. 2016
  */
 public class CsvSpeciesDisplay extends CsvParentDisplay implements SpeciesDisplay {
     private final static Logger log = LogManager.getLogger(CsvSpeciesDisplay.class.getName());
@@ -39,6 +41,11 @@ public class CsvSpeciesDisplay extends CsvParentDisplay implements SpeciesDispla
             BgeeProperties prop, ViewFactory factory, Delimiter delimiter) 
                     throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory, delimiter);
+    }
+
+    @Override
+    public void displaySpeciesHomePage(List<Species> speciesList) {
+        throw log.throwing(new UnsupportedOperationException("Not available for CSV display"));
     }
 
     @Override
@@ -101,5 +108,10 @@ public class CsvSpeciesDisplay extends CsvParentDisplay implements SpeciesDispla
         }
         
         log.exit();
+    }
+
+    @Override
+    public void displaySpecies(Species species, SpeciesDataGroup speciesDataGroup) {
+        throw log.throwing(new UnsupportedOperationException("Not available for CSV display"));
     }
 }

@@ -176,7 +176,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append(this.getRequestParameters().getUrlParametersInstance()
                         .getParamGeneList().getName()).append("'" +
                 "                            form='bgee_expr_comp_form' autofocus rows='10'" +
-                "                            placeholder='Enter a list of Ensembl IDs'>")
+                "                            placeholder='Enter a list of Ensembl IDs (one ID per line or separated by a comma)'>")
                 .append(idsText).append("</textarea>");
         sb.append("            </div>");
 
@@ -237,6 +237,13 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             sb.append("            <th>Species with absence of expression</th>");
         }
         sb.append("                <th>See details</th>");
+        sb.append("                <th>Gene count with presence of expression</th>");
+        sb.append("                <th>Gene count with absence of expression</th>");
+        sb.append("                <th>Gene count with no data</th>");
+        if (isMultiSpecies) {
+            sb.append("            <th>Species count with presence of expression</th>");
+            sb.append("            <th>Species count with absence of expression</th>");
+        }
         sb.append("            </tr>");
         sb.append("        </thead>");
         sb.append("        <tbody>");
@@ -299,6 +306,16 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         
         // Expand details
         row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
+
+        // Counts for export only
+        row.append("<td>" + expressedGenes.size() + "</td>");
+        row.append("<td>" + notExpressedGenes.size() + "</td>");
+        row.append("<td>" + condToCounts.getValue().getGenesWithNoData().size() + "</td>");
+        if (isMultiSpecies) {
+            row.append("<td>" + expressedGenes.stream().map(Gene::getSpecies).distinct().count() + "</td>");
+            row.append("<td>" + notExpressedGenes.stream().map(Gene::getSpecies).distinct().count() + "</td>");
+        }
+
         row.append("</tr>");
         return log.exit(row.toString());
     }
@@ -388,6 +405,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         if (!this.prop.isMinify()) {
             this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
             this.includeCss("lib/jquery_plugins/responsive.dataTables.min.css");
+            this.includeCss("lib/jquery_plugins/buttons.dataTables.min.css");
         } else {
             this.includeCss("lib/jquery_plugins/vendor_expr_comp.css");
         }
@@ -409,6 +427,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
             this.includeJs("lib/jquery_plugins/dataTables.responsive.min.js");
+            this.includeJs("lib/jquery_plugins/dataTables.buttons.min.js");
+            this.includeJs("lib/jquery_plugins/buttons.html5.min.js");
+            this.includeJs("lib/jquery_plugins/jszip.min.js");
             this.includeJs("expr_comp.js");
         } else {
             this.includeJs("lib/jquery_plugins/vendor_expr_comp.js");

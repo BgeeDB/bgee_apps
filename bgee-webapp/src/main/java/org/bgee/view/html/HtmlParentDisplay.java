@@ -3,6 +3,7 @@ package org.bgee.view.html;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -14,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.file.DownloadFile;
 import org.bgee.model.species.Species;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
@@ -27,7 +29,7 @@ import org.bgee.view.ViewFactory;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Sebastien Moretti
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, Jul. 2014
  */
 public class HtmlParentDisplay extends ConcreteDisplayParent {
@@ -80,6 +82,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
   
     /**
+     * A {@code String} that is the URL of the Bioconductor BgeeCall R package.
+     */
+    protected static final String BGEECALL_R_PACKAGE_URL =
+            "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html";
+
+    /**
      * A {@code String} that is the URL of the Bgee GitHub.
      */
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
@@ -103,6 +111,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
 
     /**
+     * A {@code String} that are the keywords defining Bgee.
+     */
+    protected static final String BGEE_KEYWORDS =
+            "bgee, gene expression, evolution, ontology, anatomy, development, " +
+            "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
+    
+    /**
+     * A {@code String} that is the description of Bgee.
+     */
+    protected static final String BGEE_DESCRIPTION =
+            "Bgee allows to automatically compare gene expression patterns between species, " +
+                    "by referencing expression data on anatomical ontologies, and designing homology " +
+                    "relationships between them.";
+
+    /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
      */
     protected static final String LICENCE_CC0_URL =
@@ -117,6 +140,21 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the name of the 'Bgee Lite' database.
      */
     protected final static String BGEE_LITE_NAME = "'Bgee Lite'";
+
+    /**
+     * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 
+     * with their description.
+     */
+    protected static final String COND_PARAM_DESC_LIST = "<ul class='doc_content'>"
+            + "<li><span class='list_element_title'>anatomical entities only (by default) </span> "
+            + "files contain one expression call for each unique pair of gene and anatomical entity."
+            + "If more than one developmental stage map this unique pair, the resulting expression "
+            + "call correspond to summarized information coming from all developmental stages. "
+            + "</li>"
+            + "<li><span class='list_element_title'>anatomical entities and developmental stages</span> "
+            + "files contain one expression call for each unique gene, anatomical entity and developmental stage. "
+            + "</li>"
+            + "</ul>";
 
     /**
      * Escape HTML entities in the provided {@code String}
@@ -310,6 +348,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title) {
         log.entry(title);
+        this.startDisplay(title, null);
+        log.exit();
+    }
+
+    /**
+     * Display the start of the HTML page (common to all pages).
+     *
+     * @param title             A {@code String} that is the title to be used for the page. 
+     * @param typeOfSchemaPage  A {@code String} that is the schema.org type of the page.
+     *                          If {@code null}, no property will be set.
+     */
+    protected void startDisplay(String title, String typeOfSchemaPage) {
+        log.entry(title, typeOfSchemaPage);
+        
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -317,14 +369,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
-        this.writeln("<meta name='description' content='Bgee allows to automatically"
-                + " compare gene expression patterns between species, by referencing"
-                + " expression data on anatomical ontologies, and designing homology"
-                + " relationships between them.'/>");
-        this.writeln("<meta name='keywords' content='bgee, gene expression, "
-                + "evolution, ontology, anatomy, development, evo-devo database, "
-                + "anatomical ontology, developmental ontology, gene expression "
-                + "evolution'/>");
+        this.writeln("<meta name='description' content='" + BGEE_DESCRIPTION + "'/>");
+        this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
                 + " UNIL' />");
@@ -350,7 +396,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         this.writeln("</head>");
         
-        this.writeln("<body>");
+        this.writeln("<body prefix='bs: http://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container' class='container-fluid'>");
@@ -358,7 +404,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.displayBgeeHeader();
         this.displayArchiveMessage();
         this.displayWarningMessage();
-        this.writeln("<div id='sib_body'>");
+        if (StringUtils.isBlank(typeOfSchemaPage)) {
+            this.writeln("<div id='sib_body'>");
+        } else {
+            this.writeln("<div id='sib_body' typeof='schema:" + typeOfSchemaPage + "'>");
+            this.writeln("    <meta property='schema:url' content='" +
+                    this.getRequestParameters().getRequestURL() + "' />");
+
+        }
 
         log.exit();
     }
@@ -390,7 +443,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<li><a class='js-tooltip js-copy' " +
                 "data-copy='" + this.getRequestParameters().getStableRequestURL() + "' " +
                 "data-toggle='tooltip' data-placement='top' " +
-                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>");
+                "data-original-title='Click to copy to clipboard'>Copy permanent link</a>" +
+                "</li>");
         this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
         
@@ -422,6 +476,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
         
+        RequestParameters urlSpeciesList = this.getNewRequestParameters();
+        urlSpeciesList.setPage(RequestParameters.PAGE_SPECIES);
+
         RequestParameters urlSparql = this.getNewRequestParameters();
         urlSparql.setPage(RequestParameters.PAGE_SPARQL);
 
@@ -541,6 +598,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a title='Species list' href='").append(urlSpeciesList.getRequestURL())
+                .append("'>Species list</a></li>");
         navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
         .append("'>SPARQL endpoint</a></li>");
         navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
@@ -1121,5 +1180,75 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         return log.exit("<a target='_blank' href='" + UBERON_ID_URL + 
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
                 "</a>");
+    }
+
+    protected String getSchemaMarkupGraph(List<String> properties) {
+        log.entry(properties);
+
+        return log.exit(
+                "<script type='application/ld+json'>" +
+                "    {" +
+                "        \"@context\": \"https://schema.org\"," +
+                "        \"@graph\": [" + String.join(",", properties) + "]" +
+                "    }" +
+                "</script>");
+    }
+
+    /**
+     * Return the {@code String} representing the species scientific and common names.
+     * The common name, surrounded by brackets, is displayed only if it is defined.
+     *
+     * @param species       A {@code Species} that is the species that should be displayed.
+     * @param hasSchemaTag  A {@code boolean} defining whether the Bioschemas property 'name' should be set.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected static String getCompleteSpeciesName(Species species, boolean hasSchemaTag) {
+        log.entry(species, hasSchemaTag);
+        String schemaTag = hasSchemaTag? "property='bs:name'": "";
+        return log.exit("<em " + schemaTag + ">" + htmlEntities(species.getScientificName()) + "</em>"
+                + (StringUtils.isNotBlank(species.getName()) ? " (" + htmlEntities(species.getName()) + ")" : ""));
+    }
+
+    /**
+     * Return the {@code String} that is the Dataset schema.org id.
+     *
+     * @param speciesId     An {@code Integer} that is the species ID that should be used.
+     * @param category      A {@code Category} that is the type of the Dataset.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected String getDatasetSchemaId(Integer speciesId, DownloadFile.CategoryEnum category) {
+        log.entry(speciesId, category);
+        RequestParameters url = getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_SPECIES);
+        url.setSpeciesId(speciesId);
+        String hash;
+        switch (category) {
+            case EXPR_CALLS_COMPLETE:
+                hash = "expr-calls";
+                break;
+            case AFFY_DATA:
+                hash = "proc-values-affymetrix";
+                break;
+            case RNASEQ_DATA:
+                hash = "proc-values-rna-seq";
+                break;
+            default:
+                throw log.throwing(new IllegalArgumentException(
+                        "CategoryEnum not supported: " + category));
+        }
+        return log.exit(url.getRequestURL() + "#" + hash);
+    }
+    /**
+     * Return the {@code String} that is the Dataset schema.org id.
+     *
+     * @param speciesId     An {@code Integer} that is the species ID that should be used.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected String getDatasetSchemaUrl(Integer speciesId) {
+        log.entry(speciesId);
+        RequestParameters url = getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_SPECIES);
+        url.setSpeciesId(speciesId);
+        return log.exit(url.getRequestURL());
     }
 }

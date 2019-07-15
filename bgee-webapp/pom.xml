@@ -368,6 +368,7 @@
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
                                 <cssSourceFile>gene.css</cssSourceFile>
+                                <cssSourceFile>species.css</cssSourceFile>
                                 <cssSourceFile>source.css</cssSourceFile>
                                 <cssSourceFile>sparql.css</cssSourceFile>
                                 <cssSourceFile>raw_data.css</cssSourceFile>

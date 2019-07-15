@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author  Valentine Rech de Laval
  * @version Bgee 14, July 2019
+ * @version Bgee 14, June 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
@@ -112,8 +113,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                                                  String errorMsg) {
         log.entry(searchResult, result, function, isMultiSpecies, errorMsg);
         
-
         this.startDisplay("Expression comparison page");
+
+        this.addSchemaMarkups();
 
         this.writeln("<h1>Expression comparison</h1>");
 
@@ -408,6 +410,37 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         cell.append("</td>");
 
         return log.exit(cell.toString());
+    }
+
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addSchemaMarkups() {
+        log.entry();
+
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@type\": \"WebApplication\"," +
+                "  \"@id\": \"" + url.getRequestURL() + "\"," +
+                "  \"name\": \"Expression comparison\"," +
+                "  \"url\": \"" + url.getRequestURL() + "\"," +
+                "  \"description\": \"Compare expression from several genes\"," +
+                "  \"offers\": {" +
+                "    \"@type\": \"Offer\"," +
+                "    \"price\": \"0.00\"," +
+                "    \"priceCurrency\": \"CHF\"" +
+                "  }, " +
+                "  \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "}");
+
+        this.writeln("</script>");
+        
+        log.exit();
     }
 
     @Override

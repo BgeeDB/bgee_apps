@@ -64,9 +64,10 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
         
-        this.writeln("<h1>GTEx data into Bgee</h1>");
+        this.writeln("<h1 property='schema:name'>GTEx data into Bgee</h1>");
 
-        this.writeln("<div id='bgee_introduction'><p>In addition to the continuous growth of transcriptomics datasets, "
+        this.writeln("<div id='bgee_introduction' property='schema:description'>"
+                + "<p>In addition to the continuous growth of transcriptomics datasets, "
                 + "some specific projects produce large amounts of data, generated and accessible "
                 + "in a consistent manner, as, notably, "
                 + "the <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank'>" +

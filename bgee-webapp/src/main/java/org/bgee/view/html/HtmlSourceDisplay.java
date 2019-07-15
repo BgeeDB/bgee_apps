@@ -50,13 +50,13 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
     public void displaySources(Collection<Source> sources) {
         log.entry(sources);
 
-        this.startDisplay("Data sources");
+        this.startDisplay("Data sources", "WebPage");
         
-        this.writeln("<h1>Data sources</h1>");
+        this.writeln("<h1 property='schema:name'>Data sources</h1>");
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
-        this.writeln("<p>This page provides information about the data sources used in Bgee "
+        this.writeln("<p property='schema:description'>This page provides information about the data sources used in Bgee "
                 + this.getWebAppVersion() + ".</p>");
         this.writeln(this.getContent(sources));
         this.writeln("</div>"); // end class

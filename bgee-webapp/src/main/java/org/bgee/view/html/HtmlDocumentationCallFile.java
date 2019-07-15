@@ -20,7 +20,7 @@ import org.bgee.controller.RequestParameters;
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
  * @see HtmlDocumentationDisplay
- * @version Bgee 14, Jan. 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, May 2015
  */
 public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
@@ -1739,12 +1739,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1>Expression call download file documentation</h1>");
+        this.writeln("<h1 property='schema:name'>Expression call download file documentation</h1>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        this.writeln("<div id='bgee_introduction'><p>Bgee provides calls of baseline "
+        this.writeln("<div id='bgee_introduction' property='schema:description'><p>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (orthologous genes "
                 + "in homologous organs). This documentation describes the format of these "
@@ -1977,16 +1977,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "that, in the midbrain at adult stage, gene A and B are both expressed, "
                 + "while gene C is not, thanks to call propagation.</p>");
         this.writeln("<p>It is possible to select two different combinations of <code>condition parameters</code>:</p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>anatomical entities only (by default) </span> "
-                + "files contain one expression call for each unique pair of gene and anatomical entity."
-                + "If more than one developmental stage map this unique pair, the resulting expression "
-                + "call correspond to summarized information coming from all developmental stages. "
-                + "</li>"
-                + "<li><span class='list_element_title'>anatomical entities and developmental stages</span> "
-                + "files contain one expression call for each unique gene, anatomical entity and developmental stage. "
-                + "</li>"
-                + "</ul>");
+                + COND_PARAM_DESC_LIST);
         this.writeln("<p>Presence/absence calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or an <code>advanced file</code> is used. Notably: <code>simple files</code> "

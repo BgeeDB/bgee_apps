@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.Entity;
 import org.bgee.model.SearchResult;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Condition;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code ExpressionComparisonDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
@@ -50,6 +51,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      */
     private final static Logger log = LogManager.getLogger(HtmlExpressionComparisonDisplay.class.getName());
 
+    private final static String ENTITIES_SEPARATOR = ", ";
+    
     /**
      * @param response          A {@code HttpServletResponse} that will be used to display
      *                          the page to the client.
@@ -213,7 +216,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             sb.append(searchResult.getRequestElementsNotFound().stream()
                     .sorted()
                     .map(gId -> "'" + htmlEntities(gId) + "'")
-                    .collect(Collectors.joining(" - ")));
+                    .collect(Collectors.joining(ENTITIES_SEPARATOR)));
             sb.append("</p>");
         }
 
@@ -237,6 +240,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             sb.append("            <th>Species with absence of expression</th>");
         }
         sb.append("                <th>See details</th>");
+        sb.append("                <th>Anatomical entity IDs</th>");
         sb.append("                <th>Gene count with presence of expression</th>");
         sb.append("                <th>Gene count with absence of expression</th>");
         sb.append("                <th>Gene count with no data</th>");
@@ -265,11 +269,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         StringBuilder row = new StringBuilder();
         row.append("<tr>");
         
-        row.append("    <td>");
-        row.append(function.apply(condToCounts.getKey()).stream()
+        List<AnatEntity> anatEntities = function.apply(condToCounts.getKey()).stream()
                 .sorted(Comparator.comparing(AnatEntity::getName))
+                .collect(Collectors.toList());
+        
+        row.append("    <td>");
+        row.append(anatEntities.stream()
                 .map(ae -> getAnatEntityUrl(ae, ae.getName()))
-                .collect(Collectors.joining(" - ")));
+                .collect(Collectors.joining(ENTITIES_SEPARATOR)));
         row.append("    </td>");
 
         Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
@@ -307,13 +314,20 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         // Expand details
         row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
 
-        // Counts for export only
-        row.append("<td>" + expressedGenes.size() + "</td>");
-        row.append("<td>" + notExpressedGenes.size() + "</td>");
-        row.append("<td>" + condToCounts.getValue().getGenesWithNoData().size() + "</td>");
+        // Columns for export only
+        row.append("<td>").append(anatEntities.stream()
+                .map(Entity::getId)
+                .collect(Collectors.joining(ENTITIES_SEPARATOR))).append("</td>");
+        row.append("<td>").append(expressedGenes.size()).append("</td>");
+        row.append("<td>").append(notExpressedGenes.size()).append("</td>");
+        row.append("<td>").append(condToCounts.getValue().getGenesWithNoData().size()).append("</td>");
         if (isMultiSpecies) {
-            row.append("<td>" + expressedGenes.stream().map(Gene::getSpecies).distinct().count() + "</td>");
-            row.append("<td>" + notExpressedGenes.stream().map(Gene::getSpecies).distinct().count() + "</td>");
+            row.append("<td>")
+                    .append(expressedGenes.stream().map(Gene::getSpecies).distinct().count())
+                    .append("</td>");
+            row.append("<td>")
+                    .append(notExpressedGenes.stream().map(Gene::getSpecies).distinct().count())
+                    .append("</td>");
         }
 
         row.append("</tr>");

@@ -141,7 +141,7 @@ $( document ).ready( function(){
             // Species with presence of expression
             { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'em'); } },
             // Species with absence of expression
-            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'em'); } },
             // Details
             { orderable: false },
             // Anatomical entity ID

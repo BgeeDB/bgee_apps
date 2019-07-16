@@ -129,7 +129,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     return "{" +
                            "    \"@type\": \"Dataset\"," +
                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
-                           "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
+                           "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                            "}";
                         }
                 )
@@ -148,12 +148,12 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     return "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
-                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
-                            "    \"sameAs\": \"" + this.getDatasetSchemaUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}";
                         }
                 )

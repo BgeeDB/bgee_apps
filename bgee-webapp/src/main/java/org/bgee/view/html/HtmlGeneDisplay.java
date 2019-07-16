@@ -157,7 +157,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getEnsemblGeneId())).append("</td>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
             sb.append("    <td>").append(getStringNotBlankOrDash(htmlEntities(gene.getDescription()))).append("</td>");
-            sb.append("    <td>").append(getCompleteSpeciesName(gene.getSpecies(), false)).append("</td>");
+            sb.append("    <td>").append(getCompleteSpeciesNameLink(gene.getSpecies(), false)).append("</td>");
             sb.append("    <td>").append(getMatch(geneMatch, searchTerm)).append("</td>");
             sb.append("</tr>");
         }
@@ -700,7 +700,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param gene     The {@code Gene} for which to display information
      * @return         A {@code String} containing the HTML table containing the information.
      */
-    private static String getGeneralInfo(Gene gene) {
+    private String getGeneralInfo(Gene gene) {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
@@ -712,7 +712,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getDescription()))).append("</td></tr>");
         table.append("<tr><th scope='row'>Organism</th><td property='bs:taxonomicRange' typeof='bs:Taxon'>")
-                .append(getCompleteSpeciesName(gene.getSpecies(), true)).append("</td></tr>");
+                .append(getCompleteSpeciesNameLink(gene.getSpecies(), true)).append("</td></tr>");
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")
                     .append(getSynonymDisplay(gene.getSynonyms()));

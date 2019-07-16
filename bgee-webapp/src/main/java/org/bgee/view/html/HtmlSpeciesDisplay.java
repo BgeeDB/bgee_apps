@@ -11,7 +11,6 @@ import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.Taxon;
 import org.bgee.view.SpeciesDisplay;
 
 import javax.servlet.http.HttpServletResponse;
@@ -19,10 +18,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,11 +58,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         this.writeln("<div class='species_list'>");
 
         this.writeln(speciesList.stream()
-                .map(species -> {
-                    RequestParameters url = getNewRequestParameters();
-                    url.setPage(RequestParameters.PAGE_SPECIES);
-                    url.setSpeciesId(species.getId());
-                    return "<a class='species_element' href='" + url.getRequestURL() + "' " +
+                .map(species -> 
+                           "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + "' " +
                            "   alt ='" + htmlEntities(species.getShortName())+"'>" +
                            "    <figure><img src='"+ this.getSpeciesImageSrc(species, true)+"' />" +
                            "        <figcaption>" +
@@ -74,8 +68,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                                             htmlEntities(species.getName()): "-") + "</p>" +
                            "        </figcaption>" +
                            "    </figure>" +
-                           "</a>";
-                })
+                           "</a>")
                 .collect(Collectors.joining()));
 
         this.writeln("</div>");
@@ -143,7 +136,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         props.add("{" +
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), EXPR_CALLS_COMPLETE) + "\"," +
-                "    \"url\": \"" + this.getDatasetSchemaUrl(species.getId()) + "\"," +
+                "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
                 "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
                 "    \"description\": \"" + species.getScientificName() + " calls of baseline presence/absence of expression\"," +
                 (callUrl == null? "" :
@@ -162,7 +155,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         props.add("{" +
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), RNASEQ_DATA) + "\"," +
-                "    \"url\": \"" + this.getDatasetSchemaUrl(species.getId()) + "\"," +
+                "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
                 "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, library information), " +
@@ -186,7 +179,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "{" +
                 "    \"@type\": \"Dataset\"," +
                         "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(),AFFY_DATA) + "\"," +
-                        "    \"url\": \"" + this.getDatasetSchemaUrl(species.getId()) + "\"," +
+                        "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
                 "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, chip information), " +

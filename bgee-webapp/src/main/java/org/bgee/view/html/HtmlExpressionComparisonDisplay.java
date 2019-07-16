@@ -377,7 +377,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
                         .collect(Collectors.toList()),
-                "species", s -> "<em>" + htmlEntities(s.getScientificName()) + "</em>"));
+                "species", s -> "<a href='" + getSpeciesPageUrl(s.getId()) + "'><em>" 
+                            + htmlEntities(s.getScientificName()) + "</em></a>"));
     }
 
     /**

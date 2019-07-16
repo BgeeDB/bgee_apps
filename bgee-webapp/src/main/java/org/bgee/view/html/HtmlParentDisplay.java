@@ -1195,6 +1195,35 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     /**
+     * Return the {@code String} representing the species scientific and common names as a HTML 'a' element.
+     * The common name, surrounded by brackets, is displayed only if it is defined.
+     *
+     * @param species       A {@code Species} that is the species that should be displayed.
+     * @param hasSchemaTag  A {@code boolean} defining whether the Bioschemas property 'name' should be set.
+     * @return              The {@code String} that is the species scientific and common names.
+     */
+    protected String getCompleteSpeciesNameLink(Species species, boolean hasSchemaTag) {
+        log.entry(species, hasSchemaTag);
+        return log.exit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>" 
+                + getCompleteSpeciesName(species, hasSchemaTag) + "</a>");
+    }
+
+    /**
+     * Return the {@code String} representing the species page URL.
+     *
+     * @param speciesId A {@code Integer} that is the species ID that should be used.
+     * @return          The {@code String} that is the species page URL.
+     */
+    protected String getSpeciesPageUrl(Integer speciesId) {
+        log.entry(speciesId);
+
+        RequestParameters speciesPage = getNewRequestParameters();
+        speciesPage.setPage(RequestParameters.PAGE_SPECIES);
+        speciesPage.setSpeciesId(speciesId);
+
+        return log.exit(speciesPage.getRequestURL());
+    }
+    /**
      * Return the {@code String} representing the species scientific and common names.
      * The common name, surrounded by brackets, is displayed only if it is defined.
      *
@@ -1218,9 +1247,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected String getDatasetSchemaId(Integer speciesId, DownloadFile.CategoryEnum category) {
         log.entry(speciesId, category);
-        RequestParameters url = getNewRequestParameters();
-        url.setPage(RequestParameters.PAGE_SPECIES);
-        url.setSpeciesId(speciesId);
+        
         String hash;
         switch (category) {
             case EXPR_CALLS_COMPLETE:
@@ -1236,19 +1263,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 throw log.throwing(new IllegalArgumentException(
                         "CategoryEnum not supported: " + category));
         }
-        return log.exit(url.getRequestURL() + "#" + hash);
-    }
-    /**
-     * Return the {@code String} that is the Dataset schema.org id.
-     *
-     * @param speciesId     An {@code Integer} that is the species ID that should be used.
-     * @return              The {@code String} that is the species scientific and common names.
-     */
-    protected String getDatasetSchemaUrl(Integer speciesId) {
-        log.entry(speciesId);
-        RequestParameters url = getNewRequestParameters();
-        url.setPage(RequestParameters.PAGE_SPECIES);
-        url.setSpeciesId(speciesId);
-        return log.exit(url.getRequestURL());
+        return log.exit(getSpeciesPageUrl(speciesId) + "#" + hash);
     }
 }

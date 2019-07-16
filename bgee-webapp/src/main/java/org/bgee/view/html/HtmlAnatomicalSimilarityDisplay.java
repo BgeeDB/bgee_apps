@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code AnatomicalSimilarityDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, June 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay 
@@ -119,7 +119,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                         "                  value='" + sp.getId() + "' " +
                                            (userSpeciesIds!= null && userSpeciesIds.contains(sp.getId())
                                                 ? "checked" : "") +
-                        "           />  " + htmlEntities(sp.getScientificName()) +
+                        "           />  <em>" + htmlEntities(sp.getScientificName()) + "</em>"+
                         "       </label>" +
                         "   </div>")
                 .collect(Collectors.joining());
@@ -292,7 +292,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                 .flatMap(Set::stream)
                 .distinct()
                 .filter(sp -> result.getRequestedSpecies().contains(sp))
-                .map(species -> htmlEntities(species.getScientificName()))
+                .map(species -> "<a href='"+getSpeciesPageUrl(species.getId())+"'><em>" 
+                        + htmlEntities(species.getScientificName()) + "</em></a>")
                 .sorted()
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");

@@ -168,17 +168,20 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.writeln("<div class='feature_list'>");
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
-                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                        + "all the data used to generate the information displayed on this website."));
+        //XXX Commented these lines because the Bgee dump contains GO terms and GO is not 
+        //XXX CC0 (OBO foundry ontologies follow CC-BY version 3).
+//        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+//                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+//                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+//                "Download the complete dump of the MySQL Bgee database, that contains "
+//                        + "all the data used to generate the information displayed on this website."));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
                 this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
                 "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
+                + "mysql_logo.png", "Download the dump of the MySQL Bgee lite database, that "
+                        + "contains most useful, and explicit information. Does not contain raw data."));
         
         this.writeln("</div>"); // close feature_list
 

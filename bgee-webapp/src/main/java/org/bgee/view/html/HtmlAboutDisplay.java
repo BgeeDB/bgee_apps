@@ -46,8 +46,15 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
     public void displayAboutPage() {
         log.entry();
         
-        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
-        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
+        urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        RequestParameters urlDownloadProcsGenerator = this.getNewRequestParameters();
+        urlDownloadProcsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        RequestParameters urlDownloadMysqlGenerator = this.getNewRequestParameters();
+        urlDownloadMysqlGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadMysqlGenerator.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
         RequestParameters urlGeneSearchGenerator = this.getNewRequestParameters();
         urlGeneSearchGenerator.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
@@ -85,9 +92,11 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "between organs. This allows comparisons of expression patterns "
                 + "between species.</p>");
         this.writeln("<p>Data can be browsed through <a href='" + urlGeneSearchGenerator.getRequestURL() + 
-                "'>gene search</a>, <a href='" + urlTopAnatGenerator.getRequestURL() + 
-                "'>expression enrichment analysis</a>, or <a href='" + urlDownloadGenerator.getRequestURL() + 
-                "'>data download</a>.</p>");
+                "'>gene search</a> or <a href='" + urlTopAnatGenerator.getRequestURL() + 
+                "'>expression enrichment analysis</a>. It is also possible to download <a href='" + 
+                urlDownloadCallsGenerator.getRequestURL() + "'>gene expression calls</a>, <a href='" + 
+                urlDownloadProcsGenerator.getRequestURL() + "'>processed expression values</a>, or " +
+                "<a href='" + urlDownloadMysqlGenerator.getRequestURL() + "'>MySQL dumps</a>.</p>");
         this.writeln("<p>More information is provided in the <a href='" + 
                 urlDocumentationGenerator.getRequestURL() + "'>documentation</a>.</p>");
 

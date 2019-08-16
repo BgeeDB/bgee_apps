@@ -104,7 +104,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         this.writeln("<p>The Bgee SPARQL endpoint is accessible by using your prefered " +
                 "programming language through the URL address below: </p>" +
                 "<p class='endpoint-url'>" +
-                "http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight_postgres</p>");
+                "http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</p>");
 
         this.writeln("<p>For example, to retrieve all anatomic entities in human where " +
                 "the APOC1 gene is expressed, the query is:");

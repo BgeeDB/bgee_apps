@@ -69,9 +69,13 @@ $( document ).ready( function(){
            { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
            { type: 'gene-number', targets: 3 },   // sort using the gene-number type
            { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+           { type: 'gene-number', targets: 4 },   // sort using the gene-number type
            { responsivePriority: 2, targets: 5 }, // Gene count with no data
+           { type: 'gene-number', targets: 5 },   // sort using the gene-number type
            { responsivePriority: 3, targets: 6 }, // Species count with presence of expression
+           { type: 'species-number', targets: 6 },// sort using the species-number type
            { responsivePriority: 3, targets: 7 }, // Species count with absence of expression
+           { type: 'species-number', targets: 7 },// sort using the species-number type
            { responsivePriority: 2, targets: 8 }  // Details
         ],
         columns: [ // sorting definition
@@ -125,7 +129,9 @@ $( document ).ready( function(){
             { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
             { type: 'gene-number', targets: 3 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+            { type: 'gene-number', targets: 4 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 5 }, // Gene count with no data
+            { type: 'gene-number', targets: 5 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 6 }  // Details
         ],
         columns: [ // sorting definition

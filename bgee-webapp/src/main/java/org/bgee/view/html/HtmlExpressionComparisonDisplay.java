@@ -409,6 +409,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
             this.includeJs("lib/jquery_plugins/dataTables.responsive.min.js");
+            this.includeJs("lib/jquery_plugins/dataTables.sort.min.js");
             this.includeJs("expr_comp.js");
         } else {
             this.includeJs("lib/jquery_plugins/vendor_expr_comp.js");

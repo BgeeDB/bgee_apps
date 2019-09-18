@@ -175,7 +175,6 @@ $( document ).ready( function(){
             { responsivePriority: 1, targets: 0 }, // Anatomical entities
             { responsivePriority: 1, targets: 1 }, // Score
             { responsivePriority: 1, targets: 2 }, // Min rank
-<<<<<<< HEAD
             { type: 'scientific', targets: 2 },    // sort using the scientific type
             { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
             { type: 'gene-number', targets: 3 },   // sort using the gene-number type
@@ -183,18 +182,12 @@ $( document ).ready( function(){
             { type: 'gene-number', targets: 4 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 5 }, // Gene count with no data
             { type: 'gene-number', targets: 5 },   // sort using the gene-number type
-            { responsivePriority: 2, targets: 6 }  // Details
-=======
-            { responsivePriority: 2, targets: 3 }, // Genes with presence of expression
-            { responsivePriority: 2, targets: 4 }, // Genes with absence of expression
-            { responsivePriority: 2, targets: 5 }, // Genes with no data
             { responsivePriority: 2, targets: 6 }, // Details
             { responsivePriority: 4, targets: 7, visible: false, searchable: false }, // Anatomical entity IDs
             { responsivePriority: 4, targets: 8, visible: false, searchable: false }, // Gene count with presence of expression
             { responsivePriority: 4, targets: 9, visible: false, searchable: false }, // Gene count with absence of expression
             { responsivePriority: 4, targets: 10, visible: false, searchable: false } // Gene count with no data
 
->>>>>>> origin/species-schema-export
         ],
         columns: [ // sorting definition
             // Anatomical entities

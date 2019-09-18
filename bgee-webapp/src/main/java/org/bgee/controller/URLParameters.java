@@ -76,7 +76,7 @@ public class URLParameters {
      * of one parameter. Contains: "\r\n", "\r", "\n", ",".
      * @see URLParameters.Parameter#allowsSeparatedValues().
      */
-    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ",");
+    protected static final List<String> DEFAULT_SEPARATORS = Arrays.asList("\r\n", "\r", "\n", ","," ");
 
     /**
      * A {@code boolean} that contains the default value for {@link URLParameters.Parameter#isStorable}

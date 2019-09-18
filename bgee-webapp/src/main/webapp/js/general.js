@@ -58,6 +58,7 @@ var general = {
                 $( "#bgee_data_selection h1 span.commonname" );
             this.$geneExpressionCallsPageLink = $( "#gene_expression_calls_link" );
             this.$procExprValuesPageLink = $( "#processed_expression_values_link" );
+            this.$speciesPageLink = $( "#species_info_link" );
  
             // Simple species images
             this.$speciesImg = $( "#bgee_species .species_img" );
@@ -144,53 +145,64 @@ var general = {
          * @param $currentSpecies    The DOM element <figure> that contains the species or group 
          *                           to be loaded
          */
-        loadDetails: function( $currentSpecies ){
+        loadDetails: function( $currentSpecies ) {
 
             // Fetch all DOM elements and values needed to update the display
-            var id = $currentSpecies.attr( "id" );
+            var groupId = $currentSpecies.attr("id");
+            var species = speciesData[groupId].members[0];
+
             // Generate value for the hash.
             // Add "id" in front to avoid the automatic anchor behavior 
             //that would mess up the scroll
             //TODO: this should be a proper data parameter stored in hash, 
             //like, e.g., species_id=id
-            var hashToUse = "id"+id
-            
+            var hashToUse = "id" + groupId;
+
             //manage link to gene expression calls from home page
             var requestGeneExprCallsPage = new requestParameters();
             requestGeneExprCallsPage.setURLHash(hashToUse);
-            requestGeneExprCallsPage.addValue(urlParameters.getParamPage(), 
-            		requestGeneExprCallsPage.PAGE_DOWNLOAD());
-            requestGeneExprCallsPage.addValue(urlParameters.getParamAction(), 
-            		requestGeneExprCallsPage.ACTION_DOWLOAD_CALL_FILES());
-        	this.$geneExpressionCallsPageLink.attr( "href", 
-        			//TODO: handle the hash exactly as another parameter (see TODO 
-        			//in RequestParameters.java)
-        			requestGeneExprCallsPage.getRequestURL());
+            requestGeneExprCallsPage.addValue(urlParameters.getParamPage(),
+                requestGeneExprCallsPage.PAGE_DOWNLOAD());
+            requestGeneExprCallsPage.addValue(urlParameters.getParamAction(),
+                requestGeneExprCallsPage.ACTION_DOWLOAD_CALL_FILES());
+            this.$geneExpressionCallsPageLink.attr("href",
+                //TODO: handle the hash exactly as another parameter (see TODO 
+                //in RequestParameters.java)
+                requestGeneExprCallsPage.getRequestURL());
 
-            this.$procExprValuesPageLink = $( "#processed_expression_values_link" );
             //manage link to gene expression calls from home page
             var requestProcExprValuesPage = new requestParameters();
             requestProcExprValuesPage.setURLHash(hashToUse);
-            requestProcExprValuesPage.addValue(urlParameters.getParamPage(), 
-            		requestProcExprValuesPage.PAGE_DOWNLOAD());
-            requestProcExprValuesPage.addValue(urlParameters.getParamAction(), 
-            		requestProcExprValuesPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
-        	this.$procExprValuesPageLink.attr( "href", 
-        			//TODO: handle the hash exactly as another parameter (see TODO 
-        			//in RequestParameters.java)
-        			requestProcExprValuesPage.getRequestURL());
+            requestProcExprValuesPage.addValue(urlParameters.getParamPage(),
+                requestProcExprValuesPage.PAGE_DOWNLOAD());
+            requestProcExprValuesPage.addValue(urlParameters.getParamAction(),
+                requestProcExprValuesPage.ACTION_DOWLOAD_PROC_VALUE_FILES());
+            this.$procExprValuesPageLink.attr("href",
+                //TODO: handle the hash exactly as another parameter (see TODO 
+                //in RequestParameters.java)
+                requestProcExprValuesPage.getRequestURL());
+
+            //manage link to species page from home page
+            var requestSpeciesPage = new requestParameters();
+            requestSpeciesPage.addValue(urlParameters.getParamPage(),
+                requestSpeciesPage.PAGE_SPECIES());
+            requestSpeciesPage.addValue(urlParameters.getParamSpeciesId(), species.id);
+            this.$speciesPageLink.attr("href", requestSpeciesPage.getRequestURL());
 
             // The images contain the data fields related to the species
-            var $images = $currentSpecies.find( ".species_img" ); 
-            var species = speciesData[id].members[0];
+            var $images = $currentSpecies.find(".species_img");
             var bgeeSpeciesName = species.genus + " " + species.speciesName; // Only the last one is kept when 
             // there are multiple images, in the case of group, but the field is not used in this case,
             // so no need to care about 
             var bgeeSpeciesCommonNames = species.name;
-            
-            this.$bgeeDataSelectionTextScientific.text( bgeeSpeciesName );
-            this.$bgeeDataSelectionTextCommon.text( "("+ bgeeSpeciesCommonNames +")" );
-            
+
+            this.$bgeeDataSelectionTextScientific.text(bgeeSpeciesName);
+            if (bgeeSpeciesCommonNames) {
+                this.$bgeeDataSelectionTextCommon.text("(" + bgeeSpeciesCommonNames + ")");
+            } else {
+                this.$bgeeDataSelectionTextCommon.text("");
+            }
+         
             // Add the "selected" css class to the current species and display the detail 
             // box with a visual effect
             this.$species.removeClass( "selected" ); // Unselected all other species

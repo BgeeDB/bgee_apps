@@ -604,8 +604,10 @@ var download = {
                 //we display the group name as subtitle rather than the species common name, 
                 //because we used to have incorrect common names at some point, 
                 //and because this allows more flexibility (e.g. "human including GTEx data")
-                if (bgeeGroupName) {
+                if (bgeeGroupName && bgeeGroupName !== bgeeSpeciesName) {
                 	this.$bgeeDataSelectionTextCommon.text( "("+ bgeeGroupName +")" );
+                } else {
+                    this.$bgeeDataSelectionTextCommon.text( "" );
                 }
                 this.$bgeeGroupDescription.text( "" );
                 this.$showMultiSimpleDiffexprAnatomyHeaders.hide();

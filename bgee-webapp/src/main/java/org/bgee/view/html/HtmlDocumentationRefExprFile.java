@@ -84,6 +84,8 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * 
      * @see HtmlDocumentationDisplay#displayCallDownloadFileDocumentation()
      */
+    // TODO continue to write that documentation and then add schema.org properties. 
+    // We don't want to index not finished pages
     protected void writeDocumentation() {
         log.entry();
         

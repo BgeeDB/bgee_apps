@@ -44,14 +44,14 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
     public void displayCollaborationPage() {
         log.entry();
 
-        this.startDisplay("Bgee collaborations");
+        this.startDisplay("Bgee collaborations", "WebPage");
 
-        this.writeln("<h1>Bgee collaborations</h1>");
+        this.writeln("<h1 property='schema:name'>Bgee collaborations</h1>");
 
         this.writeln("<div class='row'>");
 
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
-        this.writeln("<p>This page provides current collaborations of the Bgee project" +
+        this.writeln("<p property='schema:description'>This page provides current collaborations of the Bgee project" +
                 " (in alphabetical order).</p>");
 
 

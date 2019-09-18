@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.Entity;
 import org.bgee.model.SearchResult;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Condition;
@@ -39,7 +40,8 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code ExpressionComparisonDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
+ * @version Bgee 14, June 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
@@ -50,6 +52,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      */
     private final static Logger log = LogManager.getLogger(HtmlExpressionComparisonDisplay.class.getName());
 
+    private final static String ENTITIES_SEPARATOR = ", ";
+    
     /**
      * @param response          A {@code HttpServletResponse} that will be used to display
      *                          the page to the client.
@@ -109,8 +113,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                                                  String errorMsg) {
         log.entry(searchResult, result, function, isMultiSpecies, errorMsg);
         
-
         this.startDisplay("Expression comparison page");
+
+        this.addSchemaMarkups();
 
         this.writeln("<h1>Expression comparison</h1>");
 
@@ -176,7 +181,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append(this.getRequestParameters().getUrlParametersInstance()
                         .getParamGeneList().getName()).append("'" +
                 "                            form='bgee_expr_comp_form' autofocus rows='10'" +
-                "                            placeholder='Enter a list of Ensembl IDs'>")
+                "                            placeholder='Enter a list of Ensembl IDs (one ID per line or separated by a comma)'>")
                 .append(idsText).append("</textarea>");
         sb.append("            </div>");
 
@@ -213,7 +218,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             sb.append(searchResult.getRequestElementsNotFound().stream()
                     .sorted()
                     .map(gId -> "'" + htmlEntities(gId) + "'")
-                    .collect(Collectors.joining(" - ")));
+                    .collect(Collectors.joining(ENTITIES_SEPARATOR)));
             sb.append("</p>");
         }
 
@@ -237,6 +242,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             sb.append("            <th>Species with absence of expression</th>");
         }
         sb.append("                <th>See details</th>");
+        sb.append("                <th>Anatomical entity IDs</th>");
+        sb.append("                <th>Gene count with presence of expression</th>");
+        sb.append("                <th>Gene count with absence of expression</th>");
+        sb.append("                <th>Gene count with no data</th>");
+        if (isMultiSpecies) {
+            sb.append("            <th>Species count with presence of expression</th>");
+            sb.append("            <th>Species count with absence of expression</th>");
+        }
         sb.append("            </tr>");
         sb.append("        </thead>");
         sb.append("        <tbody>");
@@ -258,11 +271,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         StringBuilder row = new StringBuilder();
         row.append("<tr>");
         
-        row.append("    <td>");
-        row.append(function.apply(condToCounts.getKey()).stream()
+        List<AnatEntity> anatEntities = function.apply(condToCounts.getKey()).stream()
                 .sorted(Comparator.comparing(AnatEntity::getName))
+                .collect(Collectors.toList());
+        
+        row.append("    <td>");
+        row.append(anatEntities.stream()
                 .map(ae -> getAnatEntityUrl(ae, ae.getName()))
-                .collect(Collectors.joining(" - ")));
+                .collect(Collectors.joining(ENTITIES_SEPARATOR)));
         row.append("    </td>");
 
         Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
@@ -299,6 +315,23 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         
         // Expand details
         row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
+
+        // Columns for export only
+        row.append("<td>").append(anatEntities.stream()
+                .map(Entity::getId)
+                .collect(Collectors.joining(ENTITIES_SEPARATOR))).append("</td>");
+        row.append("<td>").append(expressedGenes.size()).append("</td>");
+        row.append("<td>").append(notExpressedGenes.size()).append("</td>");
+        row.append("<td>").append(condToCounts.getValue().getGenesWithNoData().size()).append("</td>");
+        if (isMultiSpecies) {
+            row.append("<td>")
+                    .append(expressedGenes.stream().map(Gene::getSpecies).distinct().count())
+                    .append("</td>");
+            row.append("<td>")
+                    .append(notExpressedGenes.stream().map(Gene::getSpecies).distinct().count())
+                    .append("</td>");
+        }
+
         row.append("</tr>");
         return log.exit(row.toString());
     }
@@ -344,7 +377,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
                         .collect(Collectors.toList()),
-                "species", s -> "<em>" + htmlEntities(s.getScientificName()) + "</em>"));
+                "species", s -> "<a href='" + getSpeciesPageUrl(s.getId()) + "'><em>" 
+                            + htmlEntities(s.getScientificName()) + "</em></a>"));
     }
 
     /**
@@ -379,6 +413,37 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         return log.exit(cell.toString());
     }
 
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addSchemaMarkups() {
+        log.entry();
+
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@type\": \"WebApplication\"," +
+                "  \"@id\": \"" + url.getRequestURL() + "\"," +
+                "  \"name\": \"Expression comparison\"," +
+                "  \"url\": \"" + url.getRequestURL() + "\"," +
+                "  \"description\": \"Compare expression from several genes\"," +
+                "  \"offers\": {" +
+                "    \"@type\": \"Offer\"," +
+                "    \"price\": \"0.00\"," +
+                "    \"priceCurrency\": \"CHF\"" +
+                "  }, " +
+                "  \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "}");
+
+        this.writeln("</script>");
+        
+        log.exit();
+    }
+
     @Override
     protected void includeCss() {
         log.entry();
@@ -388,6 +453,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         if (!this.prop.isMinify()) {
             this.includeCss("lib/jquery_plugins/jquery.dataTables.min.css");
             this.includeCss("lib/jquery_plugins/responsive.dataTables.min.css");
+            this.includeCss("lib/jquery_plugins/buttons.dataTables.min.css");
         } else {
             this.includeCss("lib/jquery_plugins/vendor_expr_comp.css");
         }
@@ -410,6 +476,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             this.includeJs("lib/jquery_plugins/jquery.dataTables.min.js");
             this.includeJs("lib/jquery_plugins/dataTables.responsive.min.js");
             this.includeJs("lib/jquery_plugins/dataTables.sort.min.js");
+            this.includeJs("lib/jquery_plugins/dataTables.buttons.min.js");
+            this.includeJs("lib/jquery_plugins/buttons.html5.min.js");
+            this.includeJs("lib/jquery_plugins/jszip.min.js");
             this.includeJs("expr_comp.js");
         } else {
             this.includeJs("lib/jquery_plugins/vendor_expr_comp.js");

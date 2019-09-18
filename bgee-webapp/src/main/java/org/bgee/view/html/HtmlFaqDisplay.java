@@ -43,9 +43,9 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         RequestParameters urlCollab = this.getNewRequestParameters();
         urlCollab.setPage(RequestParameters.PAGE_COLLABORATIONS);
         
-        this.writeln("<h1>Frequently asked questions (FAQ)</h1>");
+        this.writeln("<h1 property='schema:name'>Frequently asked questions (FAQ)</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln("<p>Got questions? We’ve got answers! Here, you can find Bgee team answers " +
                 "in response to the most frequently asked questions. " +
                 "If you don't find answers here, please do not hesitate to contact us, " +
@@ -180,9 +180,9 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         log.entry(question, answer, panelIdSuffix);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("  <div class='panel panel-default'>");
+        sb.append("  <div class='panel panel-default' property='schema:mainEntity' typeof='schema:Question'>");
         sb.append("    <div class='panel-heading' role='tab' id='heading").append(panelIdSuffix).append("Query'>");
-        sb.append("      <div class='panel-title'>");
+        sb.append("      <div class='panel-title' property='schema:name'>");
         sb.append("        <a href='#collapse").append(panelIdSuffix).append("Query' class='collapsed' " +
                 "role='button' data-toggle='collapse' data-parent='#faq-list' " +
                 "aria-expanded='false' aria-controls='collapse").append(panelIdSuffix).append("Query'>");
@@ -192,8 +192,8 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         sb.append("    </div>");
         sb.append("    <div id='collapse").append(panelIdSuffix)
                 .append("Query' class='panel-collapse collapse' role='tabpanel' aria-labelledby='collapse")
-                .append(panelIdSuffix).append("Query'>");
-        sb.append("      <div class='panel-body'>");
+                .append(panelIdSuffix).append("Query' property='schema:acceptedAnswer' typeof='schema:Answer'>");
+        sb.append("      <div class='panel-body' property='schema:text'>");
         sb.append(answer);
         sb.append("      </div>");
         sb.append("    </div>");

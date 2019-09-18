@@ -368,6 +368,7 @@
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
                                 <cssSourceFile>gene.css</cssSourceFile>
+                                <cssSourceFile>species.css</cssSourceFile>
                                 <cssSourceFile>source.css</cssSourceFile>
                                 <cssSourceFile>sparql.css</cssSourceFile>
                                 <cssSourceFile>raw_data.css</cssSourceFile>
@@ -658,6 +659,9 @@
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.buttons.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/buttons.html5.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jszip.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
@@ -667,6 +671,7 @@
                             <cssSourceFiles>
                                 <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/buttons.dataTables.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <cssFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>

@@ -20,10 +20,6 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
-table.info-table {
-	margin: 1em 0;
-}
-
 table.info-table th {
     vertical-align: top;
     text-align: left;
@@ -129,10 +125,6 @@ th.quality {
 
 table.expression td {
 	vertical-align:text-top;
-}
-
-div.info-content {
-	margin: 1em 2%;
 }
 
 td > ul {

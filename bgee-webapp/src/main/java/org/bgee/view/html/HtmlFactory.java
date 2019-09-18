@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlFactory extends ViewFactory {
@@ -146,7 +146,7 @@ public class HtmlFactory extends ViewFactory {
 	
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
+        return log.exit(new HtmlSpeciesDisplay(this.response, this.requestParameters, this.prop, this));
     }
 	@Override
 	public SearchDisplay getSearchDisplay() throws IOException {

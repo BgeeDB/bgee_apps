@@ -19,7 +19,7 @@ import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.Sum
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.EntityMinMaxRanksTO;
@@ -160,8 +160,8 @@ public class TOComparator {
             return log.exit(areTOsEqual((ConditionTO) to1, (ConditionTO) to2, compareId));
         } else if (to1 instanceof RawDataConditionTO) {
             return log.exit(areTOsEqual((RawDataConditionTO) to1, (RawDataConditionTO) to2, compareId));
-        } else if (to1 instanceof GlobalConditionMaxRankTO) {
-            return log.exit(areTOsEqual((GlobalConditionMaxRankTO) to1, (GlobalConditionMaxRankTO) to2));
+        } else if (to1 instanceof ConditionRankInfoTO) {
+            return log.exit(areTOsEqual((ConditionRankInfoTO) to1, (ConditionRankInfoTO) to2));
         } else if (to1 instanceof RawExpressionCallTO) {
             return log.exit(areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, 
                     compareId));
@@ -768,7 +768,14 @@ public class TOComparator {
     private static boolean areTOsEqual(ConditionTO to1, ConditionTO to2, boolean compareId) {
         log.entry(to1, to2, compareId);
 
-        if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId)) {
+        if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+
+                //ConditionRankInfoTO do not implement hashCode/equals
+                (to1.getRankInfoTOs() == null && to2.getRankInfoTOs() == null || 
+                to1.getRankInfoTOs() != null && to2.getRankInfoTOs() != null &&
+                to1.getRankInfoTOs().stream()
+                    .allMatch(c1 -> to2.getRankInfoTOs().stream()
+                            .anyMatch(c2 -> areTOsEqual(c1, c2))))) {
             return log.exit(true);
         }
         return log.exit(false);
@@ -804,12 +811,10 @@ public class TOComparator {
      * @param to2       An {@code ConditionTO} to be compared to {@code to1}.
      * @return          {@code true} if {@code to1} and {@code to2} have all attributes equal.
      */
-    //TODO: unit test
-    private static boolean areTOsEqual(GlobalConditionMaxRankTO to1, GlobalConditionMaxRankTO to2) {
+    private static boolean areTOsEqual(ConditionRankInfoTO to1, ConditionRankInfoTO to2) {
         log.entry(to1, to2);
 
-        if (Objects.equals(to1.getConditionId(), to2.getConditionId()) && 
-                Objects.equals(to1.getDataType(), to2.getDataType()) &&
+        if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
                 areBigDecimalEquals(to1.getMaxRank(), to2.getMaxRank()) && 
                 areBigDecimalEquals(to1.getGlobalMaxRank(), to2.getGlobalMaxRank())) {
             return log.exit(true);

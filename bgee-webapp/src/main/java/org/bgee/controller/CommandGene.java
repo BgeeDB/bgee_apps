@@ -243,10 +243,6 @@ public class CommandGene extends CommandParent {
      *                                 and keys correspond to {@code AnatEntity}s
      * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
      *                                 should be filtered for the grouping and clustering steps.
-<<<<<<< HEAD
-     * @param conditionGraph           A {@code ConditionGraph} built from {@code exprCalls}.
-=======
->>>>>>> review_rawdata_genestats_fixtests_oncomxnewfile_multispecies
      * @return                         A built {@code GeneResponse}.
      */
     private GeneResponse buildGeneResponse(Gene gene, LinkedHashMap<AnatEntity, 
@@ -290,14 +286,9 @@ public class CommandGene extends CommandParent {
     /**
      * Return the {@code Function} corresponding to the clustering method to used, 
      * based on the properties {@link BgeeProperties#getGeneScoreClusteringMethod()} 
-     * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function} 
-<<<<<<< HEAD
+     * and {@link BgeeProperties#getGeneScoreClusteringThreshold()}. The {@code Function}
      * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(
      * List, ClusteringMethod, double)}.
-=======
-     * will trigger a call to {@link ExpressionCall#generateMeanRankScoreClustering(List,
-     * ClusteringMethod, double)}.
->>>>>>> review_rawdata_genestats_fixtests_oncomxnewfile_multispecies
      * 
      * @return     A {@code Function} accepting a {@code List} of {@code ExpressionCall}s 
      *             as input, and returns a {@code Map} corresponding to the clustering as output.

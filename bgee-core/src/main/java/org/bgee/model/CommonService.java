@@ -127,7 +127,7 @@ public class CommonService extends Service {
     protected static ConditionTO mapConditionToConditionTO(int condId, Condition cond) {
         log.entry(condId, cond);
         return log.exit(new ConditionTO(condId, cond.getAnatEntityId(), cond.getDevStageId(),
-                cond.getSpeciesId()));
+                cond.getSpeciesId(), null));
     }
     
     /**

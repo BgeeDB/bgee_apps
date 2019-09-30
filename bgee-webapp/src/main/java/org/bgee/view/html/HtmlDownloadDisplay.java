@@ -129,6 +129,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     return "{" +
                            "    \"@type\": \"Dataset\"," +
                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                            "}";
                         }
@@ -148,11 +151,17 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     return "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                             "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                             "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}";
                         }

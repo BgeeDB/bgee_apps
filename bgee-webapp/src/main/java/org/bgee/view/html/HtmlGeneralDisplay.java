@@ -113,16 +113,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                     return "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                             "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}, " +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                             "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
                             "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
                             "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
                             "}";
                         }
@@ -673,6 +682,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
                 this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
+        this.writeln("<a title='Archive site Bgee version 14.0' href='" +
+                this.prop.getBgeeRootDirectory() + "bgee14_0' target='_blank'>version 14.0</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

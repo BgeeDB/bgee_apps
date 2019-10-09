@@ -480,6 +480,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='panel-body'>");
 
+        this.writeOneNews("2019-10-05",
+                "<ul>" +
+                "    <li>New score on <a href='" + urlGenePage.getRequestURL() + "' title='Gene page'>" + 
+                         "gene pages</a>.</li>" +
+                "    <li>Update of the <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +
+                         "expression comparison</a>." +
+                "    <ul>" + 
+                "        <li>Better sorting approach.</li>" +
+                "        <li>Possibility to export results (copy to clipboard or TSV).</li>" + 
+                "    </ul></li>" +   
+                "    <li>Improve findability of data by adding <a href='https://bioschemas.org' " + 
+                "    title='Bioschemas'>Bioschemas</a>  markup.</li>" +
+                "</ul>");
+        
         this.writeOneNews("2019-05-21",
                 "<ul>" +
                 "    <li>New <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +

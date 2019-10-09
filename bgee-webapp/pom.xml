@@ -660,6 +660,7 @@
                                 <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/dataTables.buttons.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.sort.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/buttons.html5.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/jszip.min.js</jsSourceFile>
                             </jsSourceFiles>

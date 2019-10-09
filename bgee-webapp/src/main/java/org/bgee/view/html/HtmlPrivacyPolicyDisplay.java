@@ -45,16 +45,16 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     public void displayPrivacyPolicyPage() {
         log.entry();
 
-        this.startDisplay("Bgee privacy notice");
+        this.startDisplay("Bgee privacy notice", "WebPage");
 
-        this.writeln("<h1>Bgee privacy notice</h1>");
+        this.writeln("<h1 property='schema:name'>Bgee privacy notice</h1>");
 
         this.writeln("<div class='row'>");
 
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
-        this.writeln("<p>This privacy notice explains what personal data are collected by the specific " +
-                "service you are requesting, for what purposes, how they are processed, " +
-                "and how we keep them secure.</p>");
+        this.writeln("<p property='schema:description'>This privacy notice explains what personal data " +
+                "are collected by the specific service you are requesting, for what purposes, " +
+                "how they are processed, and how we keep them secure.</p>");
 
         this.writeln("<h2>Who controls your personal data and how to contact us?</h2>");
         this.writeln("<dl>");

@@ -72,14 +72,14 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         String bgeeLiteDocUrl = DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation";
         
-        this.startDisplay("Bgee SPARQL endpoint");
+        this.startDisplay("Bgee SPARQL endpoint", "WebPage");
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
-        this.writeln("<h1>Bgee SPARQL endpoint</h1>");
+        this.writeln("<h1 property='schema:name'>Bgee SPARQL endpoint</h1>");
 
-        this.writeln("<p>Bgee has a SPARQL endpoint which is based on the " +
+        this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the " +
                 "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' " +
                 "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
                 BGEE_LITE_NAME + " is a lighter version of Bgee database, " +

@@ -58,6 +58,8 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     public void displayRawCallHomePage() {
         log.entry();
         
+        // TODO add schema.org properties 
+        
         this.startDisplay("Raw data information");
 
         this.writeln("<h1>Raw data search</h1>");
@@ -119,6 +121,8 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 //    public void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<RNASeqResult> rnaSeqResults, Stream<InSituSpot> inSituSpots, Stream<EST> ests) {
     public void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<InSituSpot> inSituSpots) {
         log.entry(affymetrixProbesets, inSituSpots);
+
+        // TODO add schema.org properties 
 
         this.startDisplay("Bgee raw data");
 

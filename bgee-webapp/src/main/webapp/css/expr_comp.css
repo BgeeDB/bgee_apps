@@ -6,3 +6,15 @@ td > ul {
     list-style-type: none;
     padding-left: 0;
 }
+
+.dataTables_length, .dataTables_filter {
+    padding-top: 0.755em; /* same as dataTables_info */
+}
+
+.dt-buttons {
+    padding-top: 0.25em; /* same as dataTables_paginate */
+}
+
+.dt-buttons .buttonLabel {
+    margin-left: 5px;
+}

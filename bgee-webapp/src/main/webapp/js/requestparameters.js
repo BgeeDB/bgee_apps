@@ -230,9 +230,23 @@ function requestParameters(queryString, encodeUrl, parametersSeparator){
      */
     this.PAGE_SEARCH = function() {
     	return pageSearch;
-    }
-
-
+    };
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter
+     * (see {@link urlParameters#getParamPage()}) when a species page is requested.
+     * This parameter will then be provided outside of this class through the method
+     * {@link #PAGE_SPECIES()} (to get the behavior of a public final parameter).
+     */
+    var pageSpecies = 'species';
+    /**
+     * A method to obtain the value taken by the {@code page} parameter
+     * (see {@link urlParameters#getParamPage()}) when a species page is requested.
+     */
+    this.PAGE_SPECIES = function() {
+        return pageSpecies;
+    };
+    
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link #getParamAction()}) when download page about files providing calls of 

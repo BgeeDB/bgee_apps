@@ -666,13 +666,13 @@ div.bgee_download_section figure.selected {
 }
 
 #bgee_data_selection ul {
-    white-space: nowrap;
     list-style-image: url(../img/arrow.png);
     margin: 0;
 }
   
 #bgee_data_selection li {
-    display: inline;
+    display: inline-block;
+    white-space: nowrap;
     max-width: 400px;
 }
  
@@ -707,6 +707,11 @@ div.bgee_download_section figure.selected {
 #bgee_data figure.selected p,
 #bgee_uniq_species figure.selected p {
     color: #282828;
+}
+
+/****BGEE INFO-TABLES****/
+div.info-content {
+    margin: 1em 2%;
 }
 
 /****BGEE TABLES****/

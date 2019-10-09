@@ -20,10 +20,6 @@ h1.gene_title img {
     border-radius: 8px;
 }
 
-table.info-table {
-	margin: 1em 0;
-}
-
 table.info-table th {
     vertical-align: top;
     text-align: left;
@@ -34,9 +30,18 @@ table.info-table td {
     padding: 0 0 0.5em 0;
 }
 
-div#expr_intro {
+div#rank_def {
 	display: inline-flex;
     margin-top: 2em;
+    margin-bottom: 0em;
+    font-size: 0.9em;
+    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+    padding-left: 2%;
+}
+
+div#expr_score_def {
+	display: inline-flex;
+    margin-top: 1em;
     margin-bottom: 2em;
     font-size: 0.9em;
     /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
@@ -118,7 +123,7 @@ th.anat-entity {
 	width: 29% !important;
 }
 th.dev-stages {
-	width: 40% !important;
+	width: 33% !important;
 }
 th.score {
 	width: 7% !important;
@@ -129,10 +134,6 @@ th.quality {
 
 table.expression td {
 	vertical-align:text-top;
-}
-
-div.info-content {
-	margin: 1em 2%;
 }
 
 td > ul {

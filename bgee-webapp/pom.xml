@@ -135,8 +135,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}f</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}f</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}g</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}g</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify
@@ -368,6 +368,7 @@
                                 <cssSourceFile>general.css</cssSourceFile>
                                 <cssSourceFile>topanat.css</cssSourceFile>
                                 <cssSourceFile>gene.css</cssSourceFile>
+                                <cssSourceFile>species.css</cssSourceFile>
                                 <cssSourceFile>source.css</cssSourceFile>
                                 <cssSourceFile>sparql.css</cssSourceFile>
                                 <cssSourceFile>raw_data.css</cssSourceFile>
@@ -658,6 +659,10 @@
                             <jsSourceFiles>
                                 <jsSourceFile>lib/jquery_plugins/jquery.dataTables.min.js</jsSourceFile>
                                 <jsSourceFile>lib/jquery_plugins/dataTables.responsive.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.buttons.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/dataTables.sort.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/buttons.html5.min.js</jsSourceFile>
+                                <jsSourceFile>lib/jquery_plugins/jszip.min.js</jsSourceFile>
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
@@ -667,6 +672,7 @@
                             <cssSourceFiles>
                                 <cssSourceFile>lib/jquery_plugins/jquery.dataTables.min.css</cssSourceFile>
                                 <cssSourceFile>lib/jquery_plugins/responsive.dataTables.min.css</cssSourceFile>
+                                <cssSourceFile>lib/jquery_plugins/buttons.dataTables.min.css</cssSourceFile>
                             </cssSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <cssFinalFile>vendor_expr_comp.${filter.org.bgee.webapp.css.version.extension}.css</cssFinalFile>

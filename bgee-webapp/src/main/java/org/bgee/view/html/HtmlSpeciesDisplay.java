@@ -317,7 +317,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         if (file.isPresent()) {
             DownloadFile downloadFile = file.get();
             return log.exit("<li><p>" + label + ": " +
-                    "<a class='btn btn-default btn-xs' href='" + downloadFile.getPath() + "'>" + 
+                    "<a class='btn btn-default btn-xs' href='" + 
+                    this.prop.getDownloadRootDirectory() + downloadFile.getPath() + "'>" + 
                     downloadFile.getName() + "</a> (" +
                     FileUtils.byteCountToDisplaySize(downloadFile.getSize()) + ")</p></li>");
         }

@@ -204,7 +204,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     private String getUnilEmail() {
         log.entry();
-        return log.exit("<script type='text/javascript'>eval(unescape("
+        return log.exit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%31%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%67%3A%65%77%61%6E" +
                 "%6C%65%65%6C%67%2E%6C%69%69%6C%72%65%6E%6F%75%40%69%6E%2E%6C%68%63%27%3B%76%61%72" +
@@ -221,7 +221,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     private String getSibDpoEmail() {
         log.entry();
-        return log.exit("<script type='text/javascript'>eval(unescape("
+        return log.exit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%35%39%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%64%3A%6F%70%73%40%62" +
                 "%69%73%2E%69%77%73%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69" +

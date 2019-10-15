@@ -771,7 +771,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
     
     private String getObfuscateEmailLink(String encodedLinkText) {
-        return "<script type='text/javascript'>eval(unescape("
+        return "<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65"
                 + "%31%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%42%3A%65%67%40%65"
                 + "%69%73%2E%62%77%73%73%69%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76"
@@ -908,7 +908,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void includeJs(String fileName) {
         log.entry(fileName);
-        this.writeln("<script type='text/javascript' src='" +
+        this.writeln("<script src='" +
                 this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() + 
                 this.getVersionedJsFileName(fileName) + "'></script>");
         log.exit();

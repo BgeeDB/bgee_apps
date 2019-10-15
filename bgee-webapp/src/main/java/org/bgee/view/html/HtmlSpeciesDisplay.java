@@ -59,9 +59,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
         this.writeln(speciesList.stream()
                 .map(species -> 
-                           "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + "' " +
-                           "   alt ='" + htmlEntities(species.getShortName())+"'>" +
-                           "    <figure><img src='"+ this.getSpeciesImageSrc(species, true)+"' />" +
+                           "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + ">" +
+                           "    <figure><img src='"+ this.getSpeciesImageSrc(species, true)+"' alt='"+ htmlEntities(species.getShortName())+"'>" +
                            "        <figcaption>" +
                            "            <p><i>" + htmlEntities(species.getShortName()) + "</i></p>" +
                            "            <p>" + (StringUtils.isNotBlank(species.getName()) ?

@@ -1,28 +1,28 @@
 
 div.source-list {
-    margin-bottom: 10px;
-    padding: 0 10px 0 0;
+	margin-bottom: 10px;
+	padding: 0 10px 0 0;
 }
 
 div.source {
-    padding: 0;
-    margin: 0;
+	padding: 0;
+	margin: 0;
 }
 
 .border-top {
-    border-top: #ccc 1px solid;
+	border-top: #ccc 1px solid;
 }
 
 .source-name, source-details {
-    padding: 5px 0 !important;
+	padding: 5px 0 !important;
 }
 
 .source-details-header {
-    font-weight: 300;
-    font-size: 0.9em !important;
-    text-transform: uppercase;
+	font-weight: 300;
+	font-size: 0.9em !important;
+	text-transform: uppercase;
 }
 
 .details {
-    padding: 5px 15px;
+	padding: 5px 15px;
 }

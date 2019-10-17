@@ -28,6 +28,7 @@ import org.bgee.pipeline.ontologycommon.OntologyTools;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.bgee.pipeline.species.InsertTaxa;
 import org.bgee.pipeline.uberon.CorrectTaxonConstraints;
+import org.bgee.pipeline.uberon.CorrectXrefsAndEquivalentClass;
 import org.bgee.pipeline.uberon.InsertUberon;
 import org.bgee.pipeline.uberon.TaxonConstraints;
 import org.bgee.pipeline.uberon.Uberon;
@@ -212,6 +213,9 @@ public class CommandRunner {
             break;
         case "InsertUberon": 
             InsertUberon.main(newArgs);
+            break;
+        case "CorrectXrefsAndEquivalentClass": 
+            CorrectXrefsAndEquivalentClass.main(newArgs);
             break;
         case "UberonSocketTool": 
             UberonSocketTool.main(newArgs);

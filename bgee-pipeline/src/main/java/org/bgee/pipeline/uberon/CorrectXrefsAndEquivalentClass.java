@@ -33,10 +33,12 @@ import org.supercsv.util.CsvContext;
 
 /**
  * Class dedicated to correction of XRefs and Equivalent classes of the UBERON ontology.
+ * This step is mandatory before inserting the UBERON ontology in the the Bgee database.
  * Initially all these modifications were done manually by modifying the obo and owl
  * ontologies with text editors.
  * The new approach is to reference all modification in a text file and then use information
- * present in this file to automatically modify the ontology.
+ * present in this file to automatically modify the ontology. It prevents typos in the ontologies
+ * and allows to reuse corrections from previous Bgee release.
 
  * 
  * @author Julien Wollbrett
@@ -56,11 +58,11 @@ public class CorrectXrefsAndEquivalentClass {
     public static void main(String[] args) throws Exception {
         if (args.length != 4) {
             throw log.throwing(new IllegalStateException(
-                    "You must provide 4 arguments. First argument corresponds to the path to the text"
-                    + "file listing all modifications. Second argument corresponds to the path to the"
-                    + "UBERON ontology you want to modify. Third argument corresponds to the path to the"
-                    + "modified OWL ontology to create. Fourth argument corresponds to the path to the "
-                    + "modified OBO ontology to create."));
+                    "You must provide 4 arguments :\n"
+                    + "1. path to the text file listing all modifications.\n"
+                    + "2. path to the UBERON ontology you want to modify.\n"
+                    + "3. path to the OWL ontology after correction.\n"
+                    + "4. path to the OBO ontology after correction."));
         }
         
         //init variables
@@ -124,7 +126,7 @@ public class CorrectXrefsAndEquivalentClass {
             
             // remove equivalent class axioms. This is more tricky because
             // an equivalent class axiom can be defined by more than one 
-            // triple (if restriction applied to this equivalence)
+            // triple (if restrictions applied to this equivalence)
             if (modification.getEquivalentToRemove() != null) {
                 for(String equivalentToRemove : modification.getEquivalentToRemove()) {
                     
@@ -160,7 +162,8 @@ public class CorrectXrefsAndEquivalentClass {
 
     
     private Set<XRefsAndEquivantClassBean> parseTextFile(String pathToFile) throws Exception {
-        log.info("start integration of data from file {}", pathToFile);
+        log.entry(pathToFile);
+        log.info("start parsing file {}", pathToFile, "containing all correction to apply.");
         Set<XRefsAndEquivantClassBean> lines = new HashSet<>();
         ICsvBeanReader beanReader = null;
         try {
@@ -180,7 +183,7 @@ public class CorrectXrefsAndEquivalentClass {
                 beanReader.close();
             }
         }
-        return lines;
+        return log.exit(lines);
     }
     
     /**
@@ -271,7 +274,7 @@ public class CorrectXrefsAndEquivalentClass {
     
     /**
      * A bean representing a row of the file describing XRefs and
-     * equivalent class relations to modify before inserting Uberon
+     * equivalent class relations to modify
      *
      * @author  Julien Wollbrett
      * @version Bgee 15, Oct. 2019

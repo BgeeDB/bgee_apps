@@ -59,7 +59,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
         this.writeln(speciesList.stream()
                 .map(species -> 
-                           "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + ">" +
+                           "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + "'>" +
                            "    <figure><img src='"+ this.getSpeciesImageSrc(species, true)+"' alt='"+ htmlEntities(species.getShortName())+"'>" +
                            "        <figcaption>" +
                            "            <p><i>" + htmlEntities(species.getShortName()) + "</i></p>" +
@@ -219,8 +219,10 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                         "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&amp;id=")
                 .append(species.getId()).append("'>")
                 .append(htmlEntities(String.valueOf(species.getId()))).append("</a></td></tr>");
+        String speciesSourceURL = species.getGenomeSource().getBaseUrl() + 
+                species.getScientificName().replace(" ", "_");
         table.append("<tr><th scope='row'>Genome source</th><td><a class='external_link' target='_blank' " +
-                "href='").append(species.getGenomeSource().getBaseUrl()).append("'>")
+                "href='").append(speciesSourceURL).append("'>")
                 .append(htmlEntities(species.getGenomeSource().getName())).append("</a></td></tr>");
         table.append("<tr><th scope='row'>Genome version</th><td>")
                 .append(htmlEntities(species.getGenomeVersion())).append("</td></tr>");

@@ -467,6 +467,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         RequestParameters urlExprComp = this.getNewRequestParameters();
         urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        
+        RequestParameters urlSpecies = this.getNewRequestParameters();
+        urlSpecies.setPage(RequestParameters.PAGE_SPECIES);
 
         RequestParameters urlAnatSim = this.getNewRequestParameters();
         urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
@@ -484,6 +487,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "<ul>" +
                 "    <li>New score on <a href='" + urlGenePage.getRequestURL() + "' title='Gene page'>" + 
                          "gene pages</a>.</li>" +
+                "    <li>New <a href='" + urlSpecies.getRequestURL() + "' title='Species'>" +
+                         "species</a> page.</li>" +
                 "    <li>Update of the <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +
                          "expression comparison</a>." +
                 "    <ul>" + 

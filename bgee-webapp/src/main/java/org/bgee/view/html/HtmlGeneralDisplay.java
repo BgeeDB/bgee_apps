@@ -524,12 +524,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeOneNews("2019-05-12",
                 "<ul>" +
-                "    <li>Update of the <a href='" + urlGenePage.getRequestURL() +
-                "    '>gene search page</a>:" +
+                "    <li>Update of the <a href='" + urlGenePage.getRequestURL() + "'>gene search page</a>:" +
                 "    <ul>" +
                 "        <li>Addition of a gene search result page (i.e. <a href='" +
-                         urlGeneSearchHbb.getRequestURL() +
-                "        ' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
+                         urlGeneSearchHbb.getRequestURL() + "' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
                 "        <li>Improvement of the speed of autocompletion</li>" +
                 "    </ul></li>" +
                 "    <li>Modification of gene pages to display gene name synoyms," +

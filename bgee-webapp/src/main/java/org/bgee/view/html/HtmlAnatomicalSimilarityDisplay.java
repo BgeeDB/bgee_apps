@@ -89,7 +89,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         this.writeln("<p>Retrieve anatomical homologies from a list of species and a list of Uberon IDs. "
                 + "Retrieve Uberon IDs from organ names <a href='https://www.ebi.ac.uk/ols/ontologies/uberon' "
                 + "title='Retrieve Uberon IDs from organ names' class='external_link' "
-                + "target='_blank'>here</a>.</p>");
+                + "target='_blank' rel='noopener noreferrer'>here</a>.</p>");
 
         this.writeln("</div>");
 

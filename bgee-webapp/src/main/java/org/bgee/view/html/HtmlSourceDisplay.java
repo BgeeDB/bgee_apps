@@ -101,7 +101,7 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
                 }
                 sb.append("<div class='source row ").append(border).append("'>");
                 sb.append("    <div class='source-name col-sm-3 col-md-2'>");
-                sb.append("        <a href='").append(source.getBaseUrl()).append("' target='_blank'>");
+                sb.append("        <a href='").append(source.getBaseUrl()).append("' target='_blank' rel='noopener noreferrer'>");
                 sb.append(             source.getName());
                 sb.append("        </a>");
                 sb.append("    </div>"); // close source-name

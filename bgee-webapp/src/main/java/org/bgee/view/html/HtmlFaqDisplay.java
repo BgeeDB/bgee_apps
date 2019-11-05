@@ -99,20 +99,20 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                 "<p>We use as input one specific developmental stage ontology for each species, " +
                         "and we then merge all these species-specific developmental ontologies into " +
                         "one single multi-species ontology. To do that, we use broad developmental stages " +
-                        "described in the <a href='http://uberon.org' class='external_link' target='_blank'>" +
+                        "described in the <a href='http://uberon.org' class='external_link' target='_blank' rel='noopener noreferrer'>" +
                         "Uberon ontology</a>: either we map some of the species-specific stages " +
                         "to these Uberon broad developmental stages (i.e., equivalent classes), " +
                         "or we attach some of the species-specific stages as children of " +
                         "these Uberon developmental stages (i.e., subclasses).</p>" +
                         "<p>You can find all 'source' species-specific ontologies we develop " +
                         "   <a href='https://github.com/obophenotype/developmental-stage-ontologies/tree/master/src' " +
-                        "      class='external_link' target='_blank'>here</a>. " +
+                        "      class='external_link' target='_blank' rel='noopener noreferrer'>here</a>. " +
                         "   For <i>C. elegans</i>, we rely on the " +
-                        "   <a href='http://www.obofoundry.org/ontology/wbls.html' class='external_link' target='_blank'>" +
+                        "   <a href='http://www.obofoundry.org/ontology/wbls.html' class='external_link' target='_blank' rel='noopener noreferrer'>" +
                         "   WBls ontology</a> developed by WormBase " +
                         "   (we also rely on external ontologies for fly, zebrafish, and xenopus).</p>" +
                         "<p>You can find the ontology merging all these species-specific ontologies with Uberon " +
-                        "   <a href='https://github.com/obophenotype/developmental-stage-ontologies/blob/master/external/bgee/dev_stage_ontology.obo' class='external_link' target='_blank'>" +
+                        "   <a href='https://github.com/obophenotype/developmental-stage-ontologies/blob/master/external/bgee/dev_stage_ontology.obo' class='external_link' target='_blank' rel='noopener noreferrer'>" +
                         "   here</a>. " +
                         "   You can find an overview of the resulting merge for <i>C. elegans</i> " +
                         "   <a href='https://github.com/obophenotype/developmental-stage-ontologies/blob/master/external/bgee/report.md#caenorhabditis-elegans'>" +
@@ -141,7 +141,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "that provides annotations and experiment information or processed expression values " +
                         "(see <a href='" + urlValuePage.getRequestURL() + "'>"+PROCESSED_EXPR_VALUES_PAGE_NAME+"</a>). " +
                         "It is also possible to download these data directly into R using " +
-                        "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank'>" +
+                        "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener noreferrer'>" +
                         "our R package </a>, or in the <a href='" + this.prop.getFTPRootDirectory() +
                         "sql_dump.tar.gz'>full Bgee database dump file</a>.",
                 "MoreInfo"));
@@ -155,7 +155,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "You can also visualize enrichment of expression of your list relative to " +
                         "a random background using <a href='" + urlTopAnat.getRequestURL() + "'>TopAnat</a>. " +
                         "All associated data can be downloaded using our " +
-                        "<a href='https://www.bioconductor.org/packages/BgeeDB/' class='external_link' target='_blank'>R package</a>. " +
+                        "<a href='https://www.bioconductor.org/packages/BgeeDB/' class='external_link' target='_blank' rel='noopener noreferrer'>R package</a>. " +
                         "Note that there is at present no way to visualize a list of genes.",
                 "OneGene"));
 

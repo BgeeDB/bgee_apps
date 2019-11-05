@@ -60,7 +60,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 //        this.writeln("<div id='bgee_introduction'>");
 //        this.writeln("<p>GO-like enrichment of anatomical terms, mapped to genes by expression patterns</p>");
 //        this.writeln("<p class='alert alert-danger'>While we are solving issues with TopAnat in Bgee 14, we invite you to use TopAnat in "
-//                + "<a title='TopAnat page of Bgee 13' href='http://bgee.org/bgee13/?page=top_anat' target='_blank'>"
+//                + "<a title='TopAnat page of Bgee 13' href='http://bgee.org/bgee13/?page=top_anat' target='_blank' rel='noopener noreferrer'>"
 //                + "Bgee 13</a>.</p>");
 //        this.writeln("</div>");
         

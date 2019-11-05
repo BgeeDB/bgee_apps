@@ -56,28 +56,28 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
 
         this.writeln("<h2>BioSODA</h2>");
-        this.writeln("<p><a target='_blank' title='BioSODA project description' href='" +
+        this.writeln("<p><a target='_blank' rel='noopener noreferrer' title='BioSODA project description' href='" +
                 "https://www.zhaw.ch/no_cache/en/research/research-database/project-detailview/projektid/1493/'>" +
                 "BioSODA project</a> aims at enabling sophisticated semantic queries across large, " +
                 "decentralized and heterogeneous databases via an intuitive interface. " +
                 "The system will enable scientists, without prior training, to perform powerful " +
                 "joint queries across resources in ways that cannot be anticipated and " +
                 "therefore goes far and above the query functionality of specialized knowledge bases. " +
-                "It is supported by <a href='http://www.nfp75.ch/en' target='_blank' " +
+                "It is supported by <a href='http://www.nfp75.ch/en' target='_blank' rel='noopener noreferrer' " +
                 "title='NFP75 Big Data website'>NFP75 'Big Data'</a>.<p>");
 
         this.writeln("<p>For this project, we created a sub-database of Bgee called " + BGEE_LITE_NAME +
-                ". The MySQL dump is available on <a target='_blank' title='Download the dump' href='" +
+                ". The MySQL dump is available on <a target='_blank' rel='noopener noreferrer' title='Download the dump' href='" +
                 this.prop.getFTPRootDirectory() +"sql_lite_dump.tar.gz'>Bgee FTP</a>. " +
                 "You can see the description of " + BGEE_LITE_NAME + " in <a title='" + BGEE_LITE_NAME + 
                 " description' href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation" +
-                "#information-about-the-bgee-lite-database' target='_blank'>" +
+                "#information-about-the-bgee-lite-database' target='_blank' rel='noopener noreferrer'>" +
                 "Bgee pipeline documentation</a><p>");
         
         this.writeln("<p>BioSODA uses the " + BGEE_LITE_NAME + " relational database to expose a " +
                 "Bgee SPARQL endpoint reachable through the following URL: " +
                 "<span class='copyable-url'>http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</span>. " +
-                "In the context of this project, the <a href='http://biosoda.expasy.org' target='_blank'>" +
+                "In the context of this project, the <a href='http://biosoda.expasy.org' target='_blank' rel='noopener noreferrer'>" +
                 "BioQuery web application</a> provides a user-friendly interface to query " + 
                 BGEE_LITE_NAME + " database based on the SPARQL query language.<p>");
         
@@ -86,7 +86,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
         
         this.writeln("<h2>OMA</h2>");
         
-        this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank'>OMA " +
+        this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank' rel='noopener noreferrer'>OMA " +
                 "(Orthologous MAtrix) project</a> is a method and database " +
                 "for the inference of orthologs among complete genomes.<p>");
 
@@ -101,17 +101,17 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<h2>OncoMX</h2>");
 
-        this.writeln("<p><a href='https://www.oncomx.org/' target='_blank'>OncoMX</a> is " +
+        this.writeln("<p><a href='https://www.oncomx.org/' target='_blank' rel='noopener noreferrer'>OncoMX</a> is " +
                 "a knowledgebase of unified cancer genomics data from integrated mutation, " +
                 "expression, literature, and biomarker databases, accessible through web portal. " +
-                "It is supported by <a href='https://www.cancer.gov/' target='_blank'>NIH NCI</a>.<p>");
+                "It is supported by <a href='https://www.cancer.gov/' target='_blank' rel='noopener noreferrer'>NIH NCI</a>.<p>");
         
         this.writeln("<p>For this project, we generated files containing a subset of calls of " +
                 "presence/absence of expression with expression level categories specific to OncoMX. " +
                 "Files are available on <a href='" + this.prop.getFTPRootDirectory() +
                 "/collaboration/oncoMX/'>Bgee FTP</a>. You can see the description of these files in " +
                 "<a href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/collaboration/oncoMX" +
-                "#information-about-the-files-generated-for-oncomx' target='_blank'>" +
+                "#information-about-the-files-generated-for-oncomx' target='_blank' rel='noopener noreferrer'>" +
                 "Bgee pipeline documentation</a><p>");
 
         this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS
@@ -132,3 +132,4 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
         log.exit();
     }
 }
+

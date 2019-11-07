@@ -699,8 +699,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener noreferrer'>version 12</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
                 this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener noreferrer'>version 13</a>");
-        this.writeln("<a title='Archive site Bgee version 14.0' href='" +
-                this.prop.getBgeeRootDirectory() + "bgee14_0' target='_blank' rel='noopener noreferrer'>version 14.0</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

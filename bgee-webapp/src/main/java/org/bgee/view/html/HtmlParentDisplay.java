@@ -688,12 +688,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "<img class='social-img' alt='Twitter logo' src='").append(this.prop.getBgeeRootDirectory())
                 .append(this.prop.getLogoImagesRootDirectory()).append("twitter_logo.png'></a></li>");
 
+        // UNIL
+        navbar.append("<li><a id='sib_brand' href='https://www.unil.ch/central/en/home.html' target='_blank' rel='noopener noreferrer' " +
+                "title='Link to the UNIL Université de Lausanne'><img src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
+                .append("unil_logo_noir.png' alt='UNIL Université de Lausanne' /></a></li>");
+        
         // SIB
         navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' rel='noopener noreferrer' " +
                 "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='")
                 .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
                 .append("sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
-
+        
         navbar.append("</ul>");  // close right nav links
         
         navbar.append("</div>"); // close nav links

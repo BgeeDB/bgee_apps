@@ -337,7 +337,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     .append("' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
         intro.append(". All data are available under the " +
-                "<a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener noreferrer'>" +
+                "<a rel='license noopener noreferrer' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
                 "    Creative Commons Zero license (CC0)</a>.");
         intro.append("</p>");
         // FIXME enable link to statistics TSV file

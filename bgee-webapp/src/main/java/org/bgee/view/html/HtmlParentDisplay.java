@@ -431,7 +431,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<ul class='nav navbar-nav'>");
         this.writeln("    <li><a href='https://www.sib.swiss' target='_blank' rel='noopener noreferrer'>SIB Swiss Institute of Bioinformatics</a></li>");
         this.writeln("    <li>");
-        this.writeln("        <a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener noreferrer'>");
+        this.writeln("        <a rel='license noopener noreferrer' href='" + LICENCE_CC0_URL + "' target='_blank'>");
         this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + 
                                     "cc-zero.png' alt='CC0' />");
         this.writeln("        </a>");

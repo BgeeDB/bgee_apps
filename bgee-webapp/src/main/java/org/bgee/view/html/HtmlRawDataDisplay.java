@@ -58,6 +58,8 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     public void displayRawCallHomePage() {
         log.entry();
         
+        // TODO add schema.org properties 
+        
         this.startDisplay("Raw data information");
 
         this.writeln("<h1>Raw data search</h1>");
@@ -119,6 +121,8 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 //    public void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<RNASeqResult> rnaSeqResults, Stream<InSituSpot> inSituSpots, Stream<EST> ests) {
     public void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<InSituSpot> inSituSpots) {
         log.entry(affymetrixProbesets, inSituSpots);
+
+        // TODO add schema.org properties 
 
         this.startDisplay("Bgee raw data");
 
@@ -407,7 +411,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         return annotation.getRawDataCondition().getAnatEntity().getName() + 
                 " [<a href='http://purl.obolibrary.org/obo/" + 
                 this.urlEncode(annotation.getRawDataCondition().getAnatEntityId().replace(':', '_'))
-                + "' target='_blank'>" +annotation.getRawDataCondition().getAnatEntityId() + "</a>]";
+                + "' target='_blank' rel='noopener'>" +annotation.getRawDataCondition().getAnatEntityId() + "</a>]";
     }
 
     private String getDevStageField(RawDataAnnotation annotation) {
@@ -416,20 +420,20 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         return log.exit(annotation.getRawDataCondition().getDevStage().getName() +
                 " [<a href='FIXME" +
                 this.urlEncode(annotation.getRawDataCondition().getDevStageId().replace(':', '_'))
-                + "' target='_blank'>" +annotation.getRawDataCondition().getDevStageId() + "</a>]");
+                + "' target='_blank' rel='noopener'>" +annotation.getRawDataCondition().getDevStageId() + "</a>]");
     }
 
     private String getSourceEvidenceLink(Source source, String id) {
         log.entry(source, id);
         return log.exit("<a href='" + source.getEvidenceUrl().replace("[evidence_id]", String.valueOf(id))
-                + "' target='_blank'>" + id + "</a>");
+                + "' target='_blank' rel='noopener'>" + id + "</a>");
     }
     
     private String getSourceExperimentField(Experiment exp) {
         log.entry(exp);
         return log.exit(exp.getDataSource().getName() + " [<a href='" + 
                 exp.getDataSource().getExperimentUrl().replace("[experiment_id]", String.valueOf(exp.getId()))
-                + "' target='_blank'>" + exp.getId() + "</a>]");
+                + "' target='_blank' rel='noopener'>" + exp.getId() + "</a>]");
     }
     
     @Override

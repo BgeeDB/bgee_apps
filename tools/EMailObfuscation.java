@@ -11,7 +11,7 @@ public class EMailObfuscation {
                 this.transposeEmail(href), alt_text);
 
         email = email.replaceAll("@", " [AT] ");
-        String obfuscatedEmail = String.format("<script type=\"text/javascript\">eval(unescape('%1$s'));</script><noscript>%2$s</noscript>",
+        String obfuscatedEmail = String.format("<script>eval(unescape('%1$s'));</script><noscript>%2$s</noscript>",
         		this.escapeencodeEmail(code), email);
         return obfuscatedEmail;
     }

@@ -30,108 +30,183 @@ $( document ).ready( function(){
             .attr("src", "img/wait.gif")
             .attr("alt", 'Loading'));
     });
+
+    var dom =  "<'row'<'col-sm-3'i><'col-sm-3'l><'col-sm-6'f>>" +
+        "<'row'<'col-sm-12'tr>>" +
+        "<'row'<'col-sm-4'B><'col-sm-8'p>>";
+
+    var order = [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']]; //  score desc, expressed genes desc, rank asc
+
+    var responsive = {
+        details: {
+            display: $.fn.dataTable.Responsive.display.childRowImmediate,
+            type: 'none',
+            target: ''
+        },
+        breakpoints: [
+            //make the default datatable breakpoints to be the same as bootstrap
+            { name: 'desktop',  width: Infinity },
+            { name: 'tablet-l', width: 992 },
+            { name: 'tablet-p', width: 768 },
+            { name: 'mobile-l', width: 480 },
+            { name: 'mobile-p', width: 320 },
+            //(default datatable parameters: )
+            //{ name: 'desktop',  width: Infinity },
+            //{ name: 'tablet-l', width: 1024 },
+            //{ name: 'tablet-p', width: 768 },
+            //{ name: 'mobile-l', width: 480 },
+            //{ name: 'mobile-p', width: 320 }
+
+            //create breakpoints corresponding exactly to bootstrap
+            { name: 'table_lg', width: Infinity },
+            { name: 'table_md', width: 1200 },
+            { name: 'table_sm', width: 992 },
+            { name: 'table_xs', width: 768 }
+        ]
+    };
     
+    function getButtons(columns) {
+        return [
+            {
+                extend: 'copyHtml5',
+                text: '<span><i class="glyphicon glyphicon-copy"></i></span><span class="buttonLabel">Copy to clipboard</span>',
+                exportOptions: { orthogonal: 'export', columns: columns }
+            },
+            {
+                extend: 'csvHtml5',
+                fieldSeparator: '\t',
+                extension: '.tsv',
+                text: '<span><i class="glyphicon glyphicon-floppy-save"></i></span><span class="buttonLabel">TSV</span>',
+                exportOptions: { orthogonal: 'export', columns: columns }
+            }
+        ];
+    }
+
+    function renderGeneList(data, type, htmlTag) {
+        // If export, we keep text only
+        if (type === 'export') {
+            var elements = $(htmlTag, $.parseHTML(data));
+            var output = [];
+            $.each(elements, function(idx, value) {
+                output.push($(value).text());
+            });
+            return output.join(", ");
+        }
+        return data;
+    }
+
+    function renderAEList(data, type) {
+        if (type === 'export') {
+            return $($.parseHTML(data)).text();
+        }
+        return data;
+    }
+
     // If you change any option of this table, take care to also change it for the single-species table
     $('table.expr_comp.multi-sp').DataTable( {
-        "order": [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']], //  score desc, expressed genes desc, rank asc
-        responsive: {
-            details: {
-                display: $.fn.dataTable.Responsive.display.childRowImmediate,
-                type: 'none',
-                target: ''
-            }, 
-            breakpoints: [
-                //make the default datatable breakpoints to be the same as bootstrap
-                { name: 'desktop',  width: Infinity },
-                { name: 'tablet-l', width: 992 },
-                { name: 'tablet-p', width: 768 },
-                { name: 'mobile-l', width: 480 },
-                { name: 'mobile-p', width: 320 }, 
-                //(default datatable parameters: )
-                //{ name: 'desktop',  width: Infinity },
-                //{ name: 'tablet-l', width: 1024 },
-                //{ name: 'tablet-p', width: 768 },
-                //{ name: 'mobile-l', width: 480 },
-                //{ name: 'mobile-p', width: 320 }
-                
-                //create breakpoints corresponding exactly to bootstrap
-                { name: 'table_lg', width: Infinity },
-                { name: 'table_md', width: 1200 },
-                { name: 'table_sm', width: 992 },
-                { name: 'table_xs', width: 768 }
-            ]
-        },
+        order: order,
+        dom: dom,
+        buttons: getButtons([0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]),
+        responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 1, targets: 0 }, // Anatomical entities
            { responsivePriority: 1, targets: 1 }, // Score
            { responsivePriority: 1, targets: 2 }, // Min rank
+           { type: 'scientific', targets: 2 },    // sort using the scientific type
            { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+           { type: 'gene-number', targets: 3 },   // sort using the gene-number type
            { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+           { type: 'gene-number', targets: 4 },   // sort using the gene-number type
            { responsivePriority: 2, targets: 5 }, // Gene count with no data
+           { type: 'gene-number', targets: 5 },   // sort using the gene-number type
            { responsivePriority: 3, targets: 6 }, // Species count with presence of expression
+           { type: 'species-number', targets: 6 },// sort using the species-number type
            { responsivePriority: 3, targets: 7 }, // Species count with absence of expression
-           { responsivePriority: 2, targets: 8 }  // Details
+           { type: 'species-number', targets: 7 },// sort using the species-number type
+           { responsivePriority: 2, targets: 8 }, // Details
+           { responsivePriority: 4, targets: 9, visible: false, searchable: false }, // Anatomical entity IDs
+           { responsivePriority: 4, targets: 10, visible: false, searchable: false }, // Gene count with presence of expression
+           { responsivePriority: 4, targets: 11, visible: false, searchable: false }, // Gene count with absence of expression
+           { responsivePriority: 4, targets: 12, visible: false, searchable: false }, // Gene count with no data
+           { responsivePriority: 4, targets: 13, visible: false, searchable: false }, // Species count with presence of expression
+           { responsivePriority: 4, targets: 14, visible: false, searchable: false } // Species count with absence of expression
         ],
         columns: [ // sorting definition
-           { "orderable": true }, // Anatomical entities
-           { "orderable": true }, // Score
-           { "orderable": true }, // Min rank
-           { "orderable": true }, // Gene count with presence of expression
-           { "orderable": true }, // Gene count with absence of expression
-           { "orderable": true }, // Gene count with no data
-           { "orderable": true }, // Species count with presence of expression
-           { "orderable": true }, // Species count with absence of expression
-           { "orderable": false } // Details
+            // Anatomical entities
+            { orderable: true, render: function(data, type, row) { return renderAEList(data, type); } },
+            // Score
+            { orderable: true },
+            // Min rank
+            { orderable: true },
+            // Genes with presence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            // Genes with absence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            // Genes with no data
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            // Species with presence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'em'); } },
+            // Species with absence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'em'); } },
+            // Details
+            { orderable: false },
+            // Anatomical entity ID
+            { orderable: false },
+            // Gene count with presence of expression
+            { orderable: false },
+            // Gene count with absence of expression
+            { orderable: false },
+            // Gene count with no data
+            { orderable: false },
+            // Species count with presence of expression
+            { orderable: false },
+            // Species count with absence of expression
+            { orderable: false }
         ]
     });
 
     // If you change any option of this table, take care to also change it for the multi-species table
     $('table.expr_comp.single-sp').DataTable( {
-        "order": [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']], //  score desc, expressed genes desc, rank asc
-        responsive: {
-            details: {
-                display: $.fn.dataTable.Responsive.display.childRowImmediate,
-                type: 'none',
-                target: ''
-            },
-            breakpoints: [
-                //make the default datatable breakpoints to be the same as bootstrap
-                { name: 'desktop',  width: Infinity },
-                { name: 'tablet-l', width: 992 },
-                { name: 'tablet-p', width: 768 },
-                { name: 'mobile-l', width: 480 },
-                { name: 'mobile-p', width: 320 },
-                //(default datatable parameters: )
-                //{ name: 'desktop',  width: Infinity },
-                //{ name: 'tablet-l', width: 1024 },
-                //{ name: 'tablet-p', width: 768 },
-                //{ name: 'mobile-l', width: 480 },
-                //{ name: 'mobile-p', width: 320 }
-
-                //create breakpoints corresponding exactly to bootstrap
-                { name: 'table_lg', width: Infinity },
-                { name: 'table_md', width: 1200 },
-                { name: 'table_sm', width: 992 },
-                { name: 'table_xs', width: 768 }
-            ]
-        },
+        order: order, //  score desc, expressed genes desc, rank asc
+        dom: dom,
+        buttons: getButtons([0, 1, 2, 3, 4, 5, 7, 8, 9, 10]),
+        responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
             { responsivePriority: 1, targets: 0 }, // Anatomical entities
             { responsivePriority: 1, targets: 1 }, // Score
             { responsivePriority: 1, targets: 2 }, // Min rank
+            { type: 'scientific', targets: 2 },    // sort using the scientific type
             { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+            { type: 'gene-number', targets: 3 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+            { type: 'gene-number', targets: 4 },   // sort using the gene-number type
             { responsivePriority: 2, targets: 5 }, // Gene count with no data
-            { responsivePriority: 2, targets: 6 }   // Details
+            { type: 'gene-number', targets: 5 },   // sort using the gene-number type
+            { responsivePriority: 2, targets: 6 }, // Details
+            { responsivePriority: 4, targets: 7, visible: false, searchable: false }, // Anatomical entity IDs
+            { responsivePriority: 4, targets: 8, visible: false, searchable: false }, // Gene count with presence of expression
+            { responsivePriority: 4, targets: 9, visible: false, searchable: false }, // Gene count with absence of expression
+            { responsivePriority: 4, targets: 10, visible: false, searchable: false } // Gene count with no data
+
         ],
         columns: [ // sorting definition
-            { "orderable": true }, // Anatomical entities
-            { "orderable": true }, // Score
-            { "orderable": true }, // Min rank
-            { "orderable": true }, // Gene count with presence of expression
-            { "orderable": true }, // Gene count with absence of expression
-            { "orderable": true }, // Gene count with no data
-            { "orderable": false } // Details
+            // Anatomical entities
+            { orderable: true, render: function(data, type, row) { return renderAEList(data, type); } },
+            // Score
+            { "orderable": true },
+            // Min rank
+            { "orderable": true },
+            // Genes with presence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            // Genes with absence of expression
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            // Genes with no data
+            { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
+            { "orderable": true }, // Details
+            { "orderable": false }, // Anatomical entity IDs
+            { "orderable": false }, // Gene count with presence of expression
+            { "orderable": false }, // Gene count with absence of expression
+            { "orderable": false }  // Gene count with no data
         ]
     });
 

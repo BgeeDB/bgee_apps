@@ -55,11 +55,11 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1>TopAnat documentation</h1>");
+        this.writeln("<h1 property='schema:name'>TopAnat documentation</h1>");
         
         // Introduction
-        this.writeln("<p>TopAnat is a tool to identify and visualize enriched anatomical terms, "
-        		+ "from the expression patterns of a list of genes.</p>");
+        this.writeln("<p property='schema:description'>TopAnat is a tool to identify and visualize "
+        		+ "enriched anatomical terms, from the expression patterns of a list of genes.</p>");
         this.writeln("<p>It allows to discover where genes from a set are preferentially expressed, "
         		+ "as compared to a background, represented by default by all expression data in Bgee "
         		+ "for the requested species. It is is similar to a Gene Ontology enrichment test, "
@@ -67,7 +67,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "rather than their GO functional annotations.</p>");
         this.writeln("<p>See also our "
         		+ "<a href='https://bgeedb.wordpress.com/category/topanat/' "
-        		+ "title='Link to the Bgee Wordpress blog' target='_blank'>blog post</a> "
+                + "title='Link to the Bgee Wordpress blog' target='_blank' rel='noopener'>blog post</a> "
         		+ "about TopAnat for more information.</p>");
         this.writeln("<p><strong>Please note that the results can be slow to compute</strong>, "
         		+ "typically from 5 to 30 minutes, depending on the amount of data to process.</p>");
@@ -119,7 +119,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<h2>More information</h2>");
         this.writeln("<p>TopAnat is based on "
         		+ "<a href='http://www.bioconductor.org/packages/release/bioc/html/topGO.html' "
-        		+ "title='topGO package in Bioconductor' target='_blank'>topGO</a>. "
+                + "title='topGO package in Bioconductor' target='_blank' rel='noopener'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
 
         log.exit();

@@ -1,0 +1,58 @@
+h1 img {
+	margin-right: 20px;
+	height: 50px;
+	width: 50px;
+	border-radius: 8px;
+}
+
+div.legend {
+	font-size: 0.85em;
+}
+
+table.info-table td, table.info-table th {
+	padding: 0.5em;
+}
+
+.species_list {
+	text-align: center;
+}
+
+/* TODO: If we merge 'a.species_element' with '.species_element a' we don't have the same display. Why?*/
+a.species_element {
+	text-decoration: none !important;
+}
+
+.species_element a {
+	margin: 0;
+	padding: 4px;
+	float: left;
+}
+
+.species_element figure {
+	display: inline-block;
+}
+
+.species_element img {
+	margin-top: 10px;
+	margin-right: 10px;
+	vertical-align: middle;
+	height: 100px;
+	width: 100px;
+	border-radius: 8px;
+}
+
+.species_element img:hover {
+	box-shadow: 0 0 10px 1px #920209;
+}
+
+.species_element figcaption {
+	margin-top: 4px;
+	color: #515151;
+	text-align: center;
+	font-size: 0.75em;
+}
+
+.species_element figcaption p {
+	margin: 0;
+	height: 15px;
+}

@@ -48,7 +48,7 @@
     $usecount++;
     $code = sprintf("function pgregg_transpose%d(h) {var s='%s';var r='';for(var i=0;i<s.length;i++,i++){r=r+s.substring(i+1,i+2)+s.substring(i,i+1)}h.href=r;}document.write('<a href=\"#\" onMouseOver=\"javascript:pgregg_transpose%d(this)\" onFocus=\"javascript:pgregg_transpose%d(this)\">%s</a>');", $usecount, transpose($href), $usecount, $usecount, $text);
     $UserCode = sprintf("%s%s%s",
-        "<script type=\"text/javascript\">eval(unescape('",
+        "<script>eval(unescape('",
         escapeencode($code),
         "'));</script><noscript>...</noscript>");
     return $UserCode;

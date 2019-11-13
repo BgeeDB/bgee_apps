@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code AnatomicalSimilarityDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 14, May 2019
  */
 public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay 
@@ -80,6 +80,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
         this.startDisplay("Anatomical homology");
 
+        this.addSchemaMarkups();
+
         this.writeln("<h1>Anatomical homology</h1>");
 
         this.writeln("<div id='bgee_introduction'>");
@@ -87,7 +89,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         this.writeln("<p>Retrieve anatomical homologies from a list of species and a list of Uberon IDs. "
                 + "Retrieve Uberon IDs from organ names <a href='https://www.ebi.ac.uk/ols/ontologies/uberon' "
                 + "title='Retrieve Uberon IDs from organ names' class='external_link' "
-                + "target='_blank'>here</a>.</p>");
+                + "target='_blank' rel='noopener'>here</a>.</p>");
 
         this.writeln("</div>");
 
@@ -117,7 +119,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                         "                  value='" + sp.getId() + "' " +
                                            (userSpeciesIds!= null && userSpeciesIds.contains(sp.getId())
                                                 ? "checked" : "") +
-                        "           />  " + htmlEntities(sp.getScientificName()) +
+                        "           />  <em>" + htmlEntities(sp.getScientificName()) + "</em>"+
                         "       </label>" +
                         "   </div>")
                 .collect(Collectors.joining());
@@ -290,13 +292,44 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                 .flatMap(Set::stream)
                 .distinct()
                 .filter(sp -> result.getRequestedSpecies().contains(sp))
-                .map(species -> htmlEntities(species.getScientificName()))
+                .map(species -> "<a href='"+getSpeciesPageUrl(species.getId())+"'><em>" 
+                        + htmlEntities(species.getScientificName()) + "</em></a>")
                 .sorted()
                 .collect(Collectors.joining(" - ")));
         row.append("    </td>");
 
         row.append("</tr>");
         return log.exit(row.toString());
+    }
+
+    /**
+     * Add schema.org markups to the page.
+     */
+    private void addSchemaMarkups() {
+        log.entry();
+
+        RequestParameters url = this.getNewRequestParameters();
+        url.setPage(RequestParameters.PAGE_ANAT_SIM);
+
+        this.writeln("<script type='application/ld+json'>");
+
+        this.writeln("{" +
+                "  \"@context\": \"https://schema.org\"," +
+                "  \"@type\": \"WebApplication\"," +
+                "  \"@id\": \"" + url.getRequestURL() + "\"," +
+                "  \"name\": \"Anatomical homology\"," +
+                "  \"url\": \"" + url.getRequestURL() + "\"," +
+                "  \"description\": \"Retrieve anatomical homologies from a list of species and a list of Uberon IDs\"," +
+                "  \"offers\": {" +
+                "    \"@type\": \"Offer\"," +
+                "    \"price\": \"0.00\"," +
+                "    \"priceCurrency\": \"CHF\"" +
+                "  }, " +
+                "  \"applicationCategory\": \"https://www.wikidata.org/wiki/Q15544757\"" + // science software
+                "}");
+
+        this.writeln("</script>");
+        log.exit();
     }
 
     @Override

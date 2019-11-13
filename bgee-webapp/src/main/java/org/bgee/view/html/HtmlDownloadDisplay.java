@@ -21,6 +21,10 @@ import org.bgee.model.species.Species;
 import org.bgee.view.DownloadDisplay;
 import org.bgee.view.JsonHelper;
 
+import static org.bgee.model.file.DownloadFile.CategoryEnum.AFFY_DATA;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_DATA;
+
 /**
  * This class displays the page having the category "download", i.e. with the parameter
  * page=download for the HTML view.
@@ -28,7 +32,7 @@ import org.bgee.view.JsonHelper;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDisplay {
@@ -76,18 +80,20 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.startDisplay("Bgee gene expression call download page");
         
+        this.writeln(this.getExprCallSchemaMarkups(groups));
+
         this.writeln(this.getMoreResultDivs());
   		this.writeln(getDataGroupScriptTag(groups));
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.EXPR_CALLS));
         this.writeln("<div id='expr_calls'>");
 
-        this.writeln("<h1>");
+        this.writeln("<h1 property='schema:name'>");
         this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png' " + 
                 "alt='" + GENE_EXPR_CALLS_PAGE_NAME + " logo'/>" + GENE_EXPR_CALLS_PAGE_NAME);
         this.writeln("</h1>");
         
         // Introduction
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln(this.getIntroduction(DownloadPageType.EXPR_CALLS));
         this.writeln("</div>");
 
@@ -113,12 +119,65 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         log.exit();
     }
 
+    private String getExprCallSchemaMarkups(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
+        
+        List<String> datasets = groups.stream()
+                .filter(SpeciesDataGroup::isSingleSpecies)
+                .map(sdg -> {
+                    Integer spId = sdg.getMembers().get(0).getId();
+                    return "{" +
+                           "    \"@type\": \"Dataset\"," +
+                           "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                           "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                           "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                           "}";
+                        }
+                )
+                .collect(Collectors.toList());
+        
+        return log.exit(getSchemaMarkupGraph(datasets));
+    }
+
+    private String getProcValuesSchemaMarkups(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
+
+        List<String> datasets = groups.stream()
+                .filter(SpeciesDataGroup::isSingleSpecies)
+                .map(sdg -> {
+                    Integer spId = sdg.getMembers().get(0).getId();
+                    return "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "}," +
+                            "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "}";
+                        }
+                )
+                .collect(Collectors.toList());
+
+        return log.exit(getSchemaMarkupGraph(datasets));
+    }
+
     @Override
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
     		                                                 Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
         
         this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
+        this.writeln(getProcValuesSchemaMarkups(groups));
   		this.writeln(getDataGroupScriptTag(groups));
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.PROC_EXPR_VALUES));
   		this.writeln(this.getExprValuesDirectoryScriptTag(groups));
@@ -127,14 +186,13 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.writeln("<div id='proc_values'>");
     
-        this.writeln("<h1>");
+        this.writeln("<h1 property='schema:name'>");
         this.writeln("<img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png'" + 
-                "' alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + 
-                PROCESSED_EXPR_VALUES_PAGE_NAME);
+                " alt='" + PROCESSED_EXPR_VALUES_PAGE_NAME + " logo'/>" + PROCESSED_EXPR_VALUES_PAGE_NAME);
         this.writeln("</h1>");
 
         // Introduction
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln(this.getIntroduction(DownloadPageType.PROC_EXPR_VALUES));
         this.writeln("</div>");
     
@@ -168,17 +226,20 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.writeln("<div class='feature_list'>");
 
-        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
-                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the complete dump of the MySQL Bgee database, that contains "
-                        + "all the data used to generate the information displayed on this website."));
+        //XXX Commented these lines because the Bgee dump contains GO terms and GO is not 
+        //XXX CC0 (OBO foundry ontologies follow CC-BY version 3).
+//        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(this.prop.getFTPRootDirectory() +
+//                        "sql_dump.tar.gz", false, "Download dump the MySQL Bgee database", "Bgee dump",
+//                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
+//                "Download the complete dump of the MySQL Bgee database, that contains "
+//                        + "all the data used to generate the information displayed on this website."));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
                 this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
                 "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "mysql_logo.png",
-                "Download the dump of the MySQL Bgee lite database, that contains most useful, and explicit information."));
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
+                + "mysql_logo.png", "Download the dump of the MySQL Bgee lite database, that "
+                        + "contains most useful, and explicit information. Does not contain raw data."));
         
         this.writeln("</div>"); // close feature_list
 
@@ -259,7 +320,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         intro.append(" It is possible to download these data directly into "
                     + "R using our <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
-                    + "class='external_link' target='_blank'>R package</a>.");
+                    + "class='external_link' target='_blank' rel='noopener'>R package</a>.");
 
         intro.append(" See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
@@ -276,7 +337,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     .append("' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
         intro.append(". All data are available under the " +
-                "<a rel='license' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "<a rel='license noopener' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
                 "    Creative Commons Zero license (CC0)</a>.");
         intro.append("</p>");
         // FIXME enable link to statistics TSV file
@@ -853,7 +914,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
     /**
      * Gets the {@code figcaption} element for a given {@code SpeciesDataGroup}
-     * @param species A {SpeciesDataGroup}
+     * @param speciesDataGroup  A {SpeciesDataGroup}
      * @return A {@code String} containing the html code
      */
     private static String getCaption(SpeciesDataGroup speciesDataGroup) {
@@ -866,9 +927,15 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return A {@code String} containing the html code
      */
     private static String getShortNameTag(Species species) {
-    	return getHTMLTag("p", getHTMLTag("i", htmlEntities(species.getShortName())));
+        log.entry(species);
+        
+        Map<String, String> pAttrs = new HashMap<>();
+        pAttrs.put("typeof", "bs:Taxon");
+        Map<String, String> iAttrs = new HashMap<>();
+        iAttrs.put("property", "bs:name");
+        
+        return log.exit(getHTMLTag("p", pAttrs, getHTMLTag("i", iAttrs, htmlEntities(species.getShortName()))));
     }
-    
     
   	@Override
   	protected void includeJs() {

@@ -209,7 +209,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * as compared to {@code RawExpressionCallTO}s).
      * 
      * @author  Frederic Bastian
-     * @version Bgee 14, Feb. 2017
+     * @version Bgee 14, Jun. 2019
      * @since   Bgee 14, Feb. 2017
      */
     public static class GlobalExpressionCallTO extends RawExpressionCallTO {
@@ -221,11 +221,15 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal meanRank, Set<GlobalExpressionCallDataTO> callDataTOs) {
+                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs) {
             super(id, bgeeGeneId, conditionId);
             
             this.meanRank = meanRank;
-            this.callDataTOs = callDataTOs;
+            if (callDataTOs != null) {
+                this.callDataTOs = Collections.unmodifiableSet(new HashSet<>(callDataTOs));
+            } else {
+                this.callDataTOs = null;
+            }
             //there should be at most one GlobalExpressionCallDataTO per data type.
             //we simply use Collectors.toMap that throws an exception in case of key collision
             if (this.callDataTOs != null) {
@@ -244,8 +248,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             return meanRank;
         }
         /**
-         * @return  A {@code Set} of {@code GlobalExpressionCallDataTO}s storing the data supporting this call,
-         *          one for each of the requested
+         * @return  An unmodifiable {@code Set} of {@code GlobalExpressionCallDataTO}s
+         *          storing the data supporting this call, one for each of the requested
          *          {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}s.
          */
         public Set<GlobalExpressionCallDataTO> getCallDataTOs() {

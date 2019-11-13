@@ -57,6 +57,8 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -79,7 +81,7 @@ import org.bgee.pipeline.CommandRunner;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 14, May 2019
  * @since   Bgee 14, Jan. 2017
  */
 public class InsertPropagatedCalls extends CallService {
@@ -1656,14 +1658,70 @@ public class InsertPropagatedCalls extends CallService {
     private Map<Integer, Condition> loadRawConditionMap(Collection<Species> species) {
         log.entry(species);
 
-        //TODO: reimplement/adapt this method for RawDataConditin retrieval
-        throw log.throwing(new UnsupportedOperationException("To reimplement for support RawDataCondition"));
-//        return log.exit(loadConditionMapFromResultSet(
-//                (attrs) -> this.getDaoManager().getRawDataConditionDAO().getRawDataConditionsBySpeciesIds(
-//                        species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-//                        attrs),
-//                null, species,
-//                this.getServiceFactory().getAnatEntityService(), this.getServiceFactory().getDevStageService()));
+        //TODO: to refactor with method org.bgee.model.CommonService.loadConditionMapFromResultSet
+        Map<Integer, Species> speMap = species.stream()
+                .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
+        Set<String> anatEntityIds = new HashSet<>();
+        Set<String> stageIds = new HashSet<>();
+        Set<RawDataConditionTO> conditionTOs = new HashSet<>();
+
+        RawDataConditionTOResultSet rs = this.getDaoManager().getRawDataConditionDAO()
+                .getRawDataConditionsBySpeciesIds(speMap.keySet(), null);
+
+        while (rs.next()) {
+            RawDataConditionTO condTO = rs.getTO();
+            if (!speMap.keySet().contains(condTO.getSpeciesId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The retrieved ConditionTOs do not match the provided Species."));
+            }
+            conditionTOs.add(condTO);
+            if (condTO.getAnatEntityId() != null) {
+                anatEntityIds.add(condTO.getAnatEntityId());
+            }
+            if (condTO.getStageId() != null) {
+                stageIds.add(condTO.getStageId());
+            }
+        }
+
+        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
+            this.getServiceFactory().getAnatEntityService().loadAnatEntities(
+                    speMap.keySet(), true, anatEntityIds, false)
+            .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
+            anatEntityIds.removeAll(anatMap.keySet());
+            throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - anat. entities: " + anatEntityIds));
+        }
+        final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
+            this.getServiceFactory().getDevStageService().loadDevStages(
+                    speMap.keySet(), true, stageIds, false)
+            .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
+            stageIds.removeAll(stageMap.keySet());
+            throw log.throwing(new IllegalStateException("Some stages used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - stages: " + stageIds));
+        }
+
+        return log.exit(conditionTOs.stream()
+                .collect(Collectors.toMap(cTO -> cTO.getId(), 
+                        //TODO: reimplement/adapt this method for RawDataCondition retrieval
+                        //For now we just create Conditions instead of RawDataConditions for simplicity
+                        cTO -> new Condition(
+                                cTO.getAnatEntityId() == null? null:
+                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
+                                        () -> new IllegalStateException("Anat. entity not found: "
+                                                + cTO.getAnatEntityId())),
+                                cTO.getStageId() == null? null:
+                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
+                                        () -> new IllegalStateException("Stage not found: "
+                                                + cTO.getStageId())),
+                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
+                                        () -> new IllegalStateException("Species not found: "
+                                                + cTO.getSpeciesId())))
+                        ))
+                );
     }
     private Map<Integer, Condition> generateConditionMapForCondParams(
             Set<ConditionDAO.Attribute> condParams, Map<Integer, Condition> originalCondMap) {

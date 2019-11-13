@@ -84,6 +84,8 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * 
      * @see HtmlDocumentationDisplay#displayCallDownloadFileDocumentation()
      */
+    // TODO continue to write that documentation and then add schema.org properties. 
+    // We don't want to index not finished pages
     protected void writeDocumentation() {
         log.entry();
         
@@ -162,10 +164,10 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         
         this.writeln("<h2 id='single'>Affymetrix data download files</h2>");
         this.writeln("<div class='doc_content'>"
-                + "<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' "
+                + "<p>Affymetrix data used in Bgee are retrieved from <a target='_blank' rel='noopener' "
                 + "title='External link to ArrayExpress' "
                 + "href='https://www.ebi.ac.uk/arrayexpress/'>ArrayExpress</a> and "
-                + "<a target='_blank' title='External link to GEO' "
+                + "<a target='_blank' rel='noopener' title='External link to GEO' "
                 + "href='https://www.ncbi.nlm.nih.gov/geo/'>GEO</a>. They are annotated "
                 + "to anatomical and developmental stage ontologies, filtered by quality controls "
                 + "and analyzed to produce expression data. Only \"normal\" "

@@ -1,46 +1,51 @@
 
 h1.gene_title img {
-    margin-right: 20px;
-    vertical-align: middle;
-    height: 50px;
-    width: 50px;
-    border-radius: 8px;
+	margin-right: 20px;
+	vertical-align: middle;
+	height: 50px;
+	width: 50px;
+	border-radius: 8px;
 }
 
 #bgee_species_search_submit {
-    margin-top: 8px;
+	margin-top: 8px;
 }
 
 .gene_choice img {
-    margin-top: 10px;
-    margin-right: 10px;
-    vertical-align: middle;
-    height: 100px;
-    width: 100px;
-    border-radius: 8px;
-}
-
-table.info-table {
-	margin: 1em 0;
+	margin-top: 10px;
+	margin-right: 10px;
+	vertical-align: middle;
+	height: 100px;
+	width: 100px;
+	border-radius: 8px;
 }
 
 table.info-table th {
-    vertical-align: top;
-    text-align: left;
-    padding: 0 0.7em 0.5em 0;
+	vertical-align: top;
+	text-align: left;
+	padding: 0 0.7em 0.5em 0;
 }
 table.info-table td {
-    text-align: left;
-    padding: 0 0 0.5em 0;
+	text-align: left;
+	padding: 0 0 0.5em 0;
 }
 
-div#expr_intro {
+div#rank_def {
 	display: inline-flex;
-    margin-top: 2em;
-    margin-bottom: 2em;
-    font-size: 0.9em;
-    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
-    padding-left: 2%;
+	margin-top: 2em;
+	margin-bottom: 0em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
+}
+
+div#expr_score_def {
+	display: inline-flex;
+	margin-top: 1em;
+	margin-bottom: 2em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
 }
 
 div.table-container {
@@ -48,24 +53,24 @@ div.table-container {
 }
 
 p.gene-count {
-    text-align: center;
-    font-weight: bold;
+	text-align: center;
+	font-weight: bold;
 }
 
 div.table-container label {
-    font-weight: normal;
+	font-weight: normal;
 }
 
 div.sources {
-    margin-top: 2em;
-    margin-bottom: 0.5em;
-    font-size: 0.9em;
-    /* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
-    padding-left: 2%;
+	margin-top: 2em;
+	margin-bottom: 0.5em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
 }
 div.source-info {
-    margin-right: 40px;
-    display: inline-block;
+	margin-right: 40px;
+	display: inline-block;
 }
 
 div.legend {
@@ -75,32 +80,32 @@ div.legend {
 }
 @media (max-width: 992px) {
 	div.legend {
-	   border: none;
+		border: none;
 	}
 	div.sources {
-        padding-left: 0;
-    }
-    div#expr_intro {
-        padding-left: 0;
-    }
+		padding-left: 0;
+	}
+	div#expr_intro {
+		padding-left: 0;
+	}
 }
 
 div.legend span.quality {
 	font-size: 1em;
 	display: inline-block;
-	
- /* XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-    for now we only report presence/absence of data per data type. 
-    This width will need to be made greater to display quality info */
+
+ /* XXX: temporarily "hide" qualities, as they are so incorrect at the moment.
+	for now we only report presence/absence of data per data type.
+	This width will need to be made greater to display quality info */
 	width: 6em !important;
 }
 
 div.legend table caption {
-    text-align: left;
-    font-weight: bold;
-    margin-bottom: 5px;
-    border-width: 0px 0px 1px;
-    border-style: solid;
+	text-align: left;
+	font-weight: bold;
+	margin-bottom: 5px;
+	border-width: 0px 0px 1px;
+	border-style: solid;
 }
 
 .table-container table {
@@ -108,8 +113,8 @@ div.legend table caption {
 }
 
 table th, table td {
-    text-align: left;
-    padding: 0.2em;
+	text-align: left;
+	padding: 0.2em;
 }
 th.anat-entity-id {
 	width: 12% !important;
@@ -118,7 +123,7 @@ th.anat-entity {
 	width: 29% !important;
 }
 th.dev-stages {
-	width: 40% !important;
+	width: 33% !important;
 }
 th.score {
 	width: 7% !important;
@@ -131,24 +136,20 @@ table.expression td {
 	vertical-align:text-top;
 }
 
-div.info-content {
-	margin: 1em 2%;
-}
-
 td > ul {
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
 }
 
 ul.dev-stage-list {
-    padding-left: 1.1em;
+	padding-left: 1.1em;
 }
 
 span.quality {
 	padding: .2em .5em;
 	margin: .15em;
-	border-radius: .4em; 
+	border-radius: .4em;
 	width: 1em;
 	line-height: 1em;
 	vertical-align: middle;
@@ -160,30 +161,30 @@ span.quality {
 }
 
 .details {
-    padding-right: .5em;
-    padding-left: .2em;
-    color: #777;
-    font-weight: 300;   
+	padding-right: .5em;
+	padding-left: .2em;
+	color: #777;
+	font-weight: 300;
 }
 
 .small {
-    font-size: .9em;
+	font-size: .9em;
 }
 
 .dtr-modal tr > td:first-child {
-    font-weight: bold;
+	font-weight: bold;
 }
 
 .presence {
-	background: #9efa9e; 
+	background: #9efa9e;
 	border-color: #0df20d;
 	color: #067906;
 }
 
 /* .low { */
-/* 	background: #fae39e; */
-/* 	border-color:  #f2b90d; */
-/* 	color:   #795c06; */
+/*	background: #fae39e; */
+/*	border-color: #f2b90d; */
+/*	color: #795c06; */
 /* } */
 
 .absence {
@@ -193,7 +194,7 @@ span.quality {
 }
 
 div.dtr-modal div.dtr-modal-display {
-    height: 95% !important;
+	height: 95% !important;
 }
 
 .gene-score-shift {
@@ -206,19 +207,19 @@ div.dtr-modal div.dtr-modal-display {
 }
 
 table.dataTable {
-    border-collapse: collapse !important;
+	border-collapse: collapse !important;
 }
 
 .dotted-line {
-    border-top: 2px dotted #920209;
-    width: 2em;
-}	
+	border-top: 2px dotted #920209;
+	width: 2em;
+}
 
 span.more-content {
-    display: none;
+	display: none;
 }
 
 span.errorMessage {
-    color: #E2011B;
-    font-weight: bold;
+	color: #E2011B;
+	font-weight: bold;
 }

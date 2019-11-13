@@ -20,7 +20,7 @@ import org.bgee.controller.RequestParameters;
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
  * @see HtmlDocumentationDisplay
- * @version Bgee 14, Jan. 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, May 2015
  */
 public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
@@ -618,7 +618,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         log.entry();
         return log.exit("<p>Unique identifier of the OMA gene orthology group. Note that "
                 + "these identifiers are not stable between releases, and cannot be used "
-                + "to retrieve data from <a target='_blank' "
+                + "to retrieve data from <a target='_blank' rel='noopener' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
                 + "from orthologous genes belonging to a same orthology group. "
@@ -1739,12 +1739,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     protected void writeDocumentation() {
         log.entry();
         
-        this.writeln("<h1>Expression call download file documentation</h1>");
+        this.writeln("<h1 property='schema:name'>Expression call download file documentation</h1>");
         
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
         urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        this.writeln("<div id='bgee_introduction'><p>Bgee provides calls of baseline "
+        this.writeln("<div id='bgee_introduction' property='schema:description'><p>Bgee provides calls of baseline "
                 + "presence/absence of expression, and of differential over-/under-expression, "
                 + "either for single species, or compared between species (orthologous genes "
                 + "in homologous organs). This documentation describes the format of these "
@@ -1793,7 +1793,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "derived from an organ existing before the divergence of the species compared. "
                 + "This requires careful annotations of the homology history of animal anatomy. "
                 + "These annotations are described in a separate project maintained "
-                + "by the Bgee team, see <a target='_blank' "
+                + "by the Bgee team, see <a target='_blank' rel='noopener' "
                 + "href='" + BGEE_GITHUB_URL + "/anatomical-similarity-annotations/' "
                 + "title='See anatomical-similarity-annotations project on GitHub'>"
                 + "homology annotation project on GitHub</a>. <br />"
@@ -1810,7 +1810,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "than the LCA would be discarded, such as the annotation to the \"forelimb\" "
                 + "structure (UBERON:0002102), homologous in the <i>Tetrapoda</i> lineage.</li> "
                 + "<li><span class='list_element_title'>orthology of genes</span>: relations of "
-                + "orthology between genes are retrieved using <a target='_blank' "
+                + "orthology between genes are retrieved using <a target='_blank' rel='noopener' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "OMA</a>; when comparing several species, "
                 + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
@@ -1977,16 +1977,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "that, in the midbrain at adult stage, gene A and B are both expressed, "
                 + "while gene C is not, thanks to call propagation.</p>");
         this.writeln("<p>It is possible to select two different combinations of <code>condition parameters</code>:</p>"
-                + "<ul class='doc_content'>"
-                + "<li><span class='list_element_title'>anatomical entities only (by default) </span> "
-                + "files contain one expression call for each unique pair of gene and anatomical entity."
-                + "If more than one developmental stage map this unique pair, the resulting expression "
-                + "call correspond to summarized information coming from all developmental stages. "
-                + "</li>"
-                + "<li><span class='list_element_title'>anatomical entities and developmental stages</span> "
-                + "files contain one expression call for each unique gene, anatomical entity and developmental stage. "
-                + "</li>"
-                + "</ul>");
+                + COND_PARAM_DESC_LIST);
         this.writeln("<p>Presence/absence calls are then filtered and presented differently "
                 + "depending on whether a <code>simple file</code>, "
                 + "or an <code>advanced file</code> is used. Notably: <code>simple files</code> "
@@ -3332,13 +3323,13 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "_col21'>" + ANAT_HOMOLOGY_CIO_ID_COL_NAME 
                 + " (column 21)</h5>");
         this.writeln("<p>Unique identifier from the "
-                + "<a target='_blank' title='External link to CIO in OBO' "
+                + "<a target='_blank' rel='noopener' title='External link to CIO in OBO' "
                 + "href='" + BGEE_GITHUB_URL + "/confidence-information-ontology/blob/master/src/ontology/cio-simple.obo'>"
                 + "Confidence Information Ontology</a>, providing the confidence "
                 + "in the annotation of homology of anatomical entities defined in <code>"
                 + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column 4). This ontology is an attempt "
                 + "to provide a mean to capture the confidence in annotations. "
-                + "See <a target='_blank' title='External link to CIO project' "
+                + "See <a target='_blank' rel='noopener' title='External link to CIO project' "
                 + "href='" + BGEE_GITHUB_URL + "/confidence-information-ontology'>"
                 + "project home</a> for more details.</p>");
         this.writeln("<h5 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 

@@ -37,7 +37,7 @@ import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionMaxRankTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
@@ -114,12 +114,15 @@ public class CallServiceTest extends TestAncestor {
         when(this.speciesService.loadSpeciesMap(new HashSet<>(Arrays.asList(spe1.getId())), false))
         .thenReturn(speciesById);
 
-        GlobalConditionMaxRankTO maxRankTO = new GlobalConditionMaxRankTO(new BigDecimal(100),new BigDecimal(100));
-        when(this.condDAO.getMaxRank()).thenReturn(maxRankTO);
+        ConditionRankInfoTO maxRankTO = new ConditionRankInfoTO(new BigDecimal("41025.00"), null);
+        Map<Integer, ConditionRankInfoTO> maxRankBySpeciesId = new HashMap<>();
+        maxRankBySpeciesId.put(spe1.getId(), maxRankTO);
+        when(this.condDAO.getMaxRanks(anyCollectionOf(Integer.class), anyCollectionOf(DAODataType.class),
+                anyCollectionOf(ConditionDAO.Attribute.class))).thenReturn(maxRankBySpeciesId);
 
         getLogger().exit();
     }
-    
+  
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
      * Collection, LinkedHashMap, boolean)}.
@@ -144,7 +147,7 @@ public class CallServiceTest extends TestAncestor {
                         // To not overload tests, we put null for not used attributes 
                         // but, real query return all attributes
                     new GlobalExpressionCallTO(1, bgeeGeneId1, cond1Id, 
-                        new BigDecimal(1257.34), new HashSet<>(Arrays.asList(
+                        new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                         dataPropagation , new HashSet<>(Arrays.asList(
                                                new DAOExperimentCount(
@@ -155,7 +158,7 @@ public class CallServiceTest extends TestAncestor {
                                                        DAOExperimentCount.CallType.PRESENT, 
                                                        DAOExperimentCount.DataQuality.LOW, 
                                                        DAOPropagationState.ALL, 1))), 
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                         dataPropagation , new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
@@ -174,10 +177,10 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW, 
                                                         DAOPropagationState.ALL, 1))), 
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77))))),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"))))),
                    
                     new GlobalExpressionCallTO(2, bgeeGeneId1, cond2Id, 
-                        new BigDecimal(125.00), new HashSet<>(Arrays.asList(
+                        new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                         dataPropagation, new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
@@ -188,7 +191,7 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW, 
                                                         DAOPropagationState.ALL, 1))), 
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                         dataPropagation, new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
@@ -199,7 +202,7 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW, 
                                                         DAOPropagationState.ALL, 1))), 
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.IN_SITU, true, 
                                         dataPropagation, new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
@@ -210,30 +213,30 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW, 
                                                         DAOPropagationState.ALL, 1))), 
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77))))),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"))))),
                     new GlobalExpressionCallTO(3, bgeeGeneId1, cond3Id, 
-                            new BigDecimal(125.00), new HashSet<>(Arrays.asList(
+                            new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                     new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                             dataPropagation, new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
                                                             DAOPropagationState.ALL, 1))), 
-                                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)),
+                                            0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                     new GlobalExpressionCallDataTO(DAODataType.EST, true,
                                             dataPropagation, new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
                                                             DAOPropagationState.ALL, 1))), 
-                                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)),
+                                            0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                     new GlobalExpressionCallDataTO(DAODataType.IN_SITU, true, 
                                             dataPropagation, new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
                                                             DAOPropagationState.ALL, 1))), 
-                                            0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)))))
+                                            0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))))
                     
                     ));
 
@@ -290,9 +293,9 @@ public class CallServiceTest extends TestAncestor {
         when(this.devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
 
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId()),
-                new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId()),
-                new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId())));
+                new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId(), null),
+                new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -321,7 +324,7 @@ public class CallServiceTest extends TestAncestor {
                                             DataQuality.LOW, 
                                             PropagationState.ALL, 1)
                                     )),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
                             new ExpressionCallData(DataType.EST, new HashSet<>(Arrays.asList(
                                     new ExperimentExpressionCount(
@@ -341,9 +344,9 @@ public class CallServiceTest extends TestAncestor {
                                             DataQuality.LOW, 
                                             PropagationState.ALL, 1)
                                     )),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal(1257.34))),
+                        new ExpressionLevelInfo(new BigDecimal("1257.34"))),
                 
                 new ExpressionCall(g1, new Condition(anatEntity1, stage2, spe1), 
                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
@@ -358,7 +361,7 @@ public class CallServiceTest extends TestAncestor {
                                         CallType.Expression.EXPRESSED, 
                                         DataQuality.HIGH, 
                                         PropagationState.ALL, 3))),
-                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)),
                         new ExpressionCallData(DataType.EST, new HashSet<>(Arrays.asList(
                                 new ExperimentExpressionCount(
@@ -369,7 +372,7 @@ public class CallServiceTest extends TestAncestor {
                                         CallType.Expression.EXPRESSED, 
                                         DataQuality.LOW, 
                                         PropagationState.ALL, 1))),
-                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)),
                         new ExpressionCallData(DataType.IN_SITU, new HashSet<>(Arrays.asList(
                                 new ExperimentExpressionCount(
@@ -380,9 +383,9 @@ public class CallServiceTest extends TestAncestor {
                                         CallType.Expression.EXPRESSED, 
                                         DataQuality.LOW, 
                                         PropagationState.ALL, 1))),
-                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))),
-                    new ExpressionLevelInfo(new BigDecimal(125.00))),
+                    new ExpressionLevelInfo(new BigDecimal("125.00"))),
                 
                 new ExpressionCall(g1, new Condition(anatEntity1, stage3, spe1), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
@@ -393,30 +396,30 @@ public class CallServiceTest extends TestAncestor {
                                                 CallType.Expression.EXPRESSED, 
                                                 DataQuality.LOW, 
                                                 PropagationState.ALL, 1))),
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)),
                                 new ExpressionCallData(DataType.EST, new HashSet<>(Arrays.asList(
                                         new ExperimentExpressionCount(
                                                 CallType.Expression.EXPRESSED, 
                                                 DataQuality.LOW, 
                                                 PropagationState.ALL, 1))),
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)),
                                 new ExpressionCallData(DataType.IN_SITU, new HashSet<>(Arrays.asList(
                                         new ExperimentExpressionCount(
                                                 CallType.Expression.EXPRESSED, 
                                                 DataQuality.LOW, 
                                                 PropagationState.ALL, 1))),
-                                        0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                        0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-                        new ExpressionLevelInfo(new BigDecimal(125.00))));
+                        new ExpressionLevelInfo(new BigDecimal("125.00"))));
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         
         Set<CallService.Attribute> attrs = EnumSet.complementOf(
-                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
+                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL, Attribute.EXPRESSION_SCORE));
         
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
@@ -472,17 +475,17 @@ public class CallServiceTest extends TestAncestor {
 //                        // To not overload tests, we put null for not used attributes 
 //                        // but, real query return all attributes
 //                    new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId1", 
-//                        new BigDecimal(1257.34), CallTO.DataState.LOWQUALITY, null,
+//                        new BigDecimal("1257.34"), CallTO.DataState.LOWQUALITY, null,
 //                        CallTO.DataState.HIGHQUALITY, null, CallTO.DataState.NODATA, null,
 //                        CallTO.DataState.NODATA, null, false, false, ExpressionCallTO.OriginOfLine.SELF, 
 //                        ExpressionCallTO.OriginOfLine.SELF, true), 
 //                    new ExpressionCallTO(null, "geneId1", "anatEntityId1", "stageId2", 
-//                        new BigDecimal(125.00), CallTO.DataState.NODATA, null,
+//                        new BigDecimal("125.00"), CallTO.DataState.NODATA, null,
 //                        CallTO.DataState.LOWQUALITY, null, CallTO.DataState.LOWQUALITY, null,
 //                        CallTO.DataState.NODATA, null, false, false, ExpressionCallTO.OriginOfLine.SELF, 
 //                        ExpressionCallTO.OriginOfLine.SELF, true), 
 //                    new ExpressionCallTO(null, "geneId2", "anatEntityId2", "stageId2", 
-//                        new BigDecimal(125.00), CallTO.DataState.NODATA, null,
+//                        new BigDecimal("125.00"), CallTO.DataState.NODATA, null,
 //                        CallTO.DataState.NODATA, null, CallTO.DataState.NODATA, null,
 //                        CallTO.DataState.HIGHQUALITY, null, false, false, ExpressionCallTO.OriginOfLine.SELF, 
 //                        ExpressionCallTO.OriginOfLine.SELF, true)));
@@ -575,7 +578,7 @@ public class CallServiceTest extends TestAncestor {
 ////                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
 ////                    new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.HIGH, DataType.RNA_SEQ, 
 ////                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-//                new BigDecimal(1257.34)),
+//                new BigDecimal("1257.34")),
 //            new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId2", "speciesId1"), 
 //                true, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, Arrays.asList(
 //                    new ExpressionCallData(DataType.AFFYMETRIX,
@@ -598,7 +601,7 @@ public class CallServiceTest extends TestAncestor {
 ////                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)), 
 ////                    new ExpressionCallData(Expression.EXPRESSED, DataQuality.LOW, DataType.IN_SITU,
 ////                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))), 
-//                new BigDecimal(125.00))
+//                new BigDecimal("125.00"))
 //            ,
 //            new ExpressionCall("geneId1", new Condition("anatEntityId1", "stageId3", "speciesId1"), 
 //                false, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, Arrays.asList(
@@ -658,7 +661,7 @@ public class CallServiceTest extends TestAncestor {
 ////                        new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)),
 ////                    new ExpressionCallData(Expression.NOT_EXPRESSED, DataQuality.LOW, DataType.IN_SITU,
 ////                        new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false))), 
-//                new BigDecimal(125.00)),
+//                new BigDecimal("125.00")),
 //            new ExpressionCall("geneId2", new Condition("anatEntityId2", "stageId3", "speciesId1"), 
 //                false, ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, Arrays.asList(
 //                    new ExpressionCallData(DataType.RNA_SEQ,
@@ -706,7 +709,7 @@ public class CallServiceTest extends TestAncestor {
 
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
-     * Collection, LinkedHashMap, boolean)}.
+     * Collection, LinkedHashMap, boolean)}. Test notably with computation of expression scores.
      */    
     // Keep in this test empty stream for no-expression calls:
     // it allows to detect if all calls are read when only one query has calls
@@ -723,9 +726,9 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
         DevStage devStage2 = new DevStage("devStage2");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId());
-        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null);
+        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         Condition cond2 = new Condition(anatEntity1, devStage2, spe1);
         Condition cond3 = new Condition(anatEntity2, devStage1, spe1);
@@ -744,9 +747,9 @@ public class CallServiceTest extends TestAncestor {
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
         dataPropagation.put(ConditionDAO.Attribute.STAGE_ID, DAOPropagationState.SELF);
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId()),
-                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId()),
-                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId())));
+                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null),
+                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -755,32 +758,32 @@ public class CallServiceTest extends TestAncestor {
         GlobalExpressionCallTOResultSet resultSetMock = getMockResultSet(GlobalExpressionCallTOResultSet.class, 
                 Arrays.asList(
                         new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(), 
-                                new BigDecimal(1257.34), new HashSet<>(Arrays.asList(
+                                new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                                 dataPropagation , new HashSet<>(Arrays.asList(
                                                        new DAOExperimentCount(
                                                                DAOExperimentCount.CallType.PRESENT, 
                                                                DAOExperimentCount.DataQuality.LOW, 
                                                                DAOPropagationState.ALL, 1))), 
-                                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77))))),
+                                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"))))),
                         new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(), 
-                                new BigDecimal(1257.34), new HashSet<>(Arrays.asList(
+                                new BigDecimal("41025"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation , new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.LOW, 
                                                                 DAOPropagationState.ALL, 2))), 
-                                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77))))),
+                                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"))))),
                         new GlobalExpressionCallTO(3, gTO2.getId(), condTO3.getId(), 
-                                new BigDecimal(1257.34), new HashSet<>(Arrays.asList(
+                                new BigDecimal("20000.52"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation , new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.LOW, 
                                                                 DAOPropagationState.ALL, 1))), 
-                                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77)))))));
+                                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))))));
 
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
         when(this.globalExprCallDAO.getGlobalExpressionCalls(
@@ -834,9 +837,9 @@ public class CallServiceTest extends TestAncestor {
                                     new ExperimentExpressionCount(
                                             CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL, 1)
                                     )),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal(1257.34))), 
+                        new ExpressionLevelInfo(new BigDecimal("1257.34"), new BigDecimal("96.93762"), null, null)), 
                 new ExpressionCall(g1, cond2, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
@@ -845,9 +848,9 @@ public class CallServiceTest extends TestAncestor {
                                     new ExperimentExpressionCount(
                                             CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL, 2)
                                     )),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal(1257.34))),
+                        new ExpressionLevelInfo(new BigDecimal("41025"), CallService.EXPRESSION_SCORE_MIN_VALUE, null, null)),
                 new ExpressionCall(g2, cond3, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
@@ -856,9 +859,9 @@ public class CallServiceTest extends TestAncestor {
                                     new ExperimentExpressionCount(
                                             CallType.Expression.EXPRESSED, DataQuality.LOW, PropagationState.ALL, 1)
                                     )),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal(1257.34))) 
+                        new ExpressionLevelInfo(new BigDecimal("20000.52"), new BigDecimal("51.25041"), null, null)) 
             );
         
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
@@ -980,7 +983,7 @@ public class CallServiceTest extends TestAncestor {
         
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
@@ -990,14 +993,14 @@ public class CallServiceTest extends TestAncestor {
         GlobalExpressionCallTOResultSet resultSetMock = getMockResultSet(GlobalExpressionCallTOResultSet.class, 
                 Arrays.asList(
                         new GlobalExpressionCallTO(3, gTO1.getId(), condTO1.getId(), 
-                                new BigDecimal(125.42), new HashSet<>(Arrays.asList(
+                                new BigDecimal("125.42"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation , new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.HIGH, 
                                                                 DAOPropagationState.ALL, 3))), 
-                                                0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77))
+                                                0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"))
                                         )))
                         ));
         
@@ -1060,9 +1063,9 @@ public class CallServiceTest extends TestAncestor {
                                             CallType.Expression.EXPRESSED, 
                                             DataQuality.HIGH, 
                                             PropagationState.ALL, 3))),
-                                    0, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
+                                    0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal(125.42))));
+                        new ExpressionLevelInfo(new BigDecimal("125.42"))));
 
 
         
@@ -1078,7 +1081,7 @@ public class CallServiceTest extends TestAncestor {
         callObservedData.put(Expression.NOT_EXPRESSED, false);
         
         Set<CallService.Attribute> attrs = EnumSet.complementOf(
-                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL));
+                EnumSet.of(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL, Attribute.GENE_QUAL_EXPR_LEVEL, Attribute.EXPRESSION_SCORE));
         
         CallService service = new CallService(this.serviceFactory);
         
@@ -1175,8 +1178,8 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId());
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId());
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
         Condition cond2 = new Condition(anatEntity2, devStage1, spe1);
 
@@ -1500,7 +1503,7 @@ public class CallServiceTest extends TestAncestor {
         //expected results
         ExpressionCall callg1ae1 = new ExpressionCall(g1, cond1, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10"),
+                new ExpressionLevelInfo(new BigDecimal("10"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1511,7 +1514,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg1ae2 = new ExpressionCall(g1, cond2, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("30000"),
+                new ExpressionLevelInfo(new BigDecimal("30000"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1522,7 +1525,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity2))));
         ExpressionCall callg2ae1 = new ExpressionCall(g2, cond1, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10000"),
+                new ExpressionLevelInfo(new BigDecimal("10000"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10000"), new BigDecimal("20000"),
@@ -1533,7 +1536,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg2ae2 = new ExpressionCall(g2, cond2, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("20000"),
+                new ExpressionLevelInfo(new BigDecimal("20000"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10000"), new BigDecimal("20000"),
@@ -1545,7 +1548,7 @@ public class CallServiceTest extends TestAncestor {
         //Calls with ABSENT
         ExpressionCall callg1ae1WithAbsent = new ExpressionCall(g1, cond1,
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10"),
+                new ExpressionLevelInfo(new BigDecimal("10"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1556,7 +1559,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg1ae2WithAbsent = new ExpressionCall(g1, cond2,
                 null, ExpressionSummary.NOT_EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("500000"),
+                new ExpressionLevelInfo(new BigDecimal("500000"), null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.ABSENT,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),

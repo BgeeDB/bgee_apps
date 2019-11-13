@@ -40,7 +40,6 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
-import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -50,7 +49,7 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, May 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -96,11 +95,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
         log.entry(searchTerm, result);
-        this.startDisplay("Gene information");
+        this.startDisplay("Gene information", "WebPage");
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, " +
                 "gene descriptions, synonyms and cross-references.</p>");
         this.writeln("</div>");
@@ -133,6 +132,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         
         this.endDisplay();
+        
         log.exit();
     }
 
@@ -157,7 +157,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getEnsemblGeneId())).append("</td>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
             sb.append("    <td>").append(getStringNotBlankOrDash(htmlEntities(gene.getDescription()))).append("</td>");
-            sb.append("    <td>").append(getCompleteSpeciesName(gene)).append("</td>");
+            sb.append("    <td>").append(getCompleteSpeciesNameLink(gene.getSpecies(), false)).append("</td>");
             sb.append("    <td>").append(getMatch(geneMatch, searchTerm)).append("</td>");
             sb.append("</tr>");
         }
@@ -226,11 +226,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
         
-        this.startDisplay(titleStart);
+        this.startDisplay(titleStart, "WebPage");
         
-        this.writeln("<h1>Gene search</h1>");
+        this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
-        this.writeln("<div id='bgee_introduction'>");
+        this.writeln("<div id='bgee_introduction' property='schema:description'>");
         
         this.writeln("<p>The search gene ID is found in several species. Select the desired gene:<p>");
 
@@ -285,7 +285,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         String text = StringUtils.isNotBlank(linkText)? htmlEntities(linkText):
                 htmlEntities(gene.getName() + " - " + gene.getEnsemblGeneId())
-                        + " in " + getCompleteSpeciesName(gene);
+                        + " in " + getCompleteSpeciesName(gene.getSpecies(), false);
 
         return log.exit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
     }
@@ -352,27 +352,30 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         Gene gene = geneResponse.getGene();
         
-        String titleStart = "Gene: " + gene.getName() + " - " + gene.getEnsemblGeneId(); 
-        this.startDisplay(titleStart);
-
-        this.writeln("<div class='row'>");
+        String titleStart = "Gene: " + htmlEntities(gene.getName()) 
+                + " - " + htmlEntities(gene.getEnsemblGeneId()); 
+        this.startDisplay(titleStart, "WebPage");
 
         // Gene search
+        this.writeln("<div class='row'>");
+
         this.writeln("<div class='col-sm-3'>");
         this.writeln(getGeneSearchBox(true, null));
         this.writeln("</div>"); // close div
 
         //page title
-        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7'>");
+        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
         this.writeln("<img src='" + this.getSpeciesImageSrc(gene.getSpecies(), true)
                 + "' alt='" + htmlEntities(gene.getSpecies().getShortName()) + "' />");
         this.writeln(htmlEntities(titleStart));
-        this.writeln(" - " + getCompleteSpeciesName(gene));
+        this.writeln(" - " + getCompleteSpeciesName(gene.getSpecies(), false));
         this.writeln("</h1>");
         
         this.writeln("</div>"); // close row
 
         //Gene general information
+        this.writeln("<div typeof='bs:Gene'>");
+        
         this.writeln("<h2>General information</h2>");
         this.writeln("<div class='gene'>" + getGeneralInfo(gene) + "</div>");
 
@@ -395,13 +398,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // end class
         
         //legend
-        this.writeln("<div class='legend col-xs-offset-1 col-xs-10 col-sm-offset-2 col-sm-8 col-md-offset-0 col-md-2 row'>");
+        this.writeln("<div class='legend col-xs-10 col-sm-8 col-md-2 row'>");
         this.writeln("<table class='col-xs-5 col-sm-3 col-md-12'>"
                 + "<caption>Sources</caption>" +
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
                 "<tr><th>E</th><td>EST</td></tr>" +
                 "<tr><th>I</th><td>In Situ</td></tr>" +
-                "<tr><th>R</th><td>RNA-Seq</li></td></tr></table>");
+                "<tr><th>R</th><td>RNA-Seq</td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-3 col-md-offset-0 col-md-12'>"
                 //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
                 //for now we only report presence/absence of data per data type.
@@ -424,10 +427,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //other info
         this.writeln("<div class='row'>");
 
-        this.writeln("<div id='expr_intro' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
-                + "Rank scores of expression calls are normalized across genes, conditions and species. "
+        this.writeln("<div id='rank_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
+                + "<p><strong>Rank scores </strong> of expression calls are normalized across genes, conditions and species. "
                 + "Low score means that the gene is highly expressed in the condition. "
-                + "Max rank score in all species: 4.10e4. Min rank score varies across species.</div>");
+                + "Max rank score in all species: 4.10e4. Min rank score varies across species.</p></div>");
+        
+        this.writeln("<div id='expr_score_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
+                + "<p><strong>Expression scores </strong> of expression calls use the  minimum and maximum Rank of the species to normalize the "
+                + "expression to a value between 0 and 100. Low score means that the gene is lowly expressed in the "
+                + "condition.</p></div>");
 
         //Source info
         Set<DataType> allowedDataTypes = geneResponse.getCallsByAnatEntity().values().stream()
@@ -463,6 +471,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("<h2>Cross-references</h2>");
             this.writeln(getXRefDisplay(gene.getXRefs()));
         }
+        
+        this.writeln("</div>"); // end Gene
 
         this.endDisplay();
         log.exit();
@@ -507,7 +517,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 StringJoiner sj = new StringJoiner(", ");
                 for (Source source : e.getValue().stream()
                         .sorted(Comparator.comparing(NamedEntity::getName)).collect(Collectors.toList())) {
-                    String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank'";
+                    String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank' rel='noopener'";
                     sj.add("<a href='"
                             //XXX: We should think about how to handle this display better,
                             //because maybe this base URL contains illegal chars :/
@@ -517,6 +527,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                             htmlEntities(source.getName()) + "</a>");
                 }
                 this.writeln(sj.toString());
+                this.writeln("</li>");
             }
             this.writeln("</ul>");
             this.writeln("</div>");
@@ -577,6 +588,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages min-table_sm'>Developmental stage(s)</th>")
                 .append("<th class='score'>Rank score</th>")
+                .append("<th class='score'>Expression score</th>")
                 //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
                 //for now we only report presence/absence of data per data type.
 //                .append("<th class='quality min-table_md'>Quality</th></tr></thead>\n");
@@ -669,6 +681,23 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             previousGroupInd = currentGroupInd;
         }
         sb.append("</ul></td>");
+        
+      //Expression score
+        sb.append("<td>").append(getExpressionScoreHTML(calls.get(0)))
+            .append("<ul class='masked score-list'>");
+        previousGroupInd = null;
+        for (ExpressionCall call: calls) {
+            int currentGroupInd = clusteringWithinAnatEntity.get(call);
+            sb.append("<li class='score ");
+            if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
+                sb.append(scoreShiftClassName);
+            }
+            sb.append("'>").append(getExpressionScoreHTML(call))
+              .append("</li>");
+            sb.append("\n");
+            previousGroupInd = currentGroupInd;
+        }
+        sb.append("</ul></td>");
 
         // Quality cell
         sb.append("<td>")
@@ -681,8 +710,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                         .append(getDataTypeSpans(call.getCallData())).append("</li>");
                         return sb2.toString();
                     }).collect(Collectors.joining("\n")))
-                .append("</ul></td>")
-                .append("</td>");
+                .append("</ul></td>");
         
         sb.append("</tr>");
 
@@ -695,19 +723,19 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param gene     The {@code Gene} for which to display information
      * @return         A {@code String} containing the HTML table containing the information.
      */
-    private static String getGeneralInfo(Gene gene) {
+    private String getGeneralInfo(Gene gene) {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
         table.append("<table class='info-table'>");
         table.append("<tr><th scope='row'>Ensembl ID</th><td>")
                 .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
-        table.append("<tr><th scope='row'>Name</th><td>")
+        table.append("<tr><th scope='row'>Name</th><td property='bs:name'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getName()))).append("</td></tr>");
-        table.append("<tr><th scope='row'>Description</th><td>")
+        table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getDescription()))).append("</td></tr>");
-        table.append("<tr><th scope='row'>Organism</th><td>")
-                .append(getCompleteSpeciesName(gene));
+        table.append("<tr><th scope='row'>Organism</th><td property='bs:taxonomicRange' typeof='bs:Taxon'>")
+                .append(getCompleteSpeciesNameLink(gene.getSpecies(), true)).append("</td></tr>");
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")
                     .append(getSynonymDisplay(gene.getSynonyms()));
@@ -734,7 +762,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         List<String> orderedEscapedSynonyms = synonyms.stream()
                 .sorted()
-                .map(s -> htmlEntities(s))
+                .map(s -> "<span property='bs:alternateName'>" + htmlEntities(s) + "</span>")
                 .collect(Collectors.toList());
 
         String display = getListDisplay("syn", orderedEscapedSynonyms);
@@ -759,8 +787,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .sorted(X_REF_COMPARATOR)
                 .collect(Collectors.groupingBy(XRef::getSource,
                         LinkedHashMap::new,
-                        Collectors.mapping(x -> "<a href='"
-                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank'>"
+                        Collectors.mapping(x -> "<a typeof='bs:Gene' property='bs:sameAs' href='"
+                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank' rel='noopener'>"
                                 + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
                             Collectors.toList())));
         StringBuilder display = new StringBuilder("<div class='info-content'>");
@@ -827,23 +855,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             display += "<span id='" + idPrefix + "_content' class='more-content'>, " +
                     String.join(", ", items.subList(MAX_DISPLAYED_ITEMS, items.size())) +
                     "</span>";
-            display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'><span>";
+            display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'></span>";
         }
         return log.exit(display);
-    }
-
-    /**
-     * Return the {@code String} representing the species scientific and common names.
-     * The common name, surrounded by brackets, is displayed only if it is defined.
-     *
-     * @param gene  A {@code Gene} that is the gene for which the species name should be displayed.
-     * @return      The {@code String} that is the species scientific and common names.
-     */
-    private static String getCompleteSpeciesName(Gene gene) {
-        log.entry(gene);
-        Species sp = gene.getSpecies();
-        return log.exit("<em>" + htmlEntities(sp.getScientificName()) + "</em>" 
-                + (StringUtils.isNotBlank(sp.getName()) ? " (" + htmlEntities(sp.getName()) + ")" : ""));
     }
 
     /**
@@ -939,6 +953,36 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("<span class='low-qual-score'>").append(rankScore).append("</span>");
         return log.exit(sb.toString());
     }
+    
+    /**
+     * @param call An {@code ExpressionCall} for which we want to display expression score.
+     * @return     A {@code String} containing the HTML to display the expression score, 
+     *             notably displaying information about confidence in the call.
+     */
+    private static String getExpressionScoreHTML(ExpressionCall call) {
+        log.entry(call);
+
+        //If the rank of the call is above a threshold AND the call is only supported by ESTs 
+        //and/or in situ data, then we consider it of low confidence and the corresponding score
+        //is written with a different color
+        //TODO: there should be a better mechanism to handle that, and definitely not in the view, 
+        //it is not its role to determine what is of low confidence...
+        //Maybe create in bgee-core a new ExpressionScore class, storing the expression score and its
+        //confidence.
+        Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+        String expressionScore = htmlEntities(String.valueOf(call.getExpressionScore()));
+        if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
+                (dataTypes.contains(DataType.AFFYMETRIX) || 
+                dataTypes.contains(DataType.RNA_SEQ) || 
+                call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+            return log.exit(expressionScore);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<span class='low-qual-score'>").append(expressionScore).append("</span>");
+        return log.exit(sb.toString());
+    }
+    
 
     @Override
     protected void includeCss() {

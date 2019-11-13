@@ -1,9 +1,11 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,6 +18,10 @@ import org.bgee.model.species.Species;
 import org.bgee.view.GeneralDisplay;
 import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
 
+import static org.bgee.model.file.DownloadFile.CategoryEnum.AFFY_DATA;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE;
+import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_DATA;
+
 /**
  * HTML View for the general category display
  * 
@@ -23,7 +29,7 @@ import org.bgee.view.html.HtmlDownloadDisplay.DownloadPageType;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 14, July 2019
  * @since   Bgee 13, July 2014
  */
 public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisplay {
@@ -51,14 +57,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     @Override
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.entry(groups);
-
+        
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
+        this.addSchemaMarkups(groups);
+        
         if (groups.stream().anyMatch(SpeciesDataGroup::isMultipleSpecies)) {
             throw log.throwing(new IllegalArgumentException(
                     "Only single-species groups should be displayed on the home page."));
         }
-
+        
         this.displayHeroUnit();
 
         this.displaySpeciesBanner(groups);
@@ -71,7 +79,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.displayNews();
 
-
         this.writeln("<hr class='home-divider'/>");
 
         this.displayBgeeButtons("end_buttons");
@@ -83,6 +90,110 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.exit();
     }
     
+    /**
+     * Add schema.org markup to the page.
+     */
+    private void addSchemaMarkups(List<SpeciesDataGroup> groups) {
+        log.entry(groups);
+        
+        // We build the RequestParameters without geneId to keep '{' and '}' instead of replace them due to by secureString() 
+        RequestParameters urlActionTarget = this.getNewRequestParameters();
+        urlActionTarget.setPage(RequestParameters.PAGE_GENE);
+        RequestParameters urlDownloadCalls = this.getNewRequestParameters();
+        urlDownloadCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
+        RequestParameters urlDownloadProcValues = this.getNewRequestParameters();
+        urlDownloadProcValues.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDownloadProcValues.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
+        
+        String datasets = groups.stream()
+                .filter(SpeciesDataGroup::isSingleSpecies)
+                .map(sdg -> {
+                    Integer spId = sdg.getMembers().get(0).getId();
+                    return "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "}, " +
+                            "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, RNASEQ_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "}," +
+                            "{" +
+                            "    \"@type\": \"Dataset\"," +
+                            "    \"@id\": \"" + this.getDatasetSchemaId(spId, AFFY_DATA) + "\"," +
+                            "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
+                            "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
+                            "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "}";
+                        }
+                )
+                .collect(Collectors.joining(","));
+
+        String sibSchema =
+                "{" +
+                "    \"@type\": \"Organization\"," +
+                "    \"name\": \"SIB Swiss Institute of Bioinformatics\"," +
+                "    \"sameAs\": [ \"https://www.sib.swiss\", " +
+                        "\"https://fr.wikipedia.org/wiki/Institut_suisse_de_bioinformatique\" ]" +
+                "}";
+
+        String unilSchema =
+                "{" +
+                "    \"@type\": \"CollegeOrUniversity\"," +
+                "    \"name\": \"UNIL University of Lausanne\"," +
+                "    \"sameAs\": [ \"https://unil.ch/\", " +
+                        "\"https://fr.wikipedia.org/wiki/Universit%C3%A9_de_Lausanne\" ]" +
+                "}";
+
+        String ebGroupSchema =
+                "{" +
+                "    \"@type\": \"EducationalOrganization\"," +
+                "    \"name\": \"Evolutionary Bioinformatics group\"," +
+                "    \"sameAs\": \"https://www.unil.ch/dee/robinson-rechavi-group\"" +
+                "}";
+        
+        this.writeln(getSchemaMarkupGraph(Arrays.asList(
+                "    {" +
+                "      \"@type\": \"Organization\"," +
+                "      \"name\": \"Bgee - Bring Gene Expression Expertise\"," +
+                "      \"url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"description\": \"The aim of Bgee is to help biologists to use or understand gene expression\"," +
+                "      \"logo\": \""+ this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee13_hp_logo.png\"," +
+                "      \"sameAs\": [ \"https://twitter.com/Bgeedb\", \"https://bgeedb.wordpress.com/\"]," +
+                "      \"parentOrganization\": [" + sibSchema + "," + unilSchema + "," + ebGroupSchema + "]" +
+                "    }",
+                "    {" +
+                "      \"@type\": \"DataCatalog\"," +
+                "      \"@id\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "      \"name\": \"Bgee gene expression data\"," +
+                "      \"description\": \"" + BGEE_DESCRIPTION + "\"," +
+                "      \"keywords\": \"" + BGEE_KEYWORDS + "\"," +
+                "      \"creator\": [" + ebGroupSchema + "]," +
+                "      \"provider\": [" + sibSchema + "," + unilSchema + "," + ebGroupSchema + "]," +
+                "      \"license\": \"" + LICENCE_CC0_URL + "\"," +
+                "      \"version\": \"" + this.getWebAppVersion() + "\"," +
+                "      \"potentialAction\": {" +
+                "        \"@type\": \"SearchAction\"," +
+                "        \"target\": \"" + urlActionTarget.getRequestURL() + "&" + 
+                            urlActionTarget.getUrlParametersInstance().getParamQuery() +"={query}\"," +
+                "        \"query-input\": \"required name=query\"" +
+                "      }," +
+                "      \"dataset\": [" + datasets + "]" +
+                "    }")));
+
+        log.exit();
+    }
+
     /**
      * Display the banner with species (without any interaction).
      * 
@@ -179,7 +290,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "in multiple animal species, produced from multiple data types "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
                 + "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
-                " title='GTEx portal' target='_blank'>GTEx data</a>).</p>");
+                " title='GTEx portal' target='_blank' rel='noopener'>GTEx data</a>).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");
@@ -242,12 +353,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         banner.append("<div id='bgee_data_selection' class='row'>");
         // Cross to close the banner
         banner.append("<div id='bgee_data_selection_cross'>");
-        banner.append("<img class='closing_cross' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "cross.png' " +
-                "title='Close banner' alt='Cross' />");
+        banner.append("<img class='closing_cross' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("cross.png' title='Close banner' alt='Cross' />");
         banner.append("</div>");
 
         // Section on the right of the black banner
-        banner.append("<h1 class='col-xs-12 col-md-4'>"
+        banner.append("<h1 class='col-xs-12 col-lg-3'>"
                 + "<span class='scientificname'></span>"
                 + "<span class='commonname'></span></h1>");
 
@@ -257,15 +369,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         RequestParameters urlGeneExprCalls = this.getNewRequestParameters();
         urlGeneExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlGeneExprCalls.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        banner.append("<ul class='col-xs-12 col-md-8 row'>");
-        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-                "<a id='processed_expression_values_link' class='data_page_link' href='" +
-                urlProcExprValues.getRequestURL() + "' title='Bgee processed expression values'>" +
-                "See RNA-Seq and Affymetrix data</a></li>");
-        banner.append("<li class='col-xs-12 col-sm-6'><img class='bullet_point' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "arrow.png' alt='Arrow' />" +
-                "<a id='gene_expression_calls_link' class='data_page_link' href='" +
-                urlGeneExprCalls.getRequestURL() +
-                "' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+        RequestParameters urlSpeciesPage = this.getNewRequestParameters();
+        urlSpeciesPage.setPage(RequestParameters.PAGE_SPECIES);
+
+        banner.append("<ul class='col-xs-12 col-lg-9 row'>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='processed_expression_values_link' class='data_page_link' href='")
+                .append(urlProcExprValues.getRequestURL()).append("' title='Bgee processed expression values'>")
+                .append("See RNA-Seq and Affymetrix data</a></li>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='gene_expression_calls_link' class='data_page_link' href='")
+                .append(urlGeneExprCalls.getRequestURL())
+                .append("' title='Bgee gene expression calls'>See gene expression calls</a></li>");
+        banner.append("<li class='col-xs-12 col-md-4'><img class='bullet_point' src='")
+                .append(this.prop.getBgeeRootDirectory()).append(this.prop.getImagesRootDirectory())
+                .append("arrow.png' alt='Arrow' /><a id='species_info_link' class='data_page_link' href='")
+                .append(urlSpeciesPage.getRequestURL())
+                .append("' title='Bgee species information'>See species information</a></li>");
         banner.append("</ul>");
         banner.append("</div>"); // close 
 
@@ -345,6 +467,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         RequestParameters urlExprComp = this.getNewRequestParameters();
         urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+        
+        RequestParameters urlSpecies = this.getNewRequestParameters();
+        urlSpecies.setPage(RequestParameters.PAGE_SPECIES);
 
         RequestParameters urlAnatSim = this.getNewRequestParameters();
         urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
@@ -358,6 +483,22 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='panel-body'>");
 
+        this.writeOneNews("2019-10-05",
+                "<ul>" +
+                "    <li>New score on <a href='" + urlGenePage.getRequestURL() + "' title='Gene page'>" + 
+                         "gene pages</a>.</li>" +
+                "    <li>New <a href='" + urlSpecies.getRequestURL() + "' title='Species'>" +
+                         "species</a> page.</li>" +
+                "    <li>Update of the <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +
+                         "expression comparison</a>." +
+                "    <ul>" + 
+                "        <li>Better sorting approach.</li>" +
+                "        <li>Possibility to export results (copy to clipboard or TSV).</li>" + 
+                "    </ul></li>" +   
+                "    <li>Improve findability of data by adding <a href='https://bioschemas.org' " + 
+                "    title='Bioschemas'>Bioschemas</a>  markup.</li>" +
+                "</ul>");
+        
         this.writeOneNews("2019-05-21",
                 "<ul>" +
                 "    <li>New <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>" +
@@ -383,12 +524,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeOneNews("2019-05-12",
                 "<ul>" +
-                "    <li>Update of the <a href='" + urlGenePage.getRequestURL() +
-                "    '>gene search page</a>:" +
+                "    <li>Update of the <a href='" + urlGenePage.getRequestURL() + "'>gene search page</a>:" +
                 "    <ul>" +
                 "        <li>Addition of a gene search result page (i.e. <a href='" +
-                         urlGeneSearchHbb.getRequestURL() +
-                "        ' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
+                         urlGeneSearchHbb.getRequestURL() + "' title='Search genes with \"HBB\"'>search with \"HBB\"</a>)</li>" +
                 "        <li>Improvement of the speed of autocompletion</li>" +
                 "    </ul></li>" +
                 "    <li>Modification of gene pages to display gene name synoyms," +
@@ -426,7 +565,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>" 
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
         this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
@@ -450,7 +589,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>"
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
         this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
@@ -473,11 +612,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</ul>");
         
         this.writeOneNews("2016-05-09", "Release of our new "
-                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank'>"
+                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener'>"
                 + "BgeeDB R package</a>, a package for the annotation and gene expression "
                 + "data download from Bgee database into R, and TopAnat analysis (see also "
                 + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
-                + "class='external_link' target='_blank'>Bioconductor website</a>).");
+                + "class='external_link' target='_blank' rel='noopener'>Bioconductor website</a>).");
 
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
         
@@ -557,9 +696,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
         this.writeln("View archive sites:");
         this.writeln("<a title='Archive site Bgee version 12' href='" + 
-                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank'>version 12</a>");
+                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener'>version 12</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
-                this.prop.getBgeeRootDirectory() + "bgee13' target='_blank'>version 13</a>");
+                this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

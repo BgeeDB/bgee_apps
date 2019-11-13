@@ -126,9 +126,6 @@ public class FrontController extends HttpServlet {
      * @param userService               A {@link UserService} instance, allowing to create
      *                                  {@code User} objects to identify and track users in the webapp. 
      *                                  If {@code null}, the default constructor of {@code UserService} is used.  
-     * @param geneMatchResultService    A {@link GeneMatchResultService} instance, allowing to search
-     *                                  {@code GeneMatchResult} objects to identify and track users in the webapp. 
-     *                                  If {@code null}, the default constructor of {@code UserService} is used.  
      * @param serviceFactoryProvider    A {@code Supplier} of {@code ServiceFactory}s, allowing 
      *                                  to obtain a new {@code ServiceFactory} instance 
      *                                  at each call to the {@code doRequest} method. If {@code null}, 
@@ -284,7 +281,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);
                 
             } else if (requestParameters.isASpeciesPageCategory()){
-                controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);      
+                controller = new CommandSpecies(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isASearchPageCategory()) {
             		controller = new CommandSearch(response, requestParameters, this.prop, factory,
                             serviceFactory);
@@ -294,20 +292,25 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
+                
             } else if (requestParameters.isASparqlPageCategory()) {
                 controller = new CommandSparql(response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else if (requestParameters.isAResourcesPageCategory()) {
                 controller = new CommandResources(response, requestParameters, this.prop, factory, serviceFactory);
-            }else if (requestParameters.isAStatsPageCategory()) {
+                
+            } else if (requestParameters.isAStatsPageCategory()) {
                 //no specific controllers for this for now. 
                 //We simply respond with a 'success no content' so that the client get no errors, 
                 //and so that we get correct information stored in our Apache logs.
                 //TODO: In the future, this should call our Google Monitoring implementation
                 factory.getGeneralDisplay().respondSuccessNoContent();
                 setCookie = false;
+                
             } else if (requestParameters.isAAnatSimilarityPageCategory()) {
                 controller = new CommandAnatomicalSimilarity(
                         response, requestParameters, this.prop, factory, serviceFactory);
+                
             } else {
                 throw log.throwing(new PageNotFoundException("Request not recognized."));
             }

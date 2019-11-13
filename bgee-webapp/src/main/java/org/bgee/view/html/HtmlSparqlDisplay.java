@@ -72,15 +72,15 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         String bgeeLiteDocUrl = DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation";
         
-        this.startDisplay("Bgee SPARQL endpoint");
+        this.startDisplay("Bgee SPARQL endpoint", "WebPage");
 
         this.writeln("<div class='row'>");
         this.writeln("<div class='" + CENTERED_ELEMENT_CLASS + "'>");
 
-        this.writeln("<h1>Bgee SPARQL endpoint</h1>");
+        this.writeln("<h1 property='schema:name'>Bgee SPARQL endpoint</h1>");
 
-        this.writeln("<p>Bgee has a SPARQL endpoint which is based on the " +
-                "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' " +
+        this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the " +
+                "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' " +
                 "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
                 BGEE_LITE_NAME + " is a lighter version of Bgee database, " +
                 "that contains most useful, and explicit information.</p>");
@@ -91,7 +91,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         this.writeln("<h2>Web interface to query the Bgee SPARQL endpoint</h2>");
         this.writeln("<p>Bgee SPARQL queries can be run using the web interface "
                 + "<a href='http://biosoda.expasy.org:8080/build_biosodafrontend/' " 
-                + "title='Link to Bio-Query' class='external_link' target='_blank'>Bio-Query</a> " 
+                + "title='Link to Bio-Query' class='external_link' target='_blank' rel='noopener'>Bio-Query</a> "
                 + "search created for the <a href='"+urlCollabs.getRequestURL()+"' " 
                 + "title='Bgee collaborations'>BioSODA project</a>. " 
                 + "Bgee specific queries are present under the category <span class='bioquery-section'>" 
@@ -126,33 +126,33 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "</code></pre>");
 
         this.writeln("It's possible to download result of this query in <a href='" + SPARQL_QUERY_JSON_URL + "' "
-                + "title='SPARQL example query' class='external_link' target='_blank'>JSON format</a> "
+                + "title='SPARQL example query' class='external_link' target='_blank' rel='noopener'>JSON format</a> "
                 + "or in <a href='" + SPARQL_QUERY_XML_URL + "' title='SPARQL example query' " 
-                + "class='external_link' target='_blank'>XML format</a>.</p>");
+                + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");
 
         this.writeln("<h2>Virtual RDF serialisation and semantic models</h2>");
         this.writeln("<p>The Bgee SPARQL endpoint was created using an Ontology Based Data Access (OBDA) "
                 + "approach allowing to create a virtual RDF serialisation without exporting data "
                 + "from the original relational database. It queries data stored in the "
-                + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' " 
+                + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
                 + "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + "</a> relational database.");
         this.writeln("The virtual RDF serialisation of the " + BGEE_LITE_NAME
                 + " is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
-                + "title ='Link to GenEx specification' target='_blank'>GenEx semantic model "
+                + "title ='Link to GenEx specification' target='_blank' rel='noopener'>GenEx semantic model "
                 + "specification</a> and the OBDA mappings defined in <a href="
                 + "'https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"
-                + "title='Link to OBDA mapping' target='_blank' class='external_link'>"
+                + "title='Link to OBDA mapping' target='_blank' rel='noopener' class='external_link'>"
                 + "OBDA mappings</a>. The mappings are defined with the "
                 + "<a href='https://github.com/ontop/ontop/wiki/ontopOBDAModel' "
-                + "title='Link to Ontop mapping language' target = '_blank' class='external_link'>"
+                + "title='Link to Ontop mapping language' target='_blank' rel='noopener' class='external_link'>"
                 + "Ontop mapping language</a>.</p>");
         this.writeln("<p>To cross-reference other resources, this SPARQL endpoint contains annotation "
                 + "property assertions defined by a first draft of the life-sciences "
                 + "cross-reference (LSCR) ontology that is available to download at the "
-                + "<a href='https://github.com/qfo/OrthologyOntology' target='_blank' class='external_link'"
+                + "<a href='https://github.com/qfo/OrthologyOntology' target='_blank' rel='noopener' class='external_link'"
                 + "title='Link to Quest for Orthologs github'> Quest for Orthologs GitHub</a> repository "
                 + "<a href='https://github.com/qfo/OrthologyOntology/blob/master/lscr.ttl' "
-                + "target='_blank' class='external_link' title='link to LSCR ontology'> "
+                + "target='_blank' rel='noopener' class='external_link' title='link to LSCR ontology'> "
                 + "here</a>.</p>");
         
         this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS class
@@ -175,3 +175,4 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         log.exit();
     }
 }
+

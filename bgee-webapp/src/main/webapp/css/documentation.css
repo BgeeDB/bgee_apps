@@ -1,18 +1,18 @@
 div.documentationmenu {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 2%;
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	margin-bottom: 2%;
 }
 
 div.documentationmenu > ul {
-    margin: 0;
-    padding: 0;
+	margin: 0;
+	padding: 0;
 }
 
 div.documentationmenu li {
-    list-style-type: none;
-    margin-top: 0.3%;
+	list-style-type: none;
+	margin-top: 0.3%;
 }
 
 div.large-table {
@@ -22,11 +22,11 @@ div.large-table {
 table.call_download_file_desc, table.call_download_file_example {
 	width: 100%;
 	border-top: 1px solid black;
-    border-bottom: 1px solid black;
-    font-size: 0.9em;
-    /* needed to style borders of other table elements */
-    border-collapse: collapse; 
-    margin-bottom: 1em;
+	border-bottom: 1px solid black;
+	font-size: 0.9em;
+	/* needed to style borders of other table elements */
+	border-collapse: collapse;
+	margin-bottom: 1em;
 }
 
 table.call_download_file_example {
@@ -34,24 +34,24 @@ table.call_download_file_example {
 }
 
 table.call_download_file_desc caption, table.call_download_file_example caption {
-    text-align: center;
-    font-weight: bold;
+	text-align: center;
+	font-weight: bold;
 }
-	
+
 table.call_download_file_desc thead, table.call_download_file_example thead {
 	border-bottom: 1px solid black;
 }
 
-table.call_download_file_desc td, table.call_download_file_desc th, 
+table.call_download_file_desc td, table.call_download_file_desc th,
 table.call_download_file_example td, table.call_download_file_example th {
-    vertical-align: top;
-    padding: 0.5em;
-    text-align: left;
-    font-weight: normal;
+	vertical-align: top;
+	padding: 0.5em;
+	text-align: left;
+	font-weight: normal;
 }
 
 ul.doc_content li:not(:first-child) {
-    margin-top: 0.7em;
+	margin-top: 0.7em;
 }
 
 div.doc_content {
@@ -60,5 +60,5 @@ div.doc_content {
 }
 
 a.backlink, a.backlink:visited {
-    color: #626262;
+	color: #626262;
 }

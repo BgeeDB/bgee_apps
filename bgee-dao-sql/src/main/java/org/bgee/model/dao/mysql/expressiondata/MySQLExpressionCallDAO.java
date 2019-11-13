@@ -926,10 +926,19 @@ implements ExpressionCallDAO {
             //this method should have an argument 'distinctClause'; it is the responsibility 
             //of the caller, depending on the parameters of the query, to determine 
             //whether the clause is needed.
-            boolean filterDuplicates = 
-                    this.getAttributes() != null && !this.getAttributes().isEmpty() && 
-                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.ID) && 
-                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.GENE_ID);
+
+            //Note: because of the fix for issue#173 (see beginning of this method),
+            //we cannot avoid requesting some fields, even if not requested in Attributes.
+            //This lead to have "duplicated" callTOs retrieved, because we request some fields
+            //that we then don't use to populate the CallTO (so the DISTINCT SQL clause is working
+            //and remove redundancy as compared to the field requested, but the CallTOs can still be redundant
+            //because they don't use all fields).
+            //This is a quick and sub-optimal fix, but this method is deprecated anyway.
+//            boolean filterDuplicates =
+//                    this.getAttributes() != null && !this.getAttributes().isEmpty() &&
+//                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.ID) &&
+//                    !this.getAttributes().contains(ExpressionCallDAO.Attribute.GENE_ID);
+            boolean filterDuplicates = true;
             
             return log.exit(new MySQLExpressionCallTOResultSet(stmt, this.getAttributes(), 
                     offsetParamIndex, rowCountParamIndex, rowCount, filterDuplicates));

@@ -434,7 +434,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>2.20.1</version>
                 <configuration>
                     <!-- Default value of enableAssertions is true, but just to make clear... -->
                     <enableAssertions>true</enableAssertions>
@@ -514,7 +514,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>2.18.1</version>
+                    <version>2.20.1</version>
                 </plugin>
 
                 <plugin>

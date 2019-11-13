@@ -294,7 +294,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         }
 
         // Score
-        double score = (double) Math.abs(expressedGenes.size() - notExpressedGenes.size())
+        double score = (double) (expressedGenes.size() - notExpressedGenes.size())
                 / ((double) expressedGenes.size() + notExpressedGenes.size());
         row.append("<td>").append(String.format(Locale.US, "%.2f", score)).append("</td>");
         

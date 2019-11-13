@@ -689,7 +689,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append(this.prop.getLogoImagesRootDirectory()).append("twitter_logo.png'></a></li>");
 
         // UNIL
-        navbar.append("<li><a id='sib_brand' href='https://www.unil.ch/central/en/home.html' target='_blank' rel='noopener' " +
+        navbar.append("<li><a id='unil_brand' href='https://www.unil.ch/central/en/home.html' target='_blank' rel='noopener' " +
                 "title='Link to the UNIL Université de Lausanne'><img src='")
                 .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
                 .append("unil_logo_noir.png' alt='UNIL Université de Lausanne' /></a></li>");

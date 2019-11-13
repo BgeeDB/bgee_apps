@@ -517,7 +517,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 StringJoiner sj = new StringJoiner(", ");
                 for (Source source : e.getValue().stream()
                         .sorted(Comparator.comparing(NamedEntity::getName)).collect(Collectors.toList())) {
-                    String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank' rel='noopener noreferrer'";
+                    String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank' rel='noopener'";
                     sj.add("<a href='"
                             //XXX: We should think about how to handle this display better,
                             //because maybe this base URL contains illegal chars :/
@@ -788,7 +788,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.groupingBy(XRef::getSource,
                         LinkedHashMap::new,
                         Collectors.mapping(x -> "<a typeof='bs:Gene' property='bs:sameAs' href='"
-                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank' rel='noopener noreferrer'>"
+                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank' rel='noopener'>"
                                 + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
                             Collectors.toList())));
         StringBuilder display = new StringBuilder("<div class='info-content'>");

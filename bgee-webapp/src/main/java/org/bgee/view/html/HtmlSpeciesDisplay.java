@@ -215,13 +215,13 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                     .append(htmlEntities(species.getName())).append("</td></tr>");
         }
         table.append("<tr><th scope='row'>Species ID</th><td>")
-                .append("<a class='external_link' target='_blank' rel='noopener noreferrer' href='" +
+                .append("<a class='external_link' target='_blank' rel='noopener' href='" +
                         "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&amp;id=")
                 .append(species.getId()).append("'>")
                 .append(htmlEntities(String.valueOf(species.getId()))).append("</a></td></tr>");
         String speciesSourceURL = species.getGenomeSource().getBaseUrl() + 
                 species.getScientificName().replace(" ", "_");
-        table.append("<tr><th scope='row'>Genome source</th><td><a class='external_link' target='_blank' rel='noopener noreferrer' " +
+        table.append("<tr><th scope='row'>Genome source</th><td><a class='external_link' target='_blank' rel='noopener' " +
                 "href='").append(speciesSourceURL).append("'>")
                 .append(htmlEntities(species.getGenomeSource().getName())).append("</a></td></tr>");
         table.append("<tr><th scope='row'>Genome version</th><td>")

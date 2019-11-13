@@ -193,7 +193,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "information on how to create it are available "
                 + "<a href='https://github.com/obophenotype/developmental-stage-ontologies/tree/master/external/bgee'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener noreferrer'>here.</a>"));
+                + "target='_blank' rel='noopener'>here.</a>"));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
                 cioUrl, true, "Confidence Information Ontology (CIO)", "Confidence Information Ontology (CIO)",
@@ -210,12 +210,12 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "structures in animals. A "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/generated_files/uberon' "
                 + "title='Link to custom composite version of Uberon' "
-                + "class='external_link' target='_blank' rel='noopener noreferrer'>custom version</a> is "
+                + "class='external_link' target='_blank' rel='noopener'>custom version</a> is "
                 + "generated for Bgee. Steps explaining how and why this custom "
                 + "version is generated are described "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/uberon#anatomical-ontology-todos-before-pipeline-run'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener noreferrer'>here</a>. We also manually modified mapping to terms"
+                + "target='_blank' rel='noopener'>here</a>. We also manually modified mapping to terms"
                 + "from external ontologies."));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
@@ -225,11 +225,11 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 "Bgee uses the NCBITaxon ontology. A "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/generated_files/species' "
                 + "title = 'Link to custom ncbitaxon ontology' class='external_link' "
-                + "target='_blank' rel='noopener noreferrer'>custom version</a> is generated for Bgee. Steps "
+                + "target='_blank' rel='noopener'>custom version</a> is generated for Bgee. Steps "
                 + "explaining how and why this custom version is generated are described "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/species#details'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener noreferrer'>here.</a>"));
+                + "target='_blank' rel='noopener'>here.</a>"));
         
         
         

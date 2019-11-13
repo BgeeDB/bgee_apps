@@ -67,7 +67,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "rather than their GO functional annotations.</p>");
         this.writeln("<p>See also our "
         		+ "<a href='https://bgeedb.wordpress.com/category/topanat/' "
-                + "title='Link to the Bgee Wordpress blog' target='_blank' rel='noopener noreferrer'>blog post</a> "
+                + "title='Link to the Bgee Wordpress blog' target='_blank' rel='noopener'>blog post</a> "
         		+ "about TopAnat for more information.</p>");
         this.writeln("<p><strong>Please note that the results can be slow to compute</strong>, "
         		+ "typically from 5 to 30 minutes, depending on the amount of data to process.</p>");
@@ -119,7 +119,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         this.writeln("<h2>More information</h2>");
         this.writeln("<p>TopAnat is based on "
         		+ "<a href='http://www.bioconductor.org/packages/release/bioc/html/topGO.html' "
-                + "title='topGO package in Bioconductor' target='_blank' rel='noopener noreferrer'>topGO</a>. "
+                + "title='topGO package in Bioconductor' target='_blank' rel='noopener'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
 
         log.exit();

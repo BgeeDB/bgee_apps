@@ -290,7 +290,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "in multiple animal species, produced from multiple data types "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
                 + "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
-                " title='GTEx portal' target='_blank' rel='noopener noreferrer'>GTEx data</a>).</p>");
+                " title='GTEx portal' target='_blank' rel='noopener'>GTEx data</a>).</p>");
         this.writeln("</div>");
         
         this.writeln("<div class='col-sm-4'>");
@@ -565,7 +565,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener noreferrer'>"
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
         this.writeOneNews("2017-05-16", "Release of Bgee version 14-beta:"
@@ -589,7 +589,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
                 + "</ul>"
                 + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
-                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener noreferrer'>"
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
         this.writeOneNews("2016-07-06", "Release of Bgee version 13.2: "
@@ -612,11 +612,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</ul>");
         
         this.writeOneNews("2016-05-09", "Release of our new "
-                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener noreferrer'>"
+                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener'>"
                 + "BgeeDB R package</a>, a package for the annotation and gene expression "
                 + "data download from Bgee database into R, and TopAnat analysis (see also "
                 + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
-                + "class='external_link' target='_blank' rel='noopener noreferrer'>Bioconductor website</a>).");
+                + "class='external_link' target='_blank' rel='noopener'>Bioconductor website</a>).");
 
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");
         
@@ -696,9 +696,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
         this.writeln("View archive sites:");
         this.writeln("<a title='Archive site Bgee version 12' href='" + 
-                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener noreferrer'>version 12</a>");
+                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener'>version 12</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
-                this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener noreferrer'>version 13</a>");
+                this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>version 13</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

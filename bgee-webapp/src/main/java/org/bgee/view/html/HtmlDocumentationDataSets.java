@@ -70,7 +70,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
                 + "<p>In addition to the continuous growth of transcriptomics datasets, "
                 + "some specific projects produce large amounts of data, generated and accessible "
                 + "in a consistent manner, as, notably, "
-                + "the <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank' rel='noopener noreferrer'>" +
+                + "the <a href='https://www.gtexportal.org/home/' title='GTEx portal' target='_blank' rel='noopener'>" +
                 "GTEx project</a>. The GTEx project aims at building a comprehensive resource for tissue-specific "
                 + "gene expression in human. Here we describe how this dataset was integrated into Bgee.</p></div>");
 
@@ -94,7 +94,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
                 "consistently with all other healthy RNA-seq from human and other species. " +
                 "These data are being made available both through the website, " +
                 "and through <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' " +
-                "class='external_link' target='_blank' rel='noopener noreferrer'>BgeeDB R package</a> " +
+                "class='external_link' target='_blank' rel='noopener'>BgeeDB R package</a> " +
                 "(with sensitive information hidden).</p>");
         this.writeln("</div>");
 
@@ -122,7 +122,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("<h3>GTEx data using BgeeDB R package</h3>");
         this.writeln("<div class='doc_content'>");
         this.writeln("<p>More information and examples can be found on the <a href='https://bioconductor.org/packages/BgeeDB/' "
-                + "title='Link to BgeeDB on Bioconductor' target='_blank' rel='noopener noreferrer'>BgeeDB R package page</a>.</p>");
+                + "title='Link to BgeeDB on Bioconductor' target='_blank' rel='noopener'>BgeeDB R package page</a>.</p>");
         this.writeln("<ul>");
         this.writeln("  <li>Annotations can be retrieved from RNA-Seq human experiments/libraries " +
                 "information. Experiment ID of GTEx is 'SRP012682'.");

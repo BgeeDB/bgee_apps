@@ -411,7 +411,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         return annotation.getRawDataCondition().getAnatEntity().getName() + 
                 " [<a href='http://purl.obolibrary.org/obo/" + 
                 this.urlEncode(annotation.getRawDataCondition().getAnatEntityId().replace(':', '_'))
-                + "' target='_blank' rel='noopener noreferrer'>" +annotation.getRawDataCondition().getAnatEntityId() + "</a>]";
+                + "' target='_blank' rel='noopener'>" +annotation.getRawDataCondition().getAnatEntityId() + "</a>]";
     }
 
     private String getDevStageField(RawDataAnnotation annotation) {
@@ -420,20 +420,20 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         return log.exit(annotation.getRawDataCondition().getDevStage().getName() +
                 " [<a href='FIXME" +
                 this.urlEncode(annotation.getRawDataCondition().getDevStageId().replace(':', '_'))
-                + "' target='_blank' rel='noopener noreferrer'>" +annotation.getRawDataCondition().getDevStageId() + "</a>]");
+                + "' target='_blank' rel='noopener'>" +annotation.getRawDataCondition().getDevStageId() + "</a>]");
     }
 
     private String getSourceEvidenceLink(Source source, String id) {
         log.entry(source, id);
         return log.exit("<a href='" + source.getEvidenceUrl().replace("[evidence_id]", String.valueOf(id))
-                + "' target='_blank' rel='noopener noreferrer'>" + id + "</a>");
+                + "' target='_blank' rel='noopener'>" + id + "</a>");
     }
     
     private String getSourceExperimentField(Experiment exp) {
         log.entry(exp);
         return log.exit(exp.getDataSource().getName() + " [<a href='" + 
                 exp.getDataSource().getExperimentUrl().replace("[experiment_id]", String.valueOf(exp.getId()))
-                + "' target='_blank' rel='noopener noreferrer'>" + exp.getId() + "</a>]");
+                + "' target='_blank' rel='noopener'>" + exp.getId() + "</a>]");
     }
     
     @Override

@@ -107,11 +107,11 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.writeln("<p>Bgee is developed by the " +
                 "<a href='http://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
-                "group webpage' target='_blank' rel='noopener noreferrer'>Evolutionary Bioinformatics group</a>, part of " +
-                "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank' rel='noopener noreferrer'>" +
+                "group webpage' target='_blank' rel='noopener'>Evolutionary Bioinformatics group</a>, part of " +
+                "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank' rel='noopener'>" +
                 "SIB Swiss Institute of Bioinformatics</a>, at the "
                 + "<a href='http://www.unil.ch/central/en/home.html' title='External link to UNIL' "
-                + "target='_blank' rel='noopener noreferrer'>University of Lausanne</a>.</p>" +
+                + "target='_blank' rel='noopener'>University of Lausanne</a>.</p>" +
 
                 "<p>Our main interest is in the evolution of animal genomes in the context of " +
                 "organismal function and development. We have special interests in the early " +
@@ -131,7 +131,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
                 + " <strong>Lecture Notes in Computer Science</strong>. "
                 + "5109:124-131. [<a href='http://www.springerlink.com/content/92q428161616w8r5/' "
-                + "title='Bgee paper in LNCS' target='_blank' rel='noopener noreferrer' property='schema:url'>url</a>] "
+                + "title='Bgee paper in LNCS' target='_blank' rel='noopener' property='schema:url'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
         this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: "
                 + "<br>" + this.getAuthors(Arrays.asList("Haendel MA", "Balhoff JP", "Bastian FB",
@@ -140,7 +140,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                     "Robinson-Rechavi M", "Sereno PC", "Mungall CJ"))
                 + "<br>" + this.getTitle("Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon")
                 + "<br><em>in</em> " + this.getPeriodical("J Biomed Semantics") + " (2014): 5:21. "
-                + "[<a target='_blank' rel='noopener noreferrer' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
+                + "[<a target='_blank' rel='noopener' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
                 + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
         this.writeln("<li typeof='schema:ScholarlyArticle'>For the use of the BgeeDB R package: "
@@ -149,7 +149,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br>" + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests")
                 + "<br><em>in</em> " + this.getPeriodical("F1000Research") + " 2018, 5:2748. "
-                + "[<a target='_blank' rel='noopener noreferrer' href='https://f1000research.com/articles/5-2748/v2' "
+                + "[<a target='_blank' rel='noopener' href='https://f1000research.com/articles/5-2748/v2' "
                 + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
                 + "for gene list enrichment tests' property='schema:url'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation05.ris' property='schema:sameAs'>RIS</a></li>");
@@ -160,13 +160,13 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<p>" +
                 "   To the extent possible under law, Bgee team has waived all copyright and related " +
                 "   or neighboring rights to Bgee project. This work is published under the " +
-                "   <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener noreferrer'>" +
+                "   <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener'>" +
                 "       Creative Commons Zero license (CC0)</a> from Switzerland. " +
                 "   Although CC0 doesn’t legally require users of the data to cite the source, " +
                 "   if you intend to use data from Bgee, it would be nice to cite us." +
                 "</p>" +
                 "<p>" +
-                "    <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener noreferrer'>" +
+                "    <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener'>" +
                 "        <img src='" + this.prop.getBgeeRootDirectory() +
                             this.prop.getImagesRootDirectory() + "cc-zero-large.png' alt='CC0' />" +
                 "    </a>" +
@@ -185,7 +185,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.writeln("<p>Our pipeline source code, as well as our curation and ontology resources "
                 + "can be browsed on <a title='External link to BgeeDB on GitHub' "
-                + "href='" + BGEE_GITHUB_URL + "' target='_blank' rel='noopener noreferrer'>our GitHub page</a>.</p>");
+                + "href='" + BGEE_GITHUB_URL + "' target='_blank' rel='noopener'>our GitHub page</a>.</p>");
 
         this.writeln("<p>More information about data analyses and database content is available " +
                 "in the <a href='" + urlDocumentationGenerator.getRequestURL() +

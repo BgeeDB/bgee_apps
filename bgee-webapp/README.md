@@ -139,7 +139,7 @@ Example:
 ```java
 //in a HTML view
 this.writeln("<h1>Bgee: Gene Expression Evolution</h1>");
-this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' rel='noopener noreferrer' "
+this.writeln("<a href='http://www.isb-sib.ch/' target='_blank' rel='noopener' "
     + "title='Link to the SIB Swiss Institute of Bioinformatics'>SIB</a>");
 
 //in a JSON view

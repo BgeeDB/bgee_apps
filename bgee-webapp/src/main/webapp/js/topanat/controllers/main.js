@@ -575,7 +575,7 @@
                 vm.gridApi.grid.registerRowsProcessor(vm.resultFilter, 200);
             },
             columnDefs: [
-                {field: 'anatEntityId', width: "14%", cellTemplate: '<div style="text-align:center;  position: relative;  top: 50%;  -webkit-transform: translateY(-50%);  -ms-transform: translateY(-50%);  transform: translateY(-50%);"><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank" rel="noopener noreferrer">{{row.entity[col.field]}}</a></div>' },
+                {field: 'anatEntityId', width: "14%", cellTemplate: '<div style="text-align:center;  position: relative;  top: 50%;  -webkit-transform: translateY(-50%);  -ms-transform: translateY(-50%);  transform: translateY(-50%);"><a href="http://purl.obolibrary.org/obo/{{row.entity[col.field].replace(\':\',\'_\')}}" target="_blank" rel="noopener">{{row.entity[col.field]}}</a></div>' },
                 {field: 'anatEntityName', width: "34%" },
                 {field: 'annotated', width: "8%", type: 'number'},
                 {field: 'significant', width: "8%", type: 'number'},
@@ -1031,7 +1031,7 @@
                     if (data.data.code == 429) {
                         vm.message = data.data.message 
                         + " Please note that we also propose a R package for performing programmatic TopAnat analyses, "
-                        + "see <a href='https://www.bioconductor.org/packages/BgeeDB/' target='_blank' rel='noopener noreferrer'>"
+                        + "see <a href='https://www.bioconductor.org/packages/BgeeDB/' target='_blank' rel='noopener'>"
                         + "BgeeDB Bioconductor package</a>";
                     	cancel = 1;
                     } else if (!vm.message.match(matcherJobStopped)) {

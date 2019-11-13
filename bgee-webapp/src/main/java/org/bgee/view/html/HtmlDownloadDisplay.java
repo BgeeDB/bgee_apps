@@ -320,7 +320,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         }
         intro.append(" It is possible to download these data directly into "
                     + "R using our <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
-                    + "class='external_link' target='_blank' rel='noopener noreferrer'>R package</a>.");
+                    + "class='external_link' target='_blank' rel='noopener'>R package</a>.");
 
         intro.append(" See also ");
         if (pageType == DownloadPageType.EXPR_CALLS) {
@@ -337,7 +337,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                     .append("' title='See Bgee gene expression calls'>gene expression calls</a>");
         }
         intro.append(". All data are available under the " +
-                "<a rel='license noopener noreferrer' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
+                "<a rel='license noopener' href='" + LICENCE_CC0_URL + "' target='_blank'>" +
                 "    Creative Commons Zero license (CC0)</a>.");
         intro.append("</p>");
         // FIXME enable link to statistics TSV file

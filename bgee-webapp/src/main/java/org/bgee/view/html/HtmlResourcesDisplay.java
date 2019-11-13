@@ -167,9 +167,10 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         this.startDisplay("Ontology resources");
 
         String devStageDesc = "A collection of species-specific developmental stage ontologies.";
-        String homDesc = "Ontology providing annotations of similarity between anatomical structure";
+        String homDesc = "Ontology describing homology-related concepts, notably used "
+                + "in our annotations of similarity between anatomical structures.";
         String cioDesc = "Ontology providing confidence information about annotation assertions "
-                + "in a more systematic manner";
+                + "in a systematic manner";
         String devStageUrl = "https://github.com/obophenotype/developmental-stage-ontologies";
         String cioUrl = BGEE_GITHUB_URL + "/confidence-information-ontology";
         String homUrl = BGEE_GITHUB_URL + "/homology-ontology";
@@ -193,7 +194,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "information on how to create it are available "
                 + "<a href='https://github.com/obophenotype/developmental-stage-ontologies/tree/master/external/bgee'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener'>here.</a>"));
+                + "target='_blank' rel='noopener'>on GitHub.</a>"));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
                 cioUrl, true, "Confidence Information Ontology (CIO)", "Confidence Information Ontology (CIO)",
@@ -215,7 +216,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "version is generated are described "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/uberon#anatomical-ontology-todos-before-pipeline-run'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener'>here</a>. We also manually modified mapping to terms"
+                + "target='_blank' rel='noopener'>on GitHub</a>. We also manually modified mapping to terms"
                 + "from external ontologies."));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
@@ -229,7 +230,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "explaining how and why this custom version is generated are described "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/species#details'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener'>here.</a>"));
+                + "target='_blank' rel='noopener'>on GitHub.</a>"));
         
         
         

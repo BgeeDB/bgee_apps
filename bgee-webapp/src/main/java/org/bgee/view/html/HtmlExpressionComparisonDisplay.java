@@ -121,7 +121,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("<div id='bgee_introduction'>");
 
-        this.writeln("<p>Compare expression from several genes.</p>");
+        this.writeln("<p>Compare expression of several genes. If genes belong to several species,"
+                + "comparisons will be performed in homologous organs. Please enter one"
+                + "Ensembl ID per line.</p>");
 
         this.writeln("</div>");
 

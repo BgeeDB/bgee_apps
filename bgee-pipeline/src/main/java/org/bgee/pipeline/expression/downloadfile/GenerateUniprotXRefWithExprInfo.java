@@ -199,10 +199,11 @@ public class GenerateUniprotXRefWithExprInfo {
             
             // Create String representation of the XRef with expression information
             StringBuilder sb = new StringBuilder(" Expressed in ")
+                    .append(callsByAnatEntity.keySet().iterator().next().getName())
+                    .append(" and ")
                     .append(callsByAnatEntity.size())
-                    .append(" organ").append(callsByAnatEntity.size() > 1? "s": "")
-                    .append(", highest expression level in ")
-                    .append(callsByAnatEntity.keySet().iterator().next().getName());
+                    .append(" other tissue").append(callsByAnatEntity.size() > 1? "s": "");
+                    
                 return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, sb.toString());
 
         }).filter(e -> e.getValue() != null)

@@ -1422,7 +1422,12 @@ implements GlobalExpressionCallDAO {
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
                     && (experimentCounts.isEmpty() || experimentCounts.stream().allMatch(c -> c.getCount() == 0))
                     && (propagatedCount == null || propagatedCount == 0)
-                    && rank == null && rankNorm == null && weightForMeanRank == null)) {
+                    && rank == null && rankNorm == null
+                    //Bug fix: for EST and in situ data, weightForMeanRank is retrieved from globalCond table,
+                    //not globalExpression table. It means we can have a non-null value for weightForMeanRank
+                    //even if there is no EST or in situ data for this call.
+                    //&& weightForMeanRank == null
+                    )) {
                 // If all variables are null/empty/0, this means that there is no data for the current data type
                 return log.exit(null);
             }

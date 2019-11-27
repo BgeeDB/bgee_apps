@@ -65,16 +65,11 @@ nav img {
 	margin-top: -7px;
 }
 
-#unil_brand {
-    height: 50px;
-    padding: 15px 15px;
-}
-#sib_brand {
+#sib_brand, #unil_brand {
 	height: 50px;
 	padding: 15px 15px;
 }
-
-#sib_brand img {
+#sib_brand img, #unil_brand img {
 	height: 35px;
 	margin: -7px 0 0 5px;
 }

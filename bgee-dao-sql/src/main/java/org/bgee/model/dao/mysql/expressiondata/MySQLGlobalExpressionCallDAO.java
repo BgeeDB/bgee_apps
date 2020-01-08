@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,9 +30,11 @@ import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter.Qualifier;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.DataQuality;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -574,12 +579,14 @@ implements GlobalExpressionCallDAO {
                                                 e.getValue()? " OR ": " AND ", "(", ")"));
                             }).collect(Collectors.joining(" AND ", "(", ")")));
                 }
-                
-                if (!dataFilter.getExperimentCountFilters().isEmpty()) {
+
+                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
+                if (!daoExperimentCountFilters.isEmpty()) {
                     if (previousClause) {
                         sb.append(" AND ");
                     }
-                    sb.append(dataFilter.getExperimentCountFilters().stream()
+                    previousClause = true;
+                    sb.append(daoExperimentCountFilters.stream()
                         .map(countOrFilterCollection ->
                             countOrFilterCollection.stream()
                                 .map(countFilter -> {
@@ -618,6 +625,20 @@ implements GlobalExpressionCallDAO {
                 return sb.toString();
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
+    }
+    private static List<List<DAOExperimentCountFilter>> getDAOExperimentCountFilters(CallDataDAOFilter dataFilter) {
+        log.entry(dataFilter);
+        List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = dataFilter.getExperimentCountFilters();
+        if (dataFilter.getExperimentCountFilters().isEmpty() &&
+                !dataFilter.getDataTypes().isEmpty() &&
+                !dataFilter.getDataTypes().containsAll(Arrays.asList(DAODataType.values()))) {
+            daoExperimentCountFilters = new ArrayList<>();
+            daoExperimentCountFilters.add(Arrays.stream(CallType.values())
+            .flatMap(ct -> Arrays.stream(DataQuality.values())
+                    .map(dq -> new DAOExperimentCountFilter(ct, dq, DAOPropagationState.ALL, Qualifier.GREATER_THAN, 0)))
+            .collect(Collectors.toList()));
+        }
+        return log.exit(daoExperimentCountFilters);
     }
 
     private static String getExpCountFilterFieldName(DAODataType dataType,
@@ -763,7 +784,8 @@ implements GlobalExpressionCallDAO {
                     }
                 }
 
-                for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
+                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
+                for (List<DAOExperimentCountFilter> countOrFilters: daoExperimentCountFilters) {
                     for (DAOExperimentCountFilter countFilter : countOrFilters) {
                         stmt.setInt(offsetParamIndex, countFilter.getCount());
                         offsetParamIndex++;

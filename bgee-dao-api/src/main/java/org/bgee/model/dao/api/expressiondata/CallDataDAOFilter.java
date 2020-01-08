@@ -1,10 +1,11 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class CallDataDAOFilter {
     /**
      * @see #getExperimentCountFilters()
      */
-    private final Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters;
+    private final List<List<DAOExperimentCountFilter>> daoExperimentCountFilters;
     /**
      * @see #getDataTypes()
      */
@@ -45,10 +46,10 @@ public class CallDataDAOFilter {
      * @param daoExperimentCountFilters A {@code Collection} of {@code Set}s of
      *                                  {@code DAOExperimentCountFilter}s.
      *                                  The filters in an inner {@code Set} are seen as "OR" conditions.
-     *                                  The {@code Set}s in the outer {@code Set} are seen as
-     *                                  "AND" conditions. None of the {@code Set}s (inner or outer)
+     *                                  The {@code Set}s in the outer {@code Collection} are seen as
+     *                                  "AND" conditions. None of the {@code Collection}s (inner or outer)
      *                                  can be {@code null}, empty, or to contain {@code null} elements.
-     * @param dataTypes                 A {@code Set} of {@code DAODataType}s that are the data types
+     * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
      *                                  which attributes will be sum up to match the provided
      *                                  {@code DAOExperimentCountFilter}s. If {@code null} or empty,
      *                                  then all data types are used.
@@ -74,25 +75,27 @@ public class CallDataDAOFilter {
         this.dataTypes = Collections.unmodifiableSet(
                 dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes));
-        this.daoExperimentCountFilters = Collections.unmodifiableSet(
+        this.daoExperimentCountFilters = Collections.unmodifiableList(
                 daoExperimentCountFilters == null || daoExperimentCountFilters.isEmpty()?
-                new HashSet<>():
-                daoExperimentCountFilters.stream().map(e -> Collections.unmodifiableSet(new HashSet<>(e)))
-                .collect(Collectors.toSet()));
+                new ArrayList<>():
+                daoExperimentCountFilters.stream().map(e -> Collections.unmodifiableList(new ArrayList<>(e)))
+                .collect(Collectors.toList()));
         this.callObservedData = callObservedData;
         this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
             new LinkedHashMap<>(observedDataFilter);
     }
 
     /**
-     * @return      A {@code Set} of {@code Set}s of {@code DAOExperimentCountFilter}s to parameterize
-     *              global expression queries. The filters in an inner {@code Set} are seen as
-     *              "OR" conditions. The {@code Set}s in the outer {@code Set} are seen as
+     * @return      A {@code List} of {@code List}s of {@code DAOExperimentCountFilter}s to parameterize
+     *              global expression queries. The filters in an inner {@code List} are seen as
+     *              "OR" conditions. The {@code List}s in the outer {@code List} are seen as
      *              "AND" conditions. We use this complicated mechanism because it is necessary to use
      *              "AND" and "OR" conditions to retrieve noExpression calls.
+     *              Provided as {@code List}s for convenience, to consistently set parameters
+     *              in queries.
      * @see #getDataTypes()
      */
-    public Set<Set<DAOExperimentCountFilter>> getExperimentCountFilters() {
+    public List<List<DAOExperimentCountFilter>> getExperimentCountFilters() {
         return daoExperimentCountFilters;
     }
     /**

@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
@@ -212,7 +213,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 new LinkedHashMap<String, String>() {
                     {
                         put("BGEE_GENE_ID", "bgeeGeneId");
-                        put("CONDITION_ID", "globalConditionId");
+                        put("GLOBAL_CONDITION_ID", "globalConditionId");
                         put("SUMMARY_QUALITY", "summaryQuality");
                         put("MEAN_RANK", "rank");
                         put("MEAN_SCORE", "score");
@@ -222,7 +223,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 }, new LinkedHashMap<String, Integer>() {
                     {
                         put("BGEE_GENE_ID", Types.INTEGER);
-                        put("CONDITION_ID", Types.INTEGER);
+                        put("GLOBAL_CONDITION_ID", Types.INTEGER);
                         put("SUMMARY_QUALITY", Types.VARCHAR);
                         put("MEAN_RANK", Types.DECIMAL);
                         put("MEAN_SCORE", Types.DECIMAL);
@@ -232,7 +233,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 }, new LinkedHashMap<String, Boolean>() {
                     {
                         put("BGEE_GENE_ID", false);
-                        put("CONDITION_ID", false);
+                        put("GLOBAL_CONDITION_ID", false);
                         put("SUMMARY_QUALITY", false);
                         put("MEAN_RANK", false);
                         put("MEAN_SCORE", false);
@@ -281,7 +282,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     // column to add in Easy Bgee for which no Enum exist in the Bgee API (because
     // information is not stored in the Bgee RDB)
     private static String GLOBAL_EXPRESSION_SUMMARY_QUALITY = "SUMMARY_QUALITY";
-    private static String GLOBAL_EXPRESSION_MEAN_SCORE = "SCORE";
+    private static String GLOBAL_EXPRESSION_MEAN_SCORE = "MEAN_SCORE";
     private static String GLOBAL_EXPRESSION_ORIGIN = "ORIGIN";
     private static String GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE = "CALL_TYPE";
     
@@ -807,10 +808,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     while ((customerMap = mapReader.read(header, processors)) != null) {
                         int columnNumber = 1;
                         for (String columnId : tsvFile.getColumnName().keySet()) {
-
                             Object columnValue = customerMap.get(columnId);
                             if (columnValue instanceof Integer) {
                                 stmt.setInt(columnNumber, Integer.valueOf(String.valueOf(columnValue)));
+                            } else if (columnValue instanceof Number) {
+                                stmt.setBigDecimal(columnNumber, String.valueOf(columnValue));
                             } else if (columnValue instanceof String) {
                                 stmt.setString(columnNumber, String.valueOf(columnValue));
                             } else if (columnValue == null) {
@@ -830,7 +832,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                                 }
                             } else {
                                 throw log.throwing(new IllegalArgumentException(
-                                        "Each column should be an Integer, a String, or null"));
+                                        "Column "+columnValue+" not taken into account. Each column should be"
+                                                + " an instance of Integer, BigDecimal, String, or null."));
                             }
                             columnNumber++;
                         }

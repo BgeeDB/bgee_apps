@@ -107,7 +107,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</p>");
 
         this.writeln("<p>For example, to retrieve all anatomic entities in human where " +
-                "the APOC1 gene is expressed, the query is:");
+                "the APOC1 gene is expressed, the query is:</p>");
         this.writeln("<pre><code>" +
                 "PREFIX orth: &lt;http://purl.org/net/orth#&gt;<br>" +
                 "PREFIX up: &lt;http://purl.uniprot.org/core/&gt;<br>" +
@@ -125,7 +125,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "}" +
                 "</code></pre>");
 
-        this.writeln("It's possible to download result of this query in <a href='" + SPARQL_QUERY_JSON_URL + "' "
+        this.writeln("<p>It's possible to download result of this query in <a href='" + SPARQL_QUERY_JSON_URL + "' "
                 + "title='SPARQL example query' class='external_link' target='_blank' rel='noopener'>JSON format</a> "
                 + "or in <a href='" + SPARQL_QUERY_XML_URL + "' title='SPARQL example query' " 
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");

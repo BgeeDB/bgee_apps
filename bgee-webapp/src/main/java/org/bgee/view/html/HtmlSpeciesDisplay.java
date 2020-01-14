@@ -246,7 +246,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "corresponds to a unique combination of a gene, an anatomical entity, " +
                 "and a life stage, with reported presence or absence of expression. " +
                 "More information in our <a href='").append(urlDoc.getRequestURL())
-                .append("'>documentation</a><p>");
+                .append("'>documentation</a></p>");
         
         text.append("<h3>Anatomical entities only</h3>");
 

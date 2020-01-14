@@ -226,11 +226,11 @@ http://bootsnipp.com/snippets/featured/large-dropdown-menu
 	margin-top: 23px;
 	width: 80px;
 	height: 30px;
-	transform: rotate(7deg);
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-moz-transform: rotate(90deg); /* Firefox */
 	-webkit-transform: rotate(90deg); /* Safari and Chrome */
 	-o-transform: rotate(90deg); /* Opera */
+	transform: rotate(7deg);
 }
 
 .rotate input:hover {

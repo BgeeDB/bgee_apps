@@ -81,8 +81,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the " +
                 "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' " +
-                "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
-                BGEE_LITE_NAME + " is a lighter version of Bgee database, " +
+                "title='Link to Bgee lite documentation'>'" + BGEE_LITE_NAME + "' database</a>. '" +
+                BGEE_LITE_NAME + "' is a lighter version of Bgee database, " +
                 "that contains most useful, and explicit information.</p>");
 
         RequestParameters urlCollabs = this.getNewRequestParameters();
@@ -135,9 +135,9 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "approach allowing to create a virtual RDF serialisation without exporting data "
                 + "from the original relational database. It queries data stored in the "
                 + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
-                + "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + "</a> relational database.");
-        this.writeln("The virtual RDF serialisation of the " + BGEE_LITE_NAME
-                + " is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
+                + "title='Link to Bgee lite documentation'>'" + BGEE_LITE_NAME + "'</a> relational database.");
+        this.writeln("The virtual RDF serialisation of the '" + BGEE_LITE_NAME
+                + "' is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
                 + "title ='Link to GenEx specification' target='_blank' rel='noopener'>GenEx semantic model "
                 + "specification</a> and the OBDA mappings defined in <a href="
                 + "'https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"

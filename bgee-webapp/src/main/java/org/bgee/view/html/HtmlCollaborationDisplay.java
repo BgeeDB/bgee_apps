@@ -66,26 +66,26 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 "It is supported by <a href='http://www.nfp75.ch/en' target='_blank' rel='noopener' " +
                 "title='NFP75 Big Data website'>NFP75 'Big Data'</a>.<p>");
 
-        this.writeln("<p>For this project, we created a sub-database of Bgee called " + BGEE_LITE_NAME +
-                ". The MySQL dump is available on <a target='_blank' rel='noopener' title='Download the dump' href='" +
+        this.writeln("<p>For this project, we created a sub-database of Bgee called '" + BGEE_LITE_NAME +
+                "'. The MySQL dump is available on <a target='_blank' rel='noopener' title='Download the dump' href='" +
                 this.prop.getFTPRootDirectory() +"sql_lite_dump.tar.gz'>Bgee FTP</a>. " +
-                "You can see the description of " + BGEE_LITE_NAME + " in <a title='" + BGEE_LITE_NAME + 
+                "You can see the description of '" + BGEE_LITE_NAME + "' in <a title='" + BGEE_LITE_NAME +
                 " description' href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation" +
                 "#information-about-the-bgee-lite-database' target='_blank' rel='noopener'>" +
                 "Bgee pipeline documentation</a><p>");
-        
-        this.writeln("<p>BioSODA uses the " + BGEE_LITE_NAME + " relational database to expose a " +
+
+        this.writeln("<p>BioSODA uses the '" + BGEE_LITE_NAME + "' relational database to expose a " +
                 "Bgee SPARQL endpoint reachable through the following URL: " +
                 "<span class='copyable-url'>http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</span>. " +
                 "In the context of this project, the <a href='http://biosoda.expasy.org' target='_blank' rel='noopener'>" +
-                "BioQuery web application</a> provides a user-friendly interface to query " + 
-                BGEE_LITE_NAME + " database based on the SPARQL query language.<p>");
-        
-        this.writeln("<p>The SPARQL endpoint and " + BGEE_LITE_NAME + " are available and free " +
+                "BioQuery web application</a> provides a user-friendly interface to query '" +
+                BGEE_LITE_NAME + "' database based on the SPARQL query language.<p>");
+
+        this.writeln("<p>The SPARQL endpoint and '" + BGEE_LITE_NAME + "' are available and free " +
                 "to use for other projects or applications.<p>");
-        
+
         this.writeln("<h2>OMA</h2>");
-        
+
         this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank' rel='noopener'>OMA " +
                 "(Orthologous MAtrix) project</a> is a method and database " +
                 "for the inference of orthologs among complete genomes.<p>");

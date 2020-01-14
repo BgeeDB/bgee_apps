@@ -139,7 +139,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * A {@code String} that is the name of the 'Bgee Lite' database.
      */
-    protected final static String BGEE_LITE_NAME = "'Bgee Lite'";
+    protected final static String BGEE_LITE_NAME = "Bgee Lite";
 
     /**
      * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 

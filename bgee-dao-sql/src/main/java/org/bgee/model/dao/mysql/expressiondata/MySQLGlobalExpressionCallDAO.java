@@ -330,7 +330,11 @@ implements GlobalExpressionCallDAO {
                     }
                     return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                 })
-                .collect(Collectors.joining(" + ", "((", ")"))
+                //add CAST of meanRank as a decimal to avoid floating point calculation by MySQL 
+                //that was generating ranks lower than 1. The mean rank is returned with a decimal(9,2) 
+                //because it is the same type than the one used to save the rank per datatype in the 
+                //database (no precision problem).
+                .collect(Collectors.joining(" + ", "(CAST((", ")"))
                 //generate, e.g.:
                 // / (
                 //IF(globalExpression.estMaxRank IS NULL, 0, globalExpression.estMaxRank)
@@ -340,7 +344,7 @@ implements GlobalExpressionCallDAO {
                 .map(dataType -> {
                     String weightSql = dataTypeToWeightSql.get(dataType);
                     return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
-                .collect(Collectors.joining(" + ", "/ (", ")))")));
+                .collect(Collectors.joining(" + ", "/ (", ")as decimal(9,2))))")));
     }
 
     private static String generateTableReferences(final String globalExprTableName,

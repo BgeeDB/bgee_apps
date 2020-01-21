@@ -270,6 +270,10 @@ public class CallService extends CommonService {
      * A {@code BigDecimal} representing the minimum value that can take an expression score.
      */
     public final static BigDecimal EXPRESSION_SCORE_MIN_VALUE = new BigDecimal("0.01");
+    /**
+     * A {@code BigDecimal} representing the maximum value that can take an expression score.
+     */
+    public final static BigDecimal EXPRESSION_SCORE_MAX_VALUE = new BigDecimal("100");
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
@@ -1836,6 +1840,12 @@ public class CallService extends CommonService {
         //We want expression score to be at least greater than EXPRESSION_SCORE_MIN_VALUE
         if (expressionScore.compareTo(EXPRESSION_SCORE_MIN_VALUE) < 0) {
             expressionScore = EXPRESSION_SCORE_MIN_VALUE;
+        }
+        if (expressionScore.compareTo(EXPRESSION_SCORE_MAX_VALUE) > 0) {
+            log.warn("Expression score should always be lower or equals to " + EXPRESSION_SCORE_MAX_VALUE
+                    + ". The value was " + expressionScore + "and was then manually updated to "
+                    + EXPRESSION_SCORE_MAX_VALUE + ".");
+            expressionScore = EXPRESSION_SCORE_MAX_VALUE;
         }
         return log.exit(expressionScore);
     }

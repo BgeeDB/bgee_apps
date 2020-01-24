@@ -72,7 +72,7 @@ public class GenerateOncoMXFile {
     /**
      * A {@code Set} of {DataType}s used to build the data for OncoMX.
      */
-    private final static Set<DataType> DATA_TYPES = EnumSet.of(DataType.RNA_SEQ);
+    private final static Set<DataType> DATA_TYPES = EnumSet.of(DataType.RNA_SEQ, DataType.AFFYMETRIX);
 
     /**
      * Launches the generation of the files used by OncoMX.

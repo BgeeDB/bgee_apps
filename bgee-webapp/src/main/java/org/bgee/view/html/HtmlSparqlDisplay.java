@@ -70,7 +70,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
     public void displaySparql() {
         log.entry();
 
-        String bgeeLiteDocUrl = DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/dblite_creation";
+        String bgeeLiteDocUrl = MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/easybgee_creation";
         
         this.startDisplay("Bgee SPARQL endpoint", "WebPage");
 
@@ -79,11 +79,11 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         this.writeln("<h1 property='schema:name'>Bgee SPARQL endpoint</h1>");
 
-        this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the " +
-                "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' " +
-                "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + " database</a>. " +
-                BGEE_LITE_NAME + " is a lighter version of Bgee database, " +
-                "that contains most useful, and explicit information.</p>");
+        this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the "
+                + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
+                + "title='Link to " + EASY_BGEE_NAME + " documentation'>" + EASY_BGEE_NAME + " database</a>. "
+                + EASY_BGEE_NAME + " is a lighter version of Bgee database, that contains most useful, "
+                + "and explicit information.</p>");
 
         RequestParameters urlCollabs = this.getNewRequestParameters();
         urlCollabs.setPage(RequestParameters.PAGE_COLLABORATIONS);
@@ -135,8 +135,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "approach allowing to create a virtual RDF serialisation without exporting data "
                 + "from the original relational database. It queries data stored in the "
                 + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
-                + "title='Link to Bgee lite documentation'>" + BGEE_LITE_NAME + "</a> relational database.");
-        this.writeln("The virtual RDF serialisation of the " + BGEE_LITE_NAME
+                + "title='Link to Bgee lite documentation'>" + EASY_BGEE_NAME + "</a> relational database.");
+        this.writeln("The virtual RDF serialisation of the " + EASY_BGEE_NAME
                 + " is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
                 + "title ='Link to GenEx specification' target='_blank' rel='noopener'>GenEx semantic model "
                 + "specification</a> and the OBDA mappings defined in <a href="

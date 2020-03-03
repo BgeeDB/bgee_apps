@@ -235,10 +235,10 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //                        + "all the data used to generate the information displayed on this website."));
 
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                this.prop.getFTPRootDirectory() + "sql_lite_dump.tar.gz", false,
-                "Download the dump of MySQL Bgee lite database", "Bgee lite dump",
+                this.prop.getFTPRootDirectory() + "easybgee_dump.tar.gz", false,
+                "Download the dump of MySQL " + EASY_BGEE_NAME + " database", EASY_BGEE_NAME + " dump",
                 this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
-                + "mysql_logo.png", "Download the dump of the MySQL Bgee lite database, that "
+                + "mysql_logo.png", "Download the dump of the MySQL " + EASY_BGEE_NAME + " database, that "
                         + "contains most useful, and explicit information. Does not contain raw data."));
         
         this.writeln("</div>"); // close feature_list

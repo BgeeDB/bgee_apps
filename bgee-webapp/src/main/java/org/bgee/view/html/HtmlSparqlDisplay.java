@@ -90,7 +90,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         
         this.writeln("<h2>Web interface to query the Bgee SPARQL endpoint</h2>");
         this.writeln("<p>Bgee SPARQL queries can be run using the web interface "
-                + "<a href='http://biosoda.expasy.org:8080/build_biosodafrontend/' " 
+                + "<a href='https://bgee.org/sparql' " 
                 + "title='Link to Bio-Query' class='external_link' target='_blank' rel='noopener'>Bio-Query</a> "
                 + "search created for the <a href='"+urlCollabs.getRequestURL()+"' " 
                 + "title='Bgee collaborations'>BioSODA project</a>. " 
@@ -115,9 +115,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "PREFIX obo: &lt;http://purl.obolibrary.org/obo/&gt;<br>" +
                 "SELECT DISTINCT ?anatEntity ?anatName {<br>" +
                 "    ?seq a orth:Gene .<br>" +
-                "    ?expr genex:hasSequenceUnit ?seq .<br>" +
                 "    ?seq rdfs:label ?geneName .<br>" +
-                "    ?expr genex:hasExpressionCondition ?cond .<br>" +
+                "    ?seq genex:isExpressedIn ?cond .<br>" +
                 "    ?cond genex:hasAnatomicalEntity ?anatEntity .<br>" +
                 "    ?anatEntity rdfs:label ?anatName .<br>" +
                 "    ?cond obo:RO_0002162 &lt;http://purl.uniprot.org/taxonomy/10116&gt; . <br>" +
@@ -130,22 +129,22 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "or in <a href='" + SPARQL_QUERY_XML_URL + "' title='SPARQL example query' " 
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");
 
-        this.writeln("<h2>Virtual RDF serialisation and semantic models</h2>");
-        this.writeln("<p>The Bgee SPARQL endpoint was created using an Ontology Based Data Access (OBDA) "
-                + "approach allowing to create a virtual RDF serialisation without exporting data "
-                + "from the original relational database. It queries data stored in the "
-                + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
-                + "title='Link to Bgee lite documentation'>'" + BGEE_LITE_NAME + "'</a> relational database.");
-        this.writeln("The virtual RDF serialisation of the '" + BGEE_LITE_NAME
-                + "' is based on the <a href='https://biosoda.github.io/genex/' class='external_link' "
-                + "title ='Link to GenEx specification' target='_blank' rel='noopener'>GenEx semantic model "
-                + "specification</a> and the OBDA mappings defined in <a href="
-                + "'https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"
-                + "title='Link to OBDA mapping' target='_blank' rel='noopener' class='external_link'>"
-                + "OBDA mappings</a>. The mappings are defined with the "
+        this.writeln("<h2>RDF serialisation and semantic models</h2>");
+        this.writeln("<p>The Bgee RDF data were created using an Ontology Based Data Access (OBDA) "
+                + "approach so-called Ontop. The RDF serialisation of the ‘" + EASY_BGEE_NAME  
+                + "’ database is based on the <a href='https://biosoda.github.io/genex/' "
+                + "class='external_link' title ='Link to GenEx specification' target='_blank' "
+                + "rel='noopener'> GenEx semantic model specification</a> and the OBDA mappings "
+                + "defined in <a href='https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"
+                + "title='Link to OBDA mapping' target='_blank' rel='noopener' "
+                + "class='external_link'>OBDA mappings</a>. The mappings are defined using the "
                 + "<a href='https://github.com/ontop/ontop/wiki/ontopOBDAModel' "
-                + "title='Link to Ontop mapping language' target='_blank' rel='noopener' class='external_link'>"
-                + "Ontop mapping language</a>.</p>");
+                + "title='Link to Ontop mapping language' target='_blank' rel='noopener' "
+                + "class='external_link'>Ontop mapping language</a>. We also inferred all implicit "
+                + "information based on <a href='https://www.w3.org/TR/owl2-profiles/#OWL_2_QL' "
+                + "title='Link to OWL2 QL profile' target='_blank' rel='noopener' "
+                + "class='external_link'>OWL 2 Web Ontology Language Profile QL</a>  reasoning "
+                + "over GenEx.</p>");
         this.writeln("<p>To cross-reference other resources, this SPARQL endpoint contains annotation "
                 + "property assertions defined by a first draft of the life-sciences "
                 + "cross-reference (LSCR) ontology that is available to download at the "

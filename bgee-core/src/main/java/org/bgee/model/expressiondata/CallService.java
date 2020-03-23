@@ -691,7 +691,7 @@ public class CallService extends CommonService {
                     "This method is for comparing the expression of genes in a single species"));
         }
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.
@@ -716,15 +716,15 @@ public class CallService extends CommonService {
                             c -> c.getSummaryCallType(),
                             c -> new HashSet<>(Arrays.asList(c.getGene())),
                             (v1, v2) -> {v1.addAll(v2); return v1;}));
-            //Store rank info for each Gene with data
-            Map<Gene, ExpressionLevelInfo> geneToRank = list.stream()
+            //Store expression score info for each Gene with data
+            Map<Gene, ExpressionLevelInfo> geneToExprScore = list.stream()
             //Collectors.toMap does not accept null values,
             //see https://stackoverflow.com/a/24634007/1768736
             .collect(HashMap::new, (m, v) -> m.put(v.getGene(), v.getExpressionLevelInfo()), Map::putAll);
             Set<Gene> genesWithNoData = new HashSet<>(genes);
-            genesWithNoData.removeAll(geneToRank.keySet());
+            genesWithNoData.removeAll(geneToExprScore.keySet());
             return new AbstractMap.SimpleEntry<>(list.iterator().next().getCondition(),
-                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToRank));
+                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToExprScore));
         })
         //And we create the final Map condToCounts
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));

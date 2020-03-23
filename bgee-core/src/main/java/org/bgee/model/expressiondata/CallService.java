@@ -1826,9 +1826,14 @@ public class CallService extends CommonService {
 
     private static BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
         log.entry(rank, maxRank);
-        if (rank == null || maxRank == null ||
-                rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
-            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be null or less than or equal to 0"));
+        if (maxRank == null) {
+            throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
+        }
+        if (rank == null) {
+            return log.exit(null);
+        }
+        if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
+            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
         }
         if (rank.compareTo(maxRank) > 0) {
             throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank

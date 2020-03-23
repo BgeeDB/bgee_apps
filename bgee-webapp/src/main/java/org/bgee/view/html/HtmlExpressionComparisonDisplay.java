@@ -226,7 +226,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<h2>Results</h2>");
 
-        sb.append("<p>Results are ordered by 'Score', 'Genes with presence of expression' then 'Minimum rank'. " +
+        sb.append("<p>Results are ordered by 'Conservation score', then 'Maximum expression score'. " +
                 "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
@@ -234,8 +234,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("        <thead>");
         sb.append("            <tr>");
         sb.append("                <th>Anatomical entities</th>");
-        sb.append("                <th>Score</th>");
-        sb.append("                <th>Minimum rank</th>");
+        sb.append("                <th>Conservation score</th>");
+        sb.append("                <th>Max expression score</th>");
         sb.append("                <th>Genes with presence of expression</th>");
         sb.append("                <th>Genes with absence of expression</th>");
         sb.append("                <th>Genes with no data</th>");
@@ -298,13 +298,13 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 / ((double) expressedGenes.size() + notExpressedGenes.size());
         row.append("<td>").append(String.format(Locale.US, "%.2f", score)).append("</td>");
         
-        // Min rank 
-        Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToMinRank().values().stream()
+        // Max expression score
+        Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToExprLevelInfo().values().stream()
                 .filter(Objects::nonNull)
-                .min(Comparator.comparing(ExpressionLevelInfo::getRank,
+                .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
                         Comparator.nullsLast(BigDecimal::compareTo)));
         
-        row.append("<td>").append(collect.isPresent()? collect.get().getFormattedRank(): "").append("</td>");
+        row.append("<td>").append(collect.isPresent()? collect.get().getFormattedExpressionScore(): "").append("</td>");
 
         // Counts
         row.append(this.getGeneCountCell(expressedGenes));

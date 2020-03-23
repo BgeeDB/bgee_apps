@@ -35,7 +35,7 @@ $( document ).ready( function(){
         "<'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-4'B><'col-sm-8'p>>";
 
-    var order = [[ 1, 'desc'], [ 3, 'desc'], [ 2, 'asc']]; //  score desc, expressed genes desc, rank asc
+    var order = [[ 1, 'desc'], [ 2, 'desc']]; //  conservation score desc, max expression score desc
 
     var responsive = {
         details: {
@@ -110,8 +110,8 @@ $( document ).ready( function(){
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
            { responsivePriority: 1, targets: 0 }, // Anatomical entities
-           { responsivePriority: 1, targets: 1 }, // Score
-           { responsivePriority: 1, targets: 2 }, // Min rank
+           { responsivePriority: 1, targets: 1 }, // Conservation score
+           { responsivePriority: 1, targets: 2 }, // Max expression score
            { type: 'scientific', targets: 2 },    // sort using the scientific type
            { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
            { type: 'gene-number', targets: 3 },   // sort using the gene-number type
@@ -134,9 +134,9 @@ $( document ).ready( function(){
         columns: [ // sorting definition
             // Anatomical entities
             { orderable: true, render: function(data, type, row) { return renderAEList(data, type); } },
-            // Score
+            // Conservation score
             { orderable: true },
-            // Min rank
+            // Max expression score
             { orderable: true },
             // Genes with presence of expression
             { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },
@@ -173,8 +173,8 @@ $( document ).ready( function(){
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
             { responsivePriority: 1, targets: 0 }, // Anatomical entities
-            { responsivePriority: 1, targets: 1 }, // Score
-            { responsivePriority: 1, targets: 2 }, // Min rank
+            { responsivePriority: 1, targets: 1 }, // Conservation score
+            { responsivePriority: 1, targets: 2 }, // Max expression score
             { type: 'scientific', targets: 2 },    // sort using the scientific type
             { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
             { type: 'gene-number', targets: 3 },   // sort using the gene-number type
@@ -192,9 +192,9 @@ $( document ).ready( function(){
         columns: [ // sorting definition
             // Anatomical entities
             { orderable: true, render: function(data, type, row) { return renderAEList(data, type); } },
-            // Score
+            // Conservation score
             { "orderable": true },
-            // Min rank
+            // Max expression score
             { "orderable": true },
             // Genes with presence of expression
             { orderable: true, render: function(data, type, row) { return renderGeneList(data, type, 'a'); } },

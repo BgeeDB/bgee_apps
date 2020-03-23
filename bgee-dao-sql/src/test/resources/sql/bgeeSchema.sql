@@ -43,8 +43,8 @@ create table dataSource (
     evidenceUrl varchar(255) not null default '' COMMENT 'URL to evidence for expression data sources',
 -- url to the home page of the ressource
     baseUrl varchar(255) not null default '' COMMENT 'URL to the home page of data sources',
-    releaseDate timestamp null COMMENT 'Date of data source used',
--- e.g.: Ensembl 67, cvs version xxx
+    releaseDate date null COMMENT 'Date of data source used',
+-- e.g.: Ensembl 87, git version xxx
     releaseVersion varchar(255) not null default '' COMMENT 'Version of data source used',
     dataSourceDescription TEXT COMMENT 'Description of data source',
 -- to define if this dataSource should be displayed on the page listing data sources
@@ -555,6 +555,11 @@ create table cond (
     COMMENT 'Strain information. NA: not available from source information; not annotated: information not captured by Bgee; confidential_restricted_data: information cannot be disclosed publicly. Note that all conditions used in the expression tables have "NA", "not annotated" and "confidential_restricted_data" replaced with "wild-type"'
 ) engine = innodb COMMENT 'This table stores the "raw" conditions used to annotate data and used in the "raw" expression table, where data are not propagated nor precomputed';
 
+create table remapCond (
+    incorrectConditionId mediumint unsigned not null,
+    remappedConditionId mediumint unsigned not null
+) engine = innodb COMMENT 'This table is used as an intermediary step for condition remapping, see remap_conditions.pl';
+
 create table globalCond (
     globalConditionId mediumint unsigned not null,
     anatEntityId          varchar(20)  COMMENT 'Uberon anatomical entity ID. Can be null in this table if this condition aggregates data according to other condition parameters (e.g., grouping all data in a same stage whatever the organ is).',
@@ -949,6 +954,8 @@ create table rnaSeqLibraryDiscarded (
 create table rnaSeqResult (
     rnaSeqLibraryId varchar(70) not null,
     bgeeGeneId mediumint unsigned not null COMMENT 'Internal gene ID',
+-- FPRKM and TPM values inserted here are NOT TMM normalized,
+-- these are the raw data before any normalization
     fpkm decimal(16, 6) not null COMMENT 'FPKM values, NOT log transformed',
     tpm decimal(16, 6) not null COMMENT 'TPM values, NOT log transformed',
 -- rank is not "not null" because we update this information afterwards

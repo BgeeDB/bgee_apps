@@ -485,8 +485,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeOneNews("2020-03-26", "Release of Bgee version 14.1"
                 + "<p>This is an incremental update of Bgee, with an updated RNA-Seq dataset, "
-                + "using the same genomes and ontologies as for the previous version Bgee 14.0 "
-                + "(genomes and ontologies are updated for major releases of Bgee). "
+                + "using the same genomes and ontologies as for the previous version Bgee 14.0. "
                 + "New RNA-Seq libraries have been added; some libraries previously integrated in Bgee "
                 + "have been discarded following corrections and improvements of quality controls. "
                 + "The Affymetrix, <i>in situ</i> hybridization, and EST datasets, are the same as "
@@ -501,11 +500,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "gene pages</a>.</p>"
                 + "<ul>"
                 + "  <li>For human, 663 RNA-Seq libraries added, 13 removed, for a total of 5,676 libraries in Bgee 14.1; "
-                + "  there is now in total 1,794 conditions annotated in Bgee, in 334 anatomical entities.</li>"
+                + "  there are now in total 1,794 conditions annotated in Bgee, in 334 anatomical entities.</li>"
                 + "  <li>For model organisms: "
                 + "    <ul>"
                 + "      <li>197 libraries added for mouse (total 330 libraries); "
-                + "      there is now in total 13,821 conditions annotated in Bgee, "
+                + "      there are now in total 13,821 conditions annotated in Bgee, "
                 + "      in 3,275 anatomical entities.</li>"
                 + "      <li>193 added for <i>Xenopus tropicalis</i> (total 259); "
                 + "      4,808 conditions annotated in Bgee, in 395 anatomical entities.</li>"
@@ -521,7 +520,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  <li>Addition of data also in non-human primates: "
                 + "    <ul>"
                 + "      <li>235 libraries added for <i>Pan troglodytes</i> (total 250 libraries); "
-                + "      there is now in total 70 conditions annotated in Bgee, "
+                + "      there are now in total 70 conditions annotated in Bgee, "
                 + "      in 26 anatomical entities.</li>"
                 + "      <li>196 libraries added, 48 removed for <i>Macaca mulatta</i> (total 238); "
                 + "      50 conditions annotated in Bgee, in 25 anatomical entities.</li>"
@@ -532,7 +531,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  <li>For farm and domestic animals:"
                 + "    <ul>"
                 + "      <li>224 libraries added for <i>Equus caballus</i> (total 232); "
-                + "      there is now in total 58 conditions annotated in Bgee, "
+                + "      there are now in total 58 conditions annotated in Bgee, "
                 + "      in 24 anatomical entities.</li>"
                 + "      <li>159 added for <i>Sus scrofa</i> (total 169); "
                 + "      82 conditions annotated in Bgee, in 41 anatomical entities.</li>"
@@ -553,7 +552,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  <li>Other species with changes:"
                 + "    <ul>"
                 + "      <li>89 libraries added for <i>Monodelphis domestica</i> (total 108); "
-                + "      there is now in total 51 conditions annotated in Bgee, "
+                + "      there are now in total 51 conditions annotated in Bgee, "
                 + "      in 24 anatomical entities.</li>"
                 + "      <li>70 added for <i>Rattus norvegicus</i> (total 106); "
                 + "      64 conditions annotated in Bgee, in 22 anatomical entities.</li>"
@@ -568,7 +567,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "    </ul>"
                 + "  </li>"
                 + "</ul>"
-                + "<p>You can still access to Bgee version 14.0 at <a title='Archive site Bgee version 14' "
+                + "<p>You can still access Bgee version 14.0 at <a title='Archive site Bgee version 14' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee14' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee14</a>.</p>");
 
@@ -653,7 +652,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "    </ul>"
                 + "  </li>"
                 + "</ul>"
-                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "You can still access Bgee 13 at <a title='Archive site Bgee version 13' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
@@ -677,7 +676,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
                 + "</ul>"
-                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "You can still access Bgee 13 at <a title='Archive site Bgee version 13' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 

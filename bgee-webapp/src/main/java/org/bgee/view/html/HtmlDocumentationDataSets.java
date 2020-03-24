@@ -126,8 +126,9 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("<ul>");
         this.writeln("  <li>Annotations can be retrieved from RNA-Seq human experiments/libraries " +
                 "information. Experiment ID of GTEx is 'SRP012682'.");
-        this.writeln("<pre><code>    source(\"https://bioconductor.org/biocLite.R\")");
-        this.writeln("    biocLite(\"BgeeDB\")");
+        this.writeln("<pre><code>    if (!requireNamespace(\"BiocManager\", quietly = TRUE))");
+        this.writeln("        install.packages(\"BiocManager\")");
+        this.writeln("    BiocManager::install(\"BgeeDB\")");
         this.writeln("    library(BgeeDB)");
         this.writeln("    bgee <- Bgee$new(species = \"Homo_sapiens\", dataType = \"rna_seq\")");
         this.writeln("    myAnnotation <- getAnnotation(bgee)");

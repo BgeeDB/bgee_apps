@@ -292,7 +292,7 @@ public class CommandRunner {
             GenerateBioSODAFile.main(newArgs);
             break;
         
-        //---------- Generate Easy Bgee database -----------
+        //---------- Generate EasyBgee database -----------
         case "GenerateEasyBgee":
             BgeeToEasyBgee.main(newArgs);
             break;

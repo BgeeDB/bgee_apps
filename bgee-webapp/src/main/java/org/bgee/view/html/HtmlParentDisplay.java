@@ -137,9 +137,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     private static final int HUMAN_SPECIES_ID = 9606;
 
     /**
-     * A {@code String} that is the name of the 'Easy Bgee' database.
+     * A {@code String} that is the name of the 'EasyBgee' database.
      */
-    protected final static String EASY_BGEE_NAME = "Easy Bgee";
+    protected final static String EASY_BGEE_NAME = "EasyBgee";
 
     /**
      * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 

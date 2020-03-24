@@ -40,31 +40,31 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         super(response, requestParameters, prop, factory);
     }
 
-    private static String SPARQL_QUERY_JSON_URL = "http://biosoda.expasy.org:8080/rdf4j-server/"
-            + "repositories/bgeelight?query=PREFIX%20orth%3A%20%3Chttp%3A%2F%2Fpurl.org%2Fnet%2"
-            + "Forth%23%3E%0APREFIX%20up%3A%20%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0AP"
-            + "REFIX%20genex%3A%20%3Chttp%3A%2F%2Fpurl.org%2Fgenex%23%3E%0APREFIX%20obo%3A%20%3"
-            + "Chttp%3A%2F%2Fpurl.obolibrary.org%2Fobo%2F%3E%0ASELECT%20DISTINCT%20%3FanatEntit"
-            + "y%20%3FanatName%20%7B%0A%09%3Fseq%20a%20orth%3AGene%20.%0A%09%3Fexpr%20genex%3Ah"
-            + "asSequenceUnit%20%3Fseq%20.%0A%09%3Fseq%20rdfs%3Alabel%20%3FgeneName%20.%0A%09%3"
-            + "Fexpr%20genex%3AhasExpressionCondition%20%3Fcond%20.%0A%09%3Fcond%20genex%3AhasA"
-            + "natomicalEntity%20%3FanatEntity%20.%0A%09%3FanatEntity%20rdfs%3Alabel%20%3FanatN"
-            + "ame%20.%0A%09%3Fcond%20obo%3ARO_0002162%20%3Chttp%3A%2F%2Fpurl.uniprot.org%2Ftax"
-            + "onomy%2F9606%3E%20.%20%0A%09FILTER%20(LCASE(%3FgeneName)%20%3D%20LCASE(%27apoc1%"
-            + "27)%20)%0A%7D&Accept=application%2Fjson&limit=100&offset=0&inference=false";
+    private static String SPARQL_QUERY_JSON_URL = "https://bgee.org/sparql?default-graph-uri=&"
+            + "query=PREFIX+orth%3A+%3Chttp%3A%2F%2Fpurl.org%2Fnet%2Forth%23%3E%0D%0APREFIX+up"
+            + "%3A+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0D%0APREFIX+genex%3A+%3Chttp%"
+            + "3A%2F%2Fpurl.org%2Fgenex%23%3E%0D%0APREFIX+obo%3A+%3Chttp%3A%2F%2Fpurl.obolibra"
+            + "ry.org%2Fobo%2F%3E%0D%0ASELECT+DISTINCT+%3FanatEntity+%3FanatName+%7B%0D%0A++++"
+            + "%3Fseq+a+orth%3AGene+.%0D%0A++++%3Fseq+rdfs%3Alabel+%3FgeneName+.%0D%0A++++%3Fs"
+            + "eq+genex%3AisExpressedIn+%3Fcond+.%0D%0A++++%3Fcond+genex%3AhasAnatomicalEntity"
+            + "+%3FanatEntity+.%0D%0A++++%3FanatEntity+rdfs%3Alabel+%3FanatName+.%0D%0A++++%3F"
+            + "cond+obo%3ARO_0002162+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Ftaxonomy%2F10116%3E+.+"
+            + "%0D%0A++++FILTER+%28LCASE%28%3FgeneName%29+%3D+LCASE%28%27APOC1%27%29%29%0D%0A%"
+            + "7D&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on"
+            + "&run=+Run+Query+";
 
-    private static String SPARQL_QUERY_XML_URL = "http://biosoda.expasy.org:8080/rdf4j-server/"
-            + "repositories/bgeelight?query=PREFIX%20orth%3A%20%3Chttp%3A%2F%2Fpurl.org%2Fnet%2"
-            + "Forth%23%3E%0APREFIX%20up%3A%20%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0AP"
-            + "REFIX%20genex%3A%20%3Chttp%3A%2F%2Fpurl.org%2Fgenex%23%3E%0APREFIX%20obo%3A%20%3"
-            + "Chttp%3A%2F%2Fpurl.obolibrary.org%2Fobo%2F%3E%0ASELECT%20DISTINCT%20%3FanatEntit"
-            + "y%20%3FanatName%20%7B%0A%09%3Fseq%20a%20orth%3AGene%20.%0A%09%3Fexpr%20genex%3Ah"
-            + "asSequenceUnit%20%3Fseq%20.%0A%09%3Fseq%20rdfs%3Alabel%20%3FgeneName%20.%0A%09%3"
-            + "Fexpr%20genex%3AhasExpressionCondition%20%3Fcond%20.%0A%09%3Fcond%20genex%3AhasA"
-            + "natomicalEntity%20%3FanatEntity%20.%0A%09%3FanatEntity%20rdfs%3Alabel%20%3FanatN"
-            + "ame%20.%0A%09%3Fcond%20obo%3ARO_0002162%20%3Chttp%3A%2F%2Fpurl.uniprot.org%2Ftax"
-            + "onomy%2F9606%3E%20.%20%0A%09FILTER%20(LCASE(%3FgeneName)%20%3D%20LCASE(%27apoc1%"
-            + "27)%20)%0A%7D&Accept=application%2Fxml&limit=100&offset=0&inference=false";
+    private static String SPARQL_QUERY_XML_URL = "https://bgee.org/sparql?default-graph-uri=&q"
+            + "uery=PREFIX+orth%3A+%3Chttp%3A%2F%2Fpurl.org%2Fnet%2Forth%23%3E%0D%0APREFIX+up%"
+            + "3A+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0D%0APREFIX+genex%3A+%3Chttp%3"
+            + "A%2F%2Fpurl.org%2Fgenex%23%3E%0D%0APREFIX+obo%3A+%3Chttp%3A%2F%2Fpurl.obolibrar"
+            + "y.org%2Fobo%2F%3E%0D%0ASELECT+DISTINCT+%3FanatEntity+%3FanatName+%7B%0D%0A++++%"
+            + "3Fseq+a+orth%3AGene+.%0D%0A++++%3Fseq+rdfs%3Alabel+%3FgeneName+.%0D%0A++++%3Fse"
+            + "q+genex%3AisExpressedIn+%3Fcond+.%0D%0A++++%3Fcond+genex%3AhasAnatomicalEntity+"
+            + "%3FanatEntity+.%0D%0A++++%3FanatEntity+rdfs%3Alabel+%3FanatName+.%0D%0A++++%3Fc"
+            + "ond+obo%3ARO_0002162+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Ftaxonomy%2F10116%3E+.+%"
+            + "0D%0A++++FILTER+%28LCASE%28%3FgeneName%29+%3D+LCASE%28%27APOC1%27%29%29%0D%0A%7"
+            + "D&should-sponge=&format=application%2Fsparql-results%2Bxml&timeout=0&debug=on&r"
+            + "un=+Run+Query+";
 
     @Override
     public void displaySparql() {

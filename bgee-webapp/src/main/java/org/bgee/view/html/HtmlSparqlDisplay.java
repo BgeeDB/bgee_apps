@@ -82,7 +82,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         this.writeln("<p property='schema:description'>Bgee has a SPARQL endpoint which is based on the "
                 + "<a href='" + bgeeLiteDocUrl + "' class='external_link' target='_blank' rel='noopener' "
                 + "title='Link to " + EASY_BGEE_NAME + " documentation'>" + EASY_BGEE_NAME + " database</a>. "
-                + EASY_BGEE_NAME + " is a lighter version of Bgee database, that contains most useful, "
+                + EASY_BGEE_NAME + " is a view of Bgee database, that contains most useful, "
                 + "and explicit information.</p>");
 
         RequestParameters urlCollabs = this.getNewRequestParameters();
@@ -97,7 +97,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "Bgee specific queries are present under the category <span class='bioquery-section'>" 
                 + "Bgee database queries</span>. It is possible to see the SPARQL queries and edit them " 
                 + "by clicking on the <span class='bioquery-button'>Show SPARQL Query Editor</span> " 
-                + "button. Moreover, Bio-Query allows to do federated queries between "
+                + "button. Moreover, Bio-Query allows for writing federated queries among "
                 + "UniProt, OMA and Bgee SPARQL endpoints.</p>");
 
         this.writeln("<h2>Programmatic access to the Bgee SPARQL endpoint</h2>");
@@ -106,7 +106,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "<p class='endpoint-url'>" +
                 "https://bgee.org/sparql</p>");
 
-        this.writeln("<p>For example, to retrieve all anatomic entities in human where " +
+        this.writeln("<p>For example, to retrieve all anatomic entities in Rattus norvegicus where " +
                 "the APOC1 gene is expressed, the query is:</p>");
         this.writeln("<pre><code>" +
                 "PREFIX orth: &lt;http://purl.org/net/orth#&gt;<br>" +

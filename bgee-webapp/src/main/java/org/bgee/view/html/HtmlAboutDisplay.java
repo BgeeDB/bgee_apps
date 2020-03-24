@@ -130,7 +130,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<br>" + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species")
                 + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
                 + " <strong>Lecture Notes in Computer Science</strong>. "
-                + "5109:124-131. [<a href='http://www.springerlink.com/content/92q428161616w8r5/' "
+                + "5109:124-131. [<a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
                 + "title='Bgee paper in LNCS' target='_blank' rel='noopener' property='schema:url'>url</a>] "
                 + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
         this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: "

@@ -1830,6 +1830,7 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
         }
         if (rank == null) {
+            log.info("Rank is null, cannot compute expression score");
             return log.exit(null);
         }
         if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {

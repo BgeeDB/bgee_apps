@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;

@@ -326,7 +326,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             assert false: "Unknown DownloadPageType";
         }
         intro.append(" It is possible to download these data directly into "
-                    + "R using our <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
+                    + "R using our <a href='" + BGEEDB_R_PACKAGE_URL + "' "
                     + "class='external_link' target='_blank' rel='noopener'>R package</a>.");
 
         intro.append(" See also ");

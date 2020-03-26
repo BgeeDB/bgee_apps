@@ -109,7 +109,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 "presence/absence of expression with expression level categories specific to OncoMX. " +
                 "Files are available on <a href='" + this.prop.getFTPRootDirectory() +
                 "/collaboration/oncoMX/'>Bgee FTP</a>. You can see the description of these files in " +
-                "<a href='" + DEVELOP_BGEE_PIPELINE_GITHUB_URL + "/pipeline/collaboration/oncoMX" +
+                "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/collaboration/oncoMX" +
                 "#information-about-the-files-generated-for-oncomx' target='_blank' rel='noopener'>" +
                 "Bgee pipeline documentation</a></p>");
 

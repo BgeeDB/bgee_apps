@@ -79,13 +79,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the URL of the Bioconductor BgeeDB R package.
      */
     protected static final String BGEEDB_R_PACKAGE_URL = 
-            "https://bioconductor.org/packages/release/bioc/html/BgeeDB.html";
+            "https://bioconductor.org/packages/BgeeDB/";
   
     /**
      * A {@code String} that is the URL of the Bioconductor BgeeCall R package.
      */
     protected static final String BGEECALL_R_PACKAGE_URL =
-            "https://bioconductor.org/packages/release/workflows/html/BgeeCall.html";
+            "https://bioconductor.org/packages/BgeeCall/";
 
     /**
      * A {@code String} that is the URL of the Bgee GitHub.
@@ -96,12 +96,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
      */
     protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
-            "/bgee_pipeline/tree/master";
+            "/bgee_pipeline";
     
     /**
      * A {@code String} that is the URL of the Bgee pipeline develop branch in GitHub.
      */
-    // TODO replace develop by master when bgee_pipeline will be release
     protected static final String DEVELOP_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL +
             "/bgee_pipeline/tree/develop";
 

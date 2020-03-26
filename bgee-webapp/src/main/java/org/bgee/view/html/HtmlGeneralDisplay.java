@@ -700,10 +700,10 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "</ul>");
         
         this.writeOneNews("2016-05-09", "Release of our new "
-                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener'>"
+                + "<a href='" + BGEEDB_R_PACKAGE_URL + "' class='external_link' target='_blank' rel='noopener'>"
                 + "BgeeDB R package</a>, a package for the annotation and gene expression "
                 + "data download from Bgee database into R, and TopAnat analysis (see also "
-                + "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' "
+                + "<a href='" + BGEEDB_R_PACKAGE_URL + "' "
                 + "class='external_link' target='_blank' rel='noopener'>Bioconductor website</a>).");
 
         this.writeOneNews("2016-03-22", "Various improvements of our new interface.");

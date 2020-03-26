@@ -64,7 +64,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 "joint queries across resources in ways that cannot be anticipated and " +
                 "therefore goes far and above the query functionality of specialized knowledge bases. " +
                 "It is supported by <a href='http://www.nfp75.ch/en' target='_blank' rel='noopener' " +
-                "title='NFP75 Big Data website'>NFP75 'Big Data'</a>.<p>");
+                "title='NFP75 Big Data website'>NFP75 'Big Data'</a>.</p>");
 
         this.writeln("<p>For this project, we created a sub-database of Bgee called '" + EASY_BGEE_NAME +
                 "'. The MySQL dump is available on <a target='_blank' rel='noopener' title='Download the dump' href='" +

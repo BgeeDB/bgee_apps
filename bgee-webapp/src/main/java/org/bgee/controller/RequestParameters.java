@@ -254,11 +254,11 @@ public class RequestParameters {
 
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
-     * (see {@link URLParameters#getParamAction()}) when download page about mysql dumps
+     * (see {@link URLParameters#getParamAction()}) when download page about dumps
      * is requested. Value of the parameter page should be 
      * {@link #PAGE_DOWNLOAD}.
      */
-    public static final String ACTION_DOWNLOAD_MYSQL_DUMPS = "mysql_dumps";
+    public static final String ACTION_DOWNLOAD_DUMPS = "dumps";
     
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 

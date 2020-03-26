@@ -55,9 +55,9 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         RequestParameters urlDownloadProcsGenerator = this.getNewRequestParameters();
         urlDownloadProcsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
-        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlDownloadGenerator.setAction(RequestParameters.ACTION_DOWNLOAD_DUMPS);
+        RequestParameters urlDataDownloadGenerator = this.getNewRequestParameters();
+        urlDataDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDataDownloadGenerator.setAction(RequestParameters.ACTION_DOWNLOAD_DUMPS);
         RequestParameters urlGeneSearchGenerator = this.getNewRequestParameters();
         urlGeneSearchGenerator.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
@@ -99,7 +99,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "'>expression enrichment analysis</a>. It is also possible to download <a href='" +
                 urlDownloadCallsGenerator.getRequestURL() + "'>gene expression calls</a>, <a href='" +
                 urlDownloadProcsGenerator.getRequestURL() + "'>processed expression values</a>, or " +
-                "<a href='" + urlDownloadGenerator.getRequestURL() + "'>MySQL dumps</a>.</p>");
+                "<a href='" + urlDataDownloadGenerator.getRequestURL() + "'>data dumps</a>.</p>");
         this.writeln("<p>More information is provided in the <a href='" +
                 urlDocumentationGenerator.getRequestURL() + "'>documentation</a>.</p>");
 

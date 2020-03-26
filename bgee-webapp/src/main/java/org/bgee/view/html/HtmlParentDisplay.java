@@ -734,7 +734,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
 
         if (this.prop.isArchive()) {
-            this.write("<div class='alert alert-danger'> This is an old version of Bgee ");
+            this.write("<div class='alert alert-danger'> This is an archived version of Bgee ");
 
             String version = this.getWebAppVersion();
             if (version != null) {

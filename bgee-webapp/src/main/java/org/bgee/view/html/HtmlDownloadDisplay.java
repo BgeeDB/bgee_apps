@@ -220,9 +220,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         log.entry();
         
-        this.startDisplay("Bgee dumps download");
+        this.startDisplay("Bgee data dumps download");
         
-        this.writeln("<h1>Bgee dumps</h1>");
+        this.writeln("<h1>Bgee data dumps</h1>");
         
         this.writeln("<div class='feature_list'>");
 

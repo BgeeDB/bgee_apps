@@ -455,9 +455,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         urlResourcesSourceCode.setPage(RequestParameters.PAGE_RESOURCES);
         urlResourcesSourceCode.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
 
-        RequestParameters urlMySQLDumps = this.getNewRequestParameters();
-        urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
+        RequestParameters urlDumps = this.getNewRequestParameters();
+        urlDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
+        urlDumps.setAction(RequestParameters.ACTION_DOWNLOAD_DUMPS);
         
         RequestParameters urlSparql = this.getNewRequestParameters();
         urlSparql.setPage(RequestParameters.PAGE_SPARQL);
@@ -602,8 +602,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                         ONTOLOGIES_PAGE_NAME + "</a> and " +
                         "<a href='" + urlResourcesSourceCode.getRequestURL() + "' title='Source code'>" + 
                         SOURCE_CODE_PAGE_NAME + "</a> pages.</li>" +
-                "    <li>New <a href='" + urlMySQLDumps.getRequestURL() + "' title='MySQL dumps'>" + 
-                        MYSQL_DUMPS_PAGE_NAME + "</a> and <a href='" + urlSparql.getRequestURL() + 
+                "    <li>New <a href='" + urlDumps.getRequestURL() + "' title='MySQL dumps'>" + 
+                        DUMPS_PAGE_NAME + "</a> and <a href='" + urlSparql.getRequestURL() + 
                         "' title='Bgee SPARQL endpoint'>SPARQL endpoint</a> pages.</li>" +
                 "    <li>New <a href='" + urlCollaborations.getRequestURL() + 
                         "' title='Bgee collaborations'>Bgee collaborations</a> page.</li>" +

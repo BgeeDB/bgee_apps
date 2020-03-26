@@ -43,8 +43,8 @@ public interface DownloadDisplay {
     		                                    Map<Integer, Set<String>> keywords);
      
      /**
-      * Display the download page of the MYSQL Dumps.
+      * Display the download page of the Dumps.
       */
-      void displayMysqlDumpsPage();
+      void displayDumpsPage();
 
 }

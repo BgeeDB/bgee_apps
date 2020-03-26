@@ -108,6 +108,54 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public final static String BGEE_CURRENT_URL_DEFAULT = null;
 
     /**
+     * A {@code String} that is the key to access to the System property that is read at the
+     * initialization of {@code BgeeProperties} to set the SPARQL current url (e.g., 'https://bgee.org/sparql').
+     *
+     * @see #SPARQL_CURRENT_URL_KEY
+     * @see #getSparqlCurrentUrl()
+     */
+    public final static String SPARQL_CURRENT_URL_KEY = "org.bgee.webapp.sparqlCurrentUrl";
+    /**
+     * A {@code String} that is the default value of the SPARQL current url.
+     *
+     * @see #SPARQL_CURRENT_URL_DEFAULT
+     * @see #getSparqlCurrentUrl()
+     */
+    public final static String SPARQL_CURRENT_URL_DEFAULT = null;
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the
+     * initialization of {@code BgeeProperties} to set the SPARQL stable url (e.g., 'https://bgee.org/sparql_14').
+     *
+     * @see #SPARQL_STABLE_URL_KEY
+     * @see #getSparqlStableUrl()
+     */
+    public final static String SPARQL_STABLE_URL_KEY = "org.bgee.webapp.sparqlStableUrl";
+    /**
+     * A {@code String} that is the default value of the SPARQL stable url.
+     *
+     * @see #SPARQL_CURRENT_URL_DEFAULT
+     * @see #getSparqlStableUrl()
+     */
+    public final static String SPARQL_STABLE_URL_DEFAULT = null;
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the
+     * initialization of {@code BgeeProperties} to set the SPARQL stable graph (e.g., 'https://bgee.org/rdf_v14').
+     *
+     * @see #SPARQL_STABLE_GRAPH
+     * @see #getSparqlStableGraph()
+     */
+    public final static String SPARQL_STABLE_GRAPH_KEY = "org.bgee.webapp.sparqlStableGraph";
+    /**
+     * A {@code String} that is the default value of the SPARQL stable graph.
+     *
+     * @see #SPARQL_STABLE_GRAPH
+     * @see #getSparqlStableGraph()
+     */
+    public final static String SPARQL_STABLE_GRAPH_DEFAULT = null;
+
+    /**
      * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the request parameters storage directory.
      * 
@@ -678,6 +726,24 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     private final String bgeeStableRootDirectory;
     
     /**
+     * A {@code String} that defines the current SPARQL endpoint URL,
+     * for instance, "http://bgee.org/sparql".
+     */
+    private final String sparqlCurrentUrl;
+
+    /**
+     * A {@code String} that defines the stable SPARQL endpoint URL,
+     * for instance, "http://bgee.org/sparql_14".
+     */
+    private final String sparqlStableUrl;
+
+    /**
+     * A {@code String} that defines the stable SPARQL endpoint graph,
+     * for instance, "http://bgee.org/rdf_V14".
+     */
+    private final String sparqlStableGraph;
+
+    /**
      * A {@code String} that defines the root domain of Bgee servers, 
      * for instance, ".bgee.org".
      */
@@ -875,6 +941,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
         bgeeStableRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_STABLE_ROOT_DIRECTORY_KEY, BGEE_STABLE_ROOT_DIRECTORY_DEFAULT);
+        sparqlCurrentUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                SPARQL_CURRENT_URL_KEY, SPARQL_CURRENT_URL_DEFAULT);
+        sparqlStableUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                SPARQL_STABLE_URL_KEY, SPARQL_STABLE_URL_DEFAULT);
+        sparqlStableGraph = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                SPARQL_STABLE_GRAPH_KEY, SPARQL_STABLE_GRAPH_DEFAULT);
         bgeeRootDomain = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 BGEE_ROOT_DOMAIN_KEY, BGEE_ROOT_DOMAIN_DEFAULT);
         ftpRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -995,7 +1067,37 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public String getBgeeStableRootDirectory() {
         return bgeeStableRootDirectory;
     }
-    
+
+    /**
+     * @return  A {@code String} that is the default value of the SPARQL current url.
+     *
+     * @see #SPARQL_CURRENT_URL_KEY
+     * @see #SPARQL_CURRENT_URL_DEFAULT
+     */
+    public String getSparqlCurrentUrl() {
+        return sparqlCurrentUrl;
+    }
+
+    /**
+     * @return  A {@code String} that is the default value of the SPARQL stable url.
+     *
+     * @see #SPARQL_STABLE_URL_KEY
+     * @see #SPARQL_STABLE_URL_DEFAULT
+     */
+    public String getSparqlStableUrl() {
+        return sparqlStableUrl;
+    }
+
+    /**
+     * @return  A {@code String} that is the default value of the SPARQL stable graph.
+     *
+     * @see #SPARQL_STABLE_GRAPH_KEY
+     * @see #SPARQL_STABLE_GRAPH_DEFAULT
+     */
+    public String getSparqlStableGraph() {
+        return sparqlStableGraph;
+    }
+
     /**
      * @return  A {@code String} that defines the root domain of Bgee servers, 
      *          for instance, ".bgee.org".

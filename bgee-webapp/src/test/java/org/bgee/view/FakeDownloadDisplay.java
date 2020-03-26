@@ -40,7 +40,7 @@ public class FakeDownloadDisplay extends FakeParentDisplay implements DownloadDi
     }
 
     @Override
-    public void displayMysqlDumpsPage() {
+    public void displayDumpsPage() {
         this.out.println("MySQL dumps page is good !");
         
     }

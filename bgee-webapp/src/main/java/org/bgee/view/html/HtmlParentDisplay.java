@@ -45,9 +45,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected final static String GENE_EXPR_CALLS_PAGE_NAME = "Gene expression calls";
     /**
-     * A {@code String} that is the page name of the 'mysql dumps' download page.
+     * A {@code String} that is the page name of the 'dumps' download page.
      */
-    protected final static String MYSQL_DUMPS_PAGE_NAME = "MySQL dumps";
+    protected final static String DUMPS_PAGE_NAME = "Data dumps";
     /**
      * A {@code String} that is the page name of the 'Ontologies' resources page.
      */
@@ -494,7 +494,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         RequestParameters urlMySQLDumps = this.getNewRequestParameters();
         urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
-        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_MYSQL_DUMPS);
+        urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_DUMPS);
         
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -617,7 +617,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='").append(urlDownloadProcValueFile.getRequestURL()).append("'>")
                 .append(PROCESSED_EXPR_VALUES_PAGE_NAME).append("</a></li>");
         navbar.append("<li><a href='").append(urlMySQLDumps.getRequestURL()).append("'>")
-                .append(MYSQL_DUMPS_PAGE_NAME).append("</a></li>");
+                .append(DUMPS_PAGE_NAME).append("</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
         
@@ -734,7 +734,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.entry();
 
         if (this.prop.isArchive()) {
-            this.write("<div class='alert alert-danger'> This is an old version of Bgee ");
+            this.write("<div class='alert alert-danger'> This is an archived version of Bgee ");
 
             String version = this.getWebAppVersion();
             if (version != null) {

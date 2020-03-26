@@ -83,7 +83,6 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<p>The SPARQL endpoint and '" + EASY_BGEE_NAME + "' are available and free " +
                 "to use for other projects or applications.</p>");
-
         this.writeln("<h2>OMA</h2>");
         
         this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank' rel='noopener'>OMA " +

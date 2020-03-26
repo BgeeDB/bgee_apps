@@ -93,7 +93,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("<p>All corresponding RNA-seq were reanalyzed in the Bgee pipeline, " +
                 "consistently with all other healthy RNA-seq from human and other species. " +
                 "These data are being made available both through the website, " +
-                "and through <a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' " +
+                "and through <a href='" + BGEEDB_R_PACKAGE_URL + "' " +
                 "class='external_link' target='_blank' rel='noopener'>BgeeDB R package</a> " +
                 "(with sensitive information hidden).</p>");
         this.writeln("</div>");
@@ -121,7 +121,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
 
         this.writeln("<h3>GTEx data using BgeeDB R package</h3>");
         this.writeln("<div class='doc_content'>");
-        this.writeln("<p>More information and examples can be found on the <a href='https://bioconductor.org/packages/BgeeDB/' "
+        this.writeln("<p>More information and examples can be found on the <a href='" + BGEEDB_R_PACKAGE_URL + "' "
                 + "title='Link to BgeeDB on Bioconductor' target='_blank' rel='noopener'>BgeeDB R package page</a>.</p>");
         this.writeln("<ul>");
         this.writeln("  <li>Annotations can be retrieved from RNA-Seq human experiments/libraries " +

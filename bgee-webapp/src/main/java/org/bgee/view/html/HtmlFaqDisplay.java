@@ -141,7 +141,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "that provides annotations and experiment information or processed expression values " +
                         "(see <a href='" + urlValuePage.getRequestURL() + "'>"+PROCESSED_EXPR_VALUES_PAGE_NAME+"</a>). " +
                         "It is also possible to download these data directly into R using " +
-                        "<a href='https://bioconductor.org/packages/release/bioc/html/BgeeDB.html' class='external_link' target='_blank' rel='noopener'>" +
+                        "<a href='" + BGEEDB_R_PACKAGE_URL + "' class='external_link' target='_blank' rel='noopener'>" +
                         "our R package </a>, or in the <a href='" + this.prop.getFTPRootDirectory() +
                         "sql_dump.tar.gz'>full Bgee database dump file</a>.",
                 "MoreInfo"));
@@ -155,7 +155,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "You can also visualize enrichment of expression of your list relative to " +
                         "a random background using <a href='" + urlTopAnat.getRequestURL() + "'>TopAnat</a>. " +
                         "All associated data can be downloaded using our " +
-                        "<a href='https://www.bioconductor.org/packages/BgeeDB/' class='external_link' target='_blank' rel='noopener'>R package</a>. " +
+                        "<a href='" + BGEEDB_R_PACKAGE_URL + "' class='external_link' target='_blank' rel='noopener'>R package</a>. " +
                         "Note that there is at present no way to visualize a list of genes.",
                 "OneGene"));
 

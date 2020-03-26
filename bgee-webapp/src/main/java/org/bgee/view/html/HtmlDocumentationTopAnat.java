@@ -118,7 +118,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         // More information
         this.writeln("<h2>More information</h2>");
         this.writeln("<p>TopAnat is based on "
-        		+ "<a href='http://www.bioconductor.org/packages/release/bioc/html/topGO.html' "
+        		+ "<a href='https://bioconductor.org/packages/topGO/' "
                 + "title='topGO package in Bioconductor' target='_blank' rel='noopener'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
 

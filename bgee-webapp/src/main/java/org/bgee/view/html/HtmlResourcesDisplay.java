@@ -253,13 +253,12 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "other methods in identification of poor quality arrays in datasets "
                 + "composed of arrays from many independent experiments.";
         String bgeedbGithubUrl = BGEE_GITHUB_URL + "/BgeeDB_R";
-        String pipelineGithubUrl = BGEE_GITHUB_URL + "/bgee_pipeline";
         String bgeecallGithubUrl = BGEE_GITHUB_URL + "/BgeeCall";
         String iqRayGithubUrl = BGEE_GITHUB_URL + "/IQRray";
 
         this.writeln(this.getSchemaMarkupGraph(Arrays.asList(
                 getSoftwareSourceCodeProperty("Bgee-pipeline", "Bgee pipeline code",
-                        pipelineDesc, pipelineGithubUrl, "Perl, R, and Java"),
+                        pipelineDesc, MASTER_BGEE_PIPELINE_GITHUB_URL, "Perl, R, and Java"),
                 getSoftwareSourceCodeProperty("BgeeDB-R-package", "BgeeDB R package code",
                         BGEEDB_DESCRIPTION, bgeedbGithubUrl, "R"),
                 getSoftwareSourceCodeProperty("BgeeCall-R-package", "BgeeCall R package code",
@@ -272,7 +271,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         this.writeln("<div class='feature_list'>");
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
-                pipelineGithubUrl, true, "Bgee pipeline", "Bgee pipeline",
+                MASTER_BGEE_PIPELINE_GITHUB_URL, true, "Bgee pipeline", "Bgee pipeline",
                 this.prop.getLogoImagesRootDirectory() + "github_logo.png", pipelineDesc));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(

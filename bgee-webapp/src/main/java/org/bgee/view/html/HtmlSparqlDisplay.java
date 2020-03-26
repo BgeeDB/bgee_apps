@@ -23,7 +23,9 @@ import org.bgee.view.SparqlDisplay;
 public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDisplay{
 
     private final static Logger log = LogManager.getLogger(HtmlSparqlDisplay.class.getName());
-    
+
+    private final String sparql_query_json_url;
+    private final String sparql_query_xml_url;
     /**
      * @param response          A {@code HttpServletResponse} that will be used to display 
      *                          the page to the client.
@@ -38,9 +40,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
     public HtmlSparqlDisplay(HttpServletResponse response, RequestParameters requestParameters,
             BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
-    }
-
-    private static String SPARQL_QUERY_JSON_URL = "https://bgee.org/sparql?default-graph-uri=&"
+        this.sparql_query_json_url = this.prop.getSparqlCurrentUrl()
+            + "?default-graph-uri=&"
             + "query=PREFIX+orth%3A+%3Chttp%3A%2F%2Fpurl.org%2Fnet%2Forth%23%3E%0D%0APREFIX+up"
             + "%3A+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0D%0APREFIX+genex%3A+%3Chttp%"
             + "3A%2F%2Fpurl.org%2Fgenex%23%3E%0D%0APREFIX+obo%3A+%3Chttp%3A%2F%2Fpurl.obolibra"
@@ -52,8 +53,8 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
             + "%0D%0A++++FILTER+%28LCASE%28%3FgeneName%29+%3D+LCASE%28%27APOC1%27%29%29%0D%0A%"
             + "7D&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on"
             + "&run=+Run+Query+";
-
-    private static String SPARQL_QUERY_XML_URL = "https://bgee.org/sparql?default-graph-uri=&q"
+        this.sparql_query_xml_url = this.prop.getSparqlCurrentUrl()
+            + "?default-graph-uri=&q"
             + "uery=PREFIX+orth%3A+%3Chttp%3A%2F%2Fpurl.org%2Fnet%2Forth%23%3E%0D%0APREFIX+up%"
             + "3A+%3Chttp%3A%2F%2Fpurl.uniprot.org%2Fcore%2F%3E%0D%0APREFIX+genex%3A+%3Chttp%3"
             + "A%2F%2Fpurl.org%2Fgenex%23%3E%0D%0APREFIX+obo%3A+%3Chttp%3A%2F%2Fpurl.obolibrar"
@@ -65,6 +66,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
             + "0D%0A++++FILTER+%28LCASE%28%3FgeneName%29+%3D+LCASE%28%27APOC1%27%29%29%0D%0A%7"
             + "D&should-sponge=&format=application%2Fsparql-results%2Bxml&timeout=0&debug=on&r"
             + "un=+Run+Query+";
+    }
 
     @Override
     public void displaySparql() {
@@ -134,9 +136,9 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "}" +
                 "</code></pre>");
 
-        this.writeln("<p>It is possible to download result of this query in <a href='" + SPARQL_QUERY_JSON_URL + "' "
+        this.writeln("<p>It is possible to download result of this query in <a href='" + sparql_query_json_url + "' "
                 + "title='SPARQL example query' class='external_link' target='_blank' rel='noopener'>JSON format</a> "
-                + "or in <a href='" + SPARQL_QUERY_XML_URL + "' title='SPARQL example query' " 
+                + "or in <a href='" + sparql_query_xml_url + "' title='SPARQL example query' "
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");
 
         this.writeln("<h2 id='" + RequestParameters.HASH_SPARQL_STABLE +"'>Stable programmatic access to this version of the Bgee SPARQL endpoint</h2>");

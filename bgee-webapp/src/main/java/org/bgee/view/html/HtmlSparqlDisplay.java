@@ -141,6 +141,11 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "or in <a href='" + sparql_query_xml_url + "' title='SPARQL example query' "
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");
 
+        this.writeln("<p>(Of note, as opposed to the example below to access an archived version, "
+                + "when accessing the endpoint for the latest version, it is important "
+                + "<strong>NOT</strong> to specify the name of a graph to target; otherwise, "
+                + "results will be incorrect)</p>");
+
         this.writeln("<h2 id='" + RequestParameters.HASH_SPARQL_STABLE +"'>Stable programmatic access to this version of the Bgee SPARQL endpoint</h2>");
 
         this.writeln("<p>This version of the Bgee SPARQL endpoint is accessible in a stable manner "
@@ -158,7 +163,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "PREFIX up: &lt;http://purl.uniprot.org/core/&gt;<br>" +
                 "PREFIX genex: &lt;http://purl.org/genex#&gt;<br>" +
                 "PREFIX obo: &lt;http://purl.obolibrary.org/obo/&gt;<br>" +
-                "SELECT DISTINCT ?anatEntity ?anatName  FROM NAMED &lt;" + this.prop.getSparqlStableGraph() + "&gt; {<br>" +
+                "SELECT DISTINCT ?anatEntity ?anatName  FROM &lt;" + this.prop.getSparqlStableGraph() + "&gt; {<br>" +
                 "    ?seq a orth:Gene .<br>" +
                 "    ?seq rdfs:label ?geneName .<br>" +
                 "    ?seq genex:isExpressedIn ?cond .<br>" +
@@ -168,6 +173,10 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "    FILTER (LCASE(?geneName) = LCASE('APOC1'))<br>" +
                 "}" +
                 "</code></pre>");
+
+        this.writeln("<p>Again, <strong>it is essential to specify the name of the graph of the version "
+                + "to target</strong> (in the example above, " + this.prop.getSparqlStableGraph() + "); "
+                + "otherwise, " + "results will be incorrect.</p>");
 
         this.writeln("<h2>RDF serialisation and semantic models</h2>");
         this.writeln("<p>The Bgee RDF data were created using an Ontology Based Data Access (OBDA) "

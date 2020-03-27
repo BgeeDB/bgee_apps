@@ -55,7 +55,8 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 " (in alphabetical order).</p>");
 
 
-        this.writeln("<h2>BioSODA</h2>");
+        // Bio-SODA
+        this.writeln("<h2>Bio-SODA</h2>");
         this.writeln("<p><a target='_blank' rel='noopener' title='BioSODA project description' href='" +
                 "https://www.zhaw.ch/no_cache/en/research/research-database/project-detailview/projektid/1493/'>" +
                 "BioSODA project</a> aims at enabling sophisticated semantic queries across large, " +
@@ -83,6 +84,27 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<p>The SPARQL endpoint and '" + EASY_BGEE_NAME + "' are available and free " +
                 "to use for other projects or applications.</p>");
+
+
+        // INODE
+        this.writeln("<h2>INODE</h2>");
+
+        this.writeln("<p>The <a href='http://www.inode-project.eu/' target='_blank' rel='noopener'>INODE "
+                   + "(Intelligent Open Data Exploration) project</a> aims at simplifying access to data, "
+                   + "by allowing a more dialectic and intuitive interaction with data, "
+                   + "similar to a dialog with a human. The goal of INODE is to offer a suite of agile, "
+                   + "fit-for-purpose and sustainable services for exploration of open data sets. "
+                   + "It is funded by Horizon 2020 (<a href='https://cordis.europa.eu/project/id/863410/fr' "
+                   + "target='_blank' rel='noopener'>project 863410</a>).</p>");
+
+        this.writeln("<p>The Bgee team is one of the three use-case providers which the system "
+                   + "will be initially developed and evaluated with. Bgee provides its expression data, "
+                   + "and the cancer biomarker data from OncoMX (see below). The Bgee team collaborates on "
+                   + "specifying the requirements of the system, adapting the data structure and format, "
+                   + "and testing and evaluating the system.</p>");
+
+
+        // OMA
         this.writeln("<h2>OMA</h2>");
 
         this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank' rel='noopener'>OMA " +
@@ -98,6 +120,8 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
         this.writeln("<p>The homologous expression files are also available and free " +
                 "to use for other projects or applications.</p>");
 
+
+        // OncoMX
         this.writeln("<h2>OncoMX</h2>");
 
         this.writeln("<p><a href='https://www.oncomx.org/' target='_blank' rel='noopener'>OncoMX</a> is " +

@@ -513,7 +513,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
             if (StringUtils.isNotBlank(this.prop.getBgeeCurrentUrl())) {
                 this.write("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
-                        " title='Access last version of Bgee'>Access last version of Bgee</a>");
+                        " title='Access latest version of Bgee'>Access latest version of Bgee</a>");
             }
             
             this.writeln("</div>");

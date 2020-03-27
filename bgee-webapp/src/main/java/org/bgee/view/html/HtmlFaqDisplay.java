@@ -142,8 +142,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "(see <a href='" + urlValuePage.getRequestURL() + "'>"+PROCESSED_EXPR_VALUES_PAGE_NAME+"</a>). " +
                         "It is also possible to download these data directly into R using " +
                         "<a href='" + BGEEDB_R_PACKAGE_URL + "' class='external_link' target='_blank' rel='noopener'>" +
-                        "our R package </a>, or in the <a href='" + this.prop.getFTPRootDirectory() +
-                        "sql_dump.tar.gz'>full Bgee database dump file</a>.",
+                        "our R package</a>.",
                 "MoreInfo"));
 
         this.writeln(this.getQuestionDisplay("Are there multi-species comparison available in gene expression calls?",

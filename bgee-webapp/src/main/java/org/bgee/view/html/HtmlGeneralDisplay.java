@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -124,7 +123,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
 	    String version = this.getWebAppVersion();
 	    if (version != null) {
-	        this.writeln("<span id='bgee_version'>version " + htmlEntities(version) + "</span>");
+	        this.write("<span id='bgee_version'>");
+	        if (this.prop.isArchive()) {
+	            this.write("Archived ");
+	        }
+	        this.writeln("version " + htmlEntities(version) + "</span>");
 	    }
 
 	    this.writeln("<div id='bgee_hp_logo'><img src='" + this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() 
@@ -404,10 +407,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln(getImageSources());
         this.writeln("</div>");
 
-        this.writeln("<div class='col-xs-12 col-md-2'>");
-        this.writeln("<a id ='archive_site' title='Archive site' href='https://bgee.org/bgee/bgee' target='_blank'>"
-	    		+ "View archive site</a>");
-        this.writeln("</div>");
+        if (!this.prop.isArchive()) {
+            this.writeln("<div class='col-xs-12 col-md-2'>");
+            this.writeln("<a id ='archive_site' title='Archive site' href='"
+                    + this.prop.getBgeeCurrentUrl() + "bgee12/' target='_blank'>"
+	    		    + "View archive site</a>");
+            this.writeln("</div>");
+        }
         
         this.writeln("</div>"); // close bgee_more_info row
         

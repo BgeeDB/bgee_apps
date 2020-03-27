@@ -566,6 +566,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "      6 conditions annotated in Bgee, in 4 anatomical entities.</li>"
                 + "    </ul>"
                 + "  </li>"
+                + "  <li>Update of the <a href='" + urlExprComp.getRequestURL()
+                + "'>Expression Comparison page</a> to display expression scores rather than expression ranks."
+                + "  </li>"
                 + "  <li>Update of the menu, of the <a href='" + urlCollaborations.getRequestURL()
                 + "'>collaboration page</a>, of the <a href='" + urlSparql.getRequestURL()
                 + "'>SPARQL documentation page</a> (notably to access archived version of Bgee, "

@@ -590,19 +590,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</li>");
 
         // Search
-        // For the moment, we only have gene search 
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Search <span class='caret'></span></a>");
         navbar.append("<ul class='dropdown-menu'>");
         navbar.append("<li><a title='Gene search' href='").append(urlGeneSearch.getRequestURL())
                 .append("'>Gene search</a></li>");
+        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
+                .append("Anatomical homology search</a></li>");
+        navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
+                .append("'>SPARQL endpoint</a></li>");
         navbar.append("<li><a title='Species list' href='").append(urlSpeciesList.getRequestURL())
                 .append("'>Species list</a></li>");
-        navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
-        .append("'>SPARQL endpoint</a></li>");
-        navbar.append("<li><a href='").append(urlAnatSim.getRequestURL()).append("' >")
-                .append("Anatomical homology</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
 
@@ -620,7 +619,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</ul>");
         navbar.append("</li>");
         
-     // Resources menu
+        // Resources menu
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
               + "aria-haspopup='true' aria-expanded='false'>Resources <span class='caret'></span></a>");
@@ -628,6 +627,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='").append(urlResourcesRPackages.getRequestURL())
                 .append("' title='R packages'>")
                 .append(R_PACKAGES_PAGE_NAME).append("</a></li>");
+        navbar.append("<li><a title='SPARQL endpoint' href='").append(urlSparql.getRequestURL())
+                .append("'>SPARQL endpoint</a></li>");
         navbar.append("<li><a href='").append(urlResourcesAnnotations.getRequestURL())
                 .append("' title='Annotation resources'>")
                 .append(ANNOTATIONS_PAGE_NAME).append("</a></li>");

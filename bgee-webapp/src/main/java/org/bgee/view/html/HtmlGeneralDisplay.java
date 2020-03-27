@@ -566,6 +566,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "      6 conditions annotated in Bgee, in 4 anatomical entities.</li>"
                 + "    </ul>"
                 + "  </li>"
+                + "  <li>Update of the menu, of the <a href='" + urlCollaborations.getRequestURL()
+                + "'>collaboration page</a>, of the <a href='" + urlSparql.getRequestURL()
+                + "'>SPARQL documentation page</a> (notably to access archived version of Bgee, "
+                + "starting with Bgee 14.0)."
+                + "  </li>"
                 + "</ul>"
                 + "<p>You can still access Bgee version 14.0 at <a title='Archive site Bgee version 14' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee14' target='_blank' rel='noopener'>"

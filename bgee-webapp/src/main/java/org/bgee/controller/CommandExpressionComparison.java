@@ -65,7 +65,6 @@ public class CommandExpressionComparison extends CommandParent {
             log.exit(); return;
         }
 
-        // FIXME to be removed when mock is removed
         SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
                 .searchGenesByEnsemblIds(userGeneList);
         Set<Species> species = searchResult.getResults().stream()

@@ -822,7 +822,7 @@ public class MultiSpeciesCallService extends CommonService {
                 expressionCallFilter,
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                         CallService.Attribute.CALL_TYPE, CallService.Attribute.OBSERVED_DATA,
-                        CallService.Attribute.MEAN_RANK),
+                        CallService.Attribute.EXPRESSION_SCORE),
                 serviceOrdering);
 
         Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
@@ -987,23 +987,23 @@ public class MultiSpeciesCallService extends CommonService {
                     Set<Gene> genesWithNoData = new HashSet<>(clonedGenes);
                     genesWithNoData.removeAll(genesWithData);
 
-                    //For each gene with a rank, we find the min rank
-                    Map<Gene, Optional<ExpressionLevelInfo>> geneToMinRankOptional = list.stream()
+                    //For each gene with an expression score, we find the max expression score
+                    Map<Gene, Optional<ExpressionLevelInfo>> geneToMaxExprScoreOptional = list.stream()
                     .flatMap(sc -> sc.getCalls().stream())
-                    .filter(c -> c.getMeanRank() != null)
+                    .filter(c -> c.getExpressionScore() != null)
                     .collect(Collectors.groupingBy(c -> c.getGene(),
                             Collectors.mapping(c -> c.getExpressionLevelInfo(),
                                     //Need a compiler hint with my local version of Java
-                                    Collectors.minBy(Comparator.comparing(eli -> eli.getRank())))));
-                    //We insert in the Map all genes with data, with a null rank if they don't have one
-                    Map<Gene, ExpressionLevelInfo> geneToMinRank = genesWithData.stream()
-                    .map(g -> new AbstractMap.SimpleEntry<>(g, geneToMinRankOptional.containsKey(g)? geneToMinRankOptional.get(g).get(): null))
+                                    Collectors.maxBy(Comparator.comparing(eli -> eli.getExpressionScore())))));
+                    //We insert in the Map all genes with data, with a null expr score if they don't have one
+                    Map<Gene, ExpressionLevelInfo> geneToMaxExprScore = genesWithData.stream()
+                    .map(g -> new AbstractMap.SimpleEntry<>(g, geneToMaxExprScoreOptional.containsKey(g)? geneToMaxExprScoreOptional.get(g).get(): null))
                     //Collectors.toMap does not accept null values,
                     //see https://stackoverflow.com/a/24634007/1768736
                     .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), Map::putAll);
  
                     return new AbstractMap.SimpleEntry<>(e.getKey(),
-                            new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToMinRank));
+                            new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToMaxExprScore));
                 })
                 //And we create the final Map condToCounts
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));

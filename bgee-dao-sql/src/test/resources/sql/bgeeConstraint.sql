@@ -190,7 +190,7 @@ add unique(geneId, speciesId);
 
 /*!40000 ALTER TABLE `geneToOma` DISABLE KEYS */;
 alter table geneToOma
-add primary key (bgeeGeneId, omaNodeId, taxonId);
+add primary key (bgeeGeneId, OMAGroupId, taxonId);
 /*!40000 ALTER TABLE `geneToOma` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `geneNameSynonym` DISABLE KEYS */;
@@ -236,12 +236,18 @@ add primary key(anatEntityId, stageId, speciesId, sex, sexInferred, strain),
 add unique(conditionId);
 /*!40000 ALTER TABLE `cond` ENABLE KEYS */;
 
+/*!40000 ALTER TABLE `remapCond` DISABLE KEYS */;
+alter table remapCond
+add primary key(incorrectConditionId, remappedConditionId);
+/*!40000 ALTER TABLE `remapCond` ENABLE KEYS */;
+
 /*!40000 ALTER TABLE `globalCond` DISABLE KEYS */;
 alter table globalCond
 modify globalConditionId mediumint unsigned not null auto_increment primary key,
 -- not a primary key as for table cond, because some field can be null
 add unique(anatEntityId, stageId, speciesId, sex, strain);
 /*!40000 ALTER TABLE `globalCond` ENABLE KEYS */;
+
 /*!40000 ALTER TABLE `globalCondToCond` DISABLE KEYS */;
 alter table globalCondToCond
 -- we set up this primary key using conditionRelationOrigin to benefit from the clustered index

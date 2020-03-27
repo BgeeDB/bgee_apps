@@ -483,6 +483,102 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='panel-body'>");
 
+        this.writeOneNews("2020-03-26", "Release of Bgee version 14.1"
+                + "<p>This is an incremental update of Bgee, with an updated RNA-Seq dataset, "
+                + "using the same genomes and ontologies as for the previous version Bgee 14.0. "
+                + "New RNA-Seq libraries have been added; some libraries previously integrated in Bgee "
+                + "have been discarded following corrections and improvements of quality controls. "
+                + "The Affymetrix, <i>in situ</i> hybridization, and EST datasets, are the same as "
+                + "for the previous release of Bgee 14.0. "
+                + "All calls of presence/absence of expression, expression scores, "
+                + "and all the Bgee tools and download files, have been updated accordingly.</p>"
+                + "<p>For most species in Bgee, notably non-human primates and farm and domestic animals, "
+                + "this represents a major improvement of the anatomy and life stage coverage of the data, "
+                + "making all Bgee tools much more useful, notably <a href='" + urlTopAnat.getRequestURL()
+                + "' title='Perform gene expression enrichment tests with TopAnat'>"
+                + "TopAnat</a> and the <a href='" + urlGenePage.getRequestURL() + "' title='Gene page'>"
+                + "gene pages</a>.</p>"
+                + "<ul>"
+                + "  <li>For human, 663 RNA-Seq libraries added, 13 removed, for a total of 5,676 libraries in Bgee 14.1; "
+                + "  there are now in total 1,794 conditions annotated in Bgee, in 334 anatomical entities.</li>"
+                + "  <li>For model organisms: "
+                + "    <ul>"
+                + "      <li>197 libraries added for mouse (total 330 libraries); "
+                + "      there are now in total 13,821 conditions annotated in Bgee, "
+                + "      in 3,275 anatomical entities.</li>"
+                + "      <li>193 added for <i>Xenopus tropicalis</i> (total 259); "
+                + "      4,808 conditions annotated in Bgee, in 395 anatomical entities.</li>"
+                + "      <li>239 added for <i>Drosophila melanogaster</i> (total 253); "
+                + "      5,704 conditions annotated in Bgee, in 1,138 anatomical entities.</li>"
+                + "      <li>80 added for <i>Danio rerio</i> (total 147); "
+                + "      7,307 conditions annotated in Bgee, in 1,292 anatomical entities.</li>"
+                + "      <li>9 libraries removed for <i>Caenorhabditis elegans</i> (total 41), "
+                + "      following improvements of quality controls; "
+                + "      745 conditions annotated in Bgee, in 360 anatomical entities.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>Addition of data also in non-human primates: "
+                + "    <ul>"
+                + "      <li>235 libraries added for <i>Pan troglodytes</i> (total 250 libraries); "
+                + "      there are now in total 70 conditions annotated in Bgee, "
+                + "      in 26 anatomical entities.</li>"
+                + "      <li>196 libraries added, 48 removed for <i>Macaca mulatta</i> (total 238); "
+                + "      50 conditions annotated in Bgee, in 25 anatomical entities.</li>"
+                + "      <li>1 library added for <i>Pan paniscus</i> (total 13); "
+                + "      12 conditions annotated in Bgee, in 7 anatomical entities.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>For farm and domestic animals:"
+                + "    <ul>"
+                + "      <li>224 libraries added for <i>Equus caballus</i> (total 232); "
+                + "      there are now in total 58 conditions annotated in Bgee, "
+                + "      in 24 anatomical entities.</li>"
+                + "      <li>159 added for <i>Sus scrofa</i> (total 169); "
+                + "      82 conditions annotated in Bgee, in 41 anatomical entities.</li>"
+                + "      <li>135 added for <i>Canis lupus familiaris</i> (total 141); "
+                + "      105 conditions annotated in Bgee, in 54 anatomical entities.</li>"
+                + "      <li>88 added for <i>Bos taurus</i> (total 121); "
+                + "      22 conditions annotated in Bgee, in 19 anatomical entities.</li>"
+                + "      <li>49 added for <i>Oryctolagus cuniculus</i> (total 55); "
+                + "      24 conditions annotated in Bgee, in 19 anatomical entities.</li>"
+                + "      <li>3 added for <i>Gallus gallus</i> (total 48); "
+                + "      30 conditions annotated in Bgee, in 14 anatomical entities.</li>"
+                + "      <li>23 added for <i>Felis catus</i> (total 32); "
+                + "      15 conditions annotated in Bgee, in 11 anatomical entities.</li>"
+                + "      <li>19 added for <i>Cavia porcellus</i> (total 28); "
+                + "      6 conditions annotated in Bgee, in 5 anatomical entities.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>Other species with changes:"
+                + "    <ul>"
+                + "      <li>89 libraries added for <i>Monodelphis domestica</i> (total 108); "
+                + "      there are now in total 51 conditions annotated in Bgee, "
+                + "      in 24 anatomical entities.</li>"
+                + "      <li>70 added for <i>Rattus norvegicus</i> (total 106); "
+                + "      64 conditions annotated in Bgee, in 22 anatomical entities.</li>"
+                + "      <li>27 added for <i>Anolis carolinensis</i> (total 31); "
+                + "      20 conditions annotated in Bgee, in 15 anatomical entities.</li>"
+                + "      <li>4 added for <i>Ornithorhynchus anatinus</i> (total 21); "
+                + "      16 conditions annotated in Bgee, in 9 anatomical entities.</li>"
+                + "      <li>2 added, 4 removed for <i>Drosophila simulans</i> (total 15); "
+                + "      7 conditions annotated in Bgee, in 4 anatomical entities.</li>"
+                + "      <li>4 removed for <i>Drosophila pseudoobscura</i> (total 10); "
+                + "      6 conditions annotated in Bgee, in 4 anatomical entities.</li>"
+                + "    </ul>"
+                + "  </li>"
+                + "  <li>Update of the <a href='" + urlExprComp.getRequestURL()
+                + "'>Expression Comparison page</a> to display expression scores rather than expression ranks."
+                + "  </li>"
+                + "  <li>Update of the menu, of the <a href='" + urlCollaborations.getRequestURL()
+                + "'>collaboration page</a>, of the <a href='" + urlSparql.getRequestURL()
+                + "'>SPARQL documentation page</a> (notably to access archived version of Bgee, "
+                + "starting with Bgee 14.0)."
+                + "  </li>"
+                + "</ul>"
+                + "<p>You can still access Bgee version 14.0 at <a title='Archive site Bgee version 14' "
+                + "href='" + this.prop.getBgeeRootDirectory() + "bgee14' target='_blank' rel='noopener'>"
+                + this.prop.getBgeeRootDirectory() + "bgee14</a>.</p>");
+
         this.writeOneNews("2019-10-05",
                 "<ul>" +
                 "    <li>New score on <a href='" + urlGenePage.getRequestURL() + "' title='Gene page'>" + 
@@ -564,7 +660,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "    </ul>"
                 + "  </li>"
                 + "</ul>"
-                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "You can still access Bgee 13 at <a title='Archive site Bgee version 13' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
@@ -588,7 +684,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "  </li>"
                 + "  <li>Update of download pages to make it easier to chose files to retrieve; inclusion of gene ranks (as used in gene pages) in call files..</li>"
                 + "</ul>"
-                + "You can still access to Bgee 13 at <a title='Archive site Bgee version 13' "
+                + "You can still access Bgee 13 at <a title='Archive site Bgee version 13' "
                 + "href='" + this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>"
                 + this.prop.getBgeeRootDirectory() + "bgee13</a>.");
 
@@ -695,10 +791,12 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
         this.writeln("View archive sites:");
-        this.writeln("<a title='Archive site Bgee version 12' href='" + 
-                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener'>version 12</a>");
+        this.writeln("<a title='Archive site Bgee version 14.0' href='" +
+                this.prop.getBgeeRootDirectory() + "bgee14' target='_blank' rel='noopener'>version 14.0</a>");
         this.writeln("<a title='Archive site Bgee version 13' href='" +
                 this.prop.getBgeeRootDirectory() + "bgee13' target='_blank' rel='noopener'>version 13</a>");
+        this.writeln("<a title='Archive site Bgee version 12' href='" +
+                this.prop.getBgeeRootDirectory() + "bgee12' target='_blank' rel='noopener'>version 12</a>");
         this.writeln("</div>");
         
         this.writeln("</div>"); // close bgee_more_info row

@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,9 +30,11 @@ import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter.Qualifier;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
+import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.DataQuality;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -325,7 +330,11 @@ implements GlobalExpressionCallDAO {
                     }
                     return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                 })
-                .collect(Collectors.joining(" + ", "((", ")"))
+                //add CAST of meanRank as a decimal to avoid floating point calculation by MySQL 
+                //that was generating ranks lower than 1. The mean rank is returned with a decimal(9,2) 
+                //because it is the same type than the one used to save the rank per datatype in the 
+                //database (no precision problem).
+                .collect(Collectors.joining(" + ", "(CAST((", ")"))
                 //generate, e.g.:
                 // / (
                 //IF(globalExpression.estMaxRank IS NULL, 0, globalExpression.estMaxRank)
@@ -335,7 +344,7 @@ implements GlobalExpressionCallDAO {
                 .map(dataType -> {
                     String weightSql = dataTypeToWeightSql.get(dataType);
                     return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
-                .collect(Collectors.joining(" + ", "/ (", ")))")));
+                .collect(Collectors.joining(" + ", "/ (", ")as decimal(9,2))))")));
     }
 
     private static String generateTableReferences(final String globalExprTableName,
@@ -574,12 +583,14 @@ implements GlobalExpressionCallDAO {
                                                 e.getValue()? " OR ": " AND ", "(", ")"));
                             }).collect(Collectors.joining(" AND ", "(", ")")));
                 }
-                
-                if (!dataFilter.getExperimentCountFilters().isEmpty()) {
+
+                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
+                if (!daoExperimentCountFilters.isEmpty()) {
                     if (previousClause) {
                         sb.append(" AND ");
                     }
-                    sb.append(dataFilter.getExperimentCountFilters().stream()
+                    previousClause = true;
+                    sb.append(daoExperimentCountFilters.stream()
                         .map(countOrFilterCollection ->
                             countOrFilterCollection.stream()
                                 .map(countFilter -> {
@@ -618,6 +629,20 @@ implements GlobalExpressionCallDAO {
                 return sb.toString();
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
+    }
+    private static List<List<DAOExperimentCountFilter>> getDAOExperimentCountFilters(CallDataDAOFilter dataFilter) {
+        log.entry(dataFilter);
+        List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = dataFilter.getExperimentCountFilters();
+        if (dataFilter.getExperimentCountFilters().isEmpty() &&
+                !dataFilter.getDataTypes().isEmpty() &&
+                !dataFilter.getDataTypes().containsAll(Arrays.asList(DAODataType.values()))) {
+            daoExperimentCountFilters = new ArrayList<>();
+            daoExperimentCountFilters.add(Arrays.stream(CallType.values())
+            .flatMap(ct -> Arrays.stream(DataQuality.values())
+                    .map(dq -> new DAOExperimentCountFilter(ct, dq, DAOPropagationState.ALL, Qualifier.GREATER_THAN, 0)))
+            .collect(Collectors.toList()));
+        }
+        return log.exit(daoExperimentCountFilters);
     }
 
     private static String getExpCountFilterFieldName(DAODataType dataType,
@@ -763,7 +788,8 @@ implements GlobalExpressionCallDAO {
                     }
                 }
 
-                for (Set<DAOExperimentCountFilter> countOrFilters: dataFilter.getExperimentCountFilters()) {
+                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
+                for (List<DAOExperimentCountFilter> countOrFilters: daoExperimentCountFilters) {
                     for (DAOExperimentCountFilter countFilter : countOrFilters) {
                         stmt.setInt(offsetParamIndex, countFilter.getCount());
                         offsetParamIndex++;
@@ -1422,7 +1448,12 @@ implements GlobalExpressionCallDAO {
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
                     && (experimentCounts.isEmpty() || experimentCounts.stream().allMatch(c -> c.getCount() == 0))
                     && (propagatedCount == null || propagatedCount == 0)
-                    && rank == null && rankNorm == null && weightForMeanRank == null)) {
+                    && rank == null && rankNorm == null
+                    //Bug fix: for EST and in situ data, weightForMeanRank is retrieved from globalCond table,
+                    //not globalExpression table. It means we can have a non-null value for weightForMeanRank
+                    //even if there is no EST or in situ data for this call.
+                    //&& weightForMeanRank == null
+                    )) {
                 // If all variables are null/empty/0, this means that there is no data for the current data type
                 return log.exit(null);
             }

@@ -226,11 +226,11 @@ http://bootsnipp.com/snippets/featured/large-dropdown-menu
 	margin-top: 23px;
 	width: 80px;
 	height: 30px;
-	transform: rotate(7deg);
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-moz-transform: rotate(90deg); /* Firefox */
 	-webkit-transform: rotate(90deg); /* Safari and Chrome */
 	-o-transform: rotate(90deg); /* Opera */
+	transform: rotate(7deg);
 }
 
 .rotate input:hover {
@@ -319,9 +319,9 @@ textarea {
 	background: linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(253,253,253,1) 63%, rgba(252,252,252,1) 78%, rgba(245,245,245,1) 100%);
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f5f5f5', GradientType=1 );
 
-	border-radius: 5px 5px 0px 0px;
 	-moz-border-radius: 5px 5px 0px 0px;
 	-webkit-border-radius: 5px 5px 0px 0px;
+	border-radius: 5px 5px 0px 0px;
 	border: 1px solid #f4f6f7;
 
 }
@@ -390,11 +390,12 @@ a.btn {
 	vertical-align:top;
 	margin-top:23px;
 	width:80px;height:30px;
-	transform:rotate(7deg);
 	-ms-transform:rotate(90deg); /* IE 9 */
 	-moz-transform:rotate(90deg); /* Firefox */
 	-webkit-transform:rotate(90deg); /* Safari and Chrome */
-	-o-transform:rotate(90deg); /* Opera */}
+	-o-transform:rotate(90deg); /* Opera */
+	transform:rotate(7deg);
+}
 
 .rotate input:hover{ box-shadow:0px 0px 4px #fff; }
 .inputWrapper {
@@ -604,9 +605,9 @@ div.loader div.anim-cover {
 }
 /* Used to initialize the ng-leave animation state. */
 div.loader div.anim-cover.ng-leave {
-	opacity: 0.75 ;
-	transition: all linear 200ms ;
-	-webkit-transition: all linear 200ms ;
+	opacity: 0.75;
+	-webkit-transition: all linear 200ms;
+	transition: all linear 200ms;
 }
 /* Used to set the end properties of the ng-leave animation state. */
 div.loader div.anim-cover.ng-leave-active {

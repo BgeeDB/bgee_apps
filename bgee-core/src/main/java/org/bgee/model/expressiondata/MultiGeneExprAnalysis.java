@@ -1,6 +1,5 @@
 package org.bgee.model.expressiondata;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,10 +37,10 @@ public abstract class MultiGeneExprAnalysis<T> {
 
         private final Map<ExpressionSummary, Set<Gene>> callTypeToGenes;
         private final Set<Gene> genesWithNoData;
-        private final Map<Gene, ExpressionLevelInfo> geneToMinRank;
+        private final Map<Gene, ExpressionLevelInfo> geneToExprLevelInfo;
 
         public MultiGeneExprCounts(Map<ExpressionSummary, Collection<Gene>> callTypeToGenes,
-                Collection<Gene> genesWithNoData, Map<Gene, ExpressionLevelInfo> geneToMinRank) {
+                Collection<Gene> genesWithNoData, Map<Gene, ExpressionLevelInfo> geneToExprLevelInfo) {
 
             this.callTypeToGenes = Collections.unmodifiableMap(
                     callTypeToGenes == null? new HashMap<>():
@@ -53,8 +52,8 @@ public abstract class MultiGeneExprAnalysis<T> {
 
             this.genesWithNoData = Collections.unmodifiableSet(
                     genesWithNoData == null? new HashSet<>(): new HashSet<>(genesWithNoData));
-            this.geneToMinRank = Collections.unmodifiableMap(
-                    geneToMinRank == null? new HashMap<>(): new HashMap<>(geneToMinRank));
+            this.geneToExprLevelInfo = Collections.unmodifiableMap(
+                    geneToExprLevelInfo == null? new HashMap<>(): new HashMap<>(geneToExprLevelInfo));
         }
 
         public Map<ExpressionSummary, Set<Gene>> getCallTypeToGenes() {
@@ -68,8 +67,8 @@ public abstract class MultiGeneExprAnalysis<T> {
          *          being a {@code ExpressionLevelInfo} containing the gene min rank in the condition, if any
          *          (can be {@code null} if no rank available for the gene).
          */
-        public Map<Gene, ExpressionLevelInfo> getGeneToMinRank() {
-            return geneToMinRank;
+        public Map<Gene, ExpressionLevelInfo> getGeneToExprLevelInfo() {
+            return geneToExprLevelInfo;
         }
 
         @Override
@@ -78,7 +77,7 @@ public abstract class MultiGeneExprAnalysis<T> {
             int result = 1;
             result = prime * result + ((callTypeToGenes == null) ? 0 : callTypeToGenes.hashCode());
             result = prime * result + ((genesWithNoData == null) ? 0 : genesWithNoData.hashCode());
-            result = prime * result + ((geneToMinRank == null) ? 0 : geneToMinRank.hashCode());
+            result = prime * result + ((geneToExprLevelInfo == null) ? 0 : geneToExprLevelInfo.hashCode());
             return result;
         }
         @Override
@@ -107,11 +106,11 @@ public abstract class MultiGeneExprAnalysis<T> {
             } else if (!genesWithNoData.equals(other.genesWithNoData)) {
                 return false;
             }
-            if (geneToMinRank == null) {
-                if (other.geneToMinRank != null) {
+            if (geneToExprLevelInfo == null) {
+                if (other.geneToExprLevelInfo != null) {
                     return false;
                 }
-            } else if (!geneToMinRank.equals(other.geneToMinRank)) {
+            } else if (!geneToExprLevelInfo.equals(other.geneToExprLevelInfo)) {
                 return false;
             }
             return true;
@@ -122,7 +121,7 @@ public abstract class MultiGeneExprAnalysis<T> {
             StringBuilder builder = new StringBuilder();
             builder.append("MultiGeneExprCounts [callTypeToGenes=").append(callTypeToGenes)
                    .append(", genesWithNoData=") .append(genesWithNoData)
-                   .append(", geneToMinRank=") .append(geneToMinRank)
+                   .append(", geneToExprLevelInfo=") .append(geneToExprLevelInfo)
                    .append("]");
             return builder.toString();
         }

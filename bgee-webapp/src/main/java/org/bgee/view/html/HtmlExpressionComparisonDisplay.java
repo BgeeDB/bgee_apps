@@ -121,8 +121,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("<div id='bgee_introduction'>");
 
-        this.writeln("<p>Compare expression of several genes. If genes belong to several species,"
-                + "comparisons will be performed in homologous organs. Please enter one"
+        this.writeln("<p>Compare expression of several genes. If genes belong to several species, "
+                + "comparisons will be performed in homologous organs. Please enter one "
                 + "Ensembl ID per line.</p>");
 
         this.writeln("</div>");
@@ -226,7 +226,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<h2>Results</h2>");
 
-        sb.append("<p>Results are ordered by 'Score', 'Genes with presence of expression' then 'Minimum rank'. " +
+        sb.append("<p>Results are ordered by 'Conservation score', then 'Maximum expression score'. " +
                 "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
@@ -234,8 +234,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("        <thead>");
         sb.append("            <tr>");
         sb.append("                <th>Anatomical entities</th>");
-        sb.append("                <th>Score</th>");
-        sb.append("                <th>Minimum rank</th>");
+        sb.append("                <th>Conservation score</th>");
+        sb.append("                <th>Max expression score</th>");
         sb.append("                <th>Genes with presence of expression</th>");
         sb.append("                <th>Genes with absence of expression</th>");
         sb.append("                <th>Genes with no data</th>");
@@ -294,17 +294,17 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         }
 
         // Score
-        double score = (double) Math.abs(expressedGenes.size() - notExpressedGenes.size())
+        double score = (double) (expressedGenes.size() - notExpressedGenes.size())
                 / ((double) expressedGenes.size() + notExpressedGenes.size());
         row.append("<td>").append(String.format(Locale.US, "%.2f", score)).append("</td>");
         
-        // Min rank 
-        Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToMinRank().values().stream()
-                .filter(Objects::nonNull)
-                .min(Comparator.comparing(ExpressionLevelInfo::getRank,
-                        Comparator.nullsLast(BigDecimal::compareTo)));
+        // Max expression score
+        Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToExprLevelInfo().values().stream()
+                .filter(eli -> eli != null && eli.getExpressionScore() != null)
+                .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
+                        Comparator.nullsFirst(BigDecimal::compareTo)));
         
-        row.append("<td>").append(collect.isPresent()? collect.get().getFormattedRank(): "").append("</td>");
+        row.append("<td>").append(collect.isPresent()? collect.get().getFormattedExpressionScore(): "NA").append("</td>");
 
         // Counts
         row.append(this.getGeneCountCell(expressedGenes));

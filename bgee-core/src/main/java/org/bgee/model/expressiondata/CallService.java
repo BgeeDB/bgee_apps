@@ -270,6 +270,10 @@ public class CallService extends CommonService {
      * A {@code BigDecimal} representing the minimum value that can take an expression score.
      */
     public final static BigDecimal EXPRESSION_SCORE_MIN_VALUE = new BigDecimal("0.01");
+    /**
+     * A {@code BigDecimal} representing the maximum value that can take an expression score.
+     */
+    public final static BigDecimal EXPRESSION_SCORE_MAX_VALUE = new BigDecimal("100");
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
@@ -687,7 +691,7 @@ public class CallService extends CommonService {
                     "This method is for comparing the expression of genes in a single species"));
         }
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.
@@ -712,15 +716,15 @@ public class CallService extends CommonService {
                             c -> c.getSummaryCallType(),
                             c -> new HashSet<>(Arrays.asList(c.getGene())),
                             (v1, v2) -> {v1.addAll(v2); return v1;}));
-            //Store rank info for each Gene with data
-            Map<Gene, ExpressionLevelInfo> geneToRank = list.stream()
+            //Store expression score info for each Gene with data
+            Map<Gene, ExpressionLevelInfo> geneToExprScore = list.stream()
             //Collectors.toMap does not accept null values,
             //see https://stackoverflow.com/a/24634007/1768736
             .collect(HashMap::new, (m, v) -> m.put(v.getGene(), v.getExpressionLevelInfo()), Map::putAll);
             Set<Gene> genesWithNoData = new HashSet<>(genes);
-            genesWithNoData.removeAll(geneToRank.keySet());
+            genesWithNoData.removeAll(geneToExprScore.keySet());
             return new AbstractMap.SimpleEntry<>(list.iterator().next().getCondition(),
-                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToRank));
+                    new MultiGeneExprCounts(callTypeToGenes, genesWithNoData, geneToExprScore));
         })
         //And we create the final Map condToCounts
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
@@ -1822,9 +1826,15 @@ public class CallService extends CommonService {
 
     private static BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
         log.entry(rank, maxRank);
-        if (rank == null || maxRank == null ||
-                rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
-            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be null or less than or equal to 0"));
+        if (maxRank == null) {
+            throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
+        }
+        if (rank == null) {
+            log.info("Rank is null, cannot compute expression score");
+            return log.exit(null);
+        }
+        if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
+            throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
         }
         if (rank.compareTo(maxRank) > 0) {
             throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
@@ -1836,6 +1846,12 @@ public class CallService extends CommonService {
         //We want expression score to be at least greater than EXPRESSION_SCORE_MIN_VALUE
         if (expressionScore.compareTo(EXPRESSION_SCORE_MIN_VALUE) < 0) {
             expressionScore = EXPRESSION_SCORE_MIN_VALUE;
+        }
+        if (expressionScore.compareTo(EXPRESSION_SCORE_MAX_VALUE) > 0) {
+            log.warn("Expression score should always be lower or equals to " + EXPRESSION_SCORE_MAX_VALUE
+                    + ". The value was " + expressionScore + "and was then manually updated to "
+                    + EXPRESSION_SCORE_MAX_VALUE + ".");
+            expressionScore = EXPRESSION_SCORE_MAX_VALUE;
         }
         return log.exit(expressionScore);
     }

@@ -25,10 +25,10 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
     /**
      * Default constructor.
      *
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     * @param response          A {@code HttpServletResponse} that will be used to display the
      *                          page to the client.
-     * @param requestParameters A {@code RequestParameters} handling the parameters of the 
-     *                          current request, to determine the requested displayType, 
+     * @param requestParameters A {@code RequestParameters} handling the parameters of the
+     *                          current request, to determine the requested displayType,
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
@@ -55,7 +55,8 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
                 " (in alphabetical order).</p>");
 
 
-        this.writeln("<h2>BioSODA</h2>");
+        // Bio-SODA
+        this.writeln("<h2>Bio-SODA</h2>");
         this.writeln("<p><a target='_blank' rel='noopener' title='BioSODA project description' href='" +
                 "https://www.zhaw.ch/no_cache/en/research/research-database/project-detailview/projektid/1493/'>" +
                 "BioSODA project</a> aims at enabling sophisticated semantic queries across large, " +
@@ -83,35 +84,58 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<p>The SPARQL endpoint and '" + EASY_BGEE_NAME + "' are available and free " +
                 "to use for other projects or applications.</p>");
+
+
+        // INODE
+        this.writeln("<h2>INODE</h2>");
+
+        this.writeln("<p>The <a href='http://www.inode-project.eu/' target='_blank' rel='noopener'>INODE "
+                   + "(Intelligent Open Data Exploration) project</a> aims at simplifying access to data, "
+                   + "by allowing a more dialectic and intuitive interaction with data, "
+                   + "similar to a dialog with a human. The goal of INODE is to offer a suite of agile, "
+                   + "fit-for-purpose and sustainable services for exploration of open data sets. "
+                   + "It is funded by Horizon 2020 (<a href='https://cordis.europa.eu/project/id/863410/fr' "
+                   + "target='_blank' rel='noopener'>project 863410</a>).</p>");
+
+        this.writeln("<p>The Bgee team is one of the three use-case providers which the system "
+                   + "will be initially developed and evaluated with. Bgee provides its expression data, "
+                   + "and the cancer biomarker data from OncoMX (see below). The Bgee team collaborates on "
+                   + "specifying the requirements of the system, adapting the data structure and format, "
+                   + "and testing and evaluating the system.</p>");
+
+
+        // OMA
         this.writeln("<h2>OMA</h2>");
-        
+
         this.writeln("<p>The <a href='https://omabrowser.org/oma/home/' target='_blank' rel='noopener'>OMA " +
                 "(Orthologous MAtrix) project</a> is a method and database " +
-                "for the inference of orthologs among complete genomes.<p>");
+                "for the inference of orthologs among complete genomes.</p>");
 
         this.writeln("<p>As part of a scientific collaboration with OMA, we generated files " +
                 "containing gene expression in homologous anatomical entities. " +
                 "These files are available on <a href='" +
                 this.prop.getFTPRootDirectory() +"collaboration/branch_length_expression_divergence/'>" +
-                "Bgee FTP</a>.<p>");
+                "Bgee FTP</a>.</p>");
 
         this.writeln("<p>The homologous expression files are also available and free " +
-                "to use for other projects or applications.<p>");
+                "to use for other projects or applications.</p>");
 
+
+        // OncoMX
         this.writeln("<h2>OncoMX</h2>");
 
         this.writeln("<p><a href='https://www.oncomx.org/' target='_blank' rel='noopener'>OncoMX</a> is " +
                 "a knowledgebase of unified cancer genomics data from integrated mutation, " +
                 "expression, literature, and biomarker databases, accessible through web portal. " +
-                "It is supported by <a href='https://www.cancer.gov/' target='_blank' rel='noopener'>NIH NCI</a>.<p>");
-        
+                "It is supported by <a href='https://www.cancer.gov/' target='_blank' rel='noopener'>NIH NCI</a>.</p>");
+
         this.writeln("<p>For this project, we generated files containing a subset of calls of " +
                 "presence/absence of expression with expression level categories specific to OncoMX. " +
                 "Files are available on <a href='" + this.prop.getFTPRootDirectory() +
                 "/collaboration/oncoMX/'>Bgee FTP</a>. You can see the description of these files in " +
                 "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/collaboration/oncoMX" +
                 "#information-about-the-files-generated-for-oncomx' target='_blank' rel='noopener'>" +
-                "Bgee pipeline documentation</a><p>");
+                "Bgee pipeline documentation</a></p>");
 
         this.writeln("</div>"); // close CENTERED_ELEMENT_CLASS
 
@@ -126,7 +150,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
     protected void includeCss() {
         log.entry();
         super.includeCss();
-        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
         log.exit();
     }

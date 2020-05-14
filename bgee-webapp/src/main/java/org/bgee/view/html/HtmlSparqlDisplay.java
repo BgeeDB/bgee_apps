@@ -93,7 +93,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         
         this.writeln("<h2>Web interface to query the Bgee SPARQL endpoint</h2>");
         this.writeln("<p>Bgee SPARQL queries can be run using the web interface "
-                + "<a href='" + this.prop.getSparqlCurrentUrl() + "' "
+                + "<a href='http://biosoda.expasy.org' "
                 + "title='Link to Bio-Query' class='external_link' target='_blank' rel='noopener'>Bio-Query</a> "
                 + "search created for the <a href='" + urlCollabs.getRequestURL()
                 + "' title='Bgee collaborations'>BioSODA project</a>. "

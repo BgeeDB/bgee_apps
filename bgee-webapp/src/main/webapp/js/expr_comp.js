@@ -200,15 +200,9 @@ $( document ).ready( function(){
         buttons: getButtons([0, 1, 2, 3, 4, 5, 7, 8, 9, 10]),
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
-<<<<<<< HEAD
-            { responsivePriority: 1, targets: 0 }, // Anatomical entities
-            { responsivePriority: 1, targets: 1 }, // Conservation score
-            { responsivePriority: 1, targets: 2 }, // Max expression score
-=======
             { width: "20%", responsivePriority: 1, targets: 0 }, // Anatomical entities
-            { width: "7%", responsivePriority: 3, targets: 1 }, // Score
-            { width: "7%", responsivePriority: 2, targets: 2 }, // Min rank
->>>>>>> archive_common_bgee_v14_and_later
+            { width: "7%", responsivePriority: 3, targets: 1 }, // Conservation score
+            { width: "7%", responsivePriority: 2, targets: 2 }, // Max expression score
             { type: 'scientific', targets: 2 },    // sort using the scientific type
             { width: "20%", responsivePriority: 4, targets: 3 }, // Gene count with presence of expression
             { type: 'gene-number', targets: 3 },   // sort using the gene-number type

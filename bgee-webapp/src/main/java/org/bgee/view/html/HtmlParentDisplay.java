@@ -96,7 +96,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
      */
     protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
-            "/bgee_pipeline";
+            "/bgee_pipeline/tree/master";
     
     /**
      * A {@code String} that is the URL of the Bgee pipeline develop branch in GitHub.

@@ -230,7 +230,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
-        sb.append("    <table class='expr_comp stripe compact ").append(tableClass).append("'>");
+        sb.append("    <table class='expr_comp stripe compact responsive ").append(tableClass).append("'>");
         sb.append("        <thead>");
         sb.append("            <tr>");
         sb.append("                <th>Anatomical entities</th>");

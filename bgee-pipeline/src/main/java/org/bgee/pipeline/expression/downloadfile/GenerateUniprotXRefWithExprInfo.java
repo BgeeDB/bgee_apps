@@ -202,7 +202,7 @@ public class GenerateUniprotXRefWithExprInfo {
                     .append(callsByAnatEntity.keySet().iterator().next().getName())
                     .append(" and ")
                     .append(callsByAnatEntity.size())
-                    .append(" other tissue").append(callsByAnatEntity.size() > 1? "s": "");
+                    .append(" other tissue").append(callsByAnatEntity.size() > 1? "s.": ".");
                     
                 return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, sb.toString());
 
@@ -210,7 +210,7 @@ public class GenerateUniprotXRefWithExprInfo {
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         
         Instant end = Instant.now();
-        log.debug("Time needed to retrieve expressionSummary of {} genes is {} hours", xrefList.size(),
+        log.info("Time needed to retrieve expressionSummary of {} genes is {} hours", xrefList.size(),
                 Duration.between(start, end).toHours());
         
         return log.exit(xrefList.parallelStream().map( xref -> {

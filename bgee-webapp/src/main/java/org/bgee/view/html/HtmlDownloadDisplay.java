@@ -77,8 +77,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayGeneExpressionCallDownloadPage(List<SpeciesDataGroup> groups, 
             Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
-        
-        this.startDisplay("Bgee gene expression call download page");
+        String title = "Bgee gene expression call download page";
+        String description = title + ".";
+        this.startDisplay(title, null, description);
         
         this.writeln(this.getExprCallSchemaMarkups(groups));
 
@@ -175,8 +176,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     public void displayProcessedExpressionValuesDownloadPage(List<SpeciesDataGroup> groups,
     		                                                 Map<Integer, Set<String>> keywords) {
         log.entry(groups, keywords);
-        
-        this.startDisplay("Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page");
+        String title = "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " download page";
+        String description = title + ".";
+        this.startDisplay(title, null, description);
         this.writeln(getProcValuesSchemaMarkups(groups));
   		this.writeln(getDataGroupScriptTag(groups));
         this.writeln(getKeywordScriptTag(keywords, groups, DownloadPageType.PROC_EXPR_VALUES));
@@ -220,7 +222,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         log.entry();
         
-        this.startDisplay("Bgee data dumps download");
+        String title = "Bgee data dumps download page";
+        String description = title + ".";
+        this.startDisplay(title, null, description);
         
         this.writeln("<h1>Bgee data dumps</h1>");
         

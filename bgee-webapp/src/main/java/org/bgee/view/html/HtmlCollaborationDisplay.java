@@ -44,7 +44,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
     public void displayCollaborationPage() {
         log.entry();
 
-        this.startDisplay("Bgee collaborations", "WebPage");
+        this.startDisplay("Bgee collaborations", "WebPage", "Bgee collaborations page.");
 
         this.writeln("<h1 property='schema:name'>Bgee collaborations</h1>");
 

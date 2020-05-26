@@ -73,7 +73,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
             title += "release " + version + " ";
         }
         title += "about page";
-        this.startDisplay(title, "AboutPage");
+        String description = title + ".";
+        this.startDisplay(title, "AboutPage", description);
 
         this.writeln("<h1 property='schema:name'>About</h1>");
 

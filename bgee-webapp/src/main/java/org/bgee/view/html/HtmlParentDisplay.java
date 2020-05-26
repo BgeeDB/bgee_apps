@@ -360,7 +360,23 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void startDisplay(String title, String typeOfSchemaPage) {
         log.entry(title, typeOfSchemaPage);
-        
+        this.startDisplay(title, typeOfSchemaPage, null);
+        log.exit();
+    }
+    
+
+    /**
+     * Display the start of the HTML page (common to all pages).
+     *
+     * @param title             A {@code String} that is the title to be used for the page. 
+     * @param typeOfSchemaPage  A {@code String} that is the schema.org type of the page.
+     *                          If {@code null}, no property will be set.
+     * @param description       A {@code String} that is a description specific to the page.
+     *                          This description will be combined to the generic description 
+     *                          of Bgee. If {@code null}, only generic Bgee description will 
+     *                          be used.
+     */
+    protected void startDisplay(String title, String typeOfSchemaPage, String description) {
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -368,7 +384,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
-        this.writeln("<meta name='description' content='" + BGEE_DESCRIPTION + "'/>");
+        if (description != null) {
+            this.writeln("<meta name='description' content='" + description + " " + BGEE_DESCRIPTION + "'/>");
+        }
+        
         this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()

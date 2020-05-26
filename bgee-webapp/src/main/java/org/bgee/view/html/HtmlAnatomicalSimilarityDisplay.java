@@ -78,7 +78,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                                            List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
         log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
 
-        this.startDisplay("Anatomical homology");
+        this.startDisplay("Anatomical homology", null, "Bgee Anatomical Homology page.");
 
         this.addSchemaMarkups();
 

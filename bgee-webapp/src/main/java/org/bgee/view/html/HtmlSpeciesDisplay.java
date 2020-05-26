@@ -51,7 +51,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
     public void displaySpeciesHomePage(List<Species> speciesList) {
         log.entry(speciesList);
 
-        this.startDisplay("Bgee species list");
+        this.startDisplay("Bgee species list", null, "List of species in Bgee.");
 
         this.writeln("<h1>Bgee species list</h1>");
 
@@ -85,8 +85,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
     @Override
     public void displaySpecies(Species species, SpeciesDataGroup speciesDataGroup) {
         log.entry(species, speciesDataGroup);
-
-        this.startDisplay("Species: " + htmlEntities(species.getScientificName()), "WebPage");
+        String description = htmlEntities(species.getScientificName()) + " species in Bgee.";
+        this.startDisplay("Species: " + htmlEntities(species.getScientificName()), "WebPage", description);
 
         this.writeln(this.getSchemaMarkup(speciesDataGroup));
         

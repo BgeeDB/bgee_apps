@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.view.*;
-import org.bgee.view.csv.CsvGeneDisplay;
 
 /**
  * {@code ViewFactory} returning objects generating JSON views.

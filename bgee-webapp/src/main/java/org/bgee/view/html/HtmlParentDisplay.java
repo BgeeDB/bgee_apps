@@ -86,6 +86,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String BGEECALL_R_PACKAGE_URL =
             "https://bioconductor.org/packages/BgeeCall/";
+    
+    /**
+     * A {@code String} that is the URL of the container for BgeeCall and BgeeDB R packages
+     */
+    protected static final String R_PACKAGES_CONTAINER_URL =
+            "https://hub.docker.com/r/bgeedb/bgee_r";
 
     /**
      * A {@code String} that is the URL of the Bgee GitHub.

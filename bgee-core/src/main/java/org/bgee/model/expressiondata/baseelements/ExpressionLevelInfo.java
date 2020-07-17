@@ -188,7 +188,7 @@ public class ExpressionLevelInfo {
      */
     public String getFormattedExpressionScore() {
         log.entry();
-        return log.exit(formatExpressionNumber(this.expressionScore));
+        return log.exit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.DOWN)));
     }
     /**
      * @return  {@code QualitativeExpressionLevel} for an {@code ExpressionCall}

@@ -125,6 +125,20 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.writeln("<ul>");
         this.writeln("<li typeof='schema:ScholarlyArticle'>For the use of Bgee: "
+                + "<br>" + this.getAuthors(Arrays.asList("Frederic B. Bastian", "Julien Roux", "Anne Niknejad", "Aurélie Comte", 
+                        "Sara S. Fonseca Costa", "Tarcisio Mendes de Farias", "Sébastien Moretti", "Gilles Parmentier", 
+                        "Valentine Rech de Laval", "Marta Rosikiewicz", "Julien Wollbrett", "Amina Echchiki", 
+                        "Angélique Escoriza", "Walid Gharib", "Mar Gonzales-Porta", "Yohan Jarosz", "Balazs Laurenczy", 
+                        "Philippe Moret", "Emilie Person", "Patrick Roelli", "Komal Sanjeev", "Mathieu Seppey", 
+                        "Marc Robinson-Rechavi"))
+                + "<br>" + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative transcriptomics "
+                        + "in animals")
+                + "<br><em>in</em> " + this.getPeriodical("bioRxiv 2020.05.28.119560")
+                + "[<a href='https://doi.org/10.1101/2020.05.28.119560' "
+                + "title='Bgee paper in Biorxiv' target='_blank' rel='noopener' property='schema:url'>url</a>] "
+                + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
+                + "</li>");
+        this.writeln("<li typeof='schema:ScholarlyArticle'>Other Bgee papers: "
                 + "<br>" + this.getAuthors(Arrays.asList("Bastian FB", "Parmentier G", "Roux J",
                     "Moretti S", "Laudet V", "Robinson-Rechavi M"))
                 + "<br>" + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species")
@@ -132,7 +146,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + " <strong>Lecture Notes in Computer Science</strong>. "
                 + "5109:124-131. [<a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
                 + "title='Bgee paper in LNCS' target='_blank' rel='noopener' property='schema:url'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
+                + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a>"
+                + "</li>");
         this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: "
                 + "<br>" + this.getAuthors(Arrays.asList("Haendel MA", "Balhoff JP", "Bastian FB",
                     "Blackburn DC", "Blake JA", "Bradford Y", "Comte A", "Dahdul WM", "Dececchi TA",

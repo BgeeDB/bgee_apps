@@ -46,6 +46,8 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
 
     @Override
     public void displayPublications() {
+        log.entry();
+        
         this.startDisplay("Publications", "Publications");
         
         this.writeln("<h1 property='schema:name'>Publications</h1>");
@@ -224,7 +226,13 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
 
         this.writeln("</ul>");
+        
+        this.writeln("</div>"); // close specific class
+        this.writeln("</div>"); // close row
+        
+        this.endDisplay();
 
+        log.exit();
     }
     
     private String getTitle(String title) {

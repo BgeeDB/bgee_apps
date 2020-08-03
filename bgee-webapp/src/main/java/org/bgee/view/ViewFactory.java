@@ -129,6 +129,15 @@ public abstract class ViewFactory {
     public abstract AboutDisplay getAboutDisplay() throws IOException;
     
     /**
+     *                              
+     * @return A {@code PublicationDisplay} instance that is the view to be used
+     * 
+     * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
+     *                      response output.
+     */
+    public abstract PublicationDisplay getPublicationDisplay() throws IOException;
+    
+    /**
      *
      * @return A {@code PrivacyPolicyDisplay} instance that is the view to be used
      *

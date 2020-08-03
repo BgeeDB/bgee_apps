@@ -289,6 +289,9 @@ public class FrontController extends HttpServlet {
 //            } else if (requestParameters.isADAOPageCategory()) {
 //                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
 //                        serviceFactory, this.jobService, user);
+            } else if (requestParameters.isAPublicationPageCategory()) {
+                controller = new CommandPublication(response, requestParameters, this.prop, factory);
+                
             } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);

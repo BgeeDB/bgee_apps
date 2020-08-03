@@ -164,4 +164,8 @@ public class JsonFactory extends ViewFactory {
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
+    @Override
+    public PublicationDisplay getPublicationDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    }
 }

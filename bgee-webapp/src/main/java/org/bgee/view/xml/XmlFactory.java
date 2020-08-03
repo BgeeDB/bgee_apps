@@ -141,4 +141,9 @@ public class XmlFactory extends ViewFactory {
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
+
+    @Override
+    public PublicationDisplay getPublicationDisplay() throws IOException {
+        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
+   }
 }

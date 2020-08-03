@@ -465,6 +465,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         RequestParameters urlSparql = this.getNewRequestParameters();
         urlSparql.setPage(RequestParameters.PAGE_SPARQL);
+        
+        RequestParameters urlPublication = this.getNewRequestParameters();
+        urlPublication.setPage(RequestParameters.PAGE_PUBLICATION);
 
         RequestParameters urlCollaborations = this.getNewRequestParameters();
         urlCollaborations.setPage(RequestParameters.PAGE_COLLABORATIONS);

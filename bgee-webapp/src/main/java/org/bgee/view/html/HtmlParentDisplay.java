@@ -552,6 +552,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlAnatSim = this.getNewRequestParameters();
         urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
+        
+        RequestParameters urlPublications = this.getNewRequestParameters();
+        urlPublications.setPage(RequestParameters.PAGE_PUBLICATION);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
@@ -672,6 +675,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
         navbar.append("<li><a href='").append(urlCollaborations.getRequestURL())
                 .append("'>Bgee collaborations</a></li>");
+        navbar.append("<li><a href='").append(urlPublications.getRequestURL())
+        .append("'>Bgee publications</a></li>");
         navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
                 .append("'>Bgee sources</a></li>");
         navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank' rel='noopener'>Bgee blog</a></li>");

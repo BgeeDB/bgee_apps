@@ -62,6 +62,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         urlGeneSearchGenerator.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
+        RequestParameters urlPublicationsGenerator = this.getNewRequestParameters();
+        urlPublicationsGenerator.setPage(RequestParameters.PAGE_PUBLICATION);
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
         RequestParameters urlPrivacyPolicy = this.getNewRequestParameters();
@@ -121,55 +123,6 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "of homology and related concepts into bioinformatics through ontologies "
                 + "and ontology tools.</p>");
 
-        this.writeln("<h2>How to cite us?</h2>");
-
-        this.writeln("<ul>");
-        this.writeln("<li typeof='schema:ScholarlyArticle'>For the use of Bgee: "
-                + "<br>" + this.getAuthors(Arrays.asList("Frederic B. Bastian", "Julien Roux", "Anne Niknejad", "Aurélie Comte", 
-                        "Sara S. Fonseca Costa", "Tarcisio Mendes de Farias", "Sébastien Moretti", "Gilles Parmentier", 
-                        "Valentine Rech de Laval", "Marta Rosikiewicz", "Julien Wollbrett", "Amina Echchiki", 
-                        "Angélique Escoriza", "Walid Gharib", "Mar Gonzales-Porta", "Yohan Jarosz", "Balazs Laurenczy", 
-                        "Philippe Moret", "Emilie Person", "Patrick Roelli", "Komal Sanjeev", "Mathieu Seppey", 
-                        "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative transcriptomics "
-                        + "in animals")
-                + "<br><em>in</em> " + this.getPeriodical("bioRxiv 2020.05.28.119560")
-                + "[<a href='https://doi.org/10.1101/2020.05.28.119560' "
-                + "title='Bgee paper in Biorxiv' target='_blank' rel='noopener' property='schema:url'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
-                + "</li>");
-        this.writeln("<li typeof='schema:ScholarlyArticle'>Other Bgee papers: "
-                + "<br>" + this.getAuthors(Arrays.asList("Bastian FB", "Parmentier G", "Roux J",
-                    "Moretti S", "Laudet V", "Robinson-Rechavi M"))
-                + "<br>" + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species")
-                + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
-                + " <strong>Lecture Notes in Computer Science</strong>. "
-                + "5109:124-131. [<a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
-                + "title='Bgee paper in LNCS' target='_blank' rel='noopener' property='schema:url'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a>"
-                + "</li>");
-        this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: "
-                + "<br>" + this.getAuthors(Arrays.asList("Haendel MA", "Balhoff JP", "Bastian FB",
-                    "Blackburn DC", "Blake JA", "Bradford Y", "Comte A", "Dahdul WM", "Dececchi TA",
-                    "Druzinsky RE", "Hayamizu TF", "Ibrahim N", "Lewis SE", "Mabee PM", "Niknejad A",
-                    "Robinson-Rechavi M", "Sereno PC", "Mungall CJ"))
-                + "<br>" + this.getTitle("Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon")
-                + "<br><em>in</em> " + this.getPeriodical("J Biomed Semantics") + " (2014): 5:21. "
-                + "[<a target='_blank' rel='noopener' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
-                + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
-        this.writeln("<li typeof='schema:ScholarlyArticle'>For the use of the BgeeDB R package: "
-                + "<br>" + this.getAuthors(Arrays.asList("Komljenovic A", "Roux J", "Wollbrett J",
-                    "Robinson-Rechavi M", "Bastian F"))
-                + "<br>" + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
-                + "for gene list enrichment tests")
-                + "<br><em>in</em> " + this.getPeriodical("F1000Research") + " 2018, 5:2748. "
-                + "[<a target='_blank' rel='noopener' href='https://f1000research.com/articles/5-2748/v2' "
-                + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
-                + "for gene list enrichment tests' property='schema:url'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation05.ris' property='schema:sameAs'>RIS</a></li>");
-        this.writeln("</ul>");
-
         this.writeln("<h2>Which license did we choose?</h2>");
 
         this.writeln("<p>" +
@@ -191,6 +144,12 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "   see notably \"information about original images\" at the bottom of our homepage" +
                 "   for the animal photos copyright." +
                 "</p>");
+        
+        this.writeln("<h2>How to cite us?</h2>");
+        
+        this.writeln("<p>The list of all Bgee related publications including the most recent one to use to "
+                + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() + 
+                "' title ='Bgee publications' >Bgee publications page</a> page.</p>");
 
         this.writeln("<h2>What is our privacy policy?</h2>");
         this.writeln("<p>You can find all details about our privacy policy in the dedicated page " +

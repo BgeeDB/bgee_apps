@@ -149,7 +149,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         
         this.writeln("<p>The list of all Bgee related publications including the most recent one to use to "
                 + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() + 
-                "' title ='Bgee publications' >Bgee publications page</a> page.</p>");
+                "' title ='Bgee publications' >Bgee publications</a> page.</p>");
 
         this.writeln("<h2>What is our privacy policy?</h2>");
         this.writeln("<p>You can find all details about our privacy policy in the dedicated page " +

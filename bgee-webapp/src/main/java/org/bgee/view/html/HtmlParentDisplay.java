@@ -426,6 +426,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void endDisplay() {
         log.entry();
+        
+        RequestParameters urlPublication = this.getNewRequestParameters();
+        urlPublication.setPage(RequestParameters.PAGE_PUBLICATION);
 
         this.writeln("</div>"); // close sib_body
         
@@ -450,6 +453,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "data-toggle='tooltip' data-placement='top' " +
                 "data-original-title='Click to copy to clipboard'>Copy permanent link</a>" +
                 "</li>");
+        this.writeln("<li><a href='" + urlPublication.getRequestURL() + "' title='Bgee publication page'>Cite us</a></li>");
         this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
         

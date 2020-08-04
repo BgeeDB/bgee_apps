@@ -58,7 +58,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
 
         this.writeln("<h2 property='schema:description'>How to cite Bgee?</h2>");
         
-        this.writeln("<p>If you find Bgee useful, please consider citing our latest publication:</p>");
+        this.writeln("<p>If you find Bgee useful please consider citing:</p>");
         
         this.writeln("<ul>");
         
@@ -80,7 +80,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("</ul>");
 
         
-        this.writeln("<br><p>...or choose the publication that best covers the Bgee aspects or components you used in your "
+        this.writeln("<br><p>or choose the publication that best covers the Bgee aspects or components you used in your "
                 + "work from the list of publications below. </p>");
         
         this.writeln("<h2>How to cite specific components of Bgee?</h2>");

@@ -10,7 +10,7 @@
      */
 
     angular.module('app')
-        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 'ngFileSaver']);
+        .controller('MainCtrl', MainCtrl, ['ui.bootstrap', 'angularFileUpload', 'ngLocationUpdate', 'ngFileSaver', 'ngSanitize']);
 
     MainCtrl.$inject = ['$scope', '$sce', 'bgeedataservice', 'bgeejobservice', 'helpservice', 'DataTypeFactory', 'configuration', 'logger', 'FileUploader', '$timeout', '$location', '$interval', 'lang', 'jobStatus', '$filter', 'FileSaver', 'Blob', '$route', '$window'];
 
@@ -139,15 +139,14 @@
         // stages - See:
         // http://stackoverflow.com/questions/14514461/how-can-angularjs-bind-to-list-of-checkbox-values
         // Moreover, the stages have to be checked once retrieved from the server
-        vm.selectedDevelopmentStages = [];
         vm.developmentStages = [];
 
         vm.isBackgroundChecked = 'checked';
+        vm.isStageChecked = 'checked';
 
         vm.formSubmitted = false;
         vm.isAdvancedOptionsChecked = false;
         vm.jobStatus = null;
-
 
         /* result filtering */
         vm.filterValue = ''; // single filter (on organ names and ids)
@@ -240,7 +239,7 @@
             var gotDevStages = getDevStages('fg', vm.fg_list);
 
 
-            showMessage($scope, "development stages");
+            showMessage($scope, "developmental and life stages");
 
             gotDevStages.then(function(){
                 // Issue #109
@@ -304,8 +303,7 @@
                         } else {
                             console.log("job is not done, checkjobstatus");
                             // This fixes issue #111
-                            // Do not remove the trailing slash, see comments in topanat.js
-                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId + '/';
+                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
                             vm.formSubmitted = true;
                             checkJobStatus();
                         }
@@ -347,30 +345,51 @@
         function getCombinedDevStageAndExpressionType() {
 
             vm.analysisList = []; // reset the array
-
-            var all = {id: 'ALL', name: 'All'};
-            vm.analysisList.push(all);
-
+            var specificStagesAnalysisList = []; // reset the array
+            
+            var developmentStagesCheckedCount = 0;
+            
             angular.forEach(vm.developmentStages, function(stage, key) {
-                var combined = '';
-                var object = {};
                 if (stage.checked) {
-                    /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
-                    if (vm.expr_type == 'ALL' || vm.expr_type == 'EXPRESSED') {
-                        combined = stage.name + ', expression type "Present"';
-                    }
-                    if (vm.expr_type == 'ALL' || vm.expr_type == 'OVER_EXPRESSED') {
-                        combined = stage.name + ', expression type "Over-/Under-expression"';
-                    }
-
-                    if (combined != '') {
-                        object = {};
-                        object.id = stage.id + " ; " + vm.expr_type;
-                        object.name = combined;
+                    var object = buildStage(stage.id, stage.name);
+                    if (object.size !== 0) {
                         vm.analysisList.push(object);
+                        developmentStagesCheckedCount += 1;
                     }
                 }
             });
+            
+            if (developmentStagesCheckedCount === 0) {
+                var object = buildStage('ALL-STAGES', 'all stages');
+                if (object.size !== 0) {
+                    vm.analysisList.push(object);
+                }
+            }
+            
+            // We add at the beginning of the array 'All' only if there are severals checked stages
+            if (developmentStagesCheckedCount > 1) {
+                var all = {id: 'ALL', name: 'All'};
+                vm.analysisList.unshift(all);
+            }
+        }
+        
+        function buildStage(stageId, stageName) {
+            var combined = '';
+            var object = {};
+            /* SD: The correspondence between expressionType and their values should probably be stored somewhere */
+            if (vm.expr_type === 'ALL' || vm.expr_type === 'EXPRESSED') {
+                combined = stageName + ', expression type "Present"';
+            }
+            if (vm.expr_type === 'ALL' || vm.expr_type === 'OVER_EXPRESSED') {
+                combined = stageName + ', expression type "Over-/Under-expression"';
+            }
+
+            if (combined !== '') {
+                object = {};
+                object.id = stageId + " ; " + vm.expr_type;
+                object.name = combined;
+            }
+            return object;
         }
         /***************************** End View result by stage and expression type **************************/
 
@@ -683,7 +702,7 @@
 
         vm.devStagesChecked = function() {
             console.log("vm.devStageChecked");
-            if(typeof vm.developmentStages == 'undefined'){ return [];}
+            if(typeof vm.developmentStages == 'undefined'){ return 1;}
             var checked = vm.getChecked(vm.developmentStages);
             console.log(checked);
             vm.isFormValidDevStages = checked.length ? 'yes' : '';
@@ -714,7 +733,6 @@
             var c = checked.map(function(c) { return c.id });
             console.log(c);
             return c;
-
         }
 
         vm.viewResultsBy = function(stage) {
@@ -732,6 +750,22 @@
         vm.selectBackground = function(value) {
             vm.isBackgroundChecked = value;
             checkFgBg();
+        };
+        
+        vm.selectStage = function(value) {
+            if (value === 'checked') {
+                // Uncheck stages when click on 'All stages'
+                angular.forEach(vm.developmentStages, function(stage, key) {
+                    stage.checked = '';
+                    vm.isFormValidDevStages = 'yes';
+                });
+            } else {
+                // Check all stages when click on 'Custom stages'
+                angular.forEach(vm.developmentStages, function(stage, key) {
+                    stage.checked = true;
+                });
+            }
+            vm.isStageChecked = value;
         };
 
         function checkConsistency()
@@ -914,9 +948,6 @@
             if (timer) {
                 $interval.cancel(timer);
             }
-
-            statuscounter = 0;
-
         }
 
         /*
@@ -947,7 +978,11 @@
         vm.sendForm = function() {
 
             // BG checked takes precedence over BG list.
-            vm.bg_list = vm.isBackgroundChecked == 'checked' ? '' : vm.bg_list;
+            vm.bg_list = vm.isBackgroundChecked === 'checked' ? '' : vm.bg_list;
+
+            // Stages checked takes precedence over stages list.
+            var devStageIDs = vm.isStageChecked === 'checked' ? '' : getCheckedIDs(vm.developmentStages);
+
             //
             //expr_type: vm.expr_type,
             var formData = {
@@ -958,7 +993,7 @@
                 expr_type: vm.expr_type,
                 data_qual: vm.data_qual,
                 data_type: getCheckedIDs(vm.data_type.names),
-                stage_id: getCheckedIDs(vm.developmentStages),
+                stage_id: devStageIDs,
                 decorr_type: vm.decorr_type,
                 node_size: vm.node_size,
                 fdr_thr: vm.fdr_thr,
@@ -990,16 +1025,14 @@
                         //See same remarks when retrieving results from a 'jab completed' response.
                         console.log("Results already exist.");
                         vm.jobDone = true;
-                        // Do not remove the trailing slash, see comments in topanat.js
-                        vm.resultUrl = '/result/'+vm.hash+'/';
-                        getResults();
+                        vm.resultUrl = '/result/'+vm.hash;
+                        getResults(data);
 
                     } else if(data.data.data.jobResponse.jobId && data.data.data.jobResponse.data) {
 
                         console.log("Job launched.");
                         vm.jobId = data.data.data.jobResponse.jobId;
-                        // Do not remove the trailing slash, see comments in topanat.js
-                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId+'/';
+                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId;
 
                         vm.jobStatus = data.data.data.jobResponse.jobStatus;
                         logger.success('TopAnat request successful', 'TopAnat ok');
@@ -1053,7 +1086,6 @@
         };
 
         var timer = null;
-        var statuscounter = 0;
 
         function checkJobStatus(){
 
@@ -1088,18 +1120,8 @@
 
                         } else {
 
-                            statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
-                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
-                            
-                            //scroll to result container with information about job, 
-                            //otherwise it is possible to miss it.
-                            if (statuscounter == 1) {
-                                $timeout(function(){
-                                    $window.document.getElementById('resultContainer').scrollIntoView();
-                                }, 500);
-                            }
-
+                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
                         }
                     },
 
@@ -1177,9 +1199,10 @@
             vm.zipFileByAnalysis['ALL'] = '?page=top_anat&action=download&data=' + vm.hash;
             for (var i = 0; i < data.data.topAnatResults.length; i++) {
                 var devStageId = data.data.topAnatResults[i].devStageId;
+                devStageId = !devStageId ? 'ALL-STAGES' : devStageId;
                 var callType = data.data.topAnatResults[i].callType;
 
-                // we could probably use the sanme logic as for the zip file and put a composed key
+                // we could probably use the same logic as for the zip file and put a composed key
                 // no time for now
                 vm.gridOptionsByAnalysis[devStageId] = [];
                 vm.gridOptionsByAnalysis[devStageId][callType] = data.data.topAnatResults[i].results;
@@ -1260,8 +1283,7 @@
             vm.messageSeverity = "success";
             console.log("Message generated from results: " + vm.message);
 
-            // Do not remove the trailing slash, see comments in topanat.js
-            vm.resultUrl = '/result/' + vm.hash + "/";
+            vm.resultUrl = '/result/' + vm.hash;
             console.log("ready resultUrl: " + vm.resultUrl + " - current path: " + $location.path());
 
             if($location.path() !== vm.resultUrl) {
@@ -1282,14 +1304,14 @@
 
         function getDevStages(type, list) {
 
-            showMessage($scope, "development stages");
+            showMessage($scope, "developmental and life stages");
 
             console.log("Comparing fg and bg");
             if(!checkFgBg()){
                 // TODO should BG be cleared and bgee data activated? (might be confusing to the user)
                 console.log("fg and bg did not match");
                 // fg must be in bg
-                logger.error("Genelist contains genes not found in background genes");
+                logger.error("Gene list contains genes not found in background genes");
 
                 // Issue 112: same behavior as in issue 60
                 vm.background_species = '';
@@ -1371,9 +1393,9 @@
                                 vm.message = data.data.message;
                                 vm.showDevStageError = data.data.message;
                             } else {
-                                logger.error('Getting development stages failed. Unknown error.', 'TopAnat fail');
-                                vm.message = 'Getting development stages failed. Unknown error.';
-                                vm.showDevStageError = 'Getting development stages failed. Unknown error.';
+                                logger.error('Getting developmental and life stages failed. Unknown error.', 'TopAnat fail');
+                                vm.message = 'Getting developmental and life stages failed. Unknown error.';
+                                vm.showDevStageError = 'Getting developmental and life stages failed. Unknown error.';
                             }
 
                         }
@@ -1385,11 +1407,25 @@
         }
 
         function parseMessage(message) {
-            var matcher = new RegExp('(.+) for fg_list');
+        	
+        	// For instance "461 genes entered, 457 in mouse, 2 in human, 2 not found in Bgee for fg_list"
+        	// match[1] = "461 genes entered, 457 in mouse, 2 in human, 2 in toto, 2 not found in Bgee"
+        	// match[2] = "461"
+        	// match[3] = "457"
+        	// match[4] = "in mouse"
+        	var matcher = new RegExp('((\\d+) genes entered, (\\d+) (in \\D+)(?:, \\d+ in \\D+)*(?:, \\d+ not found)? in Bgee) for fg_list');
+            
             var match = message.match(matcher);
 
             if (match != null && typeof match !== 'undefined') {
-                return match[1];
+            	var displayedText = match[2] + ' genes ' + match[4];
+            	if (match[2] > match[3]) {
+            		displayedText = $sce.trustAsHtml(displayedText + ' <span class="glyphicon glyphicon-info-sign" '
+            			+ 'uib-popover="' + match[1] + '" popover-trigger="mouseenter" '
+            			+ 'popover-placement="top" popover-append-to-body="true"'
+            			+ 'popover-title="Gene list details"></span>');
+            	}
+                return displayedText;
             }
             else {
                 return message;
@@ -1457,14 +1493,18 @@
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
                 }
 
-                var stages = [];
-                var isChecked = true;
                 console.log(data.data.fg_list.stages);
+
+                var stages = [];
+
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
-
                     // do we already have something from server
-                    isChecked = !(vm.stage_id && vm.stage_id.indexOf(devStage.id) == -1);
+                    var isChecked = true;
+                    if (!vm.stage_id || vm.stage_id.indexOf(devStage.id) === -1) {
+                        // not found in params
+                        isChecked = false;
+                    }
 
                     stages.push({
                         name : devStage.name,
@@ -1475,6 +1515,9 @@
                 });
 
                 vm.developmentStages = angular.copy(stages);
+
+                // set developmental and life stages to 'All stages'
+                vm.isStageChecked = 'checked';
 
             } else if (type === 'bg') {
 

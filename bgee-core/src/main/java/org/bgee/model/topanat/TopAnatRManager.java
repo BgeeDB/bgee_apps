@@ -157,7 +157,7 @@ public class TopAnatRManager {
         //code.addRCode("test.stat <- new('elimCount', testStatistic = GOFisherTestUnder, name ='Elim / Fisher test / underrepresentation')");
         //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
 
-        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + ", " + this.params.getPvalueThreashold() +" , organNames)");
+        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + ", " + this.params.getPvalueThreshold() +" , organNames)");
         //Do NOT sort the table again here. Already sorted by makeTable
 
         code.addRCode("    print(nrow(tableOver))");
@@ -177,7 +177,7 @@ public class TopAnatRManager {
         code.addRCode("      rownames(organNames)<-organNames[,1]");
 
         //get the number of terms with p-value below 0.01
-        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreashold() +")");
+        code.addRCode("      resultCount <- sum(as.numeric(tableOver[, 7]) <= "+ params.getPvalueThreshold() +")");
         //set the number of terms to be displayed (terms below p-value, but max 10)
         code.addRCode("      resultCount <- min(c(resultCount , "+ params.getNumberOfSignificantNodes() +"))");
         code.addRCode("      cat(paste('Number of nodes to display: ', resultCount, '\n'))");

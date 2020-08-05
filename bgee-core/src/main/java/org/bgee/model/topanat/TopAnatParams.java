@@ -501,9 +501,9 @@ public class TopAnatParams {
     }
 
     /**
-     * @return the pvalueThreashold
+     * @return the pvalueThreshold
      */
-    public Double getPvalueThreashold() {
+    public Double getPvalueThreshold() {
         return pvalueThreshold;
     }
 

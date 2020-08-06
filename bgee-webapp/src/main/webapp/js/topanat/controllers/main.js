@@ -1103,6 +1103,7 @@
         };
 
         var timer = null;
+        var statuscounter = 0;
 
         function checkJobStatus(){
 
@@ -1137,8 +1138,16 @@
 
                         } else {
 
+                            statuscounter = statuscounter + 1;
                             vm.jobStatus = data.status;
-                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId+'. ('+vm.jobStatus+') ';
+                            vm.message = lang.jobProgressBookmark+"<br/>"+lang.jobProgress+vm.jobId;
+                            //scroll to result container with information about job,
+                            //otherwise it is possible to miss it.
+                            if (statuscounter == 1) {
+                                $timeout(function(){
+                                    $window.document.getElementById('resultContainer').scrollIntoView();
+                                }, 500);
+                            }
                         }
                     },
 

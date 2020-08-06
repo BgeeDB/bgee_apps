@@ -216,6 +216,11 @@
                 if(key == "data_type"){
                     key = "selectedDataTypes"
                 }
+                if (key == "expr_type" && val instanceof Array) {
+                    //expr_type as returned by RequestParameters is an array,
+                    //but we use a string in vm, need to convert
+                    val = val[0];
+                }
 
                 vm[key] = val;
 

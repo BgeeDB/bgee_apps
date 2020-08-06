@@ -552,6 +552,9 @@
             console.log(vm.analysisList);
 
             var array = [];
+            if (typeof selected === 'undefined') {
+                return array;
+            }
             var matcher = new RegExp('(.+) ; (.+)');
             var match = selected.match(matcher);
 

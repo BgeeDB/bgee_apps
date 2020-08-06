@@ -24,7 +24,9 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -50,8 +52,12 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-
+    	LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
+    	resultHashMap.put("query", searchTerm);
+    	resultHashMap.put("result", getSearchResultTable(result.getGeneMatches(), searchTerm));
+    	this.sendResponse("General information, expression calls and cross-references of the requested gene",
+                resultHashMap);
+    	
     }
 
     @Override
@@ -169,5 +175,36 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
             return log.exit("");
         }
     }
+    
+    private ArrayList<LinkedHashMap<String, String>> getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
+        log.entry(geneMatches, searchTerm);
+
+        ArrayList<LinkedHashMap<String, String>> searchResultArrayList = new ArrayList<LinkedHashMap<String, String>>(); 
+                
+        for (GeneMatch geneMatch: geneMatches) {
+            LinkedHashMap<String, String> geneMatchHashMap = new LinkedHashMap<String, String>();
+            Gene gene = geneMatch.getGene();
+            geneMatchHashMap.put("id",gene.getEnsemblGeneId());
+            geneMatchHashMap.put("name",gene.getName());
+            geneMatchHashMap.put("description",gene.getDescription());
+            geneMatchHashMap.put("organism",gene.getSpecies().getScientificName() + " (" + gene.getSpecies().getName() + ")");
+            geneMatchHashMap.put("match",getMatch(geneMatch, searchTerm));
+            searchResultArrayList.add(geneMatchHashMap);
+        }
+        return searchResultArrayList;
+    }
+    
+    private String getMatch(GeneMatch geneMatch, String searchTerm) {
+        log.entry(geneMatch, searchTerm);
+        
+        if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
+            return log.exit("no exact match");
+        }
+
+        return log.exit(geneMatch.getMatch() +
+                " (" + geneMatch.getMatchSource().toString().toLowerCase() + ")");
+    }
+
+    
 
 }

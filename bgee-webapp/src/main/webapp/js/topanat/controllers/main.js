@@ -358,19 +358,20 @@
                     }
                 }
             });
-            
+
             if (developmentStagesCheckedCount === 0) {
                 var object = buildStage('ALL-STAGES', 'all stages');
                 if (object.size !== 0) {
                     vm.analysisList.push(object);
                 }
             }
-            
             // We add at the beginning of the array 'All' only if there are severals checked stages
-            if (developmentStagesCheckedCount > 1) {
+            else if (developmentStagesCheckedCount > 1) {
                 var all = {id: 'ALL', name: 'All'};
                 vm.analysisList.unshift(all);
             }
+            console.log("analysisList");
+            console.log(vm.analysisList);
         }
         
         function buildStage(stageId, stageName) {
@@ -385,10 +386,11 @@
             }
 
             if (combined !== '') {
-                object = {};
                 object.id = stageId + " ; " + vm.expr_type;
                 object.name = combined;
             }
+            console.log("buildStage object");
+            console.log(object);
             return object;
         }
         /***************************** End View result by stage and expression type **************************/
@@ -540,6 +542,10 @@
         /************** Result panel Handling ****************/
         function splitSelectedOption(selected) {
 
+            console.log("splitSelectedOption");
+            console.log(selected);
+            console.log(vm.analysisList);
+
             var array = [];
             var matcher = new RegExp('(.+) ; (.+)');
             var match = selected.match(matcher);
@@ -552,19 +558,28 @@
             return array;
         }
 
-        function getResultNumber (analysis) {
+        function getResultNumber (analysisId) {
 
-            if (analysis === 'ALL') {
+            console.log("getResultNumber");
+            console.log(analysisId);
+            console.log(vm.analysisList);
+
+            if (analysisId === 'ALL') {
+                console.log("length: " + vm.gridOptions.data.length);
                 return vm.gridOptions.data.length;
             }
             else {
-                var splitted = splitSelectedOption(analysis);
+                var splitted = splitSelectedOption(analysisId);
                 var rows = vm.gridOptionsByAnalysis[splitted[0]][splitted[1]];
+                console.log("length: " + rows.length);
                 return rows.length;
             }
         }
 
         vm.getResultByAnalysis = function(analysis) {
+
+            console.log("getResultByAnalysis");
+            console.log(analysis);
 
             vm.isActive = analysis;
 
@@ -577,6 +592,8 @@
                 vm.filterByStage = splitted[0];
                 vm.filterbyExpression = splitted[1];
             }
+            console.log(vm.filterByStage);
+            console.log(vm.filterbyExpression);
             vm.gridApi.grid.refresh();
         };
 

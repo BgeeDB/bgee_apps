@@ -1308,7 +1308,7 @@
             showMessage($scope, false);
 
             //TODO: the 'formSubmitted = true' is a hack to display the message when retrieving
-            //already existing results, and not only following a form submission, this sould be improved
+            //already existing results, and not only following a form submission, this should be improved
             vm.formSubmitted = true;
             vm.message = 'TopAnat request successful. Found ' + resultCount + ' records, from '
                 + analysisWithResults + (analysisWithResults > 1? " analyses": " analysis")

@@ -5,7 +5,7 @@
 },
 {
    "topic": "Developmental and life stages",
-   "help": "By default, all developmental and life stages are considered for the enrichment analysis. It is possible to provide a custom selection of developmental and life stages, selecting one or severals developmental and life stages."
+   "help": "By default, all developmental and life stages are considered for the enrichment analysis. It is possible to provide a custom selection of developmental and life stages, selecting one or several developmental and life stages."
 },
 {
     "topic": "Data quality",

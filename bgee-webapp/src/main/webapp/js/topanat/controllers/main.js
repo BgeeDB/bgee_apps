@@ -192,7 +192,7 @@
                     val = parseInt(val);
                 }
 
-                // we use hash instead od data mainly to make it clear what data it is
+                // we use hash instead of data mainly to make it clear what data it is
                 if(key == "data"){
                     vm['hash'] = val;
                 }
@@ -216,7 +216,9 @@
                 if(key == "data_type"){
                     key = "selectedDataTypes"
                 }
-                if (key == "expr_type" && val instanceof Array) {
+                if (key == "expr_type" &&
+                        typeof val !== "undefined" && val != null && val.length != null &&
+                        val.length > 0) {
                     //expr_type as returned by RequestParameters is an array,
                     //but we use a string in vm, need to convert
                     val = val[0];
@@ -232,7 +234,7 @@
 
             angular.forEach(jobStatus.data.jobResponse, function(val, key) {
 
-                // we use hash instead od data mainly to make it clear what data it is
+                // we use hash instead of data mainly to make it clear what data it is
                 if(key == "data"){
                     vm['hash'] = val;
                 }

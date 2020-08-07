@@ -222,6 +222,8 @@
                     val = val[0];
                 }
 
+                //requested stages will be stored with key 'stage_id',
+                //and will be used by "handleStages" to check the correct stages
                 vm[key] = val;
 
                 console.debug("vm."+key+" = "+vm[key]);
@@ -1534,6 +1536,8 @@
                 console.log(data.data.fg_list.stages);
 
                 var stages = [];
+                // set developmental and life stages to 'All stages'
+                vm.isStageChecked = 'checked';
 
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
@@ -1542,6 +1546,9 @@
                     if (!vm.stage_id || vm.stage_id.indexOf(devStage.id) === -1) {
                         // not found in params
                         isChecked = false;
+                    } else {
+                        //unselect "All stages"
+                        vm.isStageChecked = '';
                     }
 
                     stages.push({
@@ -1553,9 +1560,6 @@
                 });
 
                 vm.developmentStages = angular.copy(stages);
-
-                // set developmental and life stages to 'All stages'
-                vm.isStageChecked = 'checked';
 
             } else if (type === 'bg') {
 
@@ -1664,7 +1668,8 @@
             vm.node_size != configuration.node_size ||
             vm.nb_node != configuration.nb_node ||
             vm.fdr_thr != configuration.fdr_thr ||
-            vm.p_value_thr != configuration.p_value_thr)
+            vm.p_value_thr != configuration.p_value_thr ||
+            vm.isStageChecked !== 'checked')
         {
             vm.isAdvancedOptionsChecked = true;
         }

@@ -940,6 +940,7 @@
             //clear URL, otherwise results from a previous analyses might be retrieved,
             //from the hash in the URL.
             //XXX: maybe there is a better way to handle this.
+            vm.hash = '';
             vm.resultUrl = '/';
             $location.update_path("/", false);
             //also reinit result table, otherwise, if the new analysis give no results,
@@ -1128,6 +1129,13 @@
             vm.jobDone = false;
 
             // set result url without reloading the page
+            //FB: we store the current timestamp because I couldn't find something that worked
+            //to prevent initialization to be triggered by location change, even with
+            //this 'update_path' function. See topanat.js for explanations about use of this timestamp.
+            //The 'update_path' function seems better anyway, at least when the intialization
+            //is triggered, it sees the proper current hash value, with 'path' function
+            //it sees the hash used at page landing.
+            window.localStorage['topAnatRouteChangeWithoutReloadTimestamp'] = new Date().getTime();
             $location.update_path(vm.resultUrl, false);
             //$location.path(vm.resultUrl, false);
 
@@ -1330,6 +1338,14 @@
 
             if($location.path() !== vm.resultUrl) {
                 console.info("updating path...");
+                //set result url without reloading the page
+                //FB: we store the current timestamp because I couldn't find something that worked
+                //to prevent initialization to be triggered by location change, even with
+                //this 'update_path' function. See topanat.js for explanations about use of this timestamp.
+                //The 'update_path' function seems better anyway, at least when the intialization
+                //is triggered, it sees the proper current hash value, with 'path' function
+                //it sees the hash used at page landing.
+                window.localStorage['topAnatRouteChangeWithoutReloadTimestamp'] = new Date().getTime();
                 $location.update_path(vm.resultUrl, false);
             }
 

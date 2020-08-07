@@ -66,7 +66,7 @@ angular
                         console.log($route.current.params);
                         var jobid = $route.current.params.jobid;
                         var hash = $route.current.params.hash;
-                        if(typeof jobid == 'undefined' || typeof hash == 'undefined'){
+                        if(typeof jobid === 'undefined' || typeof hash === 'undefined'){
                             console.log("jobid or hash Parameter missing from jobStatus")
                             return deferred.reject("jobid or hash Parameter missing from jobStatus");
                         }
@@ -143,7 +143,7 @@ angular
                         var deferred = $q.defer();
                         var hash = $route.current.params.hash;
 
-                        if(typeof hash == 'undefined'){
+                        if(typeof hash === 'undefined'){
                             console.log("Hash parameter missing from jobStatus")
                             return deferred.reject("hash parameter missing from jobStatus");
                         }

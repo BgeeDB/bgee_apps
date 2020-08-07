@@ -123,8 +123,10 @@
                     console.log("error, server did not find result");
                     console.log(response);
                     // try to fill missing job's parameters
-                    if (typeof response.data.requestParameters !== 'undefined' && response.data.requestParameters !== null &&
-                    		response.data.code == 400) {
+                    if (typeof response.data !== 'undefined' &&
+                            typeof response.data.requestParameters !== 'undefined' &&
+                            response.data.requestParameters !== null &&
+                            response.data.code == 400) {
                         console.debug(response.data.requestParameters);
                         defer.resolve(response.data);
                     }

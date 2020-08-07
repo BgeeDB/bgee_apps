@@ -706,7 +706,7 @@
 
         function changeNumberOfRowsToShow (number) {
 
-            if (number == undefined) {
+            if (typeof number === 'undefined') {
                 number = vm.nbRows.selectedOption.id;
             }
 
@@ -1680,7 +1680,7 @@
         console.log("shouldOpenAdvancedOptions");
         console.log(configuration);
         console.log(vm);
-        if((vm.data_qual !== undefined && vm.data_qual !== null &&
+        if((typeof vm.data_qual !== 'undefined' && vm.data_qual !== null &&
         		vm.data_qual.toUpperCase() !== configuration.data_qual.toUpperCase()) ||
             vm.decorr_type != configuration.decorr_type ||
             vm.node_size != configuration.node_size ||

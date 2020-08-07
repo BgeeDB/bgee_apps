@@ -271,6 +271,8 @@
 
                     console.log("get, display or submit");
                     console.log(jobStatus);
+                    // open advanced options if non default values were used
+                    shouldOpenAdvancedOptions(vm, configuration);
 
                     // jobId check is a magic number we use to get used parameters when result is not available
                     // prevents us getting results again when we already know it's missing

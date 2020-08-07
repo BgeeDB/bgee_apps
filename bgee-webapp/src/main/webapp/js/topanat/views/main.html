@@ -77,7 +77,8 @@
                             ng-src="{{vm.species_img(job.taxid)}}"> |
                         {{job.creationDate}} |
 						<span class="truncate-parent"><span ng-show="job.title" uib-tooltip="{{job.title}}" class="truncate">{{job.title}}</span> |</span>
-                        <a class="btn-xs btn-success bgee-loading" style="text-decoration: none;" ng-href="#/result/{{job.hash}}" bgee-linkreload>View Job</a>
+						<!-- Do not add a trailing slash to the job URL, see comments in topanat.js -->
+                        <a class="btn-xs btn-success bgee-loading" style="text-decoration: none;" ng-href="#/result/{{job.hash}}">View Job</a>
                         <a class="btn-xs btn-danger" style="text-decoration: none;" href="" ng-click="vm.removeJob(job);" style="margin-left: 6px;">Remove job</a></li>
                 </ul>
             </div>

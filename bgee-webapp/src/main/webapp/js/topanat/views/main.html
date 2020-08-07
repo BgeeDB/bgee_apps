@@ -364,7 +364,7 @@
                 <div class="row">
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
                         <label class="control-group" 
-                            ng-class="{'highlighted': typeof vm.data_qual !== 'undefined' && vm.data_qual !== null &&
+                            ng-class="{'highlighted': vm.data_qual !== undefined && vm.data_qual !== null &&
                                 vm.data_qual.toUpperCase() !== vm.data_qualDefault.toUpperCase()}">
                             Data quality&nbsp;
                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Data quality" ng-mouseover="vm.getOnlineHelpForItem('Data quality')"></span>
@@ -374,11 +374,11 @@
 
                             <button ng-repeat="data_quality in vm.data_qualities"
                                     ng-class="{'btn-info': 
-                                        ((typeof vm.data_qual === 'undefined' || vm.data_qual === null) &&
+                                        ((vm.data_qual === undefined || vm.data_qual === null) &&
                                         data_quality.id.toUpperCase() === vm.data_qualDefault.toUpperCase()) ||
                                         data_quality.id.toUpperCase() === vm.data_qual.toUpperCase(),
                                         'active': 
-                                        ((typeof vm.data_qual === 'undefined' || vm.data_qual === null) &&
+                                        ((vm.data_qual === undefined || vm.data_qual === null) &&
                                         data_quality.id.toUpperCase() === vm.data_qualDefault.toUpperCase()) ||
                                         data_quality.id.toUpperCase() === vm.data_qual.toUpperCase()}"
                                     type="button"

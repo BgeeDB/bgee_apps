@@ -749,40 +749,53 @@ public class CommandTopAnat extends CommandParent {
      * @param paramName A {@code String} that is the name of the parameter.
      * @return          The {@code GeneListResponse} built from 
      *                  {@code geneList} and {@code paramName}.
+     * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
      */
-    private GeneListResponse getGeneResponse(List<String> geneList, String paramName) {
+    private GeneListResponse getGeneResponse(List<String> geneList, String paramName)
+            throws InvalidRequestException {
         log.entry(geneList, paramName);
         
         if (geneList.isEmpty()) {
             throw log.throwing(new AssertionError("Code supposed to be unreachable."));
         }
 
-        TreeSet<String> geneSet = new TreeSet<>(geneList);
-        // Load valid submitted gene IDs
-        final Set<Gene> validGenes = serviceFactory.getGeneService().
-                loadGenesByEnsemblIds(geneSet)
-                // FIXME: Remove filter on bonobo data, we should give the possibility 
-                // to the user to choose a species. In same time, remove info 
-                // under gene list textarea in TopAnat HTML file.
-                .filter(g -> g.getSpecies() == null || g.getSpecies().getId() == null || g.getSpecies().getId() != 9597)
-                .collect(Collectors.toSet());
+        final TreeSet<String> geneSet = new TreeSet<>(geneList);
+
+        // Load mapping cross-reference IDs to genes
+        final Map<String, Set<Gene>> mappingIdsToGenes =
+                serviceFactory.getGeneService().loadGenesByAnyId(geneSet, false)
+                .collect(Collectors.toMap(e->e.getKey(),
+                        // FIXME: Remove filter on bonobo data, we should give the possibility
+                        // to the user to choose a species. In same time, remove info
+                        // under gene list textarea in TopAnat HTML file.
+                        e -> e.getValue().stream()
+                        .filter(g -> g.getSpecies() == null || g.getSpecies().getId() == null ||
+                        g.getSpecies().getId() != 9597)
+                        .collect(Collectors.toSet())));
+
         // Identify undetermined gene IDs
-        final Set<String> undeterminedGeneIds = new HashSet<>(geneSet);
-        undeterminedGeneIds.removeAll(validGenes.stream()
-                .map(Gene::getEnsemblGeneId)
-                .collect(Collectors.toSet()));
+        final Set<String> undeterminedGeneIds = mappingIdsToGenes.entrySet().stream()
+                .filter(e -> e.getValue() == null || e.getValue().isEmpty())
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
         
         // Map species ID to valid gene ID count
-        final Map<Integer, Long> speciesIdToGeneCount = validGenes.stream()
+        final Map<Integer, Long> speciesIdToGeneCount = mappingIdsToGenes.values().stream()
+                    .flatMap(Collection::stream)
+                    // It is necessary to remove duplicates because 2 IDs
+                    // (a gene ID and its cross-reference) can map on the same gene
+                    .distinct()
                     .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), Collectors.counting()));
+
         // Retrieve detected species, and create a new Map Species -> Long
         final Map<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()? new HashMap<>(): 
                 this.serviceFactory.getSpeciesService()
                 .loadSpeciesByIds(speciesIdToGeneCount.keySet(), false)
                 .stream()
                 .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
-        // Determine selected species ID. 
-        Integer selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
+
+        // Determine selected species ID.
+        final Integer selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
                 //sort based on gene count (and in case of equality, based on species ID)
                 .max((e1, e2) -> {
                     if (e1.getValue().equals(e2.getValue())) {
@@ -792,15 +805,31 @@ public class CommandTopAnat extends CommandParent {
                 })
                 .map(e -> e.getKey())
                 .orElse(null);
+
         // Load valid stages for selected species
         Set<DevStage> validStages = null;
         if (selectedSpeciesId != null) {
             validStages = this.getGroupingDevStages(selectedSpeciesId, DEV_STAGE_LEVEL);
         }
 
+        final Set<String> idsMappingMultipleGenes = mappingIdsToGenes.entrySet().stream()
+                // keep ids with more than one gene in the selected species
+                .filter(e -> e.getValue().stream()
+                        .filter(g -> g.getSpecies().getId().equals(selectedSpeciesId))
+                        .count() > 1)
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+
+        if (!idsMappingMultipleGenes.isEmpty()) {
+            throw log.throwing(new InvalidRequestException(
+                    "At least one ID maps to severals Ensembl gene IDs: " + idsMappingMultipleGenes));
+        }
+
         // Identify gene IDs not in the selected species
-        TreeSet<String> notSelectedSpeciesGenes = new TreeSet<>(
-                validGenes.stream()
+        final TreeSet<String> notSelectedSpeciesGenes = new TreeSet<>(
+                // All genes found in Bgee
+                mappingIdsToGenes.values().stream().flatMap(Collection::stream)
+                    // we keep gene not in selected species
                     .filter(g -> !g.getSpecies().getId().equals(selectedSpeciesId))
                     .map(Gene::getEnsemblGeneId)
                     .collect(Collectors.toSet()));
@@ -885,26 +914,30 @@ public class CommandTopAnat extends CommandParent {
         
         StringBuilder msg = new StringBuilder();
         msg.append(submittedGeneIds.size());
-        msg.append(" genes entered");
+        msg.append(" IDs provided");
         if (!speciesToGeneCount.isEmpty()) {
+            msg.append(": ");
+            msg.append(speciesToGeneCount.entrySet().stream().map(e -> e.getValue()).count());
+            msg.append(" unique genes found in Bgee");
+
             msg.append(speciesToGeneCount.entrySet().stream()
-                //sort in descending order of gene count (and in case of equality, 
-                //by ascending order of key, for predictable message generation)
-                .sorted((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().getId().compareTo(e2.getKey().getId()); 
-                    } 
-                    return e2.getValue().compareTo(e1.getValue());
-                })
-                .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
-                .collect(Collectors.joining()));
+                    //sort in descending order of gene count (and in case of equality,
+                    //by ascending order of key, for predictable message generation)
+                    .sorted((e1, e2) -> {
+                        if (e1.getValue().equals(e2.getValue())) {
+                            return e1.getKey().getId().compareTo(e2.getKey().getId());
+                        }
+                        return e2.getValue().compareTo(e1.getValue());
+                    })
+                    .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
+                    .collect(Collectors.joining()));
         }
         if (!undeterminedGeneIds.isEmpty()) {
-            msg.append(", ");
+            msg.append(", and ");
             msg.append(undeterminedGeneIds.size());
-            msg.append(" not found");
+            msg.append(" IDs not found");
         }
-        msg.append(" in Bgee for ");
+        msg.append(" for ");
         msg.append(paramName);
         
         return log.exit(msg.toString());
@@ -1100,26 +1133,50 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * @param geneResponse
-     * @param geneIds
-     * @return
+     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs (Ensembl IDs)
+     * and removing gene IDs not in the selected species and the undetermined gene IDs.
+     *
+     * @param geneResponse  A {@code GeneListResponse} that is the gene list response
+     *                      containing information to clean the {@code ids}.
+     * @param ids           A {@code Collection} of {@code String}s that are the IDs to be cleaned.
+     * @return              A {@code Set} of {@code String}s that are Bgee gene IDs.
      */
-    private Set<String> cleanGeneIds(GeneListResponse geneResponse, Set<String> geneIds) {
-        log.entry(geneResponse, geneIds);
+    private Set<String> cleanGeneIds(GeneListResponse geneResponse, Set<String> ids) {
+        log.entry(geneResponse, ids);
         
-        Set<String> cleanGeneIds = new HashSet<>(geneIds);
+        Set<String> cleanGeneIds = new HashSet<>(ids);
         
         // Remove gene IDs that are not in bg selected species.
         cleanGeneIds.removeAll(geneResponse.getNotInSelectedSpeciesGeneIds());
         // Remove gene IDs that are in bg undetermined gene IDs
         cleanGeneIds.removeAll(geneResponse.getUndeterminedGeneIds());
         
+        cleanGeneIds = this.loadBgeeIds(cleanGeneIds);
+
         if (cleanGeneIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No gene IDs of foreground "
                     + "are in selected species from background gene ID list"));
         }
         
         return log.exit(cleanGeneIds);
+    }
+
+    /**
+     * Retrieve Bgee gene IDs (Ensembl IDs) from any ID list.
+     *
+     * @param ids   A {@code Collection} of {@code String}s that are the IDs to be converted in Bgee gene IDs.
+     * @return      The {@code Set} of {@code String}s that are the Bgee gene IDs.
+     * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
+     */
+    private Set<String> loadBgeeIds(Collection<String> ids) {
+        log.entry(ids);
+
+        return log.exit(Collections.unmodifiableSet(
+                serviceFactory.getGeneService().loadGenesByAnyId(
+                        Optional.ofNullable(ids).orElse(new HashSet<>()), false)
+                        .flatMap(m -> m.getValue().stream())
+                        .map(g -> g.getEnsemblGeneId())
+                        .collect(Collectors.toSet())));
     }
 
     /**

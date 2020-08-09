@@ -93,7 +93,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
         }
         
         if (clonedGeneIds != null) {
-            sql += GENE_X_REF_TABLE_NAME + ".bgeeGeneId IN (" + 
+            sql += GENE_X_REF_TABLE_NAME + ".bgeeGeneId IN (" +
                     BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
         }
 

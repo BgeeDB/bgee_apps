@@ -664,6 +664,14 @@ form ul {
 	color: #E2011B;
 }
 
+.modal-title {
+    font-size: 1.5em;
+}
+
+.modal-dialog {
+	margin-top: 70px !important;
+}
+
 /*
 //for swt-dev
 html {

@@ -1,10 +1,13 @@
 package org.bgee.model.gene;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,22 +15,19 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.bgee.model.CommonService;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
-import org.bgee.model.source.Source;
-import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-
-import java.util.Arrays;
-import java.util.Map.Entry;
-import java.util.Optional;
 
 /**
  * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
@@ -129,7 +129,7 @@ public class GeneService extends CommonService {
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
-     * 
+     *
      * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
      * @return                  A {@code Stream} of matching {@code Gene}s.
@@ -138,6 +138,7 @@ public class GeneService extends CommonService {
         log.entry(ensemblGeneIds);
         return log.exit(this.loadGenesByEnsemblIds(ensemblGeneIds, false));
     }
+
     /**
      * Retrieves genes from their Ensembl IDs as a {@code SearchResult}. {@code SearchResult} allows
      * also to retrieve the IDs that were <strong>not</strong> found in the database.

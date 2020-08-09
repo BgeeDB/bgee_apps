@@ -16,7 +16,6 @@ import org.bgee.model.dao.api.exception.DAOException;
  * @see GeneXRefTO
  */
 public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
-    
     /**
      * {@code Enum} used to define the attributes to populate in the {@code GeneXRefTO}s 
      * obtained from this {@code GeneXRefDAO}.
@@ -57,7 +56,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
      * The cross-references are retrieved and returned as a {@code GeneXRefTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} 
      * once results are retrieved.
-     * 
+     *
      * @param bgeeGeneIds   A {@code Collection} of {@code Integer}s that are the Bgee IDs 
      *                      of the genes to retrieve cross-references for.
      * @param attributes    A {@code Collection} of {@code GeneXRefDAO.Attribute}s defining 
@@ -95,7 +94,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
      * The cross-references are retrieved and returned as a {@code GeneXRefTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} 
      * once results are retrieved.
-     * 
+     *
      * @param bgeeGeneIds   A {@code Collection} of {@code Integer}s that are the Bgee IDs 
      *                      of the genes to retrieve cross-references for.
      * @param xRefIds       A {@code Collection} of {@code String}s that are the IDs of 
@@ -110,7 +109,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
      *                      from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds, 
+    public GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds,
             Collection<String> xRefIds, Collection<Integer> dataSourceIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException;
 
@@ -163,7 +162,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
          * <p>
          * All of these parameters are optional, so they can be {@code null} when not used.
          * Other attributes are set to {@code null}.
-         * 
+         *
          * @param bgeeGeneId    An {@code Integer} that is the Bgee ID of the gene.
          * @param xRefId        A {@code String} that is the ID of the cross-reference.
          * @param xRefName      A {@code String} that is the name of the cross-reference.
@@ -209,7 +208,7 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "Bgee gene ID: " + this.getBgeeGeneId() + " - X-Ref ID: " + this.getXRefId() + 
+            return "Bgee gene ID: " + this.getBgeeGeneId() + " - X-Ref ID: " + this.getXRefId() +
                     " - X-Ref name: " + this.getXRefName() + 
                     " - Data source ID: " + this.getDataSourceId();
         }

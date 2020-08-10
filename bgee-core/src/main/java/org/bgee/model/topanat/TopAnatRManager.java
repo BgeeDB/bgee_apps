@@ -79,6 +79,8 @@ public class TopAnatRManager {
                 anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
+        
+        String bioconductorRelease = this.props.getBioconductorReleaseNumber();
 
         code.clear();
         code.addRCode("# Check that you have installed the required packages");
@@ -86,23 +88,23 @@ public class TopAnatRManager {
         code.addRCode("  install.packages('BiocManager')");
         code.addRCode("}");
         code.addRCode("if(!suppressWarnings(require(Rgraphviz))){");
-        code.addRCode("  BiocManager::install('Rgraphviz')");
+        code.addRCode("  BiocManager::install('Rgraphviz', version='" + bioconductorRelease + ")");
         code.addRCode("}");
 
         code.addRCode("if(!suppressWarnings(require(Runiversal))){");
-        code.addRCode("  BiocManager::install('Runiversal')");
+        code.addRCode("  BiocManager::install('Runiversal', version='" + bioconductorRelease + ")");
         code.addRCode("}");
 
         // if there is no decorrelation, do not use the topGO package
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){
             code.addRCode("packageExistTopGO<-require()");
             code.addRCode("if(!suppressWarnings(require(topGO))){");
-            code.addRCode("  BiocManager::install('topGO')");
+            code.addRCode("  BiocManager::install('topGO', version='" + bioconductorRelease + ")");
             code.addRCode("}");
         }
 
         code.addRCode("if(!suppressWarnings(require(rJava))){");
-        code.addRCode("  BiocManager::install('rJava')");
+        code.addRCode("  BiocManager::install('rJava', version='" + bioconductorRelease + ")");
         code.addRCode("}");
 
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){

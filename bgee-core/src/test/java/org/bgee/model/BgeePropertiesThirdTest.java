@@ -42,6 +42,7 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
         //System.setProperty(BgeeProperties.BGEE_ROOT_DIRECTORY_KEY, "/system");
         //Other properties are set in System properties, they should override properties 
         //from file
+        System.setProperty(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY, "3.11");
         System.setProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/sysrexec");
         System.setProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, 
                 "/sysrwd");
@@ -59,6 +60,8 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerURL());
         assertEquals("Wrong property value retrieved", "search_port",
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved","3.11",
+                bgeeProp.getBioconductorReleaseNumber());
         assertEquals("Wrong property value retrieved","/sysrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/sysrwd",

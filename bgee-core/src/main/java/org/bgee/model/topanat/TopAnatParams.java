@@ -635,7 +635,11 @@ public class TopAnatParams {
                     //TODO: investigate whether results are the same if we use all data,
                     //including redundant calls with observed data
                     //(if we just give values null, null, null)
-                    obsDataFilter, true, null
+                    obsDataFilter, 
+                    //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
+                    //without running topGo 
+                    (this.decorrelationType != DecorrelationType.NONE) ? true : null,
+                    null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

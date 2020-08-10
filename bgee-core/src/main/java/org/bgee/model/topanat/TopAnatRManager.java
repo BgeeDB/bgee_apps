@@ -7,6 +7,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 
 import com.github.rcaller.rStuff.RCaller;
 import com.github.rcaller.rStuff.RCode;
@@ -23,7 +24,7 @@ import com.github.rcaller.rStuff.RCode;
 public class TopAnatRManager {
 
     private final static Logger log = LogManager.getLogger(TopAnatRManager.class.getName());
-    
+
     /**
      * A {@code String} that is the prefix of the message printed in the R console 
      * when an analysis produces no result and an empty result file is created. 
@@ -78,7 +79,7 @@ public class TopAnatRManager {
                 anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
 
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
-        
+
         code.clear();
         code.addRCode("# Please check that you have installed the required packages");
         code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
@@ -91,17 +92,23 @@ public class TopAnatRManager {
         code.addRCode("source('http://bioconductor.org/biocLite.R')");
         code.addRCode("biocLite('Runiversal')}");
 
-        code.addRCode("packageExistTopGO<-require(topGO)");
-        code.addRCode("if(!packageExistTopGO){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('topGO')}");
+        // if there is no decorrelation, do not use the topGO package
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("packageExistTopGO<-require(topGO)");
+            code.addRCode("if(!packageExistTopGO){");
+            code.addRCode("source('http://bioconductor.org/biocLite.R')");
+            code.addRCode("biocLite('topGO')}");
+        }
 
         code.addRCode("packageExistRJava<-require(rJava)");
         code.addRCode("if(!packageExistRJava){");
         code.addRCode("source('http://bioconductor.org/biocLite.R')");
         code.addRCode("biocLite('rJava')}");
 
-        code.addRCode("library(topGO)");
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("library(topGO)");
+        }
+
         code.addRCode("# Please change the working directory to match your file system:");
         code.addRCode("setwd('" + resultFilePath + "')");
         log.debug("Location of TopAnat functions file: {} - {}", this.props.getTopAnatFunctionFile(), 
@@ -132,8 +139,16 @@ public class TopAnatRManager {
         code.addRCode("if (file.info(geneToOrganFileName)$size != 0) {");
         code.addRCode("  tab <- read.table(geneToOrganFileName,header=FALSE, sep='\t')");
         code.addRCode("  gene2anatomy <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
-        code.addRCode("  print('GeneToAnaTomy:')");
-        code.addRCode("  head(gene2anatomy)");
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("  gene2anatomy <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
+            code.addRCode("  print('GeneToAnaTomy:')");
+            code.addRCode("  head(gene2anatomy)");
+        }
+        else{
+            code.addRCode("  anatomy2gene <- tapply(as.character(tab[,1]), as.character(tab[,2]), unique)"); 
+            code.addRCode("  print('AnaTomyToGene:')");
+            code.addRCode("  head(anatomy2gene)");
+        }
 
         // Organ Names File
         String[] organNames = { anatEntitiesNamesFileName };
@@ -152,22 +167,43 @@ public class TopAnatRManager {
         //in that case we cannot proceed to the tests. Or maybe there is less genes 
         //with data in the background than the threshold on node size.
         code.addRCode("  if (length(geneList) > 0 & length(levels(geneList)) == 2 & length(geneList) >= " 
-            + params.getNodeSize() + ") {");
+                + params.getNodeSize() + ") {");
 
-        code.addRCode("    myData <- maketopGOdataObject(parentMapping = relations,allGenes = geneList,nodeSize = "+ params.getNodeSize() + ",gene2Nodes = gene2anatomy)");
-        //maybe make maketopGOdataObject to return an error code rather than using 'stop'?
-        //then: code.addRCode("if (is.character(myData)) {...}");
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("    myData <- maketopGOdataObject(parentMapping = relations,allGenes = geneList,nodeSize = "+ params.getNodeSize() + ",gene2Nodes = gene2anatomy)");
+            //maybe make maketopGOdataObject to return an error code rather than using 'stop'?
+            //then: code.addRCode("if (is.character(myData)) {...}");
 
-        code.addRCode("    resFis <- runTest(myData, algorithm = '"
-                + this.params.getDecorrelationType().getCode() +"', statistic = '"
-                + this.params.getStatisticTest().getCode() +"')");
 
-        //under-representation disabled
-        //code.addRCode("test.stat <- new('elimCount', testStatistic = GOFisherTestUnder, name ='Elim / Fisher test / underrepresentation')");
-        //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
+            code.addRCode("    resFis <- runTest(myData, algorithm = '"
+                    + this.params.getDecorrelationType().getCode() +"', statistic = '"
+                    + this.params.getStatisticTest().getCode() +"')");
 
-        code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + " , organNames)");
-        //Do NOT sort the table again here. Already sorted by makeTable
+            //under-representation disabled
+            //code.addRCode("test.stat <- new('elimCount', testStatistic = GOFisherTestUnder, name ='Elim / Fisher test / underrepresentation')");
+            //code.addRCode("resFis.under <- getSigGroups(myData, test.stat)");
+
+            code.addRCode("    tableOver <- makeTable(myData,score(resFis), "+this.params.getFdrThreshold() + " , organNames)");
+            //Do NOT sort the table again here. Already sorted by makeTable
+        }else{
+            // Run the tests with custom methods that do not use the topGO package
+            // For the moment, only fisher is supported
+            code.addRCode("resTmp <- lapply(anatomy2gene,FUN=runTestWithoutTopGO,geneList=geneList,nodeSize = "+ params.getNodeSize() + ")");
+            // Filter out NULL (=below nodeSize) values
+            code.addRCode("i=1");
+            code.addRCode("    while(i <= length(resTmp)){");
+            code.addRCode("        if(length(resTmp[[i]])!=5){");
+            code.addRCode("            resTmp[[i]]<-NULL");
+            code.addRCode("        }");
+            code.addRCode("        else{");
+            code.addRCode("            i<-i+1");
+            code.addRCode("        }");
+            code.addRCode("    }");
+            code.addRCode("res <- data.frame(matrix(unlist(resTmp), nrow=length(resTmp), byrow=T))");
+            code.addRCode("colnames(res) <- c('annotated','significant','expected','foldEnrichment','pval')");
+            code.addRCode("rownames(res) <- names(resTmp)            ");
+            code.addRCode("tableOver <- makeTableWithoutTopGO(res,"+this.params.getFdrThreshold() + ", organNames)");
+        }
 
         code.addRCode("    print(nrow(tableOver))");
         code.addRCode("    print(ncol(tableOver))");
@@ -178,9 +214,15 @@ public class TopAnatRManager {
         code.addRCode("      write.table(tableOver, file=topOBOResultFile, sep='\t', row.names=F, col.names=T, quote=F)");
         code.addRCode("      resultExist <- TRUE");
 
-        code.addRCode("      pValFis <- score(resFis)");
-        code.addRCode("      pVal<-pValFis");
-        code.addRCode("      pVal[pValFis==0]<- 100");
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("      pValFis <- score(resFis)");
+            code.addRCode("      pVal<-pValFis");
+            code.addRCode("      pVal[pValFis==0]<- 100");
+        }
+        else{
+            code.addRCode(" pVal<-tableOver$p");
+            code.addRCode(" pVal[pVal==0]<- 100  ");       
+        }
 
         code.addRCode("      organNames <- read.table(organNamesFileName, header = FALSE, sep='\t')");
         code.addRCode("      rownames(organNames)<-organNames[,1]");
@@ -191,10 +233,11 @@ public class TopAnatRManager {
         code.addRCode("      resultCount <- min(c(resultCount , "+ params.getNumberOfSignificantNodes() +"))");
         code.addRCode("      cat(paste('Number of nodes to display: ', resultCount, '\n'))");
         //generate the graph only if we have significant nodes
-        code.addRCode("      if (resultCount != 0) {");
-        code.addRCode("        printTopOBOGraph(myData, pVal, firstSigNodes = resultCount, fileName = resultPDF , useInfo = 'all',pdfSW = TRUE, organNames=organNames)");
-        code.addRCode("      }");
-
+        if(this.params.getDecorrelationType() != DecorrelationType.NONE){
+            code.addRCode("      if (resultCount != 0) {");
+            code.addRCode("        printTopOBOGraph(myData, pVal, firstSigNodes = resultCount, fileName = resultPDF , useInfo = 'all',pdfSW = TRUE, organNames=organNames)");
+            code.addRCode("      }");
+        }
         code.addRCode("    }");
         code.addRCode("  }");
         code.addRCode("}");

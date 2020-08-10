@@ -81,33 +81,36 @@ public class TopAnatRManager {
         caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
 
         code.clear();
-        code.addRCode("# Please check that you have installed the required packages");
-        code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
-        code.addRCode("if(!packageExistRgraphviz){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('Rgraphviz')}");
+        code.addRCode("# Check that you have installed the required packages");
+        code.addRCode("if(!suppressWarnings(require(BiocManager))){");
+        code.addRCode("  install.packages('BiocManager')");
+        code.addRCode("}");
+        code.addRCode("if(!suppressWarnings(require(Rgraphviz))){");
+        code.addRCode("  BiocManager::install('Rgraphviz')");
+        code.addRCode("}");
 
-        code.addRCode("packageExistRUniversal<-require(Runiversal)");
-        code.addRCode("if(!packageExistRUniversal){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('Runiversal')}");
+        code.addRCode("if(!suppressWarnings(require(Runiversal))){");
+        code.addRCode("  BiocManager::install('Runiversal')");
+        code.addRCode("}");
 
         // if there is no decorrelation, do not use the topGO package
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){
-            code.addRCode("packageExistTopGO<-require(topGO)");
-            code.addRCode("if(!packageExistTopGO){");
-            code.addRCode("source('http://bioconductor.org/biocLite.R')");
-            code.addRCode("biocLite('topGO')}");
+            code.addRCode("packageExistTopGO<-require()");
+            code.addRCode("if(!suppressWarnings(require(topGO))){");
+            code.addRCode("  BiocManager::install('topGO')");
+            code.addRCode("}");
         }
 
-        code.addRCode("packageExistRJava<-require(rJava)");
-        code.addRCode("if(!packageExistRJava){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('rJava')}");
+        code.addRCode("if(!suppressWarnings(require(rJava))){");
+        code.addRCode("  BiocManager::install('rJava')");
+        code.addRCode("}");
 
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){
             code.addRCode("library(topGO)");
         }
+        code.addRCode("library(rJava)");
+        code.addRCode("library(Runiversal)");
+        code.addRCode("library(Rgraphviz)");
 
         code.addRCode("# Please change the working directory to match your file system:");
         code.addRCode("setwd('" + resultFilePath + "')");

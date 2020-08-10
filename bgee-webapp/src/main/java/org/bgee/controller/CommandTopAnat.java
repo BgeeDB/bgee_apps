@@ -9,12 +9,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -787,24 +787,22 @@ public class CommandTopAnat extends CommandParent {
                     .distinct()
                     .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), Collectors.counting()));
 
-        // Retrieve detected species, and create a new Map Species -> Long
-        final Map<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()? new HashMap<>(): 
+        // Retrieve detected species, and create a new Map Species -> Long order by descending gene counts
+        final LinkedHashMap<Species, Long> speciesToGeneCount = speciesIdToGeneCount.isEmpty()?
+                new LinkedHashMap<>():
                 this.serviceFactory.getSpeciesService()
                 .loadSpeciesByIds(speciesIdToGeneCount.keySet(), false)
                 .stream()
-                .collect(Collectors.toMap(spe -> spe, spe -> speciesIdToGeneCount.get(spe.getId())));
+                .map(spe -> new AbstractMap.SimpleEntry<>(spe, speciesIdToGeneCount.get(spe.getId())))
+                .sorted(Comparator.<Entry<Species, Long>, Long>comparing(e -> e.getValue()).reversed()
+                        .thenComparing(e -> e.getKey().getId()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException("Impossible collision"));},
+                        () -> new LinkedHashMap<>()));
 
         // Determine selected species ID.
-        final Integer selectedSpeciesId = speciesIdToGeneCount.entrySet().stream()
-                //sort based on gene count (and in case of equality, based on species ID)
-                .max((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().compareTo(e2.getKey()); 
-                    } 
-                    return e1.getValue().compareTo(e2.getValue());
-                })
-                .map(e -> e.getKey())
-                .orElse(null);
+        final Integer selectedSpeciesId = speciesToGeneCount.keySet().stream()
+                .findFirst().map(s -> s.getId()).orElse(null);
 
         // Load valid stages for selected species
         Set<DevStage> validStages = null;
@@ -836,7 +834,7 @@ public class CommandTopAnat extends CommandParent {
         
         // Determine message
         messages.add(this.getGeneUploadResponseMessage(geneSet, speciesToGeneCount, 
-                undeterminedGeneIds, paramName));
+                undeterminedGeneIds));
         
         //sanity checks
         if (speciesToGeneCount.isEmpty() && undeterminedGeneIds.isEmpty()) {
@@ -845,30 +843,20 @@ public class CommandTopAnat extends CommandParent {
         }
 
         //Transform speciesToGeneCount into a Map species ID -> gene count, and add
-        //the invalid gene count, associated to a specific key, and make it a LinkedHashMap,
+        //the invalid gene count, associated to a specific key, and keep it a LinkedHashMap,
         //for sorted and predictable responses
         LinkedHashMap<Integer, Long> responseSpeciesIdToGeneCount = null;
         if (!speciesToGeneCount.isEmpty()) {
 
-            //create a map species ID -> gene count
-            Map<Integer, Long> newMap = speciesToGeneCount.entrySet().stream()
-                    .collect(Collectors.toMap(e -> e.getKey().getId(), Entry::getValue));
+            //create a map species ID -> gene count, keeping it LinkedHashMap
+            responseSpeciesIdToGeneCount = speciesToGeneCount.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey().getId(), Entry::getValue,
+                            (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
+                            () -> new LinkedHashMap<>()));
             //add an entry for undetermined genes
             if (!undeterminedGeneIds.isEmpty()) {
-                newMap.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
+                responseSpeciesIdToGeneCount.put(UNDETERMINED_SPECIES_LABEL, Long.valueOf(undeterminedGeneIds.size()));
             }
-
-            responseSpeciesIdToGeneCount = newMap.entrySet().stream()
-                    //sort in descending order of gene count (and in case of equality,
-                    //by ascending order of key, for predictable message generation)
-                    .sorted((e1, e2) -> {
-                        if (e1.getValue().equals(e2.getValue())) {
-                            return e1.getKey().compareTo(e2.getKey());
-                        }
-                        return e2.getValue().compareTo(e1.getValue());
-                    }).collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-                            (v1, v2) -> {throw log.throwing(new IllegalStateException("no key collision possible"));},
-                            LinkedHashMap::new));
 
 
         }
@@ -900,7 +888,7 @@ public class CommandTopAnat extends CommandParent {
      * and the undetermined gene IDs.
      * 
      * @param submittedGeneIds      A {@code Set} of {@code String}s that are submitted gene IDs.
-     * @param speciesToGeneCount    A {@code Map} where keys are {@code Species} objects, 
+     * @param speciesToGeneCount    A {@code LinkedHashMap} where keys are {@code Species} objects,
      *                              the associated values being a {@code Long} that are gene ID 
      *                              count found in the species.
      * @param undeterminedGeneIds   A {@code Set} of {@code String}s that are submitted gene IDs
@@ -908,8 +896,7 @@ public class CommandTopAnat extends CommandParent {
      * @return                      A {@code String} that is the message to display.
      */
     private String getGeneUploadResponseMessage(Set<String> submittedGeneIds, 
-            Map<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds,
-            String paramName) {
+            LinkedHashMap<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds) {
         log.entry(submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
         
         StringBuilder msg = new StringBuilder();
@@ -917,28 +904,13 @@ public class CommandTopAnat extends CommandParent {
         msg.append(" IDs provided");
         if (!speciesToGeneCount.isEmpty()) {
             msg.append(": ");
-            msg.append(speciesToGeneCount.entrySet().stream().map(e -> e.getValue()).count());
-            msg.append(" unique genes found in Bgee");
-
-            msg.append(speciesToGeneCount.entrySet().stream()
-                    //sort in descending order of gene count (and in case of equality,
-                    //by ascending order of key, for predictable message generation)
-                    .sorted((e1, e2) -> {
-                        if (e1.getValue().equals(e2.getValue())) {
-                            return e1.getKey().getId().compareTo(e2.getKey().getId());
-                        }
-                        return e2.getValue().compareTo(e1.getValue());
-                    })
-                    .map(e -> ", " + e.getValue() + " in " + e.getKey().getName())
-                    .collect(Collectors.joining()));
+            Entry<Species, Long> speFirstEntry = speciesToGeneCount.entrySet().iterator().next();
+            msg.append(speFirstEntry.getValue()).append(" unique gene")
+            .append(speFirstEntry.getValue() > 1? "s": "").append(" found in ")
+            .append(speFirstEntry.getKey().getName());
+        } else {
+            msg.append(", none identified");
         }
-        if (!undeterminedGeneIds.isEmpty()) {
-            msg.append(", and ");
-            msg.append(undeterminedGeneIds.size());
-            msg.append(" IDs not found");
-        }
-        msg.append(" for ");
-        msg.append(paramName);
         
         return log.exit(msg.toString());
     }

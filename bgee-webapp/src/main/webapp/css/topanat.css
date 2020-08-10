@@ -672,6 +672,11 @@ form ul {
 	margin-top: 70px !important;
 }
 
+.modal-body {
+	white-space: pre-wrap;
+	height: 30em;
+}
+
 /*
 //for swt-dev
 html {

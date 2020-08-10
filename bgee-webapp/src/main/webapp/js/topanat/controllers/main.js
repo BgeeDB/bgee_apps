@@ -1320,6 +1320,11 @@
 
                 if(type == "fg"){
                     data['fg_list'] = list;
+                    //For correctly hiding the gene list message and displaying the loading message
+                    vm.selected_species = '';
+                    vm.geneValidationMessage = '';
+                    vm.geneModalMessage = '';
+                    vm.developmentStages = [];
                 } else {
                     data['bg_list'] = list;
                 }
@@ -1385,19 +1390,113 @@
 
         }
 
-        function parseDataForMessage(data) {
-            var matcher = new RegExp('((.+ unique genes found in Bgee), .+) for fg_list');
-            var match = data.message.match(matcher);
+        function parseDataForMessage(data, fgList) {
 
-            if (match != null && typeof match !== 'undefined') {
-                vm.geneValidationMessage = match[2];
-                vm.geneModalMessage = match[1];
-                if (data.data.fg_list.undeterminedGeneIds.length > 0) {
-                    vm.geneModalMessage += (' which are ' + data.data.fg_list.undeterminedGeneIds).replace(',', ', ');
-                }
-            } else {
-                vm.geneValidationMessage = message;
+            if (!data || !data.message) {
+                vm.geneValidationMessage = '';
+                vm.geneModalMessage = '';
+                console.log('no gene message');
+                return;
             }
+
+            vm.geneValidationMessage = data.message;
+
+            var listInfo = data.data.fg_list;
+            console.log(data.data.fg_list);
+            if (!fgList) {
+                console.log('Loading bg_list info');
+                listInfo = data.data.bg_list;
+            }
+            console.log('listInfo: ');
+            console.log(listInfo);
+            if (!listInfo ||
+                    !listInfo.geneCount || !Object.keys(listInfo.geneCount).length || Object.keys(listInfo.geneCount).length <= 1 ||
+                    !listInfo.detectedSpecies || !Object.keys(listInfo.detectedSpecies).length) {
+                vm.geneModalMessage = '';
+                console.log('no gene list info');
+                return;
+            }
+
+            var modalMessage = '';
+            if (listInfo.selectedSpecies && listInfo.detectedSpecies[listInfo.selectedSpecies]) {
+                var species = listInfo.detectedSpecies[listInfo.selectedSpecies];
+                var geneCount = listInfo.geneCount[listInfo.selectedSpecies];
+                console.log('Selected species and gene count: ' + species + ' - ' + geneCount);
+                modalMessage += 'Selected species: <i>' + species['genus'] + " " +
+                    species['speciesName'] + '</i>' +
+                    (geneCount? ', ' + geneCount + ' unique gene' + (geneCount > 1? 's': '') +
+                         ' identified in Bgee': '');
+            }
+            var otherSpecies = false;
+            var undetermined = false;
+            angular.forEach(listInfo.geneCount, function(value, key) {
+                if (key == -1) {
+                    console.log('Undetermined found');
+                    undetermined = true;
+                } else if (key && (!listInfo.selectedSpecies || key != listInfo.selectedSpecies) &&
+                        listInfo.detectedSpecies[key]) {
+                    console.log('Other species found');
+                    otherSpecies = true;
+                }
+            });
+            if (otherSpecies) {
+                //we put the species count objects in an Array to order them
+                //per descending number of genes
+                var orderedCount = [];
+                angular.forEach(listInfo.geneCount, function(value, key) {
+                    orderedCount.push( { key: key, value: value } );
+                });
+                orderedCount.sort(function(a, b) {
+                    return b.value - a.value;
+                });
+                modalMessage += "\n" + '<br />Other species detected in ID list: ' + "\n" + '<ul>';
+                for (var i = 0; i < orderedCount.length; i++) {
+                    if ((!listInfo.selectedSpecies || orderedCount[i].key != listInfo.selectedSpecies) &&
+                            listInfo.detectedSpecies[orderedCount[i].key]) {
+                        var species = listInfo.detectedSpecies[orderedCount[i].key];
+                        var geneCount = orderedCount[i].value;
+                        console.log('Other species and gene count: ' + species + ' - ' + geneCount);
+                        modalMessage += '<li><i>' + species['genus'] + " " +
+                        species['speciesName'] + '</i>: ' +
+                        (geneCount? geneCount + ' gene' + (geneCount > 1? 's': ''):
+                            '0 gene') + ' identified</li>';
+                    }
+                }
+                modalMessage += '</ul>';
+            }
+            if (undetermined && listInfo.geneCount[-1]) {
+                modalMessage += "\n" + '<br />ID' + (listInfo.geneCount[-1] > 1? 's': '') +
+                    ' not identified: ' + listInfo.geneCount[-1];
+            }
+            if (otherSpecies && listInfo.notInSelectedSpeciesGeneIds &&
+                    listInfo.notInSelectedSpeciesGeneIds.length) {
+                modalMessage += "\n" + '<br />ID' +
+                        (listInfo.notInSelectedSpeciesGeneIds.length > 1? 's': '') +
+                        ' in other species: ' + "\n" + '<ul>';
+                for (var i = 0; i < 10 && i < listInfo.notInSelectedSpeciesGeneIds.length; i++) {
+                    modalMessage += '<li>' + listInfo.notInSelectedSpeciesGeneIds[i] + '</li>';
+                }
+                if (listInfo.notInSelectedSpeciesGeneIds.length > 10) {
+                        modalMessage += '<li>...</li>';
+                }
+                modalMessage += '</ul>';
+            }
+            if (undetermined && listInfo.undeterminedGeneIds &&
+                    listInfo.undeterminedGeneIds.length) {
+                modalMessage += "\n" + '<br />ID' +
+                (listInfo.undeterminedGeneIds.length > 1? 's': '') +
+                ' not identified: ' + "\n" + '<ul>';
+                for (var i = 0; i < 10 && i < listInfo.undeterminedGeneIds.length; i++) {
+                        modalMessage += '<li>' + listInfo.undeterminedGeneIds[i] + '</li>';
+                }
+                if (listInfo.undeterminedGeneIds.length > 10) {
+                    modalMessage += '<li>...</li>';
+                }
+                modalMessage += '</ul>';
+            }
+
+            console.log('Gene modal message: ' + modalMessage);
+            vm.geneModalMessage = modalMessage;
         }
 
         /*function getNbDetectedSpecies(data, type) {
@@ -1457,7 +1556,7 @@
                     vm.selected_species = mapIdtoName(data, type + "_list");
                     console.log("selected species: "+vm.selected_species);
                     vm.isValidSpecies = true;
-                    parseDataForMessage(data);
+                    parseDataForMessage(data, true);
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
                 }
 

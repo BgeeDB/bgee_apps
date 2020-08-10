@@ -107,7 +107,7 @@
 
                             <span>
                                 <i class="fa fa-circle-o-notch fa-spin" ></i>
-                                Detecting species corresponding to the gene list, retrieving associated  development stages
+                                Analyzing gene list
                             </span>
 
                         </p>
@@ -117,7 +117,9 @@
                            ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError"
                            class="smaller">
                            {{vm.geneValidationMessage}}
-                           <span class=" glyphicon glyphicon-info-sign" role="button"
+                           <span ng-show="vm.geneModalMessage !== ''"
+                                 ng-hide="vm.geneModalMessage === '' || vm.showDevStageError"
+                                 class=" glyphicon glyphicon-info-sign" role="button"
                                 data-toggle="modal" data-target="#geneModal"></span>
                            <!-- Modal -->
                            <div class="modal" id="geneModal" tabindex="-1" role="dialog"
@@ -131,8 +133,7 @@
                                            </button>
                                            <span class="modal-title" id="geneModalLabel">Gene detection details</span>
                                        </div>
-                                       <div class="modal-body">
-                                            {{vm.geneModalMessage}}
+                                       <div class="modal-body" ng-bind-html="to_trusted(vm.geneModalMessage)">
                                        </div>
                                        <div class="modal-footer">
                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

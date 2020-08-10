@@ -468,7 +468,7 @@ runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
   foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
   backgroundExpressed <- length(subset(names(geneList),geneList==0 & names(geneList) %in% anatomy))
   backgroundNotExpressed <- length(subset(names(geneList),geneList==0 & !(names(geneList) %in% anatomy)))
-  totalExpressed <- length(subset(names(geneList),names(geneList) %in% anatomy))
+  totalExpressed <- foregroundExpressed + backgroundExpressed
   # if the min node size is not reached, return null
   if(totalExpressed < nodeSize){
     return(NULL)
@@ -485,11 +485,14 @@ runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
            c("present", "absent")))
   if(test=="fisher"){
     fis <- fisher.test(data,alternative="greater")
+  }else{
+    stop("Can only use Fisher test when running topAnat with propagated data (without topGo).")
   }
+  
   # Generate and return the result values
   annotated <- length(subset(names(geneList),names(geneList) %in% anatomy)) # =foreground+background
   significant <- foregroundExpressed
-  expected <- (foregroundExpressed+backgroundExpressed)/(backgroundNotExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)
+  expected <- (foregroundExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)/(backgroundNotExpressed+backgroundExpressed+foregroundExpressed+foregroundNotExpressed)
   foldEnrichment <- significant/expected
   return(cbind(annotated, significant , expected, foldEnrichment, pval=fis$p.value))
 }

@@ -1,10 +1,13 @@
 package org.bgee.model.gene;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,22 +15,19 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import org.bgee.model.CommonService;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
-import org.bgee.model.source.Source;
-import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-
-import java.util.Arrays;
-import java.util.Map.Entry;
-import java.util.Optional;
 
 /**
  * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
@@ -129,7 +129,7 @@ public class GeneService extends CommonService {
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
-     * 
+     *
      * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
      * @return                  A {@code Stream} of matching {@code Gene}s.
@@ -138,6 +138,7 @@ public class GeneService extends CommonService {
         log.entry(ensemblGeneIds);
         return log.exit(this.loadGenesByEnsemblIds(ensemblGeneIds, false));
     }
+
     /**
      * Retrieves genes from their Ensembl IDs as a {@code SearchResult}. {@code SearchResult} allows
      * also to retrieve the IDs that were <strong>not</strong> found in the database.
@@ -360,6 +361,9 @@ public class GeneService extends CommonService {
         log.entry(mixedGeneIDs, withSpeciesInfo);
 
         Set<String> clnMixedGeneIDs = mixedGeneIDs == null? new HashSet<>(): new HashSet<>(mixedGeneIDs);
+        if (clnMixedGeneIDs.isEmpty()) {
+            return log.exit(Stream.empty());
+        }
 
         //we need to get the Species genes belong to, in order to instantiate Gene objects.
         //we don't have access to the species ID information before getting the GeneTOs,
@@ -368,44 +372,52 @@ public class GeneService extends CommonService {
         final Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(null, withSpeciesInfo);
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
 
-        // Get mapping between given IDs and Bgee gene IDs
-        final Map<String, Set<Integer>> mapMixedIdToBgeeGeneIds = 
-                this.loadMappingXRefIdToBgeeGeneIds(clnMixedGeneIDs);
-        final Set<Integer> bgeeGeneIDs = mapMixedIdToBgeeGeneIds.values().stream()
-                .flatMap(Set::stream).collect(Collectors.toSet());
-        
-        // Get Genes from Bgee gene Ids
-        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(getDaoManager().getGeneDAO()
-                .getGenesByBgeeIds(bgeeGeneIDs).stream()
-                .collect(Collectors.toMap(
-                        EntityTO::getId,
-                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null, null,
-                                geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                )));
 
-        // Build mapping between given IDs and genes
-        Map<String, Set<Gene>> mapAnyIdToGenes = mapMixedIdToBgeeGeneIds.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey(),
-                        e -> e.getValue().stream().map(geneMap::get).collect(Collectors.toSet())));
-
-
-        // Retrieve Genes that were not found using cross-reference IDs (i.e. Ensembl IDs)
-        Set<String> notXRefIds = clnMixedGeneIDs.stream()
-                    .filter(id -> !mapMixedIdToBgeeGeneIds.containsKey(id))
-                    .collect(Collectors.toSet());
-        mapAnyIdToGenes.putAll(this.loadGenesByEnsemblIds(notXRefIds, withSpeciesInfo)
+        //Retrieve genes by Ensembl IDs
+        Map<String, Set<Gene>> mapAnyIdToGenes = this.loadGenesByEnsemblIds(clnMixedGeneIDs, withSpeciesInfo)
                 .collect(Collectors.groupingBy(Gene::getEnsemblGeneId,
-                        Collectors.mapping(x -> x, Collectors.toSet()))));
+                        Collectors.mapping(x -> x, Collectors.toSet())));
+        log.debug("Gene IDs identified: {}", mapAnyIdToGenes.keySet());
+
+
+        // Retrieve Genes that were not found using Ensembl IDs (i.e. XRef IDs)
+        Set<String> notGeneIds = clnMixedGeneIDs.stream()
+                    .filter(id -> !mapAnyIdToGenes.containsKey(id))
+                    .collect(Collectors.toSet());
+        log.debug("Other IDs (not found in gene IDs) to retrieve: {}", notGeneIds);
+        if (!notGeneIds.isEmpty()) {
+            // Get mapping between XRef IDs and Bgee gene IDs
+            final Map<String, Set<Integer>> mapXRefIdToBgeeGeneIds =
+                    this.loadMappingXRefIdToBgeeGeneIds(notGeneIds);
+            log.debug("XRefIds identified with mapping to Bgee genes: {}", mapXRefIdToBgeeGeneIds.keySet());
+            final Set<Integer> xRefBgeeGeneIDs = mapXRefIdToBgeeGeneIds.values().stream()
+                    .flatMap(Set::stream).collect(Collectors.toSet());
+            if (!xRefBgeeGeneIDs.isEmpty()) {
+                // Get Genes from Bgee gene Ids
+                final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(getDaoManager().getGeneDAO()
+                        .getGenesByBgeeIds(xRefBgeeGeneIDs).stream()
+                        .collect(Collectors.toMap(
+                                EntityTO::getId,
+                                gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null, null,
+                                        geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                )));
+                // Add mapping between XRef IDs and genes
+                mapAnyIdToGenes.putAll(mapXRefIdToBgeeGeneIds.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                e -> e.getKey(),
+                                e -> e.getValue().stream().map(geneMap::get).collect(Collectors.toSet()))));
+            }
+        }
 
         // Add provided IDs with no gene found
         clnMixedGeneIDs.removeAll(mapAnyIdToGenes.keySet());
+        log.debug("IDs not identified: {}", clnMixedGeneIDs);
         if (!clnMixedGeneIDs.isEmpty()) {
             for (String clnMixedGeneID : clnMixedGeneIDs) {
                 mapAnyIdToGenes.put(clnMixedGeneID, new HashSet<>());
             }
         }
-        // Build mapping between given IDs and genes
+
         return log.exit(mapAnyIdToGenes.entrySet().stream());
     }
 

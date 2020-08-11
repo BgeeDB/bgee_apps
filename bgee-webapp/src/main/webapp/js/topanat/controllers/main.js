@@ -123,6 +123,10 @@
         // message from the gene validation query.
         // Filled only when more than one species detected in fg
         vm.geneValidationMessage = '';
+        vm.geneModalMessage = '';
+        //bg gene list info
+        vm.bgGeneValidationMessage = '';
+        vm.bgGeneModalMessage = '';
 
         // getDevStage checks whether all the FG genes are in the BG.
         // In case of issue, isValidBackground is set to FALSE
@@ -245,85 +249,68 @@
 
             });
 
-            var gotDevStages = getDevStages('fg', vm.fg_list);
-
+            //This function has been updated not to redo a query to the server
+            //to validate the gene lists, all info necessary is already present in the response
+            getDevStages('fg', vm.fg_list, jobStatus);
+            getDevStages('bg', vm.bg_list, jobStatus);
 
             showMessage($scope, "developmental and life stages");
 
-            gotDevStages.then(function(){
-                // Issue #109
-                // In case we load an existing result page, the background selected species
-                // and checked flag were not assigned any value.
-                // We assume that, because the job exists, the bg and fg species are the same.
-                // We don't want to run another call to the server or to parse the server's response.
-                if (vm.bg_list) {
-                    vm.background_species = vm.selected_species;
-                    vm.background_selected_taxid = vm.selected_taxid;
-                    vm.isBackgroundChecked = '';
-                    vm.isValidBackground = true;
-                    vm.isValidBackgroundMessage = '';
-                    // Issue 108
-                    vm.max_node_size = getGeneCount(jobStatus, 'bg_list');
-                }
+            $timeout(function(){
 
+                console.log("get, display or submit");
+                console.log(jobStatus);
+                // open advanced options if non default values were used
+                shouldOpenAdvancedOptions(vm, configuration);
 
-                $timeout(function(){
+                // jobId check is a magic number we use to get used parameters when result is not available
+                // prevents us getting results again when we already know it's missing
 
-                    console.log("get, display or submit");
-                    console.log(jobStatus);
-                    // open advanced options if non default values were used
-                    shouldOpenAdvancedOptions(vm, configuration);
+                if(vm.jobId != -1 && (typeof jobStatus.code !== 'undefined' &&
+                    jobStatus.code !== 400 &&
+                    typeof jobStatus.data.topAnatResults !== 'undefined' ||
+                    (typeof jobStatus.data.jobResponse !== 'undefined' &&
+                    jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined"))
+                ){
 
-                    // jobId check is a magic number we use to get used parameters when result is not available
-                    // prevents us getting results again when we already know it's missing
+                    console.log(jobStatus.data);
 
-                    if(vm.jobId != -1 && (typeof jobStatus.code !== 'undefined' &&
-                        jobStatus.code !== 400 &&
-                        typeof jobStatus.data.topAnatResults !== 'undefined' ||
-                        (typeof jobStatus.data.jobResponse !== 'undefined' &&
-                        jobStatus.data.jobResponse.jobStatus.toLowerCase() == "undefined"))
-                    ){
-
-                        console.log(jobStatus.data);
-
-                        console.log("job is done, either get result or display it");
-                        //XXX: I see that it is easy for you to display the results at any moment,
-                        //would you like to disable the 'get_results' query, and to always retrieve
-                        //the results from a 'tracking_job' or 'form_prefill' query directly?
-                        if(!jobStatus.data.topAnatResults){
-                            console.log("Get results");
-                            getResults();
-                        } else {
-                            console.log("Display results");
-                            console.log(jobStatus.data.topAnatResults);
-                            displayResults(jobStatus);
-                        }
-
+                    console.log("job is done, either get result or display it");
+                    //XXX: I see that it is easy for you to display the results at any moment,
+                    //would you like to disable the 'get_results' query, and to always retrieve
+                    //the results from a 'tracking_job' or 'form_prefill' query directly?
+                    if(!jobStatus.data.topAnatResults){
+                        console.log("Get results");
+                        getResults();
                     } else {
-
-                        console.log("no result, send form or check Jobstatus");
-
-                        // no result, check if we have requestParameters and resubmit
-                        if(vm.jobId == -1 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
-                            console.log("no result or job found for the parameters, resubmit");
-                            logger.info("Job result was missing, resubmitting job");
-                            $timeout(function(){
-                                $window.document.getElementById('resultContainer').scrollIntoView();
-                            }, 500);
-                            vm.sendForm();
-                        } else {
-                            console.log("job is not done, checkjobstatus");
-                            // This fixes issue #111
-                            // Do not remove the trailing slash, see comments in topanat.js
-                            vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId + '/';
-                            vm.formSubmitted = true;
-                            checkJobStatus();
-                        }
-
+                        console.log("Display results");
+                        console.log(jobStatus.data.topAnatResults);
+                        displayResults(jobStatus);
                     }
-                }, 100);
 
-            });
+                } else {
+
+                    console.log("no result, send form or check Jobstatus");
+
+                    // no result, check if we have requestParameters and resubmit
+                    if(vm.jobId == -1 || (typeof jobStatus.requestParameters !== 'undefined' && jobStatus.code == 400)) {
+                        console.log("no result or job found for the parameters, resubmit");
+                        logger.info("Job result was missing, resubmitting job");
+                        $timeout(function(){
+                            $window.document.getElementById('resultContainer').scrollIntoView();
+                        }, 500);
+                        vm.sendForm();
+                    } else {
+                        console.log("job is not done, checkjobstatus");
+                        // This fixes issue #111
+                        // Do not remove the trailing slash, see comments in topanat.js
+                        vm.resultUrl = '/result/'+vm.hash+'/'+vm.jobId + '/';
+                        vm.formSubmitted = true;
+                        checkJobStatus();
+                    }
+
+                }
+            }, 100);
 
         } else {
 
@@ -817,7 +804,6 @@
                 // default BG should be selected.
                 // BG checked takes precedence over BG list (see sendForm function).
                 vm.background_species = '';
-                vm.isBackgroundChecked = 'checked';
                 vm.isValidBackground = false;
                 vm.isValidBackgroundMessage = 'Species differ between your gene list and your custom background. Please, check your data.';
                 // TODO
@@ -1362,7 +1348,7 @@
 
         /********************** End Action buttons *********************/
 
-        function getDevStages(type, list) {
+        function getDevStages(type, list, responseData) {
 
             showMessage($scope, "developmental and life stages");
 
@@ -1401,94 +1387,232 @@
 
                 if(type == "fg"){
                     data['fg_list'] = list;
+                    //For correctly hiding the gene list message and displaying the loading message
+                    vm.selected_species = '';
+                    vm.geneValidationMessage = '';
+                    vm.geneModalMessage = '';
+                    vm.developmentStages = [];
                 } else {
                     data['bg_list'] = list;
+                    //For correctly hiding the gene list message and displaying the loading message
+                    vm.background_species = '';
+                    vm.bgGeneValidationMessage = '';
+                    vm.bgGeneModalMessage = '';
+                    vm.isValidBackgroundMessage = '';
                 }
 
                 console.log("data to getdevstages with type: " + type);
                 console.log(data);
 
-                return bgeedataservice.getDevStages(configuration.mockupUrl, data)
-                    .then(function (data) {
-                        handleDevStages(data, type);
-                        getAllDataTypes();
-                        vm.allowedDataTypes = getAllowedDataTypes(vm.expr_type);
-                    },
+                if (!responseData) {
+                    return bgeedataservice.getDevStages(configuration.mockupUrl, data)
+                        .then(function (data) {
+                            thenGetDevStages(data, type);
+                        },
 
-                    function(data){
-                        showMessage($scope, false);
-                        console.info("could not get result");
-                        console.info(data);
-                        
-                        // Issue 117: I don't see why the species for FG should
-                        // be reset when BG is incorrect.
-                        if (type == 'fg') {
-                        	vm.selected_species = '';
-                        	vm.isValidSpecies = false;
-                        }
-                        else
-                        {
-                        	vm.background_species = '';
-                        	vm.isBackgroundChecked = 'checked';
-                        	vm.isValidBackground = false;
-                        	vm.isValidBackgroundMessage = 'Error with your custom background. Please, check your data.';
-                        }
-                        
-                        if (typeof data.message !== 'undefined') {
-                            logger.error('Getting result failed. error: ' + data.message, 'TopAnat fail');
-                            vm.message = data.message;
-                        } else if (typeof data.topAnatResults === 'undefined' && typeof data !== 'undefined' && vm.jobStatus === 'UNDEFINED') {
-                            // job is done, but the result is missing,
-                            // data probably had a message for us too, but we already show it
-                            logger.error('Getting result failed. Result may have been deleted. Resubmitting job, please stand by.', 'TopAnat fail')
-                            vm.message = data;
-                            vm.showDevStageError = data;
-                            $timeout(function(){
-                                $window.document.getElementById('resultContainer').scrollIntoView();
-                            }, 500);
-                            vm.sendForm();
-                        } else {
-                            if(data.data.message !== 'undefined'){
-                                logger.error(data.data.message, 'TopAnat fail');
-                                vm.message = data.data.message;
-                                vm.showDevStageError = data.data.message;
-                            } else {
-                                logger.error('Getting developmental and life stages failed. Unknown error.', 'TopAnat fail');
-                                vm.message = 'Getting developmental and life stages failed. Unknown error.';
-                                vm.showDevStageError = 'Getting developmental and life stages failed. Unknown error.';
-                            }
-
-                        }
-                    });
+                        function(data){
+                            failGetDevStages(data, type);
+                        });
+                } else {
+                    //In that case, we don't need to call bgeedataservice.getDevStages,
+                    //All the information needed is already present in the response
+                    thenGetDevStages(responseData, type);
+                }
             }
 
             //showMessage($scope, false);
 
         }
 
-        function parseMessage(message) {
-        	
-        	// For instance "461 genes entered, 457 in mouse, 2 in human, 2 not found in Bgee for fg_list"
-        	// match[1] = "461 genes entered, 457 in mouse, 2 in human, 2 in toto, 2 not found in Bgee"
-        	// match[2] = "461"
-        	// match[3] = "457"
-        	// match[4] = "in mouse"
-        	var matcher = new RegExp('((\\d+) genes entered, (\\d+) (in \\D+)(?:, \\d+ in \\D+)*(?:, \\d+ not found)? in Bgee) for fg_list');
-            
-            var match = message.match(matcher);
+        function thenGetDevStages(data, type) {
+            handleDevStages(data, type);
+            getAllDataTypes();
+            vm.allowedDataTypes = getAllowedDataTypes(vm.expr_type);
+        }
 
-            if (match != null && typeof match !== 'undefined') {
-            	var displayedText = match[2] + ' genes ' + match[4];
-            	if (match[2] > match[3]) {
-            		displayedText = $sce.trustAsHtml(displayedText + ' <span class="glyphicon glyphicon-info-sign" '
-            			+ 'uib-popover="' + match[1] + '" popover-trigger="mouseenter" '
-            			+ 'popover-placement="top" popover-append-to-body="true"'
-            			+ 'popover-title="Gene list details"></span>');
-            	}
-                return displayedText;
+        function failGetDevStages(data, type) {
+            showMessage($scope, false);
+            console.info("could not get result");
+            console.info(data);
+
+            // Issue 117: I don't see why the species for FG should
+            // be reset when BG is incorrect.
+            if (type == 'fg') {
+                vm.selected_species = '';
+                vm.isValidSpecies = false;
             }
-            else {
-                return message;
+            else
+            {
+                vm.background_species = '';
+                vm.isBackgroundChecked = 'checked';
+                vm.isValidBackground = false;
+                vm.isValidBackgroundMessage = 'Error with your custom background. Please, check your data.';
+            }
+
+            if (typeof data.message !== 'undefined') {
+                logger.error('Getting result failed. error: ' + data.message, 'TopAnat fail');
+                vm.message = data.message;
+            } else {
+                if(data.data.message !== 'undefined'){
+                    logger.error(data.data.message, 'TopAnat fail');
+                    vm.message = data.data.message;
+                    vm.showDevStageError = data.data.message;
+                } else {
+                    logger.error('Getting development stages failed. Unknown error.', 'TopAnat fail');
+                    vm.message = 'Getting development stages failed. Unknown error.';
+                    vm.showDevStageError = 'Getting development stages failed. Unknown error.';
+                }
+
+            }
+        }
+
+        function parseDataForMessage(data, fgList) {
+
+            if (!data || !data.data || fgList && !data.data.fg_list || !fgList && !data.data.bg_list) {
+                if (fgList) {
+                    vm.geneValidationMessage = '';
+                    vm.geneModalMessage = '';
+                } else {
+                    vm.bgGeneValidationMessage = '';
+                    vm.bgGeneModalMessage = '';
+                }
+                console.log('no gene message');
+                return;
+            }
+
+            var listInfo = data.data.fg_list;
+            console.log(data.data.fg_list);
+            if (!fgList) {
+                console.log('Loading bg_list info');
+                listInfo = data.data.bg_list;
+            }
+            console.log('listInfo: ');
+            console.log(listInfo);
+            if (!listInfo ||
+                    !listInfo.geneCount || !Object.keys(listInfo.geneCount).length ||
+                    !listInfo.detectedSpecies || !Object.keys(listInfo.detectedSpecies).length) {
+                if (fgList) {
+                    vm.geneValidationMessage = '';
+                    vm.geneModalMessage = '';
+                } else {
+                    vm.bgGeneValidationMessage = '';
+                    vm.bgGeneModalMessage = '';
+                }
+                console.log('no gene list info');
+                return;
+            }
+
+            var lines = [];
+            if (fgList && vm.fg_list) {
+                lines = vm.fg_list.split('\n');
+            } else if (!fgList && vm.bg_list) {
+                lines = vm.bg_list.split('\n');
+            }
+            var listLength = 0;
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i]) {
+                    listLength++;
+                }
+            }
+            if (!fgList && listLength) {
+                vm.isBackgroundChecked = '';
+            }
+            var modalMessage = '';
+            if (listInfo.selectedSpecies && listInfo.detectedSpecies[listInfo.selectedSpecies]) {
+                var species = listInfo.detectedSpecies[listInfo.selectedSpecies];
+                var geneCount = listInfo.geneCount[listInfo.selectedSpecies];
+                console.log('Selected species and gene count: ' + species + ' - ' + geneCount);
+
+                var message = listLength + ' ID' + (listLength > 1? 's': '') + ' provided, ' +
+                    geneCount + ' unique gene' + (geneCount > 1? 's': '') + ' found in ' + species['name'];
+                if (fgList) {
+                    vm.geneValidationMessage = message;
+                } else {
+                    vm.bgGeneValidationMessage = message;
+                }
+
+                modalMessage += 'Selected species: <i>' + species['genus'] + " " +
+                    species['speciesName'] + '</i>' +
+                    (geneCount? ', ' + geneCount + ' unique gene' + (geneCount > 1? 's': '') +
+                         ' identified in Bgee': '');
+            }
+            if (Object.keys(listInfo.geneCount).length <= 1) {
+                console.log("No need for extra gene list info, modalMessage not needed, validationMessage done");
+                return;
+            }
+            var otherSpecies = false;
+            var undetermined = false;
+            angular.forEach(listInfo.geneCount, function(value, key) {
+                if (key == -1) {
+                    console.log('Undetermined found');
+                    undetermined = true;
+                } else if (key && (!listInfo.selectedSpecies || key != listInfo.selectedSpecies) &&
+                        listInfo.detectedSpecies[key]) {
+                    console.log('Other species found');
+                    otherSpecies = true;
+                }
+            });
+            if (otherSpecies) {
+                //we put the species count objects in an Array to order them
+                //per descending number of genes
+                var orderedCount = [];
+                angular.forEach(listInfo.geneCount, function(value, key) {
+                    orderedCount.push( { key: key, value: value } );
+                });
+                orderedCount.sort(function(a, b) {
+                    return b.value - a.value;
+                });
+                modalMessage += "\n" + '<br />Other species detected in ID list: ' + "\n" + '<ul>';
+                for (var i = 0; i < orderedCount.length; i++) {
+                    if ((!listInfo.selectedSpecies || orderedCount[i].key != listInfo.selectedSpecies) &&
+                            listInfo.detectedSpecies[orderedCount[i].key]) {
+                        var species = listInfo.detectedSpecies[orderedCount[i].key];
+                        var geneCount = orderedCount[i].value;
+                        console.log('Other species and gene count: ' + species + ' - ' + geneCount);
+                        modalMessage += '<li><i>' + species['genus'] + " " +
+                        species['speciesName'] + '</i>: ' +
+                        (geneCount? geneCount + ' gene' + (geneCount > 1? 's': ''):
+                            '0 gene') + ' identified</li>';
+                    }
+                }
+                modalMessage += '</ul>';
+            }
+            if (undetermined && listInfo.geneCount[-1]) {
+                modalMessage += "\n" + '<br />ID' + (listInfo.geneCount[-1] > 1? 's': '') +
+                    ' not identified: ' + listInfo.geneCount[-1];
+            }
+            if (otherSpecies && listInfo.notInSelectedSpeciesGeneIds &&
+                    listInfo.notInSelectedSpeciesGeneIds.length) {
+                modalMessage += "\n" + '<br />ID' +
+                        (listInfo.notInSelectedSpeciesGeneIds.length > 1? 's': '') +
+                        ' in other species: ' + "\n" + '<ul>';
+                for (var i = 0; i < 10 && i < listInfo.notInSelectedSpeciesGeneIds.length; i++) {
+                    modalMessage += '<li>' + listInfo.notInSelectedSpeciesGeneIds[i] + '</li>';
+                }
+                if (listInfo.notInSelectedSpeciesGeneIds.length > 10) {
+                        modalMessage += '<li>...</li>';
+                }
+                modalMessage += '</ul>';
+            }
+            if (undetermined && listInfo.undeterminedGeneIds &&
+                    listInfo.undeterminedGeneIds.length) {
+                modalMessage += "\n" + '<br />ID' +
+                (listInfo.undeterminedGeneIds.length > 1? 's': '') +
+                ' not identified: ' + "\n" + '<ul>';
+                for (var i = 0; i < 10 && i < listInfo.undeterminedGeneIds.length; i++) {
+                        modalMessage += '<li>' + listInfo.undeterminedGeneIds[i] + '</li>';
+                }
+                if (listInfo.undeterminedGeneIds.length > 10) {
+                    modalMessage += '<li>...</li>';
+                }
+                modalMessage += '</ul>';
+            }
+
+            console.log('Gene modal message: ' + modalMessage);
+            if (fgList) {
+                vm.geneModalMessage = modalMessage;
+            } else {
+                vm.bgGeneModalMessage = modalMessage;
             }
         }
 
@@ -1549,7 +1673,7 @@
                     vm.selected_species = mapIdtoName(data, type + "_list");
                     console.log("selected species: "+vm.selected_species);
                     vm.isValidSpecies = true;
-                    vm.geneValidationMessage = parseMessage(data.message);
+                    parseDataForMessage(data, true);
                     //getNbDetectedSpecies(data, type + "_list") > 1 ? vm.geneValidationMessage = parseMessage(data.message) : vm.geneValidationMessage = '';
                 }
 
@@ -1596,6 +1720,7 @@
                 }
                 
                 checkConsistency();
+                parseDataForMessage(data, false);
             }
         }
 

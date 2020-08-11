@@ -54,7 +54,7 @@ public class MySQLGeneXRefDAOIT extends MySQLITAncestor {
         this.assertRetrievedGeneXRefTOs(expectedXrefs, methXrefs);
         
         // Check with specified attributes
-        List<GeneXRefDAO.Attribute> attributes = 
+        List<GeneXRefDAO.Attribute> attributes =
                 Arrays.asList(GeneXRefDAO.Attribute.BGEE_GENE_ID, GeneXRefDAO.Attribute.DATA_SOURCE_ID); 
         methXrefs = dao.getAllGeneXRefs(attributes).getAllTOs();
         expectedXrefs= Arrays.asList(
@@ -154,7 +154,7 @@ public class MySQLGeneXRefDAOIT extends MySQLITAncestor {
                 .filter(x -> dataSourceIds.contains(x.getDataSourceId()))
                 .collect(Collectors.toList());
         this.assertRetrievedGeneXRefTOs(expectedXrefs, methXrefs);
-        
+
         methXrefs = dao.getGeneXRefs(bgeeGeneIds, xRefIds, null, null).getAllTOs();
         expectedXrefs = this.getAllGeneXrefTOs().stream()
                 .filter(x -> bgeeGeneIds.contains(x.getBgeeGeneId()))

@@ -1,27 +1,5 @@
 package org.bgee.model.gene;
 
-import org.bgee.model.Entity;
-import org.bgee.model.ServiceFactory;
-import org.bgee.model.TestAncestor;
-import org.bgee.model.dao.api.DAOManager;
-import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
-import org.bgee.model.dao.api.gene.GeneXRefDAO;
-import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
-import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTOResultSet;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,9 +7,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
+import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet;
+import org.bgee.model.dao.api.gene.GeneXRefDAO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
+import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
+import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTOResultSet;
+import org.bgee.model.source.Source;
+import org.bgee.model.source.SourceService;
+import org.bgee.model.Entity;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
+import org.bgee.model.TestAncestor;
+
 import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
+import org.junit.Test;
+
+
+import org.mockito.invocation.InvocationOnMock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.stubbing.Answer;
 
 /**
  * This class holds the unit tests for the {@code GeneService} class.
@@ -176,6 +183,67 @@ public class GeneServiceTest extends TestAncestor {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
     
+    /**
+     * Test {@link GeneService#loadGeneById(String)}.
+     */
+    @Test
+    public void shouldLoadGeneByEnsemblId() {
+        // Initialize mock
+        int bgeeGeneId = 1;
+        String geneId = "ID1";
+        int sourceId = 1;
+
+        DAOManager managerMock = mock(DAOManager.class);
+        GeneDAO geneDao = mock(GeneDAO.class);
+        when(managerMock.getGeneDAO()).thenReturn(geneDao);
+        GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
+                Arrays.asList(new GeneBioTypeTO(1, "type1")));
+        when(geneDao.getGeneBioTypes()).thenReturn(mockBioTypeRs);
+        GeneNameSynonymDAO synDao = mock(GeneNameSynonymDAO.class);
+        when(managerMock.getGeneNameSynonymDAO()).thenReturn(synDao);
+        GeneNameSynonymTOResultSet mockSynRs = getMockResultSet(GeneNameSynonymTOResultSet.class,
+                Arrays.asList(new GeneNameSynonymTO(bgeeGeneId, "syn")));
+        when(synDao.getGeneNameSynonyms(new HashSet<>(Arrays.asList(bgeeGeneId)))).thenReturn(mockSynRs);
+        GeneXRefDAO xrefDao = mock(GeneXRefDAO.class);
+        when(managerMock.getGeneXRefDAO()).thenReturn(xrefDao);
+        GeneXRefTOResultSet mockXRefRs = getMockResultSet(GeneXRefTOResultSet.class,
+                Arrays.asList(new GeneXRefTO(bgeeGeneId, "1", "1", sourceId)));
+        when(xrefDao.getGeneXRefsByBgeeGeneIds(new HashSet<>(Arrays.asList(bgeeGeneId)), null))
+                .thenReturn(mockXRefRs);
+        ServiceFactory serviceFactory = mock(ServiceFactory.class);
+        when(serviceFactory.getDAOManager()).thenReturn(managerMock);
+        SpeciesService speciesService = mock(SpeciesService.class);
+        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
+        SourceService sourceService = mock(SourceService.class);
+        when(serviceFactory.getSourceService()).thenReturn(sourceService);
+        Map<Integer, Source> sources = new HashMap<>();
+        sources.put(sourceId, new Source(sourceId));
+        when(sourceService.loadSourcesByIds(null)).thenReturn(sources);
+
+        // Mock gene DAO
+        GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
+                Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1)));
+        when(geneDao.getGenesByEnsemblGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
+
+        // Mock species service
+        Set<Integer> speciesId = new HashSet<>(Arrays.asList(10090));
+        Species species = new Species(10090);
+        Map<Integer, Species> speciesMap = new HashMap<>();
+        speciesMap.put(10090, species);
+        when(speciesService.loadSpeciesMap(speciesId, false)).thenReturn(speciesMap);
+
+        // Test
+        Gene expectedGene = new Gene(geneId, species, new GeneBioType("type1"));
+
+        GeneService service = new GeneService(serviceFactory);
+
+        assertEquals("Incorrect gene", new HashSet<>(Arrays.asList(expectedGene)),
+                service.loadGenesByEnsemblId(geneId));
+    }
+
+    /**
+     * Test {@link GeneService#searchByTerm(String)}.
+     */
     @Test
     @Ignore("Test ignored until the method getOrthologs() is re-implemented.")
     public void testGetOrthologies() {

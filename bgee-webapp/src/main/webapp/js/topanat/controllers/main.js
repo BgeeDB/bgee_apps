@@ -1387,8 +1387,10 @@
 
                 if(type == "fg"){
                     data['fg_list'] = list;
-                    //For correctly hiding the gene list message and displaying the loading message
+                    //For correctly hiding the gene list message and species image
+                    //and displaying the loading message
                     vm.selected_species = '';
+                    vm.selected_taxid = '';
                     vm.geneValidationMessage = '';
                     vm.geneModalMessage = '';
                     vm.developmentStages = [];

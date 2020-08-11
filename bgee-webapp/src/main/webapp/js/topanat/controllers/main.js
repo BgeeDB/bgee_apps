@@ -1393,7 +1393,6 @@
                     vm.selected_taxid = '';
                     vm.geneValidationMessage = '';
                     vm.geneModalMessage = '';
-                    vm.developmentStages = [];
                 } else {
                     data['bg_list'] = list;
                     //For correctly hiding the gene list message and displaying the loading message
@@ -1680,21 +1679,26 @@
                 }
 
                 console.log(data.data.fg_list.stages);
-
                 var stages = [];
-                // set developmental and life stages to 'All stages'
-                vm.isStageChecked = 'checked';
-
+                var newStageChecked = 'checked';
                 angular.forEach(data.data.fg_list.stages, function(devStage, key){
 
                     // do we already have something from server
-                    var isChecked = true;
-                    if (!vm.stage_id || vm.stage_id.indexOf(devStage.id) === -1) {
-                        // not found in params
-                        isChecked = false;
-                    } else {
-                        //unselect "All stages"
-                        vm.isStageChecked = '';
+                    var isChecked = false;
+                    if (vm.stage_id && vm.stage_id.indexOf(devStage.id) !== -1) {
+                        isChecked = true;
+                        newStageChecked = '';
+                    }
+                    // or are we updating a gene list and there was already a stage selection
+                    else if (vm.developmentStages && vm.developmentStages.length) {
+                        angular.forEach(vm.developmentStages, function(currentStage, currentKey){
+                            if (currentStage.id === devStage.id && currentStage.checked) {
+                                isChecked = true;
+                                if (vm.isStageChecked === '') {
+                                    newStageChecked = '';
+                                }
+                            }
+                        });
                     }
 
                     stages.push({
@@ -1705,7 +1709,14 @@
 
                 });
 
+                //We used the stage_ids retrieved from response once already,
+                //now we can delete them so that the form can be modified gracefully
+                vm.stage_id = [];
+                vm.isStageChecked = newStageChecked;
                 vm.developmentStages = angular.copy(stages);
+                if (vm.isStageChecked === 'checked') {
+                    vm.isFormValidDevStages = 'yes';
+                }
                 if (vm.isBackgroundChecked === '' && vm.bg_list !== '') {
                     checkConsistency();
                 }

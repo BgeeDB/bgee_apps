@@ -823,13 +823,15 @@ public class CommandTopAnat extends CommandParent {
                     "At least one ID maps to severals Ensembl gene IDs: " + idsMappingMultipleGenes));
         }
 
-        // Identify gene IDs not in the selected species
-        final TreeSet<String> notSelectedSpeciesGenes = new TreeSet<>(
+        // Identify IDs not in the selected species
+        final TreeSet<String> notSelectedSpeciesIds = new TreeSet<>(
                 // All genes found in Bgee
-                mappingIdsToGenes.values().stream().flatMap(Collection::stream)
+                mappingIdsToGenes.entrySet().stream()
                     // we keep gene not in selected species
-                    .filter(g -> !g.getSpecies().getId().equals(selectedSpeciesId))
-                    .map(Gene::getEnsemblGeneId)
+                    .filter(e -> !e.getValue().isEmpty() &&
+                            e.getValue().stream()
+                            .noneMatch(g -> g.getSpecies().getId().equals(selectedSpeciesId)))
+                    .map(e -> e.getKey())
                     .collect(Collectors.toSet()));
         
         // Determine message
@@ -876,7 +878,7 @@ public class CommandTopAnat extends CommandParent {
                     .collect(Collectors.toList()))
                     .orElse(new ArrayList<>()),
                 //SortedSet of gene IDs with known species but not the selected species
-                notSelectedSpeciesGenes,
+                notSelectedSpeciesIds,
                 //SortedSet of undetermined gene IDs
                 Optional.ofNullable(undeterminedGeneIds)
                     .map(TreeSet<String>::new)

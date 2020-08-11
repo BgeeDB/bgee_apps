@@ -96,7 +96,7 @@
                 <div class="media gl-label">
 
 
-                        <img ng-src="{{vm.species_img(vm.selected_taxid)}}" class="img-responsive img-topanat-small pull-right" ng-show="vm.selected_taxid !==''" uib-tooltip="Detected species: {{vm.selected_species}}" alt="{{vm.selected_species}}">
+                        <img ng-src="{{vm.species_img(vm.selected_taxid)}}" class="img-responsive img-topanat-small pull-right" ng-show="vm.selected_taxid !=='' && vm.fg_list !== ''" ng-hide="!vm.selected_taxid || !vm.fg_list" uib-tooltip="Detected species: {{vm.selected_species}}" alt="{{vm.selected_species}}">
 
 
                     <div id="gene-list-media" class="media-body ng-cloak">
@@ -113,8 +113,8 @@
                         </p>
 
 
-                        <div ng-show="vm.geneValidationMessage !== ''"
-                           ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError"
+                        <div ng-show="vm.fg_list !== '' && vm.geneValidationMessage !== ''"
+                           ng-hide="!vm.fg_list || vm.geneValidationMessage === '' || vm.showDevStageError"
                            class="smaller">
                            {{vm.geneValidationMessage}}
                            <span ng-show="vm.geneModalMessage !== ''"
@@ -219,20 +219,55 @@
                         <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
                         </span>
 
-                        <p style="margin: 5px 5px 0 0;" ng-show="(vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="(!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
+                        <p style="margin: 5px 5px 0 0;" ng-show="vm.isValidBackgroundMessage === '' && (vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="vm.isValidBackgroundMessage !== '' || (!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
                     vm.isBackgroundChecked == 'checked')">
                             <i class="fa fa-circle-o-notch fa-spin"></i>
 
                             <span style="font-size: x-small" >
-                                <em>Detecting species corresponding to the background, checking consistency with gene list.</em>
+                                <em>Analyzing background gene list</em>
                             </span>
                         </p>
-                        <p style="margin: 5px 5px 0 0;" ng-show="vm.isValidBackgroundMessage !== ''">
+                        <p style="margin: 5px 5px 0 0;"
+                        ng-show="vm.isValidBackgroundMessage !== '' && vm.isBackgroundChecked !== 'checked'"
+                        ng-hide="vm.isValidBackgroundMessage === '' || vm.isBackgroundChecked === 'checked'">
                             <span style="font-size: x-small" >
                                 <em>{{vm.isValidBackgroundMessage}}</em>
                             </span>
                         </p>
+
+
+                        <div ng-show="vm.bg_list !== '' && vm.bgGeneValidationMessage !== '' && vm.isBackgroundChecked !== 'checked'"
+                           ng-hide="!vm.bg_list || vm.bgGeneValidationMessage === '' || vm.isBackgroundChecked === 'checked'"
+                           class="smaller">
+                           {{vm.bgGeneValidationMessage}}
+                           <span ng-show="vm.bgGeneModalMessage !== ''"
+                                 ng-hide="vm.bgGeneModalMessage === ''"
+                                 class=" glyphicon glyphicon-info-sign" role="button"
+                                data-toggle="modal" data-target="#bgGeneModal"></span>
+                           <!-- Modal -->
+                           <div class="modal" id="bgGeneModal" tabindex="-2" role="dialog"
+                                aria-labelledby="bgGeneModalLabel" data-backdrop="false"
+                                style="background-color: rgba(0, 0, 0, 0.5);">
+                               <div class="modal-dialog" role="document">
+                                   <div class="modal-content">
+                                       <div class="modal-header">
+                                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                               <span aria-hidden="true">&times;</span>
+                                           </button>
+                                           <span class="modal-title" id="bgGeneModalLabel">Gene detection details</span>
+                                       </div>
+                                       <div class="modal-body" ng-bind-html="to_trusted(vm.bgGeneModalMessage)">
+                                       </div>
+                                       <div class="modal-footer">
+                                           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                        </div>
+
                     </div>
+                    
                 </div>
 
                 <!--

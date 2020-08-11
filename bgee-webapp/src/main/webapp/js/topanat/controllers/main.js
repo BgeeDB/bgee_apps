@@ -1706,6 +1706,9 @@
                 });
 
                 vm.developmentStages = angular.copy(stages);
+                if (vm.isBackgroundChecked === '' && vm.bg_list !== '') {
+                    checkConsistency();
+                }
 
             } else if (type === 'bg') {
 

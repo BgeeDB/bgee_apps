@@ -891,6 +891,9 @@ public class TopAnatAnalysis {
             .forEach(e -> sb.append("_").append(e.toString()));
             sb.append("_").append(Optional.ofNullable(this.params.getSummaryQuality()).orElse(SummaryQuality.SILVER)
                     .toString());
+            if(params.getDecorrelationType() == DecorrelationType.NONE) {
+                sb.append("_" + DecorrelationType.NONE);
+            }
             
             paramsEncoded = sb.toString();
         } else {

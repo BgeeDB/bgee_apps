@@ -507,6 +507,10 @@ makeTableWithoutTopGO <- function(data, cutoff, names){
     topTable <- merge(names, topTerms, by.x=0, by.y=0)
     names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
     topTable <- topTable[order(as.numeric(topTable$p)), ]
+    topTable$Expected <- format(topTable$Expected, digits = 3, nsmall = 2, drop0trailing = TRUE)
+    topTable$foldEnrichment <- format(topTable$foldEnrichment, digits = 3)
+    topTable$p <- format(topTable$p, digits = 3)
+    topTable$fdr <- format(topTable$fdr, digits = 3)
     return(topTable)
   } else{
     print(paste("There is no significant term with a FDR threshold of ", cutoff, sep=""))

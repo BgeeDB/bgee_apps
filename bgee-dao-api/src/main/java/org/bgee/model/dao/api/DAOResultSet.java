@@ -93,7 +93,7 @@ public interface DAOResultSet<T extends TransferObject> extends AutoCloseable {
      * the first call to the method {@code next} makes the first result the current 
      * position; the second call makes the second result the current position, 
      * and so on. A call to {@link #getTO()} allows to obtain the result 
-     * corresponding to the current position. A call to {@link #getTO()} allows to 
+     * corresponding to the current position. A call to {@link #getAllTOs()} allows to
      * obtain all results.
      * <p>
      * When a call to the {@code next} method returns {@code false}, this 

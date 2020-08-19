@@ -755,12 +755,14 @@ public class InsertUberon extends MySQLDAOUser {
                     for (OWLAxiom ax: outgoingEdge.getAxioms()) {
                         classesWalked.addAll(ax.getClassesInSignature());
                     }
+                    int classCount = 0;
                     for (OWLClass clsWalked: classesWalked) {
                         OWLClass mappedClsWalked = 
                                 uberon.getOWLClass(wrapper.getIdentifier(clsWalked));
                         if (mappedClsWalked == null || 
                                 !this.isValidClass(mappedClsWalked, uberon, 
-                                        classesToIgnore, speciesIds)) {
+                                        classesToIgnore, speciesIds) ||
+                                outgoingEdge.isGCI() && mappedClsWalked.equals(outgoingEdge.getGCIFiller())) {
                             continue;
                         }
                         Set<Integer> inSpecies = uberon.existsInSpecies(mappedClsWalked, 
@@ -779,6 +781,19 @@ public class InsertUberon extends MySQLDAOUser {
                             		outgoingEdge.getGCIFiller(), mappedClsWalked, 
                             		inSpecies, outgoingEdge);
                         }
+                        classCount++;
+                    }
+                    //we sometimes have relations like:
+                    //SubClassOf(ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UBERON_0010011>
+                    //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+                    //<http://purl.obolibrary.org/obo/NCBITaxon_9443>))
+                    //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+                    //<http://purl.obolibrary.org/obo/UBERON_0010011>)),
+                    //SubClassOf(Annotation(<http://www.geneontology.org/formats/oboInOwl#source> "FMA"^^xsd:string)
+                    //<http://purl.obolibrary.org/obo/UBERON_0010011> <http://purl.obolibrary.org/obo/UBERON_0010009>)]
+                    //It would be considered as an indirect relation, but we don't want that.
+                    if (classCount <= 2) {
+                        isDirect = true;
                     }
                     //and now, in case it was a fake relation with no axioms, e.g., 
                     //reflexive edge

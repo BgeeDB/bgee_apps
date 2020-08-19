@@ -86,6 +86,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String BGEECALL_R_PACKAGE_URL =
             "https://bioconductor.org/packages/BgeeCall/";
+    
+    /**
+     * A {@code String} that is the URL of the container for BgeeCall and BgeeDB R packages
+     */
+    protected static final String R_PACKAGES_CONTAINER_URL =
+            "https://hub.docker.com/r/bgeedb/bgee_r";
 
     /**
      * A {@code String} that is the URL of the Bgee GitHub.
@@ -96,7 +102,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
      */
     protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
-            "/bgee_pipeline";
+            "/bgee_pipeline/tree/master";
     
     /**
      * A {@code String} that is the URL of the Bgee pipeline develop branch in GitHub.
@@ -439,6 +445,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void endDisplay() {
         log.entry();
+        
+        RequestParameters urlPublication = this.getNewRequestParameters();
+        urlPublication.setPage(RequestParameters.PAGE_PUBLICATION);
 
         this.writeln("</div>"); // close sib_body
         
@@ -463,6 +472,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "data-toggle='tooltip' data-placement='top' " +
                 "data-original-title='Click to copy to clipboard'>Copy permanent link</a>" +
                 "</li>");
+        this.writeln("<li><a href='" + urlPublication.getRequestURL() + "' title='Bgee publication page'>Cite us</a></li>");
         this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
         
@@ -565,6 +575,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlAnatSim = this.getNewRequestParameters();
         urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
+        
+        RequestParameters urlPublications = this.getNewRequestParameters();
+        urlPublications.setPage(RequestParameters.PAGE_PUBLICATION);
 
         // Navigation bar
         StringBuilder navbar = new StringBuilder();
@@ -685,6 +698,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='").append(urlAbout.getRequestURL()).append("'>About Bgee</a></li>");
         navbar.append("<li><a href='").append(urlCollaborations.getRequestURL())
                 .append("'>Bgee collaborations</a></li>");
+        navbar.append("<li><a href='").append(urlPublications.getRequestURL())
+        .append("'>Bgee publications</a></li>");
         navbar.append("<li><a href='").append(urlBgeeSources.getRequestURL())
                 .append("'>Bgee sources</a></li>");
         navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank' rel='noopener'>Bgee blog</a></li>");

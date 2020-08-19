@@ -195,4 +195,9 @@ public class FakeFactory extends ViewFactory {
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
         return null;
     }
+
+    @Override
+    public PublicationDisplay getPublicationDisplay() throws IOException {
+        return null;
+   }
 }

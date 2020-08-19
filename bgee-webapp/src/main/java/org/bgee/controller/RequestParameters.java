@@ -156,6 +156,12 @@ public class RequestParameters {
     
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
+     * (see {@link URLParameters#getParamPage()}) when a publication page is requested.
+     */
+    public static final String PAGE_PUBLICATION = "publication";
+    
+    /**
+     * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a species page is requested.
      */
     public static final String PAGE_SPECIES = "species";
@@ -2693,6 +2699,19 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+    
+    /**
+     * @return  A {@code boolean} to tell whether the request corresponds to a page of the
+     * category "publication".
+     */
+    public boolean isAPublicationPageCategory() {
+        log.entry();
+        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
+            this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PUBLICATION)) {
             return log.exit(true);
         }
         return log.exit(false);

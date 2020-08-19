@@ -33,6 +33,10 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
             + "analyses based on anatomical terms, where genes are mapped to anatomical "
             + "terms by expression patterns.";
     
+    private final static String CONTAINER_DESCRIPTION = "Docker container for BgeeCall and BgeeDB R "
+            + "Bioconductor packages. Contains everything needed to download Bgee data, run TopAnat "
+            + "or generate present/absent calls in R.";
+    
     /**
      * Default constructor.
      *
@@ -83,6 +87,11 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
                 BGEECALL_R_PACKAGE_URL, true, "BgeeCall R package", "BgeeCall R package",
                 this.prop.getLogoImagesRootDirectory() + "r_logo_color.png", BGEECALL_DESCRIPTION));
+        
+        this.writeln(HtmlParentDisplay.getSingleFeatureLogo(
+                R_PACKAGES_CONTAINER_URL, true, "Container for BgeeCall and BgeeDB", "Container "
+                        + "for BgeeCall and BgeeDB", this.prop.getLogoImagesRootDirectory() 
+                        + "docker_logo.png", CONTAINER_DESCRIPTION));
         
         this.writeln("</div>"); // close feature_list
 

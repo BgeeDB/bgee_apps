@@ -30,6 +30,14 @@ $( document ).ready( function(){
             .attr("src", "img/wait.gif")
             .attr("alt", 'Loading'));
     });
+    
+    changeUlToOl = function(text) {
+        return text.replace('<ul','<ol').replace('</ul>','</ol>');
+    };
+    
+    removeMaskedClass = function(text) {
+        return text.replace('masked','');
+    };
 
     var dom =  "<'row'<'col-sm-3'i><'col-sm-3'l><'col-sm-6'f>>" +
         "<'row'<'col-sm-12'tr>>" +
@@ -39,9 +47,29 @@ $( document ).ready( function(){
 
     var responsive = {
         details: {
-            display: $.fn.dataTable.Responsive.display.childRowImmediate,
-            type: 'none',
-            target: ''
+        	display: $.fn.dataTable.Responsive.display.modal( {
+                header: function ( row ) {
+                    var data = row.data();
+                    return 'Details in ' + data[0];
+                }
+            } ),
+            renderer: function ( api, rowIdx, columns ) {
+            	
+                var data = 
+                        '<tr><td>'+columns[1].title+':'+'</td><td>'+columns[1].data+'</td></tr>' +
+                        '<tr><td>'+columns[2].title+':'+'</td><td>'+columns[2].data+'</td></tr>' +
+                        '<tr><td>'+columns[3].title+':'+'</td><td>'+changeUlToOl(removeMaskedClass(columns[3].data))+'</td></tr>' +
+                        '<tr><td>'+columns[4].title+':'+'</td><td>'+changeUlToOl(removeMaskedClass(columns[4].data))+'</td></tr>' +
+                        '<tr><td>'+columns[5].title+':'+'</td><td>'+changeUlToOl(removeMaskedClass(columns[5].data))+'</td></tr>';
+                // if multispecies expression comparison
+                if(columns.length == 15) {
+                	data = data +
+                		'<tr><td>'+columns[6].title+':'+'</td><td>'+changeUlToOl(removeMaskedClass(columns[6].data))+'</td></tr>' +
+                		'<tr><td>'+columns[7].title+':'+'</td><td>'+changeUlToOl(removeMaskedClass(columns[7].data))+'</td></tr>';
+                }
+ 
+                return $('<table/>').append( data );
+            }
         },
         breakpoints: [
             //make the default datatable breakpoints to be the same as bootstrap
@@ -109,27 +137,27 @@ $( document ).ready( function(){
         buttons: getButtons([0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]),
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
-           { responsivePriority: 1, targets: 0 }, // Anatomical entities
-           { responsivePriority: 1, targets: 1 }, // Conservation score
-           { responsivePriority: 1, targets: 2 }, // Max expression score
+           { width: "16%", responsivePriority: 1, targets: 0 }, // Anatomical entities
+           { width: "5%", responsivePriority: 3, targets: 1 }, // Conservation score
+           { width: "5%", responsivePriority: 2, targets: 2 }, // Max expression score
            { type: 'scientific', targets: 2 },    // sort using the scientific type
-           { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+           { width: "14%", responsivePriority: 4, targets: 3 }, // Gene count with presence of expression
            { type: 'gene-number', targets: 3 },   // sort using the gene-number type
-           { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+           { width: "14%", responsivePriority: 6, targets: 4 }, // Gene count with absence of expression
            { type: 'gene-number', targets: 4 },   // sort using the gene-number type
-           { responsivePriority: 2, targets: 5 }, // Gene count with no data
+           { width: "14%", responsivePriority: 7, targets: 5 }, // Gene count with no data
            { type: 'gene-number', targets: 5 },   // sort using the gene-number type
-           { responsivePriority: 3, targets: 6 }, // Species count with presence of expression
+           { width: "14%", responsivePriority: 8, targets: 6 }, // Species count with presence of expression
            { type: 'species-number', targets: 6 },// sort using the species-number type
-           { responsivePriority: 3, targets: 7 }, // Species count with absence of expression
+           { width: "14%", responsivePriority: 9, targets: 7 }, // Species count with absence of expression
            { type: 'species-number', targets: 7 },// sort using the species-number type
-           { responsivePriority: 2, targets: 8 }, // Details
-           { responsivePriority: 4, targets: 9, visible: false, searchable: false }, // Anatomical entity IDs
-           { responsivePriority: 4, targets: 10, visible: false, searchable: false }, // Gene count with presence of expression
-           { responsivePriority: 4, targets: 11, visible: false, searchable: false }, // Gene count with absence of expression
-           { responsivePriority: 4, targets: 12, visible: false, searchable: false }, // Gene count with no data
-           { responsivePriority: 4, targets: 13, visible: false, searchable: false }, // Species count with presence of expression
-           { responsivePriority: 4, targets: 14, visible: false, searchable: false } // Species count with absence of expression
+           { width: "4%", responsivePriority: 5, targets: 8 }, // Details
+           { responsivePriority: 10, targets: 9, visible: false, searchable: false }, // Anatomical entity IDs
+           { responsivePriority: 10, targets: 10, visible: false, searchable: false }, // Gene count with presence of expression
+           { responsivePriority: 10, targets: 11, visible: false, searchable: false }, // Gene count with absence of expression
+           { responsivePriority: 10, targets: 12, visible: false, searchable: false }, // Gene count with no data
+           { responsivePriority: 10, targets: 13, visible: false, searchable: false }, // Species count with presence of expression
+           { responsivePriority: 10, targets: 14, visible: false, searchable: false } // Species count with absence of expression
         ],
         columns: [ // sorting definition
             // Anatomical entities
@@ -172,21 +200,21 @@ $( document ).ready( function(){
         buttons: getButtons([0, 1, 2, 3, 4, 5, 7, 8, 9, 10]),
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order
-            { responsivePriority: 1, targets: 0 }, // Anatomical entities
-            { responsivePriority: 1, targets: 1 }, // Conservation score
-            { responsivePriority: 1, targets: 2 }, // Max expression score
+            { width: "20%", responsivePriority: 1, targets: 0 }, // Anatomical entities
+            { width: "7%", responsivePriority: 3, targets: 1 }, // Conservation score
+            { width: "7%", responsivePriority: 2, targets: 2 }, // Max expression score
             { type: 'scientific', targets: 2 },    // sort using the scientific type
-            { responsivePriority: 2, targets: 3 }, // Gene count with presence of expression
+            { width: "20%", responsivePriority: 4, targets: 3 }, // Gene count with presence of expression
             { type: 'gene-number', targets: 3 },   // sort using the gene-number type
-            { responsivePriority: 2, targets: 4 }, // Gene count with absence of expression
+            { width: "20%", responsivePriority: 6, targets: 4 }, // Gene count with absence of expression
             { type: 'gene-number', targets: 4 },   // sort using the gene-number type
-            { responsivePriority: 2, targets: 5 }, // Gene count with no data
+            { width: "20%", responsivePriority: 7, targets: 5 }, // Gene count with no data
             { type: 'gene-number', targets: 5 },   // sort using the gene-number type
-            { responsivePriority: 2, targets: 6 }, // Details
-            { responsivePriority: 4, targets: 7, visible: false, searchable: false }, // Anatomical entity IDs
-            { responsivePriority: 4, targets: 8, visible: false, searchable: false }, // Gene count with presence of expression
-            { responsivePriority: 4, targets: 9, visible: false, searchable: false }, // Gene count with absence of expression
-            { responsivePriority: 4, targets: 10, visible: false, searchable: false } // Gene count with no data
+            { width: "6%", responsivePriority: 5, targets: 6 }, // Details
+            { responsivePriority: 8, targets: 7, visible: false, searchable: false }, // Anatomical entity IDs
+            { responsivePriority: 8, targets: 8, visible: false, searchable: false }, // Gene count with presence of expression
+            { responsivePriority: 8, targets: 9, visible: false, searchable: false }, // Gene count with absence of expression
+            { responsivePriority: 8, targets: 10, visible: false, searchable: false } // Gene count with no data
 
         ],
         columns: [ // sorting definition

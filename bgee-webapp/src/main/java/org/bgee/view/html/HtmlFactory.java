@@ -191,4 +191,9 @@ public class HtmlFactory extends ViewFactory {
         return log.exit(new HtmlAnatomicalSimilarityDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
+    @Override
+    public PublicationDisplay getPublicationDisplay() throws IOException {
+        log.entry();
+        return log.exit(new HtmlPublicationsDisplay(this.response, this.requestParameters, this.prop, this));
+    }
 }

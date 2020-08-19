@@ -35,6 +35,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
@@ -976,7 +977,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //confidence.
         Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String expressionScore = htmlEntities(String.valueOf(call.getExpressionScore()));
+        String expressionScore = htmlEntities(call.getExpressionLevelInfo().getFormattedExpressionScore());
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 

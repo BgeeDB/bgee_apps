@@ -46,7 +46,8 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
     public void displayTopAnatHomePage() {
         log.entry();
         
-        this.startDisplay("Bgee TopAnat page");
+        String description = "TopAnat - Gene Expression Enrichment tool in Bgee.";
+        this.startDisplay("Bgee TopAnat page", null, description);
         
         this.addSchemaMarkups();
         

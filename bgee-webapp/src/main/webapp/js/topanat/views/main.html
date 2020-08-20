@@ -45,7 +45,7 @@
                 <!--  See popover text in help.json -->
                 <span class="glyphicon glyphicon-pushpin"></span> Examples 
                 <!-- Do not add a trailing slash to the example URLs, see comments in topanat.js -->
-                <a class="bgee-loading" href="?page=top_anat#/result/7919f27d143667bc6c137401ce0c91b51e257538"
+                <a class="bgee-loading" href="?page=top_anat#/result/00fecfca04bf1b2cf88ced9b0a937d68f0eea6cb"
                    uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="bottom"
                    popover-append-to-body="true" popover-title="Example 1"
                    ng-mouseover="vm.getOnlineHelpForItem('Example 1')">1</a>
@@ -96,7 +96,7 @@
                 <div class="media gl-label">
 
 
-                        <img ng-src="{{vm.species_img(vm.selected_taxid)}}" class="img-responsive img-topanat-small pull-right" ng-show="vm.selected_taxid !==''" uib-tooltip="Detected species: {{vm.selected_species}}" alt="{{vm.selected_species}}">
+                        <img ng-src="{{vm.species_img(vm.selected_taxid)}}" class="img-responsive img-topanat-small pull-right" ng-show="vm.selected_taxid !=='' && vm.fg_list !== ''" ng-hide="!vm.selected_taxid || !vm.fg_list" uib-tooltip="Detected species: {{vm.selected_species}}" alt="{{vm.selected_species}}">
 
 
                     <div id="gene-list-media" class="media-body ng-cloak">
@@ -107,12 +107,41 @@
 
                             <span>
                                 <i class="fa fa-circle-o-notch fa-spin" ></i>
-                                Detecting species corresponding to the gene list, retrieving associated  development stages
+                                Analyzing gene list
                             </span>
 
                         </p>
+   
 
-                        <p ng-show="vm.geneValidationMessage !== ''" ng-hide="vm.geneValidationMessage === '' || vm.showDevStageError" class="smaller">{{vm.geneValidationMessage}}</p>
+                        <div ng-show="vm.fg_list !== '' && vm.geneValidationMessage !== ''"
+                           ng-hide="!vm.fg_list || vm.geneValidationMessage === '' || vm.showDevStageError"
+                           class="smaller">
+                           {{vm.geneValidationMessage}}
+                           <span ng-show="vm.geneModalMessage !== ''"
+                                 ng-hide="vm.geneModalMessage === '' || vm.showDevStageError"
+                                 class=" glyphicon glyphicon-info-sign" role="button"
+                                data-toggle="modal" data-target="#geneModal"></span>
+                           <!-- Modal -->
+                           <div class="modal" id="geneModal" tabindex="-1" role="dialog"
+                                aria-labelledby="geneModalLabel" data-backdrop="false"
+                                style="background-color: rgba(0, 0, 0, 0.5);">
+                               <div class="modal-dialog" role="document">
+                                   <div class="modal-content">
+                                       <div class="modal-header">
+                                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                               <span aria-hidden="true">&times;</span>
+                                           </button>
+                                           <span class="modal-title" id="geneModalLabel">Gene detection details</span>
+                                       </div>
+                                       <div class="modal-body" ng-bind-html="to_trusted(vm.geneModalMessage)">
+                                       </div>
+                                       <div class="modal-footer">
+                                           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                        </div>
 
                         <p ng-show="vm.showDevStageError" ng-hide="!vm.showDevStageError" class="smaller">{{vm
                             .showDevStageError}}</p>
@@ -190,20 +219,55 @@
                         <button type="button" class="btn" ng-model="vm.isBackgroundChecked" ng-click="vm.selectBackground('')" ng-disabled="vm.formSubmitted" ng-class="{'active': vm.isBackgroundChecked === '', 'btn-default': vm.isBackgroundChecked === 'checked'}">Custom data</button>
                         </span>
 
-                        <p style="margin: 5px 5px 0 0;" ng-show="(vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="(!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
+                        <p style="margin: 5px 5px 0 0;" ng-show="vm.isValidBackgroundMessage === '' && (vm.uploader.isUploading || vm.bg_list) && !vm.background_species" ng-hide="vm.isValidBackgroundMessage !== '' || (!vm.uploader.isUploading && !vm.bg_list) || vm.background_species || (vm.background_species == '' &&
                     vm.isBackgroundChecked == 'checked')">
                             <i class="fa fa-circle-o-notch fa-spin"></i>
 
                             <span style="font-size: x-small" >
-                                <em>Detecting species corresponding to the background, checking consistency with gene list.</em>
+                                <em>Analyzing background gene list</em>
                             </span>
                         </p>
-                        <p style="margin: 5px 5px 0 0;" ng-show="vm.isValidBackgroundMessage !== ''">
+                        <p style="margin: 5px 5px 0 0;"
+                        ng-show="vm.isValidBackgroundMessage !== '' && vm.isBackgroundChecked !== 'checked'"
+                        ng-hide="vm.isValidBackgroundMessage === '' || vm.isBackgroundChecked === 'checked'">
                             <span style="font-size: x-small" >
                                 <em>{{vm.isValidBackgroundMessage}}</em>
                             </span>
                         </p>
+
+
+                        <div ng-show="vm.bg_list !== '' && vm.bgGeneValidationMessage !== '' && vm.isBackgroundChecked !== 'checked'"
+                           ng-hide="!vm.bg_list || vm.bgGeneValidationMessage === '' || vm.isBackgroundChecked === 'checked'"
+                           class="smaller">
+                           {{vm.bgGeneValidationMessage}}
+                           <span ng-show="vm.bgGeneModalMessage !== ''"
+                                 ng-hide="vm.bgGeneModalMessage === ''"
+                                 class=" glyphicon glyphicon-info-sign" role="button"
+                                data-toggle="modal" data-target="#bgGeneModal"></span>
+                           <!-- Modal -->
+                           <div class="modal" id="bgGeneModal" tabindex="-2" role="dialog"
+                                aria-labelledby="bgGeneModalLabel" data-backdrop="false"
+                                style="background-color: rgba(0, 0, 0, 0.5);">
+                               <div class="modal-dialog" role="document">
+                                   <div class="modal-content">
+                                       <div class="modal-header">
+                                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                               <span aria-hidden="true">&times;</span>
+                                           </button>
+                                           <span class="modal-title" id="bgGeneModalLabel">Gene detection details</span>
+                                       </div>
+                                       <div class="modal-body" ng-bind-html="to_trusted(vm.bgGeneModalMessage)">
+                                       </div>
+                                       <div class="modal-footer">
+                                           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                        </div>
+
                     </div>
+                    
                 </div>
 
                 <!--
@@ -279,7 +343,7 @@
                 </div>-->
             </div>
 
-            <!-- OPTIONS (DEV STAGES + EXPRESSION TYPE) -->
+            <!-- OPTIONS (EXPRESSION TYPE) -->
             <div class="col-sm-4 repeat-animation hide-fade blink_me " ng-hide="!vm.isValidSpecies">
 
                 <div class="media gl-label">
@@ -291,35 +355,28 @@
 
                 <div class="row">
                     <div class="col-md-6">
-                        <span class="smallest_head" >Development stages</span>
-                        <div ng-repeat="(key, stage) in vm.developmentStages" class="checkbox checkbox-primary" style="padding: 0 0 0 15px;">
-                            <label ng-class="{'highlighted': !stage.checked}" class="checklist-label">
-                                <input type="checkbox" ng-model="stage.checked"
-                                       ng-change="vm.devStagesChecked()"
-                                       ng-disabled="vm.formSubmitted">
-                                {{stage.name}}
-                            </label>
-                        </div>
-                        <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDevStages" class="help-block">At least one development stage is required</p>
-                    </div>
-                    <div class="col-md-6">
                         <div>
                             <span class="smallest_head">Expression types</span>
                             <p class="text-disabled" style="padding: 0 0 0 15px;">Present</p>
                         </div>
-                        <div>
-                            <span class="smallest_head">With data types:</span>
-                            <div ng-repeat="(key, dataType) in vm.data_type.names" class="checkbox checkbox-primary" style="padding:
-                         0 0 0 15px;">
-                                <label ng-class="{'highlighted': (!dataType.checked && vm.allowedDataTypes.indexOf(dataType.key) != -1), 'span-disabled': vm.allowedDataTypes.indexOf(dataType.key) == -1}" class="checklist-label">&nbsp;&nbsp;<input type="checkbox" ng-model="dataType.checked" ng-change="vm.dataTypesChecked()" ng-disabled="vm.allowedDataTypes.indexOf(dataType.key) == -1 || vm.formSubmitted" />{{dataType.name}}</label>
+                    </div>
+                    <div class="col-md-6">
+                            <span class="smallest_head">Data types</span>
+                            <div ng-repeat="(key, dataType) in vm.data_type.names" 
+                                 class="checkbox checkbox-primary" style="padding: 0 0 0 15px;">
+                                <label ng-class="{'highlighted': (!dataType.checked && vm.allowedDataTypes.indexOf(dataType.key) != -1), 'span-disabled': vm.allowedDataTypes.indexOf(dataType.key) == -1}" 
+                                       class="checklist-label">&nbsp;&nbsp;
+                                    <input type="checkbox" ng-model="dataType.checked" 
+                                           ng-change="vm.dataTypesChecked()" 
+                                           ng-disabled="vm.allowedDataTypes.indexOf(dataType.key) == -1 || vm.formSubmitted" />
+                                       {{dataType.name}}
+                                </label>
                             </div>
-                            <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDataTypes" class="help-block small">At least one data type is required</p>
-                        </div>
-
+                            <p ng-cloak ng-show="vm.isValidSpecies && !vm.isFormValidDataTypes" 
+                               class="help-block small">At least one data type is required</p>
                     </div>
                 </div>
             </div>
-
         </div>
 
 
@@ -329,12 +386,48 @@
             </div>
 
             <div style="margin-top: 5px;" ng-show="vm.isAdvancedOptionsChecked" ng-hide="!vm.isAdvancedOptionsChecked" class="vert-offset form-inline">
+            
+                <div class="row">
+                    <div class="col-xs-12 form-group">
+                        <label class="control-group" ng-class="{'highlighted': vm.isStageChecked != 'checked'}">
+                            Developmental and life stages&nbsp;
+                            <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" 
+                                    popover-trigger="mouseenter" popover-placement="top" 
+                                    popover-append-to-body="true" popover-title="Developmental and life stages" 
+                                    ng-mouseover="vm.getOnlineHelpForItem('Developmental and life stages')"></span>
+                        </label>
+                        <br>
+                        <span class="btn-group btn-group-sm">
+                            <button type="button" class="btn" ng-model="vm.isStageChecked" 
+                                    ng-click="vm.selectStage('checked')" 
+                                    ng-disabled="vm.formSubmitted" 
+                                    ng-class="{'active': vm.isStageChecked === 'checked', 'btn-default': vm.isStageChecked === ''}">All stages</button>
+                            <button type="button" class="btn" ng-model="vm.isStageChecked" 
+                                    ng-click="vm.selectStage('')"
+                                    ng-disabled="vm.formSubmitted"
+                                    ng-class="{'active': vm.isStageChecked === '', 'btn-default': vm.isStageChecked === 'checked'}">Custom stages</button>
+						</span>
+						<p ng-cloak ng-show="vm.isStageChecked === '' && vm.developmentStages.length === 0" class="help-block">No species detected from gene list</p>
+                        <div ng-repeat="(key, stage) in vm.developmentStages" 
+                             class="checkbox checkbox-primary" style="padding: 0 0 0 15px;"
+                             ng-show="vm.isStageChecked === ''"
+                             ng-disabled="vm.formSubmitted || vm.isStageChecked === 'checked'">
+                            <label class="checklist-label">
+                                <input type="checkbox" ng-model="stage.checked"
+                                       ng-change="vm.devStagesChecked()" ng-disabled="vm.formSubmitted">
+                                {{stage.name}}
+                            </label>
+                        </div>
+                        <p ng-cloak ng-show="!vm.isFormValidDevStages" class="help-block">At least one developmental or life stage is required</p>
+                    </div>
+                </div>
+				<hr style="margin-top:5px;margin-bottom:5px;">
                 <div class="row">
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
                         <label class="control-group" 
-                            ng-class="{'highlighted': vm.data_qual !== undefined && vm.data_qual !== null && 
+                            ng-class="{'highlighted': vm.data_qual !== undefined && vm.data_qual !== null &&
                                 vm.data_qual.toUpperCase() !== vm.data_qualDefault.toUpperCase()}">
-                            Data quality:&nbsp;
+                            Data quality&nbsp;
                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Data quality" ng-mouseover="vm.getOnlineHelpForItem('Data quality')"></span>
                         </label>
                         <div class="clearfix"></div>
@@ -361,7 +454,7 @@
                     </div>
                     <div class="col-sm-6 col-md-9 col-lg-9 form-group">
                         <label ng-class="{'highlighted': vm.decorr_type != vm.decorr_typeDefault}">
-                            Decorrelation type:&nbsp;
+                            Decorrelation type&nbsp;
                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Decorrelation type" ng-mouseover="vm.getOnlineHelpForItem('Decorrelation type')"></span>
                         </label>
                         <div class="clearfix"></div>
@@ -384,7 +477,7 @@
                 <div class="row row-no-padding">
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
                         <label style="margin-right: 15px;" class="col-md-5 text-left" ng-class="{'highlighted': vm.node_size != vm.nodeSizeDefault}"
-                               for="node_size">Node&nbsp;size:</label>
+                               for="node_size">Node&nbsp;size</label>
                         <input type="number" id="node_size" name="node_size" ng-model="vm.node_size"
                                class="ao-input"
                                required
@@ -398,7 +491,7 @@
 
                     </div>
                     <div class="col-sm-6 col-md-9 col-lg-9 form-group">
-                        <label style="margin-right: 15px;" class="col-md-2 text-left" for="nb_node" ng-class="{'highlighted': vm.nb_node != vm.nbNodesDefault}">Nb&nbsp;of nodes:</label>
+                        <label style="margin-right: 15px;" class="col-md-2 text-left" for="nb_node" ng-class="{'highlighted': vm.nb_node != vm.nbNodesDefault}">Nb&nbsp;of nodes</label>
                         <input type="number" id="nb_node" name="nb_node" ng-model="vm.nb_node"
                                class="ao-input" required min="0">
                         <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="Number of nodes" ng-mouseover="vm.getOnlineHelpForItem('Number of nodes')">
@@ -413,7 +506,7 @@
                     <div class="col-sm-6 col-md-3 col-lg-3 form-group">
                         <div>
                             <label style="margin-right: 15px;" class="col-md-5 text-left" for="fdr_thr"
-                                   ng-class="{'highlighted': vm.fdr_thr != vm.fdrThresholdDefault}">FDR&nbsp;threshold:</label>
+                                   ng-class="{'highlighted': vm.fdr_thr != vm.fdrThresholdDefault}">FDR&nbsp;threshold</label>
                             <input id="fdr_thr" type="text" name="fdr_thr" ng-model="vm.fdr_thr" class="ao-input" ng-pattern=" /^(0(\.\d+)?|1(\.0+)?)$/" required>
                             <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="FDR threshold" ng-mouseover="vm.getOnlineHelpForItem('FDR threshold')">
                                 </span>
@@ -423,7 +516,7 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-9 col-lg-9 form-group">
-                        <label style="margin-right: 15px;" class="col-md-2 text-left" for="p_value_thr" ng-class="{'highlighted': vm.p_value_thr != vm.pvalueThresholdDefault}">p&#8209;value&nbsp;threshold:</label>
+                        <label style="margin-right: 15px;" class="col-md-2 text-left" for="p_value_thr" ng-class="{'highlighted': vm.p_value_thr != vm.pvalueThresholdDefault}">p&#8209;value&nbsp;threshold</label>
                         <input id="p_value_thr" type="text" name="p_value_thr" ng-model="vm.p_value_thr" class="ao-input" ng-pattern=" /^(0(\.\d+)?|1(\.0+)?)$/" required>
                         <span class="glyphicon glyphicon-question-sign" uib-popover="{{vm.help}}" popover-trigger="mouseenter" popover-placement="top" popover-append-to-body="true" popover-title="p-value threshold" ng-mouseover="vm.getOnlineHelpForItem('p-value threshold')">
                             </span>
@@ -517,24 +610,24 @@
 				<div class="row">
 				    <div class="col-md-12" ng-show="vm.job_title !== ''" style="padding-bottom: 15px; text-align: center;"><span class="h4">{{vm.job_title}}</span></div>					
 						<div class="col-md-6">
-						<span class="h5">View:</span>
+						<span class="h5">View</span>
 
 						<div ng-repeat="analysis in vm.analysisList">
 							<span ng-show="vm.getResultNumber(analysis.id) > 0"
-								ng-class="{highlighted: vm.isActive == analysis.id}"> <a
-								href="" ng-click="vm.getResultByAnalysis(analysis.id)">{{analysis.name}}</a>
-								({{vm.getResultNumber(analysis.id)}}) <a
-								href="{{vm.zipFileByAnalysis[analysis.id]}}" type="button"
-								class="btn btn-default btn-xs"><span
-									class="glyphicon glyphicon-download" style="margin-right: 3px;"></span>Download
-									Job Archive</a>
-							</span> <span ng-show="vm.getResultNumber(analysis.id) == 0">{{analysis.name}}
-								(0)</span>
+								ng-class="{highlighted: vm.isActive == analysis.id}">
+								<a href="" ng-click="vm.getResultByAnalysis(analysis.id)">{{analysis.name}}</a>
+								({{vm.getResultNumber(analysis.id)}})
+								<a href="{{vm.zipFileByAnalysis[analysis.id]}}" type="button"
+								    class="btn btn-default btn-xs">
+								    <span class="glyphicon glyphicon-download" style="margin-right: 3px;">
+								    </span>Download job archive</a>
+							 </span>
+							 <span ng-show="vm.getResultNumber(analysis.id) == 0">{{analysis.name}} (0)</span>
 						</div>
 					</div>
 
 					<div class="col-md-3">
-						<span class="h5">Search:</span>
+						<span class="h5">Search</span>
 						<div class="input-group">
 							<input type="text" class="form-control" ng-model='vm.filterValue'>
 							<span class="input-group-btn"><button
@@ -547,14 +640,13 @@
 						<button type="button" class="btn btn-default btn-xs"
 							ng-click="vm.downloadFilteredResults()">
 							<span class="glyphicon glyphicon-download"
-								style="margin-right: 3px;"></span>Download Selected
-							{{vm.filteredRows.length}} Results
+								style="margin-right: 3px;"></span>Download selected
+							{{vm.filteredRows.length}} results
 						</button>
 					</div>
 
-					<div class="col-md-3">
-						<span class="h5">Show:</span>
-
+					<div class="col-md-2">
+						<span class="h5">Show</span>
 						<div>
 							<select name="nbRowSelector" id="nbRowSelector"
 								ng-options="option.name for option in vm.nbRows.availableOptions track by option.id"

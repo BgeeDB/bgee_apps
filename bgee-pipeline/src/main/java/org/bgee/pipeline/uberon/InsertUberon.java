@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +43,7 @@ import owltools.graph.OWLGraphWrapper;
  * Class dedicated to the insertion of Uberon information into the Bgee data source.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14.1 Aug 2020
  * @since Bgee 13
  */
 public class InsertUberon extends MySQLDAOUser {
@@ -754,12 +755,14 @@ public class InsertUberon extends MySQLDAOUser {
                     for (OWLAxiom ax: outgoingEdge.getAxioms()) {
                         classesWalked.addAll(ax.getClassesInSignature());
                     }
+                    int classCount = 0;
                     for (OWLClass clsWalked: classesWalked) {
                         OWLClass mappedClsWalked = 
                                 uberon.getOWLClass(wrapper.getIdentifier(clsWalked));
                         if (mappedClsWalked == null || 
                                 !this.isValidClass(mappedClsWalked, uberon, 
-                                        classesToIgnore, speciesIds)) {
+                                        classesToIgnore, speciesIds) ||
+                                outgoingEdge.isGCI() && mappedClsWalked.equals(outgoingEdge.getGCIFiller())) {
                             continue;
                         }
                         Set<Integer> inSpecies = uberon.existsInSpecies(mappedClsWalked, 
@@ -778,6 +781,19 @@ public class InsertUberon extends MySQLDAOUser {
                             		outgoingEdge.getGCIFiller(), mappedClsWalked, 
                             		inSpecies, outgoingEdge);
                         }
+                        classCount++;
+                    }
+                    //we sometimes have relations like:
+                    //SubClassOf(ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UBERON_0010011>
+                    //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+                    //<http://purl.obolibrary.org/obo/NCBITaxon_9443>))
+                    //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+                    //<http://purl.obolibrary.org/obo/UBERON_0010011>)),
+                    //SubClassOf(Annotation(<http://www.geneontology.org/formats/oboInOwl#source> "FMA"^^xsd:string)
+                    //<http://purl.obolibrary.org/obo/UBERON_0010011> <http://purl.obolibrary.org/obo/UBERON_0010009>)]
+                    //It would be considered as an indirect relation, but we don't want that.
+                    if (classCount <= 2) {
+                        isDirect = true;
                     }
                     //and now, in case it was a fake relation with no axioms, e.g., 
                     //reflexive edge
@@ -795,7 +811,7 @@ public class InsertUberon extends MySQLDAOUser {
                     //we create a RelationTO with null RelationStatus in any case, 
                     //to be able to compare relations. Correct RelationStatus and relation ID 
                     //will be assigned during the second pass.
-                    RelationTO<String> relTO = new RelationTO<>(null, id, targetId, relType, null);
+                    RelationTO<String> relTO = new PipelineRelationTO<>(null, id, targetId, relType, null);
                     log.trace("RelationTO generated: {} - is direct relation: {}", 
                             relTO, isDirect);
                     //generate taxon constraints
@@ -940,6 +956,7 @@ public class InsertUberon extends MySQLDAOUser {
                 relStatus = RelationStatus.REFLEXIVE;
                 //reflexive relations must be stored as direct relations
                 inSpecies = directRelationTOs.get(relTO);
+                assert inSpecies != null;
                 
             } else if (indirectRelationTOs.containsKey(relTO)) {
                 log.trace("Relation is indirect");
@@ -954,7 +971,7 @@ public class InsertUberon extends MySQLDAOUser {
                     if (!directInSpecies.isEmpty()) {
                         
                         relationId++;
-                        RelationTO<String> newRelTO = new RelationTO<>(relationId, 
+                        RelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
                                 relTO.getSourceId(), relTO.getTargetId(), 
                                 relTO.getRelationType(), RelationStatus.DIRECT);
                         this.anatRelationTOs.add(newRelTO);
@@ -981,7 +998,7 @@ public class InsertUberon extends MySQLDAOUser {
             }
             
             relationId++;
-            RelationTO<String> newRelTO = new RelationTO<>(relationId, 
+            RelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
                     relTO.getSourceId(), relTO.getTargetId(), 
                     relTO.getRelationType(), relStatus);
             this.anatRelationTOs.add(newRelTO);
@@ -1029,5 +1046,65 @@ public class InsertUberon extends MySQLDAOUser {
         }
         
         log.exit();
+    }
+
+    /**
+     * Class used solely to implement equals/hashCode. Indeed, {@code TransferObject}s
+     * do not implement such methods.
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14.1 Aug. 2020
+     * @since Bgee 14.1 Aug. 2020
+     *
+     * @param <T>   The type of ID of source and target of the relation
+     */
+    private static class PipelineRelationTO<T> extends RelationTO<T> {
+        private static final long serialVersionUID = -6285169266195060397L;
+
+        public PipelineRelationTO(Integer relationId, T sourceId, T targetId,
+                RelationType relType, RelationStatus relationStatus) {
+            super(relationId, sourceId, targetId, relType, relationStatus);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getId() == null)? 0: this.getId().hashCode());
+            result = prime * result + ((this.getTargetId() == null)? 0: this.getTargetId().hashCode());
+            result = prime * result + ((this.getSourceId() == null)? 0: this.getSourceId().hashCode());
+            result = prime * result + ((this.getRelationType() == null)? 0: this.getRelationType().hashCode());
+            result = prime * result + ((this.getRelationStatus() == null)? 0: this.getRelationStatus().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            RelationTO<?> other = (RelationTO<?>) obj;
+            if (!Objects.equals(this.getId(), other.getId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getTargetId(), other.getTargetId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getSourceId(), other.getSourceId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationType(), other.getRelationType())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationStatus(), other.getRelationStatus())) {
+                return false;
+            }
+            return true;
+        }
     }
 }

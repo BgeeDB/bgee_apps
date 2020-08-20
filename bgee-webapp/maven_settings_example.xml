@@ -42,6 +42,7 @@
       <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <!-- Properties for running TopAnat -->
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>

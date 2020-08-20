@@ -1420,7 +1420,7 @@ create table differentialExpression (
 -- ******************************************
 -- AVAILABLE FILES FOR DOWNLOAD
 -- ******************************************
--- see (https://gitlab.sib.swiss/Bgee/bgee_apps/issues/31)
+-- see (https://github.com/BgeeDB/bgee_apps/issues/31)
 create table downloadFile (
   downloadFileId mediumint unsigned not null,
 -- path relative to the root of the download file directory, including file name

@@ -5,12 +5,25 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -98,6 +111,14 @@ public class OntologyTools {
                         "3 arguments, " + args.length + " provided."));
             }
             tools.writeOWLClassIdsToFile(args[1], args[2]);
+        } else if (args[0].equalsIgnoreCase("RetrieveAnatIncorrectIndirectRels")) {
+            if (args.length != 2) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " +
+                        "2 arguments, " + args.length + " provided."));
+            }
+            tools.getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
+                    DAOManager.getDAOManager(), args[1]);
         } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized command " + 
                 args[0]));
@@ -271,4 +292,84 @@ public class OntologyTools {
         log.exit();
     }
 
+    public void getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
+            DAOManager daoManager, String outputFile) throws IOException {
+        log.entry(daoManager, outputFile);
+
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
+                outputFile)))) {
+            RelationDAO relDAO = daoManager.getRelationDAO();
+            //We go species by species, it will be simpler
+            SpeciesTOResultSet speciesTORS = daoManager.getSpeciesDAO().getAllSpecies(null);
+            while (speciesTORS.next()) {
+                SpeciesTO speciesTO = speciesTORS.getTO();
+                out.println("# For species " + speciesTO.getName() + " - ID " + speciesTO.getId());
+
+                RelationTOResultSet<String> directRels = relDAO.getAnatEntityRelations(
+                        Collections.singleton(speciesTO.getId()), true, null, null, true,
+                        EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                        EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                        EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID));
+                RelationTOResultSet<String> indirectRels = relDAO.getAnatEntityRelations(
+                        Collections.singleton(speciesTO.getId()), true, null, null, true,
+                        EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                        EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                        null);
+                Set<RelationTO<String>> incorrectIndirectRelTOs =
+                        this.findIndirectRelsNotReachedByChainOfDirectRels(
+                                directRels, indirectRels);
+                for (RelationTO<String> incorrectIndirectRelTO: incorrectIndirectRelTOs) {
+                    out.println(incorrectIndirectRelTO);
+                }
+
+                out.println();
+            }
+        }
+        log.exit();
+    }
+
+    private <T> Set<RelationTO<T>> findIndirectRelsNotReachedByChainOfDirectRels(
+            RelationTOResultSet<T> directRelRS, RelationTOResultSet<T> indirectRelRS) {
+        log.entry(directRelRS, indirectRelRS);
+
+        Set<RelationTO<T>> incorrectIndirectRelTOs = new HashSet<>();
+        //Retrieve the direct relations and put them in a map where the key is the source ID,
+        //and the value the target ID
+        Map<T, Set<T>> directRels = directRelRS.stream().collect(Collectors.toMap(
+                relTO -> relTO.getSourceId(),
+                relTO -> new HashSet<>(Arrays.asList(relTO.getTargetId())),
+                (v1, v2) -> {v1.addAll(v2); return v1;}));
+
+        //Iterate the indirect relations to be checked
+        while (indirectRelRS.next()) {
+            RelationTO<T> indirectRelTO = indirectRelRS.getTO();
+            //Now we walk the chain of direct relations starting from the source
+            //of this indirect relation, to check whether we can walk to the target
+            boolean targetReached = false;
+            Deque<T> walker = new ArrayDeque<>(directRels.getOrDefault(
+                    indirectRelTO.getSourceId(), new HashSet<>()));
+            T currentTermId = null;
+            //to protect against cycles
+            Set<T> visitedParentIds = new HashSet<>();
+            visitedParentIds.add(indirectRelTO.getSourceId());
+            while ((currentTermId = walker.pollFirst()) != null && !targetReached) {
+                visitedParentIds.add(currentTermId);
+                if (currentTermId.equals(indirectRelTO.getTargetId())) {
+                    targetReached = true;
+                } else {
+                    Set<T> parentIds = directRels.getOrDefault(currentTermId, new HashSet<>());
+                    for (T parentId: parentIds) {
+                        if (!visitedParentIds.contains(parentId)) {
+                            log.trace("Cycle, currentTermId {} - parentId {}", currentTermId, parentId);
+                            walker.offerLast(parentId);
+                        }
+                    }
+                }
+            }
+            if (!targetReached) {
+                incorrectIndirectRelTOs.add(indirectRelTO);
+            }
+        }
+        return log.exit(incorrectIndirectRelTOs);
+    }
 }

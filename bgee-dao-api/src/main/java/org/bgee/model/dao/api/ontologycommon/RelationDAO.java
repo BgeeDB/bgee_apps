@@ -75,6 +75,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
      *                          entity relations from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
+    @Deprecated
     public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds,
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 

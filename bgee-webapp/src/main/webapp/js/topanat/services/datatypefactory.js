@@ -62,7 +62,8 @@
         }
 
         function allowedDataTypes(callType) {
-            console.log('allowedDataTypes '+callType)
+            console.log('allowedDataTypes ');
+            console.log(callType);
             if (typeof callType === 'undefined' || callType.length == 0) {
                 throw "A call type must be provided";
             }

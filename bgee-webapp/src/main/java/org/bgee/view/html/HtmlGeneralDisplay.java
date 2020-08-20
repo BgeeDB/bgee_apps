@@ -490,6 +490,25 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='panel-body'>");
 
+        this.writeOneNews("2020-08-20",
+                "<ul>"
+              + "<li>Update of <a href='" + urlTopAnat.getRequestURL()
+              + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a>: "
+              + "  <ul>"
+              + "    <li>More information is now displayed about the list of genes you entered.</li>"
+              + "    <li>It is now possible to use data from any developmental and life stage in a same analysis. "
+              + "    Previously, it was only possible to perform analyses for embryonic stage on the one hand, "
+              + "    post-embryonic stage on the other hand.</li>"
+              + "    <li>Fix various bugs in the interface.</li>"
+              + "    <li>Improve queries to the server for faster loading of existing results.</li>"
+              + "  </ul>"
+              + "</li>"
+              + "<li>New <a href='" + urlPublication.getRequestURL()
+              + "' title='Bgee publications'>publication page</a> "
+              + "listing the publications related to Bgee, and describing how to cite us.</li>"
+              + "<li>Fixed several broken links to external resources.</li>"
+              + "</ul>");
+
         this.writeOneNews("2020-03-26", "Release of Bgee version 14.1"
                 + "<p>This is an incremental update of Bgee, with an updated RNA-Seq dataset, "
                 + "using the same genomes and ontologies as for the previous version Bgee 14.0. "

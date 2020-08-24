@@ -84,7 +84,7 @@ public class TopAnatRManager {
         code.clear();
         code.addRCode("# Check that you have installed the required packages");
         code.addRCode("if(!suppressWarnings(require(BiocManager))){");
-        code.addRCode("  install.packages('BiocManager')");
+        code.addRCode("  install.packages('BiocManager', repos='https://cloud.r-project.org')");
         code.addRCode("}");
         code.addRCode("if(!suppressWarnings(require(Rgraphviz))){");
         code.addRCode("  BiocManager::install('Rgraphviz', version='" + bioconductorRelease + "')");

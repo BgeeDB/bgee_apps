@@ -145,6 +145,24 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the name of the 'EasyBgee' database.
      */
     protected final static String EASY_BGEE_NAME = "EasyBgee";
+    
+    /**
+     * A {@code String} that is the value of the type tag describing Bgee creator 
+     * for Schema.org
+     */
+    protected final static String SCHEMA_CREATOR_TYPE_BGEE = "Person";
+    
+    /**
+     * A {@code String} that is the value of the name tag describing Bgee name 
+     * for Schema.org
+     */
+    protected final static String SCHEMA_BGEE_NAME = "Bgee";
+    
+    /**
+     * A {@code String} that is the value of the name tag describing Bgee creator 
+     * for Schema.org
+     */
+    protected final static String SCHEMA_CREATOR_NAME_BGEE = "The Bgee Team";
 
     /**
      * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 

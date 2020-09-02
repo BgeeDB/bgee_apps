@@ -136,6 +136,12 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), EXPR_CALLS_COMPLETE) + "\"," +
                 "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
                 "    \"description\": \"" + species.getScientificName() + " calls of baseline presence/absence of expression\"," +
                 (callUrl == null? "" :
@@ -147,6 +153,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -155,6 +163,12 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), RNASEQ_DATA) + "\"," +
                 "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, library information), " +
@@ -170,6 +184,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -177,8 +193,14 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         props.add(
                 "{" +
                 "    \"@type\": \"Dataset\"," +
-                        "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(),AFFY_DATA) + "\"," +
-                        "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(),AFFY_DATA) + "\"," +
+                "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, chip information), " +
@@ -195,6 +217,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");

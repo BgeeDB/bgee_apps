@@ -116,7 +116,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}, " +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
@@ -124,7 +130,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
@@ -132,7 +144,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}";
                         }
                 )

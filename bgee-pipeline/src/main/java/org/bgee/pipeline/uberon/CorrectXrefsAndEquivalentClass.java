@@ -89,7 +89,7 @@ public class CorrectXrefsAndEquivalentClass {
             log.debug("class to modify : " + classToModify);
             
             // add new xrefs annotation property axioms
-            if (modification.getXrefsToAdd() != null) {
+            if (modification.getXrefsToAdd() != null && !modification.getXrefsToAdd().isEmpty()) {
                 for(String xrefToAdd : modification.getXrefsToAdd()) {
                     OWLAnnotation labelAnno = df.getOWLAnnotation(xrefAnnotProperty, 
                             df.getOWLLiteral(xrefToAdd));
@@ -100,55 +100,51 @@ public class CorrectXrefsAndEquivalentClass {
                 }
             }
             
-            // remove unwanted xrefs annotation property axioms
-            if (modification.getXrefsToRemove() != null) {
+            // remove unwanted xrefs annotation property OR equivalent class axioms. 
+            // Both are described in the same column of the mofification tsv file.
+            //  is more tricky because
+            // an equivalent class axiom can be defined by more than one 
+            // triple (if restrictions applied to this equivalence)
+            if (modification.getXrefsToRemove() != null && !modification.getXrefsToRemove().isEmpty()) {
                 for(String xrefToRemove : modification.getXrefsToRemove()) {
+                    // manage XRefs
                     OWLAnnotation labelAnno = df.getOWLAnnotation(xrefAnnotProperty, 
                             df.getOWLLiteral(xrefToRemove));
                     OWLAxiom axiomToRemove = df.getOWLAnnotationAssertionAxiom(classToModify.getIRI(), 
                             labelAnno);
-                    log.debug("remove xref annotation axiom : " + axiomToRemove);
-                    manager.removeAxiom(ontology, axiomToRemove);
-                }
-            }
-            
-            // add equivalent class axioms
-            if (modification.getEquivalentToAdd() != null) {
-                for(String equivalentToAdd : modification.getEquivalentToAdd()) {
-                    OWLClass equivalentClassToAdd = df.getOWLClass(
-                            correctOntology.oboToOWLClassIRI(equivalentToAdd));
-                    OWLAxiom axiomToAdd = df.getOWLEquivalentClassesAxiom(
-                            classToModify, equivalentClassToAdd);
-                    log.debug("add equivalent class axiom : " + axiomToAdd);
-                    manager.addAxiom(ontology, axiomToAdd);
-                }
-            }
-            
-            // remove equivalent class axioms. This is more tricky because
-            // an equivalent class axiom can be defined by more than one 
-            // triple (if restrictions applied to this equivalence)
-            if (modification.getEquivalentToRemove() != null) {
-                for(String equivalentToRemove : modification.getEquivalentToRemove()) {
+                    log.debug("label annot : " + labelAnno);
+                    if (axiomToRemove != null) {
+                        log.debug("removed xref annotation axiom : " + axiomToRemove);
+                        manager.removeAxiom(ontology, axiomToRemove);
+                    } else {
+                        OWLClass equivalentClassToRemove = df.getOWLClass(
+                            correctOntology.oboToOWLClassIRI(xrefToRemove));
                     
-                    OWLClass equivalentClassToRemove = df.getOWLClass(
-                            correctOntology.oboToOWLClassIRI(equivalentToRemove));
-                    
-                    // retrieve all axioms of the class to modify
-                    Set<OWLClassAxiom> equivalentClassesAxiom = 
-                            ontology.getAxioms(classToModify);
-                    
-                    for (OWLClassAxiom classAxiom : equivalentClassesAxiom) {
-                        if (classAxiom.getAxiomType() == AxiomType.EQUIVALENT_CLASSES) {
-                            if (classAxiom.containsEntityInSignature(equivalentClassToRemove)) {
-                                log.debug("equivalent axiom to remove : " + classAxiom);
-                                manager.removeAxiom(ontology, classAxiom);
+                        // retrieve all axioms of the class to modify
+                        Set<OWLClassAxiom> equivalentClassesAxiom = ontology.getAxioms(classToModify);
+                        for (OWLClassAxiom classAxiom : equivalentClassesAxiom) {
+                            if (classAxiom.getAxiomType() == AxiomType.EQUIVALENT_CLASSES) {
+                                if (classAxiom.containsEntityInSignature(equivalentClassToRemove)) {
+                                    log.debug("equivalent axiom to remove : " + classAxiom);
+                                    manager.removeAxiom(ontology, classAxiom);
+                                }
                             }
                         }
                     }
                 }
             }
             
-            
+//            // add equivalent class axioms
+//            if (modification.getEquivalentToAdd() != null) {
+//                for(String equivalentToAdd : modification.getEquivalentToAdd()) {
+//                    OWLClass equivalentClassToAdd = df.getOWLClass(
+//                            correctOntology.oboToOWLClassIRI(equivalentToAdd));
+//                    OWLAxiom axiomToAdd = df.getOWLEquivalentClassesAxiom(
+//                            classToModify, equivalentClassToAdd);
+//                    log.debug("add equivalent class axiom : " + axiomToAdd);
+//                    manager.addAxiom(ontology, axiomToAdd);
+//                }
+//            }
         }
         
         
@@ -267,6 +263,15 @@ public class CorrectXrefsAndEquivalentClass {
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         return super.execute(split, context);
                     }
+                },
+                new Optional() {
+                    @Override
+                    public Object execute(Object value, CsvContext context) {
+                        if (value == null) {
+                            return null;
+                        }
+                        return value.toString();
+                    }
                 }
         };
     }
@@ -287,6 +292,7 @@ public class CorrectXrefsAndEquivalentClass {
         private Set<String> xrefsToRemove;
         private Set<String> equivalentToAdd;
         private Set<String> equivalentToRemove;
+        private String comments;
         
         public XRefsAndEquivantClassBean(){
             
@@ -294,12 +300,13 @@ public class CorrectXrefsAndEquivalentClass {
         
         public XRefsAndEquivantClassBean(String classToModify, Set<String> xrefsToAdd,
                 Set<String> xrefsToRemove, Set<String> equivalentToAdd, 
-                Set<String> equivalentToRemove){
+                Set<String> equivalentToRemove, String comments){
             this.classToModify = classToModify;
             this.xrefsToAdd = xrefsToAdd;
             this.xrefsToRemove = xrefsToRemove;
             this.equivalentToAdd = equivalentToAdd;
             this.equivalentToRemove = equivalentToRemove;
+            this.comments = comments;
         }
         
         public String getClassToModify() {
@@ -332,12 +339,21 @@ public class CorrectXrefsAndEquivalentClass {
         public void setEquivalentToRemove(Set<String> equivalentToRemove) {
             this.equivalentToRemove = equivalentToRemove;
         }
+        public String getComments() {
+            return comments;
+        }
+        public void setComments(String comments) {
+            this.comments = comments;
+        }
+
+        
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((classToModify == null) ? 0 : classToModify.hashCode());
+            result = prime * result + ((comments == null) ? 0 : comments.hashCode());
             result = prime * result + ((equivalentToAdd == null) ? 0 : equivalentToAdd.hashCode());
             result = prime * result + ((equivalentToRemove == null) ? 0 : equivalentToRemove.hashCode());
             result = prime * result + ((xrefsToAdd == null) ? 0 : xrefsToAdd.hashCode());
@@ -358,6 +374,11 @@ public class CorrectXrefsAndEquivalentClass {
                 if (other.classToModify != null)
                     return false;
             } else if (!classToModify.equals(other.classToModify))
+                return false;
+            if (comments == null) {
+                if (other.comments != null)
+                    return false;
+            } else if (!comments.equals(other.comments))
                 return false;
             if (equivalentToAdd == null) {
                 if (other.equivalentToAdd != null)
@@ -386,8 +407,10 @@ public class CorrectXrefsAndEquivalentClass {
         public String toString() {
             return "XRefsAndEquivantClassBean [classToModify=" + classToModify + ", xrefsToAdd=" + xrefsToAdd
                     + ", xrefsToRemove=" + xrefsToRemove + ", equivalentToAdd=" + equivalentToAdd
-                    + ", equivalentToRemove=" + equivalentToRemove + "]";
+                    + ", equivalentToRemove=" + equivalentToRemove + ", comments=" + comments + "]";
         }
+
+        
     
     }
 

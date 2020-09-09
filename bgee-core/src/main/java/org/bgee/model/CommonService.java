@@ -35,6 +35,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneHomolog;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
@@ -135,15 +136,18 @@ public class CommonService extends Service {
      *
      * @param geneTO        A {@code GeneTO} that is the condition from data source
      *                      to map into {@code Gene}.
-     * @param geneBioType   The {@code GeneBioType} of that gene.
      * @param species       A {@code Species} that is the species of the gene.
      * @param synonyms      A {@code Collection} of {@code String}s that are synonyms of the gene.
      * @param xRefs         A {@code Collection} of {@code XRef}s that are cross-references of the gene.
+     * @param geneBioType   The {@code GeneBioType} of that gene.
+     * @param orthologs     A {@code Collection} of {@code GeneHomolog}s that are orthologs of the gene
+     * @param paralogs      A {@code Collection} of {@code GeneHomolog}s that are paralogs of the gene
      * @return              The mapped {@code Gene}.
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species,
-            Collection<String> synonyms, Collection<GeneXRef> xRefs, GeneBioType geneBioType) {
-        log.entry(geneTO, species, synonyms, xRefs, geneBioType);
+            Collection<String> synonyms, Collection<GeneXRef> xRefs, GeneBioType geneBioType, 
+            Collection<GeneHomolog> orthologs, Collection<GeneHomolog> paralogs) {
+        log.entry(geneTO, species, synonyms, xRefs, geneBioType, orthologs, paralogs);
         if (geneTO == null) {
             return log.exit(null);
         }
@@ -162,7 +166,8 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                synonyms, xRefs, species, geneBioType, geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, xRefs, species, geneBioType, orthologs, paralogs, 
+                geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**
@@ -265,7 +270,8 @@ public class CommonService extends Service {
                                 .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
                                 null, null,
                                 Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene"))
+                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")),
+                                null, null
 )
                         )));
 

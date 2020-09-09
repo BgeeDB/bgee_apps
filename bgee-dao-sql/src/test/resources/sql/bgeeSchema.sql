@@ -467,14 +467,14 @@ create table geneBioType (
 ) engine = innodb;
 
 create table geneOrthologs (
-	sourceBgeeGeneId mediumint unsigned not null COMMENT 'source of the symmetric relation of orthology between 2 genes'
-	targetBgeeGeneId mediumint unsigned not null COMMENT 'target of the symmetric relation of orthology between 2 genes'
+	bgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances'
+	targetGeneId varchar(20) not null COMMENT 'official gene ID of ortholog'
 	taxonId mediumint unsigned not null COMMENT 'NCBI taxon id at which orthology relation had been identified',
 ) engine = innodb;
 
 create table geneParalogs (
-	sourceBgeeGeneId mediumint unsigned not null COMMENT 'source of the symmetric relation of paralogy between 2 genes'
-	targetBgeeGeneId mediumint unsigned not null COMMENT 'target of the symmetric relation of paralogy between 2 genes'
+	sourceBgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances'
+	targetGeneId varchar(20) not null COMMENT 'official gene ID of paralog'
 	taxonId mediumint unsigned not null COMMENT 'NCBI taxon id of the closest parent speciation of this duplication',
 ) engine = innodb;
 

@@ -31,6 +31,7 @@ import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
+import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
@@ -52,6 +53,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultD
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneHomologsDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneNameSynonymDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneOntologyDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneXRefDAO;
@@ -1133,5 +1135,11 @@ public class MySQLDAOManager extends DAOManager {
     protected SourceToSpeciesDAO getNewSourceToSpeciesDAO() {
         log.entry();
         return log.exit(new MySQLSourceToSpeciesDAO(this));
+    }
+    
+    @Override
+    protected GeneHomologsDAO getNewGeneHomologsDAO() {
+        log.entry();
+        return log.exit(new MySQLGeneHomologsDAO(this));
     }
 }

@@ -37,6 +37,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
@@ -897,6 +898,20 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.exit(this.getNewSpeciesDAO());
     }
+    
+    /**
+     * Get a new {@link org.bgee.model.dao.api.gene.GeneHomologsDOA GeneHomologsDOA}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code GeneHomologsDOA}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.gene.GeneHomologsDOA GeneHomologsDOA
+     */
+    public GeneHomologsDAO getGeneHomologsDAO() {
+        log.entry();
+        this.checkClosed();
+        return log.exit(this.getNewGeneHomologsDAO());
+    }
     /**
      * Get a new {@link org.bgee.model.dao.api.species.TaxonDAO TaxonDAO}, 
      * unless this {@code DAOManager} is already closed. 
@@ -1401,6 +1416,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code SpeciesDAO}
      */
     protected abstract SpeciesDAO getNewSpeciesDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.gene.GeneHomologsDAO GeneHomologsDAO} instance 
+     * when this method is called. 
+     * 
+     * @return  A new {@code GeneHomologsDAO}
+     */
+    protected abstract GeneHomologsDAO getNewGeneHomologsDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.species.TaxonDAO TaxonDAO} instance 

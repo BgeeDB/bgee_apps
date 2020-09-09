@@ -15,19 +15,19 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.bgee.model.CommonService;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.source.Source;
-import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.gene.GeneHomologsDAO.GeneHomologsTO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
+import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.SpeciesService;
 
 /**
  * A {@link org.bgee.model.Service} to obtain {@link Gene} objects. Users should use the
@@ -44,6 +44,7 @@ public class GeneService extends CommonService {
 
     private final SpeciesService speciesService;
     private final GeneDAO geneDAO;
+    private enum HomologyType {ORTHOLOG, PARALOG}
 
     /**
      * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
@@ -97,11 +98,11 @@ public class GeneService extends CommonService {
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         
         // We want to return a Stream without iterating the GeneTOs first,
-        // so we won't load synonyms
+        // so we won't load synonyms, xrefs and homology
 
         return log.exit(mapGeneTOStreamToGeneStream(
                 this.geneDAO.getGenesBySpeciesAndGeneIds(filtersToMap).stream(),
-                speciesMap, null, null, null, geneBioTypeMap));
+                speciesMap, null, null, null, geneBioTypeMap, null, null));
     }
 
     /**
@@ -128,7 +129,7 @@ public class GeneService extends CommonService {
      * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
-     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
+     * This method won't load synonyms, homology and cross-references in {@code Gene}s, to avoid memory problems.
      *
      * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
      *                          of genes to retrieve.
@@ -136,7 +137,7 @@ public class GeneService extends CommonService {
      */
     public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds) {
         log.entry(ensemblGeneIds);
-        return log.exit(this.loadGenesByEnsemblIds(ensemblGeneIds, false));
+        return log.exit(this.loadGenesByEnsemblIds(ensemblGeneIds, false, false, false));
     }
 
     /**
@@ -184,6 +185,28 @@ public class GeneService extends CommonService {
      */
     public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId, boolean withSpeciesInfo) {
         log.entry(ensemblGeneId, withSpeciesInfo);
+        return log.exit(loadGenesByEnsemblId(ensemblGeneId, withSpeciesInfo, false, false));
+    }
+    
+    /**
+     * Loads {@code Gene}s from an Ensembl gene ID. Please note that in Bgee a same Ensembl gene ID
+     * can correspond to several {@code Gene}s, belonging to different species. This is because
+     * in Bgee, the genome of a species can be used for another closely-related species.
+     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
+     * <p>
+     * This method will load synonyms, cross-references and homology in {@code Gene}s.
+     *
+     * @param ensemblGeneId     A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
+     *                          is retrieved or not.
+     * @param withOrthologsInfo A {@code boolean}s defining whether orthologs should be loaded
+     * @param withParalogsInfo  A {@code boolean}s defining whether paralogs should be loaded
+     * @return                  A {@code Set} of matching {@code Gene}s.
+     */
+    public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId, boolean withSpeciesInfo,
+            boolean withOrthologsInfo, boolean withParalogsInfo) {
+        
         if (StringUtils.isBlank(ensemblGeneId)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
         }
@@ -199,16 +222,24 @@ public class GeneService extends CommonService {
         }
         final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(loadSpeciesMap(geneTOs, withSpeciesInfo));
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
-        // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
+        // we expect very few results from a single Ensembl ID, so we preload synonyms, x-refs and homology
         // from database
         Map<Integer, Set<String>> synonymMap = loadSynonymsByBgeeGeneIds(geneTOs);
         Map<Integer, Set<GeneXRefTO>> xRefsMap = loadXrefTOsByBgeeGeneIds(geneTOs);
+        Map<Integer, Set<GeneHomolog>> orthologsMap = null;
+        Map<Integer, Set<GeneHomolog>> paralogsMap = null;
+        if (withOrthologsInfo) {
+            orthologsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.ORTHOLOG, null, null);
+        }
+        if (withParalogsInfo) {
+            paralogsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.PARALOG, null, null);
+        }
         //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
         final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
         
         return log.exit(mapGeneTOStreamToGeneStream(geneTOs.stream(), speciesMap, synonymMap,
-                xRefsMap, sourceMap, geneBioTypeMap)
+                xRefsMap, sourceMap, geneBioTypeMap, orthologsMap, paralogsMap)
                 .collect(Collectors.toSet()));
     }
 
@@ -225,9 +256,12 @@ public class GeneService extends CommonService {
      *                          of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
+     * @param withOrthologsInfo A {@code boolean}s defining whether orthologs should be loaded
+     * @param withParalogsInfo  A {@code boolean}s defining whether paralogs should be loaded
      * @return                  A {@code Stream} of matching {@code Gene}s.
      */
-    public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds, boolean withSpeciesInfo) {
+    public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds, boolean withSpeciesInfo,
+            boolean withOrthologsInfo, boolean withParalogsInfo) {
         log.entry(ensemblGeneIds, withSpeciesInfo);
         if (ensemblGeneIds != null && ensemblGeneIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
@@ -241,50 +275,79 @@ public class GeneService extends CommonService {
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
 
         // As we want to return a Stream without iterating the GeneTOs first,
-        // so we won't load synonyms
+        // so we won't load synonyms, xrefs and homology
         
         return log.exit(mapGeneTOStreamToGeneStream(
                 this.geneDAO.getGenesByEnsemblGeneIds(ensemblGeneIds).stream(),
-                speciesMap, null, null, null, geneBioTypeMap));
+                speciesMap, null, null, null, geneBioTypeMap, null, null));
     }
 
     /**
-     * Get the orthologies for a given taxon.
+     * load paralogous or orthologous genes from bgee gene IDs
      * 
-     * @param taxonId      An {@code Integer that is the ID of taxon for which
-     *                      to retrieve the orthology groups.
-     * @param speciesIds    A {@code Set} of {@code Integer}s that are the IDs of species to be
-     *                      considered. If {@code null}, all species available for the taxon are used.
-     * @return              The {@code Map} where keys are {@code Integer}s corresponding to 
-     *                      OMA Node IDs, the associated value being a {@code Set} of {@code Integer}s
-     *                      corresponding to their {@code Gene}.
+     * @param geneFilters       A {@code Set} of {@code GeneFilter}s for which homologs have to be retrieved
+     * @param homologyType      A {@code HomologyType} defining if orthologs or paralogs have
+     *                          to be retrieved.
+     * @return                  A {@code Map} with {@code Gene} as key and {@code Set} of {@code GeneHomolog}
+     *                          as value.
      */
-    public Map<Integer, Set<Gene>> getOrthologs(Integer taxonId, Set<Integer> speciesIds) {
-        log.entry(taxonId, speciesIds);
-        throw log.throwing(new UnsupportedOperationException("To implement"));
-//        HierarchicalNodeToGeneTOResultSet resultSet = getDaoManager().getHierarchicalGroupDAO()
-//                .getOMANodeToGene(taxonId, speciesIds);
-//
-//        final Set<Integer> clnSpId =  speciesIds == null? new HashSet<>():
-//                Collections.unmodifiableSet(new HashSet<>(speciesIds));
-//        
-//        final Map<Integer, Species> speciesMap = getSpeciesMap(clnSpId, false);
-//
-//        final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(this.geneDAO
-//            .getGenesBySpeciesIds(speciesIds).stream()
-//                .collect(Collectors.toMap(
-//                    gTO -> gTO.getId(),
-//                    gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId())))));
-//
-//        Map<Integer, Set<Gene>> results = resultSet.stream()
-//                .collect(Collectors.groupingBy(hg -> hg.getNodeId()))
-//                .entrySet().stream()
-//                .collect(Collectors.toMap(
-//                        e -> e.getKey(), 
-//                        e -> e.getValue().stream()
-//                            .map(to -> geneMap.get(to.getBgeeGeneId())).collect(Collectors.toSet())));
-//        return log.exit(results);
+    public Map<Gene, Set<GeneHomolog>> getHomologs(Set<GeneFilter> geneFilters, HomologyType homologyType) {
+        log.entry(geneFilters, homologyType);
+        return log.exit(getHomologs(geneFilters, homologyType, null, null));
     }
+    
+    /**
+     * load paralogous or orthologous genes from bgee gene IDs
+     * 
+     * @param geneFilters       A {@code Set} of {@code GeneFilter}s for which homologs have to be retrieved
+     * @param homologyType      A {@code HomologyType} defining if orthologs or paralogs have
+     *                          to be retrieved.
+     * @param speciesIds        A {@code Set} of {@code Integer} used to filter on a subset of species
+     * @param taxonId           An {@code Integer} corresponding to the highest taxon homology relations 
+     *                          can come from
+     * @return                  A {@code Map} with {@code Gene} as key and {@code Set} of {@code GeneHomolog}
+     *                          as value.
+     */
+    public Map<Gene, Set<GeneHomolog>> getHomologs(Set<GeneFilter> geneFilters, 
+            HomologyType homologyType, Set<Integer> speciesIds, Integer taxonId) {
+        
+        log.entry(geneFilters, homologyType, speciesIds, taxonId);
+        
+        // transform geneFilter to map of speciesId as value and set of geneId as value
+        // it is mandatory to return geneTOs
+        Map<Integer, Set<String>> speciesIdToGeneIds = geneFilters.stream()
+                .collect(Collectors.toMap(p -> p.getSpeciesId(), p -> p.getEnsemblGeneIds()));
+        
+        // Retrieve geneTOs for which we want homologs
+        Set<GeneTO> geneTOs = geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)
+                .getAllTOs().stream().collect(Collectors.toSet());
+        
+        Map<Integer, Set<GeneHomolog>> bgeeGeneIdToGeneHomologs = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, 
+                homologyType, taxonId, speciesIds);
+                
+        // retrieve species by speciesId
+        Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(
+                geneFilters.stream().map(f -> f.getSpeciesId()).collect(Collectors.toSet()),
+                false);
+        Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
+
+        
+        // Retrieve Gene objects from geneFilters and collect them as a Map where keys are
+        Map<Integer, Gene> geneMap = geneTOs.stream()
+                .collect(Collectors.toMap(
+                        gTO -> gTO.getId(),
+                        gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null, null,
+                                geneBioTypeMap.get(gTO.getGeneBioTypeId()), null, null)
+                        ));
+        
+        return log.exit(bgeeGeneIdToGeneHomologs.entrySet().stream().collect(Collectors.toMap(
+                    e -> geneMap.get(e.getKey()),
+                    Map.Entry::getValue)
+                ));
+        
+
+    }
+
 
     /**
      * 
@@ -346,7 +409,7 @@ public class GeneService extends CommonService {
     /**
      * Retrieve {@code Gene}s for a given set of IDs (gene IDs or any cross-reference IDs).
      * <p>
-     * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
+     * This method won't load synonyms, homology and cross-references in {@code Gene}s, to avoid memory problems.
      * 
      * @param mixedGeneIDs  A {@code Collection} of {@code String}s that are IDs (gene IDs or any 
      *                      cross-reference IDs) for which to return the gene IDs.
@@ -374,7 +437,8 @@ public class GeneService extends CommonService {
 
 
         //Retrieve genes by Ensembl IDs
-        Map<String, Set<Gene>> mapAnyIdToGenes = this.loadGenesByEnsemblIds(clnMixedGeneIDs, withSpeciesInfo)
+        Map<String, Set<Gene>> mapAnyIdToGenes = this.loadGenesByEnsemblIds(clnMixedGeneIDs, 
+                withSpeciesInfo, false, false)
                 .collect(Collectors.groupingBy(Gene::getEnsemblGeneId,
                         Collectors.mapping(x -> x, Collectors.toSet())));
         log.debug("Gene IDs identified: {}", mapAnyIdToGenes.keySet());
@@ -399,7 +463,7 @@ public class GeneService extends CommonService {
                         .collect(Collectors.toMap(
                                 EntityTO::getId,
                                 gTO -> mapGeneTOToGene(gTO, speciesMap.get(gTO.getSpeciesId()), null, null,
-                                        geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                        geneBioTypeMap.get(gTO.getGeneBioTypeId()), null, null)
                                 )));
                 // Add mapping between XRef IDs and genes
                 mapAnyIdToGenes.putAll(mapXRefIdToBgeeGeneIds.entrySet().stream()
@@ -476,6 +540,39 @@ public class GeneService extends CommonService {
                 .collect(Collectors.toSet());
         return log.exit(this.speciesService.loadSpeciesMap(speciesIds, withSpeciesInfo));
     }
+    
+    private Map<Integer, Set<GeneHomolog>> loadMappingBgeeGeneIdToGeneHomologs(Set<GeneTO> geneTOs, 
+            HomologyType homologyType, Integer taxonId, Set<Integer> speciesIds) {
+        // Retrieve all geneHomologsTO
+        Set<GeneHomologsTO> homologsTOs = null;
+        if (homologyType == HomologyType.ORTHOLOG) {
+            homologsTOs = new HashSet<>(this.getDaoManager().getGeneHomologsDAO()
+                    .getOrthologousGenesAtTaxonLevel(geneTOs.stream().map(p -> p.getId())
+                            .collect(Collectors.toSet()), taxonId, speciesIds).getAllTOs());
+        } else if (homologyType == HomologyType.ORTHOLOG) {
+            homologsTOs = new HashSet<>(this.getDaoManager().getGeneHomologsDAO()
+                    .getParalogousGenesAtTaxonLevel(geneTOs.stream().map(p -> p.getId())
+                            .collect(Collectors.toSet()), taxonId, speciesIds).getAllTOs());
+        } else {
+            throw log.throwing(new IllegalArgumentException("unknown homology type"));
+        }
+        
+        // Load homologous genes in a map where key is geneId and value is the Gene Object
+        Map<String, Gene> mapEnsemblIdToGene = loadGenesByEnsemblIds(homologsTOs.stream()
+                .map(GeneHomologsTO::getTargetGeneId)
+                .collect(Collectors.toSet()))
+                    .collect(Collectors.toMap(Gene::getEnsemblGeneId, p -> p));
+        
+     // generate map of 
+        Map<Integer, Set<GeneHomolog>> map =homologsTOs.stream()
+                .collect(Collectors.groupingBy(p -> p.getBgeeGeneId(),
+                        Collectors.mapping(p -> new GeneHomolog(mapEnsemblIdToGene.get(p.getTargetGeneId()), 
+                                p.getTaxonId()),
+                                Collectors.toSet())));
+        
+                
+        return log.exit(map);
+    }
 
     /**
      * @param geneTOs   A {@code Collection} of {@code GeneTO}s representing the genes for which
@@ -544,7 +641,7 @@ public class GeneService extends CommonService {
         return log.exit(new GeneXRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
                 geneTO.getGeneId(), speciesMap.get(geneTO.getSpeciesId()).getScientificName()));
     }
-
+    
     private static Set<GeneXRef> getGeneXRefs(GeneTO to, Map<Integer, Set<GeneXRefTO>> xrefTOs,
             Map<Integer, Source> sourceMap, Map<Integer, Species> speciesMap) {
         log.entry(to, xrefTOs, sourceMap, speciesMap);
@@ -573,11 +670,14 @@ public class GeneService extends CommonService {
     private static Stream<Gene> mapGeneTOStreamToGeneStream(Stream<GeneTO> geneTOStream,
             Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms,
             Map<Integer, Set<GeneXRefTO>> xrefTOs, Map<Integer, Source> sourceMap,
-            Map<Integer, GeneBioType> geneBioTypeMap) {
-        log.entry(geneTOStream, speciesMap, synonyms, xrefTOs, sourceMap, geneBioTypeMap);
+            Map<Integer, GeneBioType> geneBioTypeMap, Map<Integer, Set<GeneHomolog>> orthologsMap, 
+            Map<Integer, Set<GeneHomolog>> paralogsMap) {
+        log.entry(geneTOStream, speciesMap, synonyms, xrefTOs, sourceMap, geneBioTypeMap, orthologsMap,
+                paralogsMap);
         return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
                 synonyms == null ? null : synonyms.get(to.getId()),
                         getGeneXRefs(to, xrefTOs, sourceMap, speciesMap),
-                geneBioTypeMap.get(to.getGeneBioTypeId()))));
+                geneBioTypeMap.get(to.getGeneBioTypeId()), orthologsMap.get(to.getId()),
+                        paralogsMap.get(to.getId()))));
     }
 }

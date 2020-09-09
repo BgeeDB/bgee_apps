@@ -103,9 +103,9 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
         GeneBioType geneBioType1 = new GeneBioType("bt1");
         GeneBioType geneBioType2 = new GeneBioType("bt2");
         
-        Gene gene1sp1 = new Gene("geneId1", "gene name 1 sp 1", "gene desc 1 sp1", null, null, sp1, geneBioType1, 1);
-        Gene gene1sp2 = new Gene("geneId1", "gene name 1 sp 2", "gene desc 1 sp2", null, null, sp2, geneBioType1, 1);
-        Gene gene2sp2 = new Gene("geneId2", "gene name 2", "gene desc 2", null, null, sp2, geneBioType2, 1);
+        Gene gene1sp1 = new Gene("geneId1", "gene name 1 sp 1", "gene desc 1 sp1", null, null, sp1, geneBioType1, null, null, 1);
+        Gene gene1sp2 = new Gene("geneId1", "gene name 1 sp 2", "gene desc 1 sp2", null, null, sp2, geneBioType1, null, null, 1);
+        Gene gene2sp2 = new Gene("geneId2", "gene name 2", "gene desc 2", null, null, sp2, geneBioType2, null, null, 1);
         
         when(geneService.loadGenes(new GeneFilter(sp1.getId())))
                 .thenReturn(Stream.of(gene1sp1));

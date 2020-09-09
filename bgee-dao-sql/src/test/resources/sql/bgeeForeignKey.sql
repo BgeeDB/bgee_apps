@@ -130,15 +130,13 @@ add foreign key (goAllSourceId) references geneOntologyTerm(goId) on delete casc
 
 /*!40000 ALTER TABLE `geneOrthologs` DISABLE KEYS */;
 alter table geneOrthologs
-add foreign key (sourceBgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (targetBgeeGeneId) references gene(bgeeGeneId) on delete cascade,
+add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
 add foreign key (taxonId) references taxon(taxonId) on delete cascade,
 /*!40000 ALTER TABLE `geneOrthologs` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `geneParalogs` DISABLE KEYS */;
 alter table geneParalogs
-add foreign key (sourceBgeeGeneId) references gene(bgeeGeneId) on delete cascade,
-add foreign key (targetBgeeGeneId) references gene(bgeeGeneId) on delete cascade,
+add foreign key (bgeeGeneId) references gene(bgeeGeneId) on delete cascade,
 add foreign key (taxonId) references taxon(taxonId) on delete cascade,
 /*!40000 ALTER TABLE `geneParalogs` ENABLE KEYS */;
 

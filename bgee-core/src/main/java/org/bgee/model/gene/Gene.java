@@ -74,6 +74,16 @@ public class Gene {
      * The {@code GeneBioType} of this {@code Gene}.
      */
     private final GeneBioType geneBioType;
+    
+    /**
+     * @see getOrthologs()
+     */
+    private final Collection<GeneHomolog> orthologs;
+    
+    /**
+     * @see getParalogs()
+     */
+    private final Collection<GeneHomolog> paralogs;
 	
 	/**
 	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
@@ -93,7 +103,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, Species species, GeneBioType geneBioType) throws IllegalArgumentException {
-        this(ensemblGeneId, null, null, null, null, species, geneBioType, 1);
+        this(ensemblGeneId, null, null, null, null, species, geneBioType, null, null, 1);
     }
     /**
      * Constructor providing the {@code ensemblGeneId}, the name, the description,
@@ -115,6 +125,8 @@ public class Gene {
      * @param species                               A {@code Species} representing the species
      *                                              this gene belongs to.
      * @param geneBioType                           The {@code GeneBioType} of this {@code Gene}.
+     * @param orthologs                             A {@code Collection} of {@code GeneHomolog}s
+     * @param paralogs                              A {@code Collection} of {@code GeneHomolog}s
      * @param geneMappedToSameEnsemblGeneIdCount    An {@code Integer} that is the number of genes
      *                                              in the Bgee database with the same Ensembl gene ID.
      *                                              See {@link #getGeneMappedToSameEnsemblGeneIdCount()}
@@ -123,7 +135,8 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
-            Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType,
+            Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType, 
+            Collection<GeneHomolog> orthologs, Collection<GeneHomolog> paralogs, 
             int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
@@ -148,6 +161,8 @@ public class Gene {
                 new HashSet<>(): new HashSet<>(xRefs));
         this.species = species;
         this.geneBioType = geneBioType;
+        this.orthologs = orthologs;
+        this.paralogs = paralogs;
         this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
     }
     
@@ -197,7 +212,15 @@ public class Gene {
     public GeneBioType getGeneBioType() {
         return this.geneBioType;
     }
-	/**
+    
+    
+	public Collection<GeneHomolog> getOrthologs() {
+        return orthologs;
+    }
+    public Collection<GeneHomolog> getParalogs() {
+        return paralogs;
+    }
+    /**
 	 * @return  An {@code Integer} that is the number of genes in the Bgee database
      *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
      *          we use the genome of a closely-related species, such as chimpanzee genome

@@ -3,6 +3,8 @@ package org.bgee.model.dao.mysql.gene;
 import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -49,14 +51,15 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
         // Check filtering with gene ID filter
         Integer bgeeGeneId = 1;
         // get all orthologs of gene 1
-        List<GeneHomologsTO> methOrthologs = dao.getOrthologousGenes(bgeeGeneId).getAllTOs();
+        List<GeneHomologsTO> methOrthologs = dao.getOrthologousGenes(Collections.singleton(bgeeGeneId)).getAllTOs();
         List<GeneHomologsTO> expectedOrthologs = this.getAllGeneHomologsTOs(bgeeGeneId,null);
         this.assertRetrievedGeneHomologsTOs(expectedOrthologs, methOrthologs);
 
         // Check filtering with gene ID and taxon ID
         Integer taxonId = 311;
         // get all orthologs of gene 1 at taxonomical level descendant of 311
-        methOrthologs = dao.getOrthologousGenesAtTaxonLevel(bgeeGeneId, taxonId).getAllTOs();
+        methOrthologs = dao.getOrthologousGenesAtTaxonLevel(Collections.singleton(bgeeGeneId),
+                taxonId, null).getAllTOs();
         expectedOrthologs = this.getAllGeneHomologsTOs(bgeeGeneId, taxonId);
         this.assertRetrievedGeneHomologsTOs(expectedOrthologs, methOrthologs);
     }
@@ -75,14 +78,16 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
         // Check filtering with gene ID filter
         Integer bgeeGeneId = 2;
         // get all paralogs of gene 2
-        List<GeneHomologsTO> methParalogs = dao.getParalogousGenes(bgeeGeneId).getAllTOs();
+        List<GeneHomologsTO> methParalogs = dao.getParalogousGenes(
+                Collections.singleton(bgeeGeneId)).getAllTOs();
         List<GeneHomologsTO> expectedParalogs = this.getAllGeneHomologsTOs(bgeeGeneId,null);
         this.assertRetrievedGeneHomologsTOs(expectedParalogs, methParalogs);
 
         // Check filtering with gene ID and taxon ID
         Integer taxonId = 311;
         // get all paralogs of gene 2 at taxonomical level descendant of 311
-        methParalogs = dao.getParalogousGenesAtTaxonLevel(bgeeGeneId, taxonId).getAllTOs();
+        methParalogs = dao.getParalogousGenesAtTaxonLevel(Collections.singleton(bgeeGeneId)
+                , taxonId, null).getAllTOs();
         expectedParalogs = this.getAllGeneHomologsTOs(bgeeGeneId, taxonId);
         this.assertRetrievedGeneHomologsTOs(expectedParalogs, methParalogs);
     }
@@ -95,30 +100,30 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
     private List<GeneHomologsTO> getAllGeneHomologsTOs(Integer bgeeGeneId, Integer taxonId) {
         if( taxonId == null) {
             if (bgeeGeneId == 1) {
-                return Arrays.asList(new GeneHomologsTO(1, 2, 111), 
-                        new GeneHomologsTO(1, 3, 311), 
-                        new GeneHomologsTO(4, 1, 511));
+                return Arrays.asList(new GeneHomologsTO(1, "ID2", 111), 
+                        new GeneHomologsTO(1, "ID3", 311), 
+                        new GeneHomologsTO(4, "ID1", 511));
             } else if (bgeeGeneId == 2) {
-                return Arrays.asList(new GeneHomologsTO(1, 2, 111), 
-                        new GeneHomologsTO(2, 3, 611), 
-                        new GeneHomologsTO(2, 4, 211));
+                return Arrays.asList(new GeneHomologsTO(1, "ID2", 111), 
+                        new GeneHomologsTO(2, "ID3", 611), 
+                        new GeneHomologsTO(2, "ID4", 211));
             } else if (bgeeGeneId == 3) {
-                return Arrays.asList(new GeneHomologsTO(1, 1, 311), 
-                        new GeneHomologsTO(2, 3, 611), 
-                        new GeneHomologsTO(3, 4, 711));
+                return Arrays.asList(new GeneHomologsTO(1, "ID1", 311), 
+                        new GeneHomologsTO(2, "ID3", 611), 
+                        new GeneHomologsTO(3, "ID4", 711));
             } else {
                 throw log.throwing(new IllegalArgumentException("provided bgeeGeneId not implemented to be "
                         + "used in tests"));
             }
         } else if (taxonId == 311) {
             if (bgeeGeneId == 1) {
-                return Arrays.asList(new GeneHomologsTO(1, 3, 311), 
-                        new GeneHomologsTO(4, 1, 511));
+                return Arrays.asList(new GeneHomologsTO(1, "ID3", 311), 
+                        new GeneHomologsTO(4, "ID1", 511));
             } else if (bgeeGeneId == 2) {
-                return Arrays.asList(new GeneHomologsTO(2, 3, 611));
+                return Arrays.asList(new GeneHomologsTO(2, "ID3", 611));
             } else if (bgeeGeneId == 3) {
-                return Arrays.asList(new GeneHomologsTO(1, 1, 311), 
-                        new GeneHomologsTO(2, 3, 611));
+                return Arrays.asList(new GeneHomologsTO(1, "ID1", 311), 
+                        new GeneHomologsTO(2, "ID3", 611));
             } else {
                 throw log.throwing(new IllegalArgumentException("provided bgeeGeneId not implemented to be "
                         + "used in tests"));

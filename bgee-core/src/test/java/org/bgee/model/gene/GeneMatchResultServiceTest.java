@@ -112,7 +112,7 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         
         Species expSpecies = new Species(11, "human", null, "Homo", "sapiens", null, null, null, null, null, null, 1);
         Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
-                new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"), 1);
+                new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"),null, null, 1);
 
         assertEquals(new GeneMatch(expGene, "syn2", GeneMatch.MatchSource.SYNONYM),
                 geneMatchResult.getGeneMatches().get(0));

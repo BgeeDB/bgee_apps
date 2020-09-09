@@ -71,7 +71,7 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
         /**
          * An {@code String} that is the official gene ID of the target gene of the homology relation.
          */
-        private final String targetGeneId;
+        private final Integer targetGeneId;
         
         /**
          * An {@code Integer} that is the taxon ID of the least common ancestor of the 2 
@@ -90,7 +90,7 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
          *                              ancestor of the 2 species these genes belongs to in Bgee.
          */
         
-        public GeneHomologsTO(Integer bgeeGeneId, String targetGeneId, Integer taxonId) {
+        public GeneHomologsTO(Integer bgeeGeneId, Integer targetGeneId, Integer taxonId) {
             this.bgeeGeneId = bgeeGeneId;
             this.targetGeneId = targetGeneId;
             this.taxonId = taxonId;
@@ -100,7 +100,7 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
             return bgeeGeneId;
         }
 
-        public String getTargetGeneId() {
+        public Integer getTargetGeneId() {
             return targetGeneId;
         }
 

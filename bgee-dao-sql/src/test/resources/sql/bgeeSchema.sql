@@ -468,13 +468,13 @@ create table geneBioType (
 
 create table geneOrthologs (
 	bgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances'
-	targetGeneId varchar(20) not null COMMENT 'official gene ID of ortholog'
+	targetGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID of the orthologous gene'
 	taxonId mediumint unsigned not null COMMENT 'NCBI taxon id at which orthology relation had been identified',
 ) engine = innodb;
 
 create table geneParalogs (
 	sourceBgeeGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID used for improving performances'
-	targetGeneId varchar(20) not null COMMENT 'official gene ID of paralog'
+	targetGeneId mediumint unsigned not null COMMENT 'Numeric internal gene ID of the orthologous gene'
 	taxonId mediumint unsigned not null COMMENT 'NCBI taxon id of the closest parent speciation of this duplication',
 ) engine = innodb;
 

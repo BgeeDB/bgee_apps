@@ -1,9 +1,9 @@
 package org.bgee.model.dao.mysql.gene;
 
 import static org.junit.Assert.assertTrue;
+
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -100,30 +100,30 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
     private List<GeneHomologsTO> getAllGeneHomologsTOs(Integer bgeeGeneId, Integer taxonId) {
         if( taxonId == null) {
             if (bgeeGeneId == 1) {
-                return Arrays.asList(new GeneHomologsTO(1, "ID2", 111), 
-                        new GeneHomologsTO(1, "ID3", 311), 
-                        new GeneHomologsTO(4, "ID1", 511));
+                return Arrays.asList(new GeneHomologsTO(1, 2, 111), 
+                        new GeneHomologsTO(1, 3, 311), 
+                        new GeneHomologsTO(4, 1, 511));
             } else if (bgeeGeneId == 2) {
-                return Arrays.asList(new GeneHomologsTO(1, "ID2", 111), 
-                        new GeneHomologsTO(2, "ID3", 611), 
-                        new GeneHomologsTO(2, "ID4", 211));
+                return Arrays.asList(new GeneHomologsTO(1, 2, 111), 
+                        new GeneHomologsTO(2, 3, 611), 
+                        new GeneHomologsTO(2, 4, 211));
             } else if (bgeeGeneId == 3) {
-                return Arrays.asList(new GeneHomologsTO(1, "ID1", 311), 
-                        new GeneHomologsTO(2, "ID3", 611), 
-                        new GeneHomologsTO(3, "ID4", 711));
+                return Arrays.asList(new GeneHomologsTO(1, 1, 311), 
+                        new GeneHomologsTO(2, 3, 611), 
+                        new GeneHomologsTO(3, 4, 711));
             } else {
                 throw log.throwing(new IllegalArgumentException("provided bgeeGeneId not implemented to be "
                         + "used in tests"));
             }
         } else if (taxonId == 311) {
             if (bgeeGeneId == 1) {
-                return Arrays.asList(new GeneHomologsTO(1, "ID3", 311), 
-                        new GeneHomologsTO(4, "ID1", 511));
+                return Arrays.asList(new GeneHomologsTO(1, 3, 311), 
+                        new GeneHomologsTO(4, 1, 511));
             } else if (bgeeGeneId == 2) {
-                return Arrays.asList(new GeneHomologsTO(2, "ID3", 611));
+                return Arrays.asList(new GeneHomologsTO(2, 3, 611));
             } else if (bgeeGeneId == 3) {
-                return Arrays.asList(new GeneHomologsTO(1, "ID1", 311), 
-                        new GeneHomologsTO(2, "ID3", 611));
+                return Arrays.asList(new GeneHomologsTO(1, 1, 311), 
+                        new GeneHomologsTO(2, 3, 611));
             } else {
                 throw log.throwing(new IllegalArgumentException("provided bgeeGeneId not implemented to be "
                         + "used in tests"));

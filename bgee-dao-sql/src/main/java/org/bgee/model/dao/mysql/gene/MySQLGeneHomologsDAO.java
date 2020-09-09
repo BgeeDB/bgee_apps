@@ -181,7 +181,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
         protected GeneHomologsTO getNewTO() {
             log.entry();
             Integer bgeeGeneId = null;
-            String targetGeneId = null;
+            Integer targetGeneId = null;
             Integer taxonId = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
@@ -190,7 +190,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
                         bgeeGeneId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("targetGeneId")) {
-                        targetGeneId = this.getCurrentResultSet().getString(column.getKey());
+                        targetGeneId = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else if (column.getValue().equals("taxonId")) {
                         taxonId = this.getCurrentResultSet().getInt(column.getKey());

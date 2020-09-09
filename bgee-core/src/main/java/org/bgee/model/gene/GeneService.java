@@ -229,10 +229,12 @@ public class GeneService extends CommonService {
         Map<Integer, Set<GeneHomolog>> orthologsMap = null;
         Map<Integer, Set<GeneHomolog>> paralogsMap = null;
         if (withOrthologsInfo) {
-            orthologsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.ORTHOLOG, null, null);
+            orthologsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.ORTHOLOG, null, null,
+                    speciesMap, geneBioTypeMap);
         }
         if (withParalogsInfo) {
-            paralogsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.PARALOG, null, null);
+            paralogsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.PARALOG, null, null,
+                    speciesMap, geneBioTypeMap);
         }
         //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
         final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
@@ -322,14 +324,16 @@ public class GeneService extends CommonService {
         Set<GeneTO> geneTOs = geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)
                 .getAllTOs().stream().collect(Collectors.toSet());
         
-        Map<Integer, Set<GeneHomolog>> bgeeGeneIdToGeneHomologs = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, 
-                homologyType, taxonId, speciesIds);
-                
-        // retrieve species by speciesId
+     // retrieve species by speciesId
         Map<Integer, Species> speciesMap = this.speciesService.loadSpeciesMap(
                 geneFilters.stream().map(f -> f.getSpeciesId()).collect(Collectors.toSet()),
                 false);
         Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
+        
+        Map<Integer, Set<GeneHomolog>> bgeeGeneIdToGeneHomologs = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, 
+                homologyType, taxonId, speciesIds, speciesMap, geneBioTypeMap);
+                
+        
 
         
         // Retrieve Gene objects from geneFilters and collect them as a Map where keys are
@@ -542,7 +546,8 @@ public class GeneService extends CommonService {
     }
     
     private Map<Integer, Set<GeneHomolog>> loadMappingBgeeGeneIdToGeneHomologs(Set<GeneTO> geneTOs, 
-            HomologyType homologyType, Integer taxonId, Set<Integer> speciesIds) {
+            HomologyType homologyType, Integer taxonId, Set<Integer> speciesIds, 
+            Map <Integer, Species> speciesMap, Map <Integer, GeneBioType> geneBioTypeMap) {
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> homologsTOs = null;
         if (homologyType == HomologyType.ORTHOLOG) {
@@ -557,11 +562,18 @@ public class GeneService extends CommonService {
             throw log.throwing(new IllegalArgumentException("unknown homology type"));
         }
         
-        // Load homologous genes in a map where key is geneId and value is the Gene Object
-        Map<String, Gene> mapEnsemblIdToGene = loadGenesByEnsemblIds(homologsTOs.stream()
-                .map(GeneHomologsTO::getTargetGeneId)
-                .collect(Collectors.toSet()))
-                    .collect(Collectors.toMap(Gene::getEnsemblGeneId, p -> p));
+        Map<Integer, Gene> mapEnsemblIdToGene = geneDAO.getGenesByBgeeIds(homologsTOs.stream()
+                .map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet())).getAllTOs()
+                .stream().collect(Collectors.toMap(
+                        gTO -> gTO.getId(),
+                        gTO -> mapGeneTOToGene(gTO,
+                                Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
+                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
+                                null, null,
+                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")),
+                                null, null
+                        )));
         
      // generate map of 
         Map<Integer, Set<GeneHomolog>> map =homologsTOs.stream()

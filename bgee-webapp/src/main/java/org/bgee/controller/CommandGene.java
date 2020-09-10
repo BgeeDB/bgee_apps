@@ -168,7 +168,7 @@ public class CommandGene extends CommandParent {
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true);
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true, true, true);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }

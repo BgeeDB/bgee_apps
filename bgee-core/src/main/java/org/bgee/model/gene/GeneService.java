@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -230,11 +231,11 @@ public class GeneService extends CommonService {
         Map<Integer, Set<GeneHomolog>> paralogsMap = null;
         if (withOrthologsInfo) {
             orthologsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.ORTHOLOG, null, null,
-                    speciesMap, geneBioTypeMap);
+                    geneBioTypeMap);
         }
         if (withParalogsInfo) {
             paralogsMap = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, HomologyType.PARALOG, null, null,
-                    speciesMap, geneBioTypeMap);
+                    geneBioTypeMap);
         }
         //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
         final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
@@ -331,7 +332,7 @@ public class GeneService extends CommonService {
         Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
         
         Map<Integer, Set<GeneHomolog>> bgeeGeneIdToGeneHomologs = loadMappingBgeeGeneIdToGeneHomologs(geneTOs, 
-                homologyType, taxonId, speciesIds, speciesMap, geneBioTypeMap);
+                homologyType, taxonId, speciesIds, geneBioTypeMap);
                 
         
 
@@ -547,28 +548,37 @@ public class GeneService extends CommonService {
     
     private Map<Integer, Set<GeneHomolog>> loadMappingBgeeGeneIdToGeneHomologs(Set<GeneTO> geneTOs, 
             HomologyType homologyType, Integer taxonId, Set<Integer> speciesIds, 
-            Map <Integer, Species> speciesMap, Map <Integer, GeneBioType> geneBioTypeMap) {
+            Map <Integer, GeneBioType> geneBioTypeMap) {
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> homologsTOs = null;
         if (homologyType == HomologyType.ORTHOLOG) {
             homologsTOs = new HashSet<>(this.getDaoManager().getGeneHomologsDAO()
                     .getOrthologousGenesAtTaxonLevel(geneTOs.stream().map(p -> p.getId())
                             .collect(Collectors.toSet()), taxonId, speciesIds).getAllTOs());
-        } else if (homologyType == HomologyType.ORTHOLOG) {
+        } else if (homologyType == HomologyType.PARALOG) {
             homologsTOs = new HashSet<>(this.getDaoManager().getGeneHomologsDAO()
                     .getParalogousGenesAtTaxonLevel(geneTOs.stream().map(p -> p.getId())
                             .collect(Collectors.toSet()), taxonId, speciesIds).getAllTOs());
         } else {
             throw log.throwing(new IllegalArgumentException("unknown homology type"));
         }
+        if(homologsTOs == null || homologsTOs.isEmpty()) {
+            return log.exit(null);
+        }
         
-        Map<Integer, Gene> mapEnsemblIdToGene = geneDAO.getGenesByBgeeIds(homologsTOs.stream()
-                .map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet())).getAllTOs()
-                .stream().collect(Collectors.toMap(
+        // load geneTOs of all homologous genes
+        List<GeneTO> homologousGeneTOs = geneDAO.getGenesByBgeeIds(homologsTOs.stream()
+                .map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet())).getAllTOs();
+        
+        // generate a Species Map containing info from all species
+        Map<Integer, Species> speciesMap = speciesService.loadSpeciesMap(null, false);
+        
+        Map<Integer, Gene> mapBgeeGeneIdToGene = homologousGeneTOs.stream().collect(Collectors.toMap(
                         gTO -> gTO.getId(),
                         gTO -> mapGeneTOToGene(gTO,
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                                .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
+                                .orElseThrow(() -> new IllegalStateException("Missing species ID " + 
+                                        gTO.getSpeciesId() + "for gene " + gTO.getId())),
                                 null, null,
                                 Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")),
@@ -578,7 +588,7 @@ public class GeneService extends CommonService {
      // generate map of 
         Map<Integer, Set<GeneHomolog>> map =homologsTOs.stream()
                 .collect(Collectors.groupingBy(p -> p.getBgeeGeneId(),
-                        Collectors.mapping(p -> new GeneHomolog(mapEnsemblIdToGene.get(p.getTargetGeneId()), 
+                        Collectors.mapping(p -> new GeneHomolog(mapBgeeGeneIdToGene.get(p.getTargetGeneId()), 
                                 p.getTaxonId()),
                                 Collectors.toSet())));
         
@@ -688,8 +698,9 @@ public class GeneService extends CommonService {
                 paralogsMap);
         return log.exit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
                 synonyms == null ? null : synonyms.get(to.getId()),
-                        getGeneXRefs(to, xrefTOs, sourceMap, speciesMap),
-                geneBioTypeMap.get(to.getGeneBioTypeId()), orthologsMap.get(to.getId()),
-                        paralogsMap.get(to.getId()))));
+                getGeneXRefs(to, xrefTOs, sourceMap, speciesMap),
+                geneBioTypeMap.get(to.getGeneBioTypeId()), 
+                orthologsMap == null ? null : orthologsMap.get(to.getId()),
+                paralogsMap == null ? null : paralogsMap.get(to.getId()))));
     }
 }

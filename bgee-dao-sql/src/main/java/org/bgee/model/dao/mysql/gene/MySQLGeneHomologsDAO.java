@@ -95,7 +95,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
         }
         // the table to query depends of the homologyType
         String tableName;
-        if (clonedHomologyType == HomologyType.PARALOGS) {
+        if (clonedHomologyType == HomologyType.ORTHOLOGS) {
             tableName = ORTHOLOGS_TABLE_NAME;
         } else if (clonedHomologyType == HomologyType.PARALOGS) {
             tableName = PARALOGS_TABLE_NAME;
@@ -111,7 +111,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             sql += " INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
                     + "t2.taxonRightBound <= t3.taxonRightBound";
         }
-        sql += " WHERE (" + tableName + ".bgeeGeneId IN ("
+        sql += " WHERE " + tableName + ".bgeeGeneId IN ("
                 + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size())
                 + ")";
         if (clonedTaxonId != null) {

@@ -88,15 +88,6 @@ BEGIN
                ('ID1','gleich'),
                ('ID2','synonym2'),
                ('ID3','syno3');
-               
-        -- load existing groups in the new table
-        INSERT INTO geneToOma SELECT DISTINCT t3.geneId, t1.OMANodeId, t1.taxonId 
-          FROM OMAHierarchicalGroup AS t1         
-            INNER JOIN OMAHierarchicalGroup AS t2     
-                  ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND       
-                     t2.OMANodeRightBound <= t1.OMANodeRightBound        
-                        INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId
-        WHERE t1.taxonId IS NOT NULL;
         
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \

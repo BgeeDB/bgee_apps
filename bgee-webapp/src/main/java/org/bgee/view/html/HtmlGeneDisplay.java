@@ -35,9 +35,9 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomolog;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
@@ -747,6 +747,16 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     .append(getSynonymDisplay(gene.getSynonyms()));
             table.append("</td></tr>");
         }
+        if (gene.getParalogs() != null && gene.getParalogs().size() > 0) {
+            table.append("<tr><th scope='row'>Paralog(s)</th><td>")
+                    .append(getHomologsDisplay(gene.getParalogs()));
+            table.append("</td></tr>");
+        }
+        if (gene.getOrthologs() != null && gene.getOrthologs().size() > 0) {
+            table.append("<tr><th scope='row'>Paralog(s)</th><td>")
+                    .append(getHomologsDisplay(gene.getOrthologs()));
+            table.append("</td></tr>");
+        }
         table.append("</table>");
         table.append("</div>");
 
@@ -772,6 +782,35 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.toList());
 
         String display = getListDisplay("syn", orderedEscapedSynonyms);
+        return log.exit(display);
+    }
+    
+    /**
+     * Generates the HTML code to display the homologs.
+     *
+     * @param homologs  A {@code Set} of {@code GeneHomolog}s that are the homologs to display 
+     * @return          A {@code String} that is the HTML code to display homologs
+     */
+    private String getHomologsDisplay(Collection<GeneHomolog> homologs) {
+        log.entry(homologs);
+
+        if (homologs == null || homologs.size() == 0) {
+            return "No homologs";
+        }
+        
+        RequestParameters url = this.getNewRequestParameters();
+
+        List<String> orderedEscapedHomologs = homologs.stream()
+                .sorted()
+                .map(s -> {
+                    url.setPage(RequestParameters.PAGE_GENE);
+                    url.setGeneId(s.getGene().getEnsemblGeneId());
+                return "<a href='" + url.getRequestURL() + "'>" + htmlEntities(s.getGene().getEnsemblGeneId()) + "</a>";
+                    
+                })
+                .collect(Collectors.toList());
+
+        String display = getListDisplay("homologs", orderedEscapedHomologs);
         return log.exit(display);
     }
 

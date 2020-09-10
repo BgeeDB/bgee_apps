@@ -198,11 +198,6 @@ modify bgeeGeneId mediumint unsigned not null auto_increment primary key,
 add unique(geneId, speciesId);
 /*!40000 ALTER TABLE `gene` ENABLE KEYS */;
 
-/*!40000 ALTER TABLE `geneToOma` DISABLE KEYS */;
-alter table geneToOma
-add primary key (bgeeGeneId, OMAGroupId, taxonId);
-/*!40000 ALTER TABLE `geneToOma` ENABLE KEYS */;
-
 /*!40000 ALTER TABLE `geneNameSynonym` DISABLE KEYS */;
 alter table geneNameSynonym
 add primary key (geneNameSynonym, bgeeGeneId);

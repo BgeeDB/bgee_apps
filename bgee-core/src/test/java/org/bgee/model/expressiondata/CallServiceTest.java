@@ -1812,8 +1812,9 @@ public class CallServiceTest extends TestAncestor {
         GeneBioType biotype = new GeneBioType("type1");
         Gene g1 = new Gene("1", spe1, biotype);
         Gene g2 = new Gene("2", spe1, biotype);
+
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.

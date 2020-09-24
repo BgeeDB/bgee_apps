@@ -1767,6 +1767,65 @@ public class CallService extends CommonService {
         }).collect(Collectors.toSet()));
     }
 
+    /**
+     * Recompute the information of an {@code ExpressionCall} considering only a specific
+     * {@code DataType}.
+     * <p>
+     * Note that the {@code QualitativeExpressionLevel}s are not recomputed (see {@link
+     * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToGene()
+     * ExpressionLevelInfo#getQualExprLevelRelativeToGene()} and {@link
+     * org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getQualExprLevelRelativeToAnatEntity()
+     * ExpressionLevelInfo#getQualExprLevelRelativeToAnatEntity()} in the {@code ExpressionLevelInfo}
+     * returned by method {@link ExpressionCall#getExpressionLevelInfo()}), nor the source
+     * {@code ExpressionCall}s (see {@link ExpressionCall#getSourceCalls()}).
+     *
+     * @param call      The {@code ExpressionCall} to recompute data using {@code dataType}
+     * @param dataType  The {@code DataType} to consider for recomputing information for {@code call}.
+     * @return          A new {@code ExpressionCall} corresponding to the information from {@code call}
+     *                  considering only {@code dataType}. {@code null} if there was no data from
+     *                  {@code dataType} supporting {@code call}.
+     */
+    //XXX: note, maybe all the methods to compute information, such as inferDataPropagation,
+    //inferSummaryQuality, etc, and this method, should be dispatched in the corresponding classes
+    //rather than all being in this CallService class.
+    public static ExpressionCall deriveCallForDataType(ExpressionCall call,
+            DataType dataType) {
+        log.entry(call, dataType);
+
+        if (dataType == null) {
+            throw log.throwing(new IllegalArgumentException("A DataType must be provided"));
+        }
+        if (call == null) {
+            throw log.throwing(new IllegalArgumentException("An ExpressionCall must be provided"));
+        }
+        if (call.getCallData() == null || call.getCallData().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Cannot derive call, no CallData stored"));
+        }
+        Set<ExpressionCallData> consideredCallData = call.getCallData().stream()
+                .filter(ecd -> dataType.equals(ecd.getDataType()))
+                .collect(Collectors.toSet());
+        if (consideredCallData.isEmpty()) {
+            return log.exit(null);
+        }
+        assert consideredCallData.size() == 1;
+
+        ExpressionSummary exprSummary = call.getSummaryCallType() != null?
+                inferSummaryCallType(consideredCallData): null;
+        return log.exit(new ExpressionCall(call.getGene(), call.getCondition(),
+                call.getDataPropagation() == null? null: inferDataPropagation(consideredCallData),
+                exprSummary,
+                call.getSummaryQuality() == null? null: inferSummaryQuality(consideredCallData),
+                consideredCallData,
+                loadExpressionLevelInfo(exprSummary, consideredCallData.iterator().next().getNormalizedRank(),
+                        call.getExpressionScore() == null? null:
+                            computeExpressionScore(consideredCallData.iterator().next().getNormalizedRank(),
+                                    call.getExpressionLevelInfo().getMaxRankForExpressionScore()),
+                        call.getExpressionScore() == null? null:
+                            call.getExpressionLevelInfo().getMaxRankForExpressionScore(),
+                        null, null),
+                null));
+    }
+
     //*************************************************************************
     // METHODS MAPPING GlobalExpressionCallTOs TO ExpressionCalls
     //*************************************************************************

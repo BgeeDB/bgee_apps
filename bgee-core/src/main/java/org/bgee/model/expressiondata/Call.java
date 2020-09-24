@@ -189,7 +189,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static final double DEFAULT_DISTANCE_THRESHOLD = 1.9;
 
-        public static final int MAX_EXPRESSION_SCORE = 1000;
+        public static final int MAX_EXPRESSION_SCORE = 100;
 
 
         /**
@@ -1092,6 +1092,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 //        }
         this.gene = gene;
         this.condition = condition;
+        //there should be at most one CallData per data type.
+        //we simply use Collectors.toMap that throws an exception in case of key collision
+        if (callData != null) {
+            callData.stream().collect(Collectors.toMap(c -> c.getDataType(), c -> c));
+        }
         this.callData = Collections.unmodifiableSet(
             callData == null? new HashSet<>(): new HashSet<>(callData));
 //        if (callData != null && !callData.isEmpty()) {

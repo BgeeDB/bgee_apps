@@ -420,7 +420,10 @@ public class CallService extends CommonService {
         Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = clonedAttrs.isEmpty() ||
                 clonedAttrs.contains(Attribute.EXPRESSION_SCORE)?
                         conditionDAO.getMaxRanks(speciesMap.keySet(),
-                                convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
+                                //We always request the max rank over all data types,
+                                //independently of the data types requested in the query,
+                                //because ranks are all normalized based on the max rank over all data types
+                                null,
                                 condParamCombination):
                         null;
 

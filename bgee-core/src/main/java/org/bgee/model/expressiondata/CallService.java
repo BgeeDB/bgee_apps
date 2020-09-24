@@ -977,7 +977,10 @@ public class CallService extends CommonService {
                             c.getSummaryCallType(),
                             c.getSummaryQuality(),
                             c.getCallData(),
-                            loadExpressionLevelInfo(c.getSummaryCallType(), c.getMeanRank(), c.getExpressionScore(),
+                            loadExpressionLevelInfo(c.getSummaryCallType(), c.getMeanRank(),
+                                    c.getExpressionScore(),
+                                    c.getExpressionLevelInfo() == null? null:
+                                        c.getExpressionLevelInfo().getMaxRankForExpressionScore(),
                                     anatEntityMinMaxRank != null? anatEntityMinMaxRank:
                                         anatEntityMinMaxRanks.get(c.getCondition().getAnatEntity()),
                                     geneMinMaxRank != null? geneMinMaxRank:
@@ -1216,10 +1219,10 @@ public class CallService extends CommonService {
     }
 
     private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary,
-            BigDecimal rank, BigDecimal expressionScore,
+            BigDecimal rank, BigDecimal expressionScore, BigDecimal maxRankForExpressionScore,
             EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
         log.entry(exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
-        return log.exit(new ExpressionLevelInfo(rank, expressionScore,
+        return log.exit(new ExpressionLevelInfo(rank, expressionScore, maxRankForExpressionScore,
                 loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
                 loadQualExprLevel(exprSummary, rank, anatEntityMinMaxRank)));
     }
@@ -1819,6 +1822,7 @@ public class CallService extends CommonService {
             attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
             attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)?
                     loadExpressionLevelInfo(exprSummary, globalCallTO.getMeanRank(), expressionScore,
+                            maxRankInfo == null? null: maxRankInfo.getMaxRank(),
                             anatEntityMinMaxRanks == null? null:
                                 anatEntityMinMaxRanks.get(cond.getAnatEntity()),
                             geneMinMaxRanks == null? null: geneMinMaxRanks.get(gene)): null));

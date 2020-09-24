@@ -292,7 +292,7 @@ public class GenerateOncoMXFile {
             String tmpExtension = ".tmp";
             String fileName = (speciesLatinName + "_"
                     + selectedDevStageIds.stream().collect(Collectors.joining("_")) + "_"
-                    + DATA_TYPES.stream().map(d -> d.toString()).collect(Collectors.joining("_")))
+                    + DATA_TYPES.stream().map(d -> d.toString()).sorted().collect(Collectors.joining("_")))
                     .replaceAll(" ", "_") + ".tsv";
             File tmpFile = new File(outputDirectory, fileName + tmpExtension);
             // override any existing file

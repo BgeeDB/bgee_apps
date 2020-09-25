@@ -136,6 +136,23 @@ table.expression td {
 	vertical-align:text-top;
 }
 
+th.taxon-id {
+	width: 7% !important;
+}
+th.taxon-name {
+	width: 12% !important;
+}
+th.homo-species {
+	width: 20% !important;
+}
+th.homo-gene-id {
+	width: 20% !important;
+}
+
+table.homologs td {
+	vertical-align:text-top;
+}
+
 td > ul {
 	margin: 0;
 	padding: 0;
@@ -143,6 +160,10 @@ td > ul {
 }
 
 ul.dev-stage-list {
+	padding-left: 1.1em;
+}
+
+ul.homo-species-list {
 	padding-left: 1.1em;
 }
 
@@ -222,4 +243,9 @@ span.more-content {
 span.errorMessage {
 	color: #E2011B;
 	font-weight: bold;
+}
+
+.inactiveLink {
+   pointer-events: none;
+   cursor: default;
 }

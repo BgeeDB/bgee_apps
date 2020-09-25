@@ -169,8 +169,7 @@ $( document ).ready( function(){
                 		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
                 		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
             			'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data + '</td></tr>' +
-            			'<tr><td>' + columns[4].title + '</td><td>' + columns[4].data + '</td></tr>' +
-            			'<tr><td>' + columns[5].title + '</td><td>' + columns[5].data + '</td></tr>';
+            			'<tr><td>' + columns[4].title + '</td><td>' + columns[4].data + '</td></tr>';
                 	return $('<table class="table"/>').append( data );
                 }
             }, 
@@ -199,15 +198,13 @@ $( document ).ready( function(){
            { responsivePriority: 1, targets: 0 }, // Taxon Name
            { responsivePriority: 2, targets: 1 }, // Species with homologs
            { responsivePriority: 3, targets: 2 },  // Genes
-           { responsivePriority: 4, targets: 3 },  // Species Without homologs
-           { responsivePriority: 5, targets: 4 },  // Button to run expr. comp
-           { responsivePriority: 6, targets: 5 }  // Button to run expr. comp
+           { responsivePriority: 4, targets: 3 },  // Button to run expr. comp
+           { responsivePriority: 5, targets: 4 }  // Button to run expr. comp
         ],
         columns: [ // sorting definition
            { "orderable": false }, // Taxon Name - ordering disabled
            { "orderable": false }, // Species with homologs - ordering disabled
            { "orderable": false },  // Genes - ordering disabled
-           { "orderable": false },  // Genes without homologs - ordering disabled
            { "orderable": false },  // Button to run expr. comp - ordering disabled
            { "orderable": false }  // details - ordering disabled
         ]

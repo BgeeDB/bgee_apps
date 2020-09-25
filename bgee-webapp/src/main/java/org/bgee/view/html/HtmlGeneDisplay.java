@@ -785,14 +785,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
               .append("<th class='taxon-name'>Taxon name</th>")
               .append("<th class='homo-species min-table_sm'>Species with " + homologyString.toLowerCase() + "</th>")
               .append("<th class='homo-gene-id'>Gene(s)</th>")
-              .append("<th class='homo-gene-id'>Species without " + homologyString.toLowerCase() + "</th>")
               .append("<th class='exp-comp'>Expression comparison</th>")
               .append("<th class='details'>See details</th>")
               .append("</tr></thead>\n");
         
         //XXX MAYBE NOT TO DO IN THE DISPLAY????
-        // first generate map from taxId to taxon. 
-        // This Map is sorted from more recent to oldest taxon.
+        // Generate map from taxId to taxon. It is sorted from more recent to oldest taxon.
         LinkedHashMap<Integer, Taxon> taxonById = speciesByTaxon.keySet().stream()
                 .sorted(Comparator
                         .<Taxon,Integer>comparing(t -> t.getLevel(), Comparator.nullsLast(Integer::compareTo)).reversed())
@@ -809,11 +807,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     .stream().collect(Collectors.groupingBy(gh -> gh.getGene().getSpecies().getId(),
                             Collectors.mapping(GeneHomolog::getGene, Collectors.toSet())));
         }
-        
-        // generate map to retrieve total number of species per taxon in Bgee
-        // Used to count number 
-        Map<Integer, Species> speciesById = speciesByTaxon.values().stream().flatMap(Collection::stream)
-                .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
         
         // init empty map that will contain all genes at one taxonomical level
         LinkedHashMap<Taxon, Set<Gene>> genesByTaxonWithDescendant = new LinkedHashMap<Taxon, Set<Gene>>();
@@ -890,31 +883,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     }
                     sbRow.append("'><span class='details small'>")
                     .append(getSpecificGenePageLink(orthoGene, orthoGene.getEnsemblGeneId()))
+                    .append(StringUtils.isBlank(orthoGene.getName())? "": " " + htmlEntities(orthoGene.getName()))
                     .append("</span></li>").append("\n");
                     needSpeciesSeparator = false;
                 }
                 needSpeciesSeparator = true;
-            }
-            sbRow.append("</ul></td>");
-            
-            // Species without orthologs info
-            Set<Integer> allSpecies = speciesByTaxon.get(currentTaxon).stream().map(Species::getId)
-                    .collect(Collectors.toSet());
-            Set<Integer> speciesWithHomologs = homologsWithDescendantBySpeciesId.keySet();
-            List<Species> speciesWithoutHomologs = allSpecies.stream()
-                    .filter(s -> !speciesWithHomologs.contains(s))
-                    .map(s -> speciesById.get(s))
-                    .sorted(Comparator.<Species, Integer>comparing(s -> s.getPreferredDisplayOrder(), 
-                            Comparator.nullsLast(Integer::compareTo)))
-                    .collect(Collectors.toList());
-            sbRow.append("<td>")
-            .append(speciesWithoutHomologs.size()).append(" species")
-                .append("<ul class='masked homo-genes-list'>");
-            for (Species speciesWoHomo:speciesWithoutHomologs) {
-                sbRow.append("<li class='ortho-gene'>")
-                    .append("<span class='details small'>")
-                    .append(getCompleteSpeciesNameLink(speciesWoHomo, true))
-                    .append("</span></li>").append("\n");
             }
             sbRow.append("</ul></td>");
             
@@ -925,8 +898,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     .map(Gene::getEnsemblGeneId).collect(Collectors.toList());
             genesToCompare.add(gene.getEnsemblGeneId());
             exprComparison.setGeneList(genesToCompare);
-            sbRow.append("<td><a target='_blank' rel='noopener' href='")
-                .append(exprComparison.getRequestURL()).append("'>Run expression comparison</a></td>");
+            sbRow.append("<td><a href='").append(exprComparison.getRequestURL())
+                .append("'>Compare expression</a></td>");
 
             
             // See Details column

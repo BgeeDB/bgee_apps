@@ -63,6 +63,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
             .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
     
+    private final static Comparator<GeneHomolog> GENE_HOMOLOGY_COMPARATOR = Comparator
+            .<GeneHomolog, Integer>comparing(x -> x.getGene().getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+            .thenComparing(x -> x.getGene().getEnsemblGeneId(), Comparator.nullsLast(String::compareTo));
+    
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
      *                             the page to the client.
@@ -753,7 +757,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             table.append("</td></tr>");
         }
         if (gene.getOrthologs() != null && gene.getOrthologs().size() > 0) {
-            table.append("<tr><th scope='row'>Paralog(s)</th><td>")
+            table.append("<tr><th scope='row'>Orthologs(s)</th><td>")
                     .append(getHomologsDisplay(gene.getOrthologs()));
             table.append("</td></tr>");
         }
@@ -801,7 +805,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         RequestParameters url = this.getNewRequestParameters();
 
         List<String> orderedEscapedHomologs = homologs.stream()
-                .sorted()
+                .sorted(GENE_HOMOLOGY_COMPARATOR)
                 .map(s -> {
                     url.setPage(RequestParameters.PAGE_GENE);
                     url.setGeneId(s.getGene().getEnsemblGeneId());

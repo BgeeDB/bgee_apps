@@ -22,7 +22,8 @@ import java.util.Set;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @Author  Julien Wollbrett
+ * @version Bgee 14, Sep. 2020
  * @since   Bgee 01
  */
 //Note: this class does not extend NamedEntity, because we don't want to expose
@@ -78,12 +79,12 @@ public class Gene {
     /**
      * @see getOrthologs()
      */
-    private final Collection<GeneHomolog> orthologs;
+    private final Set<GeneHomolog> orthologs;
     
     /**
      * @see getParalogs()
      */
-    private final Collection<GeneHomolog> paralogs;
+    private final Set<GeneHomolog> paralogs;
 	
 	/**
 	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
@@ -161,8 +162,10 @@ public class Gene {
                 new HashSet<>(): new HashSet<>(xRefs));
         this.species = species;
         this.geneBioType = geneBioType;
-        this.orthologs = orthologs;
-        this.paralogs = paralogs;
+        this.orthologs = Collections.unmodifiableSet(orthologs == null?
+                new HashSet<>(): new HashSet<>(orthologs));
+        this.paralogs = Collections.unmodifiableSet(paralogs == null?
+                new HashSet<>(): new HashSet<>(paralogs));
         this.geneMappedToSameEnsemblGeneIdCount = geneMappedToSameEnsemblGeneIdCount;
     }
     
@@ -286,6 +289,8 @@ public class Gene {
                .append(", synonyms=").append(synonyms)
                .append(", x-refs=").append(xRefs)
                .append(", species=").append(species)
+               .append(", orthologs=").append(orthologs)
+               .append(", paralogs=").append(paralogs)
                .append(", geneBioType=").append(geneBioType)
                .append(", geneMappedToSameEnsemblGeneIdCount=").append(geneMappedToSameEnsemblGeneIdCount)
                .append("]");

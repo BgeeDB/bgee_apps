@@ -81,6 +81,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
     private GeneHomologsTOResultSet getOneTypeOfHomology(Set<Integer> bgeeGeneIds, Integer taxonId, 
             Set<Integer> speciesIds, HomologyType homologyType) {
         log.entry(bgeeGeneIds, taxonId, homologyType, speciesIds);
+        log.debug(bgeeGeneIds + " " + taxonId + " " + homologyType + " " + speciesIds);
         
      // Filter arguments
         Set<Integer> clonedGeneIds = Optional.ofNullable(bgeeGeneIds)
@@ -126,11 +127,10 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
      // we don't use a try-with-resource, because we return a pointer to the results,
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
+            log.debug(sql);
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            stmt.setIntegers(1, bgeeGeneIds, true);
+            stmt.setIntegers(1, clonedGeneIds, true);
             int offsetParamIndex = clonedGeneIds.size();
-            stmt.setIntegers(offsetParamIndex, clonedGeneIds, true);
-            offsetParamIndex += clonedGeneIds.size();
             if (clonedTaxonId != null) {
                 stmt.setInt(offsetParamIndex, clonedTaxonId);
                 offsetParamIndex++;

@@ -546,9 +546,25 @@ public class GeneService extends CommonService {
         return log.exit(this.speciesService.loadSpeciesMap(speciesIds, withSpeciesInfo));
     }
     
+    /**
+     * load homology as a {@code Map} where keys are bgee gene Ids and values are {@code Set} of homologous
+     * genes
+     * 
+     * @param geneTOs           A {@code Set} of {@code GeneTO}s for which homologs have to be retrieved
+     * @param homologyType      A {@code HomologyType} defining if orthologs or paralogs have
+     *                          to be retrieved.
+     * @param taxonId           An {@code Integer} corresponding to the highest taxon homology relations 
+     *                          can come from
+     * @param speciesIds        A {@code Set} of {@code Integer} used to filter on a subset of species
+     * @param geneBioTypeMap    A {@code Map} of {@code Integer} corresponding to biotype IDs as key and 
+     *                          {@code GeneBiotype} as value 
+     * @return                  A {@code Map} with {@code Integer} corresponding to bgee gene IDs as keys 
+     *                          and {@code Set} of {@code GeneHomolog} as values.
+     */
     private Map<Integer, Set<GeneHomolog>> loadMappingBgeeGeneIdToGeneHomologs(Set<GeneTO> geneTOs, 
             HomologyType homologyType, Integer taxonId, Set<Integer> speciesIds, 
             Map <Integer, GeneBioType> geneBioTypeMap) {
+        log.entry(geneTOs, homologyType, taxonId, speciesIds, geneBioTypeMap);
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> homologsTOs = null;
         if (homologyType == HomologyType.ORTHOLOG) {

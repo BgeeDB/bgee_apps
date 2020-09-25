@@ -17,6 +17,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.species.Species;
+import org.bgee.model.species.Taxon;
 import org.bgee.view.ConcreteDisplayParent;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.ViewFactory;
@@ -114,6 +115,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} to be used to build the URL to OBO terms.
      */
     protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
+    
+    /**
+     * A {@code String} to be used to build the URL to NCBI taxonomy.
+     */
+    protected static final String NCBI_TAXONOMY_URL = 
+            "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=";
 
     /**
      * A {@code String} that are the keywords defining Bgee.
@@ -1237,6 +1244,22 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         
         return log.exit("<a target='_blank' rel='noopener' href='" + UBERON_ID_URL +
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
+                "</a>");
+    }
+    
+    /**
+     * @param taxon     A {@code Taxon} that is the taxon for which build the URL.
+     * @param text      A {@code String} that is the text to be displayed for the link.
+     * @return          A {@code String} that is the URLs of the provided taxon.
+     */
+    protected String getTaxonUrl(Taxon taxon, String text) {
+        log.entry(taxon, text);
+        if (taxon == null) {
+            throw log.throwing(new IllegalArgumentException("The provided taxon should be not null"));
+        }
+        
+        return log.exit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId() 
+                + "'>" + htmlEntities(text) +
                 "</a>");
     }
 

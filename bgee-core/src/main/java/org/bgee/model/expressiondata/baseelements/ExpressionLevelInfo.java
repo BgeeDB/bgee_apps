@@ -110,6 +110,7 @@ public class ExpressionLevelInfo {
 
     private final BigDecimal rank;
     private final BigDecimal expressionScore;
+    private final BigDecimal maxRankForExpressionScore;
     private final QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene;
     private final QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity;
 
@@ -117,20 +118,24 @@ public class ExpressionLevelInfo {
      * @param rank  See {@link #getRank()}
      */
     public ExpressionLevelInfo(BigDecimal rank) {
-        this(rank, null, null, null);
+        this(rank, null, null, null, null);
     }
     /**
      * @param rank                              See {@link #getRank()}
      * @param expressionScore                   See {@link #getExpressionScore()}
+     * @param maxRankForExpressionScore         See {@link #getMaxRankForExpressionScore()}
      * @param qualExprLevelRelativeToGene       See {@link #getQualExprLevelRelativeToGene()}
      * @param qualExprLevelRelativeToAnatEntity See {@link #getQualExprLevelRelativeToAnatEntity()}
      */
     public ExpressionLevelInfo(BigDecimal rank, BigDecimal expressionScore,
+            BigDecimal maxRankForExpressionScore,
             QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene,
             QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity) {
-        if (rank != null && rank.compareTo(new BigDecimal("0")) <= 0) {
+        if (rank != null && rank.compareTo(new BigDecimal("0")) <= 0 ||
+                maxRankForExpressionScore != null &&
+                maxRankForExpressionScore.compareTo(new BigDecimal("0")) <= 0) {
             throw log.throwing(new IllegalArgumentException(
-                    "The rank cannot be less than or equal to 0."));
+                    "Ranks cannot be less than or equal to 0."));
         }
         if (expressionScore != null &&
                 (expressionScore.compareTo(new BigDecimal("0")) <= 0 ||
@@ -140,6 +145,7 @@ public class ExpressionLevelInfo {
         }
         this.rank = rank;
         this.expressionScore = expressionScore;
+        this.maxRankForExpressionScore = maxRankForExpressionScore;
         this.qualExprLevelRelativeToGene = qualExprLevelRelativeToGene;
         this.qualExprLevelRelativeToAnatEntity = qualExprLevelRelativeToAnatEntity;
     }
@@ -191,6 +197,15 @@ public class ExpressionLevelInfo {
         return log.exit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
     }
     /**
+     * @return  The {@code BigDecimal} corresponding to the max expression rank,
+     *          allowing to transform the expression rank into an expression score.
+     * @see #getRank()
+     * @see #getExpressionScore()
+     */
+    public BigDecimal getMaxRankForExpressionScore() {
+        return maxRankForExpressionScore;
+    }
+    /**
      * @return  {@code QualitativeExpressionLevel} for an {@code ExpressionCall}
      *          relative to the expression level of the {@code Gene} (obtained by comparing
      *          the expression rank score of the call to the min. and max rank scores
@@ -220,6 +235,7 @@ public class ExpressionLevelInfo {
         result = prime * result + ((qualExprLevelRelativeToGene == null) ? 0 : qualExprLevelRelativeToGene.hashCode());
         result = prime * result + ((rank == null) ? 0 : rank.hashCode());
         result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
+        result = prime * result + ((maxRankForExpressionScore == null) ? 0 : maxRankForExpressionScore.hashCode());
         return result;
     }
     @Override
@@ -262,6 +278,13 @@ public class ExpressionLevelInfo {
         } else if (!expressionScore.equals(other.expressionScore)) {
             return false;
         }
+        if (maxRankForExpressionScore == null) {
+            if (other.maxRankForExpressionScore != null) {
+                return false;
+            }
+        } else if (!maxRankForExpressionScore.equals(other.maxRankForExpressionScore)) {
+            return false;
+        }
         return true;
     }
 
@@ -270,6 +293,7 @@ public class ExpressionLevelInfo {
         StringBuilder builder = new StringBuilder();
         builder.append("ExpressionLevelInfo [rank=").append(rank)
                .append(", expressionScore=").append(expressionScore)
+               .append(", maxRankForExpressionScore=").append(maxRankForExpressionScore)
                .append(", qualExprLevelRelativeToGene=").append(qualExprLevelRelativeToGene)
                .append(", qualExprLevelRelativeToAnatEntity=")
                .append(qualExprLevelRelativeToAnatEntity).append("]");

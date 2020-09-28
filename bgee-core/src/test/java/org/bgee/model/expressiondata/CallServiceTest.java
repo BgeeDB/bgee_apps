@@ -122,7 +122,7 @@ public class CallServiceTest extends TestAncestor {
 
         getLogger().exit();
     }
-  
+
     /**
      * Test the method {@link CallService#loadExpressionCalls(String, ExpressionCallFilter, 
      * Collection, LinkedHashMap, boolean)}.
@@ -839,7 +839,8 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal("1257.34"), new BigDecimal("96.93762"), null, null)), 
+                        new ExpressionLevelInfo(new BigDecimal("1257.34"), new BigDecimal("96.93762"),
+                                new BigDecimal("41025"), null, null)),
                 new ExpressionCall(g1, cond2, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
@@ -850,7 +851,8 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal("41025"), CallService.EXPRESSION_SCORE_MIN_VALUE, null, null)),
+                        new ExpressionLevelInfo(new BigDecimal("41025"), CallService.EXPRESSION_SCORE_MIN_VALUE,
+                                new BigDecimal("41025"), null, null)),
                 new ExpressionCall(g2, cond3, 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
@@ -861,7 +863,8 @@ public class CallServiceTest extends TestAncestor {
                                     )),
                                     0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77"),
                                   new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
-                        new ExpressionLevelInfo(new BigDecimal("20000.52"), new BigDecimal("51.25041"), null, null)) 
+                        new ExpressionLevelInfo(new BigDecimal("20000.52"), new BigDecimal("51.25041"),
+                                new BigDecimal("41025"), null, null))
             );
         
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
@@ -1503,7 +1506,7 @@ public class CallServiceTest extends TestAncestor {
         //expected results
         ExpressionCall callg1ae1 = new ExpressionCall(g1, cond1, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10"), null,
+                new ExpressionLevelInfo(new BigDecimal("10"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1514,7 +1517,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg1ae2 = new ExpressionCall(g1, cond2, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("30000"), null,
+                new ExpressionLevelInfo(new BigDecimal("30000"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1525,7 +1528,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity2))));
         ExpressionCall callg2ae1 = new ExpressionCall(g2, cond1, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10000"), null,
+                new ExpressionLevelInfo(new BigDecimal("10000"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10000"), new BigDecimal("20000"),
@@ -1536,7 +1539,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg2ae2 = new ExpressionCall(g2, cond2, 
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("20000"), null,
+                new ExpressionLevelInfo(new BigDecimal("20000"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.LOW,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10000"), new BigDecimal("20000"),
@@ -1548,7 +1551,7 @@ public class CallServiceTest extends TestAncestor {
         //Calls with ABSENT
         ExpressionCall callg1ae1WithAbsent = new ExpressionCall(g1, cond1,
                 null, ExpressionSummary.EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("10"), null,
+                new ExpressionLevelInfo(new BigDecimal("10"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.HIGH,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1559,7 +1562,7 @@ public class CallServiceTest extends TestAncestor {
                                         anatEntity1))));
         ExpressionCall callg1ae2WithAbsent = new ExpressionCall(g1, cond2,
                 null, ExpressionSummary.NOT_EXPRESSED, null, null,
-                new ExpressionLevelInfo(new BigDecimal("500000"), null,
+                new ExpressionLevelInfo(new BigDecimal("500000"), null, null,
                         new QualitativeExpressionLevel<Gene>(ExpressionLevelCategory.ABSENT,
                                 new EntityMinMaxRanks<Gene>(
                                         new BigDecimal("10"), new BigDecimal("30000"),
@@ -1809,8 +1812,9 @@ public class CallServiceTest extends TestAncestor {
         GeneBioType biotype = new GeneBioType("type1");
         Gene g1 = new Gene("1", spe1, biotype);
         Gene g2 = new Gene("2", spe1, biotype);
+
         Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.MEAN_RANK);
+                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.

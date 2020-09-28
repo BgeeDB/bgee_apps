@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -193,7 +194,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
                         Arrays.asList(new ExpressionCallData(DataType.AFFYMETRIX, exprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
-                                new DataPropagation())),
+                                new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))),
                         new ExpressionLevelInfo(new BigDecimal(90))),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
@@ -202,7 +203,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         Arrays.asList(new ExpressionCallData(DataType.EST, exprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
-                                new DataPropagation())), null),
+                                new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false))), null),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae2", "aeName2", "aeDesc2"),
                                 new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
@@ -210,10 +211,10 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
                         Arrays.asList(new ExpressionCallData(DataType.RNA_SEQ, noExprExperimentCounts,
                                 10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
-                                new DataPropagation()),
+                                new DataPropagation(PropagationState.SELF, PropagationState.ANCESTOR, false)),
                                 new ExpressionCallData(DataType.IN_SITU, noExprExperimentCounts,
                                         10, new BigDecimal(99), new BigDecimal(88), new BigDecimal(77),
-                                        new DataPropagation())
+                                        new DataPropagation(PropagationState.SELF, PropagationState.ANCESTOR, false))
                                 ), null));
         
         Set<Attribute> attr = getAttributes(true);
@@ -703,10 +704,13 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
     
     private Set<Attribute> getAttributes(Boolean isObservedDataOnly) {
         log.entry(isObservedDataOnly);
-        Set<Attribute> attrs = new HashSet<>(Arrays.asList(Attribute.ANAT_ENTITY_ID,
-            Attribute.DATA_QUALITY, Attribute.DATA_TYPE_RANK_INFO, Attribute.OBSERVED_DATA, 
-            Attribute.GENE, Attribute.CALL_TYPE, Attribute.EXPERIMENT_COUNTS,
-            Attribute.MEAN_RANK));
+        Set<Attribute> attrs = Arrays.stream(Attribute.values())
+                .filter(a -> !a.isConditionParameter())
+                //we also don't want the qualitative expression levels
+                .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
+                        !a.equals(Attribute.GENE_QUAL_EXPR_LEVEL))
+                .collect(Collectors.toSet());
+        attrs.add(Attribute.ANAT_ENTITY_ID);
         if(isObservedDataOnly) {
             attrs.add(Attribute.DEV_STAGE_ID);
         }
@@ -966,17 +970,13 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         for (ExpressionSummary sum : ExpressionSummary.values()) {
             expressionSummaries.add(GenerateDownloadFile.convertExpressionSummaryToString(sum));
         }
-        
-        List<Object> expressions = new ArrayList<Object>();
-        for (Expression expr : Expression.values()) {
-            expressions.add(GenerateDownloadFile.convertExpressionToString(expr));
-        }
-        expressions.add(GenerateDownloadFile.NO_DATA_VALUE);
+        expressionSummaries.add(GenerateDownloadFile.NO_DATA_VALUE);
 
         List<Object> qualitySummaries = new ArrayList<Object>();
         qualitySummaries.add(GenerateDownloadFile.convertSummaryQualityToString(SummaryQuality.GOLD));
         qualitySummaries.add(GenerateDownloadFile.convertSummaryQualityToString(SummaryQuality.SILVER));
         qualitySummaries.add(GenerateDownloadFile.convertSummaryQualityToString(SummaryQuality.BRONZE));
+        qualitySummaries.add(GenerateDownloadFile.NA_VALUE);
         
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {
@@ -998,33 +998,50 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         processorsList.addAll(new ArrayList<>(Arrays.asList(
                 new IsElementOf(expressionSummaries),   // Expression
                 new IsElementOf(qualitySummaries),      // Quality
+                new StrNotNullOrEmpty(),                // Expression score
                 new StrNotNullOrEmpty())));             // Expression rank
               
         if (!isSimplified) {
             processorsList.addAll(new ArrayList<>(Arrays.asList(
-                new IsElementOf(originValues),          // Including observed data 
-                new IsElementOf(expressions),           // Affymetrix data
+                new IsElementOf(originValues),          // Including observed data
+                new IsElementOf(expressionSummaries),   // Affymetrix data
+                new IsElementOf(qualitySummaries),      // Affymetrix qual
+                new StrNotNullOrEmpty(),                // Affymetrix score
+                new StrNotNullOrEmpty(),                // Affymetrix rank
+                new StrNotNullOrEmpty(),                // Affymetrix weight
+                new IsElementOf(originValues),          // Including Affymetrix data
                 new LMinMax(0, Long.MAX_VALUE),         // Affymetrix present high
                 new LMinMax(0, Long.MAX_VALUE),         // Affymetrix present low
                 new LMinMax(0, Long.MAX_VALUE),         // Affymetrix absent high
                 new LMinMax(0, Long.MAX_VALUE),         // Affymetrix absent low
-                new IsElementOf(originValues),          // Including Affymetrix data
-                new IsElementOf(expressions),           // EST data
+                new IsElementOf(expressionSummaries),   // EST data
+                new IsElementOf(qualitySummaries),      // EST qual
+                new StrNotNullOrEmpty(),                // EST score
+                new StrNotNullOrEmpty(),                // EST rank
+                new StrNotNullOrEmpty(),                // EST weight
+                new IsElementOf(originValues),          // Including EST data
                 new LMinMax(0, Long.MAX_VALUE),         // EST present high
                 new LMinMax(0, Long.MAX_VALUE),         // EST present low
-                new IsElementOf(originValues),          // Including EST data
-                new IsElementOf(expressions),           // In Situ data
+                new IsElementOf(expressionSummaries),   // In situ data
+                new IsElementOf(qualitySummaries),      // In situ qual
+                new StrNotNullOrEmpty(),                // In situ score
+                new StrNotNullOrEmpty(),                // In situ rank
+                new StrNotNullOrEmpty(),                // In situ weight
+                new IsElementOf(originValues),          // Including In situ data
                 new LMinMax(0, Long.MAX_VALUE),         // In Situ present high
                 new LMinMax(0, Long.MAX_VALUE),         // In Situ present low
                 new LMinMax(0, Long.MAX_VALUE),         // In Situ absent high
                 new LMinMax(0, Long.MAX_VALUE),         // In Situ absent low
-                new IsElementOf(originValues),          // Including in Situ data
-                new IsElementOf(expressions),           // RNA-seq data
+                new IsElementOf(expressionSummaries),   // RNA-seq data
+                new IsElementOf(qualitySummaries),      // RNA-seq qual
+                new StrNotNullOrEmpty(),                // RNA-seq score
+                new StrNotNullOrEmpty(),                // RNA-seq rank
+                new StrNotNullOrEmpty(),                // RNA-seq weight
+                new IsElementOf(originValues),          // Including RNA-seq data
                 new LMinMax(0, Long.MAX_VALUE),         // RNA-seq present high
                 new LMinMax(0, Long.MAX_VALUE),         // RNA-seq present low
                 new LMinMax(0, Long.MAX_VALUE),         // RNA-seq absent high
-                new LMinMax(0, Long.MAX_VALUE),         // RNA-seq absent low
-                new IsElementOf(originValues))));         // Including RNA-seq data
+                new LMinMax(0, Long.MAX_VALUE))));      // RNA-seq absent low
         }
         
         CellProcessor[] processors = processorsList.toArray(new CellProcessor[processorsList.size()]);
@@ -1049,33 +1066,50 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
             expecteds.addAll(new ArrayList<String>(Arrays.asList(
                     GenerateDownloadFile.EXPRESSION_COLUMN_NAME,
                     GenerateDownloadFile.QUALITY_COLUMN_NAME,
+                    GenerateDownloadFile.EXPRESSION_SCORE_COLUMN_NAME,
                     GenerateDownloadFile.EXPRESSION_RANK_COLUMN_NAME)));
             
             if (!isSimplified) {
                 expecteds.addAll(new ArrayList<String>(Arrays.asList(
                         GenerateDownloadFile.INCLUDING_OBSERVED_DATA_COLUMN_NAME,
-                        GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME, 
+                        GenerateDownloadFile.AFFYMETRIX_DATA_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIX_QUAL_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIX_WEIGHT_COLUMN_NAME,
+                        GenerateDownloadFile.AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME,
-                        GenerateDownloadFile.AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME, 
-                        GenerateDownloadFile.EST_DATA_COLUMN_NAME, 
+                        GenerateDownloadFile.EST_DATA_COLUMN_NAME,
+                        GenerateDownloadFile.EST_QUAL_COLUMN_NAME,
+                        GenerateDownloadFile.EST_EXPRESSION_SCORE_COLUMN_NAME,
+                        GenerateDownloadFile.EST_EXPRESSION_RANK_COLUMN_NAME,
+                        GenerateDownloadFile.EST_WEIGHT_COLUMN_NAME,
+                        GenerateDownloadFile.EST_OBSERVED_DATA_COLUMN_NAME,
                         GenerateDownloadFile.EST_PRESENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.EST_PRESENT_LOW_COUNT_COLUMN_NAME,
-                        GenerateDownloadFile.EST_OBSERVED_DATA_COLUMN_NAME, 
-                        GenerateDownloadFile.IN_SITU_DATA_COLUMN_NAME, 
+                        GenerateDownloadFile.IN_SITU_DATA_COLUMN_NAME,
+                        GenerateDownloadFile.IN_SITU_QUAL_COLUMN_NAME,
+                        GenerateDownloadFile.IN_SITU_EXPRESSION_SCORE_COLUMN_NAME,
+                        GenerateDownloadFile.IN_SITU_EXPRESSION_RANK_COLUMN_NAME,
+                        GenerateDownloadFile.IN_SITU_WEIGHT_COLUMN_NAME,
+                        GenerateDownloadFile.IN_SITU_OBSERVED_DATA_COLUMN_NAME,
                         GenerateDownloadFile.IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME,
-                        GenerateDownloadFile.IN_SITU_OBSERVED_DATA_COLUMN_NAME, 
                         GenerateDownloadFile.RNASEQ_DATA_COLUMN_NAME,
+                        GenerateDownloadFile.RNASEQ_QUAL_COLUMN_NAME,
+                        GenerateDownloadFile.RNASEQ_EXPRESSION_SCORE_COLUMN_NAME,
+                        GenerateDownloadFile.RNASEQ_EXPRESSION_RANK_COLUMN_NAME,
+                        GenerateDownloadFile.RNASEQ_WEIGHT_COLUMN_NAME,
+                        GenerateDownloadFile.RNASEQ_OBSERVED_DATA_COLUMN_NAME,
                         GenerateDownloadFile.RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME,
                         GenerateDownloadFile.RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME,
-                        GenerateDownloadFile.RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME,
-                        GenerateDownloadFile.RNASEQ_OBSERVED_DATA_COLUMN_NAME)));
+                        GenerateDownloadFile.RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME)));
             }
             
             assertArrayEquals("Incorrect headers", expecteds.stream().toArray(), headers);

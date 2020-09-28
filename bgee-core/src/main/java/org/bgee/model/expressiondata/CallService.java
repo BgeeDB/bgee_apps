@@ -1896,7 +1896,7 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
         }
         if (rank == null) {
-            log.info("Rank is null, cannot compute expression score");
+            log.debug("Rank is null, cannot compute expression score");
             return log.exit(null);
         }
         if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
@@ -1946,8 +1946,12 @@ public class CallService extends CommonService {
                     attrs.contains(Attribute.OBSERVED_DATA);
             assert !getExperimentsCounts ||
                     cdTO.getExperimentCounts() != null && !cdTO.getExperimentCounts().isEmpty();
-            assert !getRankInfo || cdTO.getRank() != null && cdTO.getRankNorm() != null &&
-                    cdTO.getWeightForMeanRank() != null;
+            //The following assertion was incorrect: as of Bgee 14.1, if the call is not observed
+            //(propagation only), there is no associated rank. Even when we'll have globalRanks,
+            //as of Bgee 14.2, there can still be an absent call propagated from a parent,
+            //and thus with no rank associated.
+//            assert !getRankInfo || cdTO.getRank() != null && cdTO.getRankNorm() != null &&
+//                    cdTO.getWeightForMeanRank() != null;
             assert !getDataProp || cdTO.getDataPropagation() != null &&
                     !cdTO.getDataPropagation().isEmpty() && cdTO.isConditionObservedData() != null;
 

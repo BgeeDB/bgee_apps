@@ -78,6 +78,16 @@ public class OntologyTools {
      *     <li>path to the file where to store the list of IDs.
      *   </ol>
      * </li>
+     * <li>If the first element in {@code args} is {@code RetrieveAnatIncorrectIndirectRels}, 
+     * the action will be to retrieve from the database indirect relations that cannot be reached
+     * through a chain of direct relations, and to write them into an output file, see 
+     * {@link #getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
+     *      DAOManager, String)}. 
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *     <li>path to the file where to store the list of relations.
+     *   </ol>
+     * </li>
      * </ul>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.

@@ -5,19 +5,24 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -306,34 +311,76 @@ public class OntologyTools {
             DAOManager daoManager, String outputFile) throws IOException {
         log.entry(daoManager, outputFile);
 
+        RelationDAO relDAO = daoManager.getRelationDAO();
+        //We go species by species, it will be simpler,
+        //but we will summarize as much as possible over all species
+        SpeciesTOResultSet speciesTORS = daoManager.getSpeciesDAO().getAllSpecies(null);
+        //TOs don't implement equals/hashCode, so we'll use relation IDs and need a Map
+        //to find back the RelationTO associated to each ID
+        Map<Integer, RelationTO<String>> relationTOIdMap = new HashMap<>();
+        //We'll associated IDs of incorrect relations to a Set containing the species
+        //the relation is incorrect in.
+        Map<Integer, Set<SpeciesTO>> speciesPerIncorrectIndirectRelId = new HashMap<>();
+        while (speciesTORS.next()) {
+            SpeciesTO speciesTO = speciesTORS.getTO();
+
+            RelationTOResultSet<String> directRels = relDAO.getAnatEntityRelations(
+                    Collections.singleton(speciesTO.getId()), true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.DIRECT),
+                    EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID));
+            RelationTOResultSet<String> indirectRels = relDAO.getAnatEntityRelations(
+                    Collections.singleton(speciesTO.getId()), true, null, null, true,
+                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
+                    EnumSet.of(RelationTO.RelationStatus.INDIRECT),
+                    null);
+            Set<RelationTO<String>> incorrectIndirectRelTOs =
+                    this.findIndirectRelsNotReachedByChainOfDirectRels(
+                            directRels, indirectRels);
+            Set<SpeciesTO> speciesTOs = new HashSet<>();
+            speciesTOs.add(speciesTO);
+            for (RelationTO<String> incorrectIndirectRelTO: incorrectIndirectRelTOs) {
+                relationTOIdMap.put(incorrectIndirectRelTO.getId(), incorrectIndirectRelTO);
+                speciesPerIncorrectIndirectRelId.merge(incorrectIndirectRelTO.getId(), speciesTOs,
+                        (existingSpeciesTOs, newSpeciesTOs) -> {
+                            existingSpeciesTOs.addAll(newSpeciesTOs);
+                            return existingSpeciesTOs;
+                        });
+            }
+        }
+
+        //To know if there are species in which the indirect relations can be retrieved
+        //through a chain of direct relations
+        TaxonConstraintDAO taxonConstraintDAO = daoManager.getTaxonConstraintDAO();
+        Map<Integer, Set<Integer>> taxonConstraintsPerIncorrectIndirectRelId = taxonConstraintDAO
+                .getAnatEntityRelationTaxonConstraints(null, relationTOIdMap.keySet(), null)
+                .stream().map(tcTO -> new AbstractMap.SimpleEntry<>(tcTO.getEntityId(),
+                        new HashSet<>(Arrays.asList(tcTO.getSpeciesId()))))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 outputFile)))) {
-            RelationDAO relDAO = daoManager.getRelationDAO();
-            //We go species by species, it will be simpler
-            SpeciesTOResultSet speciesTORS = daoManager.getSpeciesDAO().getAllSpecies(null);
-            while (speciesTORS.next()) {
-                SpeciesTO speciesTO = speciesTORS.getTO();
-                out.println("# For species " + speciesTO.getName() + " - ID " + speciesTO.getId());
+            speciesPerIncorrectIndirectRelId.entrySet().stream()
+            .sorted(Comparator
+                    .<Entry<Integer, Set<SpeciesTO>>>comparingInt(e -> e.getValue().size()).reversed()
+                    .thenComparing(e -> e.getKey()))
+            .forEach(e -> {
+                Set<Integer> invalidSpeciesIds = e.getValue().stream().map(sTO -> sTO.getId())
+                        .collect(Collectors.toSet());
+                Set<Integer> validSpeciesIds = taxonConstraintsPerIncorrectIndirectRelId.get(e.getKey())
+                        .stream().filter(speId -> speId == null || !invalidSpeciesIds.contains(speId))
+                        .collect(Collectors.toSet());
 
-                RelationTOResultSet<String> directRels = relDAO.getAnatEntityRelations(
-                        Collections.singleton(speciesTO.getId()), true, null, null, true,
-                        EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
-                        EnumSet.of(RelationTO.RelationStatus.DIRECT),
-                        EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID));
-                RelationTOResultSet<String> indirectRels = relDAO.getAnatEntityRelations(
-                        Collections.singleton(speciesTO.getId()), true, null, null, true,
-                        EnumSet.of(RelationTO.RelationType.ISA_PARTOF),
-                        EnumSet.of(RelationTO.RelationStatus.INDIRECT),
-                        null);
-                Set<RelationTO<String>> incorrectIndirectRelTOs =
-                        this.findIndirectRelsNotReachedByChainOfDirectRels(
-                                directRels, indirectRels);
-                for (RelationTO<String> incorrectIndirectRelTO: incorrectIndirectRelTOs) {
-                    out.println(incorrectIndirectRelTO);
-                }
-
-                out.println();
-            }
+                out.println(relationTOIdMap.get(e.getKey())
+                        + " - incorrect for species (" + invalidSpeciesIds.size() + "): "
+                        + invalidSpeciesIds.stream().map(speId -> speId.toString())
+                            .collect(Collectors.joining(", "))
+                        + " - valid for species (" + validSpeciesIds.size() + "): "
+                        + validSpeciesIds.stream().map(speId -> speId == null? "All species": speId.toString())
+                            .collect(Collectors.joining(", "))
+                        );
+            });
         }
         log.exit();
     }

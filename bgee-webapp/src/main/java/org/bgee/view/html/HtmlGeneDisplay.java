@@ -37,11 +37,10 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneHomolog;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
-import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
@@ -362,6 +361,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(geneResponse);
         
         Gene gene = geneResponse.getGene();
+        GeneHomologs geneHomologs = geneResponse.getGeneHomologs();
         
         String titleStart = "Gene: " + htmlEntities(gene.getName()) 
                 + " - " + htmlEntities(gene.getEnsemblGeneId()); 
@@ -389,7 +389,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div typeof='bs:Gene'>");
         
         this.writeln("<h2>General information</h2>");
-        this.writeln("<div class='gene'>" + getGeneralInfo(gene) + "</div>");
+        this.writeln("<div class='gene'>" + getGeneralInfo(gene, geneHomologs) + "</div>");
 
 
         //Expression data
@@ -479,30 +479,30 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // end other info
         
         // Orthologs info
-        if(!(gene.getOrthologs() == null || gene.getOrthologs().isEmpty())) {
+        if(!( geneHomologs.getOrthologsByTaxon()== null || 
+                geneHomologs.getOrthologsByTaxon().isEmpty())) {
             this.writeln("<a id='orthologs' class='inactiveLink'><h2>Orthologs</h2></a>");
             this.writeln("<div id='orthologs_data' class='row'>");
             //table-container
             this.writeln("<div class='col-xs-12 col-md-12'>");
             this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(
-                    geneResponse.getGene(),geneResponse.getSpeciesByTaxonOrthologs(), true));
+            this.writeln(getHomologyHTMLByTaxon(gene,geneHomologs.getOrthologsByTaxon(), true));
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             this.writeln("</div>"); // end orthologs_data 
         }
         
      // Paralogs info
-        if(!(gene.getParalogs() == null || gene.getParalogs().isEmpty())) {
+        if(!(geneHomologs.getParalogsByTaxon() == null || 
+                geneHomologs.getParalogsByTaxon().isEmpty())) {
             this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs</h2></a>");
             this.writeln("<div id='paralogs_data' class='row'>");
             //table-container
             this.writeln("<div class='col-xs-12 col-md-12'>");
             this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(
-                    geneResponse.getGene(),geneResponse.getSpeciesByTaxonParalogs(), false));
+            this.writeln(getHomologyHTMLByTaxon(gene,geneHomologs.getParalogsByTaxon(), false));
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             this.writeln("</div>"); // end orthologs_data 
@@ -773,8 +773,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     *                           will be displayed
     * @return                   A {@code String} that is the generated HTML.
     */
-    private String getHomologyHTMLByTaxon(Gene gene, Map<Taxon, Set<Species>> speciesByTaxon, boolean orthologs) {//, HomologyType homologyType) {
-        log.entry(gene, speciesByTaxon, orthologs);
+    private String getHomologyHTMLByTaxon(Gene gene, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon, 
+            boolean orthologs) {
+        log.entry(homologsByTaxon, orthologs);
         //TODO shity part to modify once code is ok
         String homologyString = orthologs ? "Orthologs" : "Paralogs";
 
@@ -783,56 +784,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("<table class='homologs stripe nowrap compact responsive'>")
               .append("<thead><tr>")
               .append("<th class='taxon-name'>Taxon name</th>")
-              .append("<th class='homo-species min-table_sm'>Species with " + homologyString.toLowerCase() + "</th>")
+              .append("<th class='homo-species min-table_sm'>Species with " 
+                      + homologyString.toLowerCase() + "</th>")
               .append("<th class='homo-gene-id'>Gene(s)</th>")
               .append("<th class='exp-comp'>Expression comparison</th>")
               .append("<th class='details'>See details</th>")
               .append("</tr></thead>\n");
-        
-        //XXX MAYBE NOT TO DO IN THE DISPLAY????
-        // Generate map from taxId to taxon. It is sorted from more recent to oldest taxon.
-        LinkedHashMap<Integer, Taxon> taxonById = speciesByTaxon.keySet().stream()
-                .sorted(Comparator
-                        .<Taxon,Integer>comparing(t -> t.getLevel(), Comparator.nullsLast(Integer::compareTo)).reversed())
-                .collect(Collectors.toMap(Taxon::getId, t -> t, (o, n) -> o, LinkedHashMap::new));
-        
-        // generate map to retrieve all genes for one species
-        Map<Integer, Set<Gene>> homologsBySpeciesId = null;
-        if (orthologs) {
-            homologsBySpeciesId =gene.getOrthologs()
-                .stream().collect(Collectors.groupingBy(gh -> gh.getGene().getSpecies().getId(),
-                        Collectors.mapping(GeneHomolog::getGene, Collectors.toSet())));
-        } else {
-            homologsBySpeciesId =gene.getParalogs()
-                    .stream().collect(Collectors.groupingBy(gh -> gh.getGene().getSpecies().getId(),
-                            Collectors.mapping(GeneHomolog::getGene, Collectors.toSet())));
-        }
-        
-        // init empty map that will contain all genes at one taxonomical level
-        LinkedHashMap<Taxon, Set<Gene>> genesByTaxonWithDescendant = new LinkedHashMap<Taxon, Set<Gene>>();
-        
-        for(Integer taxId:new ArrayList<>(taxonById.keySet())) {
-            Taxon currentTaxon = taxonById.get(taxId);
-            Set<Gene> allGenes = new HashSet<Gene>();
-            Set<Species> descendantSpecies = speciesByTaxon.get(currentTaxon);
-            for (Species currentSpecies:descendantSpecies) {
-                if(homologsBySpeciesId.containsKey(currentSpecies.getId())) {
-                    allGenes.addAll(homologsBySpeciesId.get(currentSpecies.getId()));
-                }
-            }
-            genesByTaxonWithDescendant.put(currentTaxon, allGenes);
-
-        }
-        
+       
         // Start generation of html to display
         StringBuilder sbRow = new StringBuilder();
         
         // all homologs of one taxon
-        for(Entry<Taxon,Set<Gene>> homologsOneTaxon: genesByTaxonWithDescendant.entrySet()) {
+        for(Entry<Taxon,Set<Gene>> homologsOneTaxon: homologsByTaxon.entrySet()) {
             sbRow.append("<tr>");
             Taxon currentTaxon= homologsOneTaxon.getKey();
-            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = homologsOneTaxon.getValue().stream()
-                    .sorted(GENE_HOMOLOGY_COMPARATOR)
+            
+            // sort genes by Id and group then by species Id in order to add a line as species 
+            // separator
+            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = homologsOneTaxon
+                    .getValue().stream().sorted(GENE_HOMOLOGY_COMPARATOR)
                     .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), LinkedHashMap::new,
                             Collectors.mapping(g -> g, Collectors.toList())));
             
@@ -849,16 +819,19 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             // boolean used to create vertical line each time a new species is displayed
             boolean needSpeciesSeparator = false;
             // all homologs of one species
-            for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId.entrySet()) {
+            for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId
+                    .entrySet()) {
                 List<Gene> genes = homologsOneSpecies.getValue();
                 sbRow.append("<li class='homo-species");
                 if (needSpeciesSeparator) {
                     sbRow.append(" gene-score-shift");
                 }
                 sbRow.append("'><span class='details small'>")
-                    .append(getCompleteSpeciesNameLink(genes.iterator().next().getSpecies(), true))
+                    .append(getCompleteSpeciesNameLink(genes.iterator().next().getSpecies(), 
+                            true))
                     .append("</span></li>").append("\n");
-                //add empty lines in the list to be able to write genes in front of the proper species
+                //add empty lines in the list to be able to write genes in front of the proper 
+                // species
                 for (int i = 1; i< genes.size(); i++) {
                     sbRow.append("<li class='ortho-species'><br></li>").append("\n");
                 }
@@ -920,7 +893,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param gene     The {@code Gene} for which to display information
      * @return         A {@code String} containing the HTML table containing the information.
      */
-    private String getGeneralInfo(Gene gene) {
+    private String getGeneralInfo(Gene gene, GeneHomologs geneHomologs) {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
@@ -938,16 +911,23 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     .append(getSynonymDisplay(gene.getSynonyms()));
             table.append("</td></tr>");
         }
-        if (gene.getOrthologs() != null && gene.getOrthologs().size() > 0) {
+        // add orthologs and paralogs number
+        if (geneHomologs.getOrthologsByTaxon() != null && 
+                geneHomologs.getOrthologsByTaxon().size() > 0) {
             table.append("<tr><th scope='row'>Orthologs(s)</th><td>")
                 .append("<a href='#orthologs' title='orthologs details'>")
-                .append(gene.getOrthologs().size() + " orthologs</a>");
+                .append(geneHomologs.getOrthologsByTaxon().entrySet().stream()
+                        .flatMap(o -> o.getValue().stream())
+                        .collect(Collectors.toSet()).size() + " orthologs</a>");
             table.append("</td></tr>");
         }
-        if (gene.getParalogs() != null && gene.getParalogs().size() > 0) {
+        if (geneHomologs.getParalogsByTaxon() != null && 
+                geneHomologs.getParalogsByTaxon().size() > 0) {
             table.append("<tr><th scope='row'>Paralog(s)</th><td>")
                     .append("<a href='#paralogs' title='paralogs details'>")
-                    .append(gene.getParalogs().size() + " paralogs</a>");
+                    .append(geneHomologs.getParalogsByTaxon().entrySet().stream()
+                            .flatMap(o -> o.getValue().stream())
+                            .collect(Collectors.toSet()).size() + " paralogs</a>");
             table.append("</td></tr>");
         }
         table.append("</table>");

@@ -2,11 +2,13 @@ package org.bgee.controller;
 
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,11 +23,11 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
+import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.gene.GeneHomolog;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
@@ -54,8 +56,7 @@ public class CommandGene extends CommandParent {
     public static class GeneResponse {
         private final Gene gene;
         private final LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity;
-        private final Map<Taxon, Set<Species>> speciesByTaxonOrthologs;
-        private final Map<Taxon, Set<Species>> speciesByTaxonParalogs;
+        private final GeneHomologs geneHomologs;
         private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clusteringBestEachAnatEntity;
         private final Map<ExpressionCall, Integer> clusteringWithinAnatEntity;
@@ -71,16 +72,14 @@ public class CommandGene extends CommandParent {
                 LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity, 
                 Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
                 Map<ExpressionCall, Integer> clusteringWithinAnatEntity,
-                Map<Taxon,Set<Species>> speciesByTaxonOrthologs,
-                Map<Taxon,Set<Species>> speciesByTaxonParalogs) {
+                GeneHomologs geneHomologs) {
             this.gene = gene;
             this.includingAllRedundantCalls = includingAllRedundantCalls;
             //too boring to protect the Maps for this internal class...
             this.callsByAnatEntity = callsByAnatEntity;
             this.clusteringBestEachAnatEntity = clusteringBestEachAnatEntity;
             this.clusteringWithinAnatEntity = clusteringWithinAnatEntity;
-            this.speciesByTaxonOrthologs = speciesByTaxonOrthologs;
-            this.speciesByTaxonParalogs = speciesByTaxonParalogs;
+            this.geneHomologs = geneHomologs;
         }
 
         /**
@@ -144,27 +143,14 @@ public class CommandGene extends CommandParent {
             return clusteringWithinAnatEntity;
         }
 
-        /** 
-         * A {@code Map} linking a taxon that is a LCA of orthology to all species part of its taxon subtree.
-         * 
-         * @return     A {@code Map} where keys are {@code Taxon} and values are {@code Set} of
-         * {@code Species}. 
-         * 
+        /**
+         * @return  The {@code GeneHomologs} of the gene which information are requested for. 
          */
-        public Map<Taxon, Set<Species>> getSpeciesByTaxonOrthologs() {
-            return speciesByTaxonOrthologs;
+        public GeneHomologs getGeneHomologs() {
+            return geneHomologs;
         }
+
         
-        /** 
-         * A {@code Map} linking a taxon that is a LCA of paralogy to all species part of its taxon subtree.
-         * 
-         * @return     A {@code Map} where keys are {@code Taxon} and values are {@code Set} of
-         * {@code Species}. 
-         * 
-         */
-        public Map<Taxon, Set<Species>> getSpeciesByTaxonParalogs() {
-            return speciesByTaxonParalogs;
-        }
         
     }
 
@@ -206,7 +192,7 @@ public class CommandGene extends CommandParent {
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true, true, true);
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }
@@ -248,47 +234,60 @@ public class CommandGene extends CommandParent {
             throw log.throwing(new AssertionError("Impossible case"));
         }
 
+        
         display.displayGene(this.buildGeneResponse(selectedGene));
         log.exit();
     }
 
-    private GeneResponse buildGeneResponse(Gene gene) throws IllegalStateException {
+    private GeneResponse buildGeneResponse(Gene gene) 
+            throws IllegalStateException {
         log.entry(gene);
         //retrieve calls with silver quality for one anat. entity and at least bronze quality
         //for the same anat. entity and a dev. stage
         LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = serviceFactory.getCallService()
                 .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                         new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()));
-        Map<Taxon, Set<Species>> speciesByTaxonOrthologs = null;
-        if(!(gene.getOrthologs() == null || gene.getOrthologs().isEmpty())) {
-            speciesByTaxonOrthologs = serviceFactory.getTaxonService().loadTaxa(
-                    gene.getOrthologs().stream().map(GeneHomolog::getTaxonId)
-                    .collect(Collectors.toSet()), false)
-                    .collect(Collectors.toMap(t -> t, 
-                                    t -> serviceFactory.getSpeciesService()
-                                    .loadSpeciesByTaxonIds(Collections.singleton(t.getId()), false)));
+        
+        // Load homology information
+        GeneHomologs geneHomologs = serviceFactory.getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), 
+                        gene.getSpecies().getId(), true, true);
+        
+        // Update how homologs are stored in order to easily show data in gene page
+        // 1. sort homologs from more recent to oldest taxon
+        LinkedHashMap<Taxon, Set<Gene>> orthologsMap = geneHomologs.getOrthologsByTaxon().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        LinkedHashMap<Taxon, Set<Gene>> paralogsMap = geneHomologs.getParalogsByTaxon().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        
+        // 2. add to each taxon level all genes from more recent taxon
+        Set<Gene> genesToAdd = new HashSet<Gene>();
+        for (Entry<Taxon, Set<Gene>> orthologsOneTaxon : orthologsMap.entrySet()) {
+            orthologsOneTaxon.getValue().addAll(genesToAdd);
+            genesToAdd = orthologsOneTaxon.getValue();
         }
-        Map<Taxon, Set<Species>> speciesByTaxonParalogs = null;
-        if(!(gene.getParalogs() == null || gene.getParalogs().isEmpty())) {
-            speciesByTaxonParalogs = serviceFactory.getTaxonService().loadTaxa(
-                    gene.getParalogs().stream().map(GeneHomolog::getTaxonId)
-                    .collect(Collectors.toSet()), false)
-                    .collect(Collectors.toMap(t -> t, 
-                                    t -> serviceFactory.getSpeciesService()
-                                    .loadSpeciesByTaxonIds(Collections.singleton(t.getId()), false)));
+        genesToAdd = new HashSet<Gene>();
+        for (Entry<Taxon, Set<Gene>> paralogsOneTaxon : paralogsMap.entrySet()) {
+            paralogsOneTaxon.getValue().addAll(genesToAdd);
+            genesToAdd = paralogsOneTaxon.getValue();
         }
-       if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
+        
+        GeneHomologs updatedGeneHomologs = new GeneHomologs(geneHomologs.getGene(), orthologsMap, paralogsMap);
+        
+        if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-             return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
-                     new HashMap<>(), new HashMap<>(),speciesByTaxonOrthologs, 
-                     speciesByTaxonParalogs));
+            return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
+                    new HashMap<>(), new HashMap<>(),updatedGeneHomologs));
         }
         
         //**************************************
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, speciesByTaxonOrthologs,
-                speciesByTaxonParalogs, true));
+        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, updatedGeneHomologs, true));
     }
     
     /**
@@ -306,10 +305,9 @@ public class CommandGene extends CommandParent {
      * @return                         A built {@code GeneResponse}.
      */
     private GeneResponse buildGeneResponse(Gene gene, LinkedHashMap<AnatEntity, 
-            List<ExpressionCall>> callsByAnatEntity, Map <Taxon, Set<Species>> speciesByTaxonOrthologs,
-            Map <Taxon, Set<Species>> speciesByTaxonParalogs, boolean filterRedundantCalls) {
-        log.entry(gene, callsByAnatEntity, speciesByTaxonOrthologs, speciesByTaxonParalogs, 
-                filterRedundantCalls);
+            List<ExpressionCall>> callsByAnatEntity, GeneHomologs geneHomologs, 
+            boolean filterRedundantCalls) {
+        log.entry(gene, callsByAnatEntity, geneHomologs, filterRedundantCalls);
 
         long startFilteringTimeInMs = System.currentTimeMillis();
 
@@ -342,8 +340,7 @@ public class CommandGene extends CommandParent {
         // Build GeneResponse
         //*********************
         return log.exit(new GeneResponse(gene, !filterRedundantCalls, callsByAnatEntity,
-                clusteringBestEachAnatEntity, clusteringWithinAnatEntity, speciesByTaxonOrthologs,
-                speciesByTaxonParalogs));
+                clusteringBestEachAnatEntity, clusteringWithinAnatEntity, geneHomologs));
     }
     
     /**

@@ -804,15 +804,15 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                           + "</ul>");
         this.writeOneNews("2015-04-16", "Release of the multi-species " +
                           "differential expression data (across anatomy) for 6 groups, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         this.writeOneNews("2015-03-03", "Release of the single-species " +
                           "differential expression data for 11 species, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         this.writeOneNews("2014-12-19", "Release of the single-species " +
                           "expression data for 17 species, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         
         this.writeln("</div>"); // close panel-body

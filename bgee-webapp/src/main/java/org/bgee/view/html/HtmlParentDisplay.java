@@ -68,25 +68,25 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the page name of the 'gene expression calls' download page.
      */
     protected final static String TOP_ANAT_PAGE_NAME = "TopAnat: Expression enrichment analysis";
-    
+
     /**
      * A {@code String} to be used in {@code class} attribute.
      */
-    protected static final String CENTERED_ELEMENT_CLASS = 
+    protected static final String CENTERED_ELEMENT_CLASS =
             "col-xs-12 col-xs-offset-0 col-sm-offset-1 col-sm-10";
 
     /**
      * A {@code String} that is the URL of the Bioconductor BgeeDB R package.
      */
-    protected static final String BGEEDB_R_PACKAGE_URL = 
+    protected static final String BGEEDB_R_PACKAGE_URL =
             "https://bioconductor.org/packages/BgeeDB/";
-  
+
     /**
      * A {@code String} that is the URL of the Bioconductor BgeeCall R package.
      */
     protected static final String BGEECALL_R_PACKAGE_URL =
             "https://bioconductor.org/packages/BgeeCall/";
-    
+
     /**
      * A {@code String} that is the URL of the container for BgeeCall and BgeeDB R packages
      */
@@ -97,13 +97,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the URL of the Bgee GitHub.
      */
     protected static final String BGEE_GITHUB_URL = "https://github.com/BgeeDB";
-    
+
     /**
      * A {@code String} that is the URL of the Bgee pipeline master branch in GitHub.
      */
-    protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL + 
+    protected static final String MASTER_BGEE_PIPELINE_GITHUB_URL = BGEE_GITHUB_URL +
             "/bgee_pipeline/tree/master";
-    
+
     /**
      * A {@code String} that is the URL of the Bgee pipeline develop branch in GitHub.
      */
@@ -121,7 +121,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_KEYWORDS =
             "bgee, gene expression, evolution, ontology, anatomy, development, " +
             "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
-    
+
     /**
      * A {@code String} that is the description of Bgee.
      */
@@ -137,7 +137,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "https://creativecommons.org/publicdomain/zero/1.0/";
 
     /**
-     * A {@code String} that is the ID of the human species. 
+     * A {@code String} that is the ID of the human species.
      */
     private static final int HUMAN_SPECIES_ID = 9606;
 
@@ -145,27 +145,27 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the name of the 'EasyBgee' database.
      */
     protected final static String EASY_BGEE_NAME = "EasyBgee";
-    
+
     /**
-     * A {@code String} that is the value of the type tag describing Bgee creator 
+     * A {@code String} that is the value of the type tag describing Bgee creator
      * for Schema.org
      */
     protected final static String SCHEMA_CREATOR_TYPE_BGEE = "Person";
-    
+
     /**
-     * A {@code String} that is the value of the name tag describing Bgee name 
+     * A {@code String} that is the value of the name tag describing Bgee name
      * for Schema.org
      */
     protected final static String SCHEMA_BGEE_NAME = "Bgee";
-    
+
     /**
-     * A {@code String} that is the value of the name tag describing Bgee creator 
+     * A {@code String} that is the value of the name tag describing Bgee creator
      * for Schema.org
      */
     protected final static String SCHEMA_CREATOR_NAME_BGEE = "The Bgee Team";
 
     /**
-     * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters 
+     * A {@code String} that is the list (HTLM tag {@code <ul>}) of condition parameters
      * with their description.
      */
     protected static final String COND_PARAM_DESC_LIST = "<ul class='doc_content'>"
@@ -186,7 +186,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
-        try {                            
+        try {
             return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
         } catch (Exception e) {
             log.catching(e);
@@ -196,7 +196,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
     /**
      * Helper method to get an html tag
-     * @param name    A {@code String} representing the name of the element 
+     * @param name    A {@code String} representing the name of the element
      * @param content A {@code String} reprensenting the content of the element
      * @return The HTML code as {@code String}.
      */
@@ -204,10 +204,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          log.entry(name, content);
          return log.exit(getHTMLTag(name, null, content));
      }
-     
+
      /**
-      * Helper method to get an html tag with attributes set. 
-      * @param name          A {@code String} representing the name of the element 
+      * Helper method to get an html tag with attributes set.
+      * @param name          A {@code String} representing the name of the element
       * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
       * @return The HTML code as {@code String}
       */
@@ -215,20 +215,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          log.entry(name, attributes);
          return log.exit(getHTMLTag(name, attributes, null));
      }
-     
+
      /**
       * Helper method to get an html tag
-      * @param name          A {@code String} representing the name of the element 
+      * @param name          A {@code String} representing the name of the element
       * @param attributes    A {@code Map} where keys are attribute names and values are attribute values.
-      *                      Can be {@code null} or empty. 
+      *                      Can be {@code null} or empty.
       * @param content       A {@code String} representing the content of the element
       * @return The HTML code as {@code String}.
       */
      protected static String getHTMLTag(String name, Map<String, String> attributes, String content) {
          log.entry(name, attributes, content);
-         
+
          StringBuilder sb = new StringBuilder();
-         sb.append("<").append(name); 
+         sb.append("<").append(name);
          if (attributes != null) {
              for (Map.Entry<String, String> attr: attributes.entrySet()) {
                  sb.append(" ").append(attr.getKey()).append("='").append(attr.getValue()).append("'");
@@ -248,9 +248,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Get the single feature logo with a description as a HTML 'div' element.
      *
      * @param url           A {@code String} that is the URL of the link.
-     * @param externalLink  A {@code boolean} defining whether the link points to a Bgee 
-     *                      internal URL, or an external resource (in which case a 'target' 
-     *                      attribute with the '_blank' value will be append to the link). 
+     * @param externalLink  A {@code boolean} defining whether the link points to a Bgee
+     *                      internal URL, or an external resource (in which case a 'target'
+     *                      attribute with the '_blank' value will be append to the link).
      *                      If {@code true}, the link points to an external resource.
      * @param title         A {@code String} that is the title and the alternate text of the image.
      * @param figcaption    A {@code String} that is the caption of the 'figure' element.
@@ -260,10 +260,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                      formated in HTML and HTML escaped if necessary.
      */
     protected static String getSingleFeatureLogo(
-            String url, boolean externalLink, String title, String figcaption, 
+            String url, boolean externalLink, String title, String figcaption,
             String imgPath, String desc) {
         log.entry(url, externalLink, title, figcaption, imgPath, desc);
-        
+
         StringBuilder feature = new StringBuilder();
         feature.append("<div class='single_feature'>");
         feature.append("<a href='" + url + "' title='" + title + "'"
@@ -275,7 +275,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             feature.append("<p>" + desc + "</p>");
         }
         feature.append("</div>");
-        
+
         return log.exit(feature.toString());
     }
 
@@ -289,52 +289,52 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       */
      private final String charEncoding;
 
-     
+
      /**
-      * Constructor providing the necessary dependencies, except the {@code JsonHelper}, 
+      * Constructor providing the necessary dependencies, except the {@code JsonHelper},
       * that will thus be based on the default implementation.
-      * 
-      * @param response          A {@code HttpServletResponse} that will be used to display the 
+      *
+      * @param response          A {@code HttpServletResponse} that will be used to display the
       *                          page to the client
-      * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+      * @param requestParameters The {@code RequestParameters} that handles the parameters of the
       *                          current request.
       * @param prop              A {@code BgeeProperties} instance that contains the properties
       *                          to use.
       * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
-      * 
+      *
       * @throws IllegalArgumentException If {@code factory} is {@code null}.
       * @throws IOException              If there is an issue when trying to get or to use the
-      *                                  {@code PrintWriter} 
+      *                                  {@code PrintWriter}
       * @see #HtmlParentDisplay(HttpServletResponse, RequestParameters, BgeeProperties, JsonHelper, HtmlFactory)
       */
-     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
+     public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters,
              BgeeProperties prop, HtmlFactory factory) throws IllegalArgumentException, IOException {
          this(response, requestParameters, prop, null, factory);
      }
     /**
      * Constructor providing the necessary dependencies.
-     * 
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     *
+     * @param response          A {@code HttpServletResponse} that will be used to display the
      *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
+     * @param requestParameters The {@code RequestParameters} that handles the parameters of the
      *                          current request.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
-     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON. 
+     * @param jsonHelper        A {@code JsonHelper} used to read/write variables into JSON.
      * @param factory           The {@code HtmlFactory} that was used to instantiate this object.
-     * 
+     *
      * @throws IllegalArgumentException If {@code factory} is {@code null}.
      * @throws IOException              If there is an issue when trying to get or to use the
-     *                                  {@code PrintWriter} 
+     *                                  {@code PrintWriter}
      */
-    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters, 
-            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory) 
+    public HtmlParentDisplay(HttpServletResponse response, RequestParameters requestParameters,
+            BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory)
                     throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, factory);
         this.charEncoding = this.getRequestParameters().getCharacterEncoding();
         this.jsonHelper = jsonHelper;
     }
-    
+
     @Override
     protected String getContentType() {
         log.entry();
@@ -347,16 +347,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("");
         log.exit();
     }
-    
+
     /**
-     * URL encode the provided {@code String}, with the character encoding used to generate URLs. 
-     * 
+     * URL encode the provided {@code String}, with the character encoding used to generate URLs.
+     *
      * @param stringToWrite A {@code String} to be encoded.
      * @return              The encoded {@code String}.
      */
     protected String urlEncode(String stringToWrite) {
         log.entry(stringToWrite);
-        try {                            
+        try {
             return log.exit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
         } catch (Exception e) {
             log.catching(e);
@@ -367,7 +367,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Display the start of the HTML page (common to all pages).
      *
-     * @param title A {@code String} that is the title to be used for the page. 
+     * @param title A {@code String} that is the title to be used for the page.
      */
     protected void startDisplay(String title) {
         log.entry(title);
@@ -378,7 +378,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     /**
      * Display the start of the HTML page (common to all pages).
      *
-     * @param title             A {@code String} that is the title to be used for the page. 
+     * @param title             A {@code String} that is the title to be used for the page.
      * @param typeOfSchemaPage  A {@code String} that is the schema.org type of the page.
      *                          If {@code null}, no property will be set.
      */
@@ -387,17 +387,17 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.startDisplay(title, typeOfSchemaPage, null);
         log.exit();
     }
-    
+
 
     /**
      * Display the start of the HTML page (common to all pages).
      *
-     * @param title             A {@code String} that is the title to be used for the page. 
+     * @param title             A {@code String} that is the title to be used for the page.
      * @param typeOfSchemaPage  A {@code String} that is the schema.org type of the page.
      *                          If {@code null}, no property will be set.
      * @param description       A {@code String} that is a description specific to the page.
-     *                          This description will be combined to the generic description 
-     *                          of Bgee. If {@code null}, only generic Bgee description will 
+     *                          This description will be combined to the generic description
+     *                          of Bgee. If {@code null}, only generic Bgee description will
      *                          be used.
      */
     protected void startDisplay(String title, String typeOfSchemaPage, String description) {
@@ -411,20 +411,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         if (description != null) {
             this.writeln("<meta name='description' content='" + description + " " + BGEE_DESCRIPTION + "'/>");
         }
-        
+
         this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"
                 + ZonedDateTime.now(ZoneId.of("Europe/Zurich")).getYear()
                 + " UNIL' />");
         this.writeln("<link rel='shortcut icon' type='image/x-icon' href='"
                 + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + "favicon.ico'/>");
-        this.includeCss(); // load default css files, and css files specific of a view 
+        this.includeCss(); // load default css files, and css files specific of a view
                            // (views must override this method if needed)
-        this.includeJs();  // load default js files, and css files specific of a view 
+        this.includeJs();  // load default js files, and css files specific of a view
                            // (views must override this method if needed)
         //google analytics
         //TODO: add the UA ID to properties. If no UA ID defined, do not display the google analytics code.
-        //This will notably allow to stop messing up the google analytics results with our development tests 
+        //This will notably allow to stop messing up the google analytics results with our development tests
         //(there would be no UA ID defined in test resource properties)
         this.writeln("<script>");
         this.writeln("(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){");
@@ -435,9 +435,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("ga('set', 'anonymizeIp', true);");
         this.writeln("ga('send', 'pageview');");
         this.writeln("</script>");
-        
+
         this.writeln("</head>");
-        
+
         this.writeln("<body prefix='bs: http://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
@@ -463,12 +463,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected void endDisplay() {
         log.entry();
-        
+
         RequestParameters urlPublication = this.getNewRequestParameters();
         urlPublication.setPage(RequestParameters.PAGE_PUBLICATION);
 
         this.writeln("</div>"); // close sib_body
-        
+
         //FIXME: I noticed that this footer disappear in printed version
         this.writeln("<nav id='bgee_footer' class='navbar navbar-default'>");
         this.writeln("<div class='container-fluid'>");
@@ -477,12 +477,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("    <li><a href='https://www.sib.swiss' target='_blank' rel='noopener'>SIB Swiss Institute of Bioinformatics</a></li>");
         this.writeln("    <li>");
         this.writeln("        <a rel='license noopener' href='" + LICENCE_CC0_URL + "' target='_blank'>");
-        this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() + 
+        this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() +
                                     "cc-zero.png' width='80' height='15' alt='CC0' />");
         this.writeln("        </a>");
         this.writeln("    </li>");
         this.writeln("</ul>");
-        
+
 
         this.writeln("<ul class='nav navbar-nav navbar-right'>");
         this.writeln("<li><a class='js-tooltip js-copy' " +
@@ -493,7 +493,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<li><a href='" + urlPublication.getRequestURL() + "' title='Bgee publication page'>Cite us</a></li>");
         this.writeln("<li>" + this.getObfuscateHelpEmail() + "</li>");
         this.writeln("</ul>");
-        
+
         this.writeln("</div>"); // close container
         this.writeln("</nav>"); // close bgee_footer nev
 
@@ -504,7 +504,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</div>"); // close privacy-panel
 
         this.writeln("</div>"); // close sib_container
-        
+
         this.writeln("</body>");
         this.writeln("</html>");
         log.exit();
@@ -515,13 +515,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     private void displayBgeeHeader() {
         log.entry();
-        
+
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
 
         RequestParameters urlGeneSearch = this.getNewRequestParameters();
         urlGeneSearch.setPage(RequestParameters.PAGE_GENE);
-        
+
         RequestParameters urlSpeciesList = this.getNewRequestParameters();
         urlSpeciesList.setPage(RequestParameters.PAGE_SPECIES);
 
@@ -530,18 +530,18 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlExprComp = this.getNewRequestParameters();
         urlExprComp.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
-        
+
         RequestParameters urlDownload = this.getNewRequestParameters();
         urlDownload.setPage(RequestParameters.PAGE_DOWNLOAD);
-        
+
         RequestParameters urlDownloadProcValueFile = this.getNewRequestParameters();
         urlDownloadProcValueFile.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadProcValueFile.setAction(RequestParameters.ACTION_DOWLOAD_PROC_VALUE_FILES);
-        
+
         RequestParameters urlMySQLDumps = this.getNewRequestParameters();
         urlMySQLDumps.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlMySQLDumps.setAction(RequestParameters.ACTION_DOWNLOAD_DUMPS);
-        
+
         RequestParameters urlDownloadExprCallFiles = this.getNewRequestParameters();
         urlDownloadExprCallFiles.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadExprCallFiles.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
@@ -550,19 +550,19 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlResourcesRPackages = this.getNewRequestParameters();
         urlResourcesRPackages.setPage(RequestParameters.PAGE_RESOURCES);
         urlResourcesRPackages.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
-        
+
         RequestParameters urlResourcesAnnotations = this.getNewRequestParameters();
         urlResourcesAnnotations.setPage(RequestParameters.PAGE_RESOURCES);
         urlResourcesAnnotations.setAction(RequestParameters.ACTION_RESOURCES_ANNOTATIONS);
-        
+
         RequestParameters urlResourcesOntologies = this.getNewRequestParameters();
         urlResourcesOntologies.setPage(RequestParameters.PAGE_RESOURCES);
         urlResourcesOntologies.setAction(RequestParameters.ACTION_RESOURCES_ONTOLOGIES);
-        
+
         RequestParameters urlResourcesSourceCode = this.getNewRequestParameters();
         urlResourcesSourceCode.setPage(RequestParameters.PAGE_RESOURCES);
         urlResourcesSourceCode.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
-        
+
         RequestParameters urlDocDataSets = this.getNewRequestParameters();
         urlDocDataSets.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDocDataSets.setAction(RequestParameters.ACTION_DOC_DATA_SETS);
@@ -593,7 +593,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         RequestParameters urlAnatSim = this.getNewRequestParameters();
         urlAnatSim.setPage(RequestParameters.PAGE_ANAT_SIM);
-        
+
         RequestParameters urlPublications = this.getNewRequestParameters();
         urlPublications.setPage(RequestParameters.PAGE_PUBLICATION);
 
@@ -601,7 +601,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         StringBuilder navbar = new StringBuilder();
 
         String navbarClass = this.prop.isArchive()? "navbar-archive": "navbar-default";
-        
+
         navbar.append("<nav id='bgee-menu' class='navbar ").append(navbarClass).append("'>");
 
         // Brand and toggle get grouped for better mobile display
@@ -622,10 +622,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         // Nav links
         navbar.append("<div id='bgee-navbar' class='collapse navbar-collapse'>");
-        
+
         // Left nav links
         navbar.append("<ul class='nav navbar-nav'>");
-        
+
         // Analysis
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
@@ -668,7 +668,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 .append(DUMPS_PAGE_NAME).append("</a></li>");
         navbar.append("</ul>");
         navbar.append("</li>");
-        
+
         // Resources menu
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
@@ -707,7 +707,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li>").append(this.getObfuscateHelpEmail()).append("</li>");
         navbar.append("</ul>");
         navbar.append("</li>");
-        
+
         // About
         navbar.append("<li class='dropdown'>");
         navbar.append("<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' "
@@ -723,13 +723,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("<li><a href='https://bgeedb.wordpress.com' target='_blank' rel='noopener'>Bgee blog</a></li>");
         navbar.append("<li><a href='").append(urlPrivacyPolicy.getRequestURL()).append("'>Bgee privacy notice</a></li>");
         navbar.append("</ul>");
-        navbar.append("</li>");        
+        navbar.append("</li>");
 
         navbar.append("</ul>"); // close left nav links
 
         // Right nav links
         navbar.append("<ul class='nav navbar-nav navbar-right'>");
-        
+
         // R package
         navbar.append("<li><a title='Download Bgee data with the BgeeDB R package' target='_blank' rel='noopener' href='" + BGEEDB_R_PACKAGE_URL + "'>" +
                 "<img class='social-img' alt='R logo' src='")
@@ -745,36 +745,36 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "title='Link to the UNIL Université de Lausanne'><img src='")
                 .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
                 .append("unil_logo_noir.png' alt='UNIL Université de Lausanne' /></a></li>");
-        
+
         // SIB
         navbar.append("<li><a id='sib_brand' href='https://www.sib.swiss' target='_blank' rel='noopener' " +
                 "title='Link to the SIB Swiss Institute of Bioinformatics'><img src='")
                 .append(this.prop.getBgeeRootDirectory()).append(this.prop.getLogoImagesRootDirectory())
                 .append("sib_emblem.png' alt='SIB Swiss Institute of Bioinformatics' /></a></li>");
-        
+
         navbar.append("</ul>");  // close right nav links
-        
+
         navbar.append("</div>"); // close nav links
 
         navbar.append("</nav>"); // close navbar navbar-default
-        
+
         this.writeln(navbar.toString());
         log.exit();
     }
-    
+
     /**
-     * Display a warning message on all pages if {@link BgeeProperties#getWarningMessage()} 
+     * Display a warning message on all pages if {@link BgeeProperties#getWarningMessage()}
      * returns a non-blank value (see {@link #prop}).
      */
     private void displayWarningMessage() {
         log.entry();
-        
+
         if (StringUtils.isNotBlank(this.prop.getWarningMessage())) {
-            this.writeln("<div class='alert alert-warning'>" + 
-                htmlEntities(this.prop.getWarningMessage()) + 
+            this.writeln("<div class='alert alert-warning'>" +
+                htmlEntities(this.prop.getWarningMessage()) +
             "</div>");
         }
-        
+
         log.exit();
     }
 
@@ -797,7 +797,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 this.write("<a href=' "+this.prop.getBgeeCurrentUrl()+"' class='alert-link'" +
                         " title='Access latest version of Bgee'>Access latest version of Bgee</a>");
             }
-            
+
             this.writeln("</div>");
         }
 
@@ -827,7 +827,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String getObfuscateEmail() {
         return getObfuscateEmailLink("%65%2D%6D%61%69%6C");
     }
-    
+
     private String getObfuscateEmailLink(String encodedLinkText) {
         return "<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%70%67%72%65%67%67%5F%74%72%61%6E%73%70%6F%73%65"
@@ -852,13 +852,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected String getMainDocumentationLogo() {
         log.entry();
-        
+
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
-    
+
         return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDocumentationGenerator.getRequestURL(), false, 
-                "Bgee documentation page", "Documentation", 
+                urlDocumentationGenerator.getRequestURL(), false,
+                "Bgee documentation page", "Documentation",
                 this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
     }
 
@@ -870,13 +870,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //     */
 //    protected String getMainDownloadLogo() {
 //        log.entry();
-//        
+//
 //        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
 //        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
-//    
-//        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(), 
-//                "Bgee expression data page", "Expression data", 
-//                this.prop.getLogoImagesRootDirectory() + "download_logo.png", 
+//
+//        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(),
+//                "Bgee expression data page", "Expression data",
+//                this.prop.getLogoImagesRootDirectory() + "download_logo.png",
 //                "Calls of baseline presence/absence of expression, "
 //                + "and of differential over-/under-expression."));
 //    }
@@ -897,37 +897,37 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
         urlDownloadCallsGenerator.setAction(RequestParameters.ACTION_DOWLOAD_CALL_FILES);
-        
-        StringBuilder logos = new StringBuilder(); 
-        
+
+        StringBuilder logos = new StringBuilder();
+
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadCallsGenerator.getRequestURL(), false, 
-                "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME, 
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png", 
+                urlDownloadCallsGenerator.getRequestURL(), false,
+                "Bgee " + GENE_EXPR_CALLS_PAGE_NAME.toLowerCase() + " page", GENE_EXPR_CALLS_PAGE_NAME,
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "expr_calls_logo.png",
                 "Calls of baseline presence/absence of expression, "
                 + "and of differential over-/under-expression, in single or multiple species."));
 
         logos.append(HtmlParentDisplay.getSingleFeatureLogo(
-                urlDownloadRefExprGenerator.getRequestURL(), false, 
-                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page", 
+                urlDownloadRefExprGenerator.getRequestURL(), false,
+                "Bgee " + PROCESSED_EXPR_VALUES_PAGE_NAME.toLowerCase() + " page",
                 PROCESSED_EXPR_VALUES_PAGE_NAME,
-                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png", 
+                this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "proc_values_logo.png",
                 "Annotations and processed expression data (e.g., read counts, TPM and "
                 + "RPKM values, Affymetrix probeset signal intensities)."));
-        
+
         return log.exit(logos.toString());
     }
 
     /**
-     * Write HTML code allowing to include common javascript files. Subclasses needing to include 
-     * additional javascript files must override this method. 
+     * Write HTML code allowing to include common javascript files. Subclasses needing to include
+     * additional javascript files must override this method.
      * <p>
      * <strong>Important</strong>:
      * <ul>
-     * <li>Javascript files should always be included by calling {@link #includeJs(String)}. 
-     * {@link #includeJs(String)} will set the proper directory, and will automatically 
+     * <li>Javascript files should always be included by calling {@link #includeJs(String)}.
+     * {@link #includeJs(String)} will set the proper directory, and will automatically
      * define versioned file names.
-     * <li>{@code super.includeJs()} should always be called by these overriding methods, 
+     * <li>{@code super.includeJs()} should always be called by these overriding methods,
      * unless the aim is to generate a special page not using the common Bgee javascript libraries.
      * </ul>
      * @see #includeJs(String)
@@ -946,7 +946,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("requestparameters.js");
             this.includeJs("common.js");
         } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml
             //to correctly merge/minify them.
             this.includeJs("vendor_common.js");
             this.includeJs("script_common.js");
@@ -954,40 +954,40 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         log.exit();
     }
     /**
-     * Write the HTML code allowing to include the javascript file named {@code fileName}. 
-     * This method will notably retrieve the directory hosting the files, and will 
-     * define the versioned file name corresponding to {@code fileName}, as hosted 
+     * Write the HTML code allowing to include the javascript file named {@code fileName}.
+     * This method will notably retrieve the directory hosting the files, and will
+     * define the versioned file name corresponding to {@code fileName}, as hosted
      * on the server. HTML is written using {@link #writeln(String)}.
-     * <strong>It should be called only within a {@link #includeJs()} method, whether overridden 
+     * <strong>It should be called only within a {@link #includeJs()} method, whether overridden
      * or not.</strong>.
-     * 
+     *
      * @param fileName  The original name of the javascript file to include.
      * @see #getVersionedJsFileName(String)
      */
     protected void includeJs(String fileName) {
         log.entry(fileName);
         this.writeln("<script src='" +
-                this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() + 
+                this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() +
                 this.getVersionedJsFileName(fileName) + "'></script>");
         log.exit();
     }
     /**
-     * Transform the name of a javascript file into a name including version information, 
-     * following the pattern used for javascript files hosted on the server. This is to avoid 
-     * caching issues. The extension to use for version information is provided by 
-     * {@link BgeeProperties#getJavascriptVersionExtension()}. 
+     * Transform the name of a javascript file into a name including version information,
+     * following the pattern used for javascript files hosted on the server. This is to avoid
+     * caching issues. The extension to use for version information is provided by
+     * {@link BgeeProperties#getJavascriptVersionExtension()}.
      * <p>
-     * For instance, if {@code getJavascriptVersionExtension} returns "-13", 
-     * and if {@code originalFileName} is equal to "common.js", the value returned 
+     * For instance, if {@code getJavascriptVersionExtension} returns "-13",
+     * and if {@code originalFileName} is equal to "common.js", the value returned
      * by this method will be: "common-13.js".
      * <p>
-     * For simplicity, only file names ending with '.js' are accepted, otherwise, 
+     * For simplicity, only file names ending with '.js' are accepted, otherwise,
      * an {@code IllegalArgumentException} is thrown.
-     * 
-     * @param originalFileName  A {@code String} that is the name of a javascript file, 
+     *
+     * @param originalFileName  A {@code String} that is the name of a javascript file,
      *                          ending with ".js", to transform into a versioned file name.
-     * @return                  A {@code String} that is the versioned javascript file name, 
-     *                          as used on the server, including the version extension 
+     * @return                  A {@code String} that is the versioned javascript file name,
+     *                          as used on the server, including the version extension
      *                          returned by {@link BgeeProperties#getJavascriptVersionExtension()}.
      */
     protected String getVersionedJsFileName(String originalFileName) {
@@ -996,26 +996,26 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.js'."));
         }
-        //if no version info was provided, or if we don't want to use the minified files, 
+        //if no version info was provided, or if we don't want to use the minified files,
         //return original name.
-        if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension()) || 
+        if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension()) ||
                 !this.prop.isMinify()) {
             return log.exit(originalFileName);
         }
-        return log.exit(originalFileName.replaceAll("(.+?)\\.js", 
+        return log.exit(originalFileName.replaceAll("(.+?)\\.js",
                 "$1." + this.prop.getJavascriptVersionExtension() + ".js"));
     }
-    
+
     /**
-     * Write HTML code allowing to include common CSS files. Subclasses needing to include 
-     * additional CSS files must override this method. 
+     * Write HTML code allowing to include common CSS files. Subclasses needing to include
+     * additional CSS files must override this method.
      * <p>
      * <strong>Important</strong>:
      * <ul>
-     * <li>CSS files should always be included by calling {@link #includeCss(String)}. 
-     * {@link #includeCss(String)} will set the proper directory, and will automatically 
+     * <li>CSS files should always be included by calling {@link #includeCss(String)}.
+     * {@link #includeCss(String)} will set the proper directory, and will automatically
      * define versioned file names.
-     * <li>{@code super.includeCss()} should always be called by these overriding methods, 
+     * <li>{@code super.includeCss()} should always be called by these overriding methods,
      * unless the aim is to generate a special page not using the common CSS definitions.
      * </ul>
      * @see #includeCss(String)
@@ -1029,52 +1029,52 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             //we need to add the bootstrap CSS file after jQuery CSS file to override it for tooltip
             this.includeCss("lib/jquery_plugins/bootstrap.min.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
-            this.includeCss("bgee.css");  
+            this.includeCss("bgee.css");
         } else {
-            //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+            //If you ever add new files, you need to edit bgee-webapp/pom.xml
             //to correctly merge/minify them.
-            //the CSS files need to keep their relative location to other paths the same, 
+            //the CSS files need to keep their relative location to other paths the same,
             //this is why we keep their location and don't merge them all
             this.includeCss("lib/jquery_plugins/vendor_common.css");
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
-            this.includeCss("common.css"); 
+            this.includeCss("common.css");
         }
     }
     /**
-     * Write the HTML code allowing to include the CSS file named {@code fileName}. 
-     * This method will notably retrieve the directory hosting the files, and will 
-     * define the versioned file name corresponding to {@code fileName}, as hosted 
+     * Write the HTML code allowing to include the CSS file named {@code fileName}.
+     * This method will notably retrieve the directory hosting the files, and will
+     * define the versioned file name corresponding to {@code fileName}, as hosted
      * on the server. HTML is written using {@link #writeln(String)}.
-     * <strong>It should be called only within a {@link #includeCss()} method, whether overridden 
+     * <strong>It should be called only within a {@link #includeCss()} method, whether overridden
      * or not.</strong>.
-     * 
+     *
      * @param fileName  The original name of the CSS file to include.
      * @see #getVersionedCssFileName(String)
      */
     protected void includeCss(String fileName) {
         log.entry(fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
-                + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory() 
+                + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory()
                 + this.getVersionedCssFileName(fileName) + "'/>");
         log.exit();
     }
     /**
-     * Transform the name of a CSS file into a name including version information, 
-     * following the pattern used for CSS files hosted on the server. This is to avoid 
-     * caching issues. The extension to use for version information is provided by 
-     * {@link BgeeProperties#getCssVersionExtension()}. 
+     * Transform the name of a CSS file into a name including version information,
+     * following the pattern used for CSS files hosted on the server. This is to avoid
+     * caching issues. The extension to use for version information is provided by
+     * {@link BgeeProperties#getCssVersionExtension()}.
      * <p>
-     * For instance, if {@code getCssVersionExtension} returns "-13", 
-     * and if {@code originalFileName} is equal to "bgee.css", the value returned 
+     * For instance, if {@code getCssVersionExtension} returns "-13",
+     * and if {@code originalFileName} is equal to "bgee.css", the value returned
      * by this method will be: "bgee-13.css".
      * <p>
-     * For simplicity, only file names ending with '.css' are accepted, otherwise, 
+     * For simplicity, only file names ending with '.css' are accepted, otherwise,
      * an {@code IllegalArgumentException} is thrown.
-     * 
-     * @param originalFileName  A {@code String} that is the name of a CSS file, 
+     *
+     * @param originalFileName  A {@code String} that is the name of a CSS file,
      *                          ending with ".css", to transform into a versioned file name.
-     * @return                  A {@code String} that is the versioned CSS file name, 
-     *                          as used on the server, including the version extension 
+     * @return                  A {@code String} that is the versioned CSS file name,
+     *                          as used on the server, including the version extension
      *                          returned by {@link BgeeProperties#getCssVersionExtension()}.
      */
     protected String getVersionedCssFileName(String originalFileName) {
@@ -1083,36 +1083,36 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.css'."));
         }
-        //if no version info was provided, or if we don't want to use the minified files, 
+        //if no version info was provided, or if we don't want to use the minified files,
         //return original name.
-        if (StringUtils.isBlank(this.prop.getCssVersionExtension()) || 
+        if (StringUtils.isBlank(this.prop.getCssVersionExtension()) ||
                 !this.prop.isMinify()) {
             return log.exit(originalFileName);
         }
-        return log.exit(originalFileName.replaceAll("(.+?)\\.css", 
+        return log.exit(originalFileName.replaceAll("(.+?)\\.css",
                 "$1." + this.prop.getCssVersionExtension() + ".css"));
     }
 
     /**
-     * Return a new {@code RequestParameters} object to be used to generate URLs. 
-     * This new {@code RequestParameters} will use the same {@code URLParameters} 
-     * as those returned by {@link #getRequestParameters()} when calling 
-     * {@link RequestParameters#getUrlParametersInstance()}, 
-     * and the {@code BgeeProperties} {@link #prop}. 
+     * Return a new {@code RequestParameters} object to be used to generate URLs.
+     * This new {@code RequestParameters} will use the same {@code URLParameters}
+     * as those returned by {@link #getRequestParameters()} when calling
+     * {@link RequestParameters#getUrlParametersInstance()},
+     * and the {@code BgeeProperties} {@link #prop}.
      * Also, parameters will be URL encoded, and parameter separator will be {@code &amp;}.
-     * 
+     *
      * @return  A newly created RequestParameters object.
      */
     protected RequestParameters getNewRequestParameters() {
         log.entry();
         return log.exit(new RequestParameters(
-                this.getRequestParameters().getUrlParametersInstance(), 
+                this.getRequestParameters().getUrlParametersInstance(),
                 this.prop, true, "&amp;"));
     }
 
     /**
-     * @return  The {@code HtmlFactory} that instantiated this object. This method is provided 
-     *          only for convenience to avoid having to cast the {@code Viewfactory} returned by 
+     * @return  The {@code HtmlFactory} that instantiated this object. This method is provided
+     *          only for convenience to avoid having to cast the {@code Viewfactory} returned by
      *          {@link #getFactory()}.
      */
     protected HtmlFactory getHtmlFactory() {
@@ -1120,7 +1120,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
     /**
      * @return  The {@code ViewFactory} that instantiated this object, of type {@code HtmlFactory}.
-     *          See {@link #getHtmlFactory()} for a method returning directly the factory 
+     *          See {@link #getHtmlFactory()} for a method returning directly the factory
      *          as a {@code HtmlFactory}.
      */
     @Override
@@ -1128,16 +1128,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected ViewFactory getFactory() {
         return super.getFactory();
     }
-    
+
     /**
      * @return  The {@code JsonHelper} used to read/write variables into JSON.
      */
     protected JsonHelper getJsonHelper() {
         return jsonHelper;
     }
-    
+
     /**
-     * Get the images sources of a download page as a HTML 'div' element. 
+     * Get the images sources of a download page as a HTML 'div' element.
      *
      * @return  the {@code String} that is the images sources as HTML 'div' element.
      */
@@ -1175,20 +1175,20 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         sources.append("<p><i>Xenopus tropicalis</i> picture by V&aacute;clav Gvo&zcaron;d&iacute;k (http://calphotos.berkeley.edu) [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/2.5'>CC-BY-SA-2.5</a>, <a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/2.5'>CC-BY-SA-2.5</a> or <a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' rel='noopener' href='" + commonsWikipedia + "/File%3AXenopus_tropicalis01.jpeg'>See <i>X. tropicalis</i> picture via Wikimedia Commons</a></p>");
         sources.append("<p><i>Drosophila ananassae</i> picture by Nicolas Gompel [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' rel='noopener' href='http://gompel.org/drosophilidae'>See <i>D. ananassae</i> picture via Nicolas Gompel's lab website</a></p>");
         sources.append("<p><i>Drosophila mojavensis</i> picture by Nicolas Gompel [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' rel='noopener' href='http://gompel.org/drosophilidae'>See <i>D. mojavensis</i> picture via Nicolas Gompel's lab website</a></p>");
-        sources.append("<p><i>Drosophila pseudoobscura</i> picture, <a target='_blank' rel='noopener' href='http://metazoa.ensembl.org/i/species/large/Drosophila_pseudoobscura.png'>See <i>D. pseudoobscura </i> picture via Ensembl Metazoa</a></p>");
+        sources.append("<p><i>Drosophila pseudoobscura</i> picture, <a target='_blank' rel='noopener' href='https://metazoa.ensembl.org/i/species/Drosophila_pseudoobscura.png'>See <i>D. pseudoobscura </i> picture via Ensembl Metazoa</a></p>");
         sources.append("<p><i>Drosophila simulans</i> picture by Nicolas Gompel [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' rel='noopener' href='http://gompel.org/drosophilidae'>See <i>D. simulans</i> picture via Nicolas Gompel's lab website</a></p>");
         sources.append("<p><i>Drosophila virilis</i> picture by Nicolas Gompel [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' rel='noopener' href='http://gompel.org/drosophilidae'>See <i>D. virilis</i> picture via Nicolas Gompel's lab website</a></p>");
         sources.append("<p><i>Drosophila yakuba</i> picture by Nicolas Gompel [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-nc-sa/2.0/'>CC BY-NC-SA 2.0 FR</a>], <a target='_blank' rel='noopener' href='http://gompel.org/drosophilidae'>See <i>D. yakuba</i> picture via Nicolas Gompel's lab website</a></p>");
         //        sources.append("<p><i>Pongo pygmaeus</i> picture by Greg Hume (Own work) [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' rel='noopener' href='" + commonsWikipedia + "/File%3ASUMATRAN_ORANGUTAN.jpg'>See <i>P. pygmaeus</i> picture via Wikimedia Commons</a></p>");
         //        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' rel='noopener' href='" + commonsWikipedia + "/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         sources.append("</div>");
-    
+
         return log.exit(sources.toString());
     }
 
     /**
-     * Get the src of the provided species for a HTML 'img' element. 
-     * 
+     * Get the src of the provided species for a HTML 'img' element.
+     *
      * @param species       A {@code Species} that is the species for which the src is returned.
      * @param isLightImg    A {@code boolean} defining whether image should be the light version.
      * @return              The {@code String} that is the 'src' of the provided species
@@ -1207,7 +1207,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         return log.exit(src.toString());
     }
-    
+
     /**
      * @return  A {@code String} that is the formatted version number of the webapp.
      *          {@code null} if this information is not available.
@@ -1234,7 +1234,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         if (anatEntity == null) {
             throw log.throwing(new IllegalArgumentException("The provided anat. entity should be not null"));
         }
-        
+
         return log.exit("<a target='_blank' rel='noopener' href='" + UBERON_ID_URL +
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
                 "</a>");
@@ -1262,7 +1262,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected String getCompleteSpeciesNameLink(Species species, boolean hasSchemaTag) {
         log.entry(species, hasSchemaTag);
-        return log.exit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>" 
+        return log.exit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>"
                 + getCompleteSpeciesName(species, hasSchemaTag) + "</a>");
     }
 
@@ -1305,7 +1305,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected String getDatasetSchemaId(Integer speciesId, DownloadFile.CategoryEnum category) {
         log.entry(speciesId, category);
-        
+
         String hash;
         switch (category) {
             case EXPR_CALLS_COMPLETE:
@@ -1323,7 +1323,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         return log.exit(getSpeciesPageUrl(speciesId) + "#" + hash);
     }
-    
+
     /**
      * Return the {@code String} that is the Dataset schema.org name.
      *
@@ -1347,7 +1347,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                     "CategoryEnum not supported: " + category));
         }
     }
-    
+
     /**
      * Return the {@code String} that is the Dataset schema.org description.
      *

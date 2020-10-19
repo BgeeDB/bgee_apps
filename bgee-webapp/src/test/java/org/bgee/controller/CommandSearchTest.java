@@ -56,7 +56,7 @@ public class CommandSearchTest extends TestAncestor {
         when(serviceFac.getGeneMatchResultService(any(BgeeProperties.class))).thenReturn(geneMatchService);
 
         List<GeneMatch> geneMatches = Collections.singletonList(new GeneMatch(
-                new Gene("geneId", "name", "description", null, null, new Species(1), new GeneBioType("b"), null, null, 1),
+                new Gene("geneId", "name", "description", null, null, new Species(1), new GeneBioType("b"), 1),
                 "synonym", MatchSource.ID));
         GeneMatchResult result = new GeneMatchResult(10000, geneMatches);
         when(geneMatchService.searchByTerm("gene", null, 0, 1)).thenReturn(result);

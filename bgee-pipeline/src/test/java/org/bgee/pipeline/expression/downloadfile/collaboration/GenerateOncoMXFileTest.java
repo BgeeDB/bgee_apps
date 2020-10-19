@@ -156,9 +156,9 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         Condition cond3_1 = new Condition(anatEntity3, devStage1, human);
         Condition cond3_2 = new Condition(anatEntity3, devStage2, human);
         Condition cond3_3 = new Condition(anatEntity3, devStage3, human);
-        Gene gene1 = new Gene("gene1", "geneName1", "g1", null, null, human, new GeneBioType("biotype1"), null, null, 1);
-        Gene gene2 = new Gene("gene2", "geneName2", "g2", null, null, human, new GeneBioType("biotype1"), null, null, 1);
-        Gene gene3 = new Gene("gene3", "geneName3", "g3", null, null, human, new GeneBioType("biotype1"), null, null, 1);
+        Gene gene1 = new Gene("gene1", "geneName1", "g1", null, null, human, new GeneBioType("biotype1"), 1);
+        Gene gene2 = new Gene("gene2", "geneName2", "g2", null, null, human, new GeneBioType("biotype1"), 1);
+        Gene gene3 = new Gene("gene3", "geneName3", "g3", null, null, human, new GeneBioType("biotype1"), 1);
 
         EntityMinMaxRanks<Gene> gene1MinMaxRanks = new EntityMinMaxRanks<>(
                 new BigDecimal("1"), new BigDecimal("500"), gene1);

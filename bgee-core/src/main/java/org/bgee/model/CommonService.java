@@ -1,18 +1,18 @@
 package org.bgee.model;
 
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,21 +23,20 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneXRef;
-import org.bgee.model.gene.GeneFilter;
-import org.bgee.model.gene.GeneHomolog;
-import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneNotFoundException;
+import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 
@@ -145,9 +144,8 @@ public class CommonService extends Service {
      * @return              The mapped {@code Gene}.
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species,
-            Collection<String> synonyms, Collection<GeneXRef> xRefs, GeneBioType geneBioType, 
-            Collection<GeneHomolog> orthologs, Collection<GeneHomolog> paralogs) {
-        log.entry(geneTO, species, synonyms, xRefs, geneBioType, orthologs, paralogs);
+            Collection<String> synonyms, Collection<GeneXRef> xRefs, GeneBioType geneBioType) {
+        log.entry(geneTO, species, synonyms, xRefs, geneBioType);
         if (geneTO == null) {
             return log.exit(null);
         }
@@ -166,8 +164,7 @@ public class CommonService extends Service {
                     "Species ID of the gene does not match provided Species."));
         }
         return log.exit(new Gene(geneTO.getGeneId(), geneTO.getName(), geneTO.getDescription(),
-                synonyms, xRefs, species, geneBioType, orthologs, paralogs, 
-                geneTO.getGeneMappedToGeneIdCount()));
+                synonyms, xRefs, species, geneBioType, geneTO.getGeneMappedToGeneIdCount()));
     }
 
     /**
@@ -270,9 +267,7 @@ public class CommonService extends Service {
                                 .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
                                 null, null,
                                 Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")),
-                                null, null
-)
+                                .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))
                         )));
 
         //check that we get all specifically requested genes.

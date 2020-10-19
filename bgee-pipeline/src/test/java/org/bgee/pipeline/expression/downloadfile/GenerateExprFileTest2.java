@@ -341,10 +341,10 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         DevStage ds2 = new DevStage("Stage_id2", "name", "desc");
         DevStage parentDs2 = new DevStage("ParentStage_id2", "name", "desc");
         GeneBioType biotype = new GeneBioType("b");
-        Gene g1 = new Gene("ID1", "name1", null, null, null, spe11, biotype, null, null, 1);
-        Gene g2 = new Gene("ID2", "name2", null, null, null, spe11, biotype, null, null, 1);
-        Gene g3 = new Gene("ID3", "name3", null, null, null, spe11, biotype, null, null, 1);
-        Gene g4 = new Gene("ID4", "name4", null, null, null, spe22, biotype, null, null, 1);
+        Gene g1 = new Gene("ID1", "name1", null, null, null, spe11, biotype, 1);
+        Gene g2 = new Gene("ID2", "name2", null, null, null, spe11, biotype, 1);
+        Gene g3 = new Gene("ID3", "name3", null, null, null, spe11, biotype, 1);
+        Gene g4 = new Gene("ID4", "name4", null, null, null, spe22, biotype, 1);
 
         // First, we need a mock MySQLDAOManager, for the class to acquire mock DAOs. 
         MockDAOManager mockManager = new MockDAOManager();

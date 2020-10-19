@@ -719,8 +719,8 @@ public class CallServiceTest extends TestAncestor {
         
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
         GeneTO gTO2 = new GeneTO(2, "gene2", "geneName2", spe1.getId());
-        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), null, null, 1);
-        Gene g2 = new Gene(gTO2.getGeneId(), gTO2.getName(), null, null, null, spe1, new GeneBioType("b"), null, null, 1);
+        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), 1);
+        Gene g2 = new Gene(gTO2.getGeneId(), gTO2.getName(), null, null, null, spe1, new GeneBioType("b"), 1);
         
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
@@ -979,7 +979,7 @@ public class CallServiceTest extends TestAncestor {
         //More complex query
         
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
-        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), null, null, 1);
+        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), 1);
         
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         DevStage devStage1 = new DevStage("devStage1");
@@ -1172,9 +1172,9 @@ public class CallServiceTest extends TestAncestor {
     public void shouldLoadCallsWithQuantExprLevels() {
         //2 genes, 2 organs, 1 stage, 2 conditions
         GeneTO gTO1 = new GeneTO(1, "gene1", "geneName1", spe1.getId());
-        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), null, null, 1);
+        Gene g1 = new Gene(gTO1.getGeneId(), gTO1.getName(), null, null, null, spe1, new GeneBioType("b"), 1);
         GeneTO gTO2 = new GeneTO(2, "gene2", "geneName2", spe1.getId());
-        Gene g2 = new Gene(gTO2.getGeneId(), gTO2.getName(), null, null, null, spe1, new GeneBioType("b"), null, null, 1);
+        Gene g2 = new Gene(gTO2.getGeneId(), gTO2.getName(), null, null, null, spe1, new GeneBioType("b"), 1);
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");

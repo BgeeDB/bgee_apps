@@ -36,12 +36,12 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
     public GeneHomologsTOResultSet getOrthologousGenes(Set<Integer> bgeeGeneIds);
     
     public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, Set<Integer> speciesIds);
+            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds);
     
     public GeneHomologsTOResultSet getParalogousGenes(Set<Integer> bgeeGeneIds);
     
     public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, Set<Integer> speciesIds);
+            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds);
     
     public void insertParalogs(Set<GeneHomologsTO> paralogs);
     

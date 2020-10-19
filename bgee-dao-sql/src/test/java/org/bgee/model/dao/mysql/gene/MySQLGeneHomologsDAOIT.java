@@ -59,7 +59,7 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
         Integer taxonId = 311;
         // get all orthologs of gene 1 at taxonomical level descendant of 311
         methOrthologs = dao.getOrthologousGenesAtTaxonLevel(Collections.singleton(bgeeGeneId),
-                taxonId, null).getAllTOs();
+                taxonId, true, null).getAllTOs();
         expectedOrthologs = this.getAllGeneHomologsTOs(bgeeGeneId, taxonId);
         this.assertRetrievedGeneHomologsTOs(expectedOrthologs, methOrthologs);
     }
@@ -87,7 +87,7 @@ public class MySQLGeneHomologsDAOIT extends MySQLITAncestor{
         Integer taxonId = 311;
         // get all paralogs of gene 2 at taxonomical level descendant of 311
         methParalogs = dao.getParalogousGenesAtTaxonLevel(Collections.singleton(bgeeGeneId)
-                , taxonId, null).getAllTOs();
+                , taxonId, true, null).getAllTOs();
         expectedParalogs = this.getAllGeneHomologsTOs(bgeeGeneId, taxonId);
         this.assertRetrievedGeneHomologsTOs(expectedParalogs, methParalogs);
     }

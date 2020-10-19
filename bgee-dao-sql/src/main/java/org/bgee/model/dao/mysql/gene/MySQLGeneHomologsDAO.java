@@ -55,33 +55,34 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
     @Override
     public GeneHomologsTOResultSet getOrthologousGenes(Set<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
-        return log.exit(getOrthologousGenesAtTaxonLevel(bgeeGeneIds, null, null));
+        return log.exit(getOrthologousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
     public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, Set<Integer> speciesIds) {
-        log.entry(bgeeGeneIds);
-        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, speciesIds, HomologyType.ORTHOLOGS));
+            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds) {
+        log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
+        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
+                speciesIds, HomologyType.ORTHOLOGS));
     }
 
     @Override
     public GeneHomologsTOResultSet getParalogousGenes(Set<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
-        return log.exit(getParalogousGenesAtTaxonLevel(bgeeGeneIds, null, null));
+        return log.exit(getParalogousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
     public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, Set<Integer> speciesIds) {
-        log.entry(bgeeGeneIds);
-        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, speciesIds, HomologyType.PARALOGS));
+            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds) {
+        log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
+        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
+                speciesIds, HomologyType.PARALOGS));
     }
     
     private GeneHomologsTOResultSet getOneTypeOfHomology(Set<Integer> bgeeGeneIds, Integer taxonId, 
-            Set<Integer> speciesIds, HomologyType homologyType) {
+            boolean withDescendantTaxon, Set<Integer> speciesIds, HomologyType homologyType) {
         log.entry(bgeeGeneIds, taxonId, homologyType, speciesIds);
-        log.debug(bgeeGeneIds + " " + taxonId + " " + homologyType + " " + speciesIds);
         
      // Filter arguments
         Set<Integer> clonedGeneIds = Optional.ofNullable(bgeeGeneIds)
@@ -104,33 +105,68 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             throw log.throwing(new IllegalArgumentException(
                     "unknown homology type"));
         }
-        String sql = generateSelectClause(tableName, columnToAttributesMap, Boolean.TRUE);
-        sql += " FROM " + tableName;
+        String sqlFirstColumn = generateSelectClause(tableName, columnToAttributesMap, Boolean.TRUE);
+        sqlFirstColumn += " FROM " + tableName;
         
-        if (taxonId != null) {
-            sql += " INNER JOIN taxon AS t2 ON t2.taxonId = " + tableName + ".taxonId ";
-            sql += " INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
+        if (clonedTaxonId != null && withDescendantTaxon) {
+            sqlFirstColumn += " INNER JOIN taxon AS t2 ON t2.taxonId = " + tableName + ".taxonId ";
+            sqlFirstColumn += " INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
                     + "t2.taxonRightBound <= t3.taxonRightBound";
         }
-        sql += " WHERE " + tableName + ".bgeeGeneId IN ("
+        // Create 2 queries. One to filter bgeeGeneId on 1st column and one to filter bgeeGeneId on 2nd column
+        String sqlSecondColumn = sqlFirstColumn;
+        
+        if (clonedSpeciesIds != null) {
+            sqlFirstColumn += " INNER JOIN gene AS t4 ON " + tableName + ".bgeeGeneId = t4.bgeeGeneId";
+            sqlSecondColumn += " INNER JOIN gene AS t4 ON " + tableName + ".targetGeneId = t4.bgeeGeneId";
+        }
+
+
+        sqlFirstColumn += " WHERE " + tableName + ".bgeeGeneId IN ("
+                + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size())
+                + ")";
+        sqlSecondColumn += " WHERE " + tableName + ".targetGeneId IN ("
                 + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size())
                 + ")";
         if (clonedTaxonId != null) {
-            sql += " AND t3.taxonId = ?";
+            String taxonFilter;
+            if(withDescendantTaxon) {
+                taxonFilter = " AND t3.taxonId = ?";
+            } else {
+                taxonFilter = " AND " + tableName + ".taxonId = ?";
+            }
+            sqlFirstColumn += taxonFilter;
+            sqlSecondColumn += taxonFilter;
         }
         if (clonedSpeciesIds != null) {
-            sql += " AND " + tableName + ".speciesId IN ("
+            String speciesFilter = " AND t4.speciesId IN ("
                     + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size())
                     + ")";
+            sqlFirstColumn += speciesFilter;
+            sqlSecondColumn += speciesFilter;
         }
         
-     // we don't use a try-with-resource, because we return a pointer to the results,
+        //create the final sql query corresponding to union of the 2 previously created queries
+        String sql = "(" + sqlFirstColumn + ") UNION (" + sqlSecondColumn + ")";
+        
+        // we don't use a try-with-resource, because we return a pointer to the results,
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             log.debug(sql);
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setIntegers(1, clonedGeneIds, true);
-            int offsetParamIndex = clonedGeneIds.size();
+            int offsetParamIndex = clonedGeneIds.size() + 1;
+            if (clonedTaxonId != null) {
+                stmt.setInt(offsetParamIndex, clonedTaxonId);
+                offsetParamIndex++;
+            }
+            if (clonedSpeciesIds != null) {
+                stmt.setIntegers(offsetParamIndex, clonedSpeciesIds, true);
+                offsetParamIndex += clonedSpeciesIds.size();
+            }
+            //same parameters for union subquery requesting second column
+            stmt.setIntegers(offsetParamIndex, clonedGeneIds, true);
+            offsetParamIndex += clonedGeneIds.size();
             if (clonedTaxonId != null) {
                 stmt.setInt(offsetParamIndex, clonedTaxonId);
                 offsetParamIndex++;

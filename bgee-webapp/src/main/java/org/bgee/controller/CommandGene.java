@@ -255,14 +255,22 @@ public class CommandGene extends CommandParent {
         
         // Update how homologs are stored in order to easily show data in gene page
         // 1. sort homologs from more recent to oldest taxon
-        LinkedHashMap<Taxon, Set<Gene>> orthologsMap = geneHomologs.getOrthologsByTaxon().entrySet().stream()
+        LinkedHashMap<Taxon, Set<Gene>> orthologsMap = new LinkedHashMap<Taxon, Set<Gene>>();
+        if(geneHomologs.getOrthologsByTaxon() != null && 
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
+            geneHomologs.getOrthologsByTaxon().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-        LinkedHashMap<Taxon, Set<Gene>> paralogsMap = geneHomologs.getParalogsByTaxon().entrySet().stream()
+        }
+        LinkedHashMap<Taxon, Set<Gene>> paralogsMap = new LinkedHashMap<Taxon, Set<Gene>>();
+        if(geneHomologs.getOrthologsByTaxon() != null && 
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
+            geneHomologs.getParalogsByTaxon().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        }
         
         // 2. add to each taxon level all genes from more recent taxon
         Set<Gene> genesToAdd = new HashSet<Gene>();

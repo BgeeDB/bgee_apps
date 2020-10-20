@@ -29,14 +29,11 @@ public class GeneHomologs {
     
     public GeneHomologs(Gene gene, LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon,
             LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon) {
+        log.entry(orthologsByTaxon, paralogsByTaxon);
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("a gene can not be null"));
         }
-        if((orthologsByTaxon == null || orthologsByTaxon.isEmpty()) &&
-                (paralogsByTaxon == null || paralogsByTaxon.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException("orthologs or paralogs have "
-                    + "to be provided. They can not both be null or empty"));
-        }
+
         this.gene = gene;
         this.orthologsByTaxon = orthologsByTaxon;
         this.paralogsByTaxon = paralogsByTaxon;

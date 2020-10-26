@@ -496,7 +496,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      // Paralogs info
         if(!(geneHomologs.getParalogsByTaxon() == null || 
                 geneHomologs.getParalogsByTaxon().isEmpty())) {
-            this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs</h2></a>");
+            this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs (same species)</h2></a>");
             this.writeln("<div id='paralogs_data' class='row'>");
             //table-container
             this.writeln("<div class='col-xs-12 col-md-12'>");
@@ -783,10 +783,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         StringBuilder sb = new StringBuilder();
         sb.append("<table class='homologs stripe nowrap compact responsive'>")
               .append("<thead><tr>")
-              .append("<th class='taxon-name'>Taxon name</th>")
-              .append("<th class='homo-species min-table_sm'>Species with " 
-                      + homologyString.toLowerCase() + "</th>")
-              .append("<th class='homo-gene-id'>Gene(s)</th>")
+              .append("<th class='taxon-name'>Taxon name</th>");
+//        if (orthologs) {
+            sb.append("<th class='homo-species min-table_sm'>Species with " 
+                      + homologyString.toLowerCase() + "</th>");
+//        }
+        sb.append("<th class='homo-gene-id'>Gene(s)</th>")
               .append("<th class='exp-comp'>Expression comparison</th>")
               .append("<th class='details'>See details</th>")
               .append("</tr></thead>\n");
@@ -813,32 +815,34 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             
             
             //species with orthologs info
-            sbRow.append("<td>")
-                .append(homologsWithDescendantBySpeciesId.size()).append(" species")
-                .append("<ul class='masked homo-species-list'>");
             // boolean used to create vertical line each time a new species is displayed
             boolean needSpeciesSeparator = false;
-            // all homologs of one species
-            for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId
-                    .entrySet()) {
-                List<Gene> genes = homologsOneSpecies.getValue();
-                sbRow.append("<li class='homo-species");
-                if (needSpeciesSeparator) {
-                    sbRow.append(" gene-score-shift");
+//            if(orthologs) {
+                sbRow.append("<td>")
+                    .append(homologsWithDescendantBySpeciesId.size()).append(" species")
+                    .append("<ul class='masked homo-species-list'>");
+                // all homologs of one species
+                for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId
+                        .entrySet()) {
+                    List<Gene> genes = homologsOneSpecies.getValue();
+                    sbRow.append("<li class='homo-species");
+                    if (needSpeciesSeparator) {
+                        sbRow.append(" gene-score-shift");
+                    }
+                    sbRow.append("'><span class='details small'>")
+                        .append(getCompleteSpeciesNameLink(genes.iterator().next().getSpecies(), 
+                                true))
+                        .append("</span></li>").append("\n");
+                    //add empty lines in the list to be able to write genes in front of the proper 
+                    // species
+                    for (int i = 1; i< genes.size(); i++) {
+                        sbRow.append("<li class='ortho-species'><br></li>").append("\n");
+                    }
+                    needSpeciesSeparator = true;
+                    
                 }
-                sbRow.append("'><span class='details small'>")
-                    .append(getCompleteSpeciesNameLink(genes.iterator().next().getSpecies(), 
-                            true))
-                    .append("</span></li>").append("\n");
-                //add empty lines in the list to be able to write genes in front of the proper 
-                // species
-                for (int i = 1; i< genes.size(); i++) {
-                    sbRow.append("<li class='ortho-species'><br></li>").append("\n");
-                }
-                needSpeciesSeparator = true;
-                
-            }
-            sbRow.append("</ul></td>");
+                sbRow.append("</ul></td>");
+//            }
             
             
             //genes info

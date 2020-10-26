@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -248,25 +249,36 @@ public class CommandGene extends CommandParent {
                 .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                         new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()));
         
-        // Load homology information
-        GeneHomologs geneHomologs = serviceFactory.getGeneHomologsService()
-                .getGeneHomologs(gene.getEnsemblGeneId(), 
-                        gene.getSpecies().getId(), true, true);
+        // Load homology information. As we decided to only show in species paralogs in the gene
+        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we 
+        // first create one GeneHomologs object containing only paralogs and one GeneHomologs 
+        // object containing only orthologs.
+        GeneHomologs geneOrthologs = serviceFactory.getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                        true, false);
+        GeneHomologs geneParalogs = serviceFactory.getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                        Collections.singleton(gene.getSpecies().getId()), null, true, 
+                        false, true);
+        // generate one unique GeneHomologs object containing both paralogs and orthologs 
+        // retrieved using different filters
+        GeneHomologs geneHomologs = new GeneHomologs(gene,  geneOrthologs.getOrthologsByTaxon(), 
+                geneParalogs.getParalogsByTaxon());
         
         // Update how homologs are stored in order to easily show data in gene page
         // 1. sort homologs from more recent to oldest taxon
         LinkedHashMap<Taxon, Set<Gene>> orthologsMap = new LinkedHashMap<Taxon, Set<Gene>>();
         if(geneHomologs.getOrthologsByTaxon() != null && 
                 !geneHomologs.getOrthologsByTaxon().isEmpty()) {
-            geneHomologs.getOrthologsByTaxon().entrySet().stream()
+            orthologsMap = geneHomologs.getOrthologsByTaxon().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         }
         LinkedHashMap<Taxon, Set<Gene>> paralogsMap = new LinkedHashMap<Taxon, Set<Gene>>();
-        if(geneHomologs.getOrthologsByTaxon() != null && 
-                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
-            geneHomologs.getParalogsByTaxon().entrySet().stream()
+        if(geneHomologs.getParalogsByTaxon() != null && 
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
+            paralogsMap = geneHomologs.getParalogsByTaxon().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));

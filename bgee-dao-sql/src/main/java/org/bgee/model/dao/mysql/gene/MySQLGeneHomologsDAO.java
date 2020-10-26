@@ -105,20 +105,26 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             throw log.throwing(new IllegalArgumentException(
                     "unknown homology type"));
         }
-        String sqlFirstColumn = generateSelectClause(tableName, columnToAttributesMap, Boolean.TRUE);
-        sqlFirstColumn += " FROM " + tableName;
+        
+        // Create 2 queries. One to filter bgeeGeneId on 1st column and one to filter bgeeGeneId on 2nd column
+        String sqlFirstColumn = "SELECT DISTINCT " + tableName + ".bgeeGeneId as bgeeGeneId, "
+                + tableName + ".targetGeneId as targetGeneId, " + tableName + ".taxonId"
+                + " from " + tableName;
+        String sqlSecondColumn = "SELECT DISTINCT " + tableName + ".targetGeneId as bgeeGeneId, "
+                + tableName + ".bgeeGeneId as targetGeneId, " + tableName + ".taxonId"
+                + " from " + tableName;
         
         if (clonedTaxonId != null && withDescendantTaxon) {
-            sqlFirstColumn += " INNER JOIN taxon AS t2 ON t2.taxonId = " + tableName + ".taxonId ";
-            sqlFirstColumn += " INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
+            String join = " INNER JOIN taxon AS t2 ON t2.taxonId = " + tableName + ".taxonId "
+                    + "INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
                     + "t2.taxonRightBound <= t3.taxonRightBound";
+            sqlFirstColumn += join;
+            sqlSecondColumn += join;
         }
-        // Create 2 queries. One to filter bgeeGeneId on 1st column and one to filter bgeeGeneId on 2nd column
-        String sqlSecondColumn = sqlFirstColumn;
         
         if (clonedSpeciesIds != null) {
-            sqlFirstColumn += " INNER JOIN gene AS t4 ON " + tableName + ".bgeeGeneId = t4.bgeeGeneId";
-            sqlSecondColumn += " INNER JOIN gene AS t4 ON " + tableName + ".targetGeneId = t4.bgeeGeneId";
+            sqlFirstColumn += " INNER JOIN gene AS t4 ON " + tableName + ".targetGeneId = t4.bgeeGeneId";
+            sqlSecondColumn += " INNER JOIN gene AS t4 ON " + tableName + ".bgeeGeneId = t4.bgeeGeneId";
         }
 
 

@@ -176,8 +176,6 @@ public class GeneHomologsService extends CommonService{
         if (withParalogs) {
             paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(bgeeGeneIds,
                     taxonId, withDescendantTaxon, homologsSpeciesIds).getAllTOs());
-        } else {
-            throw log.throwing(new IllegalArgumentException("unknown homology type"));
         }
         
         // load GeneBioTypes by geneBioTypeId
@@ -246,20 +244,22 @@ public class GeneHomologsService extends CommonService{
                         e -> new HashSet<>(Collections.singleton(e.getTargetGeneId())),
                         (a, b) -> {a.addAll(b); return a;})));
         Map<Integer, Gene> homologousGenesByBgeeGeneId = new HashMap<Integer, Gene>();
-        // load homologous Genes by bgeeGeneId
-        if(homologsTOs != null && ! homologsTOs.isEmpty()) {
-            geneDAO.getGenesByBgeeIds(homologsTOs
-                    .stream().map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet()))
-                    .getAllTOs().stream()
-                    .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO,
-                            Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                            .orElseThrow(() -> new IllegalStateException("Missing species ID " + 
-                                    gTO.getSpeciesId() + "for gene " + gTO.getId())),
-                            null, null,
-                            Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                            .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID "
-                                    + "for gene"))
-                    )));
+        
+        // Create Map with bgeeGeneId as key and a Set of homologous genes as value. 
+        Map<Integer, Gene> homologousGenesByBgeeGeneId = (homologsTOs != null && !homologsTOs.isEmpty())
+                ? geneDAO
+                        .getGenesByBgeeIds(
+                                homologsTOs.stream().map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet()))
+                        .getAllTOs().stream()
+                        .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO, Optional
+                                .ofNullable(speciesMap.get(gTO.getSpeciesId()))
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "Missing species ID " + gTO.getSpeciesId() + "for gene " + gTO.getId())),
+                                null, null,
+                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId())).orElseThrow(
+                                        () -> new IllegalStateException("Missing gene biotype ID " + "for gene")))))
+                : new HashMap<Integer, Gene>();
+        
         }
         // load Taxon by taxonId
         Map<Integer, Taxon> taxonByTaxonId = this.getServiceFactory().getTaxonService()

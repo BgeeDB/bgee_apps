@@ -80,7 +80,7 @@ public class GeneHomologsService extends CommonService{
      *                              be retrieved.
      * @param withDescendantTaxon   A {@code boolean} used only when taxonId is not null. Allows
      *                              to retrieve homologs from te specified taxonId and all its
-     *                              descendants.                     
+     *                              descendants.
      * @param withOrthologs         A {@code boolean} defining if orthologous genes have to be 
      *                              retrieved.
      * @param withParalogs          A {@code boolean} defining if paralogous genes have to be 
@@ -96,7 +96,7 @@ public class GeneHomologsService extends CommonService{
         return log.exit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs).iterator().next());
     }
-    
+
     /**
      * get homologous genes from one geneFilter
      * 
@@ -110,7 +110,7 @@ public class GeneHomologsService extends CommonService{
      *                              be retrieved.
      * @param withDescendantTaxon   A {@code boolean} used only when taxonId is not null. Allows
      *                              to retrieve homologs from te specified taxonId and all its
-     *                              descendants.                     
+     *                              descendants.
      * @param withOrthologs         A {@code boolean} defining if orthologous genes have to be 
      *                              retrieved.
      * @param withParalogs          A {@code boolean} defining if paralogous genes have to be 
@@ -142,7 +142,7 @@ public class GeneHomologsService extends CommonService{
      *                              be retrieved.
      * @param withDescendantTaxon   A {@code boolean} used only when taxonId is not null. Allows
      *                              to retrieve homologs from te specified taxonId and all its
-     *                              descendants.                     
+     *                              descendants.
      * @param withOrthologs         A {@code boolean} defining if orthologous genes have to be 
      *                              retrieved.
      * @param withParalogs          A {@code boolean} defining if paralogous genes have to be 

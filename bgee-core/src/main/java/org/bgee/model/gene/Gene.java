@@ -22,8 +22,7 @@ import java.util.Set;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @Author  Julien Wollbrett
- * @version Bgee 14, Sep. 2020
+ * @version Bgee 14, Apr. 2019
  * @since   Bgee 01
  */
 //Note: this class does not extend NamedEntity, because we don't want to expose
@@ -124,7 +123,7 @@ public class Gene {
      *                                      or {@code Species} is {@code null}.
      */
     public Gene(String ensemblGeneId, String name, String description, Collection<String> synonyms,
-            Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType, 
+            Collection<GeneXRef> xRefs, Species species, GeneBioType geneBioType,
             int geneMappedToSameEnsemblGeneIdCount)
         throws IllegalArgumentException {
         if (StringUtils.isBlank(ensemblGeneId)) {
@@ -198,9 +197,8 @@ public class Gene {
     public GeneBioType getGeneBioType() {
         return this.geneBioType;
     }
-
     /**
-	 * @return  An {@code Integer} that is the number of genes in the Bgee database
+     * @return  An {@code Integer} that is the number of genes in the Bgee database
      *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
      *          we use the genome of a closely-related species, such as chimpanzee genome
      *          for analyzing bonobo data. For this reason, a same Ensembl gene ID

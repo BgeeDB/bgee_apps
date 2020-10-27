@@ -139,8 +139,6 @@ public class CommonService extends Service {
      * @param synonyms      A {@code Collection} of {@code String}s that are synonyms of the gene.
      * @param xRefs         A {@code Collection} of {@code XRef}s that are cross-references of the gene.
      * @param geneBioType   The {@code GeneBioType} of that gene.
-     * @param orthologs     A {@code Collection} of {@code GeneHomolog}s that are orthologs of the gene
-     * @param paralogs      A {@code Collection} of {@code GeneHomolog}s that are paralogs of the gene
      * @return              The mapped {@code Gene}.
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species,

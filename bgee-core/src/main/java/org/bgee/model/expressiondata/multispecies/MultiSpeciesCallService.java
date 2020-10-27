@@ -354,12 +354,14 @@ public class MultiSpeciesCallService extends CommonService {
         //FIXME: getOrthologs should take a Gene, a Taxon and a collection of species,
         //and return Map<taxonId, Set<Gene>>, using the highest taxon ID
         int highestTaxonId = 0;// to implement
-//        Map<Integer, Set<Gene>> omaToGenes = this.getServiceFactory().getGeneService()
-//                .getOrthologs(highestTaxonId, clonedSpeIds);
+        Map<Taxon, Set<Gene>> taxonToGenes = this.getServiceFactory().getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                        new HashSet<Integer>(speciesIds),highestTaxonId, true, true, false)
+                .getOrthologsByTaxon();
         for (Integer taxonId : taxonIds) {
             log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
             // Retrieve homologous organ groups with gene IDs
-//            log.trace("Homologous organ groups with genes: {}", omaToGenes);
+            log.trace("Homologous organ groups with genes: {}", taxonToGenes);
 //            Set<String> orthologousEnsemblGeneIds = omaToGenes.values().stream()
 //                    .filter(geneSet -> geneSet.stream()
 //                            .anyMatch(g -> gene.getEnsemblGeneId().equals(g.getEnsemblGeneId())))

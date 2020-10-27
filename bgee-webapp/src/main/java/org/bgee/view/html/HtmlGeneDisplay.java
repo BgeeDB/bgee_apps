@@ -781,13 +781,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         // create header of the table
         StringBuilder sb = new StringBuilder();
-        sb.append("<table class='homologs stripe nowrap compact responsive'>")
-              .append("<thead><tr>")
+        if (orthologs) {
+            sb.append("<table class='orthologs stripe nowrap compact responsive'>");
+        } else {
+            sb.append("<table class='paralogs stripe nowrap compact responsive'>");
+        }
+        sb.append("<thead><tr>")
               .append("<th class='taxon-name'>Taxon name</th>");
-//        if (orthologs) {
+        
+        // number of species column present only on orthologs table
+        if (orthologs) {
             sb.append("<th class='homo-species min-table_sm'>Species with " 
                       + homologyString.toLowerCase() + "</th>");
-//        }
+        }
+        
         sb.append("<th class='homo-gene-id'>Gene(s)</th>")
               .append("<th class='exp-comp'>Expression comparison</th>")
               .append("<th class='details'>See details</th>")
@@ -817,7 +824,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             //species with orthologs info
             // boolean used to create vertical line each time a new species is displayed
             boolean needSpeciesSeparator = false;
-//            if(orthologs) {
+            
+            // number of species column present only on orthologs table
+            if(orthologs) {
                 sbRow.append("<td>")
                     .append(homologsWithDescendantBySpeciesId.size()).append(" species")
                     .append("<ul class='masked homo-species-list'>");
@@ -842,7 +851,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     
                 }
                 sbRow.append("</ul></td>");
-//            }
+            }
             
             
             //genes info

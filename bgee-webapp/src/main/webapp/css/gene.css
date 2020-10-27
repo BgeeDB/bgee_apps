@@ -149,7 +149,11 @@ th.homo-gene-id {
 	width: 20% !important;
 }
 
-table.homologs td {
+table.orthologs td {
+	vertical-align:text-top;
+}
+
+table.paralogs td {
 	vertical-align:text-top;
 }
 

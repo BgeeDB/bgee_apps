@@ -243,7 +243,6 @@ public class GeneHomologsService extends CommonService{
                 Collectors.toMap(GeneHomologsTO::getTaxonId, 
                         e -> new HashSet<>(Collections.singleton(e.getTargetGeneId())),
                         (a, b) -> {a.addAll(b); return a;})));
-        Map<Integer, Gene> homologousGenesByBgeeGeneId = new HashMap<Integer, Gene>();
         
         // Create Map with bgeeGeneId as key and a Set of homologous genes as value. 
         Map<Integer, Gene> homologousGenesByBgeeGeneId = (homologsTOs != null && !homologsTOs.isEmpty())
@@ -260,7 +259,6 @@ public class GeneHomologsService extends CommonService{
                                         () -> new IllegalStateException("Missing gene biotype ID " + "for gene")))))
                 : new HashMap<Integer, Gene>();
         
-        }
         // load Taxon by taxonId
         Map<Integer, Taxon> taxonByTaxonId = this.getServiceFactory().getTaxonService()
                 .loadTaxa(homologsTOs.stream().map(GeneHomologsTO::getTaxonId)

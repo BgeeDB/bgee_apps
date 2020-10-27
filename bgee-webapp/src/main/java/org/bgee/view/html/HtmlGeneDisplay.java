@@ -761,7 +761,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         return log.exit(sb.toString());
     }
     
-    //TODO : Do not use a String to define the type of homology
     /** Generates the HTML code displaying information about homologous genes.
     * 
     * @param gene               A {@code Gene} containing all homology informations
@@ -970,15 +969,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String display = getListDisplay("syn", orderedEscapedSynonyms);
         return log.exit(display);
     }
-       
-    /**
-     * Generates the HTML code displaying information about gene homology.
-     * 
-     * @param genes                        A {@code Gene} for which homology has to be displayed
-     * @return                             A {@code String} that is the generated HTML.
-     */
-   
-    
 
     /**
      * Return the {@code String} that is the HTML code of the cross-references table.

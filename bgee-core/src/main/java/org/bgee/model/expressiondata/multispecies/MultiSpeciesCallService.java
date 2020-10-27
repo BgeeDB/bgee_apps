@@ -35,6 +35,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
+import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -266,10 +267,12 @@ public class MultiSpeciesCallService extends CommonService {
     	Map<Taxon,Set<Species>> leavesLCA = getLeavesLCA(taxonOntology, species, geneFilter);
     	Set<AnatEntitySimilarity> anatEntitySims = getAnatSimByTaxonId(leavesLCA);
     	Set<DevStageSimilarity> devStageSims = getDevStagesSimByTaxonId(leavesLCA);
-    	Set<OrthologousGeneGroup> orthologousGeneGroups = geneService.getOrthologs(
-    			leavesLCA.keySet().stream().map(t -> t.getId()).collect(Collectors.toSet()),
-    				speciesIds,geneFilter)
-    			.collect(Collectors.toSet());
+    	//TODO need to update to match new GeneHomologs class
+    	Set<OrthologousGeneGroup> orthologousGeneGroups = new HashSet<OrthologousGeneGroup>();
+//    	Set<OrthologousGeneGroup> orthologousGeneGroups = geneService.getOrthologs(
+//    			leavesLCA.keySet().stream().map(t -> t.getId()).collect(Collectors.toSet()),
+//    				speciesIds,geneFilter)
+//    			.collect(Collectors.toSet());
     	ExpressionCallFilter callFilter = convertToExprCallFilter(multiSpeciesCallFilter,
     			anatEntitySims, devStageSims, 
     			orthologousGeneGroups);

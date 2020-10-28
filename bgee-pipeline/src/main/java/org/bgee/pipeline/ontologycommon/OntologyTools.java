@@ -337,11 +337,10 @@ public class OntologyTools {
             Set<RelationTO<String>> incorrectIndirectRelTOs =
                     this.findIndirectRelsNotReachedByChainOfDirectRels(
                             directRels, indirectRels);
-            Set<SpeciesTO> speciesTOs = new HashSet<>();
-            speciesTOs.add(speciesTO);
             for (RelationTO<String> incorrectIndirectRelTO: incorrectIndirectRelTOs) {
                 relationTOIdMap.put(incorrectIndirectRelTO.getId(), incorrectIndirectRelTO);
-                speciesPerIncorrectIndirectRelId.merge(incorrectIndirectRelTO.getId(), speciesTOs,
+                speciesPerIncorrectIndirectRelId.merge(incorrectIndirectRelTO.getId(),
+                        new HashSet<>(Arrays.asList(speciesTO)),
                         (existingSpeciesTOs, newSpeciesTOs) -> {
                             existingSpeciesTOs.addAll(newSpeciesTOs);
                             return existingSpeciesTOs;

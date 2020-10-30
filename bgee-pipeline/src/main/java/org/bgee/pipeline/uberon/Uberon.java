@@ -39,7 +39,9 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.Optional;
@@ -59,7 +61,7 @@ import owltools.graph.OWLGraphWrapper;
  * to developmental stage ontology, see {@link UberonDevStage}.
  * 
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14.2 Oct. 2020
  * @since Bgee 13
  */
 public class Uberon extends UberonCommon {
@@ -179,6 +181,20 @@ public class Uberon extends UberonCommon {
      *   <li>path to the Uberon ontology.
      *   <li>path to the output file where to save the mappings.
      *   </ol>
+     *
+     * <li>If the first element in {@code args} is "explainRelation", the action will be 
+     * to retrieve edges outgoing from an OWLClass from Uberon, and to display information
+     * about them in the console.
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the Uberon ontology.
+     *   <li>OBO-like ID or IRI of the {@code OWLClass} to retrieve outgoing edges for.
+     *   <li>OBO-like ID or IRI of the {@code OWLClass} that must be the target of the outgoing edges.
+     *       can be an empty arg (see {@link org.bgee.pipeline.CommandRunner#EMPTY_ARG EMPTY_ARG}).
+     *   <li>A list of species IDs the source and target of the outgoing edges must be valid in
+     *       (see {@link #explainRelationForOWLClass(String, String, Collection)} for details).
+     *       Cannot be empty, species IDs must be provided.
+     *   </ol>
      * </ul>
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException If {@code args} does not contain the proper 
@@ -247,6 +263,15 @@ public class Uberon extends UberonCommon {
                         "3 arguments, " + args.length + " provided."));
             }
             new Uberon(args[1]).extractSexInfoToFile(args[2]);
+        } else if (args[0].equalsIgnoreCase("explainRelation")) {
+            if (args.length != 5) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Incorrect number of arguments provided, expected " + 
+                        "5 arguments, " + args.length + " provided."));
+            }
+            new Uberon(args[1]).explainRelationForOWLClass(args[2],
+                    CommandRunner.parseArgument(args[3]),
+                    CommandRunner.parseListArgumentAsInt(args[4]));
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -1106,6 +1131,295 @@ public class Uberon extends UberonCommon {
     }
 
     /**
+     * Method to explain relations outgoing from an {@code OWLClass}, potentially incoming to
+     * another specified {@code OWLClass}. Information will be basically displayed in the console.
+     *
+     * @param sourceClassId A {@code String} representing the OBO-like ID or IRI of an {@code OWLClass}
+     *                      for which outgoing edges must be detailed.
+     * @param targetClassId A {@code String} representing the OBO-like ID or IRI of an {@code OWLClass}
+     *                      for which edges outgoing from {@code sourceClassId} must target.
+     *                      Can be {@code null}.
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                      of the species to consider.
+     *                      Only outgoing edges with the source and target existing 
+     *                      in at least one of these species will be considered.
+     *                      The validity of the relation itself in these species will not be checked
+     *                      (GCI relation). Cannot be {@code null} nor empty.
+     */
+    public void explainRelationForOWLClass(String sourceClassId, String targetClassId,
+            Collection<Integer> speciesIds) {
+        log.entry(sourceClassId, targetClassId, speciesIds);
+
+        OWLClass sourceClass = this.getOWLClass(sourceClassId);
+        if (sourceClass == null) {
+            System.out.println("Could not find OWLClass corresponding to " + sourceClassId);
+        }
+        Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges =
+                this.getValidOutgoingEdgesForOWLClass(sourceClass, new HashSet<>(), speciesIds);
+        Set<OWLGraphEdge> allOutgoingEdges = new HashSet<>(directIndirectValidOutgoingEdges.get(false));
+        allOutgoingEdges.addAll(directIndirectValidOutgoingEdges.get(true));
+
+        OntologyUtils utils = this.getOntologyUtils();
+        OWLGraphWrapper wrapper = utils.getWrapper();
+        boolean targetClassIdFound = false;
+        for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+            OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
+            String targetId = wrapper.getIdentifier(target);
+            if (targetClassId == null || targetClassId.equals(targetId)) {
+                targetClassIdFound = true;
+            } else {
+                continue;
+            }
+            System.out.println("Outgoing edge from " + sourceClassId + " to " + targetId + ": "
+                    + outgoingEdge);
+        }
+        if (!targetClassIdFound) {
+            System.out.println("No outgoing edge foud from " + sourceClassId + " to " + targetClassId);
+        }
+
+        log.exit();
+    }
+
+    /**
+     * Retrieves edges outgoing from {@code cls} valid for Bgee, present in the ontologies wrapped by
+     * this {@code uberon}. A {@code Map} with a {@code Boolean} key is returned to be able to distinguish
+     * between direct and indirect outgoing edges. Of note, in this method, an outgoing edge
+     * going through multiple classes can still be considered direct. A check on the number of valid
+     * classes used in underlying axioms must be performed by methods calling this one
+     * (see for instance method {@code InsertUberon#generateRelationTOsFirstPass}).
+     *
+     * @param cls               An {@code OWLClass} for which to retrieve outgoing direct
+     *                          and indirect edges.
+     * @param classesToIgnore   A {@code Set} of {@code OWLClass}es to be discarded, 
+     *                          generated by the method {@code insertAnatOntologyIntoDataSource}.
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                          of the species to consider.
+     *                          Only outgoing edges with the source and target existing 
+     *                          in at least one of these species will be considered.
+     *                          The validity of the relation itself in these species will not be checked
+     *                          (GCI relation). Cannot be {@code null} nor empty.
+     * @return                  A {@code Map} with a {@code Boolean} key, where a {@code Set} of
+     *                          {@code OWLGraphEdge}s representing direct outgoing edges will be
+     *                          associated to the key {@code true}, and a {@code Set} of
+     *                          {@code OWLGraphEdge}s representing indirect outgoing edges will be
+     *                          associated to the key {@code false}. Of note, in this method,
+     *                          an outgoing edge going through multiple classes can still be
+     *                          considered direct.
+     * @throws IllegalArgumentException If it was not possible to retrieve an OBO-like ID 
+     *                                  and a label for an {@code OWLClass} that should 
+     *                                  have been considered.
+     */
+    public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesForOWLClass(OWLClass cls,
+            Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
+        log.entry(cls, classesToIgnore, speciesIds);
+
+        OntologyUtils utils = this.getOntologyUtils();
+        OWLGraphWrapper wrapper = utils.getWrapper();
+        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(
+                UberonCommon.TAXONOMY_ROOT_ID, true);
+        OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
+                OntologyUtils.PART_OF_ID);
+
+        Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges = new HashMap<>();
+        Set<OWLGraphEdge> directValidOutgoingEdges = new HashSet<>();
+        Set<OWLGraphEdge> indirectValidOutgoingEdges = new HashSet<>();
+        directIndirectValidOutgoingEdges.put(true, directValidOutgoingEdges);
+        directIndirectValidOutgoingEdges.put(false, indirectValidOutgoingEdges);
+
+        //get equivalent class
+        OWLClass mappedCls = this.getOWLClass(wrapper.getIdentifier(cls));
+        if (mappedCls == null || 
+                !this.isValidClass(mappedCls, classesToIgnore, speciesIds)) {
+            return log.exit(directIndirectValidOutgoingEdges);
+        }
+
+        for (OWLOntology ont: wrapper.getAllOntologies()) {
+            Set<OWLClass> allClasses = ont.getClassesInSignature(Imports.INCLUDED);
+            if (!allClasses.contains(cls)) {
+                continue;
+            }
+
+            //************************************
+            // Relations outgoing from cls
+            //************************************
+            //we generate TOs relative to relations between terms. 
+            //here we retrieve the graph closure outgoing from cls
+            Set<OWLGraphEdge> allOutgoingEdges = 
+                    wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(cls);
+
+            //we do not want to include develops_from or transformation_of relations 
+            //propagated through is_a relations AFTER we reached the first 
+            //developmental precursor. So, if A is_a B develops_from C is_a D, 
+            //we will accept the edge A develops_from C, but not A develops_from D.
+            //To filter such edges, we retrieve all targets of a transformation_of 
+            //or develops_from relation, and remove among them the ancestors by is_a 
+            //(we retain only the "leaves" by is_a). This is not bullet-proof 
+            //(for instance, we surely would like to propagate to equivalent classes, 
+            //that are seen as linked by an is_a relation), but this avoid to walk 
+            //each edge, as the method getOutgoingEdgesNamedClosureOverSupPropsWithGCI does.
+            //So, we first retrieve all targets of such relations: 
+            Set<OWLClass> transfOfTargets = new HashSet<OWLClass>();
+            Set<OWLClass> devFromTargets = new HashSet<OWLClass>();
+            for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+                if (!(outgoingEdge.getTarget() instanceof OWLClass) || 
+                        !wrapper.isRealClass(outgoingEdge.getTarget())) {
+                    continue;
+                }
+                //make sure to call isTransformationOfRelation before 
+                //isDevelopsFromRelation, because a transformation_of relation is also 
+                //a develops_from relation.
+                if (utils.isTransformationOfRelation(outgoingEdge)) {
+                    transfOfTargets.add((OWLClass) outgoingEdge.getTarget());
+                } else if (utils.isDevelopsFromRelation(outgoingEdge) && 
+                        //just to be sure, in case the order of the code changes
+                        !utils.isTransformationOfRelation(outgoingEdge)) {
+                    devFromTargets.add((OWLClass) outgoingEdge.getTarget());
+                }
+            }
+            //here we do something borderline: filter using a fake ObjectProperty, 
+            //to retain leaves only through is_a relations.
+            Set<OWLPropertyExpression> fakeProps = new HashSet<OWLPropertyExpression>(
+                    Arrays.asList(wrapper.getManager().getOWLDataFactory().
+                            getOWLObjectProperty(IRI.create(""))));
+            utils.retainLeafClasses(transfOfTargets, fakeProps);
+            utils.retainLeafClasses(devFromTargets, fakeProps);
+            log.trace("Valid transformation_of targets of edges outgoing from {}: {}", 
+                    cls, transfOfTargets);
+            log.trace("Valid develops_from targets of edges outgoing from {}: {}", 
+                    cls, devFromTargets);
+            
+            
+            //we also get direct outgoingEdges to be able to know if a relation 
+            //is direct or indirect
+            Set<OWLGraphEdge> directOutgoingEdges = 
+                    wrapper.getOutgoingEdgesWithGCI(cls);
+            //and finally, we also create a fake edge to be an "identity" relation 
+            //(because we want to insert reflexive relations into Bgee)
+            OWLGraphEdge fakeEdge = new OWLGraphEdge(mappedCls, mappedCls, ont);
+            allOutgoingEdges.add(fakeEdge);
+            directOutgoingEdges.add(fakeEdge);
+            
+            edge: for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+                log.trace("Iterating outgoing edge {}", outgoingEdge);
+                
+                //to distinguish direct and indirect relations
+                boolean isDirect = directOutgoingEdges.contains(outgoingEdge);
+                
+                //-------------Test validity of edge---------------
+                if (outgoingEdge.getQuantifiedPropertyList().size() != 1) {
+                    log.trace("Edge discarded because multiple or no property.");
+                    continue edge;
+                }
+                //if it is a GCI relation, with make sure it is actually 
+                //a taxonomy GCI relation
+                if (outgoingEdge.isGCI() && 
+                        (!wrapper.getAncestorsThroughIsA(outgoingEdge.getGCIFiller()).
+                                contains(taxonomyRoot) || 
+                                !partOf.equals(outgoingEdge.getGCIRelation()))) {
+                    log.trace("Edge discarded because it is a non-taxonomy GCI");
+                    continue edge;
+                }
+                
+                //-------------Test validity of target---------------
+                if (!(outgoingEdge.getTarget() instanceof OWLClass)) {
+                    log.trace("Edge discarded because target is not an OWLClass");
+                    continue edge;
+                }
+                
+                //if this is a transformation_of or develops_from edge, 
+                //and this is not a direct edge, 
+                //we check whether the target is allowed for propagation.
+                //make sure to call isTransformationOfRelation before 
+                //isDevelopsFromRelation, because a transformation_of relation is also 
+                //a develops_from relation.
+                if (!isDirect && 
+                        ((utils.isTransformationOfRelation(outgoingEdge) && 
+                                !transfOfTargets.contains(outgoingEdge.getTarget())) || 
+                                (utils.isDevelopsFromRelation(outgoingEdge) && 
+                                        !utils.isTransformationOfRelation(outgoingEdge) && 
+                                        !devFromTargets.contains(outgoingEdge.getTarget()))) ) {
+                    
+                    log.trace("Edge discarded because target is invalid for develops_from or transformation_of relation");
+                    continue edge;
+                }
+                
+                OWLClass target = (OWLClass) outgoingEdge.getTarget();
+                if (!this.isValidClass(target, classesToIgnore, speciesIds)) {
+                    log.trace("Edge discarded because target is invalid");
+                    continue edge;
+                }
+                //get equivalent class
+                target = this.getOWLClass(wrapper.getIdentifier(target));
+                if (target == null || 
+                        !this.isValidClass(target, classesToIgnore, speciesIds)) {
+                    log.trace("Edge discarded because target is invalid");
+                    continue edge;
+                }
+
+                if (isDirect) {
+                    directValidOutgoingEdges.add(outgoingEdge);
+                } else {
+                    indirectValidOutgoingEdges.add(outgoingEdge);
+                }
+            }
+        }
+        return log.exit(directIndirectValidOutgoingEdges);
+    }
+
+    /**
+     * Checks whether {@code cls} is a valid {@code OWLClass} to be considered for insertion.
+     * 
+     * @param cls               An {@code OWLClass} representing an anatomical entity 
+     *                          to be considered for insertion.
+     * @param classesToIgnore   A {@code Set} of {@code OWLClass}es to be discarded, 
+     *                          generated by the method {@code insertAnatOntologyIntoDataSource}.
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                          of the species to consider, as provided to the method 
+     *                          {@code insertAnatOntologyIntoDataSource}. 
+     *                          Only anatomical entities existing 
+     *                          in at least one of these species will be considered.
+     *                          Cannot be {@code null} or empty.
+     * @return                  {@code true} if {@code cls} is a valid {@code OWLClass} 
+     *                          considered for insertion, {@code false} if {@code cls} 
+     *                          was discarded (because member of {@code classesToIgnore}, 
+     *                          or not a member of the provided species, ...).
+     * @throws IllegalArgumentException If it was not possible to retrieve an OBO-like ID 
+     *                                  and a label for {@code cls}.
+     */
+    public boolean isValidClass(OWLClass cls, Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
+        log.entry(cls, classesToIgnore, speciesIds);
+        
+        OntologyUtils utils = this.getOntologyUtils();
+        OWLGraphWrapper wrapper = utils.getWrapper();
+        
+        //keep the stage only if exists in one of the requested species, 
+        //and if not obsolete, and if not a class to ignore
+        if (classesToIgnore.contains(cls) || 
+                !this.existsInAtLeastOneSpecies(cls, speciesIds) || 
+                !wrapper.isRealClass(cls)) {
+            log.trace("Class discarded");
+            return log.exit(false);
+        }
+        
+        //check that we always have an ID and a name, only for class that will not be 
+        //replaced by another one
+        if (cls.equals(this.getOWLClass(wrapper.getIdentifier(cls)))) {
+            String id = wrapper.getIdentifier(cls);
+            if (StringUtils.isBlank(id)) {
+                throw log.throwing(new IllegalArgumentException("No OBO-like ID retrieved for " + 
+                        cls));
+            }
+            String name = wrapper.getLabel(cls);
+            if (StringUtils.isBlank(name)) {
+                throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
+                        cls));
+            }
+        }
+        
+        return log.exit(true);
+    }
+
+    /**
      * Obtain from the {@code OWLOntology} wrapped into {@code wrapper} all its 
      * {@code OWLObjectProperty}s that can lead to {@code OWLClass}es representing taxa.
      * 
@@ -1233,9 +1547,7 @@ public class Uberon extends UberonCommon {
             Collection<String> classIdsExcludedFromSubsetRemoval) {
         this.classIdsExcludedFromSubsetRemoval = classIdsExcludedFromSubsetRemoval;
     }
-    
-    
-    
+
 // NOTE May 13 2014: this method seems now completely useless, to remove if it is confirmed.
 //    /**
 //     * Retrieve all {@code OWLGraphEdge}s related to the relation {@code relationToUse}, 

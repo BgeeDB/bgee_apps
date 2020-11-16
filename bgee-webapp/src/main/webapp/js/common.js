@@ -132,7 +132,7 @@ function setCookie(cookieName, cookieVersion) {
     var d = new Date();
     d.setTime(d.getTime() + (365*24*60*60*1000)); // 1 year
     var expires = "expires="+ d.toUTCString();
-    document.cookie = cookieName + "=" + cookieVersion + ";" + expires + ";path=/;";
+    document.cookie = cookieName + "=" + cookieVersion + ";" + expires + ";path=/;Secure;SameSite=Strict";
 }
 
 function displayPrivacyBanner(cookieName, toDisplay) {

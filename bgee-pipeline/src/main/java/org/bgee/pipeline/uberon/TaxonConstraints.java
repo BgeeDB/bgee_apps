@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.species.Taxon;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.AnnotationCommon;
@@ -52,17 +54,23 @@ import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 import org.supercsv.cellprocessor.FmtBool;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvBeanReader;
+import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvBeanReader;
+import org.supercsv.io.ICsvBeanWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
 
+import owltools.graph.OWLGraphUtil;
 import owltools.graph.OWLGraphWrapper;
 import owltools.mooncat.SpeciesSubsetterUtil;
 
@@ -123,6 +131,38 @@ public class TaxonConstraints {
     public final static String UBERON_NAME_COLUMN_NAME = "Uberon name";
     
     /**
+     * A {@code String} that is the name of the column containing Taxon IDs
+     * with constraints, in the taxon constraints file.
+     */
+    public final static String WITH_CONSTRAINTS_ID = "Only in Taxon IDs";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon Names
+     * with constraints, in the taxon constraints file.
+     */
+    public final static String WITH_CONSTRAINTS_NAME = "Only in Taxon Names";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon IDs
+     * without constraints, in the taxon constraints file.
+     */
+    public final static String WITHOUT_CONSTRAINTS_ID = "Never in Taxon IDs";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon Names
+     * without constraints, in the taxon constraints file.
+     */
+    public final static String WITHOUT_CONSTRAINTS_NAME = "Never in Taxon Names";
+    
+    /**
+     * A {@code String} that is the name of the column containing comments, 
+     * in the taxon constraints file.
+     */
+    public final static String COMMENTS = "Comments";
+    
+    
+    
+    /**
      * Several actions can be launched from this main method, depending on the first 
      * element in {@code args}: 
      * <ul>
@@ -171,6 +211,34 @@ public class TaxonConstraints {
      *   for each taxon, and stored in this directory, containing only 
      *   the {@code OWLClass}es existing in this taxon. If not provided, the intermediate 
      *   ontologies will not be stored. 
+     *   </ol>
+     * <li>If the first element in {@code args} is "explainCuratedTaxonConstraints", 
+     * the action will be to generate a tsv file allowing to know 
+     * for each {@code OWLClass} in the Uberon ontology, in which species it exists, 
+     * among the species provided through another TSV file, containing their NCBI IDs. 
+     * The generation of this file takes as input two files containing taxon constraints 
+     * information. One file with taxon constraints automatically generated from the 
+     * uberon ontology and one file corresponding to manual curation of these automatically
+     * generated taxon constraints.
+     * See {@link #generateCuratedTaxonConstraints(String, String, String, String)} 
+     * Following elements in {@code args} must then be: 
+     *   <ol>
+     *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
+     *   contain the taxon constraints ("in taxon" and "only_in_taxon" relations, 
+     *   not all Uberon versions contain them).
+     *   <li>path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy 
+     *   to include disjoint classes axioms between sibling taxa. 
+     *   <li> path to the taxon constraints tsv file automatically generated using the
+     *   uberon ontology. See {@link generateTaxonConstraints(String,  Map, String, 
+     *   Map, String, String)} for more details.
+     *   <li> path to the curated taxon constraints tsv file manually created by Bgee curators.
+     *   This file contains same columns than the automatically generated one and each 
+     *   row correspond to a modification to the automatically generated file.
+     *   <li>path to the TSV files containing the IDs of the species for which we want 
+     *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
+     *   for human). The first line should be a header line, defining a column to get 
+     *   IDs from, named exactly "taxon ID" (other columns are optional and will be ignored).
+     *   <li>path to the generated TSV file, output of the method.
      *   </ol>
      * <li>If the first element in {@code args} is "explainTaxonConstraints", 
      * the action will be to display the explanation for the existence or absence 
@@ -240,6 +308,20 @@ public class TaxonConstraints {
                     CommandRunner.parseMapArgumentAsInteger(args[6]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
                     args[7], storeDir);
+        } else if (args[0].equalsIgnoreCase("generateCuratedTaxonConstraints")) {
+            
+            if (args.length != 7) {
+                throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                        "provided, expected 3 arguments, " + args.length + 
+                        " provided."));
+            }
+            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
+            String generatedTaxonConstraintsFile = args[3];
+            String curatedTaxonConstraintsFile= args[4];
+            String speciesFile = args[5];
+            String outputFile = args[6];
+            generate.generateCuratedTaxonConstraints(generatedTaxonConstraintsFile, 
+                    curatedTaxonConstraintsFile, speciesFile, outputFile);
         } else if (args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
         
             if (args.length != 4) {
@@ -257,7 +339,7 @@ public class TaxonConstraints {
         
         log.exit();
     }
-    
+
     /**
      * A {@code OWLGraphWrapper} provided at instantiation, wrapping the Uberon 
      * {@code OWLOntology}, used to generate or retrieve taxon constraints.
@@ -569,10 +651,10 @@ public class TaxonConstraints {
      *                                      of matching terms.
      * @param outputFile        A {@code String} that is the path to the generated 
      *                          TSV file, output of the method. It will have one header line. 
-     *                          The columns will be: ID of the Uberon classes, IDs of each 
-     *                          of the taxa that were examined. For each of the taxon column, 
-     *                          a boolean is provided as "T" or "F", to define whether 
-     *                          the associated Uberon class exists in it.
+     *                          The columns will be: ID of the Uberon classes, IDs of taxa 
+     *                          where the Uberon class exists, Names of taxa where the Uberon
+     *                          class exists, IDS of taxa where Uberon class does not exist, 
+     *                          Names of the taxa where the Uberon class does not exist.
      * @param storeOntologyDir  A {@code String} that is the path to a directory 
      *                          where to store intermediate ontologies. If {@code null} 
      *                          the generated ontologies will not be stored.
@@ -602,7 +684,7 @@ public class TaxonConstraints {
         //retrieve all tax IDs in taxonIdFile
         Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(taxonIdFile);
         
-        //get the simplification steps associated to requeted taxa. 
+        //get the simplification steps associated to requested taxa. 
         //We first clone taxaSimplificationSteps to avoid changes while streaming, 
         //we use a LinkedHashMap in case the generation order must be predicatable. 
         final Map<Integer, List<Integer>> clonedSteps = 
@@ -658,14 +740,36 @@ public class TaxonConstraints {
                 .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
                 .map(refWrapper::getIdentifier).collect(Collectors.toSet());
         
-        //launch the generation of taxon constraints and write them to file. 
+        //launch the generation of taxon constraints. 
         Map<String, Set<Integer>> constraints = this.generateTaxonConstraints(
                 taxIdsWithSteps, refClassIds, idStartsToOverridingTaxonIds, storeOntologyDir);
-        writeToFile(constraints, taxonIds, refWrapper, outputFile);
+        //create Map where values correspond to speciesIds without constraints.
+        // this Map will be usefull to generate column of output file containing IDs of taxa
+        // where the Uberon term does not exist.
+        Map<String, Set<Integer>> absentConstraints = constraints.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> {
+                    Set<Integer> absConstraints = new HashSet<Integer>(taxonIds);
+                    absConstraints.removeAll(e.getValue());
+                    return absConstraints;
+                }));
+        
+
+        LinkedHashMap<Taxon, Set<Taxon>> taxonLCAToDescendantSpeciesMap = 
+                generateTaxonLCAToDescendantSpecies(taxonIds);
+        
+        // update constraints to only contains taxon where all descendant species are present.
+        // This step is used to generate an "easy" to read/maintain taxonContraint file that Bgee
+        // curators can check manually.
+        Map<String, Set<Taxon>> constraintsLCA = fromSpeciesToTaxonConstraints(constraints, 
+                taxonLCAToDescendantSpeciesMap, taxonIds);
+        Map<String, Set<Taxon>>  absentConstraintsLCA = fromSpeciesToTaxonConstraints(absentConstraints, 
+                taxonLCAToDescendantSpeciesMap, taxonIds);
+
+        writeTaxonLCAToFile(constraintsLCA, absentConstraintsLCA, taxonIds, refWrapper, outputFile);
         
         log.exit();
     }
-    
+
     /**
      * Returns a {@code Map} representing the taxon constraints generated using  
      * the Uberon ontology and taxonomy ontology provided at instantiation, 
@@ -842,6 +946,279 @@ public class TaxonConstraints {
         
         log.info("Done generating taxon constraints.");
         return log.exit(filteredConstraints);
+    }
+    
+    /**
+     * Generate the final taxon constraints file that will be used to insert taxon constraints
+     * in the database. In this file each line correspond to one {@code OWLClass} of the uberon 
+     * ontology and the list of species ID it is present (T) or absent(F) in.
+     * <p>
+     * Two files containing taxon constraints are used to generate this final file.
+     * <p> 
+     * The first one is the file generated automatically from the Uberon ontology ({@link 
+     * generateTaxonConstraints(String,  Map, String, Map, String, String)})
+     * <p>
+     * The second one is the file provided by Bgee curators that contains only taxon constraints
+     * not properly defined automatically. Each line of this file will be used to overwrite the
+     * corresponding information in the automatically generated file.
+     * 
+     * @param generatedTaxonConstraintsFile     path to the file containing taxon constraints generated 
+     *                                          automatically from the Uberon ontology ({@link 
+     *                                          generateTaxonConstraints(String,  Map, String, 
+     *                                          Map, String, String)})
+     * @param curatedTaxonConstraintsFile       path to the file containing manually generated taxon
+     *                                          constraints to overwrite.
+     * @param speciesFile                       path to the file containing all species IDs
+     * @param outputFile                        path to the file where corrected taxon constraints will
+     *                                          be written
+     * @throws IOException
+     */
+    public void generateCuratedTaxonConstraints(String generatedTaxonConstraintsFile,
+            String curatedTaxonConstraintsFile, String speciesFile, String outputFile) 
+                    throws IOException {
+        
+        //retrieve all tax IDs in taxonIdFile
+        Set<Integer> speciesIds = AnnotationCommon.getTaxonIds(speciesFile);
+        
+     // generate Mapping between LCA taxon IDs and descendant species IDs
+        Map<Integer, Set<Integer>> taxonToSpecies = 
+                generateTaxonLCAToDescendantSpecies(speciesIds).entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().getId(), 
+                        e -> e.getValue().stream().map(t -> t.getId())
+                        .collect(Collectors.toSet())));
+        
+        Map <String, Set<Integer>> uberonIdToSpeciesIdsGeneratedMap = 
+                fromTaxonTCFileToUberonToSpeciesMap(generatedTaxonConstraintsFile, 
+                        taxonToSpecies, speciesIds);
+        Map <String, Set<Integer>> uberonIdToSpeciesIdsCuratedMap = 
+                fromTaxonTCFileToUberonToSpeciesMap(curatedTaxonConstraintsFile, 
+                        taxonToSpecies, speciesIds);
+        
+        // apply curators updates
+        uberonIdToSpeciesIdsGeneratedMap = uberonIdToSpeciesIdsGeneratedMap.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, e -> {
+                String uberonId = e.getKey();
+                if(uberonIdToSpeciesIdsCuratedMap.containsKey(uberonId)) {
+                    return uberonIdToSpeciesIdsCuratedMap.get(uberonId);
+                }
+                return e.getValue();
+            }));
+            
+        writeToFile(uberonIdToSpeciesIdsGeneratedMap, speciesIds, this.uberonOntWrapper, 
+                outputFile);
+        
+    }
+    
+    /**
+     * From a file containing Uberon terms associated to taxon IDs where the terms are present, create a 
+     * {@code Map} with Uberon IDs as key and {@code Set} of all species IDs where the uberon ID is present 
+     * as value.
+     * <p> 
+     * Basically this method use a mapping between taxon IDs to descendant species IDs to transform taxon IDs
+     * present in the input file to all descendant species IDs.
+     * 
+     * @param pathToFile            Path to the file containing taxon constraints at taxon level
+     * @param taxonToSpecies        A {@code Map} with {@code Integer} corresponding to taxon IDs as key and
+     *                              {@code Set} of {@code Integer} corresponding to descendant species IDs as
+     *                              value.
+     * @param allSpeciesIds         A {@code Set} of {@code Integer} containing the IDs of all species.
+     * 
+     * @return                      A {@code Map} of {@code String} corresponding to Uberon IDs as key associated 
+     *                              to a {@code Set} of {@code Integer} corresponding to all species IDs the uberon
+     *                              term is present in as values. 
+     * @throws IOException
+     */
+    private Map<String, Set<Integer>> fromTaxonTCFileToUberonToSpeciesMap(String pathToFile,
+            Map<Integer, Set<Integer>> taxonToSpecies, Set<Integer> allSpeciesIds) throws IOException {
+        log.entry(pathToFile, taxonToSpecies, allSpeciesIds);
+        
+        Map<String, Set<Integer>> uberonToSpecies = new HashMap<String, Set<Integer>>();
+        
+        //read the uberon to taxon file
+        ICsvBeanReader beanReader = null;
+        try {
+            beanReader = new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED);
+            
+            // using null value in header allows not to consider this column
+            String[] header= new String[] {UBERON_ID_COLUMN_NAME, null,
+                    WITH_CONSTRAINTS_ID, null,
+                    WITHOUT_CONSTRAINTS_ID, null, null               
+            };
+            
+            // using null as CellProcessor allows not to process data in this column
+            final CellProcessor[] processors = new CellProcessor[] { 
+                    new UniqueHashCode(), //uberon ID
+                    null,  // uberon Name
+                    new Optional(), // taxon IDs present
+                    null, // taxon names present
+                    new Optional(), // taxon IDs absent
+                    null, // taxon names absent
+                    null  // comment
+            };
+
+            TaxonTaxonConstraintsBean taxonTC;
+            while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, header, 
+                    processors)) != null ) {
+                String uberonId = taxonTC.getUberonId();
+                
+                // retrieve taxa Ids and if their correspondence to taxa with or without TC
+                Set<Integer> taxonIds = new HashSet<Integer>();
+                boolean isTaxaWithTC =true;
+                if (taxonTC.getTaxonIdWithConstraints().isEmpty()) {
+                    taxonIds = Arrays.stream(taxonTC.getTaxonIdWithoutConstraints()
+                            .split("\\s*,\\s*")).map(e -> Integer.valueOf(e))
+                            .collect(Collectors.toSet());
+                } else {
+                    taxonIds = Arrays.stream(taxonTC.getTaxonIdWithConstraints()
+                            .split("\\s*,\\s*")).map(e -> Integer.valueOf(e))
+                            .collect(Collectors.toSet());
+                }
+
+                // retrieve species corresponding to taxa
+                Set<Integer> speciesIds = new HashSet<Integer>();
+                for (Integer taxonId : taxonIds) {
+                    speciesIds.addAll(taxonToSpecies.get(taxonId));
+                }
+                
+                // if species Ids were defined from taxa without TC, species to retrieve
+                // have to be the complement of speciesIDsTC in bgeeSpecies
+                if (!isTaxaWithTC) {
+                    Set<Integer> complementSpecies = new HashSet<Integer>(allSpeciesIds);
+                    complementSpecies.removeAll(speciesIds);
+                    speciesIds = complementSpecies;
+                }
+                
+                uberonToSpecies.put(uberonId, speciesIds);
+            }             
+        }
+        finally {
+            if( beanReader != null ) {
+                beanReader.close();
+            }
+        }
+        return log.exit(uberonToSpecies);
+    }
+    
+    /**
+     * Returns the Mapping between Least Common Ancestor (LCA) taxon generated from all Bgee species and the Set
+     * of all Bgee species descendant to this LCA.
+     * This method is useful to generate an easier to read output file listing taxon constraints at LCA level
+     * and not for each species (e.g if all Bgee mammalian species have a taxonConstraint for an anatomical 
+     * entity, the output file will contain only Mammalia and not all species).
+     * Return a linkedHashMap ordered by descending size of the Set of values. This ordering allows to always 
+     * find the highest LCA taxon level first when iterating on the entries.
+     * The returned {@code LinkedHashMap} also contains {@Taxon} corresponding to bgee species as keys mapped to
+     * a {@code Set} of one {@Taxon} corresponding to this species as value. This one to one mapping is useful to
+     * store species scientific name and then provide this information in the output file to help curators.
+     * 
+     * 
+     * @param   speciesIds A {@code Set} containing all Bgee species IDs
+     * @return  A {@code LinkedHashMap} with {@code Taxon} as key and {@code Set} of {@Taxon} as values. The
+     *          {@code LinkedHashMap} is ordered by reversed size of the {@code Set} of values.
+     */
+    private LinkedHashMap<Taxon, Set<Taxon>> generateTaxonLCAToDescendantSpecies(Set<Integer> speciesIds) {
+        log.entry(speciesIds);
+        
+        //define least common ancestor and corresponding Bgee species. Generate Taxon objects
+        // to be able to provide taxon scientific name in the output file
+        LinkedHashMap<Taxon, Set<Taxon>> lcasToSpecies= new LinkedHashMap<Taxon, Set<Taxon>>();
+        for (int speciesId1: speciesIds) {
+            OWLClass species1 = this.taxOntWrapper.getOWLClassByIdentifier(
+                    OntologyUtils.getTaxOntologyId(speciesId1), true);
+            for (int speciesId2: speciesIds) {
+                OWLClass species2 = this.taxOntWrapper.getOWLClassByIdentifier(
+                        OntologyUtils.getTaxOntologyId(speciesId2), true);
+                if (species1 == species2) {
+                    Taxon speciesTaxon = new Taxon(OntologyUtils
+                                .getTaxNcbiId(this.taxOntWrapper.getIdentifier(species1)), 
+                                null, null, this.taxOntWrapper.getLabel(species1), 
+                                1, false);
+                    lcasToSpecies.put(speciesTaxon, Collections.singleton(speciesTaxon));
+                } else {
+                    for (OWLObject lca: OWLGraphUtil.findLeastCommonAncestors(
+                            this.taxOntWrapper, species1, species2)) {
+                        if (lca instanceof OWLClass) {
+                            
+                            Taxon lcaClass = new Taxon(OntologyUtils
+                                    .getTaxNcbiId(this.taxOntWrapper.getIdentifier(lca)), 
+                                    null, null, this.taxOntWrapper.getLabel(lca), 
+                                    1, false);
+                            Set<Taxon> descendantClasses = this.taxOntWrapper
+                                    .getOWLClassDescendants((OWLClass) lca).stream()
+                                    // Keep only Bgee species Ids
+                                    .filter(e -> speciesIds.contains(OntologyUtils
+                                            .getTaxNcbiId(this.taxOntWrapper.getIdentifier(e))))
+                                    .map(e -> new Taxon(
+                                            OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(e)), 
+                                            null, null, this.taxOntWrapper.getLabel(e), 
+                                            1, false)).collect(Collectors.toSet());
+                            lcasToSpecies.put(lcaClass, descendantClasses);
+                            
+                        }
+                    }
+                }
+            }
+        }
+        // now order the Map by reversed size of the Set of values
+        lcasToSpecies = lcasToSpecies.entrySet().stream()
+                .sorted(Map.Entry.<Taxon,Set<Taxon>>comparingByValue(
+                        Comparator.comparingInt(Set::size)).reversed())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (a, b) -> a, LinkedHashMap::new));
+        return log.exit(lcasToSpecies);
+    }
+    
+    /**
+     * Return the mapping between an Uberon ID and all LCA taxon with taxon constraint information.
+     * This information can be LCAs with presence of a taxon constraint for a given Uberon ID if the 
+     * {@code constraints} Map provided as parameter correspond to the mapping between uberon IDs and all species 
+     * with a taxon constraint OR LCAs with absence of taxon constraint for a given uberon ID if the
+     * {@code constraints} Map provided as parameter correspond to the mapping between uberon IDs an all species
+     * without a taxon constraint. The information of LCAs with absence of taxon constraints is useful
+     * to generate an easier to read output file containing rather the LCAs with taxon constraints or
+     * the LCAs without taxon constraints depending of the number of taxon associated. If for a given
+     * uberon ID the size of the list of LCAs without taxon constraint is smaller than the one with 
+     * taxon constraints then only LCAs without taxon constraints will be written in the output file.
+     *  
+     * 
+     * @param constraints                       A {@code Map} where keys are {@code String} corresponding
+     *                                          to uberon IDs and values are a {@code Set} of {@code Integer}
+     *                                          corresponding to Bgee species IDs with presence or absence of
+     *                                          taxon constraints
+     * @param taxonLCAToDescendantSpeciesMap    A {@code LinkedHashMap} with {@code Taxon} as key and 
+     *                                          {@code Set} of {@Taxon} as values. The {@code LinkedHashMap} 
+     *                                          is ordered by reversed size of the {@code Set} of values.
+     * @param speciesIds                        A {@code Set} of {@code Integer} corresponding to all Bgee
+     *                                          species IDs
+     * @return                                  A {@code Map} where keys are {@code String} correpsonding
+     *                                          to uberon IDs and values are a {@code Set} of {@code Taxon}
+     *                                          corresponding to LCAs taxons with presence or absence of
+     *                                          taxon constraints
+     */
+    private Map<String, Set<Taxon>> fromSpeciesToTaxonConstraints(Map<String, Set<Integer>> constraints,
+            LinkedHashMap<Taxon, Set<Taxon>> taxonLCAToDescendantSpeciesMap, Set<Integer> speciesIds) {
+        log.entry(constraints, speciesIds);
+        
+        Map<String, Set<Taxon>> uberonToTaxIds = new HashMap<String, Set<Taxon>>();
+        for(Entry<String, Set<Integer>> uberonToSpeciesIds : constraints.entrySet()) {
+            Set<Integer> remainingSpeciesIds = uberonToSpeciesIds.getValue();
+            Set<Taxon> newTaxonIds = new HashSet<Taxon>();
+            for(Entry<Taxon, Set<Taxon>> taxonToDescendantSpeciesEntry : 
+                taxonLCAToDescendantSpeciesMap.entrySet()) {
+                Set<Integer> descendantspeciesIds = taxonToDescendantSpeciesEntry.getValue()
+                        .stream().map(e -> e.getId()).collect(Collectors.toSet());
+                if(remainingSpeciesIds.containsAll(descendantspeciesIds)) {
+                    newTaxonIds.add(taxonToDescendantSpeciesEntry.getKey());
+                    remainingSpeciesIds.removeAll(descendantspeciesIds);
+                    if(remainingSpeciesIds.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+            uberonToTaxIds.put(uberonToSpeciesIds.getKey(), newTaxonIds);
+        }
+        
+        return log.exit(uberonToTaxIds);
     }
     
     /**
@@ -1060,6 +1437,83 @@ public class TaxonConstraints {
                 ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
         }
         return log.exit(new ElkReasonerFactory().createReasoner(ont, config));
+    }
+    
+
+    private static void writeTaxonLCAToFile(Map<String, Set<Taxon>> uberonToTaxonConstraints, 
+            Map<String, Set<Taxon>> uberonToNoTaxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper refUberonWrapper, String outputFile) throws IOException {
+        log.entry(uberonToTaxonConstraints, uberonToNoTaxonConstraints, taxonIds, 
+                refUberonWrapper, outputFile);
+        
+        //order uberon IDs to have same row ordering between releases
+        List<String> uberonIds = new ArrayList<String>(uberonToTaxonConstraints.keySet());
+        Collections.sort(uberonIds);
+        
+        final CellProcessor[] processors = new CellProcessor[] { 
+                new UniqueHashCode(new NotNull()), 
+                new NotNull(), 
+                new Optional(),
+                new Optional(),
+                new Optional(),
+                new Optional(),
+                new Optional()
+        };
+        String[] header= new String[] {
+                UBERON_ID_COLUMN_NAME, UBERON_NAME_COLUMN_NAME,
+                WITH_CONSTRAINTS_ID, WITH_CONSTRAINTS_NAME,
+                WITHOUT_CONSTRAINTS_ID, WITHOUT_CONSTRAINTS_NAME, COMMENTS           
+        };
+        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            beanWriter.writeHeader(header);
+            for(String uberonId : uberonIds) {
+                //boolean to remember in which columns to write taxon info
+                boolean withConstraintsColumn = true;
+                
+                // retrieve taxa to write
+                List<Taxon> taxaToWrite;
+                int noTaxonConstraintsSize = uberonToNoTaxonConstraints.get(uberonId).size();
+                int taxonConstraintsSize = uberonToTaxonConstraints.get(uberonId).size();
+                if( (noTaxonConstraintsSize > 0 && noTaxonConstraintsSize < taxonConstraintsSize)
+                        || taxonConstraintsSize == 0) {
+                    taxaToWrite = new ArrayList<Taxon>(uberonToNoTaxonConstraints
+                            .get(uberonId));
+                    withConstraintsColumn = false;  
+                } else {
+                    taxaToWrite = new ArrayList<Taxon>(uberonToTaxonConstraints
+                            .get(uberonId));
+                }
+                // sort taxa by Taxon Id
+                taxaToWrite.sort((Taxon t1, Taxon t2) -> t1.getId()-t2.getId());
+                
+                OWLClass cls = refUberonWrapper.getOWLClassByIdentifier(uberonId, true);
+                String label = "-";
+                if (cls != null) {
+                    label = refUberonWrapper.getLabelOrDisplayId(cls);
+                }
+                //generate text from list of taxon
+                String taxonIdsText = String.join(", ", taxaToWrite.stream()
+                        .map(t  -> t.getId().toString()).collect(Collectors.toList()));
+                String taxonNamesText = String.join(", ", taxaToWrite.stream()
+                        .map(t  -> t.getScientificName()).collect(Collectors.toList()));
+                
+                // add values to corresponding columns
+                TaxonTaxonConstraintsBean taxonTCBean = null;
+                if(withConstraintsColumn) {
+                    taxonTCBean = new TaxonTaxonConstraintsBean(uberonId, label, taxonIdsText,
+                            taxonNamesText, null, null, null);
+                } else {
+                    taxonTCBean = new TaxonTaxonConstraintsBean(uberonId, label, null, null, 
+                            taxonIdsText, taxonNamesText, null);
+                }
+                beanWriter.write(taxonTCBean,  header, processors);
+             
+            }
+        }
+        
+        log.exit();
     }
     
     /**
@@ -1677,5 +2131,162 @@ public class TaxonConstraints {
         }
 
         return log.exit(constraints);
+    }
+    
+    static class TaxonTaxonConstraintsBean {
+        
+        private String uberonId;
+        private String uberonName;
+        private String taxonIdWithConstraints;
+        private String taxonNameWithConstraints;
+        private String taxonIdWithoutConstraints;
+        private String taxonNameWithoutConstraints;
+        private String description;
+        
+        public TaxonTaxonConstraintsBean() {}
+        
+        public TaxonTaxonConstraintsBean(String uberonId, String uberonName, String taxonIdWithConstraints,
+                String taxonNameWithConstraints, String taxonIdWithoutConstraints, 
+                String taxonNameWithoutConstraints, String description) {
+            this.uberonId = uberonId;
+            this.uberonName = uberonName;
+            this.taxonIdWithConstraints = taxonIdWithConstraints;
+            this.taxonNameWithConstraints = taxonNameWithConstraints;
+            this.taxonIdWithoutConstraints = taxonIdWithoutConstraints;
+            this.taxonNameWithoutConstraints = taxonNameWithoutConstraints;
+            this.description = description;
+        }
+
+        //GETTERS
+        public String getUberonId() {
+            return uberonId;
+        }
+
+        public void setUberonId(String uberonId) {
+            this.uberonId = uberonId;
+        }
+
+        public String getUberonName() {
+            return uberonName;
+        }
+
+        public void setUberonName(String uberonName) {
+            this.uberonName = uberonName;
+        }
+
+        public String getTaxonIdWithConstraints() {
+            return taxonIdWithConstraints;
+        }
+
+        public void setTaxonIdWithConstraints(String taxonIdWithConstraints) {
+            this.taxonIdWithConstraints = taxonIdWithConstraints;
+        }
+
+        public String getTaxonNameWithConstraints() {
+            return taxonNameWithConstraints;
+        }
+
+        public void setTaxonNameWithConstraints(String taxonNameWithConstraints) {
+            this.taxonNameWithConstraints = taxonNameWithConstraints;
+        }
+
+        public String getTaxonIdWithoutConstraints() {
+            return taxonIdWithoutConstraints;
+        }
+
+        public void setTaxonIdWithoutConstraints(String taxonIdWithoutConstraints) {
+            this.taxonIdWithoutConstraints = taxonIdWithoutConstraints;
+        }
+
+        public String getTaxonNameWithoutConstraints() {
+            return taxonNameWithoutConstraints;
+        }
+
+        public void setTaxonNameWithoutConstraints(String taxonNameWithoutConstraints) {
+            this.taxonNameWithoutConstraints = taxonNameWithoutConstraints;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return "TaxonTaxonConstraintsBean [uberonId=" + uberonId + ", uberonName=" + uberonName
+                    + ", taxonIdWithConstraints=" + taxonIdWithConstraints + ", taxonNameWithConstraints="
+                    + taxonNameWithConstraints + ", taxonIdWithoutConstraints=" + taxonIdWithoutConstraints
+                    + ", taxonNameWithoutConstraints=" + taxonNameWithoutConstraints + ", description=" + description
+                    + "]";
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((description == null) ? 0 : description.hashCode());
+            result = prime * result + ((taxonIdWithConstraints == null) ? 0 : taxonIdWithConstraints.hashCode());
+            result = prime * result + ((taxonIdWithoutConstraints == null) ? 0 : taxonIdWithoutConstraints.hashCode());
+            result = prime * result + ((taxonNameWithConstraints == null) ? 0 : taxonNameWithConstraints.hashCode());
+            result = prime * result
+                    + ((taxonNameWithoutConstraints == null) ? 0 : taxonNameWithoutConstraints.hashCode());
+            result = prime * result + ((uberonId == null) ? 0 : uberonId.hashCode());
+            result = prime * result + ((uberonName == null) ? 0 : uberonName.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TaxonTaxonConstraintsBean other = (TaxonTaxonConstraintsBean) obj;
+            if (description == null) {
+                if (other.description != null)
+                    return false;
+            } else if (!description.equals(other.description))
+                return false;
+            if (taxonIdWithConstraints == null) {
+                if (other.taxonIdWithConstraints != null)
+                    return false;
+            } else if (!taxonIdWithConstraints.equals(other.taxonIdWithConstraints))
+                return false;
+            if (taxonIdWithoutConstraints == null) {
+                if (other.taxonIdWithoutConstraints != null)
+                    return false;
+            } else if (!taxonIdWithoutConstraints.equals(other.taxonIdWithoutConstraints))
+                return false;
+            if (taxonNameWithConstraints == null) {
+                if (other.taxonNameWithConstraints != null)
+                    return false;
+            } else if (!taxonNameWithConstraints.equals(other.taxonNameWithConstraints))
+                return false;
+            if (taxonNameWithoutConstraints == null) {
+                if (other.taxonNameWithoutConstraints != null)
+                    return false;
+            } else if (!taxonNameWithoutConstraints.equals(other.taxonNameWithoutConstraints))
+                return false;
+            if (uberonId == null) {
+                if (other.uberonId != null)
+                    return false;
+            } else if (!uberonId.equals(other.uberonId))
+                return false;
+            if (uberonName == null) {
+                if (other.uberonName != null)
+                    return false;
+            } else if (!uberonName.equals(other.uberonName))
+                return false;
+            return true;
+        }
+        
+        
+        
+        
     }
 }

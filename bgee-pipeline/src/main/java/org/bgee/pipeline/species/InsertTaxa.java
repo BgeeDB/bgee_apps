@@ -158,6 +158,11 @@ public class InsertTaxa extends MySQLDAOUser {
      * separated by a separator {@link org.bgee.pipeline.annotations.AnnotationCommon#ENTITY_SEPARATORS}.
      */
     public static final String SPECIES_KEYWORDS_KEY= "keywords";
+    /**
+     * A {@code String} that is the key to retrieve comments associated to a species, 
+     * separated by a separator {@link org.bgee.pipeline.annotations.AnnotationCommon#ENTITY_SEPARATORS}.
+     */
+    public static final String SPECIES_COMMENT_KEY= "comment";
     
     /**
      * A {@code OWLGraphWrapper} wrapping the NCBI taxonomy {@code OWLOntology}.
@@ -288,12 +293,12 @@ public class InsertTaxa extends MySQLDAOUser {
     /**
      * Extract the information about the species to include in Bgee from the provided 
      * TSV file. The first line of this file should be a header line, 
-     * defining 7 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
+     * defining 12 columns, named exactly as: {@link #SPECIES_ID_KEY}, 
      * {@link #SPECIES_GENUS_KEY}, {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     * {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY}, 
+     * {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY}, {@link SPECIES_GENOME_VERSION_KEY}, 
      * {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, 
      * {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
-     * {@link #SPECIES_KEYWORDS_KEY} (in whatever order). 
+     * {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY} (in whatever order). 
      * This method returns a {@code Collection} where each 
      * species is represented by a {@code Map}, containing information mapped 
      * to the keys listed above. In these {@code Map}s, the value associated to 
@@ -304,12 +309,12 @@ public class InsertTaxa extends MySQLDAOUser {
      *                      containing the species used in Bgee
      * @return              A {@code Collection} of {@code Map}s where each {@code Map} 
      *                      represents a species, with information about it mapped to 
-     *                      the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY}, 
-     *                      {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY}, 
-     *                      {@link #SPECIES_GENOME_FILE_KEY}, {@link #SPECIES_GENOME_VERSION_KEY}, 
-     *                      {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY}, 
-     *                      {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY}, 
-     *                      {@link #SPECIES_KEYWORDS_KEY}.
+     *                      the keys {@link #SPECIES_ID_KEY}, {@link #SPECIES_GENUS_KEY},
+     *                      {@link #SPECIES_NAME_KEY}, {@link #SPECIES_COMMON_NAME_KEY},
+     *                      {@link #SPECIES_DISPLAY_ORDER_KEY}, {@link #SPECIES_GENOME_FILE_KEY},
+     *                      {@link SPECIES_GENOME_VERSION_KEY}, {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY},
+     *                      {@link #SPECIES_GENOME_ID_KEY}, {@link #SPECIES_FAKE_GENE_PREFIX_KEY},
+     *                      {@link #SPECIES_KEYWORDS_KEY}, {@link #SPECIES_COMMENT_KEY}.
      *                      The values associated to {@link #SPECIES_ID_KEY} and 
      *                      {@link #SPECIES_GENOME_DATA_SOURCE_ID_KEY} are 
      *                      an {@code Integer}, other values are {@code String}s.
@@ -327,7 +332,7 @@ public class InsertTaxa extends MySQLDAOUser {
             String unexpectedFormat = "The provided TSV species file is not " +
             		"in the expected format";
             String[] header = mapReader.getHeader(true);
-            if (header.length != 11) {
+            if (header.length != 12) {
                 throw log.throwing(new IllegalArgumentException(unexpectedFormat));
             }
             
@@ -355,6 +360,8 @@ public class InsertTaxa extends MySQLDAOUser {
                     processors[i] = new Optional();
                 } else if (header[i].equalsIgnoreCase(SPECIES_KEYWORDS_KEY)) {
                     processors[i] = new Optional(new AnnotationCommon.ParseMultipleStringValues());
+                } else if (header[i].equalsIgnoreCase(SPECIES_COMMENT_KEY)) {
+                    processors[i] = new Optional();
                 } else {
                     throw log.throwing(new IllegalArgumentException(unexpectedFormat 
                             + " - unrecognized column: " + header[i]));

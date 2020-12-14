@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+
 import owltools.graph.OWLGraphManipulator;
 import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -1232,7 +1234,7 @@ public class OntologyUtils {
      * @throws IllegalArgumentException
      */
     public void saveAsOBO(String outputFile) 
-            throws IOException, IllegalArgumentException, OWLOntologyCreationException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
         this.saveAsOBO(outputFile, true);
         log.exit();
@@ -1255,7 +1257,7 @@ public class OntologyUtils {
      *                                      a correct name.
      */
     public void saveAsOBO(String outputFile, boolean checkStructure) 
-            throws IOException, IllegalArgumentException, OWLOntologyCreationException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
 
         if (!outputFile.endsWith(".obo")) {
@@ -2386,5 +2388,69 @@ public class OntologyUtils {
             return "[OntologyUtils wrapping " + this.ontology.toString() + "]";
         } 
         return super.toString();
+    }
+
+    /**
+     * Class used solely to implement equals/hashCode. Indeed, {@code TransferObject}s
+     * do not implement such methods.
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14.1 Aug. 2020
+     * @since Bgee 14.1 Aug. 2020
+     *
+     * @param <T>   The type of ID of source and target of the relation
+     */
+    public static class PipelineRelationTO<T> extends RelationTO<T> {
+        private static final long serialVersionUID = -6285169266195060397L;
+
+        public PipelineRelationTO(T sourceId, T targetId) {
+            this(null, sourceId, targetId, null, null);
+        }
+
+        public PipelineRelationTO(Integer relationId, T sourceId, T targetId,
+                RelationType relType, RelationStatus relationStatus) {
+            super(relationId, sourceId, targetId, relType, relationStatus);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getId() == null)? 0: this.getId().hashCode());
+            result = prime * result + ((this.getTargetId() == null)? 0: this.getTargetId().hashCode());
+            result = prime * result + ((this.getSourceId() == null)? 0: this.getSourceId().hashCode());
+            result = prime * result + ((this.getRelationType() == null)? 0: this.getRelationType().hashCode());
+            result = prime * result + ((this.getRelationStatus() == null)? 0: this.getRelationStatus().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            RelationTO<?> other = (RelationTO<?>) obj;
+            if (!Objects.equals(this.getId(), other.getId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getTargetId(), other.getTargetId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getSourceId(), other.getSourceId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationType(), other.getRelationType())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationStatus(), other.getRelationStatus())) {
+                return false;
+            }
+            return true;
+        }
     }
 }

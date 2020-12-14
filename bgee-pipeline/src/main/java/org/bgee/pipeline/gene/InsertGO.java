@@ -14,6 +14,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.pipeline.MySQLDAOUser;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
+import org.bgee.pipeline.ontologycommon.OntologyUtils.PipelineRelationTO;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -252,7 +253,7 @@ public class InsertGO extends MySQLDAOUser {
                   edge.getSingleQuantifiedProperty().getQuantifier() == Quantifier.SUBCLASS_OF) || 
                   edge.getSingleQuantifiedProperty().getProperty().equals(partOf)) {
                     
-                    RelationTO<String> rel = new RelationTO<>(goWrapper.getIdentifier(edge.getSource()), 
+                    RelationTO<String> rel = new PipelineRelationTO<String>(goWrapper.getIdentifier(edge.getSource()), 
                             goWrapper.getIdentifier(edge.getTarget()));
                     rels.add(rel);
                     log.debug("Adding relation: {}", rel);

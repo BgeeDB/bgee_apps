@@ -333,6 +333,23 @@ public class CommandRunner {
     }
 
     /**
+     * Return a {@code boolean} value corresponding to {@code arg}: if {@code arg} is equal to
+     * '1' or to 'true', ignoring case, this method returns {@code true}, otherwise returns
+     * {@code false} in all other cases.
+     *
+     * @param arg   A {@code String} that is an argument from a command line usage.
+     * @return      A {@code boolean} value corresponding to {@code arg}.
+     */
+    public static boolean parseArgumentAsBoolean(String arg) {
+        log.entry(arg);
+        if (arg != null && (arg.trim().equalsIgnoreCase("1") ||
+                arg.trim().equalsIgnoreCase("true"))) {
+            return log.exit(true);
+        }
+        return log.exit(false);
+    }
+
+    /**
      * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
      * being {@code String.class}.
      * 

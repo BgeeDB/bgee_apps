@@ -2406,7 +2406,10 @@ public class OntologyUtils {
         public PipelineRelationTO(T sourceId, T targetId) {
             this(null, sourceId, targetId, null, null);
         }
-
+        public PipelineRelationTO(T sourceId, T targetId, RelationType relType,
+                RelationStatus relationStatus) {
+            this(null, sourceId, targetId, relType, relationStatus);
+        }
         public PipelineRelationTO(Integer relationId, T sourceId, T targetId,
                 RelationType relType, RelationStatus relationStatus) {
             super(relationId, sourceId, targetId, relType, relationStatus);

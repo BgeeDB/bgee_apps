@@ -23,13 +23,19 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
+import org.bgee.pipeline.ontologycommon.OntologyUtils.PipelineRelationTO;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -269,7 +275,7 @@ public class Uberon extends UberonCommon {
                         "Incorrect number of arguments provided, expected " + 
                         "5 arguments, " + args.length + " provided."));
             }
-            new Uberon(args[1]).explainRelationForOWLClass(args[2],
+            new Uberon(args[1]).explainRelationFromOWLClassIds(args[2],
                     CommandRunner.parseArgument(args[3]),
                     CommandRunner.parseListArgumentAsInt(args[4]));
         } else {
@@ -1146,38 +1152,91 @@ public class Uberon extends UberonCommon {
      *                      The validity of the relation itself in these species will not be checked
      *                      (GCI relation). Cannot be {@code null} nor empty.
      */
-    public void explainRelationForOWLClass(String sourceClassId, String targetClassId,
+    public void explainRelationFromOWLClassIds(String sourceClassId, String targetClassId,
             Collection<Integer> speciesIds) {
+        log.entry(sourceClassId, targetClassId, speciesIds);
+
+        Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges =
+                this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId, speciesIds);
+
+        if (directIndirectValidOutgoingEdges == null) {
+            System.out.println("Could not find OWLClass corresponding to " + sourceClassId);
+            log.exit(); return;
+        }
+        OntologyUtils utils = this.getOntologyUtils();
+        OWLGraphWrapper wrapper = utils.getWrapper();
+        //Just to easily retrieve the source class from the edges
+        OWLClass sourceClass = directIndirectValidOutgoingEdges.values().stream()
+                .flatMap(set -> set.stream())
+                .findAny()
+                .map(outgoingEdge -> this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getSource())))
+                .get();
+        directIndirectValidOutgoingEdges.entrySet().stream().forEach(e -> {
+            e.getValue().stream().forEach(outgoingEdge -> {
+                OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
+                String targetId = wrapper.getIdentifier(target);
+                System.out.println((e.getKey() ? "Direct" : "Indirect")
+                + " outgoing edge from " + sourceClassId + " to " + targetId + ": "
+                        + outgoingEdge);
+            });
+        });
+
+        if (directIndirectValidOutgoingEdges.values().stream().allMatch(s -> s.isEmpty())) {
+            System.out.println("No outgoing edge found from " + sourceClassId + " to " + targetClassId);
+            log.exit(); return;
+        }
+
+        System.out.println("First pass RelationTOs: ");
+        Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs = new HashMap<>();
+        Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs = new HashMap<>();
+        this.generateRelationTOsFirstPassForOWLClass(sourceClass,
+                directIndirectValidOutgoingEdges, directRelationTOs, indirectRelationTOs,
+                new HashSet<>(), speciesIds);
+        directRelationTOs.entrySet().stream()
+        .forEach(e -> System.out.println("First pass direct RelationTOs: " + e.getKey() + " - "
+                + " valid in species IDs: " + e.getValue()));
+        indirectRelationTOs.entrySet().stream()
+        .forEach(e -> System.out.println("First pass indirect RelationTOs: " + e.getKey() + " - "
+                + " valid in species IDs: " + e.getValue()));
+
+        System.out.println("Second pass RelationTOs: ");
+        Map<PipelineRelationTO<String>, Set<TaxonConstraintTO<Integer>>> secondPassRelationTOs =
+                this.generateRelationTOsSecondPass(directRelationTOs, indirectRelationTOs, speciesIds, 0);
+        secondPassRelationTOs.entrySet().stream().forEach(e -> {
+            System.out.print("Second pass RelationTOs: " + e.getKey() + " - TaxonConstraintTOs: ");
+            e.getValue().stream().forEach(v -> System.out.print(v + " "));
+            System.out.println();
+        });
+
+        log.exit();
+    }
+
+    public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
+            String targetClassId, Collection<Integer> speciesIds) {
         log.entry(sourceClassId, targetClassId, speciesIds);
 
         OWLClass sourceClass = this.getOWLClass(sourceClassId);
         if (sourceClass == null) {
-            System.out.println("Could not find OWLClass corresponding to " + sourceClassId);
+            log.debug("Could not find OWLClass corresponding to {}", sourceClassId);
+            return log.exit(null);
         }
-        Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges =
-                this.getValidOutgoingEdgesForOWLClass(sourceClass, new HashSet<>(), speciesIds);
-        Set<OWLGraphEdge> allOutgoingEdges = new HashSet<>(directIndirectValidOutgoingEdges.get(false));
-        allOutgoingEdges.addAll(directIndirectValidOutgoingEdges.get(true));
 
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
-        boolean targetClassIdFound = false;
-        for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
-            OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
-            String targetId = wrapper.getIdentifier(target);
-            if (targetClassId == null || targetClassId.equals(targetId)) {
-                targetClassIdFound = true;
-            } else {
-                continue;
-            }
-            System.out.println("Outgoing edge from " + sourceClassId + " to " + targetId + ": "
-                    + outgoingEdge);
-        }
-        if (!targetClassIdFound) {
-            System.out.println("No outgoing edge foud from " + sourceClassId + " to " + targetClassId);
-        }
-
-        log.exit();
+        return log.exit(
+            this.getValidOutgoingEdgesForOWLClass(sourceClass, new HashSet<>(), speciesIds)
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().filter(outgoingEdge -> {
+                            OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
+                            String targetId = wrapper.getIdentifier(target);
+                            if (targetClassId == null || targetClassId.equals(targetId)) {
+                                return true;
+                            }
+                            return false;
+                        }).collect(Collectors.toSet())
+        )));
     }
 
     /**
@@ -1215,8 +1274,6 @@ public class Uberon extends UberonCommon {
 
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
-        OWLClass taxonomyRoot = wrapper.getOWLClassByIdentifier(
-                UberonCommon.TAXONOMY_ROOT_ID, true);
         OWLObjectProperty partOf = wrapper.getOWLObjectPropertyByIdentifier(
                 OntologyUtils.PART_OF_ID);
 
@@ -1313,8 +1370,7 @@ public class Uberon extends UberonCommon {
                 //if it is a GCI relation, with make sure it is actually 
                 //a taxonomy GCI relation
                 if (outgoingEdge.isGCI() && 
-                        (!wrapper.getAncestorsThroughIsA(outgoingEdge.getGCIFiller()).
-                                contains(taxonomyRoot) || 
+                        (!isTaxonomyClass(outgoingEdge.getGCIFiller()) || 
                                 !partOf.equals(outgoingEdge.getGCIRelation()))) {
                     log.trace("Edge discarded because it is a non-taxonomy GCI");
                     continue edge;
@@ -1417,6 +1473,378 @@ public class Uberon extends UberonCommon {
         }
         
         return log.exit(true);
+    }
+
+    /**
+     * Method to determine whether an {@code OWLObject} is an {@code OWLClass}
+     * part of the taxonomy ontology.
+     *
+     * @param o An {@code OWLObject} to test.
+     * @return  {@code true} if {@code o} is an {@code OWLClass} part of the taxonomy ontology.
+     */
+    public boolean isTaxonomyClass(OWLObject o) {
+        log.entry(o);
+        OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
+        return log.exit(wrapper.getAncestorsThroughIsA(o).contains(
+                wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID, true)));
+    }
+
+    /**
+     * Execute the first pass generating {@code RelationTO}s representing relations between 
+     * {@code OWLClass}es and their related {@code TaxonConstraintTO}s, present 
+     * in the ontologies wrapped by {@code uberon}. The {@code Map}s {@code directRelationTOs} 
+     * and {@code indirectRelationTOs} provided as arguments will be modified as a result 
+     * of the call to this method.
+     * <p>
+     * This method will store {@code RelationTO}s representing 
+     * direct relations into the {@code Map} {@code directRelationTOs}, those representing 
+     * indirect relations into the {@code Map} {@code indirectRelationTOs}. In these 
+     * {@code Map}s, the {@code RelationTO}s will be associated to a {@code Set} of 
+     * {@code Integer}s, representing the NCBI IDs of the species they are valid for. 
+     * We need to store them separately to latter be able to identify  
+     * direct relations with different taxon constraints as compared to an equivalent 
+     * indirect relations, in order to keep only the taxa not defined for the indirect 
+     * relation.
+     * <p>
+     * This method is called by {@link #generateRelationInformation(Uberon, Set, Collection)}, 
+     * and will be followed by a call to 
+     * {@link #generateRelationTOsSecondPass(Map, Map, Collection)}. We need to do a first pass 
+     * through all relations, to be able to detect relations leading to equivalent classes, 
+     * or relations equivalent, but with different taxon constraints. The second pass 
+     * will assign proper relation IDs and {@code RelationStatus}. They are split into 
+     * two separated methods only for clarity.
+     * 
+     * @param directRelationTOs A {@code Map} where keys are {@code RelationTO}s, that will 
+     *                          store direct relations between anatomical entities, 
+     *                          the associated value being a {@code Set} of {@code Integer}s, 
+     *                          that will store the NCBI IDs of the species the relation 
+     *                          is valid for. This {@code Map} will be filled as a result 
+     *                          of the call to this method.
+     * @param indirectRelationTOs A {@code Map} where keys are {@code RelationTO}s, that will 
+     *                          store indirect relations between anatomical entities, 
+     *                          the associated value being a {@code Set} of {@code Integer}s, 
+     *                          that will store the NCBI IDs of the species the relation 
+     *                          is valid for. This {@code Map} will be filled as a result 
+     *                          of the call to this method.
+     * @param uberon            An {@code Uberon} wrapping the anatomical ontology 
+     *                          to be inserted.
+     * @param classesToIgnore   A {@code Set} of {@code OWLClass}es to be discarded, 
+     *                          generated by the method {@code insertAnatOntologyIntoDataSource}.
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                          of the species to consider, as provided to the method 
+     *                          {@code insertAnatOntologyIntoDataSource}. 
+     *                          Only anatomical entities and relations existing 
+     *                          in at least one of these species will be considered. 
+     * @see #generateRelationInformation(Uberon, Set, Collection)
+     * @see #generateRelationTOsSecondPass(Map, Map, Collection)
+     * @throws IllegalArgumentException If it was not possible to retrieve an OBO-like ID 
+     *                                  and a label for an {@code OWLClass} that should 
+     *                                  have been considered.
+     */
+    public void generateRelationTOsFirstPassForOWLClass(OWLClass cls,
+            Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges,
+            Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
+            Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs, 
+            Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
+        log.entry(directRelationTOs, indirectRelationTOs, classesToIgnore, speciesIds);
+        
+        OntologyUtils utils = this.getOntologyUtils();
+        OWLGraphWrapper wrapper = utils.getWrapper();
+        
+        OWLClass mappedCls = this.getOWLClass(wrapper.getIdentifier(cls));
+        if (mappedCls == null || !this.isValidClass(mappedCls, classesToIgnore, speciesIds)) {
+            log.exit(); return;
+        }
+        String id = wrapper.getIdentifier(mappedCls);
+
+        Set<OWLGraphEdge> allOutgoingEdges = new HashSet<>(directIndirectValidOutgoingEdges.get(false));
+        allOutgoingEdges.addAll(directIndirectValidOutgoingEdges.get(true));
+        Set<OWLGraphEdge> directOutgoingEdges = directIndirectValidOutgoingEdges.get(true);
+        
+        edge: for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+            boolean isDirect = directOutgoingEdges.contains(outgoingEdge);
+            OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
+            String targetId = wrapper.getIdentifier(target);
+            
+            //-------------Generate RelationTOs and taxon constraints---------------
+            RelationType relType = null;
+            if (utils.isASubClassOfEdge(outgoingEdge) || 
+                    utils.isPartOfRelation(outgoingEdge)) {
+                relType = RelationType.ISA_PARTOF;
+            }
+            //make sure to call isTransformationOfRelation before 
+            //isDevelopsFromRelation, because a transformation_of relation is also 
+            //a develops_from relation.
+            else if (utils.isTransformationOfRelation(outgoingEdge)) {
+                relType = RelationType.TRANSFORMATIONOF;
+            } else if (utils.isDevelopsFromRelation(outgoingEdge) && 
+                    //just to be sure, in case the order of the code changes
+                    !utils.isTransformationOfRelation(outgoingEdge)) {
+                relType = RelationType.DEVELOPSFROM;
+            } else {
+                throw log.throwing(new IllegalArgumentException("The provided ontology " +
+                        "contains a relation that is not recognized: " + outgoingEdge));
+            }
+            
+            //now, get the taxon constraints for this relation 
+            Set<Integer> speciesIdsToConsider = new HashSet<Integer>(speciesIds);
+            if (outgoingEdge.isGCI()) {
+                //if it is a GCI, we retrieve the associated species
+                Set<String> speciesClsIdsToConsider = new HashSet<String>();
+                speciesClsIdsToConsider.add(
+                        wrapper.getIdentifier(outgoingEdge.getGCIFiller()));
+                for (OWLClass taxonGCIDescendants: 
+                    wrapper.getDescendantsThroughIsA(outgoingEdge.getGCIFiller())) {
+                    speciesClsIdsToConsider.add(
+                            wrapper.getIdentifier(taxonGCIDescendants));
+                }
+                speciesIdsToConsider = 
+                        OntologyUtils.convertToNcbiIds(speciesClsIdsToConsider);
+                speciesIdsToConsider.retainAll(speciesIds);
+                
+            } 
+            //in any case, we apply the maximal taxon constraints from all OWLClasses 
+            //that were walked on the path
+            Set<OWLClass> classesWalked = new HashSet<OWLClass>();
+            for (OWLAxiom ax: outgoingEdge.getAxioms()) {
+                classesWalked.addAll(ax.getClassesInSignature());
+            }
+            int classCount = 0;
+            for (OWLClass clsWalked: classesWalked) {
+                OWLClass mappedClsWalked = 
+                        this.getOWLClass(wrapper.getIdentifier(clsWalked));
+                if (mappedClsWalked == null || 
+                        !this.isValidClass(mappedClsWalked, classesToIgnore, speciesIds) ||
+                        outgoingEdge.isGCI() && mappedClsWalked.equals(outgoingEdge.getGCIFiller())) {
+                    continue;
+                }
+                Set<Integer> inSpecies = this.existsInSpecies(mappedClsWalked, 
+                        speciesIds);
+                log.trace("OWLClass walked to produce the edge: {} - Mapped to OWLClass: {} - Exists in species: {}", 
+                        clsWalked, mappedClsWalked, inSpecies);
+                boolean changed = speciesIdsToConsider.retainAll(inSpecies);
+                if (log.isDebugEnabled() && changed && outgoingEdge.isGCI()) {
+                    //It's actually OK, the OWLGraphWrapper does not use taxon constraints, 
+                    //so it can't determine this. Here, this is an improvement 
+                    //for the Bgee pipeline.
+                    log.debug("A GCI relation is supposed to exist in taxon {}, "
+                            + "but it was produced by combining edges going through "
+                            + "classes not existing in this taxon, notably the class {}, " +
+                            "existing in species {}. Offending GCI relation: {}", 
+                            outgoingEdge.getGCIFiller(), mappedClsWalked, 
+                            inSpecies, outgoingEdge);
+                }
+                classCount++;
+            }
+            //we sometimes have relations like:
+            //SubClassOf(ObjectIntersectionOf(<http://purl.obolibrary.org/obo/UBERON_0010011>
+            //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+            //<http://purl.obolibrary.org/obo/NCBITaxon_9443>))
+            //ObjectSomeValuesFrom(<http://purl.obolibrary.org/obo/BFO_0000050>
+            //<http://purl.obolibrary.org/obo/UBERON_0010011>)),
+            //SubClassOf(Annotation(<http://www.geneontology.org/formats/oboInOwl#source> "FMA"^^xsd:string)
+            //<http://purl.obolibrary.org/obo/UBERON_0010011> <http://purl.obolibrary.org/obo/UBERON_0010009>)]
+            //It would be considered as an indirect relation, but we don't want that.
+            if (classCount <= 2) {
+                isDirect = true;
+            }
+            //and now, in case it was a fake relation with no axioms, e.g., 
+            //reflexive edge
+            speciesIdsToConsider.retainAll(this.existsInSpecies(mappedCls, speciesIds));
+            speciesIdsToConsider.retainAll(this.existsInSpecies(target, speciesIds));
+            
+            if (speciesIdsToConsider.isEmpty()) {
+                //exists in no species, discard
+                log.trace("Discarding edge because exists in no species: {}", 
+                        outgoingEdge);
+                continue edge;
+            }
+            
+            //create RelationTO.
+            //we create a RelationTO with null RelationStatus in any case, 
+            //to be able to compare relations. Correct RelationStatus and relation ID 
+            //will be assigned during the second pass.
+            PipelineRelationTO<String> relTO = new PipelineRelationTO<>(null, id, targetId, relType, null);
+            log.trace("RelationTO generated: {} - is direct relation: {}", 
+                    relTO, isDirect);
+            //generate taxon constraints
+            Set<Integer> inSpecies = null;
+            if (isDirect) {
+                inSpecies = directRelationTOs.get(relTO);
+                if (inSpecies == null) {
+                    inSpecies = new HashSet<Integer>();
+                    directRelationTOs.put(relTO, inSpecies);
+                }
+            } else {
+                inSpecies = indirectRelationTOs.get(relTO);
+                if (inSpecies == null) {
+                    inSpecies = new HashSet<Integer>();
+                    indirectRelationTOs.put(relTO, inSpecies);
+                }
+            }
+            inSpecies.addAll(speciesIdsToConsider);
+            log.trace("Complete taxon constraints generated so far for this RelationTO: {}", 
+                    inSpecies);
+        }
+        
+        log.exit();
+    }
+
+    /**
+     * Execute the second pass generating {@code RelationTO}s representing relations between 
+     * {@code OWLClass}es and their related {@code TaxonConstraintTO}s. 
+     * The {@code Map}s {@code directRelationTOs} and {@code indirectRelationTOs} 
+     * are used to generate the final {@code RelationTOs} and {@code TaxonConstraintTO}s,  
+     * that will be stored in {@link #anatRelationTOs} and {@link #anatRelTaxonConstraintTOs}.
+     * <p>
+     * This method is called by {@link #generateRelationInformation(Uberon, Set, Collection)}, 
+     * after a call to 
+     * {@link #generateRelationTOsFirstPass(Map, Map, Uberon, Set, Collection)}. 
+     * We need to do a first pass 
+     * through all relations, to be able to detect relations leading to equivalent classes, 
+     * or relations equivalent, but with different taxon constraints. The second pass 
+     * will assign proper relation IDs and {@code RelationStatus}. They are split into 
+     * two separated methods only for clarity.
+     * 
+     * @param directRelationTOs A {@code Map} where keys are {@code RelationTO}s, that are 
+     *                          the direct relations between anatomical entities, 
+     *                          the associated value being a {@code Set} of {@code Integer}s, 
+     *                          that are the NCBI IDs of the species the relation 
+     *                          is valid for. 
+     * @param indirectRelationTOs A {@code Map} where keys are {@code RelationTO}s, that are 
+     *                          the indirect relations between anatomical entities, 
+     *                          the associated value being a {@code Set} of {@code Integer}s, 
+     *                          that are the NCBI IDs of the species the relation 
+     *                          is valid for. 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the NCBI IDs 
+     *                          of the species to consider, as provided to the method 
+     *                          {@code insertAnatOntologyIntoDataSource}. 
+     *                          Only anatomical entities and relations existing 
+     *                          in at least one of these species will be considered.
+     * @param relationIdStart   A {@code int} that is the ID where to start the increment of relation IDs
+     *                          from.
+     * @return                  A {@code Map} where keys are the generated {@code PipelineRelationTO}s,
+     *                          the associated value being a {@code Set} storing the {@code TaxonConstraintTO}s
+     *                          for the related relation.
+     * @see #generateRelationTOsFirstPassForOWLClass(OWLClass, Map, Map, Map, Set, Set, Collection)
+     */
+    public Map<PipelineRelationTO<String>, Set<TaxonConstraintTO<Integer>>>
+    generateRelationTOsSecondPass(Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
+            Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs,
+            Collection<Integer> speciesIds, int relationIdStart) {
+        log.entry(directRelationTOs, indirectRelationTOs, speciesIds, relationIdStart);
+        
+        int relationId = relationIdStart;
+        Set<RelationTO<String>> allRelationTOs = new HashSet<>(directRelationTOs.keySet());
+        allRelationTOs.addAll(indirectRelationTOs.keySet());
+        Map<PipelineRelationTO<String>, Set<TaxonConstraintTO<Integer>>> relsToTCs = new HashMap<>();
+        
+        for (RelationTO<String> relTO: allRelationTOs) {
+            log.trace("Iterating relation: {}", relTO);
+            
+            RelationStatus relStatus = null;
+            Set<Integer> inSpecies = null;
+            if (relTO.getSourceId().equals(relTO.getTargetId())) {
+                //if it is not an is_a relation, it is not a reflexive relation, 
+                //but an incorrect cycle.
+                if (!relTO.getRelationType().equals(RelationType.ISA_PARTOF)) {
+                    log.trace("Discarding relationTO because it is a cycle: {}", relTO);
+                    continue;
+                }
+                
+                log.trace("Relation is reflexive");
+                relStatus = RelationStatus.REFLEXIVE;
+                //reflexive relations must be stored as direct relations
+                inSpecies = directRelationTOs.get(relTO);
+                assert inSpecies != null;
+                
+            } else if (indirectRelationTOs.containsKey(relTO)) {
+                log.trace("Relation is indirect");
+                relStatus = RelationStatus.INDIRECT;
+                inSpecies = indirectRelationTOs.get(relTO);
+                
+                //if there is also an equivalent direct relation with different taxon constraints, 
+                //we keep only the taxon constraints not present in the indirect relation
+                Set<Integer> directInSpecies = directRelationTOs.get(relTO);
+                if (directInSpecies != null) {
+                    directInSpecies.removeAll(inSpecies);
+                    if (!directInSpecies.isEmpty()) {
+                        
+                        relationId++;
+                        PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+                                relTO.getSourceId(), relTO.getTargetId(), 
+                                relTO.getRelationType(), RelationStatus.DIRECT);
+                        log.trace("An equivalent direct relation also exists, but with different " +
+                                "taxon constraints, generating direct redundant relation: {}", 
+                                newRelTO);
+                        
+                        //such a relation should never be defined for all taxa at this point
+                        if (directInSpecies.containsAll(speciesIds)) {
+                            throw log.throwing(new AssertionError("Incorrect taxon constraints " +
+                                    "for direct redundant relation: " + relTO));
+                        }
+                        relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, directInSpecies, 
+                                speciesIds));
+                    } else {
+                        log.trace("An equivalent direct relation also exists, but taxon constraints " +
+                                "are a subset of the indirect relation, discarding direct relation");
+                    }
+                }
+            } else if (directRelationTOs.containsKey(relTO)) {
+                log.trace("Relation is direct");
+                relStatus = RelationStatus.DIRECT;
+                inSpecies = directRelationTOs.get(relTO);
+            }
+            
+            relationId++;
+            PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+                    relTO.getSourceId(), relTO.getTargetId(), 
+                    relTO.getRelationType(), relStatus);
+            log.trace("Generating proper RelationTO: {}", newRelTO);
+
+            relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, inSpecies, 
+                    speciesIds));
+        }
+        return log.exit(relsToTCs);
+    }
+
+    /**
+     * Convenient method to generate the {@code TaxonConstraintTO}s associated to 
+     * a relation between anatomical entities.
+     * 
+     * @param relationId        An {@code int} that is the ID of a relation for which 
+     *                          to associate taxon constraints to.
+     * @param inSpecies         A {@code Set} of {@code Integer}s that the NCBI IDs of the species 
+     *                          the relation is defined for.
+     * @param allowedSpeciesIds A {@code Collection} of {@code Integer}s that the NCBI IDs 
+     *                          of the allowed species to be inserted into the data source.
+     * @return                  A {@code Set} of {@code TaxonConstraintTO}s generated from
+     *                          the arguments.
+     * @see #generateRelationTOsSecondPass(Map, Map, Collection, int)
+     */
+    private static Set<TaxonConstraintTO<Integer>> getRelationTaxonConstraints(int relationId, Set<Integer> inSpecies, 
+            Collection<Integer> allowedSpeciesIds) {
+        log.entry(relationId, inSpecies, allowedSpeciesIds);
+
+        Set<TaxonConstraintTO<Integer>> taxonConstraints = new HashSet<>();
+        if (inSpecies.containsAll(allowedSpeciesIds)) {
+            //a null speciesId means: exists in all species
+            TaxonConstraintTO<Integer> taxConstraintTO = 
+                    new TaxonConstraintTO<>(relationId, null);
+            log.trace("Taxon constraint: {}", taxConstraintTO);
+            taxonConstraints.add(taxConstraintTO);
+        } else if (!inSpecies.isEmpty()) {
+            for (int speciesId: inSpecies) {
+                TaxonConstraintTO<Integer> taxConstraintTO = new TaxonConstraintTO<>(
+                        relationId, speciesId);
+                log.trace("Taxon constraint: {}", taxConstraintTO);
+                taxonConstraints.add(taxConstraintTO);
+            }
+        } else {
+            throw log.throwing(new AssertionError("Relation with no taxon constraints defined."));
+        }
+        
+        return log.exit(taxonConstraints);
     }
 
     /**

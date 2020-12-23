@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -303,11 +304,13 @@ public class GenerateTaxonOntology {
                 log.trace("New label {} will be added for class {}", newAnnot, cls);
                 
                 //and remove any already existing label
-                for (OWLAnnotation annotation : EntitySearcher.getAnnotations(cls, ont, labelProp)) {
-                    rmLabels.add(new RemoveAxiom(ont, 
-                        factory.getOWLAnnotationAssertionAxiom(cls.getIRI(), annotation)));
-                    log.trace("Existing label {} will be removed for class {}", annotation, cls);
-                }
+                rmLabels.addAll(EntitySearcher.getAnnotations(cls, ont, labelProp)
+                        .map(annotation -> {
+                            log.trace("Existing label {} will be removed for class {}", annotation, cls);
+                            return new RemoveAxiom(ont, factory.getOWLAnnotationAssertionAxiom(
+                                    cls.getIRI(), annotation));
+                        })
+                        .collect(Collectors.toSet()));
             }
         }
         ChangeApplied labelsRemoved = manager.applyChanges(rmLabels);

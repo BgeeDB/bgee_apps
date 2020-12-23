@@ -958,14 +958,18 @@ public class Uberon extends UberonCommon {
                     }
                 }
                 //and from any annotation properties that can lead to a taxon
-                for (OWLAnnotation annot: EntitySearcher.getAnnotations(cls, ont)) {
-                    if (annotProps.contains(annot.getProperty()) && 
-                            annot.getValue() instanceof IRI) {
-                        log.trace("Taxon {} captured through annotation property in annotation {}", 
-                                annot.getValue(), annot);
-                        taxonIds.add(wrapper.getIdentifier(annot.getValue()));
-                    }
-                }
+                taxonIds.addAll(EntitySearcher.getAnnotations(cls, ont)
+                        .map(annot -> {
+                            if (annotProps.contains(annot.getProperty()) &&
+                                    annot.getValue() instanceof IRI) {
+                                log.trace("Taxon {} captured through annotation property in annotation {}",
+                                        annot.getValue(), annot);
+                                return wrapper.getIdentifier(annot.getValue());
+                            }
+                            return null;
+                        })
+                        .filter(id -> id != null)
+                        .collect(Collectors.toSet()));
             }
             
             //now we get the "treat-xrefs-as-reverse-genus-differentia" ontology annotations

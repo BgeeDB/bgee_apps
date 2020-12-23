@@ -1297,8 +1297,8 @@ public class OntologyUtils {
         File rdfFile = new File(outputFile); 
         OWLOntologyManager manager = this.ontology.getOWLOntologyManager();
         RDFXMLDocumentFormat owlRdfFormat = new RDFXMLDocumentFormat();
-        if (owlRdfFormat.isPrefixOWLOntologyFormat()) {
-            owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLOntologyFormat());
+        if (owlRdfFormat.isPrefixOWLDocumentFormat()) {
+            owlRdfFormat.copyPrefixesFrom(owlRdfFormat.asPrefixOWLDocumentFormat());
         } 
         manager.saveOntology(this.ontology, owlRdfFormat, IRI.create(rdfFile.toURI()));
         

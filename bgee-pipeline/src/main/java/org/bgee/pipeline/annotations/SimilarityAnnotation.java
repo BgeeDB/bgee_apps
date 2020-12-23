@@ -3738,8 +3738,10 @@ public class SimilarityAnnotation {
                 log.trace("Already annotated, skip");
                 continue;
             }
-            for (OWLClassExpression clsExpr: 
-                EntitySearcher.getEquivalentClasses(cls, uberonOntWrapper.getAllOntologies())) {
+            Set<OWLClassExpression> clsExprs = uberonOntWrapper.getAllOntologies().stream()
+                    .flatMap(ont -> EntitySearcher.getEquivalentClasses(cls, ont))
+                    .collect(Collectors.toSet());
+            for (OWLClassExpression clsExpr: clsExprs) {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {
                     log.trace("Examining IntersectionOf expression: {}", clsExpr);
                     boolean allClassesAnnotated = true;

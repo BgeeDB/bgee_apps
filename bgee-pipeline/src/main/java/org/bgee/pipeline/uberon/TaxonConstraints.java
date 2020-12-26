@@ -398,7 +398,7 @@ public class TaxonConstraints {
         log.entry(fileNamePrefix);
         
         OntologyUtils utils = new OntologyUtils(this.uberonOntWrapper);
-        utils.saveAsOBO(fileNamePrefix + ".obo");
+        utils.saveAsOBO(fileNamePrefix + ".obo", false);
         utils.saveAsOWL(fileNamePrefix + ".owl");
         
         log.exit();

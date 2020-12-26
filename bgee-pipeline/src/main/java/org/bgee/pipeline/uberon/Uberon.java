@@ -1218,6 +1218,14 @@ public class Uberon extends UberonCommon {
     public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
             String targetClassId, Collection<Integer> speciesIds) {
         log.entry(sourceClassId, targetClassId, speciesIds);
+        return log.exit(this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId,
+                speciesIds, false, new HashSet<>()));
+    }
+
+    public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
+            String targetClassId, Collection<Integer> speciesIds, boolean twoPassesValidation,
+            Set<OWLClass> classesToIgnore) {
+        log.entry(sourceClassId, targetClassId, speciesIds, twoPassesValidation, classesToIgnore);
 
         OWLClass sourceClass = this.getOWLClass(sourceClassId);
         if (sourceClass == null) {
@@ -1228,17 +1236,35 @@ public class Uberon extends UberonCommon {
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
         return log.exit(
-            this.getValidOutgoingEdgesForOWLClass(sourceClass, new HashSet<>(), speciesIds)
+            this.getValidOutgoingEdgesForOWLClass(sourceClass, classesToIgnore, speciesIds)
                 .entrySet().stream()
                 .collect(Collectors.toMap(
                         e -> e.getKey(),
                         e -> e.getValue().stream().filter(outgoingEdge -> {
-                            OWLClass target = this.getOWLClass(wrapper.getIdentifier(outgoingEdge.getTarget()));
-                            String targetId = wrapper.getIdentifier(target);
-                            if (targetClassId == null || targetClassId.equals(targetId)) {
+                            if (targetClassId != null) {
+                                OWLClass target = this.getOWLClass(wrapper.getIdentifier(
+                                        outgoingEdge.getTarget()));
+                                String targetId = wrapper.getIdentifier(target);
+                                if (!targetClassId.equals(targetId)) {
+                                    return false;
+                                }
+                            }
+                            if (!twoPassesValidation) {
                                 return true;
                             }
-                            return false;
+
+                            Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs = new HashMap<>();
+                            Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs = new HashMap<>();
+                            Map<Boolean, Set<OWLGraphEdge>> tempEdges = new HashMap<>();
+                            tempEdges.put(e.getKey(), new HashSet<>(Arrays.asList(outgoingEdge)));
+                            tempEdges.put(!e.getKey(), new HashSet<>());
+                            this.generateRelationTOsFirstPassForOWLClass(sourceClass,
+                                    tempEdges, directRelationTOs, indirectRelationTOs,
+                                    classesToIgnore, speciesIds);
+                            Map<PipelineRelationTO<String>, Set<TaxonConstraintTO<Integer>>>
+                            secondPassRelationTOs = this.generateRelationTOsSecondPass(
+                                    directRelationTOs, indirectRelationTOs, speciesIds, 0);
+                            return !secondPassRelationTOs.isEmpty();
                         }).collect(Collectors.toSet())
         )));
     }
@@ -1618,6 +1644,13 @@ public class Uberon extends UberonCommon {
                 OWLClass mappedClsWalked = 
                         this.getOWLClass(wrapper.getIdentifier(clsWalked));
                 if (mappedClsWalked == null || 
+                        //FIXME: Do we want to completely discard an edge simply because
+                        //it walks through a class to ignore?
+                        //Apparently, lots of indirect relations were invalid in the database,
+                        //they could not be retrieved by walking a chain of direct relation,
+                        //which causes inconsistencies in the analyses. This code here should have avoided
+                        //that, by discarding both the direct and indirect relations going through
+                        //a class to ignore. Did this code work correctly?
                         !this.isValidClass(mappedClsWalked, classesToIgnore, speciesIds) ||
                         outgoingEdge.isGCI() && mappedClsWalked.equals(outgoingEdge.getGCIFiller())) {
                     continue;

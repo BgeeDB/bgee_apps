@@ -452,6 +452,8 @@ public class OntologyTools {
             Map<PipelineRelationTO<String>, Set<List<PipelineRelationTO<String>>>> missingIndirectRels =
                     findChainOfDirectRelsWithNoCorrespondingIndirectRels(directRels, indirectRels,
                             anatEntityIdsForSpecies);
+            log.info("{} missing indirect relations to add for species {}",
+                    missingIndirectRels.size(), speciesTO.getId());
             //We merge the potential problems over several species,
             //and also store all possible chains producing the indirect rels over all species
             for (Entry<PipelineRelationTO<String>, Set<List<PipelineRelationTO<String>>>> missingIndirectRel:
@@ -846,6 +848,7 @@ public class OntologyTools {
             for (Entry<PipelineRelationTO<String>, Set<SpeciesTO>> e: speciesPerRelTOToAdd.entrySet()) {
                 allRelsToAdd.put(e.getKey(), new HashSet<>(e.getValue()));
             }
+            log.info("{} new direct RelationTOs to add", speciesPerRelTOToAdd.size());
             for (Entry<PipelineRelationTO<String>, Set<SpeciesTO>> e: speciesPerMissingIndirectRels.entrySet()) {
                 allRelsToAdd.merge(e.getKey(), new HashSet<>(e.getValue()),
                         (existingSpeciesTOs, newSpeciesTOs) -> {
@@ -853,6 +856,7 @@ public class OntologyTools {
                             return existingSpeciesTOs;
                         });
             }
+            log.info("{} new indirect RelationTOs to add", speciesPerMissingIndirectRels.size());
             for (Entry<PipelineRelationTO<String>, Set<SpeciesTO>> e: allRelsToAdd.entrySet()) {
                 RelationTO<String> newRelTO = e.getKey();
                 Set<Integer> speciesIds = e.getValue().stream().map(speTO -> speTO.getId())
@@ -912,6 +916,8 @@ public class OntologyTools {
             for (Entry<Integer, Set<SpeciesTO>> e: speciesPerPotentialCycle.entrySet()) {
                 allRelsToDelete.put(e.getKey(), new HashSet<>(e.getValue()));
             }
+            log.info("{} indirect RelationTOs to remove because chain could cause a cycle",
+                    speciesPerPotentialCycle.size());
             for (Entry<Integer, Set<SpeciesTO>> e: speciesPerNotExistingClasses.entrySet()) {
                 allRelsToDelete.merge(e.getKey(), new HashSet<>(e.getValue()),
                         (existingSpeciesTOs, newSpeciesTOs) -> {
@@ -919,6 +925,8 @@ public class OntologyTools {
                             return existingSpeciesTOs;
                         });
             }
+            log.info("{} indirect RelationTOs to remove because chain go through absent classes",
+                    speciesPerNotExistingClasses.size());
             for (Entry<Integer, Set<SpeciesTO>> e: speciesPerIndirectRelsToRemove.entrySet()) {
                 allRelsToDelete.merge(e.getKey(), new HashSet<>(e.getValue()),
                         (existingSpeciesTOs, newSpeciesTOs) -> {
@@ -926,6 +934,9 @@ public class OntologyTools {
                             return existingSpeciesTOs;
                         });
             }
+            log.info("{} indirect RelationTOs to remove because direct equivalent relation will be added",
+                    speciesPerIndirectRelsToRemove.size());
+            log.info("{} indirect RelationTOs to remove in total", allRelsToDelete.size());
             allRelsToDelete.entrySet().stream().forEach(e -> {
                 int incorrectRelId = e.getKey();
                 Set<Integer> toRemoveSpeciesIds = e.getValue().stream().map(speTO -> speTO.getId())
@@ -964,6 +975,8 @@ public class OntologyTools {
     }
 
     //TODO
+    //TODO: add another check in another method to find roots of the ontology: we had a few terms
+    //hanging at the root, disconnected from the graph
 //    private static <T> Set<RelationTO<T>> findDirectRelsToRemoveBecauseLongerPath(Set<RelationTO<T>> directRels,
 //            Set<RelationTO<T>> indirectRels) {
 //        log.entry(directRels, indirectRels);

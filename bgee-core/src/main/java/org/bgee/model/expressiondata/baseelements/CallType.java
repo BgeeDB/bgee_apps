@@ -75,8 +75,9 @@ public interface CallType {
                 }
                 break;
             case NOT_EXPRESSED:
-                //for no-expression calls, propagation from parent anat. entities.
-                if (PropagationState.DESCENDANT.equals(propState)) {
+                //As of Bgee 14.2, no propagation of absent calls at all.
+                if (PropagationState.DESCENDANT.equals(propState) ||
+                        PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;

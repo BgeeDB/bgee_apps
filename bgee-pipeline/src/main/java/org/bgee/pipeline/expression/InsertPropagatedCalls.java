@@ -81,7 +81,7 @@ import org.bgee.pipeline.CommandRunner;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, May 2019
+ * @version Bgee 14.2, Dec. 2020
  * @since   Bgee 14, Jan. 2017
  */
 public class InsertPropagatedCalls extends CallService {
@@ -113,7 +113,8 @@ public class InsertPropagatedCalls extends CallService {
     private final static int MAX_NUMBER_OF_CALLS_TO_INSERT = 100;
 
     private final static Set<PropagationState> ALLOWED_PROP_STATES_BEFORE_MERGE = EnumSet.of(
-            PropagationState.SELF, PropagationState.ANCESTOR, PropagationState.DESCENDANT);
+            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+            PropagationState.SELF, /*PropagationState.ANCESTOR, */PropagationState.DESCENDANT);
 
     private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
@@ -1426,6 +1427,7 @@ public class InsertPropagatedCalls extends CallService {
     //Should a similar mechanism be directly implemented in ConditionGraph?
     //Seems complicated and might not worth it in all situations.
     //But it seems to result in a 30% speed increase in this class.
+    //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
     private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
 
 
@@ -2065,15 +2067,17 @@ public class InsertPropagatedCalls extends CallService {
                 propagatedData.putAll(ancestorCalls);
             }
 
-            log.trace(COMPUTE_MARKER, "Starting to retrieve descendant conditions for {}.", 
-                    curCall.getCondition());
-            Set<Condition> descendantConditions = this.condToDescendants.computeIfAbsent(
-                    curCall.getCondition(), 
-                    k -> conditionGraph.getDescendantConditions(
-                            k, false, false, NB_SUBLEVELS_MAX, null));
-            log.trace(COMPUTE_MARKER, "Done retrieving descendant conditions for {}: {}.", 
-                    curCall.getCondition(), descendantConditions.size());
-            log.trace("Descendant conditions: {}", descendantConditions);
+            //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
+            Set<Condition> descendantConditions = new HashSet<>();
+//            log.trace(COMPUTE_MARKER, "Starting to retrieve descendant conditions for {}.", 
+//                    curCall.getCondition());
+//            Set<Condition> descendantConditions = this.condToDescendants.computeIfAbsent(
+//                    curCall.getCondition(), 
+//                    k -> conditionGraph.getDescendantConditions(
+//                            k, false, false, NB_SUBLEVELS_MAX, null));
+//            log.trace(COMPUTE_MARKER, "Done retrieving descendant conditions for {}: {}.", 
+//                    curCall.getCondition(), descendantConditions.size());
+//            log.trace("Descendant conditions: {}", descendantConditions);
             if (!descendantConditions.isEmpty()) {
                 Map<PipelineCall, Set<PipelineCallData>> descendantCalls =
                         propagatePipelineData(entry, descendantConditions, false);
@@ -2343,7 +2347,9 @@ public class InsertPropagatedCalls extends CallService {
             assert pipelineCallData.stream().allMatch(pcd -> 
                 (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) && 
                 (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().stream()
-                        .noneMatch(eeto -> CallDirection.ABSENT.equals(eeto.getCallDirection()))) &&  
+                        //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+//                        .noneMatch(eeto -> CallDirection.ABSENT.equals(eeto.getCallDirection()))) &&
+                        .noneMatch(eeto -> false)) &&
                 (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().stream()
                         .noneMatch(eeto -> CallDirection.PRESENT.equals(eeto.getCallDirection()))));
             
@@ -2371,12 +2377,15 @@ public class InsertPropagatedCalls extends CallService {
         //experiments only once between ABSENT HIGH and ABSENT LOW.
         final Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataAbsentToEETO = 
             p -> p.getParentExperimentExpr() == null? null: p.getParentExperimentExpr().stream()
-                .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
+                //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
+//                .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
+                .filter(eeTO -> false)
                 .collect(Collectors.toSet());
-        int absentHighParentCount = getSpecificCount(pipelineCallData,
-            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.HIGH);
-        int absentLowParentCount = getSpecificCount(pipelineCallData,
-            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.LOW);
+        //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
+//        int absentHighParentCount = getSpecificCount(pipelineCallData,
+//            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.HIGH);
+//        int absentLowParentCount = getSpecificCount(pipelineCallData,
+//            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.LOW);
         
         //not really needed since PRESENT calls always win over ABSENT calls, 
         //but formally we do not propagate ABSENT calls to parent condition, 
@@ -2479,10 +2488,11 @@ public class InsertPropagatedCalls extends CallService {
             PropagationState.DESCENDANT, presentHighDescCount));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
             PropagationState.DESCENDANT, presentLowDescCount));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-            PropagationState.ANCESTOR, absentHighParentCount));
-        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-            PropagationState.ANCESTOR, absentLowParentCount));
+        //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
+//            PropagationState.ANCESTOR, absentHighParentCount));
+//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
+//            PropagationState.ANCESTOR, absentLowParentCount));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
             PropagationState.ALL, presentHighTotalCount));
         counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
@@ -2605,7 +2615,7 @@ public class InsertPropagatedCalls extends CallService {
     
     /**
      * Retrieve the {@code ExperimentExpressionTO}s from valid attributes of the provided 
-     * {@code PipelineCallData} dependig on their {@code CallDirection}, then keep only 
+     * {@code PipelineCallData} depending on their {@code CallDirection}, then keep only 
      * for each experiment the "best" {@code ExperimentExpressionTO}.
      * 
      * @param pipelineCallData
@@ -2621,16 +2631,20 @@ public class InsertPropagatedCalls extends CallService {
                     if (p.getSelfExperimentExpr() != null) {
                         exps.addAll(p.getSelfExperimentExpr());
                     }
-                    
-                    //we keep only ABSENT calls from parent structures, so that 
-                    //getBestExperimentExpressionTOs does not discard an experiment 
-                    //showing expression of the gene in one parent, and absence of expression
-                    //in another parent: in that case, we want to propagate only the absence 
-                    //of expression, since we don't propagate presence of expression
-                    //to descendant conditions
+
+                    //Note: as of Bgee 14.2, we don't propagate absent calls to sub-structures anymore.
+                    //Former comment:
+//                    //we keep only ABSENT calls from parent structures, so that 
+//                    //getBestExperimentExpressionTOs does not discard an experiment 
+//                    //showing expression of the gene in one parent, and absence of expression
+//                    //in another parent: in that case, we want to propagate only the absence 
+//                    //of expression, since we don't propagate presence of expression
+//                    //to descendant conditions
                     if (p.getParentExperimentExpr() != null) {
                         exps.addAll(p.getParentExperimentExpr().stream()
-                            .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
+                            //Note: as of Bgee 14.2, we don't propagate absent calls to sub-structures anymore.
+//                            .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
+                            .filter(eeTO -> false)
                             .collect(Collectors.toSet()));
                     }
                     

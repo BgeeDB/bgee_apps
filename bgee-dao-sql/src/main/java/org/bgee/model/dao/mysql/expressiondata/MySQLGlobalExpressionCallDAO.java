@@ -1231,18 +1231,34 @@ implements GlobalExpressionCallDAO {
         newParamIndex++;
         if (!DAODataType.EST.equals(dataType)) {
             //absent high parent
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+            if (callDataTO.getExperimentCounts().stream()
+                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
                                  DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+            }
+            stmt.setInt(newParamIndex, 0);
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
             newParamIndex++;
             //absent low parent
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+            if (callDataTO.getExperimentCounts().stream()
+                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
                                  DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+            }
+            stmt.setInt(newParamIndex, 0);
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
             newParamIndex++;
         }
         //present high total

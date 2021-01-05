@@ -28,7 +28,8 @@ public class ExperimentExpressionCount {
      * A {@code Set} of {@code PropagationState}s that are accepted by this class.
      */
     public final static Set<PropagationState> ALLOWED_PROP_STATES = EnumSet.of(
-            PropagationState.SELF, PropagationState.DESCENDANT, PropagationState.ANCESTOR,
+            //Note: as of Bgee 14.2, we do not propagate absent expression calls to substructures anymore
+            PropagationState.SELF, PropagationState.DESCENDANT, /*PropagationState.ANCESTOR,*/
             PropagationState.ALL);
 
     /**

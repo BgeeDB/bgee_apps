@@ -240,9 +240,10 @@ public class CallService extends CommonService {
 
     protected static final DataPropagation DATA_PROPAGATION_IDENTITY = new DataPropagation(null, null, null);
     protected final static Set<PropagationState> ALLOWED_PROP_STATES = EnumSet.of(
-            PropagationState.SELF, PropagationState.ANCESTOR, PropagationState.DESCENDANT,
-            PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF_AND_DESCENDANT,
-            PropagationState.ANCESTOR_AND_DESCENDANT, PropagationState.ALL);
+            //As of Bgee 14.2 we do not propagate absent calls to substructures anymore
+            PropagationState.SELF, /*PropagationState.ANCESTOR,*/ PropagationState.DESCENDANT,
+            /*PropagationState.SELF_AND_ANCESTOR,*/ PropagationState.SELF_AND_DESCENDANT
+            /*, PropagationState.ANCESTOR_AND_DESCENDANT, PropagationState.ALL*/);
     /**
      * A {@code Set} of {@code ConditionDAO.Attribute}s used as of Bgee 14 to retrieve ranks
      * (for now, we don't use mean ranks computed for anatomical entities only, or dev. stages only;

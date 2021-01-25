@@ -146,7 +146,6 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
                 "the service is live, even if you stop using the service. We will keep the personal " +
                 "data for the minimum amount of time possible to ensure legal compliance and to " +
                 "facilitate internal and external audits if they arise.</p>");
-        this.writeln("<p>Most data are kept maximum 24 months (26 months for Google Analytics statistics).</p>");
         this.writeln("<p>Only <strong>Help desk</strong> data are kept longer.</p>");
         
         this.writeln("<h2>Cookies</h2>");

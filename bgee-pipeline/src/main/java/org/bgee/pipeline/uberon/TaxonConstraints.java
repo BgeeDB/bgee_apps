@@ -166,20 +166,25 @@ public class TaxonConstraints {
      * Several actions can be launched from this main method, depending on the first 
      * element in {@code args}: 
      * <ul>
-     * <li>If the first element in {@code args} is "generateTaxonConstraints", 
-     * it will launch the generation of a TSV files, allowing to know, 
-     * for each {@code OWLClass} in the Uberon ontology, in which taxa it exits, 
-     * among the taxa provided through another TSV file, containing their NCBI IDs. 
+     * <li>If the first element in {@code args} is "generateTaxonConstraints" or
+     * "generateTaxonConstraintsFromMergedOntology", it will launch the generation of a TSV files,
+     * allowing to know, for each {@code OWLClass} in the Uberon ontology, in which taxa it exits,
+     * among the taxa provided through another TSV file, containing their NCBI IDs.
      * See {@link #generateTaxonConstraints(String, Map, String, Map, String, String)} 
-     * for more details. Following elements in {@code args} must then be: 
+     * for more details. Following elements in {@code args} must then be:
      *   <ol>
      *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
      *   contain the taxon constraints ("in taxon" and "never_in_taxon" relations, 
-     *   not all Uberon versions contain them).
-     *   <li>path to the NCBI taxonomy ontology. This taxonomy must contain disjoint 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "generateTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology with proper disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "generateTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. This taxonomy must contain disjoint
      *   classes axioms between sibling taxa, as explained in a Chris Mungall 
      *   <a href='http://douroucouli.wordpress.com/2012/04/24/taxon-constraints-in-owl/'>
      *   blog post</a>, see also {@link org.bgee.pipeline.species.GenerateTaxonOntology}.
+     *   If the first element in {@code args} is "generateTaxonConstraintsFromMergedOntology",
+     *   this argument must be empty (see {@link CommandRunner#EMPTY_ARG}).
      *   <li>path to the TSV files containing the IDs of the taxa for which we want 
      *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
      *   for human). The first line should be a header line, defining a column to get 
@@ -212,22 +217,28 @@ public class TaxonConstraints {
      *   the {@code OWLClass}es existing in this taxon. If not provided, the intermediate 
      *   ontologies will not be stored. 
      *   </ol>
-     * <li>If the first element in {@code args} is "explainCuratedTaxonConstraints", 
-     * the action will be to generate a tsv file allowing to know 
-     * for each {@code OWLClass} in the Uberon ontology, in which species it exists, 
-     * among the species provided through another TSV file, containing their NCBI IDs. 
-     * The generation of this file takes as input two files containing taxon constraints 
-     * information. One file with taxon constraints automatically generated from the 
+     * <li>If the first element in {@code args} is "generateCuratedTaxonConstraints" or
+     * "generateCuratedTaxonConstraintsFromMergedOntology", the action will be to generate
+     * a tsv file allowing to know for each {@code OWLClass} in the Uberon ontology,
+     * in which species it exists, among the species provided through another TSV file,
+     * containing their NCBI IDs. The generation of this file takes as input two files containing
+     * taxon constraints information. One file with taxon constraints automatically generated from the
      * uberon ontology and one file corresponding to manual curation of these automatically
      * generated taxon constraints.
-     * See {@link #generateCuratedTaxonConstraints(String, String, String, String)} 
-     * Following elements in {@code args} must then be: 
+     * See {@link #generateCuratedTaxonConstraints(String, String, String, String)}.
+     * Following elements in {@code args} must then be:
      *   <ol>
      *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
      *   contain the taxon constraints ("in taxon" and "only_in_taxon" relations, 
-     *   not all Uberon versions contain them).
-     *   <li>path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy 
-     *   to include disjoint classes axioms between sibling taxa. 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "explainCuratedTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology. It is not mandatory for this taxonomy to include
+     *   disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "explainCuratedTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy
+     *   to include disjoint classes axioms between sibling taxa. If the first element in {@code args}
+     *   is "explainCuratedTaxonConstraintsFromMergedOntology", this argument must be empty
+     *   (see {@link CommandRunner#EMPTY_ARG}).
      *   <li> path to the taxon constraints tsv file automatically generated using the
      *   uberon ontology. See {@link generateTaxonConstraints(String,  Map, String, 
      *   Map, String, String)} for more details.
@@ -240,22 +251,40 @@ public class TaxonConstraints {
      *   IDs from, named exactly "taxon ID" (other columns are optional and will be ignored).
      *   <li>path to the generated TSV file, output of the method.
      *   </ol>
-     * <li>If the first element in {@code args} is "explainTaxonConstraints", 
-     * the action will be to display the explanation for the existence or absence 
-     * of existence of a Uberon term in a given taxon. See {@link 
+     * <li>If the first element in {@code args} is "explainTaxonConstraints" or
+     * "explainTaxonConstraintsFromMergedOntology", the action will be to display the explanation
+     * for the existence or absence of existence of a Uberon term in a given taxon. See {@link
      * #explainTaxonExistence(Collection, Collection)} for more details. 
      * The explanation will be displayed using the logger of this class with an 
      * {@code info} level.
-     * Following elements in {@code args} must then be: 
+     * Following elements in {@code args} must then be:
      *   <ol>
      *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
      *   contain the taxon constraints ("in taxon" and "only_in_taxon" relations, 
-     *   not all Uberon versions contain them).
-     *   <li>path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy 
-     *   to include disjoint classes axioms between sibling taxa. 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "explainTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology. It is not mandatory for this taxonomy to include
+     *   disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "explainTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy
+     *   to include disjoint classes axioms between sibling taxa. If the first element in {@code args}
+     *   is "explainTaxonConstraintsFromMergedOntology", this argument must be empty
+     *   (see {@link CommandRunner#EMPTY_ARG}).
      *   <li>OBO-like ID of the Uberon term for which we want an explanation
      *   <li>NCBI ID (for instance, 9606) of the taxon in which we want to explain 
      *   existence or nonexistence of the requested Uberon term.
+     *   </ol>
+     * <li>If the first element in {@code args} is "mergeUberonAndTaxonomy", the action will be
+     * to save an ontology merging the provided Uberon and taxonomy ontologies.
+     * Uberon will be cleaned from redundant information present in the taxonomy not to have conflicts,
+     * and the two ontologies will be merged, and saved into a OWL file and an OBO file.
+     * Following elements in {@code args} must then be:
+     *   <ol>
+     *   <li>path to the source Uberon OWL ontology file.
+     *   <li>path to the taxonomy ontology.
+     *   <li>path to output file, without specifying ".owl" nor ".obo" at the end
+     *   (the two formats will be automatically saved and the proper extensions added to the path)
+     *   </ol>
      * </ul>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -274,22 +303,47 @@ public class TaxonConstraints {
         IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
         OBOFormatParserException, IOException, OWLOntologyStorageException {
         log.entry((Object[]) args);
-        
-        if (args[0].equalsIgnoreCase("explainTaxonConstraints")) {
+
+        //The path to the taxonomy ontology is for all calls the third argument provided
+        String taxPath = CommandRunner.parseArgument(args[2]);
+        TaxonConstraints taxonConstraints;
+        if (taxPath != null) {
+            if (args[0].equalsIgnoreCase("explainTaxonConstraintsFromMergedOntology") ||
+                    args[0].equalsIgnoreCase("generateTaxonConstraintsFromMergedOntology") ||
+                    args[0].equalsIgnoreCase("generateCuratedTaxonConstraintsFromMergedOntology")) {
+                throw log.throwing(new IllegalArgumentException("According to the arguments provided, "
+                        + "the taxonomy ontology should already have been merged within Uberon"));
+            }
+            //The path to Uberon is for all calls the second argument provided
+            taxonConstraints = new TaxonConstraints(args[1], taxPath);
+        } else {
+            if (args[0].equalsIgnoreCase("explainTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("generateTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("generateCuratedTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
+                throw log.throwing(new IllegalArgumentException("The taxonomy ontology must be provided"));
+            }
+            //The path to Uberon is for all calls the second argument provided
+            taxonConstraints = new TaxonConstraints(args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("explainTaxonConstraints") ||
+                args[0].equalsIgnoreCase("explainTaxonConstraintsFromMergedOntology")) {
             if (args.length != 5) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "3 arguments, " + args.length + " provided."));
+                        "5 arguments, " + args.length + " provided."));
             }
             
             String clsId = args[3];
             String taxId = args[4];
-            new TaxonConstraints(args[1], args[2]).explainAndPrintTaxonExistence(
+            taxonConstraints.explainAndPrintTaxonExistence(
                             Arrays.asList(clsId), 
                             Arrays.asList(Integer.parseInt(taxId)), 
                             System.out::println);
             
-        } else if (args[0].equalsIgnoreCase("generateTaxonConstraints")) {
+        } else if (args[0].equalsIgnoreCase("generateTaxonConstraints") ||
+                args[0].equalsIgnoreCase("generateTaxonConstraintsFromMergedOntology")) {
         
             if (args.length < 8 || args.length > 9) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
@@ -301,26 +355,25 @@ public class TaxonConstraints {
             if (args.length == 9) {
                 storeDir = args[8];
             }
-            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
-            generate.generateTaxonConstraints(args[3], 
+            taxonConstraints.generateTaxonConstraints(args[3],
                     CommandRunner.parseMapArgumentAsAllInteger(args[4]), 
                     CommandRunner.parseArgument(args[5]), 
                     CommandRunner.parseMapArgumentAsInteger(args[6]).entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
                     args[7], storeDir);
-        } else if (args[0].equalsIgnoreCase("generateCuratedTaxonConstraints")) {
+        } else if (args[0].equalsIgnoreCase("generateCuratedTaxonConstraints") ||
+                args[0].equalsIgnoreCase("generateCuratedTaxonConstraintsFromMergedOntology")) {
             
             if (args.length != 7) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                        "provided, expected 3 arguments, " + args.length + 
+                        "provided, expected 7 arguments, " + args.length +
                         " provided."));
             }
-            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
             String generatedTaxonConstraintsFile = args[3];
             String curatedTaxonConstraintsFile= args[4];
             String speciesFile = args[5];
             String outputFile = args[6];
-            generate.generateCuratedTaxonConstraints(generatedTaxonConstraintsFile, 
+            taxonConstraints.generateCuratedTaxonConstraints(generatedTaxonConstraintsFile,
                     curatedTaxonConstraintsFile, speciesFile, outputFile);
         } else if (args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
         
@@ -329,8 +382,7 @@ public class TaxonConstraints {
                         "provided, expected 4 arguments, " + args.length + 
                         " provided."));
             }
-            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
-            generate.saveUberonToFile(args[3]);
+            taxonConstraints.saveUberonToFile(args[3]);
             
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
@@ -358,19 +410,10 @@ public class TaxonConstraints {
     private final Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier;
 
     /**
-     * Constructor private, the Uberon and the taxonomy ontologies must be provided.
-     * @see #TaxonConstraints(OWLOntology, OWLOntology)
-     * @see #TaxonConstraints(String, String)
-     */
-    @SuppressWarnings("unused")
-    private TaxonConstraints() throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        this((OWLGraphWrapper) null, (OWLGraphWrapper) null);
-    }
-    /**
      * Constructor accepting the path to the Uberon ontology and the path to the taxonomy 
      * ontology, allowing to generate or retrieve taxon constraints. 
-     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil} 
-     * will be used (see 
+     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil}
+     * will be used (see
      * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
@@ -381,11 +424,31 @@ public class TaxonConstraints {
      * @throws IOException                  If the provided files could not be read.
      * @see #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper)
      */
-    public TaxonConstraints(String uberonFile, String taxOntFile) 
-            throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+    public TaxonConstraints(String uberonFile, String taxOntFile)
+            throws UnknownOWLOntologyException, OWLOntologyCreationException,
             OBOFormatParserException, IOException {
         this(new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)));
+    }
+    /**
+     * Constructor accepting the path to the ontology containing Uberon and the taxonomy
+     * already merged, allowing to generate or retrieve taxon constraints.
+     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil}
+     * will be used (see
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
+     *
+     * @param mergedUberonAndTaxonomyFile   A {@code String} that is the path to the ontology
+     *                                      containing Uberon and the taxonomy already merged.
+     * @throws UnknownOWLOntologyException  If the provided ontology could not be used.
+     * @throws OWLOntologyCreationException If the provided ontology could not be used.
+     * @throws OBOFormatParserException     If the provided ontology could not be used.
+     * @throws IOException                  If the provided file could not be read.
+     * @see #TaxonConstraints(OWLGraphWrapper)
+     */
+    public TaxonConstraints(String mergedUberonAndTaxonomyFile)
+            throws UnknownOWLOntologyException, OWLOntologyCreationException,
+            OBOFormatParserException, IOException {
+        this(new OWLGraphWrapper(OntologyUtils.loadOntology(mergedUberonAndTaxonomyFile)));
     }
     /**
      * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
@@ -404,6 +467,49 @@ public class TaxonConstraints {
     public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException {
         this(uberonOntGraph, taxOntGraph, SpeciesSubsetterUtil::new);
+    }
+
+    /**
+     * Constructor accepting an {@code OWLGraphWrapper} wrapping the ontology containing Uberon
+     * and the taxonomy already merged, allowing to generate or retrieve taxon constraints.
+     * If it is requested to generate constraints, default {@code SpeciesSubsetterUtil} 
+     * class will be used (see 
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
+     *
+     * @param mergedUberonAndTaxonomyOntGraph   An {@code OWLGraphWrapper} containing the ontology
+     *                                          containing Uberon and the taxonomy already merged.
+     * @throws UnknownOWLOntologyException      if {@code mergedUberonAndTaxonomyOntGraph}
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code mergedUberonAndTaxonomyOntGraph}
+     *                                          could not be used.
+     */
+    public TaxonConstraints(OWLGraphWrapper mergedUberonAndTaxonomyOntGraph) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this(mergedUberonAndTaxonomyOntGraph, SpeciesSubsetterUtil::new);
+    }
+    /**
+     * Constructor accepting an {@code OWLGraphWrapper} wrapping the ontology containing Uberon
+     * and the taxonomy already merged, allowing to generate or retrieve taxon constraints,
+     * as well as a {@code Function} that will act as a supplier of {@code SpeciesSubsetterUtil}s, 
+     * accepting an {@code OWLGraphWrapper} as input. This will be used if it is requested 
+     * to generate taxon constraints, to obtain a fresh {@code SpeciesSubsetterUtil} 
+     * for each taxon for which constraints must be analyzed. 
+     * 
+     * @param mergedUberonAndTaxonomyOntGraph   An {@code OWLGraphWrapper} containing the ontology
+     *                                          containing Uberon and the taxonomy already merged.
+     * @param subsetterUtilSupplier             A {@code Function} accepting an {@code OWLGraphWrapper} 
+     *                                          as input and returning a fresh {@code SpeciesSubsetterUtil}, 
+     *                                          used as supplier of new {@code SpeciesSubsetterUtil}s 
+     *                                          for each taxon . 
+     * @throws UnknownOWLOntologyException      if {@code mergedUberonAndTaxonomyOntGraph} 
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code mergedUberonAndTaxonomyOntGraph} 
+     *                                          could not be used.
+     */
+    public TaxonConstraints(OWLGraphWrapper mergedUberonAndTaxonomyOntGraph,
+            Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this(mergedUberonAndTaxonomyOntGraph, null, subsetterUtilSupplier);
     }
     /**
      * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
@@ -427,42 +533,56 @@ public class TaxonConstraints {
     public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph, 
             Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        if (uberonOntGraph == null || taxOntGraph == null) {
+        if (uberonOntGraph == null) {
             throw log.throwing(new IllegalStateException("You must provide the Uberon " +
-                    "ontology and the taxonomy ontology at instantiation."));
+                    "ontology at instantiation."));
         }
         this.uberonOntWrapper = uberonOntGraph;
-        this.taxOntWrapper = taxOntGraph;
+        if (taxOntGraph == null) {
+            log.info("The Uberon ontology provided should have been merged properly "
+                    + "with the taxonomy ontology already.");
+            //Uberon in that case will be also the source for taxonomy information.
+            this.taxOntWrapper = this.uberonOntWrapper;
+        } else {
+            this.taxOntWrapper = taxOntGraph;
+        }
         this.subsetterUtilSupplier = subsetterUtilSupplier;
         
-        this.prepareUberon();
+        this.prepareUberon(taxOntGraph == null);
     }
     
     /**
-     * Prepares {@link #uberonOntWrapper} to be used to generate or retrieve taxon constraints, 
-     * by using {@link #taxOntWrapper}. This method notably removes any "is_a" relations 
-     * and disjoint classes axioms between taxa that might be present in Uberon, 
-     * they can be inconsistent with the taxonomy we use. Then it merges the Uberon 
-     * ontology and the taxonomy ontology, for a reasoner to work properly.
+     * Prepares {@link #uberonOntWrapper} to be used to generate or retrieve taxon constraints,
+     * by merging the import closures and clearing the cached edges.
+     * If the taxonomy ontology was not already merged within Uberon, this method will remove
+     * any "is_a" relations and disjoint classes axioms between taxa that might be present in Uberon,
+     * they can be inconsistent with the taxonomy ontology we use.
+     * Uberon and the taxonomy ontology will then be merged, for a reasoner to work properly.
+     *
+     * @param alreadyMergedUberonAndTaxonomy    A {@code boolean} defining whether the taxonomy ontology
+     *                                          is already properly merged within the provided Uberon
+     *                                          ontology (if {@code true}).
      */
-    private void prepareUberon() throws OWLOntologyCreationException {
-        log.entry();
-        log.info("Merging Uberon and taxonomy ontology...");
+    private void prepareUberon(boolean alreadyMergedUberonAndTaxonomy) throws OWLOntologyCreationException {
+        log.entry(alreadyMergedUberonAndTaxonomy);
+        log.info("Preparing Uberon...");
         //we need to merge the import closure, otherwise the classes in the imported ontologies 
         //will be seen by the method #getAllRealOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
-        
-        //then, we remove any "is_a" relations and disjoint classes axioms between taxa 
-        //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
-        this.filterUberonOntology();
-        
-        //now we merge the Uberon ontology and the taxonomy ontology for the reasoner 
-        //to work properly, just importing them in a same OWLGraphWrapper woud not 
-        //be enough
-        this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
+
+        if (!alreadyMergedUberonAndTaxonomy) {
+            //then, we remove any "is_a" relations and disjoint classes axioms between taxa
+            //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
+            this.filterUberonOntology();
+
+            //now we merge the Uberon ontology and the taxonomy ontology for the reasoner
+            //to work properly, just importing them in a same OWLGraphWrapper woud not
+            //be enough
+            this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
+        }
         
         this.uberonOntWrapper.clearCachedEdges();
-        log.info("Done merging Uberon and taxonomy ontology.");
+        log.info("Done preparing Uberon.");
         log.exit();
     }
     
@@ -737,7 +857,12 @@ public class TaxonConstraints {
             refWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(completeUberonFile));
         }
         Set<String> refClassIds = refWrapper.getAllRealOWLClasses().stream()
-                .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
+                //We don't simply check whether the taxonomy ontology contains the class,
+                //because as of Bgee 15 we can use a version of Uberon already merged with the taxonomy
+                .filter(cls -> !UberonCommon.TAXONOMY_ROOT_ID.equals(this.taxOntWrapper.getIdentifier(cls)) &&
+                               this.taxOntWrapper.getAncestorsThroughIsA(cls).stream()
+                                   .map(a -> this.taxOntWrapper.getIdentifier(a))
+                                   .noneMatch(id -> UberonCommon.TAXONOMY_ROOT_ID.equals(id)))
                 .map(refWrapper::getIdentifier).collect(Collectors.toSet());
         
         //launch the generation of taxon constraints. 
@@ -896,7 +1021,12 @@ public class TaxonConstraints {
         //then we get the IDs of all OWLClasses existing in the Uberon ontology 
         //used to generate taxon constraints. 
         Set<String> existingClassIds = this.uberonOntWrapper.getAllRealOWLClasses().stream()
-                .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
+                //We don't simply check whether the taxonomy ontology contains the class,
+                //because as of Bgee 15 we can use a version of Uberon already merged with the taxonomy
+                .filter(cls -> !UberonCommon.TAXONOMY_ROOT_ID.equals(this.taxOntWrapper.getIdentifier(cls)) &&
+                               this.taxOntWrapper.getAncestorsThroughIsA(cls).stream()
+                                   .map(a -> this.taxOntWrapper.getIdentifier(a))
+                                   .noneMatch(id -> UberonCommon.TAXONOMY_ROOT_ID.equals(id)))
                 .map(this.uberonOntWrapper::getIdentifier).collect(Collectors.toSet());
         log.trace("Existing OWLClasses in source Uberon ontology: {}", existingClassIds);
         
@@ -980,7 +1110,7 @@ public class TaxonConstraints {
         //retrieve all tax IDs in taxonIdFile
         Set<Integer> speciesIds = AnnotationCommon.getTaxonIds(speciesFile);
         
-     // generate Mapping between LCA taxon IDs and descendant species IDs
+       // generate Mapping between LCA taxon IDs and descendant species IDs
         Map<Integer, Set<Integer>> taxonToSpecies = 
                 generateTaxonLCAToDescendantSpecies(speciesIds).entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().getId(), 

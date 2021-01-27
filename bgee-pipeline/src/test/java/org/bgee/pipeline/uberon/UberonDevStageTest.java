@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.TestAncestor;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -519,6 +520,7 @@ public class UberonDevStageTest extends TestAncestor {
      * @throws IOException
      */
     @Test
+    @Ignore
     public void shouldGetComplexStageIdsBetween() throws OWLOntologyCreationException, 
     OBOFormatParserException, IOException {
         OWLOntology ont = OntologyUtils.loadOntology(UberonDevStageTest.class.
@@ -644,8 +646,7 @@ public class UberonDevStageTest extends TestAncestor {
         //overridenTaxonConstraints.put("HsapDv", new HashSet<Integer>(Arrays.asList(9606)));
         Map<String, Set<Integer>> taxonConstraints = 
                 TaxonConstraints.extractTaxonConstraints(UberonDevStageTest.class.
-                getResource("/uberon/devTaxonConstraints.tsv").getFile(), 
-                overridenTaxonConstraints);
+                getResource("/uberon/devTaxonConstraints.tsv").getFile());
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
         OntologyUtils utils = new OntologyUtils(wrapper);
         UberonDevStage uberon = new UberonDevStage(utils, taxonConstraints);

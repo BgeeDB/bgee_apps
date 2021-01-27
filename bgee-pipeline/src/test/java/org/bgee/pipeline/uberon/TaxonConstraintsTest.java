@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,11 +13,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -101,24 +98,6 @@ public class TaxonConstraintsTest extends TestAncestor {
             "U:22", "U:23", "U:24", "U:25", "U:26", 
             "S:1", "S:2", "S:3", "S:4", "S:5", "S:6", "S:9", "S:12", "S:998", "S:999", "S:1000", 
             "FAKE:1", "FAKE:2", "FAKE:100"));
-    /**
-     * A {@code Map} where keys are {@code String}s representing prefixes of uberon terms 
-     * to match, the associated value being a {@code Set} of {@code Integer}s 
-     * to replace taxon constraints of matching terms.
-     */
-    private final static Map<String, Set<Integer>> ID_STARTS_TO_OVERRIDING_TAX_IDS = Stream.of(
-            //should match S:9 only, not S:998 nor S:999 because there is a longest match
-            new SimpleEntry<String, Set<Integer>>("S:9", new HashSet<>(Arrays.asList(8))), 
-            //should match both S:998 and S:999. Also, test with a taxon not existing 
-            //in taxon ontology (should be discarded)
-            new SimpleEntry<String, Set<Integer>>("S:99", new HashSet<>(Arrays.asList(8, 13, 100))), 
-            //taxon should be expanded to also include NCBITaxon:13, parent of NCBITaxon:14
-            new SimpleEntry<String, Set<Integer>>("S:1000", new HashSet<>(Arrays.asList(8, 14))), 
-            //class not present in the ontology but requested anyway
-            new SimpleEntry<String, Set<Integer>>("FAKE:2", new HashSet<>(Arrays.asList(8))), 
-            //class not present in the ontology nor requested, should not appear in taxon constraints
-            new SimpleEntry<String, Set<Integer>>("FAKE:3", new HashSet<>(Arrays.asList(8))))
-            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     
     @Rule
     public final TemporaryFolder testFolder = new TemporaryFolder();
@@ -153,7 +132,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                     new OWLGraphWrapper(OntologyUtils.loadOntology(UBERONFILE)), 
                     new OWLGraphWrapper(OntologyUtils.loadOntology(TAXONTFILE)));
             generate.generateTaxonConstraints(taxIdsWithPrefiltering, UBERON_IDS, 
-                    ID_STARTS_TO_OVERRIDING_TAX_IDS, testFolder.getRoot().getPath());
+                    testFolder.getRoot().getPath());
             
             //test failed, an exception should have been thrown
             throw log.throwing(new AssertionError("No exception was thrown when using related taxa."));
@@ -192,8 +171,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                 });
         
         Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                taxIdsWithPrefiltering, UBERON_IDS, 
-                ID_STARTS_TO_OVERRIDING_TAX_IDS, testFolder.getRoot().getPath());
+                taxIdsWithPrefiltering, UBERON_IDS, testFolder.getRoot().getPath());
         
         //check use of SpeciesSubsetterUtils
         assertEquals("Incorrect number of taxon constraint analyses performed", 8, 
@@ -259,8 +237,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                 });
         
         Map<String, Set<Integer>> constraints = generate.generateTaxonConstraints(
-                taxIdsWithPrefiltering, UBERON_IDS, 
-                ID_STARTS_TO_OVERRIDING_TAX_IDS, testFolder.getRoot().getPath());
+                taxIdsWithPrefiltering, UBERON_IDS, testFolder.getRoot().getPath());
         
         //check use of SpeciesSubsetterUtils
         assertEquals("Incorrect number of taxon constraint analyses performed", 4, 
@@ -300,14 +277,14 @@ public class TaxonConstraintsTest extends TestAncestor {
         Map<String, Set<Integer>> constraints = new HashMap<>();
         constraints.put(UBERON_IDS.iterator().next(), new HashSet<>(TAXONIDS.iterator().next()));
         Mockito.doReturn(constraints).when(test)
-        .generateTaxonConstraints(anyObject(), anyObject(), anyObject(), anyObject());
+        .generateTaxonConstraints(anyObject(), anyObject(), anyObject());
         
         Map<Integer, List<Integer>> taxaSimplificationSteps = new LinkedHashMap<>();
         taxaSimplificationSteps.put(8, Arrays.asList(15));
         taxaSimplificationSteps.put(13, Arrays.asList(15, 100));
         String outputTSV = testFolder.newFile("testtemp.tsv").getPath();
         test.generateTaxonConstraints(TAXONFILE, taxaSimplificationSteps, 
-                UBERONFILE, ID_STARTS_TO_OVERRIDING_TAX_IDS, outputTSV, null);
+                UBERONFILE, outputTSV, null);
 
         Map<Integer, List<Integer>> propagatedSimplificationSteps = new LinkedHashMap<>();
         propagatedSimplificationSteps.put(8, Arrays.asList(15));
@@ -318,8 +295,7 @@ public class TaxonConstraintsTest extends TestAncestor {
         ids.remove("FAKE:1");
         ids.remove("FAKE:2");
         ids.add("U:6");
-        verify(test).generateTaxonConstraints(propagatedSimplificationSteps, ids, 
-                ID_STARTS_TO_OVERRIDING_TAX_IDS, null);
+        verify(test).generateTaxonConstraints(propagatedSimplificationSteps, ids, null);
     }
     
     /**
@@ -405,7 +381,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                 //U:24 subclass of U:23 - exists in taxa 13, 14, and 15
                 toCompare = new HashSet<Integer>(Arrays.asList(13, 14, 15));
                 
-            } else if (classId.equals("S:12")) {
+            } else if (classId.equals("S:12") || classId.equals("S:9") || classId.equals("S:998")) {
                 //S:998 never_in_taxon NCBITaxon:13 - NCBITaxon:14 subClassOf NCBITaxon:13 
                 // => exists in taxa 8 and 15
                 //note that this will also test that disjoint classes axioms are removed 
@@ -421,25 +397,6 @@ public class TaxonConstraintsTest extends TestAncestor {
                 //U:26 subclass of U:25 - exists in taxon 13 and 14
                 toCompare = new HashSet<Integer>(Arrays.asList(13, 14));
                 
-            } else if (classId.equals("S:9") || classId.equals("FAKE:2")) {
-                //S:9 supposed to exist in taxa 8 and 15, but constraints overridden.
-                //FAKE:2 not present in Uberon ontology but requested anyway, 
-                //supposed to exist in all taxa, but constraints overridden. 
-                toCompare = new HashSet<Integer>(Arrays.asList(8));
-                
-            } else if (classId.equals("S:998") || classId.equals("S:999")) {
-                //S:998 supposed to exist in taxa 8 and 15, but constraints overridden. 
-                //S:999 supposed to exist in all taxa, but constraints overridden.
-                //This also tests that the overriding taxon 100, not part of the taxonomy ontology, 
-                //is correctly discarded.
-                toCompare = new HashSet<Integer>(Arrays.asList(8, 13));
-                
-            } else if (classId.equals("S:1000")) {
-                //S:1000 supposed to exist in all taxa, but constraints overridden. 
-                //This also tests that the overriding taxon 14 is correctly expanded 
-                //to also include parent taxon 13.
-                toCompare = new HashSet<Integer>(Arrays.asList(8, 13, 14));
-                
             } else if (classId.equals("U:100")) {
                 //U:100 exists in none of the requested taxa
                 toCompare = new HashSet<Integer>();
@@ -448,7 +405,8 @@ public class TaxonConstraintsTest extends TestAncestor {
                     classId.equals("U:2") || classId.equals("U:3") || classId.equals("U:4") || 
                     classId.equals("U:5") || classId.equals("S:1") || classId.equals("S:2") || 
                     classId.equals("S:3") || classId.equals("S:4") || classId.equals("S:5") || 
-                    classId.equals("S:6") || classId.equals("FAKE:1") || classId.equals("FAKE:100")) {
+                    classId.equals("S:6") || classId.equals("FAKE:1") || classId.equals("FAKE:100") ||
+                    classId.equals("FAKE:2") || classId.equals("S:999") || classId.equals("S:1000")) {
                 //FAKE:1 not present in Uberon ontology but requested anyway, constraints 
                 //not overridden => will be defined as existing in all taxa, with a warning log.
                 //FAKE:100 is present in an imported ontology, it is a regression test to check 
@@ -561,7 +519,7 @@ public class TaxonConstraintsTest extends TestAncestor {
         TaxonConstraints generate = new TaxonConstraints(UBERONFILE, TAXONTFILE);
         generate.generateTaxonConstraints(TAXONFILE, null, TaxonConstraintsTest.class.
                 getResource("/uberon/taxonConstraintsTest_allClasses.obo").getPath(), 
-                ID_STARTS_TO_OVERRIDING_TAX_IDS, outputTSV, null);
+                outputTSV, null);
 
         //now read the TSV file
         try (ICsvMapReader mapReader = new CsvMapReader(
@@ -764,32 +722,5 @@ public class TaxonConstraintsTest extends TestAncestor {
         
         assertEquals(expectedConstraints, TaxonConstraints.extractTaxonConstraints(
                 this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath()));
-    }
-    
-    /**
-     * Test the method {@link TaxonConstraints#extractTaxonConstraints(String, Map)}
-     */
-    @Test
-    public void shouldExtractTaxonConstraintsWithReplacement() 
-            throws FileNotFoundException, IOException {
-        Map<String, Set<Integer>> expectedConstraints = new HashMap<String, Set<Integer>>();
-        String clsId1 = "id1";
-        String clsId2 = "id2";
-        String clsId3 = "id3";
-        String clsId4 = "id4";
-        String clsId5 = "id5_1_5";
-        expectedConstraints.put(clsId1, new HashSet<Integer>(Arrays.asList(10, 15, 16, 19)));
-        expectedConstraints.put(clsId2, new HashSet<Integer>(Arrays.asList(10, 15, 16)));
-        expectedConstraints.put(clsId3, new HashSet<Integer>(Arrays.asList(10, 15)));
-        expectedConstraints.put(clsId4, new HashSet<Integer>(Arrays.asList(10)));
-        expectedConstraints.put(clsId5, new HashSet<Integer>(Arrays.asList(10)));
-        
-        Map<String, Set<Integer>> replacementConstrains = new HashMap<String, Set<Integer>>();
-        replacementConstrains.put("id5", new HashSet<Integer>(Arrays.asList(10, 15)));
-        replacementConstrains.put("id5_1", new HashSet<Integer>(Arrays.asList(10)));
-        
-        assertEquals(expectedConstraints, TaxonConstraints.extractTaxonConstraints(
-                this.getClass().getResource("/uberon/taxonConstraints.tsv").getPath(), 
-                replacementConstrains));
     }
 }

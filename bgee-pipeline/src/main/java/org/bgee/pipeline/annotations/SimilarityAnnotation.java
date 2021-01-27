@@ -464,12 +464,6 @@ public class SimilarityAnnotation {
      *   <li>the path to the file containing taxon constraints. See 
      *   {@link org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#parseArgument(String)}).
-     *   <li>A {@code Map<String, Set<Integer>>} to potentially override taxon constraints, 
-     *   see {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it in command line. See constructor 
-     *   {@link SimilarityAnnotation#SimilarityAnnotation(String, Map, String, String, String, String, String)} 
-     *   for more details about overriding taxon constraints. Can be empty (see 
-     *   {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}).
      *   <li>the path to the Uberon ontology.
      *   <li>the path to the taxonomy ontology.
      *   <li>the path to the homology and related concepts (HOM) ontology.
@@ -524,16 +518,14 @@ public class SimilarityAnnotation {
             }
             writeAnatEntitiesWithNoTransformationOfToFile(args[1], args[2], args[3]);
         } else if (args[0].equalsIgnoreCase("generateReleaseFile")) {
-            if (args.length != 12) {
+            if (args.length != 11) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "12 arguments, " + args.length + " provided."));
+                        "11 arguments, " + args.length + " provided."));
             }
-            new SimilarityAnnotation(CommandRunner.parseArgument(args[1]), 
-                    CommandRunner.parseMapArgumentAsInteger(args[2]).entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<>(e.getValue()))), 
-                    args[3], args[4], args[5], args[6], args[7]).generateReleaseFiles(
-                            args[8], args[9], args[10], args[11]);
+            new SimilarityAnnotation(CommandRunner.parseArgument(args[1]),
+                    args[2], args[3], args[4], args[5], args[6]).generateReleaseFiles(
+                            args[7], args[8], args[9], args[10]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -1342,14 +1334,6 @@ public class SimilarityAnnotation {
      *                                      in which case the taxon constraint verifications 
      *                                      will not be performed.
      *                                      See {@link org.bgee.pipeline.uberon.TaxonConstraints}
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms, if {@code taxonConstraintsFile} 
-     *                                      is not {@code null}. See 
-     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#extractTaxonConstraints(String, Map)}
-     *                                      for example of use. Can be {@code null}.
      * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
      *                                      ontology.
      * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
@@ -1365,16 +1349,14 @@ public class SimilarityAnnotation {
      * @throws OWLOntologyCreationException If an error occurs while loading the ontologies.
      * @throws IOException                  If a file could not be read.
      */
-    public SimilarityAnnotation(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds, String uberonOntFile, 
+    public SimilarityAnnotation(String taxonConstraintsFile, String uberonOntFile, 
             String taxOntFile, String homOntFile, String ecoOntFile, String confOntFile) 
                     throws OBOFormatParserException, FileNotFoundException, 
                     OWLOntologyCreationException, IOException {
         this((taxonConstraintsFile == null? 
                 null: 
                 //FIXME: should provde all class IDs in Uberon to method
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds)), 
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(homOntFile)), 

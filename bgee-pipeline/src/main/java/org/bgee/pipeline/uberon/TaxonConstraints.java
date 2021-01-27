@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -858,16 +859,16 @@ public class TaxonConstraints {
                 }));
         
 
-        LinkedHashMap<Taxon, Set<Taxon>> taxonLCAToDescendantSpeciesMap = 
-                generateTaxonLCAToDescendantSpecies(taxonIds);
+        LinkedHashMap<Taxon, Set<Integer>> taxonToDescendantSpeciesMap =
+                generateTaxonToDescendantSpecies(taxonIds);
         
         // update constraints to only contains taxon where all descendant species are present.
         // This step is used to generate an "easy" to read/maintain taxonContraint file that Bgee
         // curators can check manually.
         Map<String, Set<Taxon>> constraintsLCA = fromSpeciesToTaxonConstraints(constraints, 
-                taxonLCAToDescendantSpeciesMap, taxonIds);
+                taxonToDescendantSpeciesMap, taxonIds);
         Map<String, Set<Taxon>>  absentConstraintsLCA = fromSpeciesToTaxonConstraints(absentConstraints, 
-                taxonLCAToDescendantSpeciesMap, taxonIds);
+                taxonToDescendantSpeciesMap, taxonIds);
 
         writeTaxonLCAToFile(constraintsLCA, absentConstraintsLCA, taxonIds, refWrapper, outputFile);
         
@@ -1057,10 +1058,9 @@ public class TaxonConstraints {
         
        // generate Mapping between LCA taxon IDs and descendant species IDs
         Map<Integer, Set<Integer>> taxonToSpecies = 
-                generateTaxonLCAToDescendantSpecies(speciesIds).entrySet().stream()
+                generateTaxonToDescendantSpecies(speciesIds).entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().getId(), 
-                        e -> e.getValue().stream().map(t -> t.getId())
-                        .collect(Collectors.toSet())));
+                        e -> new HashSet<>(e.getValue())));
         
         Map <String, Set<Integer>> uberonIdToSpeciesIdsGeneratedMap = 
                 fromTaxonTCFileToUberonToSpeciesMap(generatedTaxonConstraintsFile, 
@@ -1175,8 +1175,8 @@ public class TaxonConstraints {
     }
     
     /**
-     * Returns the Mapping between Least Common Ancestor (LCA) taxon generated from all Bgee species and the Set
-     * of all Bgee species descendant to this LCA.
+     * Returns the Mapping between taxa in the taxonomy ontology and the Set
+     * of all Bgee species descendant to this taxon.
      * This method is useful to generate an easier to read output file listing taxon constraints at LCA level
      * and not for each species (e.g if all Bgee mammalian species have a taxonConstraint for an anatomical 
      * entity, the output file will contain only Mammalia and not all species).
@@ -1188,59 +1188,46 @@ public class TaxonConstraints {
      * 
      * 
      * @param   speciesIds A {@code Set} containing all Bgee species IDs
-     * @return  A {@code LinkedHashMap} with {@code Taxon} as key and {@code Set} of {@Taxon} as values. The
-     *          {@code LinkedHashMap} is ordered by reversed size of the {@code Set} of values.
+     * @return  A {@code LinkedHashMap} with {@code Taxon} as key, and {@code Set} of {@code Integer}s
+     *          as values that are the NCBI IDs of the descendant species of the associated {@code Taxon}.
+     *          The {@code LinkedHashMap} is ordered by reversed size of the {@code Set} of values.
      */
-    private LinkedHashMap<Taxon, Set<Taxon>> generateTaxonLCAToDescendantSpecies(Set<Integer> speciesIds) {
+    private LinkedHashMap<Taxon, Set<Integer>> generateTaxonToDescendantSpecies(Set<Integer> speciesIds) {
         log.entry(speciesIds);
         
         //define least common ancestor and corresponding Bgee species. Generate Taxon objects
         // to be able to provide taxon scientific name in the output file
-        LinkedHashMap<Taxon, Set<Taxon>> lcasToSpecies= new LinkedHashMap<Taxon, Set<Taxon>>();
-        for (int speciesId1: speciesIds) {
-            OWLClass species1 = this.taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(speciesId1), true);
-            for (int speciesId2: speciesIds) {
-                OWLClass species2 = this.taxOntWrapper.getOWLClassByIdentifier(
-                        OntologyUtils.getTaxOntologyId(speciesId2), true);
-                if (species1 == species2) {
-                    Taxon speciesTaxon = new Taxon(OntologyUtils
-                                .getTaxNcbiId(this.taxOntWrapper.getIdentifier(species1)), 
-                                null, null, this.taxOntWrapper.getLabel(species1), 
-                                1, false);
-                    lcasToSpecies.put(speciesTaxon, Collections.singleton(speciesTaxon));
-                } else {
-                    for (OWLObject lca: OWLGraphUtil.findLeastCommonAncestors(
-                            this.taxOntWrapper, species1, species2)) {
-                        if (lca instanceof OWLClass) {
-                            
-                            Taxon lcaClass = new Taxon(OntologyUtils
-                                    .getTaxNcbiId(this.taxOntWrapper.getIdentifier(lca)), 
-                                    null, null, this.taxOntWrapper.getLabel(lca), 
-                                    1, false);
-                            Set<Taxon> descendantClasses = this.taxOntWrapper
-                                    .getOWLClassDescendants((OWLClass) lca).stream()
-                                    // Keep only Bgee species Ids
-                                    .filter(e -> speciesIds.contains(OntologyUtils
-                                            .getTaxNcbiId(this.taxOntWrapper.getIdentifier(e))))
-                                    .map(e -> new Taxon(
-                                            OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(e)), 
-                                            null, null, this.taxOntWrapper.getLabel(e), 
-                                            1, false)).collect(Collectors.toSet());
-                            lcasToSpecies.put(lcaClass, descendantClasses);
-                            
-                        }
-                    }
+        return log.exit(this.taxOntWrapper.getAllRealOWLClasses().stream()
+        .map(cls -> {
+            Integer taxId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(cls));
+            //getTaxNcbiId returns null if it is not a NCBITaxon ID
+            if (taxId == null) {
+                return null;
+            }
+            Taxon taxon = new Taxon(taxId,
+                    null, null, this.taxOntWrapper.getLabel(cls),
+                    1, false);
+            Set<Integer> taxSpeIds = new HashSet<>();
+            if (speciesIds.contains(taxId)) {
+                taxSpeIds.add(taxId);
+            } else {
+                taxSpeIds = this.taxOntWrapper
+                        .getDescendantsThroughIsA(cls).stream()
+                        .map(d -> OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(d)))
+                        // Keep only Bgee species Ids
+                        .filter(id -> id != null && speciesIds.contains(id))
+                        .collect(Collectors.toSet());
+                if (taxSpeIds.isEmpty()) {
+                    return null;
                 }
             }
-        }
-        // now order the Map by reversed size of the Set of values
-        lcasToSpecies = lcasToSpecies.entrySet().stream()
-                .sorted(Map.Entry.<Taxon,Set<Taxon>>comparingByValue(
-                        Comparator.comparingInt(Set::size)).reversed())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (a, b) -> a, LinkedHashMap::new));
-        return log.exit(lcasToSpecies);
+            return new AbstractMap.SimpleEntry<>(taxon, taxSpeIds);
+        })
+        .filter(e -> e != null)
+        .sorted(Entry.<Taxon, Set<Integer>>comparingByValue(
+                Comparator.comparingInt(Set::size)).reversed())
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                (v1, v2) -> v1, () -> new LinkedHashMap<Taxon, Set<Integer>>())));
     }
     
     /**
@@ -1260,10 +1247,11 @@ public class TaxonConstraints {
      *                                          to uberon IDs and values are a {@code Set} of {@code Integer}
      *                                          corresponding to Bgee species IDs with presence or absence of
      *                                          taxon constraints
-     * @param taxonLCAToDescendantSpeciesMap    A {@code LinkedHashMap} with {@code Taxon} as key and 
-     *                                          {@code Set} of {@Taxon} as values. The {@code LinkedHashMap} 
+     * @param taxonToDescendantSpeciesMap       A {@code LinkedHashMap} with {@code Taxon} as key and
+     *                                          {@code Set} of {@code Integer}s as values that are IDs
+     *                                          of species belonging to the associated taxon. The {@code LinkedHashMap}
      *                                          is ordered by reversed size of the {@code Set} of values.
-     * @param speciesIds                        A {@code Set} of {@code Integer} corresponding to all Bgee
+     * @param speciesIds                        A {@code Set} of {@code Integer}s corresponding to all Bgee
      *                                          species IDs
      * @return                                  A {@code Map} where keys are {@code String} correpsonding
      *                                          to uberon IDs and values are a {@code Set} of {@code Taxon}
@@ -1271,17 +1259,16 @@ public class TaxonConstraints {
      *                                          taxon constraints
      */
     private Map<String, Set<Taxon>> fromSpeciesToTaxonConstraints(Map<String, Set<Integer>> constraints,
-            LinkedHashMap<Taxon, Set<Taxon>> taxonLCAToDescendantSpeciesMap, Set<Integer> speciesIds) {
+            LinkedHashMap<Taxon, Set<Integer>> taxonToDescendantSpeciesMap, Set<Integer> speciesIds) {
         log.entry(constraints, speciesIds);
         
         Map<String, Set<Taxon>> uberonToTaxIds = new HashMap<String, Set<Taxon>>();
         for(Entry<String, Set<Integer>> uberonToSpeciesIds : constraints.entrySet()) {
             Set<Integer> remainingSpeciesIds = uberonToSpeciesIds.getValue();
             Set<Taxon> newTaxonIds = new HashSet<Taxon>();
-            for(Entry<Taxon, Set<Taxon>> taxonToDescendantSpeciesEntry : 
-                taxonLCAToDescendantSpeciesMap.entrySet()) {
-                Set<Integer> descendantspeciesIds = taxonToDescendantSpeciesEntry.getValue()
-                        .stream().map(e -> e.getId()).collect(Collectors.toSet());
+            for(Entry<Taxon, Set<Integer>> taxonToDescendantSpeciesEntry:
+                taxonToDescendantSpeciesMap.entrySet()) {
+                Set<Integer> descendantspeciesIds = taxonToDescendantSpeciesEntry.getValue();
                 if(remainingSpeciesIds.containsAll(descendantspeciesIds)) {
                     newTaxonIds.add(taxonToDescendantSpeciesEntry.getKey());
                     remainingSpeciesIds.removeAll(descendantspeciesIds);

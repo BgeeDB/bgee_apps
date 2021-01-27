@@ -1298,7 +1298,7 @@ public class TaxonConstraints {
         
         Map<String, Set<Taxon>> uberonToTaxIds = new HashMap<String, Set<Taxon>>();
         for(Entry<String, Set<Integer>> uberonToSpeciesIds : constraints.entrySet()) {
-            Set<Integer> remainingSpeciesIds = uberonToSpeciesIds.getValue();
+            Set<Integer> remainingSpeciesIds = new HashSet<>(uberonToSpeciesIds.getValue());
             Set<Taxon> newTaxonIds = new HashSet<Taxon>();
             for(Entry<Taxon, Set<Integer>> taxonToDescendantSpeciesEntry:
                 taxonToDescendantSpeciesMap.entrySet()) {
@@ -1311,6 +1311,8 @@ public class TaxonConstraints {
                     }
                 }
             }
+            assert remainingSpeciesIds.isEmpty():
+                "No corresponding taxon found for species IDs: " + remainingSpeciesIds;
             uberonToTaxIds.put(uberonToSpeciesIds.getKey(), newTaxonIds);
         }
         

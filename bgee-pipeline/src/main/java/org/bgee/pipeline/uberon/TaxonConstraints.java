@@ -1127,15 +1127,16 @@ public class TaxonConstraints {
         Map<String, Set<Integer>> uberonToSpecies = new HashMap<String, Set<Integer>>();
         
         //read the uberon to taxon file
-        ICsvBeanReader beanReader = null;
-        try {
-            beanReader = new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED);
+        try (ICsvBeanReader beanReader =
+                new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED)) {
             
             // using null value in header allows not to consider this column
             String[] header= new String[] {UBERON_ID_COLUMN_NAME, null,
                     WITH_CONSTRAINTS_ID, null,
                     WITHOUT_CONSTRAINTS_ID, null, null               
             };
+            String[] fieldMapping = new String[] { "uberonId", null, "taxonIdWithConstraints",
+                    null, "taxonIdWithoutConstraints", null, null};
             
             // using null as CellProcessor allows not to process data in this column
             final CellProcessor[] processors = new CellProcessor[] { 
@@ -1149,7 +1150,7 @@ public class TaxonConstraints {
             };
 
             TaxonTaxonConstraintsBean taxonTC;
-            while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, header, 
+            while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, fieldMapping,
                     processors)) != null ) {
                 String uberonId = taxonTC.getUberonId();
                 int lineNumber = beanReader.getLineNumber();
@@ -1199,11 +1200,6 @@ public class TaxonConstraints {
                 
                 uberonToSpecies.put(uberonId, speciesIds);
             }             
-        }
-        finally {
-            if( beanReader != null ) {
-                beanReader.close();
-            }
         }
         return log.exit(uberonToSpecies);
     }
@@ -1562,6 +1558,9 @@ public class TaxonConstraints {
                 WITH_CONSTRAINTS_ID, WITH_CONSTRAINTS_NAME,
                 WITHOUT_CONSTRAINTS_ID, WITHOUT_CONSTRAINTS_NAME, COMMENTS           
         };
+        String[] fieldMapping = new String[] { "uberonId", "uberonName", "taxonIdWithConstraints",
+                "taxonNameWithConstraints", "taxonIdWithoutConstraints", "taxonNameWithoutConstraints",
+                "description"};
         try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile),
                 Utils.TSVCOMMENTED)) {
             
@@ -1606,7 +1605,7 @@ public class TaxonConstraints {
                     taxonTCBean = new TaxonTaxonConstraintsBean(uberonId, label, null, null, 
                             taxonIdsText, taxonNamesText, null);
                 }
-                beanWriter.write(taxonTCBean,  header, processors);
+                beanWriter.write(taxonTCBean, fieldMapping, processors);
              
             }
         }
@@ -2018,7 +2017,7 @@ public class TaxonConstraints {
         return log.exit(constraints);
     }
     
-    static class TaxonTaxonConstraintsBean {
+    public static class TaxonTaxonConstraintsBean {
         
         private String uberonId;
         private String uberonName;

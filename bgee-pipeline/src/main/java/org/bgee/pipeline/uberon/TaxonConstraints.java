@@ -353,7 +353,7 @@ public class TaxonConstraints {
             }
             taxonConstraints.generateTaxonConstraints(args[3],
                     CommandRunner.parseMapArgumentAsAllInteger(args[4]), 
-                    CommandRunner.parseArgument(args[5]), 
+                    CommandRunner.parseArgument(args[5]),
                     args[6], storeDir);
         } else if (args[0].equalsIgnoreCase("generateCuratedTaxonConstraints") ||
                 args[0].equalsIgnoreCase("generateCuratedTaxonConstraintsFromMergedOntology")) {

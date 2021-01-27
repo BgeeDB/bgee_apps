@@ -337,10 +337,14 @@ public class OntologyUtils {
      * @param ontologyTermId    A {@code String} that is the ID of a term in 
      *                          the taxonomy ontology.
      * @return                  An {@code int} that is the corresponding ID 
-     *                          on the NCBI website. 
+     *                          on the NCBI website. {@code null} if {@code ontologyTermId}
+     *                          is not an ontology NCBI taxon ID.
      */
-    public static int getTaxNcbiId(String ontologyTermId) {
+    public static Integer getTaxNcbiId(String ontologyTermId) {
         log.entry(ontologyTermId);
+        if (!ontologyTermId.startsWith(TAX_ONTOLOGY_ID_PREFIX)) {
+            return log.exit(null);
+        }
         return log.exit(Integer.parseInt(
                 ontologyTermId.substring(TAX_ONTOLOGY_ID_PREFIX.length())));
     }

@@ -71,7 +71,6 @@ import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
 
-import owltools.graph.OWLGraphUtil;
 import owltools.graph.OWLGraphWrapper;
 import owltools.mooncat.SpeciesSubsetterUtil;
 
@@ -849,7 +848,7 @@ public class TaxonConstraints {
         Map<String, Set<Integer>> constraints = this.generateTaxonConstraints(
                 taxIdsWithSteps, refClassIds, storeOntologyDir);
         //create Map where values correspond to speciesIds without constraints.
-        // this Map will be usefull to generate column of output file containing IDs of taxa
+        // this Map will be useful to generate column of output file containing IDs of taxa
         // where the Uberon term does not exist.
         Map<String, Set<Integer>> absentConstraints = constraints.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> {

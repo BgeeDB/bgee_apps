@@ -1073,15 +1073,32 @@ public class TaxonConstraints {
         uberonIdToSpeciesIdsGeneratedMap = uberonIdToSpeciesIdsGeneratedMap.entrySet().stream()
             .collect(Collectors.toMap(Entry::getKey, e -> {
                 String uberonId = e.getKey();
-                if(uberonIdToSpeciesIdsCuratedMap.containsKey(uberonId)) {
-                    return uberonIdToSpeciesIdsCuratedMap.get(uberonId);
+                //iterate all curated constraints to find the longest match possible with uberonId
+                Set<Integer> replacementConstraints = null;
+                String matchingPrefix = "";
+                for (Entry<String, Set<Integer>> uberonIdToSpeciesIdsCuratedEntry:
+                    uberonIdToSpeciesIdsCuratedMap.entrySet()) {
+                    if (uberonId.startsWith(uberonIdToSpeciesIdsCuratedEntry.getKey()) &&
+                            uberonIdToSpeciesIdsCuratedEntry.getKey().length() > matchingPrefix.length()) {
+                        matchingPrefix = uberonIdToSpeciesIdsCuratedEntry.getKey();
+                        log.trace("Uberon ID {} matching prefix {}, taxon constraints overriden: {}",
+                                uberonId, matchingPrefix, uberonIdToSpeciesIdsCuratedEntry.getValue());
+                        replacementConstraints =
+                                new HashSet<Integer>(uberonIdToSpeciesIdsCuratedEntry.getValue());
+                        //continue iterations anyway in case there is a longest match
+                    }
                 }
+                if(replacementConstraints != null) {
+                    log.debug("Use taxon constraints overriden for Uberon ID {}: {}",
+                            uberonId, replacementConstraints);
+                    return replacementConstraints;
+                }
+                log.trace("Use taxon constraints generated for Uberon ID {}: {}", uberonId, e.getValue());
                 return e.getValue();
             }));
             
         writeToFile(uberonIdToSpeciesIdsGeneratedMap, speciesIds, this.uberonOntWrapper, 
                 outputFile);
-        
     }
     
     /**

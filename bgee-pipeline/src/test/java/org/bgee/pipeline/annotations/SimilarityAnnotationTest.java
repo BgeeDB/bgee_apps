@@ -538,7 +538,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         SimilarityAnnotation simAnnot = new SimilarityAnnotation(
                 SimilarityAnnotationTest.class.getResource(
-                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(),
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -1279,7 +1279,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         SimilarityAnnotation simAnnot = new SimilarityAnnotation(
                 SimilarityAnnotationTest.class.getResource(
-                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(),
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -1417,7 +1417,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
         
         SimilarityAnnotation simAnnot = new SimilarityAnnotation(
                 SimilarityAnnotationTest.class.getResource(
-                        "/similarity_annotations/taxonConstraints.tsv").getFile(), null, 
+                        "/similarity_annotations/taxonConstraints.tsv").getFile(),
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -1523,7 +1523,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
     public void shouldGenerateInferredAnnotations() throws ParseException, 
         OBOFormatParserException, FileNotFoundException, OWLOntologyCreationException, 
         IOException {
-        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null,
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -1909,7 +1909,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
     @Test
     public void shouldGenerateRawAnnotations() throws OBOFormatParserException, 
     FileNotFoundException, OWLOntologyCreationException, IOException, ParseException {
-        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null,
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -2151,7 +2151,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
     public void shouldGenerateSummaryAnnotations() throws OBOFormatParserException, 
     FileNotFoundException, OWLOntologyCreationException, IOException, 
     IllegalArgumentException, IllegalStateException, ParseException {
-        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null,
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(
@@ -2467,7 +2467,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
     public void shouldGenerateAncestralTaxaAnnotations() throws OBOFormatParserException, 
     FileNotFoundException, OWLOntologyCreationException, IOException, 
     IllegalArgumentException, IllegalStateException {
-        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null, null, 
+        SimilarityAnnotation simAnnot = new SimilarityAnnotation(null,
                 SimilarityAnnotationTest.class.getResource(
                         "/similarity_annotations/fake_uberon.obo").getFile(), 
                 SimilarityAnnotationTest.class.getResource(

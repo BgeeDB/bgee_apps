@@ -61,42 +61,7 @@ public class Taxon extends NamedEntity<Integer> implements OntologyElement<Taxon
         return lca;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + (lca ? 1231 : 1237);
-        result = prime * result + level;
-        result = prime * result + ((scientificName == null) ? 0 : scientificName.hashCode());
-        return result;
-    }
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Taxon other = (Taxon) obj;
-        if (lca != other.lca) {
-            return false;
-        }
-        if (level != other.level) {
-            return false;
-        }
-        if (scientificName == null) {
-            if (other.scientificName != null) {
-                return false;
-            }
-        } else if (!scientificName.equals(other.scientificName)) {
-            return false;
-        }
-        return true;
-    }
+    //Entity classes do not implement equals/hashCode, only based on ID
 
     @Override
     public String toString() {

@@ -226,67 +226,44 @@ public class UberonDevStage extends UberonCommon {
      *                                      the import closure of the ontology.
      */
     public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils) throws OWLOntologyCreationException {
-        this(uberonOntUtils, taxOntUtils, null);
+        this(uberonOntUtils, taxOntUtils, (Map<String, Set<Integer>>) null);
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
      * the path the a file containing taxon constraints, as parsable by 
-     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
-     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
-     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
      * This argument can be {@code null}, but as usage of the developmental stage ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
      * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
-     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         this(uberonOntUtils, TaxonConstraints.extractTaxonConstraints(
-                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
-                uberonOntUtils.getWrapper().getAllRealOWLClasses()
-                        .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
-                        .collect(Collectors.toSet())));
+                pathToTaxonConstraints));
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
      * the path the a file containing taxon constraints, as parsable by 
-     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
-     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
-     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
      * This argument can be {@code null}, but as usage of the developmental stage ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
      * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
      * @param pathToTaxOnt              A {@code String} that is the path to the taxonomy ontology. 
-     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         this(uberonOntUtils, taxOntUtils, 
-                TaxonConstraints.extractTaxonConstraints(
-                        pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
-                        uberonOntUtils.getWrapper().getAllRealOWLClasses()
-                                .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
-                                .collect(Collectors.toSet())));
+                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 

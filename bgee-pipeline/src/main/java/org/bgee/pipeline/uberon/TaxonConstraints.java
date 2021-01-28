@@ -32,8 +32,9 @@ import org.bgee.pipeline.annotations.AnnotationCommon;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
 import org.bgee.pipeline.species.GenerateTaxonOntology;
 import org.obolibrary.oboformat.parser.OBOFormatParserException;
-import org.semanticweb.HermiT.Configuration;
-import org.semanticweb.HermiT.ReasonerFactory;
+import org.semanticweb.elk.owlapi.ElkReasonerConfiguration;
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.elk.reasoner.config.ReasonerConfiguration;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -52,7 +53,6 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 import org.supercsv.cellprocessor.FmtBool;
 import org.supercsv.cellprocessor.Optional;
@@ -1521,16 +1521,16 @@ public class TaxonConstraints {
      */
     private OWLReasoner createReasoner(OWLOntology ont) {
         log.entry(ont);
-        OWLReasonerConfiguration config = new Configuration();
-//        //we need to set the number of workers because on our ubber machines,
-//        //we have too many processors, so that we have too many workers,
-//        //and too many memory consumed.
-//        if (config.se.getElkConfiguration().getParameterAsInt(
-//                ReasonerConfiguration.NUM_OF_WORKING_THREADS) > MAX_WORKER_COUNT) {
-//            config.getElkConfiguration().setParameter(
-//                ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
-//        }
-        return log.exit(new ReasonerFactory().createReasoner(ont, config));
+        ElkReasonerConfiguration config = new ElkReasonerConfiguration();
+        //we need to set the number of workers because on our ubber machines,
+        //we have too many processors, so that we have too many workers,
+        //and too many memory consumed.
+        if (config.getElkConfiguration().getParameterAsInt(
+                ReasonerConfiguration.NUM_OF_WORKING_THREADS) > MAX_WORKER_COUNT) {
+            config.getElkConfiguration().setParameter(
+                ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
+        }
+        return log.exit(new ElkReasonerFactory().createReasoner(ont, config));
     }
     
 

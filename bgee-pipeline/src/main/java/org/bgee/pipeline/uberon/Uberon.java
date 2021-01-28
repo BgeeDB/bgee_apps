@@ -946,7 +946,7 @@ public class Uberon extends UberonCommon {
                     }
                 }
                 //and from any annotation properties that can lead to a taxon
-                taxonIds.addAll(EntitySearcher.getAnnotations(cls, ont)
+                taxonIds.addAll(EntitySearcher.getAnnotations(cls, ont).stream()
                         .map(annot -> {
                             if (annotProps.contains(annot.getProperty()) &&
                                     annot.getValue() instanceof IRI) {

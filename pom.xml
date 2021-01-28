@@ -180,7 +180,7 @@
             <dependency>
                 <groupId>org.bbop</groupId>
                 <artifactId>OWLTools-all</artifactId>
-                <version>0.3.0-SNAPSHOT-owlapi-5.1.17</version>
+                <version>0.3.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
             <!-- Used to generate our custom NCBI taxonomy ontology -->

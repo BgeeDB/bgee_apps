@@ -3721,7 +3721,7 @@ public class SimilarityAnnotation {
                 continue;
             }
             Set<OWLClassExpression> clsExprs = uberonOntWrapper.getAllOntologies().stream()
-                    .flatMap(ont -> EntitySearcher.getEquivalentClasses(cls, ont))
+                    .flatMap(ont -> EntitySearcher.getEquivalentClasses(cls, ont).stream())
                     .collect(Collectors.toSet());
             for (OWLClassExpression clsExpr: clsExprs) {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {

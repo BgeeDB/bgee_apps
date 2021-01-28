@@ -304,7 +304,7 @@ public class GenerateTaxonOntology {
                 log.trace("New label {} will be added for class {}", newAnnot, cls);
                 
                 //and remove any already existing label
-                rmLabels.addAll(EntitySearcher.getAnnotations(cls, ont, labelProp)
+                rmLabels.addAll(EntitySearcher.getAnnotations(cls, ont, labelProp).stream()
                         .map(annotation -> {
                             log.trace("Existing label {} will be removed for class {}", annotation, cls);
                             return new RemoveAxiom(ont, factory.getOWLAnnotationAssertionAxiom(

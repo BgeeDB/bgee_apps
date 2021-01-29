@@ -1131,10 +1131,6 @@ public class TaxonConstraints {
                 new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED)) {
             
             // using null value in header allows not to consider this column
-            String[] header= new String[] {UBERON_ID_COLUMN_NAME, null,
-                    WITH_CONSTRAINTS_ID, null,
-                    WITHOUT_CONSTRAINTS_ID, null, null               
-            };
             String[] fieldMapping = new String[] { "uberonId", null, "taxonIdWithConstraints",
                     null, "taxonIdWithoutConstraints", null, null};
             
@@ -1148,27 +1144,33 @@ public class TaxonConstraints {
                     null, // taxon names absent
                     null  // comment
             };
-
+            beanReader.getHeader(true);
             TaxonTaxonConstraintsBean taxonTC;
             while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, fieldMapping,
                     processors)) != null ) {
+                
                 String uberonId = taxonTC.getUberonId();
                 int lineNumber = beanReader.getLineNumber();
                 
                 // retrieve taxon Ids with or without TC
                 boolean isTaxaWithTC = true;
                 String taxColToSplit = null;
-                if (!taxonTC.getTaxonIdWithoutConstraints().isEmpty() &&
-                        !taxonTC.getTaxonIdWithConstraints().isEmpty()) {
+                if (!(taxonTC.getTaxonIdWithoutConstraints() == null ||
+                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) && 
+                        !(taxonTC.getTaxonIdWithConstraints() == null ||
+                        taxonTC.getTaxonIdWithConstraints().isEmpty())) {
                     throw log.throwing(new IllegalArgumentException("Cannot use both the columns "
                             + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + ", line number: "
                             + lineNumber));
-                } else if (taxonTC.getTaxonIdWithoutConstraints().isEmpty() &&
-                        taxonTC.getTaxonIdWithConstraints().isEmpty()) {
+                } else if ( (taxonTC.getTaxonIdWithoutConstraints() == null ||
+                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) &&
+                        (taxonTC.getTaxonIdWithConstraints() == null || 
+                        taxonTC.getTaxonIdWithConstraints().isEmpty()) ) {
                     throw log.throwing(new IllegalArgumentException("Both the columns "
                             + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + " are empty, "
                             + "line number: " + lineNumber));
-                } else if (!taxonTC.getTaxonIdWithoutConstraints().isEmpty()) {
+                } else if ( !(taxonTC.getTaxonIdWithoutConstraints() == null || 
+                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) ) {
                     taxColToSplit = taxonTC.getTaxonIdWithoutConstraints();
                     isTaxaWithTC = false;
                 } else {

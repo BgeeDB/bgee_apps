@@ -1164,8 +1164,8 @@ public class TaxonConstraints {
                         (taxonTC.getTaxonIdWithConstraints() == null ||
                         taxonTC.getTaxonIdWithConstraints().isEmpty()) ) {
                     throw log.throwing(new IllegalArgumentException("Both the columns "
-                            + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + " are empty, "
-                            + "line number: " + lineNumber));
+                            + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + " are empty. "
+                            + "Uberon ID: " + uberonId + " - Line number: " + lineNumber));
                 }
                 if (taxonTC.getTaxonIdWithConstraints() != null &&
                         !taxonTC.getTaxonIdWithConstraints().isEmpty()) {
@@ -1178,6 +1178,16 @@ public class TaxonConstraints {
                             taxonTC.getTaxonIdWithoutConstraints(), taxonToSpecies, lineNumber);
                 }
 
+                if (!inSpeciesIds.containsAll(neverInSpeciesIds)) {
+                    throw log.throwing(new IllegalArgumentException("The taxa in column "
+                            + WITHOUT_CONSTRAINTS_ID
+                            + " are not a subset of the taxa where the anat. entity exists. "
+                            + "Uberon ID: " + uberonId + " - Line number: " + lineNumber
+                            + " - In species IDs: " + inSpeciesIds.stream()
+                                .map(id -> id.toString()).collect(Collectors.joining(", "))
+                            + " - Never in species IDs: " + neverInSpeciesIds.stream()
+                                .map(id -> id.toString()).collect(Collectors.joining(", "))));
+                }
                 inSpeciesIds.removeAll(neverInSpeciesIds);
                 uberonToSpecies.put(uberonId, inSpeciesIds);
             }             

@@ -97,7 +97,6 @@ public class TopAnatRManager {
 
         // if there is no decorrelation, do not use the topGO package
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){
-            code.addRCode("packageExistTopGO<-require()");
             code.addRCode("if(!suppressWarnings(require(topGO))){");
             code.addRCode("  BiocManager::install('topGO', version='" + bioconductorRelease + "')");
             code.addRCode("}");
@@ -133,8 +132,6 @@ public class TopAnatRManager {
         code.addStringArray("organRelationshipsFileName", organRelationships);
         code.addRCode("tab <- read.table(organRelationshipsFileName,header=FALSE, sep='\t')");
         code.addRCode("relations <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
-        code.addRCode("print('Relations:')");
-        code.addRCode("head(relations)");
 
         // Gene to Organ Relationship File
         String[] geneToOrgan = { geneToAnatEntitiesFileName };
@@ -146,13 +143,9 @@ public class TopAnatRManager {
         code.addRCode("  gene2anatomy <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
         if(this.params.getDecorrelationType() != DecorrelationType.NONE){
             code.addRCode("  gene2anatomy <- tapply(as.character(tab[,2]), as.character(tab[,1]), unique)");
-            code.addRCode("  print('GeneToAnaTomy:')");
-            code.addRCode("  head(gene2anatomy)");
         }
         else{
             code.addRCode("  anatomy2gene <- tapply(as.character(tab[,1]), as.character(tab[,2]), unique)"); 
-            code.addRCode("  print('AnaTomyToGene:')");
-            code.addRCode("  head(anatomy2gene)");
         }
 
         // Organ Names File
@@ -160,14 +153,10 @@ public class TopAnatRManager {
         code.addStringArray("organNamesFileName", organNames);
         code.addRCode("  organNames <- read.table(organNamesFileName, header = FALSE, sep='\t',row.names=1)");
         code.addRCode("  names(organNames) <- organNames");
-        code.addRCode("  print('OrganNames:')");
-        code.addRCode("  head(organNames)");
 
         code.addStringArray("StringIDs", foregroundIds.toArray(new String[0]));
         code.addRCode("  geneList <- factor(as.integer(names(gene2anatomy) %in% StringIDs))");
         code.addRCode("  names(geneList) <- names(gene2anatomy)");
-        code.addRCode("  print('GeneList:')");
-        code.addRCode("  head(geneList)");
         //maybe all submitted genes are part of the background, or none of them, 
         //in that case we cannot proceed to the tests. Or maybe there is less genes 
         //with data in the background than the threshold on node size.
@@ -210,12 +199,8 @@ public class TopAnatRManager {
             code.addRCode("tableOver <- makeTableWithoutTopGO(res,"+this.params.getFdrThreshold() + ", organNames)");
         }
 
-        code.addRCode("    print(nrow(tableOver))");
-        code.addRCode("    print(ncol(tableOver))");
-
         //if we get results, save the results and generate a graph visualization
         code.addRCode("    if(!is.null(nrow(tableOver)) && nrow(tableOver) != 0  && ncol(tableOver) == 8) {");
-        code.addRCode("      print('RESULTS!')");
         code.addRCode("      write.table(tableOver, file=topOBOResultFile, sep='\t', row.names=F, col.names=T, quote=F)");
         code.addRCode("      resultExist <- TRUE");
 

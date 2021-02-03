@@ -1120,7 +1120,7 @@ public class TaxonConstraints {
      *                              term is present in as values. 
      * @throws IOException
      */
-    private Map<String, Set<Integer>> fromTaxonTCFileToUberonToSpeciesMap(String pathToFile,
+    private static Map<String, Set<Integer>> fromTaxonTCFileToUberonToSpeciesMap(String pathToFile,
             Map<Integer, Set<Integer>> taxonToSpecies, Set<Integer> allSpeciesIds) throws IOException {
         log.entry(pathToFile, taxonToSpecies, allSpeciesIds);
         
@@ -1148,62 +1148,61 @@ public class TaxonConstraints {
             TaxonTaxonConstraintsBean taxonTC;
             while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, fieldMapping,
                     processors)) != null ) {
-                
+
                 String uberonId = taxonTC.getUberonId();
                 int lineNumber = beanReader.getLineNumber();
-                
-                // retrieve taxon Ids with or without TC
-                boolean isTaxaWithTC = true;
-                String taxColToSplit = null;
-                if (!(taxonTC.getTaxonIdWithoutConstraints() == null ||
-                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) && 
-                        !(taxonTC.getTaxonIdWithConstraints() == null ||
-                        taxonTC.getTaxonIdWithConstraints().isEmpty())) {
-                    throw log.throwing(new IllegalArgumentException("Cannot use both the columns "
-                            + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + ", line number: "
-                            + lineNumber));
-                } else if ( (taxonTC.getTaxonIdWithoutConstraints() == null ||
+
+                //By default, without constraints the anat. entity exists in all species
+                Set<Integer> inSpeciesIds = new HashSet<>(allSpeciesIds);
+                //And we can exclude species from the list
+                //(that is either all species if there is no constraint,
+                //or the list of "only_in_taxon" species)
+                Set<Integer> neverInSpeciesIds = new HashSet<>();
+                //Retrieve taxon Ids with and/or without TC.
+                if ( (taxonTC.getTaxonIdWithoutConstraints() == null ||
                         taxonTC.getTaxonIdWithoutConstraints().isEmpty()) &&
-                        (taxonTC.getTaxonIdWithConstraints() == null || 
+                        (taxonTC.getTaxonIdWithConstraints() == null ||
                         taxonTC.getTaxonIdWithConstraints().isEmpty()) ) {
                     throw log.throwing(new IllegalArgumentException("Both the columns "
                             + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + " are empty, "
                             + "line number: " + lineNumber));
-                } else if ( !(taxonTC.getTaxonIdWithoutConstraints() == null || 
-                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) ) {
-                    taxColToSplit = taxonTC.getTaxonIdWithoutConstraints();
-                    isTaxaWithTC = false;
-                } else {
-                    taxColToSplit = taxonTC.getTaxonIdWithConstraints();
                 }
-                Set<Integer> taxonIds = Arrays.stream(taxColToSplit.split(","))
-                        .map(e -> Integer.valueOf(e.trim()))
-                        .collect(Collectors.toSet());
+                if (taxonTC.getTaxonIdWithConstraints() != null &&
+                        !taxonTC.getTaxonIdWithConstraints().isEmpty()) {
+                    inSpeciesIds = getSpeciesIdsFromTaxonColumn(
+                            taxonTC.getTaxonIdWithConstraints(), taxonToSpecies, lineNumber);
+                }
+                if (taxonTC.getTaxonIdWithoutConstraints() != null &&
+                        !taxonTC.getTaxonIdWithoutConstraints().isEmpty()) {
+                    neverInSpeciesIds = getSpeciesIdsFromTaxonColumn(
+                            taxonTC.getTaxonIdWithoutConstraints(), taxonToSpecies, lineNumber);
+                }
 
-                // retrieve species corresponding to taxa
-                Set<Integer> speciesIds = taxonIds.stream()
-                        .flatMap(id -> {
-                            Set<Integer> taxSpeciesIds = taxonToSpecies.get(id);
-                            if (taxSpeciesIds == null) {
-                                throw log.throwing(new IllegalStateException("Could not find taxon ID: "
-                                        + id + ", line: " + lineNumber));
-                            }
-                            return taxSpeciesIds.stream();
-                        })
-                        .collect(Collectors.toSet());
-                
-                // if species Ids were defined from taxa without TC, species to retrieve
-                // have to be the complement of speciesIDsTC in bgeeSpecies
-                if (!isTaxaWithTC) {
-                    Set<Integer> complementSpecies = new HashSet<Integer>(allSpeciesIds);
-                    complementSpecies.removeAll(speciesIds);
-                    speciesIds = complementSpecies;
-                }
-                
-                uberonToSpecies.put(uberonId, speciesIds);
+                inSpeciesIds.removeAll(neverInSpeciesIds);
+                uberonToSpecies.put(uberonId, inSpeciesIds);
             }             
         }
         return log.exit(uberonToSpecies);
+    }
+    private static Set<Integer> getSpeciesIdsFromTaxonColumn(String taxColToSplit,
+            Map<Integer, Set<Integer>> taxonToSpecies, int lineNumber) {
+        log.entry(taxColToSplit, taxonToSpecies, lineNumber);
+
+        Set<Integer> taxonIds = Arrays.stream(taxColToSplit.split(","))
+                .map(e -> Integer.valueOf(e.trim()))
+                .collect(Collectors.toSet());
+
+        // retrieve species corresponding to taxa
+        return log.exit(taxonIds.stream()
+                .flatMap(id -> {
+                    Set<Integer> taxSpeciesIds = taxonToSpecies.get(id);
+                    if (taxSpeciesIds == null) {
+                        throw log.throwing(new IllegalStateException("Could not find taxon ID: "
+                                + id + ", line: " + lineNumber));
+                    }
+                    return taxSpeciesIds.stream();
+                })
+                .collect(Collectors.toSet()));
     }
     
     /**

@@ -182,9 +182,9 @@ public class TopAnatRManager {
         }else{
             // Run the tests with custom methods that do not use the topGO package
             // For the moment, only fisher is supported
-            code.addRCode("resTmp <- lapply(anatomy2gene,FUN=runTestWithoutTopGO,geneList=geneList,nodeSize = "+ params.getNodeSize() + ")");
+            code.addRCode("    resTmp <- lapply(anatomy2gene,FUN=runTestWithoutTopGO,geneList=geneList,nodeSize = "+ params.getNodeSize() + ")");
             // Filter out NULL (=below nodeSize) values
-            code.addRCode("i=1");
+            code.addRCode("    i=1");
             code.addRCode("    while(i <= length(resTmp)){");
             code.addRCode("        if(length(resTmp[[i]])!=5){");
             code.addRCode("            resTmp[[i]]<-NULL");
@@ -193,10 +193,10 @@ public class TopAnatRManager {
             code.addRCode("            i<-i+1");
             code.addRCode("        }");
             code.addRCode("    }");
-            code.addRCode("res <- data.frame(matrix(unlist(resTmp), nrow=length(resTmp), byrow=T))");
-            code.addRCode("colnames(res) <- c('annotated','significant','expected','foldEnrichment','pval')");
-            code.addRCode("rownames(res) <- names(resTmp)            ");
-            code.addRCode("tableOver <- makeTableWithoutTopGO(res,"+this.params.getFdrThreshold() + ", organNames)");
+            code.addRCode("    res <- data.frame(matrix(unlist(resTmp), nrow=length(resTmp), byrow=T))");
+            code.addRCode("    colnames(res) <- c('annotated','significant','expected','foldEnrichment','pval')");
+            code.addRCode("    rownames(res) <- names(resTmp)            ");
+            code.addRCode("    tableOver <- makeTableWithoutTopGO(res,"+this.params.getFdrThreshold() + ", organNames)");
         }
 
         //if we get results, save the results and generate a graph visualization
@@ -210,8 +210,8 @@ public class TopAnatRManager {
             code.addRCode("      pVal[pValFis==0]<- 100");
         }
         else{
-            code.addRCode(" pVal<-tableOver$p");
-            code.addRCode(" pVal[pVal==0]<- 100  ");       
+            code.addRCode("      pVal<-tableOver$p");
+            code.addRCode("      pVal[pVal==0]<- 100  ");       
         }
 
         code.addRCode("      organNames <- read.table(organNamesFileName, header = FALSE, sep='\t')");
@@ -237,7 +237,7 @@ public class TopAnatRManager {
         code.addRCode("  cat('" + NO_RESULT_MESSAGE_PREFIX + ": ', topOBOResultFile, '\n')");
         code.addRCode("  file.create(topOBOResultFile)");
         //we need a tableOver object for RCaller to perform the commands
-        code.addRCode("    tableOver <- data.frame(1, 8)");
+        code.addRCode("  tableOver <- data.frame(1, 8)");
         code.addRCode("}");
 
 

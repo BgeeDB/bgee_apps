@@ -459,6 +459,22 @@ generateGraph <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TR
 #}
 
 #########
+# Feb2021
+# function to round up numbers from 5
+# x : number to round
+# n : number of digit after comma
+# solution found here : https://stackoverflow.com/questions/12688717/round-up-from-5
+#########
+roundUp = function(x, n) {
+  posneg = sign(x)
+  z <- abs(x)*10^n
+  z <- z + 0.5 + sqrt(.Machine$double.eps)
+  z <- trunc(z)
+  z <- z/10^n
+  z*posneg
+}
+
+#########
 # Jan2016, Author mseppey
 # Perform the enrichment fisher test without TopGO
 #########
@@ -492,7 +508,7 @@ runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
   # Generate and return the result values
   annotated <- length(subset(names(geneList),names(geneList) %in% anatomy)) # =foreground+background
   significant <- foregroundExpressed
-  expected <- (foregroundExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)/(backgroundNotExpressed+backgroundExpressed+foregroundExpressed+foregroundNotExpressed)
+  expected <- roundUp((foregroundExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)/(backgroundNotExpressed+backgroundExpressed+foregroundExpressed+foregroundNotExpressed), 2)
   foldEnrichment <- significant/expected
   return(cbind(annotated, significant , expected, foldEnrichment, pval=fis$p.value))
 }

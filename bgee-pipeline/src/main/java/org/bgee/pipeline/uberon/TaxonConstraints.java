@@ -1131,8 +1131,9 @@ public class TaxonConstraints {
                 new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED)) {
             
             // using null value in header allows not to consider this column
-            String[] fieldMapping = new String[] { "uberonId", null, "taxonIdWithConstraints",
-                    null, "taxonIdWithoutConstraints", null, null};
+            String[] fieldMapping = new String[] { "uberonId", "uberonName", "taxonIdWithConstraints",
+                    "taxonNameWithConstraints", "taxonIdWithoutConstraints",
+                    "taxonNameWithoutConstraints", "description"};
             
             // using null as CellProcessor allows not to process data in this column
             final CellProcessor[] processors = new CellProcessor[] { 

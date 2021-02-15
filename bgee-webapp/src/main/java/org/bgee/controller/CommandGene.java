@@ -1,7 +1,12 @@
 package org.bgee.controller;
 
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -17,6 +22,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
@@ -45,6 +51,7 @@ public class CommandGene extends CommandParent {
     public static class GeneResponse {
         private final Gene gene;
         private final LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity;
+        private final GeneHomologs geneHomologs;
         private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clusteringBestEachAnatEntity;
         private final Map<ExpressionCall, Integer> clusteringWithinAnatEntity;
@@ -59,13 +66,15 @@ public class CommandGene extends CommandParent {
         public GeneResponse(Gene gene, boolean includingAllRedundantCalls, 
                 LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity, 
                 Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
-                Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
+                Map<ExpressionCall, Integer> clusteringWithinAnatEntity,
+                GeneHomologs geneHomologs) {
             this.gene = gene;
             this.includingAllRedundantCalls = includingAllRedundantCalls;
             //too boring to protect the Maps for this internal class...
             this.callsByAnatEntity = callsByAnatEntity;
             this.clusteringBestEachAnatEntity = clusteringBestEachAnatEntity;
             this.clusteringWithinAnatEntity = clusteringWithinAnatEntity;
+            this.geneHomologs = geneHomologs;
         }
 
         /**
@@ -128,6 +137,16 @@ public class CommandGene extends CommandParent {
         public Map<ExpressionCall, Integer> getClusteringWithinAnatEntity() {
             return clusteringWithinAnatEntity;
         }
+
+        /**
+         * @return  The {@code GeneHomologs} of the gene which information are requested for. 
+         */
+        public GeneHomologs getGeneHomologs() {
+            return geneHomologs;
+        }
+
+        
+        
     }
 
     /**
@@ -210,27 +229,45 @@ public class CommandGene extends CommandParent {
             throw log.throwing(new AssertionError("Impossible case"));
         }
 
+        
         display.displayGene(this.buildGeneResponse(selectedGene));
         log.exit();
     }
 
-    private GeneResponse buildGeneResponse(Gene gene) throws IllegalStateException {
+    private GeneResponse buildGeneResponse(Gene gene) 
+            throws IllegalStateException {
         log.entry(gene);
         //retrieve calls with silver quality for one anat. entity and at least bronze quality
         //for the same anat. entity and a dev. stage
         LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = serviceFactory.getCallService()
                 .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                         new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()));
+        
+        // Load homology information. As we decided to only show in species paralogs in the gene
+        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we 
+        // first create one GeneHomologs object containing only paralogs and one GeneHomologs 
+        // object containing only orthologs.
+        GeneHomologs geneOrthologs = serviceFactory.getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                        true, false);
+        GeneHomologs geneParalogs = serviceFactory.getGeneHomologsService()
+                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                        Collections.singleton(gene.getSpecies().getId()), null, true, 
+                        false, true);
+        // generate one unique GeneHomologs object containing both paralogs and orthologs 
+        // retrieved using different filters
+        GeneHomologs geneHomologs = GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs);
+        
         if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-             return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
-                     new HashMap<>(), new HashMap<>()));
+            return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
+                    new HashMap<>(), new HashMap<>(), geneHomologs));
         }
         
         //**************************************
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, true));
+        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, geneHomologs, true));
     }
     
     /**
@@ -241,13 +278,16 @@ public class CommandGene extends CommandParent {
      * @param callsByAnatEntity        A {@code LinkedHashMap} where values are {@code ExpressionCall}s sorted using the  
      *                                 {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}
      *                                 and keys correspond to {@code AnatEntity}s
+     * @param callsByAnatEntity        A {@code Map} where keys are {@code Taxon) and values are @{code Set} of 
+     *                                 {@code Species}
      * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
      *                                 should be filtered for the grouping and clustering steps.
      * @return                         A built {@code GeneResponse}.
      */
     private GeneResponse buildGeneResponse(Gene gene, LinkedHashMap<AnatEntity, 
-            List<ExpressionCall>> callsByAnatEntity, boolean filterRedundantCalls) {
-        log.entry(gene, callsByAnatEntity, filterRedundantCalls);
+            List<ExpressionCall>> callsByAnatEntity, GeneHomologs geneHomologs, 
+            boolean filterRedundantCalls) {
+        log.entry(gene, callsByAnatEntity, geneHomologs, filterRedundantCalls);
 
         long startFilteringTimeInMs = System.currentTimeMillis();
 
@@ -280,7 +320,7 @@ public class CommandGene extends CommandParent {
         // Build GeneResponse
         //*********************
         return log.exit(new GeneResponse(gene, !filterRedundantCalls, callsByAnatEntity,
-                clusteringBestEachAnatEntity, clusteringWithinAnatEntity));
+                clusteringBestEachAnatEntity, clusteringWithinAnatEntity, geneHomologs));
     }
     
     /**

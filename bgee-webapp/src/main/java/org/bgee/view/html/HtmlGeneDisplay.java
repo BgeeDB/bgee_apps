@@ -35,12 +35,13 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.source.Source;
+import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -62,6 +63,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
             .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
             .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
+    
+    private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
+            .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+            .thenComparing(x -> x.getEnsemblGeneId(), Comparator.nullsLast(String::compareTo));
     
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
@@ -356,6 +361,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(geneResponse);
         
         Gene gene = geneResponse.getGene();
+        GeneHomologs geneHomologs = geneResponse.getGeneHomologs();
         
         String titleStart = "Gene: " + htmlEntities(gene.getName()) 
                 + " - " + htmlEntities(gene.getEnsemblGeneId()); 
@@ -383,7 +389,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div typeof='bs:Gene'>");
         
         this.writeln("<h2>General information</h2>");
-        this.writeln("<div class='gene'>" + getGeneralInfo(gene) + "</div>");
+        this.writeln("<div class='gene'>" + getGeneralInfo(gene, geneHomologs) + "</div>");
 
 
         //Expression data
@@ -442,8 +448,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + "<p><strong>Expression scores </strong> of expression calls use the  minimum and maximum Rank of the species to normalize the "
                 + "expression to a value between 0 and 100. Low score means that the gene is lowly expressed in the "
                 + "condition.</p></div>");
-
-        //Source info
+        
+      //Source info
         Set<DataType> allowedDataTypes = geneResponse.getCallsByAnatEntity().values().stream()
                 .flatMap(List::stream)
                 .flatMap(call -> call.getCallData().stream())
@@ -471,6 +477,52 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end info_sources 
         }
         this.writeln("</div>"); // end other info
+        
+        // Orthologs info
+        if(geneHomologs.getOrthologsByTaxon() != null &&
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
+            this.writeln("<a id='orthologs' class='inactiveLink'><h2>Orthologs</h2></a>");
+            this.writeln("<div id='orthologs_data' class='row'>");
+            //table-container
+            this.writeln("<div class='col-xs-12 col-md-12'>");
+            this.writeln("<div class='table-container'>");
+
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getOrthologsByTaxon(), true));
+            this.writeln("</div>"); // end table-container
+            this.writeln("</div>"); // end class
+            
+            this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
+                    + "href='https://omabrowser.org/oma/vps/" + gene.getEnsemblGeneId() 
+                    + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");
+            this.writeln("</div>");
+            
+            this.writeln("</div>"); // end orthologs_data 
+        }
+        
+        // Paralogs info
+        if(geneHomologs.getParalogsByTaxon() != null &&
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
+            this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs (same species)</h2></a>");
+            this.writeln("<div id='paralogs_data' class='row'>");
+            //table-container
+            this.writeln("<div class='col-xs-12 col-md-12'>");
+            this.writeln("<div class='table-container'>");
+
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getParalogsByTaxon(), false));
+            this.writeln("</div>"); // end table-container
+            this.writeln("</div>"); // end class
+            
+            this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
+                    + "href='https://omabrowser.org/oma/pps/" + gene.getEnsemblGeneId() 
+                    + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");
+            this.writeln("</div>");
+            
+            this.writeln("</div>"); // end orthologs_data 
+        }
+
+        
         
         // Cross-references
         if (gene.getXRefs() != null && gene.getXRefs().size() > 0) {
@@ -722,6 +774,148 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         return log.exit(sb.toString());
     }
+    
+    /** Generates the HTML code displaying information about homologous genes.
+    * 
+    * @param gene               A {@code Gene} containing all homology informations
+    * @param speciesByTaxon     A {@code LinkedHashMap} where keys are {@code Taxon}s, 
+    *                           the associated value being the {@code Set} of {@code Species}
+    *                           descendant of the taxon in Bgee. Ordered from more recent taxon
+    *                           to older taxon.
+    * @param orthologs          A {@code boolean} used to define if orthologs or paralogs have to be 
+    *                           displayed. If {@code true}, orthologs will be displayed.
+    *                           If {@code false}, paralogs will be displayed
+    * @return                   A {@code String} that is the generated HTML.
+    */
+    private String getHomologyHTMLByTaxon(Gene gene, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon, 
+            boolean orthologs) {
+        log.entry(homologsByTaxon, orthologs);
+        //TODO shity part to modify once code is ok
+        String homologyString = orthologs ? "Orthologs" : "Paralogs";
+
+        // create header of the table
+        StringBuilder sb = new StringBuilder();
+        if (orthologs) {
+            sb.append("<table class='orthologs stripe nowrap compact responsive'>");
+        } else {
+            sb.append("<table class='paralogs stripe nowrap compact responsive'>");
+        }
+        sb.append("<thead><tr>")
+              .append("<th class='taxon-name'>Taxon name</th>");
+        
+        // number of species column present only on orthologs table
+        if (orthologs) {
+            sb.append("<th class='homo-species min-table_sm'>Species with " 
+                      + homologyString.toLowerCase() + "</th>");
+        }
+        
+        sb.append("<th class='homo-gene-id'>Gene(s)</th>")
+              .append("<th class='exp-comp'>Expression comparison</th>")
+              .append("<th class='details'>See details</th>")
+              .append("</tr></thead>\n");
+       
+        // Start generation of html to display
+        StringBuilder sbRow = new StringBuilder();
+        
+        // all homologs of one taxon
+        // We will display to each taxon level all genes from more recent taxon
+        Set<Gene> allGenes = new HashSet<>();
+        for(Entry<Taxon,Set<Gene>> homologsOneTaxon: homologsByTaxon.entrySet()) {
+            sbRow.append("<tr>");
+            Taxon currentTaxon= homologsOneTaxon.getKey();
+            allGenes.addAll(homologsOneTaxon.getValue());
+            
+            // sort genes by Id and group then by species Id in order to add a line as species 
+            // separator
+            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = allGenes.stream()
+                    .sorted(GENE_HOMOLOGY_COMPARATOR)
+                    .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), LinkedHashMap::new,
+                            Collectors.mapping(g -> g, Collectors.toList())));
+            
+            //taxon Info
+            sbRow.append("<td>")
+                .append(getTaxonUrl(currentTaxon))
+                .append("</td>");
+            
+            
+            //species with orthologs info
+            // boolean used to create vertical line each time a new species is displayed
+            boolean needSpeciesSeparator = false;
+            
+            // number of species column present only on orthologs table
+            if(orthologs) {
+                sbRow.append("<td>")
+                    .append(homologsWithDescendantBySpeciesId.size()).append(" species")
+                    .append("<ul class='masked homo-species-list'>");
+                // all homologs of one species
+                for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId
+                        .entrySet()) {
+                    List<Gene> genes = homologsOneSpecies.getValue();
+                    sbRow.append("<li class='homo-species");
+                    if (needSpeciesSeparator) {
+                        sbRow.append(" gene-score-shift");
+                    }
+                    sbRow.append("'><span class='details small'>")
+                        .append(getCompleteSpeciesNameLink(genes.iterator().next().getSpecies(), 
+                                true))
+                        .append("</span></li>").append("\n");
+                    //add empty lines in the list to be able to write genes in front of the proper 
+                    // species
+                    for (int i = 1; i< genes.size(); i++) {
+                        sbRow.append("<li class='ortho-species'><br></li>").append("\n");
+                    }
+                    needSpeciesSeparator = true;
+                    
+                }
+                sbRow.append("</ul></td>");
+            }
+            
+            
+            //genes info
+            int numberGenes = allGenes.size();
+            sbRow.append("<td>")
+            .append(numberGenes).append(" gene").append(numberGenes > 1? "s": "")
+                .append("<ul class='masked ortho-genes-list'>");
+            needSpeciesSeparator = false;
+            for(Entry<Integer, List<Gene>> homologsOneSpecies: homologsWithDescendantBySpeciesId.entrySet()) {
+                List<Gene> homoGenes = homologsOneSpecies.getValue();
+                for (Gene orthoGene:homoGenes) {
+                    sbRow.append("<li class='homo-gene");
+                    if(needSpeciesSeparator) {
+                        sbRow.append(" gene-score-shift");
+                    }
+                    sbRow.append("'><span class='details small'>")
+                    .append(getSpecificGenePageLink(orthoGene, orthoGene.getEnsemblGeneId()))
+                    .append(StringUtils.isBlank(orthoGene.getName())? "": " " + htmlEntities(orthoGene.getName()))
+                    .append("</span></li>").append("\n");
+                    needSpeciesSeparator = false;
+                }
+                needSpeciesSeparator = true;
+            }
+            sbRow.append("</ul></td>");
+            
+            //expression comparison link
+            RequestParameters exprComparison = this.getNewRequestParameters();
+            exprComparison.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
+            List<String> genesToCompare = homologsOneTaxon.getValue().stream()
+                    .map(Gene::getEnsemblGeneId).collect(Collectors.toList());
+            genesToCompare.add(gene.getEnsemblGeneId());
+            exprComparison.setGeneList(genesToCompare);
+            sbRow.append("<td><a href='").append(exprComparison.getRequestURL())
+                .append("'>Compare expression</a></td>");
+
+            
+            // See Details column
+            sbRow.append("<td><span class='expandable' title='click to expand'>[+]</span></td>");
+            
+            
+            sbRow.append("</tr>");
+            
+        }
+        sb.append("<tbody>").append(sbRow.toString()).append("</tbody>");
+        sb.append("</table>");
+        return log.exit(sb.toString());
+    }
 
     /**
      * Create a table containing general information for {@code Gene}
@@ -729,7 +923,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param gene     The {@code Gene} for which to display information
      * @return         A {@code String} containing the HTML table containing the information.
      */
-    private String getGeneralInfo(Gene gene) {
+    private String getGeneralInfo(Gene gene, GeneHomologs geneHomologs) {
         log.entry(gene);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
@@ -745,6 +939,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         if (gene.getSynonyms() != null && gene.getSynonyms().size() > 0) {
             table.append("<tr><th scope='row'>Synonym(s)</th><td>")
                     .append(getSynonymDisplay(gene.getSynonyms()));
+            table.append("</td></tr>");
+        }
+        // add orthologs and paralogs number
+        if (geneHomologs.getOrthologsByTaxon() != null && 
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
+            table.append("<tr><th scope='row'>Orthologs(s)</th><td>")
+                .append("<a href='#orthologs' title='orthologs details'>")
+                .append(geneHomologs.getOrthologsByTaxon().entrySet().stream()
+                        .flatMap(o -> o.getValue().stream())
+                        .collect(Collectors.toSet()).size() + " orthologs</a>");
+            table.append("</td></tr>");
+        }
+        if (geneHomologs.getParalogsByTaxon() != null && 
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
+            table.append("<tr><th scope='row'>Paralog(s)</th><td>")
+                    .append("<a href='#paralogs' title='paralogs details'>")
+                    .append(geneHomologs.getParalogsByTaxon().entrySet().stream()
+                            .flatMap(o -> o.getValue().stream())
+                            .collect(Collectors.toSet()).size() + " paralogs</a>");
             table.append("</td></tr>");
         }
         table.append("</table>");

@@ -29,6 +29,14 @@ BEGIN
                (511,'taxSName511','taxCName511',7,10,3,1),
                (611,'taxSName611','taxCName611',8,9,4,1),
                (711,'taxSName711','taxCName711',12,13,2,0);
+               
+        INSERT INTO geneOrthologs (sourceBgeeGeneId,targetBgeeGeneId,taxonId) 
+        VALUES (1,"ID2",111),
+               (1,"ID3",311),
+               (4,"ID1",511),
+               (2,"ID3",611),
+               (2,"ID4",211),
+               (3,"ID4",711);
 
         INSERT INTO OMAHierarchicalGroup (OMANodeId,OMAGroupId,OMANodeLeftBound,OMANodeRightBound,taxonId) 
         VALUES (1,'HOG:NAILDQY',1,8,111),
@@ -80,15 +88,6 @@ BEGIN
                ('ID1','gleich'),
                ('ID2','synonym2'),
                ('ID3','syno3');
-               
-        -- load existing groups in the new table
-        INSERT INTO geneToOma SELECT DISTINCT t3.geneId, t1.OMANodeId, t1.taxonId 
-          FROM OMAHierarchicalGroup AS t1         
-            INNER JOIN OMAHierarchicalGroup AS t2     
-                  ON t2.OMANodeLeftBound >= t1.OMANodeLeftBound AND       
-                     t2.OMANodeRightBound <= t1.OMANodeRightBound        
-                        INNER JOIN gene AS t3 ON t2.OMANodeId = t3.OMAParentNodeId
-        WHERE t1.taxonId IS NOT NULL;
         
 --               --1 Stage_id1 36 ----------------------------------------------------------------------------------------------------
 --              /            |                                                         \                                              \

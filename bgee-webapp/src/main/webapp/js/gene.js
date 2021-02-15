@@ -151,6 +151,148 @@ $( document ).ready( function(){
         }
     } );
     
+    // table homologs
+    $('table.orthologs').DataTable( {
+    	//enable ordering but apply no ordering during initialization
+    	"order": [],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.modal( {
+                    header: function ( row ) {
+                        var data = row.data();
+                        return 'Details in ' + data[1];
+                    }
+                } ),
+                renderer: function ( api, rowIdx, columns ) {
+                	var data = 
+                		'<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
+            			'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data + '</td></tr>' +
+            			'<tr><td>' + columns[4].title + '</td><td>' + columns[4].data + '</td></tr>';
+                	return $('<table class="table"/>').append( data );
+                }
+            }, 
+            breakpoints: [
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: 992 },
+                { name: 'tablet-p', width: 768 },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 }, 
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+                
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: 1200 },
+                { name: 'table_sm', width: 992 },
+                { name: 'table_xs', width: 768 }
+            ]
+        },
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
+           { responsivePriority: 1, targets: 0 }, // Taxon Name
+           { responsivePriority: 2, targets: 1 }, // Species with homologs
+           { responsivePriority: 3, targets: 2 },  // Genes
+           { responsivePriority: 4, targets: 3 },  // Button to run expr. comp
+           { responsivePriority: 5, targets: 4 }  // Button to run expr. comp
+        ],
+        columns: [ // sorting definition
+           { "orderable": false }, // Taxon Name - ordering disabled
+           { "orderable": false }, // Species with homologs - ordering disabled
+           { "orderable": false },  // Genes - ordering disabled
+           { "orderable": false },  // Button to run expr. comp - ordering disabled
+           { "orderable": false }  // details - ordering disabled
+        ]
+    });
+    
+ // table homologs
+    $('table.paralogs').DataTable( {
+    	//enable ordering but apply no ordering during initialization
+    	"order": [],
+        responsive: {
+            details: {
+                display: $.fn.dataTable.Responsive.display.modal( {
+                    header: function ( row ) {
+                        var data = row.data();
+                        return 'Details in ' + data[1];
+                    }
+                } ),
+                renderer: function ( api, rowIdx, columns ) {
+                	var data = 
+                		'<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
+                		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + columns[2].data + '</td></tr>' +
+            			'<tr><td>' + columns[3].title + '</td><td>' + columns[3].data + '</td></tr>';
+                	return $('<table class="table"/>').append( data );
+                }
+            }, 
+            breakpoints: [
+                //make the default datatable breakpoints to be the same as bootstrap
+                { name: 'desktop',  width: Infinity },
+                { name: 'tablet-l', width: 992 },
+                { name: 'tablet-p', width: 768 },
+                { name: 'mobile-l', width: 480 },
+                { name: 'mobile-p', width: 320 }, 
+                //(default datatable parameters: )
+                //{ name: 'desktop',  width: Infinity },
+                //{ name: 'tablet-l', width: 1024 },
+                //{ name: 'tablet-p', width: 768 },
+                //{ name: 'mobile-l', width: 480 },
+                //{ name: 'mobile-p', width: 320 }
+                
+                //create breakpoints corresponding exactly to bootstrap
+                { name: 'table_lg', width: Infinity },
+                { name: 'table_md', width: 1200 },
+                { name: 'table_sm', width: 992 },
+                { name: 'table_xs', width: 768 }
+            ]
+        },
+        columnDefs: [ // Higher responsivePriority are removed first, target define the order
+           { responsivePriority: 1, targets: 0 }, // Taxon Name
+           { responsivePriority: 2, targets: 1 },  // Genes
+           { responsivePriority: 3, targets: 2 },  // Button to run expr. comp
+           { responsivePriority: 4, targets: 3 }  // Button to run expr. comp
+        ],
+        columns: [ // sorting definition
+           { "orderable": false }, // Taxon Name - ordering disabled
+           { "orderable": false },  // Genes - ordering disabled
+           { "orderable": false },  // Button to run expr. comp - ordering disabled
+           { "orderable": false }  // details - ordering disabled
+        ]
+    });
+    
+ // expand the aggregated species of homologs table
+    $('table.paralogs tbody').on('click', '.expandable', function () {
+    	
+        var t = $(this).text();
+        var t2 = t.replace('[+]','[-]');
+        if (t != t2) {
+        	$(this).text(t2)
+        	$(this).parent().parent().find("ul").show(250);
+        } else {
+        	 $(this).text(t.replace('-','+'));
+        	$(this).parent().parent().find("ul").hide(250);
+        }
+    } );
+    
+    $('table.orthologs tbody').on('click', '.expandable', function () {
+    	
+        var t = $(this).text();
+        var t2 = t.replace('[+]','[-]');
+        if (t != t2) {
+        	$(this).text(t2)
+        	$(this).parent().parent().find("ul").show(250);
+        } else {
+        	 $(this).text(t.replace('-','+'));
+        	$(this).parent().parent().find("ul").hide(250);
+        }
+    } );
+    
     jQuery.fn.dataTableExt.oSort['score-asc'] = function(a, b) {
     	var x = parseHtmlScore(a);
     	var y = parseHtmlScore(b);

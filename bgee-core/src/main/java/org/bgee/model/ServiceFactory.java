@@ -17,6 +17,7 @@ import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
@@ -123,6 +124,14 @@ public class ServiceFactory implements AutoCloseable {
     public GeneService getGeneService() {
         log.entry();
         return log.exit(new GeneService(this));
+    }
+    
+    /**
+     * @return  A newly instantiated {@code GeneHomologsService}
+     */
+    public GeneHomologsService getGeneHomologsService() {
+        log.entry();
+        return log.exit(new GeneHomologsService(this));
     }
 
     /**

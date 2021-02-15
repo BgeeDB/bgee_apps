@@ -39,6 +39,24 @@ div#rank_def {
 	padding-left: 2%;
 }
 
+div#orthology_source {
+	display: inline-flex;
+	margin-top: 2em;
+	margin-bottom: 0em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
+}
+
+div#paralogy_source {
+	display: inline-flex;
+	margin-top: 2em;
+	margin-bottom: 0em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
+}
+
 div#expr_score_def {
 	display: inline-flex;
 	margin-top: 1em;
@@ -136,6 +154,27 @@ table.expression td {
 	vertical-align:text-top;
 }
 
+th.taxon-id {
+	width: 7% !important;
+}
+th.taxon-name {
+	width: 12% !important;
+}
+th.homo-species {
+	width: 20% !important;
+}
+th.homo-gene-id {
+	width: 20% !important;
+}
+
+table.orthologs td {
+	vertical-align:text-top;
+}
+
+table.paralogs td {
+	vertical-align:text-top;
+}
+
 td > ul {
 	margin: 0;
 	padding: 0;
@@ -143,6 +182,10 @@ td > ul {
 }
 
 ul.dev-stage-list {
+	padding-left: 1.1em;
+}
+
+ul.homo-species-list {
 	padding-left: 1.1em;
 }
 
@@ -222,4 +265,9 @@ span.more-content {
 span.errorMessage {
 	color: #E2011B;
 	font-weight: bold;
+}
+
+.inactiveLink {
+   pointer-events: none;
+   cursor: default;
 }

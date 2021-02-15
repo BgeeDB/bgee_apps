@@ -113,7 +113,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
         this.writeln("                },");
         this.writeln("               ");
         this.writeln("       };");
-        log.exit();
+        log.traceExit();
     }
 
 }

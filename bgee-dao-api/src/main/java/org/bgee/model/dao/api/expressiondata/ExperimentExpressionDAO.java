@@ -155,7 +155,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
              */
             public static CallQuality convertToCallQuality(String stringRepresentation){
                 log.entry(stringRepresentation);
-                return log.exit(ExperimentExpressionTO.convert(CallQuality.class, stringRepresentation));
+                return log.traceExit(ExperimentExpressionTO.convert(CallQuality.class, stringRepresentation));
             }
         }
         public enum CallDirection implements TransferObject.EnumDAOField {
@@ -184,7 +184,7 @@ public interface ExperimentExpressionDAO extends DAO<ExperimentExpressionDAO.Att
              */
             public static CallDirection convertToCallDirection(String stringRepresentation){
                 log.entry(stringRepresentation);
-                return log.exit(ExperimentExpressionTO.convert(CallDirection.class, stringRepresentation));
+                return log.traceExit(ExperimentExpressionTO.convert(CallDirection.class, stringRepresentation));
             }
         }
 

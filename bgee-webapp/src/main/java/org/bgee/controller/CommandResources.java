@@ -75,7 +75,7 @@ public class CommandResources extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
 }

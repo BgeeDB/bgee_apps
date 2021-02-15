@@ -1051,7 +1051,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         GenerateInsertGeneStats statsGenerator = new GenerateInsertGeneStats();
         statsGenerator.generate(args[0], args[1], args[2], speciesIds);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1103,7 +1103,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             log.info("Done generating of stat files for the species {}.", species.getId());
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     private void generatePerSpecies(Species species, Set<Gene> genes, final Set<AnatEntity> nonInformativeAnatEntities,
@@ -1176,13 +1176,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 //            this.closeDAO();
 //        }
         
-        log.exit();
+        log.traceExit();
     }
 
 //    private Set<BioTypeStatsTO> convertBiotypeStatsBeansToTOs(Set<BiotypeStatsBean> biotypeStatsBeans) {
 //        log.entry(biotypeStatsBeans);
 //        throw log.throwing(new UnsupportedOperationException("Mathod to be implement"));
-//        return log.exit(biotypeStatsBeans.parallelStream()
+//        return log.traceExit(biotypeStatsBeans.parallelStream()
 //                .map(b -> new BioTypeStatsTO())
 //                .collect(Collectors.toSet()));
 //    }
@@ -1260,7 +1260,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             bean.setFormattedMaxRank(lastCall.getFormattedMeanRank());
         }
 
-        log.exit();
+        log.traceExit();
     }
     private static void generateBioTypeStats(BiotypeStatsBean bsb, List<GeneStatsBean> geneBeans) {
         log.entry(bsb, geneBeans);
@@ -1294,7 +1294,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         }
         sumAnatEntityCondCount(bsb);
 
-        log.exit();
+        log.traceExit();
     }
     private static GeneStatsBean generateAllGeneSummary(Collection<GeneStatsBean> geneStatsBeans) {
         log.entry(geneStatsBeans);
@@ -1313,7 +1313,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             setMinMaxRank(allGeneBean, geneBean);
         }
         allGeneBean.setFilteredGenePagePresentAnatEntity(allGeneBean.getFilteredGenePagePresentAnatEntities().size());
-        return log.exit(allGeneBean);
+        return log.traceExit(allGeneBean);
     }
     private static BiotypeStatsBean generateAllBiotypeSummary(Collection<BiotypeStatsBean> biotypeStatsBeans) {
         log.entry(biotypeStatsBeans);
@@ -1337,7 +1337,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             addAnatEntitiesConds(allBioType, biotypeStatsBean);
         }
         sumAnatEntityCondCount(allBioType);
-        return log.exit(allBioType);
+        return log.traceExit(allBioType);
     }
 
     private static void setMinMaxRank(CommonBean allBean, CommonBean otherBean) {
@@ -1356,7 +1356,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             allBean.setFormattedMaxRank(otherBean.getFormattedMaxRank());
         }
 
-        log.exit();
+        log.traceExit();
     }
     private static void addAnatEntitiesConds(CommonBean allBean, CommonBean otherBean) {
         log.entry(allBean, otherBean);
@@ -1368,7 +1368,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         allBean.getAbsentAnatEntities().addAll(otherBean.getAbsentAnatEntities());
         allBean.getAbsentConds().addAll(otherBean.getAbsentConds());
 
-        log.exit();
+        log.traceExit();
     }
     private static void sumAnatEntityCondCount(BiotypeStatsBean biotypeBean) {
         log.entry(biotypeBean);
@@ -1384,7 +1384,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         biotypeBean.setAbsentAnatEntityCount(biotypeBean.getAbsentAnatEntities().size());
         biotypeBean.setAbsentCondCount(biotypeBean.getAbsentConds().size());
 
-        log.exit();
+        log.traceExit();
     }
     private static void sumUpGeneCalls(GeneStatsBean bean, Collection<ExpressionCall> calls,
             EnumSet<CallService.Attribute> condParams, Collection<AnatEntity> nonInformativeAnatEntities) {
@@ -1426,7 +1426,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             }
         }
     
-        log.exit();
+        log.traceExit();
     }
     private static void incrementGeneBeanFromCall(GeneStatsBean bean, ExpressionCall call, boolean anatEntityCalls,
             boolean nonInformativeAnatEntity) {
@@ -1445,7 +1445,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             invokeGetterSetterIncrement(bean, filteredGetterName, filteredSetterName);
         }
 
-        log.exit();
+        log.traceExit();
     }
     private static void invokeGetterSetterIncrement(GeneStatsBean bean, String getterName, String setterName) {
         log.entry(bean, getterName, setterName);
@@ -1462,7 +1462,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw log.throwing(new IllegalStateException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     private static void sumAllGeneStatsCallCounts(CommonBean allBean, CommonBean otherBean) {
         log.entry(allBean, otherBean);
@@ -1489,7 +1489,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             }
         }
     
-        log.exit();
+        log.traceExit();
     }
     private static String getMethodName(ExpressionSummary callType, SummaryQuality qual, boolean getter, 
             boolean anatEntityCalls, boolean filteredAnatEntity) {
@@ -1535,15 +1535,15 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             methodName += "Cond";
         }
 
-        return log.exit(methodName);
+        return log.traceExit(methodName);
     }
     private static Method getMethod(String methodName, boolean getter) {
         log.entry(methodName, getter);
         try {
             if (getter) {
-                return log.exit(CommonBean.class.getMethod(methodName, (Class<?>[]) null));
+                return log.traceExit(CommonBean.class.getMethod(methodName, (Class<?>[]) null));
             }
-            return log.exit(GeneStatsBean.class.getMethod(methodName, int.class));
+            return log.traceExit(GeneStatsBean.class.getMethod(methodName, int.class));
         } catch (NoSuchMethodException | SecurityException e) {
             throw log.throwing(new IllegalStateException(e));
         }
@@ -1586,7 +1586,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
             log.info("New file created: {}", file.getPath());
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     private static int getTotalCallCount(GeneStatsBean geneBean) {
@@ -1598,7 +1598,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 geneBean.getPresentBronzeCond() + geneBean.getPresentSilverCond() +
                 geneBean.getPresentGoldCond() + geneBean.getAbsentBronzeCond() +
                 geneBean.getAbsentSilverCond() + geneBean.getAbsentGoldCond();
-        return log.exit(total);
+        return log.traceExit(total);
     }
 
     /**
@@ -1682,7 +1682,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         headers[idx++] = FILTERED_ABSENT_SILVER_COND_COLUMN_NAME;
         headers[idx++] = FILTERED_ABSENT_GOLD_COND_COLUMN_NAME;
 
-        return log.exit(headers);
+        return log.traceExit(headers);
     }
 
     /**
@@ -1786,7 +1786,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         " for file type: " + fileType));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
 
     /**
@@ -1965,7 +1965,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                         " for file type: " + fileType));
             }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
     
     /**
@@ -2037,6 +2037,6 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                             "Unrecognized header: " + header[i] + " for gene stat file."));
             }
         }
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 }

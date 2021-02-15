@@ -77,6 +77,6 @@ public class CommandJob extends CommandParent {
                     + " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

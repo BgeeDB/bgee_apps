@@ -114,7 +114,7 @@ public class GenerateTaxonOntology {
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
         generate.generateOntologyToFile(args[0], args[1], args[2]);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -156,7 +156,7 @@ public class GenerateTaxonOntology {
         //save in OWL
         new OntologyUtils(ont).saveAsOWL(outputFile);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -196,7 +196,7 @@ public class GenerateTaxonOntology {
         //at later steps.
         this.createTaxonDisjointAxioms(wrapper);
         
-        return log.exit(wrapper.getSourceOntology());
+        return log.traceExit(wrapper.getSourceOntology());
     }
     
     /**
@@ -220,7 +220,7 @@ public class GenerateTaxonOntology {
         log.info("Starting convertion from .dat file to OWLOntology...");
         OWLOntology ont = NCBI2OWL.convertToOWL(pathToTaxonomyData, null);
         log.info("Done converting .dat file to OWLOntology.");
-        return log.exit(ont);
+        return log.traceExit(ont);
     }
     
     /**
@@ -260,7 +260,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done filtering ontology for taxa {}.", taxonIds);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -324,7 +324,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done replacing unique names, {} labels removed, {} labels added", 
                 labelsRemoved, labelsAdded);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -389,7 +389,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done creating disjoint classes axioms, created {} disjoint axioms.", 
                 axiomCount);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -429,7 +429,7 @@ public class GenerateTaxonOntology {
         }
         disjointAxioms.add(factory.getOWLDisjointClassesAxiom(expressions));
         
-        return log.exit(disjointAxioms);
+        return log.traceExit(disjointAxioms);
     }
     
     /**
@@ -474,6 +474,6 @@ public class GenerateTaxonOntology {
             }
         }
         
-        return log.exit(disjointAxioms);
+        return log.traceExit(disjointAxioms);
     }
 }

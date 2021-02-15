@@ -53,7 +53,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
     public SourceToSpeciesTOResultSet getAllSourceToSpecies(
             Collection<SourceToSpeciesDAO.Attribute> attibutes) throws DAOException {
         log.entry(attibutes);
-        return log.exit(this.getSourceToSpecies(null, null, null, null, attibutes));
+        return log.traceExit(this.getSourceToSpecies(null, null, null, null, attibutes));
         
     }
 
@@ -143,7 +143,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
             if (filterByInfoTypes) {
                 stmt.setEnumDAOFields(offsetParamIndex, infoTypes, true);
             }
-            return log.exit(new MySQLSourceToSpeciesTOResultSet(stmt));
+            return log.traceExit(new MySQLSourceToSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -201,7 +201,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
                 }
             }
             // Set SourceToSpeciesTO
-            return log.exit(new SourceToSpeciesTO(dataSourceId, speciesId, dataType, infoType));
+            return log.traceExit(new SourceToSpeciesTO(dataSourceId, speciesId, dataType, infoType));
         }
     }
 }

@@ -117,7 +117,7 @@
 //            job.release();
 //        }
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -236,7 +236,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -273,7 +273,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -314,7 +314,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -344,7 +344,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -362,12 +362,12 @@
 //        List<String> requestedAttrs = rqParams.getValues(
 //                rqParams.getUrlParametersInstance().getParamAttributeList());
 //        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
-//            return log.exit(Arrays.asList(attrType.getEnumConstants()));
+//            return log.traceExit(Arrays.asList(attrType.getEnumConstants()));
 //        }
 //        //we don't use Enum.valueOf to be able to get parameters in lower case. 
 //        final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
 //                .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
-//        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
+//        return log.traceExit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
 //                .collect(Collectors.toList()));
 //    }
 //}

@@ -158,13 +158,13 @@ public class CallService extends CommonService {
         public String getCondParamName() {
             log.entry();
             if (!this.isConditionParameter()) {
-                return log.exit(null);
+                return log.traceExit((String) null);
             }
             switch(this) {
             case ANAT_ENTITY_ID:
-                return log.exit("anatomicalEntity");
+                return log.traceExit("anatomicalEntity");
             case DEV_STAGE_ID:
-                return log.exit("developmentalStage");
+                return log.traceExit("developmentalStage");
             default:
                 throw log.throwing(new IllegalStateException("Cond param not supported"));
             }
@@ -176,7 +176,7 @@ public class CallService extends CommonService {
          */
         public static EnumSet<Attribute> getAllConditionParameters() {
             log.entry();
-            return log.exit(Arrays.stream(CallService.Attribute.values())
+            return log.traceExit(Arrays.stream(CallService.Attribute.values())
                     .filter(a -> a.isConditionParameter())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
         }
@@ -430,7 +430,7 @@ public class CallService extends CommonService {
 
 
         //All necessary information ready, retrieve ExpressionCalls
-        return log.exit(loadExpressionCallStream(callFilter, clonedAttrs, clonedOrderingAttrs,
+        return log.traceExit(loadExpressionCallStream(callFilter, clonedAttrs, clonedOrderingAttrs,
                 condParamCombination, geneMap, condMap, maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks));
     }
 
@@ -459,7 +459,7 @@ public class CallService extends CommonService {
     public LinkedHashMap<AnatEntity, List<ExpressionCall>>
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter) throws IllegalArgumentException {
         log.entry(geneFilter);
-        return log.exit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(geneFilter, null));
+        return log.traceExit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(geneFilter, null));
     }
     /**
      * Same method as {@link #loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter)},
@@ -506,7 +506,7 @@ public class CallService extends CommonService {
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
-            return log.exit(new LinkedHashMap<>());
+            return log.traceExit(new LinkedHashMap<>());
         }
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
@@ -540,7 +540,7 @@ public class CallService extends CommonService {
                         serviceOrdering)
                 .collect(Collectors.toList());
         
-        return log.exit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
+        return log.traceExit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                 organCalls, organStageCalls, true, condGraph));
     }
 
@@ -626,7 +626,7 @@ public class CallService extends CommonService {
                 .filter(c -> organIds.contains(c.getCondition().getAnatEntityId())).collect(Collectors.toList());
         if (orderedCalls.isEmpty()) {
             log.debug("No condition calls for gene");
-            return log.exit(new LinkedHashMap<>());
+            return log.traceExit(new LinkedHashMap<>());
         }
         
         //we need to make sure that the ExpressionCalls are ordered in exactly the same way
@@ -652,7 +652,7 @@ public class CallService extends CommonService {
         //*********************
         LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity =
                 groupByAnatEntAndFilterCalls(orderedCalls, redundantCalls, true);
-        return log.exit(callsByAnatEntity);
+        return log.traceExit(callsByAnatEntity);
     }
 
     //XXX: should the loadSingleSpeciesExprAnalysis methods moved to a new service?
@@ -676,7 +676,7 @@ public class CallService extends CommonService {
                 null,                              //any data type
                 null, null, null                   //both observed and propagated calls
                 );
-        return log.exit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
+        return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
     }
     public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter) {
         log.entry(callFilter);
@@ -685,7 +685,7 @@ public class CallService extends CommonService {
         }
         Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters())
                 .collect(Collectors.toSet());
-        return log.exit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
+        return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
     }
     private SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter,
             Set<Gene> genes) {
@@ -733,7 +733,7 @@ public class CallService extends CommonService {
         //And we create the final Map condToCounts
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        return log.exit(new SingleSpeciesExprAnalysis(genes, condToCounts));
+        return log.traceExit(new SingleSpeciesExprAnalysis(genes, condToCounts));
     }
 
     //*************************************************************************
@@ -752,7 +752,7 @@ public class CallService extends CommonService {
             isQueryAllowingToComputeAnatEntityQualExprLevel(callFilter, condParamCombination,
                     attrs, orderingAttrs)) {
             //No need to query min./max ranks then
-            return log.exit(new HashMap<>());
+            return log.traceExit(new HashMap<>());
         }
 
         //Query to retrieve min./max ranks
@@ -788,7 +788,7 @@ public class CallService extends CommonService {
         log.trace("Map ID to AnatEntity produced: {}", idToAnatEntity);
 
         //Perform query and map TOs to EntityMinMaxRanks
-        return log.exit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(Arrays.asList(daoFilter),
+        return log.traceExit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(Arrays.asList(daoFilter),
                 condParamCombination).stream()
         .map(minMaxRanksTO -> new EntityMinMaxRanks<AnatEntity>(
                 minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
@@ -810,7 +810,7 @@ public class CallService extends CommonService {
             isQueryAllowingToComputeGeneQualExprLevel(callFilter, condParamCombination,
                     attrs, orderingAttrs)) {
             //No need to query min./max ranks then
-            return log.exit(new HashMap<>());
+            return log.traceExit(new HashMap<>());
         }
 
         //Query to retrieve min./max ranks
@@ -834,7 +834,7 @@ public class CallService extends CommonService {
                 condParamCombination);
 
         //Perform query and map TOs to EntityMinMaxRanks
-        return log.exit(this.globalExprCallDAO.getMinMaxRanksPerGene(Arrays.asList(daoFilter),
+        return log.traceExit(this.globalExprCallDAO.getMinMaxRanksPerGene(Arrays.asList(daoFilter),
                 condParamCombination).stream()
         .map(minMaxRanksTO -> new EntityMinMaxRanks<Gene>(
                 minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
@@ -887,7 +887,7 @@ public class CallService extends CommonService {
             //as long as the Stream is not consumed (lazy-loading).
             .stream();
 
-        return log.exit(calls);
+        return log.traceExit(calls);
     }
 
     //*************************************************************************
@@ -947,7 +947,7 @@ public class CallService extends CommonService {
 
             //If indeed it is possible to compute min./max ranks from the list of calls
             if (toListStream != null) {
-                return log.exit(toListStream.flatMap(toList -> {
+                return log.traceExit(toListStream.flatMap(toList -> {
                     List<ExpressionCall> intermediateCalls = toList.stream()
                             //To retrieve the min./max ranks, we need to know the SummaryCall,
                             //so, rather than computing CallData and SumaryCall several times,
@@ -999,7 +999,7 @@ public class CallService extends CommonService {
         //(information then already retrieved through previous independent queries,
         //with results provided through arguments anatEntityMinMaxRanks and geneMinMaxRanks).
         //We thus don't use intermediate steps to create the ExpressionCalls.
-        return log.exit(toStream
+        return log.traceExit(toStream
             .map(to -> mapGlobalCallTOToExpressionCall(to, geneMap, condMap, callFilter,
                     maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks, attrs)));
     }
@@ -1024,7 +1024,7 @@ public class CallService extends CommonService {
         //If filterRedundantCalls is true, we completely discard anat. entities 
         //that have only redundant calls, but if an anat. entity has some non-redundant calls 
         //and is not discarded, we preserve all its calls, even the redundant ones. 
-        return log.exit(orderedCalls.stream()
+        return log.traceExit(orderedCalls.stream()
                 //group by anat. entity
                 .collect(Collectors.groupingBy(
                         c -> c.getCondition().getAnatEntity(), 
@@ -1054,13 +1054,13 @@ public class CallService extends CommonService {
 
         //Perform the checks for qualitative expression levels relative to any entity
         if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         //Now, we do only the remaining checks for qualitative expression levels relative to genes
 
         //Obviously we need the gene info
         if (!attributes.contains(Attribute.GENE)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would also need the results to be retrieved ordered by gene IDs first,
@@ -1072,7 +1072,7 @@ public class CallService extends CommonService {
                 !orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) &&
                 (callFilter.getGeneFilters().size() != 1 ||
                 callFilter.getGeneFilters().iterator().next().getEnsemblGeneIds().size() != 1)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would need the query to retrieve expression calls in any anat. entity-stage.
@@ -1080,10 +1080,10 @@ public class CallService extends CommonService {
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
         if ((callFilter.getConditionFilters() != null && callFilter.getConditionFilters().stream()
                 .anyMatch(cf -> !cf.getAnatEntityIds().isEmpty()))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     private static boolean isQueryAllowingToComputeAnatEntityQualExprLevel(ExpressionCallFilter callFilter,
@@ -1093,13 +1093,13 @@ public class CallService extends CommonService {
 
         //Perform the checks for qualitative expression levels relative to any entity
         if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         //Now, we do only the remaining checks for qualitative expression levels relative to anat. entities
 
         //Obviously we need the anat. entity info
         if (!attributes.contains(Attribute.ANAT_ENTITY_ID)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would also need the results to be retrieved ordered by anat. entity IDs first,
@@ -1112,17 +1112,17 @@ public class CallService extends CommonService {
                         callFilter.getConditionFilters().stream().anyMatch(cf -> cf.getAnatEntityIds().size() != 1) ||
                         callFilter.getConditionFilters().stream().flatMap(cf -> cf.getAnatEntityIds().stream())
                                 .collect(Collectors.toSet()).size() != 1)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would need the query to retrieve expression calls in any dev. stage and for any gene,
         //not discarding observed conditions or calls, to compute the expression level categories
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
         if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     private static boolean isQueryAllowingToComputeAnyQualExprLevel(ExpressionCallFilter callFilter,
@@ -1131,19 +1131,19 @@ public class CallService extends CommonService {
 
         //If ranks not requested, we can't do anything
         if (!attributes.contains(Attribute.MEAN_RANK)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //Since for now we use ranks only from calls with params GENE-ANAT_ENTITY-DEV_STAGE,
         //This is the condition parameter combination we need
         if (!condParamCombination.equals(COND_PARAM_COMBINATION_FOR_RANKS)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would need the query to retrieve calls of presence of expression of any quality
         SummaryQuality exprQual = callFilter.getSummaryCallTypeQualityFilter().get(SummaryCallType.ExpressionSummary.EXPRESSED);
         if (exprQual == null || !exprQual.equals(SummaryQuality.values()[0])) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We need calls to include observed data, from any call type (meaning, we need expressed calls from any quality,
@@ -1153,14 +1153,14 @@ public class CallService extends CommonService {
         if ((!callFilter.getCallObservedData().containsKey(null) &&
                 !callFilter.getCallObservedData().keySet().containsAll(EnumSet.allOf(CallType.Expression.class))) ||
             callFilter.getCallObservedData().values().stream().anyMatch(b -> Boolean.FALSE.equals(b))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         //We can't use the main query if it was requested to obtain non-observed conditions,
         //or non-observed calls along anatomy of dev. stages
         if (callFilter.getConditionFilters().stream().anyMatch(cf -> Boolean.FALSE.equals(cf.getObservedConditions())) ||
                 Boolean.FALSE.equals(callFilter.getAnatEntityObservedData()) ||
                 Boolean.FALSE.equals(callFilter.getDevStageObservedData())) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We would also need the results to be retrieved ordered by gene/anat. entity IDs first,
@@ -1171,15 +1171,15 @@ public class CallService extends CommonService {
         Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
                 .map(gf -> gf.getSpeciesId()).collect(Collectors.toSet());
         if (requestedSpeciesIds.size() != 1) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         //We need the query to retrieve expression calls at least in any stage
         if (callFilter.getConditionFilters().stream().anyMatch(cf -> !cf.getDevStageIds().isEmpty())) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     private static <T> EntityMinMaxRanks<T> getMinMaxRanksFromCallGroup(
@@ -1218,7 +1218,7 @@ public class CallService extends CommonService {
             previousEntity = entity;
         }
         //If there was only NOT_EXPRESSED calls, the min and max ranks will both be null
-        return log.exit(new EntityMinMaxRanks<T>(minRankExpressedCalls, maxRankExpressedCalls,
+        return log.traceExit(new EntityMinMaxRanks<T>(minRankExpressedCalls, maxRankExpressedCalls,
                 previousEntity));
     }
 
@@ -1226,7 +1226,7 @@ public class CallService extends CommonService {
             BigDecimal rank, BigDecimal expressionScore, BigDecimal maxRankForExpressionScore,
             EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
         log.entry(exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
-        return log.exit(new ExpressionLevelInfo(rank, expressionScore, maxRankForExpressionScore,
+        return log.traceExit(new ExpressionLevelInfo(rank, expressionScore, maxRankForExpressionScore,
                 loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
                 loadQualExprLevel(exprSummary, rank, anatEntityMinMaxRank)));
     }
@@ -1234,14 +1234,14 @@ public class CallService extends CommonService {
             EntityMinMaxRanks<T> minMaxRanks) {
         log.entry(exprSummary, rank, minMaxRanks);
         if (ExpressionSummary.NOT_EXPRESSED.equals(exprSummary)) {
-            return log.exit(new QualitativeExpressionLevel<>(ExpressionLevelCategory.ABSENT, minMaxRanks));
+            return log.traceExit(new QualitativeExpressionLevel<>(ExpressionLevelCategory.ABSENT, minMaxRanks));
         }
         if (ExpressionSummary.EXPRESSED.equals(exprSummary) && rank != null && minMaxRanks != null) {
-            return log.exit(new QualitativeExpressionLevel<>(
+            return log.traceExit(new QualitativeExpressionLevel<>(
                     ExpressionLevelCategory.getExpressionLevelCategory(minMaxRanks, rank),
                     minMaxRanks));
         }
-        return log.exit(null);
+        return log.traceExit((QualitativeExpressionLevel<T>) null);
     }
 
     //*************************************************************************
@@ -1267,7 +1267,7 @@ public class CallService extends CommonService {
                     "No species nor gene IDs retrieved for filtering results."));
         }
 
-        return log.exit(new CallDAOFilter(
+        return log.traceExit(new CallDAOFilter(
                     // gene IDs
                     geneIdFilter, 
                     //species
@@ -1347,7 +1347,7 @@ public class CallService extends CommonService {
                     "No parameter allowing to determine a condition parameter combination"));
         }
 
-        return log.exit(Collections.unmodifiableSet(daoCondParamComb));
+        return log.traceExit(Collections.unmodifiableSet(daoCondParamComb));
     }
 
     private static Set<CallDataDAOFilter> convertCallFilterToCallDataDAOFilters(
@@ -1355,7 +1355,7 @@ public class CallService extends CommonService {
         log.entry(callFilter, condParamCombination);
 
         if (checkNoCallDataDAOFilterNeeded(callFilter)) {
-            return log.exit(null);
+            return log.traceExit((Set<CallDataDAOFilter>) null);
         }
 
         Set<CallDataDAOFilter> callDataDAOFilters = new HashSet<>();
@@ -1387,7 +1387,7 @@ public class CallService extends CommonService {
 
         //the method should have exited right away if no filtering was necessary
         assert callDataDAOFilters != null && !callDataDAOFilters.isEmpty();
-        return log.exit(callDataDAOFilters);
+        return log.traceExit(callDataDAOFilters);
     }
     /**
      * Checks whether this {@code CallFilter} requires creating {@code CallDataDAOFilter}s.
@@ -1414,7 +1414,7 @@ public class CallService extends CommonService {
         //Note: it is not possible to request no-expression calls from EST data,
         //but for convenience we do not consider this an error here, otherwise we could not provide
         //one ExpressionCallFilter to simply say: "give me all calls".
-        return log.exit(checkAllCallTypesAllQualsRequested(callFilter) && allDataTypesSelected &&
+        return log.traceExit(checkAllCallTypesAllQualsRequested(callFilter) && allDataTypesSelected &&
                 allObservedStates && allCondObservedData &&
                 //this is true only as long as the minimum experiment count threshold is 1
                 MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1);
@@ -1433,7 +1433,7 @@ public class CallService extends CommonService {
         boolean allCallTypesSelected = callFilter.getSummaryCallTypeQualityFilter() == null ||
                 callFilter.getSummaryCallTypeQualityFilter().isEmpty() ||
                 callFilter.getSummaryCallTypeQualityFilter().keySet().equals(EnumSet.allOf(SummaryCallType.ExpressionSummary.class));
-        return log.exit(lowestQualSelected && allCallTypesSelected);
+        return log.traceExit(lowestQualSelected && allCallTypesSelected);
     }
 
     private static CallDataDAOFilter generateCallDataDAOFilter(ExpressionCallFilter callFilter,
@@ -1494,7 +1494,7 @@ public class CallService extends CommonService {
         }
 
 
-        return log.exit(new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes, callObservedData,
+        return log.traceExit(new CallDataDAOFilter(daoExperimentCountFilters, daoDataTypes, callObservedData,
                 convertCallFilterToDAOObservedDataFilter(callFilter, condParamCombination)));
     }
 
@@ -1597,7 +1597,7 @@ public class CallService extends CommonService {
 //      }
 //      return new CallDataDAOFilter(daoExperimentCountFilters, filteredDataTypes);
 
-        return log.exit(daoExperimentCountFilters);
+        return log.traceExit(daoExperimentCountFilters);
     }
 
     /**
@@ -1627,7 +1627,7 @@ public class CallService extends CommonService {
             }
             filter.put(ConditionDAO.Attribute.STAGE_ID, callFilter.getDevStageObservedData());
         }
-        return log.exit(filter);
+        return log.traceExit(filter);
     }
 
     private static DAOExperimentCount.CallType convertSummaryCallTypeToDAOCallType(
@@ -1636,9 +1636,9 @@ public class CallService extends CommonService {
 
         switch(callType) {
         case EXPRESSED:
-            return log.exit(DAOExperimentCount.CallType.PRESENT);
+            return log.traceExit(DAOExperimentCount.CallType.PRESENT);
         case NOT_EXPRESSED:
-            return log.exit(DAOExperimentCount.CallType.ABSENT);
+            return log.traceExit(DAOExperimentCount.CallType.ABSENT);
         default:
             throw log.throwing(new IllegalArgumentException("Unsupported CallType: " + callType));
         }
@@ -1648,9 +1648,9 @@ public class CallService extends CommonService {
 
         switch(callType) {
         case EXPRESSED:
-            return log.exit(DAOExperimentCount.CallType.PRESENT);
+            return log.traceExit(DAOExperimentCount.CallType.PRESENT);
         case NOT_EXPRESSED:
-            return log.exit(DAOExperimentCount.CallType.ABSENT);
+            return log.traceExit(DAOExperimentCount.CallType.ABSENT);
         default:
             throw log.throwing(new IllegalArgumentException("Unsupported CallType: " + callType));
         }
@@ -1659,7 +1659,7 @@ public class CallService extends CommonService {
     private static Set<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
             Set<OrderingAttribute> attrs) {
         log.entry(attrs);
-        return log.exit(attrs.stream()
+        return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> {
                     switch (a) {
@@ -1678,7 +1678,7 @@ public class CallService extends CommonService {
         Set<Attribute> attributes) {
         log.entry(attributes);
         
-        return log.exit(attributes.stream().flatMap(attr -> {
+        return log.traceExit(attributes.stream().flatMap(attr -> {
             switch (attr) {
                 case GENE: 
                     return Stream.of(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
@@ -1713,7 +1713,7 @@ public class CallService extends CommonService {
             LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
         log.entry(orderingAttributes);
         
-        return log.exit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
+        return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
                 e -> {
                     switch (e.getKey()) {
                         case GENE_ID: 
@@ -1749,19 +1749,19 @@ public class CallService extends CommonService {
         log.entry(dts);
         
         if (dts == null || dts.isEmpty()) {
-            return log.exit(EnumSet.allOf(DAODataType.class));
+            return log.traceExit(EnumSet.allOf(DAODataType.class));
         }
-        return log.exit(dts.stream()
+        return log.traceExit(dts.stream()
             .map(dt -> {
                 switch(dt) {
                     case AFFYMETRIX: 
-                        return log.exit(DAODataType.AFFYMETRIX);
+                        return log.traceExit(DAODataType.AFFYMETRIX);
                     case EST: 
-                        return log.exit(DAODataType.EST);
+                        return log.traceExit(DAODataType.EST);
                     case IN_SITU: 
-                        return log.exit(DAODataType.IN_SITU);
+                        return log.traceExit(DAODataType.IN_SITU);
                     case RNA_SEQ: 
-                        return log.exit(DAODataType.RNA_SEQ);
+                        return log.traceExit(DAODataType.RNA_SEQ);
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
                 }
@@ -1806,13 +1806,13 @@ public class CallService extends CommonService {
                 .filter(ecd -> dataType.equals(ecd.getDataType()))
                 .collect(Collectors.toSet());
         if (consideredCallData.isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((ExpressionCall) null);
         }
         assert consideredCallData.size() == 1;
 
         ExpressionSummary exprSummary = call.getSummaryCallType() != null?
                 inferSummaryCallType(consideredCallData): null;
-        return log.exit(new ExpressionCall(call.getGene(), call.getCondition(),
+        return log.traceExit(new ExpressionCall(call.getGene(), call.getCondition(),
                 call.getDataPropagation() == null? null: inferDataPropagation(consideredCallData),
                 exprSummary,
                 call.getSummaryQuality() == null? null: inferSummaryQuality(consideredCallData),
@@ -1867,7 +1867,7 @@ public class CallService extends CommonService {
                 computeExpressionScore(globalCallTO.getMeanRank(), maxRankInfo.getMaxRank()): null;
         ExpressionSummary exprSummary = attrs == null || attrs.isEmpty() || attrs.contains(Attribute.CALL_TYPE)?
                 inferSummaryCallType(callData): null;
-        return log.exit(new ExpressionCall(
+        return log.traceExit(new ExpressionCall(
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.GENE)?
                     gene: null,
             attrs == null || attrs.isEmpty() || attrs.stream().anyMatch(a -> a.isConditionParameter())?
@@ -1898,7 +1898,7 @@ public class CallService extends CommonService {
         }
         if (rank == null) {
             log.debug("Rank is null, cannot compute expression score");
-            return log.exit(null);
+            return log.traceExit((BigDecimal) null);
         }
         if (rank.compareTo(new BigDecimal("0")) <= 0 || maxRank.compareTo(new BigDecimal("0")) <= 0) {
             throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
@@ -1920,7 +1920,7 @@ public class CallService extends CommonService {
                     + EXPRESSION_SCORE_MAX_VALUE + ".");
             expressionScore = EXPRESSION_SCORE_MAX_VALUE;
         }
-        return log.exit(expressionScore);
+        return log.traceExit(expressionScore);
     }
 
     private static Set<ExpressionCallData> mapGlobalCallTOToExpressionCallData(
@@ -1928,10 +1928,10 @@ public class CallService extends CommonService {
         log.entry(globalCallTO, attrs, requestedDataTypes);
         
         if (globalCallTO.getCallDataTOs() == null || globalCallTO.getCallDataTOs().isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((Set<ExpressionCallData>) null);
         }
 
-        return log.exit(globalCallTO.getCallDataTOs().stream().map(cdTO -> {
+        return log.traceExit(globalCallTO.getCallDataTOs().stream().map(cdTO -> {
             DataType dt = mapDAODataTypeToDataType(Collections.singleton(cdTO.getDataType()),
                     requestedDataTypes).iterator().next();
 
@@ -1988,7 +1988,7 @@ public class CallService extends CommonService {
     private static ExperimentExpressionCount mapDAOExperimentCountToExperimentExpressionCount(
             DAOExperimentCount count) {
         log.entry(count);
-        return log.exit(new ExperimentExpressionCount(
+        return log.traceExit(new ExperimentExpressionCount(
                 mapDAOCallTypeToCallType(count.getCallType()),
                 mapDAODataQualityToDataQuality(count.getDataQuality()),
                 mapDAOPropStateToPropState(count.getPropagationState()),
@@ -2001,9 +2001,9 @@ public class CallService extends CommonService {
         }
         switch(daoCallType) {
         case PRESENT:
-            return log.exit(CallType.Expression.EXPRESSED);
+            return log.traceExit(CallType.Expression.EXPRESSED);
         case ABSENT:
-            return log.exit(CallType.Expression.NOT_EXPRESSED);
+            return log.traceExit(CallType.Expression.NOT_EXPRESSED);
         default:
             throw log.throwing(new IllegalStateException("DAOCallType not supported: " + daoCallType));
         }
@@ -2015,9 +2015,9 @@ public class CallService extends CommonService {
         }
         switch(qual) {
         case LOW:
-            return log.exit(DataQuality.LOW);
+            return log.traceExit(DataQuality.LOW);
         case HIGH:
-            return log.exit(DataQuality.HIGH);
+            return log.traceExit(DataQuality.HIGH);
         default:
             throw log.throwing(new IllegalStateException("DAODataQuality not supported: " + qual));
         }
@@ -2034,13 +2034,13 @@ public class CallService extends CommonService {
                     .map(dt -> {
                         switch(dt) {
                         case AFFYMETRIX:
-                            return log.exit(DataType.AFFYMETRIX);
+                            return log.traceExit(DataType.AFFYMETRIX);
                         case EST:
-                            return log.exit(DataType.EST);
+                            return log.traceExit(DataType.EST);
                         case IN_SITU:
-                            return log.exit(DataType.IN_SITU);
+                            return log.traceExit(DataType.IN_SITU);
                         case RNA_SEQ:
-                            return log.exit(DataType.RNA_SEQ);
+                            return log.traceExit(DataType.RNA_SEQ);
                         default:
                             throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
                         }
@@ -2055,29 +2055,29 @@ public class CallService extends CommonService {
                     + mappedDataTypes));
         }
 
-        return log.exit(mappedDataTypes);
+        return log.traceExit(mappedDataTypes);
     }
 
     private static PropagationState mapDAOPropStateToPropState(DAOPropagationState propState) {
         log.entry(propState);
         if (propState == null) {
-            return log.exit(null);
+            return log.traceExit((PropagationState) null);
         }
         switch(propState) {
         case ALL:
-            return log.exit(PropagationState.ALL);
+            return log.traceExit(PropagationState.ALL);
         case SELF:
-            return log.exit(PropagationState.SELF);
+            return log.traceExit(PropagationState.SELF);
         case ANCESTOR:
-            return log.exit(PropagationState.ANCESTOR);
+            return log.traceExit(PropagationState.ANCESTOR);
         case DESCENDANT:
-            return log.exit(PropagationState.DESCENDANT);
+            return log.traceExit(PropagationState.DESCENDANT);
         case SELF_AND_ANCESTOR:
-            return log.exit(PropagationState.SELF_AND_ANCESTOR);
+            return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
         case SELF_AND_DESCENDANT:
-            return log.exit(PropagationState.SELF_AND_DESCENDANT);
+            return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
         case ANCESTOR_AND_DESCENDANT:
-            return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+            return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
         default:
             throw log.throwing(new IllegalStateException("Unsupported DAOPropagationState: "
                     + propState));
@@ -2096,7 +2096,7 @@ public class CallService extends CommonService {
                         cd.getDataPropagation().isIncludingObservedData() == null)) {
             throw log.throwing(new IllegalArgumentException("Missing info for inferring data propagation"));
         }
-        return log.exit(callData.stream()
+        return log.traceExit(callData.stream()
                 .map(cd -> cd.getDataPropagation())
                 .reduce(
                         DATA_PROPAGATION_IDENTITY,
@@ -2112,7 +2112,7 @@ public class CallService extends CommonService {
 
         if (callDataTO == null || callDataTO.getDataPropagation() == null ||
                 callDataTO.getDataPropagation().isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((DataPropagation) null);
         }
 
         PropagationState anatEntityPropState = null;
@@ -2138,20 +2138,20 @@ public class CallService extends CommonService {
 
         Boolean observedData = callDataTO.isConditionObservedData();
 
-        return log.exit(new DataPropagation(anatEntityPropState, stagePropState, observedData));
+        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, observedData));
     }
     protected static DataPropagation mergeDataPropagations(DataPropagation dataProp1,
             DataPropagation dataProp2) {
         log.entry(dataProp1, dataProp2);
 
         if (dataProp1 == null && dataProp2 == null) {
-            return log.exit(DATA_PROPAGATION_IDENTITY);
+            return log.traceExit(DATA_PROPAGATION_IDENTITY);
         }
         if (dataProp1 == null || dataProp1.equals(DATA_PROPAGATION_IDENTITY)) {
-            return log.exit(dataProp2);
+            return log.traceExit(dataProp2);
         }
         if (dataProp2 == null || dataProp2.equals(DATA_PROPAGATION_IDENTITY)) {
-            return log.exit(dataProp1);
+            return log.traceExit(dataProp1);
         }
 
         PropagationState anatEntityPropState = mergePropagationStates(
@@ -2180,7 +2180,7 @@ public class CallService extends CommonService {
                     + dataProp1 + " - " + dataProp2));
         }
 
-        return log.exit(new DataPropagation(anatEntityPropState, stagePropState, retrievedObservedData));
+        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, retrievedObservedData));
     }
     private static PropagationState mergePropagationStates(PropagationState state1,
             PropagationState state2) {
@@ -2196,70 +2196,70 @@ public class CallService extends CommonService {
         }
 
         if (state1 == null && state2 == null) {
-            return log.exit(null);
+            return log.traceExit((PropagationState) null);
         }
         if (state1 == null) {
-            return log.exit(state2);
+            return log.traceExit(state2);
         }
         if (state2 == null) {
-            return log.exit(state1);
+            return log.traceExit(state1);
         }
 
         if (state1.equals(state2)) {
-            return log.exit(state1);
+            return log.traceExit(state1);
         }
         Set<PropagationState> propStates = EnumSet.of(state1, state2);
         if (propStates.contains(PropagationState.ALL)) {
-            return log.exit(PropagationState.ALL);
+            return log.traceExit(PropagationState.ALL);
         }
 
         if (propStates.contains(PropagationState.SELF)) {
             if (propStates.contains(PropagationState.ANCESTOR)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
+                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
             } else if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
+                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
+                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
             } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
+                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             } else {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.ANCESTOR)) {
             if (propStates.contains(PropagationState.DESCENDANT)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.SELF_AND_ANCESTOR);
+                return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
             } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
             } else {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.DESCENDANT)) {
             if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.SELF_AND_DESCENDANT);
+                return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ANCESTOR_AND_DESCENDANT);
+                return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
             } else {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_ANCESTOR)) {
             if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             } else {
                 throw log.throwing(new AssertionError("Case not covered, " + propStates));
             }
         } else if (propStates.contains(PropagationState.SELF_AND_DESCENDANT)) {
             if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit(PropagationState.ALL);
+                return log.traceExit(PropagationState.ALL);
             }
             throw log.throwing(new AssertionError("Case not covered, " + propStates));
         } else if (propStates.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
@@ -2279,9 +2279,9 @@ public class CallService extends CommonService {
         log.entry(callData);
 
         if (callData.stream().anyMatch(cd -> Expression.EXPRESSED.equals(cd.getCallType()))) {
-            return log.exit(ExpressionSummary.EXPRESSED);
+            return log.traceExit(ExpressionSummary.EXPRESSED);
         }
-        return log.exit(ExpressionSummary.NOT_EXPRESSED);
+        return log.traceExit(ExpressionSummary.NOT_EXPRESSED);
     }
 
     /**
@@ -2316,26 +2316,26 @@ public class CallService extends CommonService {
         }
         
         if (expPresentHigh >= MIN_HIGH_GOLD) {
-            return log.exit(SummaryQuality.GOLD);
+            return log.traceExit(SummaryQuality.GOLD);
         }
         if (expPresentHigh >= MIN_HIGH_SILVER || expPresentLow >= MIN_LOW_SILVER) {
-            return log.exit(SummaryQuality.SILVER);
+            return log.traceExit(SummaryQuality.SILVER);
         }
         if (expPresentHigh >= MIN_HIGH_BRONZE || expPresentLow >= MIN_LOW_BRONZE) {
             //*Currently* we don't have bronze quality if we have some present high.
             //Could change in the future if we change the thresholds.
             assert expPresentHigh == 0;
-            return log.exit(SummaryQuality.BRONZE);
+            return log.traceExit(SummaryQuality.BRONZE);
         }
         
         if (expAbsentHigh >= MIN_HIGH_GOLD) {
-            return log.exit(SummaryQuality.GOLD);
+            return log.traceExit(SummaryQuality.GOLD);
         }
         if (expAbsentHigh >= MIN_HIGH_SILVER || expAbsentLow >= MIN_LOW_SILVER) {
-            return log.exit(SummaryQuality.SILVER);
+            return log.traceExit(SummaryQuality.SILVER);
         }
         if (expAbsentHigh >= MIN_HIGH_BRONZE || expAbsentLow >= MIN_LOW_BRONZE) {
-            return log.exit(SummaryQuality.BRONZE);
+            return log.traceExit(SummaryQuality.BRONZE);
         }
         
         throw log.throwing(new IllegalArgumentException("Malformed CallData"));
@@ -2356,7 +2356,7 @@ public class CallService extends CommonService {
             PropagationState state) {
         log.entry(cd, expr, qual, state);
         if (cd.getExperimentCounts() == null) {
-            return log.exit(0);
+            return log.traceExit(0);
         }
         Set<ExperimentExpressionCount> counts = cd.getExperimentCounts().stream()
             .filter(c -> expr.equals(c.getCallType()) && qual.equals(c.getDataQuality())
@@ -2367,8 +2367,8 @@ public class CallService extends CommonService {
                 cd, expr, qual, state, counts);
         if (counts.isEmpty()) {
             //For instance, if we request no-expression from EST data, no corresponding counts
-            return log.exit(0);
+            return log.traceExit(0);
         }
-        return log.exit(counts.iterator().next().getCount());
+        return log.traceExit(counts.iterator().next().getCount());
     }
 }

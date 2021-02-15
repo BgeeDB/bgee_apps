@@ -62,28 +62,28 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
     @Override
     public GeneHomologsTOResultSet getOrthologousGenes(Collection<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
-        return log.exit(getOrthologousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
+        return log.traceExit(getOrthologousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
     public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
             Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds) {
         log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
-        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
+        return log.traceExit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
                 speciesIds, HomologyType.ORTHOLOGS));
     }
 
     @Override
     public GeneHomologsTOResultSet getParalogousGenes(Collection<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
-        return log.exit(getParalogousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
+        return log.traceExit(getParalogousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
     public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
             Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds) {
         log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
-        return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
+        return log.traceExit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
                 speciesIds, HomologyType.PARALOGS));
     }
     
@@ -186,7 +186,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             if (clonedSpeciesIds != null) {
                 stmt.setIntegers(offsetParamIndex, clonedSpeciesIds, true);
             }
-            return log.exit(new MySQLGeneHomologsTOResultSet(stmt));
+            return log.traceExit(new MySQLGeneHomologsTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -249,7 +249,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
                 }
             }
             // Set GeneHomologsTO
-            return log.exit(new GeneHomologsTO(bgeeGeneId, targetGeneId, taxonId));
+            return log.traceExit(new GeneHomologsTO(bgeeGeneId, targetGeneId, taxonId));
         }
     }
 

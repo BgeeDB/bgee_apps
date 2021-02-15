@@ -93,7 +93,7 @@ public class MySQLSummarySimilarityAnnotationDAO
               .append("ON t4.CIOId = ").append(SUMMARY_SIM_ANNOT_TABLE).append(".CIOId ");
         }
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     private static String generateWhereCond(Integer taxonId, boolean ancestralTaxaAnnots,
             boolean descentTaxaAnnots, Boolean positiveAnnots, Boolean trusted) {
@@ -133,7 +133,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             whereClauseStarted = true;
         }
     
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     private static void parameterizeStatement(BgeePreparedStatement stmt, Integer taxonId,
             Boolean positiveAnnots, Boolean trusted) throws SQLException {
@@ -169,7 +169,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
         log.entry();
-        return log.exit(this.getSummarySimilarityAnnotations(null, false, false, null, null, null));
+        return log.traceExit(this.getSummarySimilarityAnnotations(null, false, false, null, null, null));
     }
     @Override
     public SummarySimilarityAnnotationTOResultSet getSummarySimilarityAnnotations(
@@ -193,7 +193,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             parameterizeStatement(stmt, taxonId, positiveAnnots, trusted);
-            return log.exit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
+            return log.traceExit(new MySQLSummarySimilarityAnnotationTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -202,7 +202,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     @Override
     public SimAnnotToAnatEntityTOResultSet getAllSimAnnotToAnatEntity() {
         log.entry();
-        return log.exit(this.getSimAnnotToAnatEntity(null, false, false, null, null));
+        return log.traceExit(this.getSimAnnotToAnatEntity(null, false, false, null, null));
     }
     @Override
     public SimAnnotToAnatEntityTOResultSet getSimAnnotToAnatEntity(Integer taxonId,
@@ -225,7 +225,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             parameterizeStatement(stmt, taxonId, positiveAnnots, trusted);
-            return log.exit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
+            return log.traceExit(new MySQLSimAnnotToAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -271,7 +271,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(annotationInsertedCount);        
+        return log.traceExit(annotationInsertedCount);        
     }
     
     @Override
@@ -311,7 +311,7 @@ public class MySQLSummarySimilarityAnnotationDAO
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(rowInsertedCount);        
+        return log.traceExit(rowInsertedCount);        
     }
 
     /**
@@ -395,7 +395,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                         log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
+                return log.traceExit(new SummarySimilarityAnnotationTO(id, taxonId, negated, cioId));
 
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
@@ -476,7 +476,7 @@ public class MySQLSummarySimilarityAnnotationDAO
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new SimAnnotToAnatEntityTO(summarySimilarityAnnotationId, anatEntityId));
+            return log.traceExit(new SimAnnotToAnatEntityTO(summarySimilarityAnnotationId, anatEntityId));
         }
     }
 }

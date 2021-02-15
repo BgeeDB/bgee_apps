@@ -92,7 +92,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             if (!filteredKeywords.isEmpty()) {
                 stmt.setStrings(1, filteredKeywords, true);
             }             
-            return log.exit(new MySQLKeywordTOResultSet(stmt));
+            return log.traceExit(new MySQLKeywordTOResultSet(stmt));
             
         } catch (SQLException|IllegalArgumentException e) {
             throw log.throwing(new DAOException(e));
@@ -126,7 +126,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             if (!filteredSpeciesIds.isEmpty()) {
                 stmt.setIntegers(1, filteredSpeciesIds, true);
             }             
-            return log.exit(new MySQLKeywordTOResultSet(stmt));
+            return log.traceExit(new MySQLKeywordTOResultSet(stmt));
             
         } catch (SQLException|IllegalArgumentException e) {
             throw log.throwing(new DAOException(e));
@@ -156,7 +156,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
             if (!filteredSpeciesIds.isEmpty()) {
                 stmt.setIntegers(1, filteredSpeciesIds, true);
             }             
-            return log.exit(new MySQLEntityToKeywordTOResultSet<Integer>(stmt, "speciesId", Integer.class));
+            return log.traceExit(new MySQLEntityToKeywordTOResultSet<Integer>(stmt, "speciesId", Integer.class));
             
         } catch (SQLException|IllegalArgumentException e) {
             throw log.throwing(new DAOException(e));
@@ -200,7 +200,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                 }
             }
             
-            return log.exit(inserted);
+            return log.traceExit(inserted);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -238,7 +238,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -285,7 +285,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                         log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new KeywordTO(id, name));
+                return log.traceExit(new KeywordTO(id, name));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -349,7 +349,7 @@ public class MySQLKeywordDAO extends MySQLDAO<KeywordDAO.Attribute> implements K
                         log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new EntityToKeywordTO<T>(entityId, keywordId));
+                return log.traceExit(new EntityToKeywordTO<T>(entityId, keywordId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

@@ -163,7 +163,7 @@ abstract class CommandParent {
         this.serverRoot = prop.getBgeeRootDirectory();
         this.homePage   = prop.getBgeeRootDirectory();
         this.bgeeRoot   = prop.getBgeeRootDirectory();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -191,7 +191,7 @@ abstract class CommandParent {
      */
     public boolean preprocessRequestAndCheckIfContinue() {
         log.entry();
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -252,7 +252,7 @@ abstract class CommandParent {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -268,13 +268,13 @@ abstract class CommandParent {
         List<String> rqDatatypes  = this.requestParameters.getDataType();
         if (rqDatatypes != null && 
                 rqDatatypes.size() == 1 && rqDatatypes.get(0).equals(RequestParameters.ALL_VALUE)) {
-            return log.exit(EnumSet.allOf(DataType.class));
+            return log.traceExit(EnumSet.allOf(DataType.class));
         }
         if (rqDatatypes != null && !BgeeEnum.areAllInEnum(DataType.class, rqDatatypes)) {
             throw log.throwing(new InvalidRequestException("Incorrect data types provided: "
                     + rqDatatypes));
         }
-        return log.exit(DataType.convertToDataTypeSet(rqDatatypes));
+        return log.traceExit(DataType.convertToDataTypeSet(rqDatatypes));
     }
     /**
      * Check and retrieve the summary quality requested in the {@code RequestParameters} object 
@@ -288,11 +288,11 @@ abstract class CommandParent {
         
         String rqDataQual = this.requestParameters.getDataQuality();
         if (SummaryQuality.GOLD.name().equalsIgnoreCase(rqDataQual)) {
-            return log.exit(SummaryQuality.GOLD);
+            return log.traceExit(SummaryQuality.GOLD);
         }
         if (rqDataQual == null || SummaryQuality.SILVER.name().equalsIgnoreCase(rqDataQual) || 
                 RequestParameters.ALL_VALUE.equalsIgnoreCase(rqDataQual)) {
-            return log.exit(SummaryQuality.SILVER);
+            return log.traceExit(SummaryQuality.SILVER);
         }
         throw log.throwing(new InvalidRequestException("Incorrect data quality provided: "
                 + rqDataQual));
@@ -313,12 +313,12 @@ abstract class CommandParent {
         List<String> requestedAttrs = rqParams.getValues(
                 rqParams.getUrlParametersInstance().getParamAttributeList());
         if (requestedAttrs == null || requestedAttrs.isEmpty()) {
-            return log.exit(Arrays.asList(attrType.getEnumConstants()));
+            return log.traceExit(Arrays.asList(attrType.getEnumConstants()));
         }
         //we don't use Enum.valueOf to be able to get parameters in lower case. 
         final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
                 .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
-        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
+        return log.traceExit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
                 .collect(Collectors.toList()));
     }
 }

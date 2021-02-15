@@ -283,7 +283,7 @@ public class Uberon extends UberonCommon {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
 //    public static void test() throws FileNotFoundException, IOException, 
@@ -466,7 +466,7 @@ public class Uberon extends UberonCommon {
 //        ub2.getOntologyUtils().removeOBOProblematicAxioms();
 //        ub2.getOntologyUtils().saveAsOBO(sourceOntName + "_base_simple_reduced_human_expression_only.obo", false);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 
     /**
@@ -607,7 +607,7 @@ public class Uberon extends UberonCommon {
                     this.getClassesRemovedFilePath(), this.getClassesRemoved());
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -754,7 +754,7 @@ public class Uberon extends UberonCommon {
             				"needs to be examined)");
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -856,7 +856,7 @@ public class Uberon extends UberonCommon {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -890,7 +890,7 @@ public class Uberon extends UberonCommon {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -986,7 +986,7 @@ public class Uberon extends UberonCommon {
             throw log.throwing(new IllegalArgumentException("The provided ontology " +
                     " did not allow to acquire any taxon ID"));
         }
-        return log.exit(OntologyUtils.convertToNcbiIds(taxonIds));
+        return log.traceExit(OntologyUtils.convertToNcbiIds(taxonIds));
     }
     
     /**
@@ -1029,7 +1029,7 @@ public class Uberon extends UberonCommon {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1109,7 +1109,7 @@ public class Uberon extends UberonCommon {
             mapWriter.flush();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1124,7 +1124,7 @@ public class Uberon extends UberonCommon {
         log.entry(object);
         
         Collection<String> subsets = this.getOntologyUtils().getWrapper().getSubsets(object);
-        return log.exit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, subsets) && 
+        return log.traceExit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, subsets) && 
                 Collections.disjoint(INFORMATIVE_SUBSETS, subsets));
     }
 
@@ -1153,7 +1153,7 @@ public class Uberon extends UberonCommon {
 
         if (directIndirectValidOutgoingEdges == null) {
             System.out.println("Could not find OWLClass corresponding to " + sourceClassId);
-            log.exit(); return;
+            log.traceExit(); return;
         }
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -1175,7 +1175,7 @@ public class Uberon extends UberonCommon {
 
         if (directIndirectValidOutgoingEdges.values().stream().allMatch(s -> s.isEmpty())) {
             System.out.println("No outgoing edge found from " + sourceClassId + " to " + targetClassId);
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         System.out.println("First pass RelationTOs: ");
@@ -1200,13 +1200,13 @@ public class Uberon extends UberonCommon {
             System.out.println();
         });
 
-        log.exit();
+        log.traceExit();
     }
 
     public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
             String targetClassId, Collection<Integer> speciesIds) {
         log.entry(sourceClassId, targetClassId, speciesIds);
-        return log.exit(this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId,
+        return log.traceExit(this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId,
                 speciesIds, false, new HashSet<>()));
     }
 
@@ -1218,12 +1218,12 @@ public class Uberon extends UberonCommon {
         OWLClass sourceClass = this.getOWLClass(sourceClassId);
         if (sourceClass == null) {
             log.debug("Could not find OWLClass corresponding to {}", sourceClassId);
-            return log.exit(null);
+            return log.traceExit((Map<Boolean, Set<OWLGraphEdge>>) null);
         }
 
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
-        return log.exit(
+        return log.traceExit(
             this.getValidOutgoingEdgesForOWLClass(sourceClass, classesToIgnore, speciesIds)
                 .entrySet().stream()
                 .collect(Collectors.toMap(
@@ -1305,7 +1305,7 @@ public class Uberon extends UberonCommon {
         OWLClass mappedCls = this.getOWLClass(wrapper.getIdentifier(cls));
         if (mappedCls == null || 
                 !this.isValidClass(mappedCls, classesToIgnore, speciesIds)) {
-            return log.exit(directIndirectValidOutgoingEdges);
+            return log.traceExit(directIndirectValidOutgoingEdges);
         }
 
         for (OWLOntology ont: wrapper.getAllOntologies()) {
@@ -1437,7 +1437,7 @@ public class Uberon extends UberonCommon {
                 }
             }
         }
-        return log.exit(directIndirectValidOutgoingEdges);
+        return log.traceExit(directIndirectValidOutgoingEdges);
     }
 
     /**
@@ -1472,7 +1472,7 @@ public class Uberon extends UberonCommon {
                 !this.existsInAtLeastOneSpecies(cls, speciesIds) || 
                 !wrapper.isRealClass(cls)) {
             log.trace("Class discarded");
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         //check that we always have an ID and a name, only for class that will not be 
@@ -1490,7 +1490,7 @@ public class Uberon extends UberonCommon {
             }
         }
         
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     /**
@@ -1503,7 +1503,7 @@ public class Uberon extends UberonCommon {
     public boolean isTaxonomyClass(OWLObject o) {
         log.entry(o);
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
-        return log.exit(wrapper.getAncestorsThroughIsA(o).contains(
+        return log.traceExit(wrapper.getAncestorsThroughIsA(o).contains(
                 wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID, true)));
     }
 
@@ -1571,7 +1571,7 @@ public class Uberon extends UberonCommon {
         
         OWLClass mappedCls = this.getOWLClass(wrapper.getIdentifier(cls));
         if (mappedCls == null || !this.isValidClass(mappedCls, classesToIgnore, speciesIds)) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         String id = wrapper.getIdentifier(mappedCls);
 
@@ -1712,7 +1712,7 @@ public class Uberon extends UberonCommon {
                     inSpecies);
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1830,7 +1830,7 @@ public class Uberon extends UberonCommon {
             relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, inSpecies, 
                     speciesIds));
         }
-        return log.exit(relsToTCs);
+        return log.traceExit(relsToTCs);
     }
 
     /**
@@ -1869,7 +1869,7 @@ public class Uberon extends UberonCommon {
             throw log.throwing(new AssertionError("Relation with no taxon constraints defined."));
         }
         
-        return log.exit(taxonConstraints);
+        return log.traceExit(taxonConstraints);
     }
 
     /**
@@ -1901,7 +1901,7 @@ public class Uberon extends UberonCommon {
             objectProps.addAll(wrapper.getSubPropertyReflexiveClosureOf(evolved));
         }
         
-        return log.exit(objectProps);
+        return log.traceExit(objectProps);
     }
     
     /**
@@ -1951,7 +1951,7 @@ public class Uberon extends UberonCommon {
             annotProps.addAll(wrapper.getSubAnnotationPropertyReflexiveClosureOf(prop));
         }
         
-        return log.exit(annotProps);
+        return log.traceExit(annotProps);
     }
 
     /**
@@ -2071,6 +2071,6 @@ public class Uberon extends UberonCommon {
 //            }
 //        }
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 }

@@ -61,21 +61,21 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
     @Override
     public SpeciesTOResultSet getAllSpecies(Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
         log.entry(attributes);
-        return log.exit(this.getSpeciesByIds(null, attributes));
+        return log.traceExit(this.getSpeciesByIds(null, attributes));
     }
     
     @Override
     public SpeciesTOResultSet getSpeciesByIds(Collection<Integer> speciesIds,
             Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
         log.entry(speciesIds, attributes);
-        return log.exit(this.getSpeciesByIdsAndTaxonIds(speciesIds, null, attributes));
+        return log.traceExit(this.getSpeciesByIdsAndTaxonIds(speciesIds, null, attributes));
     }
 
     @Override
     public SpeciesTOResultSet getSpeciesByTaxonIds(Collection<Integer> taxonIds,
             Collection<SpeciesDAO.Attribute> attributes) throws DAOException {
         log.entry(taxonIds, attributes);
-        return log.exit(this.getSpeciesByIdsAndTaxonIds(null, taxonIds, attributes));
+        return log.traceExit(this.getSpeciesByIdsAndTaxonIds(null, taxonIds, attributes));
     }
 
     private SpeciesTOResultSet getSpeciesByIdsAndTaxonIds(Collection<Integer> speciesIds,
@@ -137,7 +137,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                 stmt.setIntegers(index, clonedTaxIds, true);
                 index += clonedTaxIds.size();
             }
-            return log.exit(new MySQLSpeciesTOResultSet(stmt));
+            return log.traceExit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -158,7 +158,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLSpeciesTOResultSet(stmt));
+            return log.traceExit(new MySQLSpeciesTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -227,7 +227,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -308,7 +308,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
                 throw log.throwing(new DAOException(e));
             }
             //Set SpeciesTO
-            return log.exit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
+            return log.traceExit(new SpeciesTO(speciesId, speciesCommonName, genus, species,
                     displayOrder, taxonId, genomeFilePath, genomeVersion, dataSourceId, 
                     genomeSpeciesId));
         }

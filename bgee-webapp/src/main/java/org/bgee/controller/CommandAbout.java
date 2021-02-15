@@ -56,6 +56,6 @@ public class CommandAbout extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

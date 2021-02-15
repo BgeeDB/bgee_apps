@@ -99,7 +99,7 @@ public class TaskManager {
 		
 		log.info("New TaskManager with ID {} for Thread {} registered", id, 
 				Thread.currentThread().getId());
-		log.exit();
+		log.traceExit();
 	}
 	
 	/**
@@ -428,7 +428,7 @@ public class TaskManager {
         this.setTotalSubTaskCount(totalSubTaskCount);
         this.setCurrentSubTaskIndex(0);
         this.setCurrentSubTaskName(firstSubTaskName);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -439,7 +439,7 @@ public class TaskManager {
     public void endSubTask() {
         log.entry();
         log.debug("Ending sub-task {}", this.currentSubTaskName);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Called when the {@code QueryTool} starts its next sub-task
@@ -454,7 +454,7 @@ public class TaskManager {
         log.debug("Starting new sub-task {}", subTaskName);
         this.incrementCurrentSubTaskIndex();
         this.setCurrentSubTaskName(subTaskName);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -476,6 +476,6 @@ public class TaskManager {
                     this.taskName);
             this.taskNotCompleted();
         }
-        log.exit();
+        log.traceExit();
     }
 }

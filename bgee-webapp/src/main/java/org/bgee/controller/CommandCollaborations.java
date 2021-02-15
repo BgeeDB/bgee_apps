@@ -55,6 +55,6 @@ public class CommandCollaborations extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

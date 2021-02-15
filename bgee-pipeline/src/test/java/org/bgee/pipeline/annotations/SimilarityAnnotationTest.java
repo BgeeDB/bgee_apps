@@ -163,7 +163,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
                         getResource("/similarity_annotations/curator_similarity_annotations.tsv").
                         getFile()));
         
-        log.exit();
+        log.traceExit();
     }
     
     @Ignore

@@ -388,7 +388,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 file.delete();
             }
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -415,7 +415,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             Map<Condition, String> condToConditionId = extractGlobalCondTable(speciesId, directory);
             extractGlobalExpressionTable(ensemblIdToBgeeGeneId, condToConditionId, speciesId, directory);
         }
-        log.exit();
+        log.traceExit();
     }
 
     private void extractGlobalExpressionTable(Map<String, Integer> ensemblIdToBgeeGeneId,
@@ -465,7 +465,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
         writeOutputFile(file, callsInformation, header, processors);
-        log.exit();
+        log.traceExit();
     }
 
     private List<Map<String, String>> getGlobalExpressionMap(Integer speciesId,
@@ -482,7 +482,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         // init callObservedData
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
-        return log.exit(serviceFactory.getCallService()
+        return log.traceExit(serviceFactory.getCallService()
                 .loadExpressionCalls(new ExpressionCallFilter(silverCallFilter,
                         Collections.singleton(new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())), null, null,
                         obsDataFilter, null, null), attributes, orderingAttributes)
@@ -530,7 +530,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         final CellProcessor[] processors = createCellProcessor(TsvFile.GENE_OUTPUT_FILE);
         File file = new File(directory, TsvFile.GENE_OUTPUT_FILE.fileName);
         writeOutputFile(file, allGenesInformation, header, processors);
-        return log.exit(allTOs.stream().collect(Collectors.toMap(to -> to.getGeneId(), to -> to.getId())));
+        return log.traceExit(allTOs.stream().collect(Collectors.toMap(to -> to.getGeneId(), to -> to.getId())));
     }
 
     private void extractAnatEntityTable(String directory) {
@@ -550,7 +550,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         final CellProcessor[] processors = createCellProcessor(TsvFile.ANATENTITY_OUTPUT_FILE);
         File file = new File(directory, TsvFile.ANATENTITY_OUTPUT_FILE.getFileName());
         writeOutputFile(file, allAnatEntitiesInformation, header, processors);
-        log.exit();
+        log.traceExit();
     }
 
     private void extractStageTable(String directory) {
@@ -570,7 +570,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         final CellProcessor[] processors = createCellProcessor(TsvFile.DEVSTAGE_OUTPUT_FILE);
         File file = new File(directory, TsvFile.DEVSTAGE_OUTPUT_FILE.fileName);
         writeOutputFile(file, allDevStagesInformation, header, processors);
-        log.exit();
+        log.traceExit();
     }
 
     private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
@@ -613,7 +613,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         // write global condition tsv file
         File file = new File(directory, TsvFile.GLOBALCOND_OUTPUT_FILE.getFileName());
         writeOutputFile(file, allGlobalCondInformation, header, processors);
-        return log.exit(createCondToConditionIdMap(conditionTOs));
+        return log.traceExit(createCondToConditionIdMap(conditionTOs));
     }
 
     private Set<Integer> extractSpeciesTable(SpeciesTOResultSet speciesTOs, String directory) {
@@ -638,7 +638,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         final CellProcessor[] processors = createCellProcessor(TsvFile.SPECIES_OUTPUT_FILE);
         File file = new File(directory, TsvFile.SPECIES_OUTPUT_FILE.getFileName());
         writeOutputFile(file, allSpeciesInformation, header, processors);
-        return log.exit(speciesIds);
+        return log.traceExit(speciesIds);
     }
 
     /**
@@ -681,7 +681,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             }
             index++;
         }
-        return log.exit(cellProcessor);
+        return log.traceExit(cellProcessor);
     }
 
     /**
@@ -719,7 +719,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -742,7 +742,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 throw log.throwing(new IllegalStateException("Can not connect to the database"));
             }
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -853,14 +853,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         new IllegalStateException("Can not read the file " + directory + tsvFile.getFileName()));
             }
         }
-        log.exit();
+        log.traceExit();
     }
     
     private String dataPropagationToString(DataPropagation dataPropagation) {
         log.entry(dataPropagation);
         //TODO: to remove when the API can return all types of propagation
         if(dataPropagation == null) {
-            return log.exit("");
+            return log.traceExit("");
         }
         EnumSet<PropagationState> allPropagationState = dataPropagation.getAllPropagationStates();
         if (dataPropagation.isIncludingObservedData()) {
@@ -868,23 +868,23 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
                     (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) && 
                             allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT))) {
-                return log.exit("all");
+                return log.traceExit("all");
             } else if (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR)) {
-                return log.exit("self and ancestor");
+                return log.traceExit("self and ancestor");
             } else if (allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT)) {
-                return log.exit("self and descendant");
+                return log.traceExit("self and descendant");
             } else if (allPropagationState.contains(PropagationState.SELF)) {
-            	return log.exit("self");
+            	return log.traceExit("self");
             }
         } else {
             if ( (allPropagationState.contains(PropagationState.ANCESTOR) && 
                     allPropagationState.contains(PropagationState.DESCENDANT)) ||
                     allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.exit("ancestor and descendant");
+                return log.traceExit("ancestor and descendant");
             } else if (allPropagationState.contains(PropagationState.ANCESTOR)) {
-                return log.exit("ancestor");
+                return log.traceExit("ancestor");
             } else if (allPropagationState.contains(PropagationState.DESCENDANT)) {
-                return log.exit("descendant");
+                return log.traceExit("descendant");
             }
         }
         throw log.throwing(new IllegalArgumentException("Unknown data propagation status  "

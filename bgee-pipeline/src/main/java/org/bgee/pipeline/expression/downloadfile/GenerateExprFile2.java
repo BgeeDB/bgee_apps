@@ -166,7 +166,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             GenerateExprFile2.convertToAttributes(CommandRunner.parseListArgument(args[3])));
         generator.generateExprFiles();
 
-        log.exit();
+        log.traceExit();
     }
     
     private static Set<Attribute> convertToAttributes(List<String> argumentList) {
@@ -184,7 +184,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     "\" does not correspond to any element of " + Attribute.class.getName()));
         }
         
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
 
     /**
@@ -337,7 +337,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             log.info("Done generating of expression files for the species {}.", speciesId);
         });
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -507,7 +507,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -527,7 +527,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         List<Attribute> attributeList = new ArrayList<>(attributes);
         Collections.sort(attributeList);
 
-        return log.exit(attributes.stream()
+        return log.traceExit(attributes.stream()
                 //we use a flatMap to be able to return an empty Stream (avoid having double '_' in file name)
                 .flatMap(a -> {
                     switch (a) {
@@ -673,7 +673,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
 
     /**
@@ -752,7 +752,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             headers[idx++] = RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME;
         }
-        return log.exit(headers);
+        return log.traceExit(headers);
     }
     
     /**
@@ -890,7 +890,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             "Some of data types were not found in the header: expected: "
             + DATA_TYPE_ORDER + " - found: " + dataTypeFound;
 
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
     
     /**
@@ -966,7 +966,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             }
         }
         
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 
     /**
@@ -1055,7 +1055,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 }
             }
         });
-        return log.exit(rowCount.get());
+        return log.traceExit(rowCount.get());
     }
 
     /**
@@ -1075,7 +1075,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             ExpressionCallData data = callFromDataType.getCallData().iterator().next();
             assert dataType.equals(data.getDataType());
 
-            return log.exit(new DataExprCounts(dataType,
+            return log.traceExit(new DataExprCounts(dataType,
                     convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
                     convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
                     this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.HIGH,
@@ -1091,7 +1091,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     callFromDataType.getExpressionScore() == null ? NA_VALUE : callFromDataType.getFormattedExpressionScore(),
                     data.getWeightForMeanRank() == null ? NA_VALUE : data.getWeightForMeanRank().toPlainString()));
         }
-        return log.exit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, 0L, 0L, 0L, 0L,
+        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, 0L, 0L, 0L, 0L,
                     convertObservedDataToString(false), NA_VALUE, NA_VALUE, NA_VALUE));
     }
 

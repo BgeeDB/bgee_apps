@@ -279,6 +279,6 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("</ul>");
         this.writeln("</div>");
 
-        log.exit();
+        log.traceExit();
     }
 }

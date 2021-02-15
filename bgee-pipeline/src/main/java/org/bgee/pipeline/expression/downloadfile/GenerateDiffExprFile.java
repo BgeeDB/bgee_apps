@@ -287,7 +287,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                             CommandRunner.parseListArgument(args[1]), SingleSpDiffExprFileType.class), 
                     args[2]);
         generator.generateDiffExprFiles();
-        log.exit();
+        log.traceExit();
     }
     /**
      * Default constructor. 
@@ -403,7 +403,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     speciesId);
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -572,7 +572,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         //now, if everything went fine, we rename the temporary files
         this.renameTempFiles(generatedFileNames, tmpExtension);
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -621,7 +621,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         log.debug("Done retrieving global expression calls, {} calls found", 
                 diffExpressionCallTOs.size());
         
-        return log.exit(diffExpressionCallTOs); 
+        return log.traceExit(diffExpressionCallTOs); 
     }
 
     /**
@@ -714,7 +714,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
     
     /**
@@ -758,7 +758,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             headers[17] = RNASEQ_INCONSISTENT_DEA_COUNT_COLUMN_NAME;
         }
         
-        return log.exit(headers);
+        return log.traceExit(headers);
     }
 
     /**
@@ -804,7 +804,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
             }
         }
         
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 
     /**
@@ -899,7 +899,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 throw log.throwing(new IllegalStateException("Incorrect data state", e));
             }
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Generate a row to be written in a differential expression download file. This methods will 
@@ -968,7 +968,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                 to.getDiffExprCallTypeRNASeq(), to.getRNASeqData());
     
         if (!dataAdded) {
-            return log.exit(null);
+            return log.traceExit((Map<String, String>) null);
         }
 
         // ********************************
@@ -998,7 +998,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     String.valueOf(to.getInconsistentDEACountRNASeq()));
         }
 
-        return log.exit(row);
+        return log.traceExit(row);
     }
 
     /**
@@ -1080,7 +1080,7 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
                     // again because when simple file is generated in same time as advanced file  
                     // we do not filter these calls when retrieving calls from database.
                     if (fileType.isSimpleFileType()) {
-                        return log.exit(false);
+                        return log.traceExit(false);
                     }
                     break;
                 default:
@@ -1125,6 +1125,6 @@ public class GenerateDiffExprFile extends GenerateDownloadFile {
         row.put(DIFFEXPRESSION_COLUMN_NAME, summary.getStringRepresentation());
         row.put(QUALITY_COLUMN_NAME, quality);
 
-        return log.exit(true);
+        return log.traceExit(true);
     }
 }

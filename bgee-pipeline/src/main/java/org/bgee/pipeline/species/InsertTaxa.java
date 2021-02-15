@@ -234,7 +234,7 @@ public class InsertTaxa extends MySQLDAOUser {
         InsertTaxa insert = new InsertTaxa();
         insert.insertSpeciesAndTaxa(args[0], args[1], args[2]);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -287,7 +287,7 @@ public class InsertTaxa extends MySQLDAOUser {
                 AnnotationCommon.getTaxonIds(taxonFile), 
                 OntologyUtils.loadOntology(ncbiOntFile));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -378,7 +378,7 @@ public class InsertTaxa extends MySQLDAOUser {
             		"species file did not allow to acquire any species."));
         }
         
-        return log.exit(allSpecies);
+        return log.traceExit(allSpecies);
     }
     
     /**
@@ -489,7 +489,7 @@ public class InsertTaxa extends MySQLDAOUser {
         }
 
         log.info("Done inserting species and taxa.");
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -583,7 +583,7 @@ public class InsertTaxa extends MySQLDAOUser {
             throw log.throwing(new IllegalStateException("The taxonomy ontology " +
             		"did not allow to acquire all the requested species"));
         }
-        return log.exit(speciesTOs);
+        return log.traceExit(speciesTOs);
     }
     
     /**
@@ -700,7 +700,7 @@ public class InsertTaxa extends MySQLDAOUser {
                     "did not allow to acquire any taxon"));
         }
         
-        return log.exit(taxonTOs);
+        return log.traceExit(taxonTOs);
     }
     
     /**
@@ -748,7 +748,7 @@ public class InsertTaxa extends MySQLDAOUser {
         int taxonRemovedCount = manipulator.filterClasses(owlClassesToKeep).size();
         
         log.trace("Done filtering, {} taxa removed", taxonRemovedCount);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -775,6 +775,6 @@ public class InsertTaxa extends MySQLDAOUser {
             }
         }
         
-        return log.exit(commonName);
+        return log.traceExit(commonName);
     }
 }

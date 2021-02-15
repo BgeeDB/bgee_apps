@@ -112,7 +112,7 @@ public class ConditionGraph {
         this.devStageOnt = devStageOnt;
         this.inferAncestralConditions = inferAncestralConds;
         this.inferDescendantConditions = inferDescendantConds;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -132,7 +132,7 @@ public class ConditionGraph {
         log.entry(entityIds, ont);
         
         if (ont == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         
         Set<T> recognizedEntityIds = ont.getElements().stream()
@@ -144,7 +144,7 @@ public class ConditionGraph {
                     + "in the provided onology: " + unrecognizedIds));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -175,7 +175,7 @@ public class ConditionGraph {
                     + " - Second condition: " + secondCond));
         }
         if (firstCond.equals(secondCond)) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         //Of note, computations are three times faster when checking stages before anat. entities. 
@@ -186,7 +186,7 @@ public class ConditionGraph {
                 !this.devStageOnt.getAncestors(
                         this.devStageOnt.getElement(secondCond.getDevStageId()))
                 .contains(this.devStageOnt.getElement(firstCond.getDevStageId()))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         if (this.anatEntityOnt != null && 
@@ -195,19 +195,19 @@ public class ConditionGraph {
                 !this.anatEntityOnt.getAncestors(
                         this.anatEntityOnt.getElement(secondCond.getAnatEntityId()))
                 .contains(this.anatEntityOnt.getElement(firstCond.getAnatEntityId()))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         if (firstCond.getDevStageId() != null && secondCond.getDevStageId() == null || 
                 secondCond.getDevStageId() != null && firstCond.getDevStageId() == null) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         if (firstCond.getAnatEntityId() != null && secondCond.getAnatEntityId() == null || 
                 secondCond.getAnatEntityId() != null && firstCond.getAnatEntityId() == null) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
-        return log.exit(true);
+        return log.traceExit(true);
     }
     
     /**
@@ -220,7 +220,7 @@ public class ConditionGraph {
      */
     public Set<Condition> getAncestorConditions(Condition cond) {
         log.entry(cond);
-        return log.exit(this.getAncestorConditions(cond, false));
+        return log.traceExit(this.getAncestorConditions(cond, false));
     }
 
     //TODO: unit tests
@@ -272,7 +272,7 @@ public class ConditionGraph {
                         anatEntityIds.contains(e.getAnatEntityId()))
            .collect(Collectors.toSet());
         log.trace("Done retrieving ancestral conditions for {}: {}", cond, conds.size());
-        return log.exit(conds);
+        return log.traceExit(conds);
     }
 
     /**
@@ -285,7 +285,7 @@ public class ConditionGraph {
      */
     public Set<Condition> getDescendantConditions(Condition cond) {
         log.entry(cond);
-        return log.exit(this.getDescendantConditions(cond, false));
+        return log.traceExit(this.getDescendantConditions(cond, false));
     }
     
     /**
@@ -319,7 +319,7 @@ public class ConditionGraph {
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
         boolean includeSubstages) {
         log.entry(cond, directRelOnly, includeSubstages);
-        return log.exit(getDescendantConditions(cond, directRelOnly, includeSubstages, null, null));
+        return log.traceExit(getDescendantConditions(cond, directRelOnly, includeSubstages, null, null));
     }
 
     /**
@@ -376,7 +376,7 @@ public class ConditionGraph {
         log.trace("Stage IDs retrieved: {}", devStageIds);
         log.trace("Anat. entity IDs retrieved: {}", anatEntityIds);
         
-        return log.exit(this.conditions.stream()
+        return log.traceExit(this.conditions.stream()
                 .filter(e -> !e.equals(cond) && 
                              devStageIds.contains(e.getDevStageId()) && 
                              anatEntityIds.contains(e.getAnatEntityId()))

@@ -143,7 +143,7 @@ public class OntologyService extends CommonService {
      */
     public Ontology<AnatEntity, String> getAnatEntityOntology(Integer speciesId, Collection<String> anatEntityIds) {
         log.entry(speciesId, anatEntityIds);
-        return log.exit(this.getAnatEntityOntology(speciesId, anatEntityIds,
+        return log.traceExit(this.getAnatEntityOntology(speciesId, anatEntityIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false));
     }
 
@@ -174,7 +174,7 @@ public class OntologyService extends CommonService {
             Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, anatEntityIds, getAncestors, getDescendants, relationTypes);
         
-        return log.exit(this.getAnatEntityOntology(Arrays.asList(speciesId), anatEntityIds, 
+        return log.traceExit(this.getAnatEntityOntology(Arrays.asList(speciesId), anatEntityIds, 
                 relationTypes, getAncestors, getDescendants)
                 .getAsSingleSpeciesOntology(speciesId));
     }
@@ -198,7 +198,7 @@ public class OntologyService extends CommonService {
     public MultiSpeciesOntology<AnatEntity, String> getAnatEntityOntology(Collection<Integer> speciesIds, 
             Collection<String> anatEntityIds) {
         log.entry(speciesIds, anatEntityIds);
-        return log.exit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
+        return log.traceExit(this.getAnatEntityOntology(speciesIds, anatEntityIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false));
     }
 
@@ -267,7 +267,7 @@ public class OntologyService extends CommonService {
                 this.getServiceFactory(), AnatEntity.class);
 
         log.debug("AnatEntityOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
-        return log.exit(ont);
+        return log.traceExit(ont);
     }
     
     /**
@@ -314,7 +314,7 @@ public class OntologyService extends CommonService {
     public Ontology<DevStage, String> getDevStageOntology(Integer speciesId, Collection<String> devStageIds, 
             boolean getAncestors, boolean getDescendants) {
         log.entry(speciesId, devStageIds, getAncestors, getDescendants);
-        return log.exit(getDevStageOntology(Arrays.asList(speciesId), devStageIds, getAncestors, 
+        return log.traceExit(getDevStageOntology(Arrays.asList(speciesId), devStageIds, getAncestors, 
                 getDescendants).getAsSingleSpeciesOntology(speciesId));
     }
 
@@ -390,7 +390,7 @@ public class OntologyService extends CommonService {
                 this.getServiceFactory(), DevStage.class);
 
         log.debug("DevStageOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
-        return log.exit(ont);
+        return log.traceExit(ont);
     }
 
     /**
@@ -402,7 +402,7 @@ public class OntologyService extends CommonService {
      */
     public Ontology<Taxon, Integer> getTaxonOntology() {
         log.entry();
-        return log.exit(this.getTaxonOntologyFromTaxonIds(null, false, false, false));
+        return log.traceExit(this.getTaxonOntologyFromTaxonIds(null, false, false, false));
     }
     /**
      * Returns the {@code Taxon} {@code Ontology} going from the root of the taxonomy
@@ -451,7 +451,7 @@ public class OntologyService extends CommonService {
         Ontology<Taxon, Integer> sourceOnt = this.getTaxonOntologyFromTaxonIds(genusIds,
                 lcaRequestSpecies || lcaBgeeSpecies, true, false);
         if (!lcaRequestSpecies) {
-            return log.exit(sourceOnt);
+            return log.traceExit(sourceOnt);
         }
 
         //Now, if lcaRequestSpecies is true, we identify the taxa that are LCA of
@@ -470,7 +470,7 @@ public class OntologyService extends CommonService {
         }
         //create a new ontology subset
         Set<Integer> validTaxIds = validTaxa.stream().map(t -> t.getId()).collect(Collectors.toSet());
-        return log.exit(new Ontology<Taxon, Integer>(null, validTaxa,
+        return log.traceExit(new Ontology<Taxon, Integer>(null, validTaxa,
                 sourceOnt.getRelations().stream()
                 .filter(r -> validTaxIds.contains(r.getSourceId()) &&
                         validTaxIds.contains(r.getTargetId()))
@@ -513,7 +513,7 @@ public class OntologyService extends CommonService {
             boolean lcaBgeeSpecies, boolean getAncestors, boolean getDescendants) {
         log.entry(speciesIds, lcaBgeeSpecies, getAncestors, getDescendants);
         Taxon lcaTax = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(speciesIds);
-        return log.exit(this.getTaxonOntologyFromTaxonIds(Collections.singleton(lcaTax.getId()),
+        return log.traceExit(this.getTaxonOntologyFromTaxonIds(Collections.singleton(lcaTax.getId()),
                 lcaBgeeSpecies, getAncestors, getDescendants));
     }
     /**
@@ -552,7 +552,7 @@ public class OntologyService extends CommonService {
         Set<Integer> clonedTaxIds = taxonIds == null? new HashSet<>(): new HashSet<>(taxonIds);
         Set<RelationTO<Integer>> rels = this.getTaxonRelationTOs(clonedTaxIds, lcaBgeeSpecies,
                 getAncestors, getDescendants);
-        return log.exit(new Ontology<Taxon, Integer>(null,
+        return log.traceExit(new Ontology<Taxon, Integer>(null,
                 this.getServiceFactory().getTaxonService()
                 .loadTaxa(this.getRequestedEntityIds(clonedTaxIds, rels), false)
                 //The method TaxonService.loadTaxa does not have a mechanism to specify
@@ -579,7 +579,7 @@ public class OntologyService extends CommonService {
                 //We want to retrieve the relation IDs to link to the relation taxon constraints,
                 //so we retrieve all attributes
                 null);
-        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+        return log.traceExit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     private Set<RelationTO<String>> getDevStageRelationTOs(Collection<Integer> speciesIds, 
             Collection<String> entityIds, boolean getAncestors, boolean getDescendants) {
@@ -587,14 +587,14 @@ public class OntologyService extends CommonService {
         QuadriFunction<Set<String>, Set<String>, Boolean, Set<RelationStatus>, RelationTOResultSet<String>> fun =
             (s, t, b, r) -> getDaoManager().getRelationDAO().getStageRelations(
                 speciesIds, true, s, t, b, r, null);
-        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+        return log.traceExit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
     private Set<RelationTO<Integer>> getTaxonRelationTOs(Collection<Integer> entityIds,
             final boolean lca, boolean getAncestors, boolean getDescendants) {
         log.entry(entityIds, lca, getAncestors, getDescendants);
         QuadriFunction<Set<Integer>, Set<Integer>, Boolean, Set<RelationStatus>, RelationTOResultSet<Integer>> fun =
             (s, t, b, r) -> getDaoManager().getRelationDAO().getTaxonRelations(s, t, b, r, lca, null);
-        return log.exit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
+        return log.traceExit(getRelationTOs(fun, entityIds, getAncestors, getDescendants));
     }
 
     /**
@@ -692,7 +692,7 @@ public class OntologyService extends CommonService {
                         .collect(Collectors.toSet()));
             }
         }
-        return log.exit(relations);
+        return log.traceExit(relations);
     }
     /**
      * Convenience method to retrieve IDs of {@code OntologyElement}s to load, 
@@ -720,6 +720,6 @@ public class OntologyService extends CommonService {
                     .flatMap(rel -> Stream.of(rel.getSourceId(), rel.getTargetId()))
                     .collect(Collectors.toSet()));
         }
-        return log.exit(requestedEntityIds);
+        return log.traceExit(requestedEntityIds);
     }
 }

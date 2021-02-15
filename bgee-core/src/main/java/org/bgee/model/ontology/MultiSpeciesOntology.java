@@ -267,7 +267,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                             e -> Collections.unmodifiableSet(e.getValue()))));
 
         log.debug("MultiSpeciesOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -295,7 +295,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             throw log.throwing(new IllegalArgumentException("Element is not present in the ontology: "
                                + element));
         }
-        return log.exit(elementToSpeciesIds.get(element));
+        return log.traceExit(elementToSpeciesIds.get(element));
     }
 
     /**
@@ -332,7 +332,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             retrievedElements.addAll(allSpeElements);
         }
 
-        return log.exit(retrievedElements);
+        return log.traceExit(retrievedElements);
     }
     
     /**
@@ -368,7 +368,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             retrievedRels.addAll(allSpeRels);
         }
 
-        return log.exit(retrievedRels);
+        return log.traceExit(retrievedRels);
     }
     
     /**
@@ -391,7 +391,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<T> getAncestors(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
-        return log.exit(this.getAncestors(element, null, directRelOnly, speciesIds));
+        return log.traceExit(this.getAncestors(element, null, directRelOnly, speciesIds));
     }
 
     /**
@@ -417,7 +417,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
-        return log.exit(this.getRelatives(element, this.getElements(speciesIds), 
+        return log.traceExit(this.getRelatives(element, this.getElements(speciesIds), 
                 true, relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
     
@@ -441,7 +441,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<T> getDescendants(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, directRelOnly, speciesIds);
-        return log.exit(this.getDescendants(element, null, directRelOnly, speciesIds));
+        return log.traceExit(this.getDescendants(element, null, directRelOnly, speciesIds));
     }
     
     /**
@@ -467,7 +467,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
         log.entry(element, relationTypes, directRelOnly, speciesIds);
-        return log.exit(this.getRelatives(element, this.getElements(speciesIds), false, 
+        return log.traceExit(this.getRelatives(element, this.getElements(speciesIds), false, 
                 relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
 
@@ -492,7 +492,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
                     "Species ID should be in this multi-species ontology"));
         }
        
-        return log.exit(new Ontology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
+        return log.traceExit(new Ontology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
                 this.getRelations(Arrays.asList(speciesId)), this.getRelationTypes(),
                 this.getServiceFactory(), this.getType()));
     }

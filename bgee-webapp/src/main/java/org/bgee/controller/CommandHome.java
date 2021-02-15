@@ -67,7 +67,7 @@ public class CommandHome extends CommandParent
         } else {
             throw new PageNotFoundException();
         }
-        log.exit();
+        log.traceExit();
     }
 
 }

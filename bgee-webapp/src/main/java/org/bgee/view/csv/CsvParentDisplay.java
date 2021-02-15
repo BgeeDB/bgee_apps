@@ -51,9 +51,9 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
     @Override
     protected String getContentType() {
         if (Delimiter.TAB.equals(this.delimiter)) {
-            return log.exit("text/tab-separated-values");
+            return log.traceExit("text/tab-separated-values");
         } else if (Delimiter.COMMA.equals(this.delimiter)) {
-            return log.exit("text/csv");
+            return log.traceExit("text/csv");
         } else {
             throw log.throwing(new IllegalStateException("Unsupported delimiter type: " + this.delimiter));
         }
@@ -63,7 +63,7 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
     protected void startDisplay() {
         log.entry();
         this.sendHeaders();
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write end of CSV file. If you used another writer to write the content of the file, 
@@ -81,6 +81,6 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
         this.writeln("");
         this.writeln("");
         this.writeln("");
-        log.exit();
+        log.traceExit();
     }
 }

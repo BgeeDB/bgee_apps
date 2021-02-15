@@ -60,7 +60,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 "We apologize for any inconvenience.</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -73,7 +73,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 "An error occurred on our side. This error was logged and will be investigated. " +
                 "We apologize for any inconvenience.</p>");
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -102,7 +102,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p class='alert'>" + htmlEntities(e.getMessage()) + "</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -118,7 +118,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -132,7 +132,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p class='alert'>Request maximum size exceeded.</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -148,7 +148,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p>Incorrect parameter: " + htmlEntities(e.getURLParameter().getName()) + "</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -161,7 +161,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p>404 not found. We could not understand your query.</p> ");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -178,7 +178,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p>Invalid key: " + htmlEntities(e.getKey()) + "</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -192,7 +192,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 + "We apologize for any inconvenience.</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -206,7 +206,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
                 + "for the requested view or the requested parameters.</p>");
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -219,7 +219,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         this.writeln("<p class='alert'>Too Many Requests - " + htmlEntities(e.getMessage()) + "</p>");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -229,6 +229,6 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("general.css");
-        log.exit();
+        log.traceExit();
     }
 }

@@ -42,7 +42,7 @@ public class RawCall {
          */
         public static final DetectionFlag convertToDetectionFlag(String representation) {
             log.entry(representation);
-            return log.exit(BgeeEnum.convert(DetectionFlag.class, representation));
+            return log.traceExit(BgeeEnum.convert(DetectionFlag.class, representation));
         }
 
         /**
@@ -112,7 +112,7 @@ public class RawCall {
          */
         public static final ExclusionReason convertToExclusionReason(String representation) {
             log.entry(representation);
-            return log.exit(BgeeEnum.convert(ExclusionReason.class, representation));
+            return log.traceExit(BgeeEnum.convert(ExclusionReason.class, representation));
         }
     
         /**

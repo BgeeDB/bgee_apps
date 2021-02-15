@@ -77,7 +77,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         
         this.displayExpressionComparison(null, null, null, null, null);
         
-        log.exit();
+        log.traceExit();
     }
     
     public void displayExpressionComparison(String errorMsg) {
@@ -85,7 +85,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.displayExpressionComparison(null, null, null, null, errorMsg);
 
-        log.exit();
+        log.traceExit();
     }
     
     @Override
@@ -95,7 +95,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
         this.displayExpressionComparison(searchResult, result, fun, false, null);
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -105,7 +105,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
         this.displayExpressionComparison(searchResult, result, fun, true, null);
 
-        log.exit();
+        log.traceExit();
     }
 
     private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
@@ -139,7 +139,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     private String getForm(String errorMsg) {
@@ -206,7 +206,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("    </div>");
         sb.append("</div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private <T> String getResult(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
@@ -262,7 +262,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("    </table>");
         sb.append("</div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
 
     }
 
@@ -335,7 +335,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         }
 
         row.append("</tr>");
-        return log.exit(row.toString());
+        return log.traceExit(row.toString());
     }
 
     /**
@@ -357,7 +357,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         };
 
         //Need a compiler hint of generic type for my Java version
-        return log.exit(this.<Gene>getCell(genes.stream()
+        return log.traceExit(this.<Gene>getCell(genes.stream()
                         .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
                         .collect(Collectors.toList()),
                 "gene" + (genes.size() > 1? "s": ""),
@@ -374,7 +374,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     private String getSpeciesCountCell(Set<Gene> genes) {
         log.entry(genes);
         //Need a compiler hint of generic type for my Java version
-        return log.exit(this.<Species>getCell(genes.stream()
+        return log.traceExit(this.<Species>getCell(genes.stream()
                         .map(Gene::getSpecies)
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
@@ -412,7 +412,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         cell.append("    </ul>");
         cell.append("</td>");
 
-        return log.exit(cell.toString());
+        return log.traceExit(cell.toString());
     }
 
     /**
@@ -443,7 +443,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("</script>");
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -464,7 +464,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -486,7 +486,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             this.includeJs("lib/jquery_plugins/vendor_expr_comp.js");
             this.includeJs("script_expr_comp.js");
         }
-        log.exit();
+        log.traceExit();
     }
 }
 

@@ -216,7 +216,7 @@ public class GenerateRankFile {
             fileName += ".tmp";
         }
         
-        return log.exit(Paths.get(outputDir, fileName).toFile());
+        return log.traceExit(Paths.get(outputDir, fileName).toFile());
     }
     /**
      * Create the header to be used by SuperCSV for writing the file. 
@@ -266,7 +266,7 @@ public class GenerateRankFile {
         header[i] = "XRefs to BTO";
         i++;
         
-        return log.exit(header);
+        return log.traceExit(header);
     }
     /**
      * Create a mapping from columns of the TSV file to attributes of the {@code ExpressionCallBean}.
@@ -318,7 +318,7 @@ public class GenerateRankFile {
         colToAttribute[i] = "btoXRefs";
         i++;
         
-        return log.exit(colToAttribute);
+        return log.traceExit(colToAttribute);
     }
     /**
      * Define the {@code CellProcessor}s for writing the TSV file. 
@@ -369,7 +369,7 @@ public class GenerateRankFile {
         processors[i] = new Optional(new Utils.FmtMultipleStringValues());
         i++;
         
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
     /**
      * <ul>
@@ -440,7 +440,7 @@ public class GenerateRankFile {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     
@@ -529,7 +529,7 @@ public class GenerateRankFile {
                     }
                 }));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -644,7 +644,7 @@ public class GenerateRankFile {
             Files.move(tmpOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -748,7 +748,7 @@ public class GenerateRankFile {
                     .thenComparing(call -> call.getMeanRank())
                     .thenComparing(call -> call.getCondition().getAnatEntityId());
             
-            return log.exit(organCalls
+            return log.traceExit(organCalls
                     .map(call -> {
                         BigDecimal minRank = minRankByAnatEntityIdByGeneId.get(call.getGene().getEnsemblGeneId())
                                 .get(call.getCondition().getAnatEntityId());
@@ -768,7 +768,7 @@ public class GenerateRankFile {
         // Now, we manage the retrieving of calls by considering anatEntity and devStage
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         attrs.add(CallService.Attribute.DEV_STAGE_ID);
-        return log.exit(service.loadExpressionCalls(
+        return log.traceExit(service.loadExpressionCalls(
                 new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(speciesId)),
                         null, dataTypeFilters, obsDataFilter, true, true),
@@ -815,7 +815,7 @@ public class GenerateRankFile {
             }
         });
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -851,7 +851,7 @@ public class GenerateRankFile {
 //              singleGeneExprCalls, conditionGraph);
         
         //map ExpressionCalls to ExpressionCallBean to be written in output file
-        return log.exit(singleGeneExprCalls.stream().map(c -> {
+        return log.traceExit(singleGeneExprCalls.stream().map(c -> {
             if (!gene.getEnsemblGeneId().equals(c.getGene().getEnsemblGeneId())) {
                 throw log.throwing(new IllegalArgumentException("The provided gene does not correspond to "
                         + "the expression calls."));
@@ -899,7 +899,7 @@ public class GenerateRankFile {
         
         //hack for adult mammalian kidney UBERON:0000082
         if ("UBERON:0000082".equals(call.getCondition().getAnatEntityId())) {
-            return log.exit(Arrays.asList("BTO:0000671"));
+            return log.traceExit(Arrays.asList("BTO:0000671"));
         }
 
         OWLGraphWrapper wrapper = this.uberonOnt.getOntologyUtils().getWrapper();
@@ -909,6 +909,6 @@ public class GenerateRankFile {
             xrefs = wrapper.getXref(cls).stream().filter(xref -> xref.startsWith("BTO:"))
                     .collect(Collectors.toList());
         }
-        return log.exit(xrefs == null || xrefs.isEmpty()? null: xrefs);
+        return log.traceExit(xrefs == null || xrefs.isEmpty()? null: xrefs);
     }
 }

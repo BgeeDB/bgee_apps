@@ -83,7 +83,7 @@ public class UberonSocketTool {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -251,7 +251,7 @@ public class UberonSocketTool {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -292,7 +292,7 @@ public class UberonSocketTool {
                     "start and end stages (" + params.get(0) + " - " + params.get(1) + ")"));
         }
         
-        return log.exit(output);
+        return log.traceExit(output);
     }
     
     /**
@@ -313,7 +313,7 @@ public class UberonSocketTool {
                 classes, this.uberonCommon.getOntologyUtils().getGenericPartOfProps());
         
         if (classes.size() == 1) {
-            return log.exit(this.uberonCommon.getOntologyUtils().getWrapper().getIdentifier(
+            return log.traceExit(this.uberonCommon.getOntologyUtils().getWrapper().getIdentifier(
                     classes.iterator().next()));
         } 
         if (log.isWarnEnabled()) {
@@ -325,6 +325,6 @@ public class UberonSocketTool {
             }
         }
         
-        return log.exit("");
+        return log.traceExit("");
     }
 }

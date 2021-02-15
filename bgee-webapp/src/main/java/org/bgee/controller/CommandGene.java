@@ -178,12 +178,12 @@ public class CommandGene extends CommandParent {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
                     .searchByTerm(search, null, 0, 1000);
             display.displayGeneSearchResult(search, result);
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         if (geneId == null) {
             display.displayGeneHomePage();
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
@@ -204,7 +204,7 @@ public class CommandGene extends CommandParent {
             url.setGeneId(genes.iterator().next().getEnsemblGeneId());
             this.response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
             this.response.addHeader("Location", url.getRequestURL());
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         Gene selectedGene = null;
@@ -215,7 +215,7 @@ public class CommandGene extends CommandParent {
             //otherwise we need to let the user choose the species he/she wants
             if (speciesId == null || speciesId <= 0) {
                 display.displayGeneChoice(genes);
-                log.exit(); return;
+                log.traceExit(); return;
             }
             Set<Gene> speciesGenes = genes.stream()
                     .filter(g -> g.getSpecies().getId().equals(speciesId))
@@ -231,7 +231,7 @@ public class CommandGene extends CommandParent {
 
         
         display.displayGene(this.buildGeneResponse(selectedGene));
-        log.exit();
+        log.traceExit();
     }
 
     private GeneResponse buildGeneResponse(Gene gene) 
@@ -260,14 +260,14 @@ public class CommandGene extends CommandParent {
         
         if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
-            return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
+            return log.traceExit(new GeneResponse(gene, true, callsByAnatEntity, 
                     new HashMap<>(), new HashMap<>(), geneHomologs));
         }
         
         //**************************************
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, geneHomologs, true));
+        return log.traceExit(this.buildGeneResponse(gene, callsByAnatEntity, geneHomologs, true));
     }
     
     /**
@@ -319,7 +319,7 @@ public class CommandGene extends CommandParent {
         //*********************
         // Build GeneResponse
         //*********************
-        return log.exit(new GeneResponse(gene, !filterRedundantCalls, callsByAnatEntity,
+        return log.traceExit(new GeneResponse(gene, !filterRedundantCalls, callsByAnatEntity,
                 clusteringBestEachAnatEntity, clusteringWithinAnatEntity, geneHomologs));
     }
     
@@ -357,7 +357,7 @@ public class CommandGene extends CommandParent {
             //define clustering function
             log.debug("Using clustering method {} with distance threshold {}", method, 
                     this.prop.getGeneScoreClusteringThreshold());
-            return log.exit(
+            return log.traceExit(
                     callList -> ExpressionCall.generateMeanRankScoreClustering(callList, method, 
                             this.prop.getGeneScoreClusteringThreshold()));
         } catch (IllegalArgumentException e) {

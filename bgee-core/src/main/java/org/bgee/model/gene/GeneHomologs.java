@@ -57,7 +57,7 @@ public class GeneHomologs {
         }
         paralogs = GeneHomologsService.sortMapByTaxon(paralogs);
 
-        return log.exit(new GeneHomologs(gh1.getGene(), orthologs, paralogs));
+        return log.traceExit(new GeneHomologs(gh1.getGene(), orthologs, paralogs));
     }
 
     private final Gene gene;

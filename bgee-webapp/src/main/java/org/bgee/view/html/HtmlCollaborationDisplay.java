@@ -143,7 +143,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -152,7 +152,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
-        log.exit();
+        log.traceExit();
     }
 }
 

@@ -168,7 +168,7 @@ public class TopAnatController {
         this.serviceFactory = serviceFactory;
         this.job = Optional.ofNullable(job);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -183,7 +183,7 @@ public class TopAnatController {
         //TODO: TopAnatAnalysis should be provided with the Job instance to be able to use 
         //'checkInterrupted'
 
-        return log.exit(this.topAnatParams.stream()
+        return log.traceExit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, new TopAnatRManager(this.props, params),this))
                 .map(analysis -> {
@@ -257,7 +257,7 @@ public class TopAnatController {
     void acquireReadLock(String fileName) {
         log.entry(fileName);
         this.acquireLock(fileName, true);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -272,7 +272,7 @@ public class TopAnatController {
     void acquireWriteLock(String fileName) {
         log.entry(fileName);
         this.acquireLock(fileName, false);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -287,7 +287,7 @@ public class TopAnatController {
     void releaseWriteLock(String fileName) {
         log.entry(fileName);
         this.releaseLock(fileName, false);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -338,7 +338,7 @@ public class TopAnatController {
                 lock.writeLock().lock();
             }
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -353,7 +353,7 @@ public class TopAnatController {
     void releaseReadLock(String fileName) {
         log.entry(fileName);
         this.releaseLock(fileName, true);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -377,7 +377,7 @@ public class TopAnatController {
         } else {
             lock.writeLock().unlock();
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -424,7 +424,7 @@ public class TopAnatController {
                 readWriteLocks.remove(fileName);
             }
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -468,7 +468,7 @@ public class TopAnatController {
                 readWritelock = newReadWriteLock;
             }
         }
-        return log.exit(readWritelock);
+        return log.traceExit(readWritelock);
     }
 
     /**
@@ -476,7 +476,7 @@ public class TopAnatController {
      */
     public boolean areAnalysesDone(){
         log.entry();
-        return log.exit(this.topAnatParams.stream()
+        return log.traceExit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, new TopAnatRManager(this.props, params), this))
                 .allMatch(a -> a.isAnalysisDone()));

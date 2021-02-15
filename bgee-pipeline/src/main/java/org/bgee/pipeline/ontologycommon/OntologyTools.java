@@ -156,7 +156,7 @@ public class OntologyTools {
                 args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -187,7 +187,7 @@ public class OntologyTools {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -208,7 +208,7 @@ public class OntologyTools {
         OWLOntologyCreationException, OBOFormatParserException, IOException {
         log.entry(ontFile);
         
-        return log.exit(this.getObsoleteIds(OntologyUtils.loadOntology(ontFile)));
+        return log.traceExit(this.getObsoleteIds(OntologyUtils.loadOntology(ontFile)));
     }
     
     /**
@@ -237,7 +237,7 @@ public class OntologyTools {
             }
         }
         
-        return log.exit(obsoleteIds);
+        return log.traceExit(obsoleteIds);
     }
     
     /**
@@ -264,7 +264,7 @@ public class OntologyTools {
             OBOFormatParserException, IOException {
         log.entry(ontFile);
         
-        return log.exit(this.getAllRealOWLClassIds(
+        return log.traceExit(this.getAllRealOWLClassIds(
                 new OWLGraphWrapper(OntologyUtils.loadOntology(ontFile))));
     }
     
@@ -288,7 +288,7 @@ public class OntologyTools {
             allIds.add(ontWrapper.getIdentifier(owlClass));
         }
         
-        return log.exit(allIds);
+        return log.traceExit(allIds);
     }
     
     /**
@@ -321,7 +321,7 @@ public class OntologyTools {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     public void getFromDBAnatPartOfIsAIndirectRelsNotReachedByChainOfDirectRelsAndWriteToFile(
@@ -971,7 +971,7 @@ public class OntologyTools {
                 out.println();
             });
         }
-        log.exit();
+        log.traceExit();
     }
 
     //TODO
@@ -1047,7 +1047,7 @@ public class OntologyTools {
                 }
             }
         }
-        return log.exit(composedRels.entrySet().stream()
+        return log.traceExit(composedRels.entrySet().stream()
                 .filter(e -> !indirectRelMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
                         .contains(e.getKey().getTargetId()) &&
                         !directRelMap.getOrDefault(e.getKey().getSourceId(), new HashSet<>())
@@ -1065,7 +1065,7 @@ public class OntologyTools {
                 directRels, true);
 
         //Iterate the indirect relations to be checked
-        return log.exit(indirectRels.stream().filter(indirectRelTO -> {
+        return log.traceExit(indirectRels.stream().filter(indirectRelTO -> {
             //Now we walk the chain of direct relations starting from the source
             //of this indirect relation, to check whether we can walk to the target
             boolean targetReached = false;
@@ -1125,7 +1125,7 @@ public class OntologyTools {
         Map<T, Set<T>> allRelMap = sourceToTargetsOrTargetToSources(
                 allRels, true);
 
-        return log.exit(incorrectIndirectRels.stream()
+        return log.traceExit(incorrectIndirectRels.stream()
         .filter(relTO -> {
             Set<T> sourceIds = new HashSet<>(incorrectRelsTargetToSources.get(relTO.getTargetId()));
             sourceIds.remove(relTO.getSourceId());
@@ -1138,7 +1138,7 @@ public class OntologyTools {
     private static <T extends RelationTO<U>, U> Map<U, Set<U>> sourceToTargetsOrTargetToSources(
             Collection<T> rels, boolean sourceToTargets) {
         log.entry(rels, sourceToTargets);
-        return log.exit(rels.stream().collect(Collectors.toMap(
+        return log.traceExit(rels.stream().collect(Collectors.toMap(
                 relTO -> sourceToTargets ? relTO.getSourceId() : relTO.getTargetId(),
                 relTO -> new HashSet<>(Arrays.asList(sourceToTargets ? relTO.getTargetId() : relTO.getSourceId())),
                 (v1, v2) -> {v1.addAll(v2); return v1;})));

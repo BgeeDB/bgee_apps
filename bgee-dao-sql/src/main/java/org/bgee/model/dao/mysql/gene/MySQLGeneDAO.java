@@ -78,19 +78,19 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.entry();
-        return log.exit(getGenes(null, null, null));
+        return log.traceExit(getGenes(null, null, null));
     }
 
     @Override
     public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
-        return log.exit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, null));
+        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, null));
     }
 
     @Override
     public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);
-        return log.exit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, true));
+        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, true));
     }
 
     @Override
@@ -99,26 +99,26 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
         //sanity checks on geneIds will be performed by the getGenes method
         speToGeneMap.put(null, ensemblGeneIds == null? null: new HashSet<>(ensemblGeneIds));
-        return log.exit(getGenes(speToGeneMap, null, null));
+        return log.traceExit(getGenes(speToGeneMap, null, null));
     }
     
     @Override
     public GeneTOResultSet getGenesByIds(Collection<Integer> geneIds) throws DAOException {
         log.entry(geneIds);
-        return log.exit(getGenes(null, geneIds, null));
+        return log.traceExit(getGenes(null, geneIds, null));
     }
 
     @Override
     public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds)
             throws DAOException {
         log.entry(speciesIdToGeneIds);
-        return log.exit(this.getGenes(speciesIdToGeneIds, null, null));
+        return log.traceExit(this.getGenes(speciesIdToGeneIds, null, null));
     }
 
     @Override
     public GeneTOResultSet getGenesByBgeeIds(Collection<Integer> bgeeGeneIds) throws DAOException {
         log.entry(bgeeGeneIds);
-        return log.exit(this.getGenes(null, bgeeGeneIds, null));
+        return log.traceExit(this.getGenes(null, bgeeGeneIds, null));
     }
 
     private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds,
@@ -234,7 +234,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 offsetParamIndex += clonedBgeeGeneIds.size();
             }
 
-            return log.exit(new MySQLGeneTOResultSet(stmt));
+            return log.traceExit(new MySQLGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -248,7 +248,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLGeneBioTypeTOResultSet(stmt));
+            return log.traceExit(new MySQLGeneBioTypeTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -322,7 +322,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 geneUpdatedCount += stmt.executeUpdate();
                 stmt.clearParameters();
             }
-            return log.exit(geneUpdatedCount);
+            return log.traceExit(geneUpdatedCount);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -330,7 +330,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     private Map<Integer, Set<String>> convertSpeciesIdsTOMap(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(speciesIds == null? null: speciesIds.stream()
+        return log.traceExit(speciesIds == null? null: speciesIds.stream()
                 .collect(Collectors.toMap(id -> {
                     if (id == null || id <= 0) {
                         throw log.throwing(new IllegalStateException(
@@ -410,7 +410,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 }
             }
             // Set GeneTO
-            return log.exit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
+            return log.traceExit(new GeneTO(id, geneId, geneName, geneDescription, speciesId, geneBioTypeId, OMAParentNodeId,
                     ensemblGene, geneMappedToGeneIdCount));
         }
     }
@@ -457,7 +457,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
                 }
             }
             // Set GeneBioTypeTO
-            return log.exit(new GeneBioTypeTO(id, name));
+            return log.traceExit(new GeneBioTypeTO(id, name));
         }
     }
 }

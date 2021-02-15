@@ -117,7 +117,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     private String getExprCallSchemaMarkups(List<SpeciesDataGroup> groups) {
@@ -139,7 +139,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 )
                 .collect(Collectors.toList());
         
-        return log.exit(getSchemaMarkupGraph(datasets));
+        return log.traceExit(getSchemaMarkupGraph(datasets));
     }
 
     private String getProcValuesSchemaMarkups(List<SpeciesDataGroup> groups) {
@@ -169,7 +169,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 )
                 .collect(Collectors.toList());
 
-        return log.exit(getSchemaMarkupGraph(datasets));
+        return log.traceExit(getSchemaMarkupGraph(datasets));
     }
 
     @Override
@@ -214,7 +214,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
     
     @Override
@@ -256,7 +256,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -297,7 +297,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         ));
         sb.append(";</script>");
         
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -355,7 +355,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 //        intro.append(", and <a href='" + this.prop.getFTPRootDirectory() 
 //                + "statistics.tsv' title='Database statistics TSV file'>"
 //                + "database statistics</a>.</p>");
-        return log.exit(intro.toString());
+        return log.traceExit(intro.toString());
     }
     
     /**
@@ -366,7 +366,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getMoreResultDivs() {
         log.entry();
         
-        return log.exit(
+        return log.traceExit(
                 "<div id='bgee_more_results_up'>More result(s)</div>" +
                 "<div id='bgee_more_results_down'>More result(s)</div>");
     }
@@ -396,7 +396,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         box.append("</div>");
         box.append("</div>");
         
-        return log.exit(box.toString());
+        return log.traceExit(box.toString());
     }
 
 
@@ -453,7 +453,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         s.append("</div>"); // close panel
         
-        return log.exit(s.toString());
+        return log.traceExit(s.toString());
     }
 
     /**
@@ -509,7 +509,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("</div>"); // close row
         banner.append("</div>"); // close bgee_data_selection
     
-        return log.exit(banner.toString());
+        return log.traceExit(banner.toString());
     }
 
 	private void getProcExprValueBanner(StringBuilder banner) {
@@ -706,7 +706,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     private String getHelpLink(String id) {
         log.entry(id);
 
-        return log.exit("<a id='" + id + "' class='banner_link' href=''>See documentation</a>");
+        return log.traceExit("<a id='" + id + "' class='banner_link' href=''>See documentation</a>");
     }
 
     /**
@@ -716,7 +716,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private String getShowHeaderLink(String id) {
         log.entry(id);
-        return log.exit("<a id='" + id + "' class='show-header'>" + 
+        return log.traceExit("<a id='" + id + "' class='show-header'>" + 
                 "<img class='details' src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() +
                 "plus.png' title='Show headers' alt='Plus'/></a>");
     }
@@ -750,7 +750,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
             images.append(getHTMLTag("img", attrs));
         }
         
-        return log.exit(images.toString());
+        return log.traceExit(images.toString());
     }
 
     /**
@@ -811,7 +811,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         
         s.append("</div>"); // close panel
         
-        return log.exit(s.toString());
+        return log.traceExit(s.toString());
     }
 
     /**
@@ -850,7 +850,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         sb.append(this.getJsonHelper().toJson(dataGroups.stream()
                 .collect(Collectors.toMap(SpeciesDataGroup::getId, Function.identity()))));
         sb.append(";</script>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -905,7 +905,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 .collect(Collectors.toList())));
         sb.append(";</script>");
         
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -916,7 +916,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      */
     private static String getCaption(Species species, SpeciesDataGroup group) {
         log.entry(species, group);
-        return log.exit(getHTMLTag("figcaption", getShortNameTag(species)
+        return log.traceExit(getHTMLTag("figcaption", getShortNameTag(species)
                 //we display the group name as subtitle rather than the species common name, 
                 //because we used to have incorrect common names at some point, 
                 //and because this allows more flexibility (e.g. "human including GTEx data")
@@ -945,7 +945,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         Map<String, String> iAttrs = new HashMap<>();
         iAttrs.put("property", "bs:name");
         
-        return log.exit(getHTMLTag("p", pAttrs, getHTMLTag("i", iAttrs, htmlEntities(species.getShortName()))));
+        return log.traceExit(getHTMLTag("p", pAttrs, getHTMLTag("i", iAttrs, htmlEntities(species.getShortName()))));
     }
     
   	@Override
@@ -955,7 +955,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
   		this.includeJs("download.js");
-  		log.exit();
+  		log.traceExit();
   	}
 
     @Override
@@ -965,7 +965,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("download.css");
-        log.exit();
+        log.traceExit();
     }
 }
 

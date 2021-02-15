@@ -167,7 +167,7 @@ public class CommandDownloadTest extends TestAncestor {
                 ));
         
         //groups: 
-        return log.exit(Arrays.asList(
+        return log.traceExit(Arrays.asList(
                 new SpeciesDataGroup(11, "single spe g1", null, 
                         Arrays.asList(spe1), dlFileGroup1), 
                 new SpeciesDataGroup(22, "single spe g2", null, 
@@ -187,7 +187,7 @@ public class CommandDownloadTest extends TestAncestor {
      */
     public static Map<Integer, Set<String>> getTestSpeToKeywords() {
         log.entry();
-        return log.exit(Stream.of(
+        return log.traceExit(Stream.of(
             //regression test, no keywords associated to species 9606 on purpose, 
             //a previous version of the code threw a NPE
             new AbstractMap.SimpleEntry<>(10090, new HashSet<>(Arrays.asList("house mouse", "mice"))), 
@@ -207,7 +207,7 @@ public class CommandDownloadTest extends TestAncestor {
     public static Map<Integer, Set<String>> getTestSpeciesToTerms() {
         log.entry();
         List<SpeciesDataGroup> groups = getTestGroups();
-        return log.exit(Stream.of(
+        return log.traceExit(Stream.of(
                 new AbstractMap.SimpleEntry<>(groups.get(0).getMembers().get(0).getId(), new HashSet<>(
                         Arrays.asList(groups.get(0).getMembers().get(0).getName(), 
                                 groups.get(0).getMembers().get(0).getScientificName(), 

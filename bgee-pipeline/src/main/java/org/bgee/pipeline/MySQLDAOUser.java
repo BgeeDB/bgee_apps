@@ -289,7 +289,7 @@ public abstract class MySQLDAOUser {
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -312,7 +312,7 @@ public abstract class MySQLDAOUser {
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -322,7 +322,7 @@ public abstract class MySQLDAOUser {
     protected void closeDAO() {
         log.entry();
         this.manager.close();
-        log.exit();
+        log.traceExit();
     }
     
     public MySQLDAOManager getManager() {

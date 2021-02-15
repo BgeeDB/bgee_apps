@@ -63,12 +63,12 @@ public abstract class BgeeEnum {
         log.entry(enumClass, representation);
         
         if (representation == null) {
-            return log.exit(null);
+            return log.traceExit((T) null);
         }
         for (T element: enumClass.getEnumConstants()) {
             if (element.getStringRepresentation().toLowerCase().equals(representation.toLowerCase()) || 
                     element.name().toLowerCase().equals(representation.toLowerCase())) {
-                return log.exit(element);
+                return log.traceExit(element);
             }
         }
         throw log.throwing(new IllegalArgumentException("\"" + representation + 
@@ -95,7 +95,7 @@ public abstract class BgeeEnum {
         log.entry(representations);
 
         if (representations == null || representations.isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((Set<T>) null);
         }
 
         Set<String> filteredRepresentations = new HashSet<>(representations);
@@ -104,7 +104,7 @@ public abstract class BgeeEnum {
             T convertedRep = convert(enumClass, repr);
             enumSet.add(convertedRep);
         }
-        return log.exit(enumSet);
+        return log.traceExit(enumSet);
     }
 
     /**
@@ -125,7 +125,7 @@ public abstract class BgeeEnum {
         log.entry(enums);
         
         if (enums == null || enums.isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((Set<String>) null);
         }
 
         Set<String> stringSet = new HashSet<String>();
@@ -134,7 +134,7 @@ public abstract class BgeeEnum {
                 stringSet.add(bgeeEnum.getStringRepresentation());
             }
         }
-        return log.exit(stringSet);
+        return log.traceExit(stringSet);
     }
     
     /**
@@ -153,10 +153,10 @@ public abstract class BgeeEnum {
         for (T bgeeEnum: EnumSet.allOf(enumClass)) {
             if (bgeeEnum.getStringRepresentation().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation) || 
                 bgeeEnum.name().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation)) {
-                return log.exit(true);
+                return log.traceExit(true);
             }
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -175,14 +175,14 @@ public abstract class BgeeEnum {
             Class<T> enumClass, Collection<String> representations) {
         log.entry(enumClass, representations);
         if (representations == null) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
         Set<String> filteredRepresentations = new HashSet<>(representations);
         for (String representation: filteredRepresentations) {
             if (!BgeeEnum.isInEnum(enumClass, representation)) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
         }
-        return log.exit(true);
+        return log.traceExit(true);
     }
 }

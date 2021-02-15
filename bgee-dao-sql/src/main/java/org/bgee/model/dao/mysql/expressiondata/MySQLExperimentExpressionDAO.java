@@ -64,7 +64,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
           .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(expressionIdField)
           .append(" = ").append(expExprTableName).append(".").append(expressionIdField);
         
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     private static String getWhere(Set<Integer> geneIds) {
         log.entry();
@@ -72,7 +72,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         sb.append(" WHERE ").append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME)
           .append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
           .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())).append(") ");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     private static String getOrderBy() {
         log.entry();
@@ -82,7 +82,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         sb.append(" ORDER BY ")
           .append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
           .append(", ").append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME).append(".").append(expressionIdField);
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     /**
@@ -144,7 +144,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
+            return log.traceExit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -203,7 +203,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
+            return log.traceExit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -257,7 +257,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
+            return log.traceExit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -311,7 +311,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLExperimentExpressionTOResultSet(stmt));
+            return log.traceExit(new MySQLExperimentExpressionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -386,7 +386,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new ExperimentExpressionTO(exprId, experimentId, 
+                return log.traceExit(new ExperimentExpressionTO(exprId, experimentId, 
                         presentHighCount, presentLowCount, absentHighCount, absentLowCount,
                         callQuality, callDirection));
             } catch (SQLException e) {

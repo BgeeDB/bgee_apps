@@ -66,7 +66,7 @@ public class CIOWrapperTest {
         cioWrapper = new CIOWrapper(OntologyUtils.loadOntology(CIOWrapperTest.class.
                 getResource("/ontologies/cio.owl").getFile()));
         graphWrapper = cioWrapper.getOWLGraphWrapper();
-        log.exit();
+        log.traceExit();
     }
 
     
@@ -133,7 +133,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getConfidenceLevel(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000038"));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -302,7 +302,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getEvidenceConcordance(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000042"));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -389,7 +389,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getEvidenceTypeConcordance(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033"));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -492,7 +492,7 @@ public class CIOWrapperTest {
             //test passed
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -519,7 +519,7 @@ public class CIOWrapperTest {
         cioWrapper.getSingleEvidenceConfidenceStatement(
                 graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.CONFIDENCE_LEVEL_ID));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -605,7 +605,7 @@ public class CIOWrapperTest {
                 graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000027"), 
                 cioWrapper.getConfidenceStatement(weaklyConflictingConc, differentTypes, mediumConf));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -643,7 +643,7 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceStatement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000028")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isConfidenceElement(OWLClass)}.
@@ -680,7 +680,7 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceElement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000006")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isEvidenceConcordance(OWLClass)}.
@@ -714,7 +714,7 @@ public class CIOWrapperTest {
                 cioWrapper.isEvidenceConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000037")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isSingleEvidenceConcordance(OWLClass)}.
@@ -742,7 +742,7 @@ public class CIOWrapperTest {
                 cioWrapper.isSingleEvidenceConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000043")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isEvidenceTypeConcordance(OWLClass)}.
@@ -770,7 +770,7 @@ public class CIOWrapperTest {
                 cioWrapper.isEvidenceTypeConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000043")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isConfidenceLevel(OWLClass)}.
@@ -804,7 +804,7 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceLevel(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isRejectedStatement(OWLClass)}.
@@ -829,7 +829,7 @@ public class CIOWrapperTest {
                 cioWrapper.isRejectedStatement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033")));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -845,7 +845,7 @@ public class CIOWrapperTest {
                 graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.HIGH_CONF_LEVEL_ID)), 
                 cioWrapper.getOrderedConfidenceLevels());
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -882,7 +882,7 @@ public class CIOWrapperTest {
         this.checkObjectProperty(wrapper, CIOWrapper.HAS_EVIDENCE_TYPE_CONCORDANCE_ID);
         this.checkObjectProperty(wrapper, CIOWrapper.PROVIDES_GREATER_CONF_THAN_ID);
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Checks that there exists, in the ontology wrapped by {@code wrapper}, 

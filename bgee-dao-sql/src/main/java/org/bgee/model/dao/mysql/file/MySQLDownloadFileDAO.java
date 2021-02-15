@@ -61,9 +61,9 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     private static ConditionDAO.Attribute convertToConditionParameter(String value) {
         log.entry(value);
         if ("anatomicalEntity".equals(value)) {
-            return log.exit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+            return log.traceExit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         } else if ("developmentalStage".equals(value)) {
-            return log.exit(ConditionDAO.Attribute.STAGE_ID);
+            return log.traceExit(ConditionDAO.Attribute.STAGE_ID);
         } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized value"));
         }
@@ -86,7 +86,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         final String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, colToAttributesMap, false);
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLDownloadFileTOResultSet(stmt));
+            return log.traceExit(new MySQLDownloadFileTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -139,7 +139,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -212,7 +212,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new DownloadFileTO(id, name, description, path, size, 
+                return log.traceExit(new DownloadFileTO(id, name, description, path, size, 
                         category, speciesDataGroupId, condParams));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));

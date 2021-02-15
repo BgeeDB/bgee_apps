@@ -131,6 +131,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             isValid = false;
         }
         
-        return log.exit(isValid);
+        return log.traceExit(isValid);
     }
 }

@@ -44,7 +44,7 @@ public class KeywordService extends Service {
 	 */
 	public Map<Integer, Set<String>> getKeywordForAllSpecies() {
 		log.entry();
-		return log.exit(getKeywordForSpecies(null));
+		return log.traceExit(getKeywordForSpecies(null));
 	}
 	/**
 	 * Gets a {@code Map} of keywords for a given set of species. For species, keywords 
@@ -61,7 +61,7 @@ public class KeywordService extends Service {
                 .stream().collect(Collectors.toMap(EntityTO::getId, KeywordDAO.KeywordTO::getName));
 		
         EntityToKeywordTOResultSet<Integer> results = dao.getKeywordToSpecies(speciesIds);
-		return log.exit(results.stream().collect(groupingBy(
+		return log.traceExit(results.stream().collect(groupingBy(
 				EntityToKeywordTO::getEntityId,
 				mapping(t -> keywordMap.get(t.getKeywordId()), toSet()))));
 	}

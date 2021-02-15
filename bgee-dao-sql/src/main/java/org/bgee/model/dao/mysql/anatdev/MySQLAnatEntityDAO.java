@@ -51,21 +51,21 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     @Override
     public AnatEntityTOResultSet getAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
         log.entry(anatEntitiesIds);
-        return log.exit(this.getAnatEntities(null, anatEntitiesIds));
+        return log.traceExit(this.getAnatEntities(null, anatEntitiesIds));
     }
 
     @Override
     public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException {
         log.entry(speciesIds);
-        return log.exit(this.getAnatEntities(speciesIds, null));
+        return log.traceExit(this.getAnatEntities(speciesIds, null));
     }
     
     @Override
     public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Collection<String> anatEntitiesIds)
             throws DAOException {
         log.entry(speciesIds, anatEntitiesIds);
-        return log.exit(this.getAnatEntities(speciesIds, true, anatEntitiesIds, this.getAttributes()));
+        return log.traceExit(this.getAnatEntities(speciesIds, true, anatEntitiesIds, this.getAttributes()));
     }
     
     @Override
@@ -163,7 +163,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 stmt.setStrings(offsetParamIndex, clonedEntityIds, true);
             }
 
-            return log.exit(new MySQLAnatEntityTOResultSet(stmt));
+            return log.traceExit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -222,7 +222,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             if (isSpeciesFilter) {
                 stmt.setIntegers(1, clonedSpeIds, true);
             }             
-            return log.exit(new MySQLAnatEntityTOResultSet(stmt));
+            return log.traceExit(new MySQLAnatEntityTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -244,17 +244,17 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
         
         switch (attribute) {
             case ID: 
-                return log.exit("anatEntityId");
+                return log.traceExit("anatEntityId");
             case NAME: 
-                return log.exit("anatEntityName");
+                return log.traceExit("anatEntityName");
             case DESCRIPTION: 
-                return log.exit("anatEntityDescription");
+                return log.traceExit("anatEntityDescription");
             case START_STAGE_ID: 
-                return log.exit("startStageId");
+                return log.traceExit("startStageId");
             case END_STAGE_ID: 
-                return log.exit("endStageId");
+                return log.traceExit("endStageId");
             case NON_INFORMATIVE: 
-                return log.exit("nonInformative");
+                return log.traceExit("nonInformative");
             default: 
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
@@ -296,7 +296,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(entityInsertedCount);
+        return log.traceExit(entityInsertedCount);
     }
 
     /**
@@ -347,7 +347,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new AnatEntityTO(anatEntityId, anatEntityName, anatEntityDescription, 
+            return log.traceExit(new AnatEntityTO(anatEntityId, anatEntityName, anatEntityDescription, 
                     startStageId, endStageId, nonInformative));
         }
     }

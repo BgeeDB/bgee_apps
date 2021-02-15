@@ -55,6 +55,6 @@ public class CommandPrivacyPolicy extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

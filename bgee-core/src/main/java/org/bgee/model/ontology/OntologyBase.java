@@ -164,7 +164,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
                 e -> Collections.unmodifiableSet(e.getValue()))));
 
         log.debug("OntologyBase created in {} ms", System.currentTimeMillis() - startTimeInMs);
-        log.exit();
+        log.traceExit();
     }
     
     //**********************************************
@@ -236,7 +236,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getAncestors(T element) {
         log.entry(element);
-        return log.exit(this.getAncestors(element, false));
+        return log.traceExit(this.getAncestors(element, false));
     }
 
     /**
@@ -256,7 +256,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public List<T> getOrderedAncestors(T element) {
         log.entry(element);
-        return log.exit(this.getOrderedAncestors(element, null));
+        return log.traceExit(this.getOrderedAncestors(element, null));
     }
 
     /**
@@ -273,7 +273,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
-        return log.exit(this.getAncestors(element, relationTypes, false));
+        return log.traceExit(this.getAncestors(element, relationTypes, false));
     }
     
     /**
@@ -303,7 +303,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             throw new IllegalArgumentException("Provided element is not found in this ontology");
         }
         Set<T> ancestors = this.getAncestors(element, relationTypes, false);
-        return log.exit(this.getOrderedRelations(element).stream()
+        return log.traceExit(this.getOrderedRelations(element).stream()
             .map(r -> getElement(r.getTargetId()))
             .filter(e -> ancestors.contains(e))
             .collect(Collectors.toList()));
@@ -327,7 +327,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getAncestors(T element, boolean directRelOnly) {
         log.entry(element, directRelOnly);
-        return log.exit(this.getAncestors(element, null, directRelOnly));
+        return log.traceExit(this.getAncestors(element, null, directRelOnly));
     }
     
     /**
@@ -349,7 +349,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
+        return log.traceExit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
                 this.getRelations()));
     }
 
@@ -366,7 +366,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getDescendants(T element) {
         log.entry(element);
-        return log.exit(this.getDescendants(element, false));
+        return log.traceExit(this.getDescendants(element, false));
     }
 
     /**
@@ -383,7 +383,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes) {
         log.entry(element, relationTypes);
-        return log.exit(this.getDescendants(element, relationTypes, false));
+        return log.traceExit(this.getDescendants(element, relationTypes, false));
     }
 
     /**
@@ -404,7 +404,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getDescendants(T element, boolean directRelOnly) {
         log.entry(element, directRelOnly);
-        return log.exit(this.getDescendants(element, null, directRelOnly));
+        return log.traceExit(this.getDescendants(element, null, directRelOnly));
     }
 
 
@@ -427,7 +427,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
         log.entry(element, relationTypes, directRelOnly);
-        return log.exit(this.getRelatives(element, this.getElements(), false, relationTypes, directRelOnly, 
+        return log.traceExit(this.getRelatives(element, this.getElements(), false, relationTypes, directRelOnly, 
                 this.getRelations()));
     }
 
@@ -459,7 +459,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             currentElements.addAll(descendants);
             i++;
         }
-        return log.exit(allDescendants);
+        return log.traceExit(allDescendants);
     }
     
     /**
@@ -528,7 +528,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             toKeep = this.relationsByTargetElement.get(element);
         }
         if (toKeep == null || toKeep.isEmpty()) {
-            return log.exit(new HashSet<>());
+            return log.traceExit(new HashSet<>());
         }
 
         Stream<RelationTO<U>> filteredRelations1 = toKeep.stream()
@@ -557,7 +557,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
                 .filter(e -> !e.getId().equals(element.getId()))
                 .collect(Collectors.toSet());
         log.trace("Done retrieving relatives for {}: {}", element, returned.size());
-        return log.exit(returned);
+        return log.traceExit(returned);
     }
 
     /**
@@ -595,7 +595,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             countViewedRelations++;
         }
 
-        return log.exit(orderedRels);
+        return log.traceExit(orderedRels);
     }
 
     /**
@@ -650,7 +650,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             //means that the provided elements have no ancestors in common,
             //it can happen if the ontology has several roots, the elements belong to
             //completely independent branches
-            return log.exit(new HashSet<>());
+            return log.traceExit(new HashSet<>());
         }
         //Now, we discard any ancestor that is itself an ancestor of an ancestor
         Iterator<T> ancestorIterator = ancestors.iterator();
@@ -659,7 +659,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
             discardedAncestors.addAll(this.getAncestors(ancestorIterator.next(), relationTypes));
         }
         ancestors.removeAll(discardedAncestors);
-        return log.exit(ancestors);
+        return log.traceExit(ancestors);
     }
 
     /**
@@ -679,10 +679,10 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     public Set<T> getAncestorsAmongElements(Collection<T> elements, Collection<RelationType> relationTypes) {
         log.entry(elements, relationTypes);
         if (elements == null || elements.isEmpty()) {
-            return log.exit(new HashSet<>());
+            return log.traceExit(new HashSet<>());
         }
         Set<T> clonedElements = new HashSet<>(elements);
-        return log.exit(clonedElements.stream()
+        return log.traceExit(clonedElements.stream()
                 .filter(e -> Collections.disjoint(clonedElements, this.getAncestors(e, relationTypes)))
                 .collect(Collectors.toSet()));
     }
@@ -699,11 +699,11 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         log.entry(relType);
         switch (relType) {
         case ISA_PARTOF: 
-            return log.exit(RelationTO.RelationType.ISA_PARTOF);
+            return log.traceExit(RelationTO.RelationType.ISA_PARTOF);
         case DEVELOPSFROM: 
-            return log.exit(RelationTO.RelationType.DEVELOPSFROM);
+            return log.traceExit(RelationTO.RelationType.DEVELOPSFROM);
         case TRANSFORMATIONOF: 
-            return log.exit(RelationTO.RelationType.TRANSFORMATIONOF);
+            return log.traceExit(RelationTO.RelationType.TRANSFORMATIONOF);
         default: 
             throw log.throwing(new IllegalStateException("Unsupported TO relation type: " + relType));
         }

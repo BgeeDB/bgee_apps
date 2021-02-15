@@ -79,7 +79,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             if (hasSpecies) {
                 stmt.setIntegers(2, speciesIds, true);
             }  
-            return log.exit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
+            return log.traceExit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -124,7 +124,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                 stmt.setInt(2, startingSpeciesId);
                 stmt.setStrings(3, startingGeneIds, true);
             }  
-            return log.exit(new MySQLHierarchicalNodeTOResultSet(stmt));
+            return log.traceExit(new MySQLHierarchicalNodeTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -153,7 +153,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
             if (hasSpecies) {
                 stmt.setIntegers(2, speciesIds, true);
             }  
-            return log.exit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
+            return log.traceExit(new MySQLHierarchicalNodeToGeneTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -198,7 +198,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     			groupInsertedCount += stmt.executeUpdate();
     			stmt.clearParameters();
     		}
-    		return log.exit(groupInsertedCount);
+    		return log.traceExit(groupInsertedCount);
     	} catch (SQLException e) {
     		throw log.throwing(new DAOException(e));
     	}
@@ -233,7 +233,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
     			groupToGeneInsertedCount += stmt.executeUpdate();
     			stmt.clearParameters();
     		}
-    		return log.exit(groupToGeneInsertedCount);
+    		return log.traceExit(groupToGeneInsertedCount);
     	} catch (SQLException e) {
     		throw log.throwing(new DAOException(e));
     	}
@@ -314,7 +314,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                    throw log.throwing(new DAOException(e));
                }
            }
-           return log.exit(new HierarchicalNodeTO(nodeId, hogId, null, null, taxonId));
+           return log.traceExit(new HierarchicalNodeTO(nodeId, hogId, null, null, taxonId));
        }
 
    }
@@ -393,7 +393,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new HierarchicalNodeToGeneTO(hogId, geneId, taxonId));
+            return log.traceExit(new HierarchicalNodeToGeneTO(hogId, geneId, taxonId));
         }
     }
 
@@ -464,7 +464,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            connection.close();
 //        }
 //
-//        return log.exit(orthologousGenes);
+//        return log.traceExit(orthologousGenes);
 //    }
 //
 //    /**
@@ -543,7 +543,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            }
 //        }
 //
-//        return log.exit(orthologousGenes);
+//        return log.traceExit(orthologousGenes);
 //    }
 //
 //    /**
@@ -613,7 +613,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            connection.close();
 //        }
 //
-//        return log.exit(paralogusGenes);
+//        return log.traceExit(paralogusGenes);
 //    }
 //
 //    /**
@@ -687,7 +687,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            connection.close();
 //        }
 //
-//        return log.exit(orthologousGenes);
+//        return log.traceExit(orthologousGenes);
 //    }
 //
 //    /**
@@ -764,7 +764,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            }
 //        }
 //
-//        return log.exit(orthologousGenes);
+//        return log.traceExit(orthologousGenes);
 //
 //    }
 

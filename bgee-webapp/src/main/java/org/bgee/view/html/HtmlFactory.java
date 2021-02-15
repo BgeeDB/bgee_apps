@@ -70,83 +70,83 @@ public class HtmlFactory extends ViewFactory {
 	@Override
 	public DownloadDisplay getDownloadDisplay()  throws IOException {
 	    log.entry();
-		return log.exit(new HtmlDownloadDisplay(this.response, this.requestParameters,
+		return log.traceExit(new HtmlDownloadDisplay(this.response, this.requestParameters,
 		        this.prop, this.jsonHelper, this));
 	}
 
 	@Override
 	public GeneralDisplay getGeneralDisplay() throws IOException {
 	    log.entry();
-		return log.exit(new HtmlGeneralDisplay(this.response, this.requestParameters,
+		return log.traceExit(new HtmlGeneralDisplay(this.response, this.requestParameters,
 		        this.prop, this));
 	}
 
     @Override
     public ErrorDisplay getErrorDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlErrorDisplay(this.response, this.requestParameters,
+        return log.traceExit(new HtmlErrorDisplay(this.response, this.requestParameters,
                 this.prop, this));
     }
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlDocumentationDisplay(
+        return log.traceExit(new HtmlDocumentationDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public AboutDisplay getAboutDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlAboutDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlAboutDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public CollaborationDisplay getCollaborationDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlCollaborationDisplay(
+        return log.traceExit(new HtmlCollaborationDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlTopAnatDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlTopAnatDisplay(this.response, this.requestParameters, this.prop, this));
     }
     
 	@Override
 	public GeneDisplay getGeneDisplay() throws IOException {
 		log.entry();
-		return log.exit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
+		return log.traceExit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
 	}
 
     @Override
     public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
+        return log.traceExit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));
+        return log.traceExit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override
 	public SourceDisplay getSourceDisplay() throws IOException {
 	    log.entry();
-	    return log.exit(new HtmlSourceDisplay(this.response, this.requestParameters, this.prop, this));
+	    return log.traceExit(new HtmlSourceDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 	
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
-        return log.exit(new HtmlSpeciesDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlSpeciesDisplay(this.response, this.requestParameters, this.prop, this));
     }
 	@Override
 	public SearchDisplay getSearchDisplay() throws IOException {
@@ -160,7 +160,7 @@ public class HtmlFactory extends ViewFactory {
     @Override
     public JobDisplay getJobDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlJobDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlJobDisplay(this.response, this.requestParameters, this.prop, this));
     }
     @Override
 	public RPackageDisplay getRPackageDisplay() throws IOException {
@@ -170,30 +170,30 @@ public class HtmlFactory extends ViewFactory {
     @Override
     public FaqDisplay getFaqDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public SparqlDisplay getSparqlDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlSparqlDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlSparqlDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlResourcesDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlResourcesDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlAnatomicalSimilarityDisplay(
+        return log.traceExit(new HtmlAnatomicalSimilarityDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
     @Override
     public PublicationDisplay getPublicationDisplay() throws IOException {
         log.entry();
-        return log.exit(new HtmlPublicationsDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new HtmlPublicationsDisplay(this.response, this.requestParameters, this.prop, this));
     }
 }

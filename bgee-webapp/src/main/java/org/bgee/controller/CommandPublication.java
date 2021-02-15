@@ -58,6 +58,6 @@ public class CommandPublication extends CommandParent{
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

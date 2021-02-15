@@ -59,7 +59,7 @@ public class TopAnatRManager {
         this.code = RCode.create();
         this.props = props;
         this.params = topAnatParams;
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -76,7 +76,7 @@ public class TopAnatRManager {
         this.code = code;
         this.props = props;
         this.params = params;
-        log.exit();
+        log.traceExit();
     }
 
     protected String generateRCode(String resultFilePath, 
@@ -248,7 +248,7 @@ public class TopAnatRManager {
         code.addRCode("}");
 
 
-        return log.exit(code.toString());
+        return log.traceExit(code.toString());
 
     }
     protected void performRFunction(String consoleFileName) throws FileNotFoundException {
@@ -260,7 +260,7 @@ public class TopAnatRManager {
         caller.redirectROutputToFile(consoleFileName, true);
         caller.setRCode(code);
         caller.runAndReturnResult("tableOver");
-        log.exit();
+        log.traceExit();
 
     }
 

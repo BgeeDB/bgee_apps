@@ -282,7 +282,7 @@ public class MultiSpeciesCallService extends CommonService {
     			new LinkedHashMap<>());
     	Set<MultiSpeciesCall<ExpressionCall>> multiSpeciesCall = groupCalls(
     			orthologousGeneGroups, anatEntitySims, devStageSims, calls.collect(Collectors.toSet()));
-    	return log.exit(computeConservationScore(multiSpeciesCall));
+    	return log.traceExit(computeConservationScore(multiSpeciesCall));
     	
     	
     	
@@ -489,7 +489,7 @@ public class MultiSpeciesCallService extends CommonService {
                 continue;
             }
         }
-        return log.exit(multiSpCalls);
+        return log.traceExit(multiSpCalls);
             
             
     }
@@ -521,7 +521,7 @@ public class MultiSpeciesCallService extends CommonService {
 	        		inputCall.getOMAGroupId(), inputCall.getOrthologousGenes(), inputCall.getCalls(),
 	        		conservationScore));
         }
-        return log.exit(outputCalls);
+        return log.traceExit(outputCalls);
     }
     
     
@@ -537,7 +537,7 @@ public class MultiSpeciesCallService extends CommonService {
         Collection<Attribute> attributes) {
         log.entry(attributes);
         
-        return log.exit(attributes.stream().flatMap(attr -> {
+        return log.traceExit(attributes.stream().flatMap(attr -> {
             switch (attr) {
                 case GENE: 
                     return Stream.of(CallService.Attribute.GENE);
@@ -579,7 +579,7 @@ public class MultiSpeciesCallService extends CommonService {
             LinkedHashMap<MultiSpeciesCallService.OrderingAttribute, Service.Direction> orderingAttributes) {
         log.entry(orderingAttributes);
         
-        return log.exit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
+        return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
             e -> {
                 switch (e.getKey()) {
                     case GENE_ID: 
@@ -663,7 +663,7 @@ public class MultiSpeciesCallService extends CommonService {
     				anatEntitySimilarityService.loadPositiveAnatEntitySimilarities(
     						t.getKey().getId(), true));
     	});
-    	return log.exit(anatEntitySimilarities);
+    	return log.traceExit(anatEntitySimilarities);
     }
     
     /**
@@ -686,7 +686,7 @@ public class MultiSpeciesCallService extends CommonService {
     				);
     		devStageSimilarities.addAll(groupingStages);
     	});
-    	return log.exit(devStageSimilarities);
+    	return log.traceExit(devStageSimilarities);
     }
 
     
@@ -852,7 +852,7 @@ public class MultiSpeciesCallService extends CommonService {
                                 hasExpression? ExpressionSummary.EXPRESSED: ExpressionSummary.NOT_EXPRESSED);
                     });
                 });
-        return log.exit(similarityExpressionCallStream);
+        return log.traceExit(similarityExpressionCallStream);
 
     }
 
@@ -943,7 +943,7 @@ public class MultiSpeciesCallService extends CommonService {
                                 return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
                             }).filter(s -> !s.getCalls().isEmpty());
                 });
-        return log.exit(similarityExpressionCallStream);
+        return log.traceExit(similarityExpressionCallStream);
     }
 
     //TODO: equivalent method accepting ExpressionCallFilter
@@ -1013,7 +1013,7 @@ public class MultiSpeciesCallService extends CommonService {
                 //And we create the final Map condToCounts
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        return log.exit(new MultiSpeciesExprAnalysis(clonedGenes, condToCounts));
+        return log.traceExit(new MultiSpeciesExprAnalysis(clonedGenes, condToCounts));
     }
     //TODO: Once the method loadSimilarityExpressionCalls accepting an ExpressionCallFiter
     //will be ready, add a method to accept an ExpressionCallFilter rather than geneFilters,

@@ -82,7 +82,7 @@ public class CommandSpecies extends CommandParent {
 
             display.displaySpecies(sp, speciesDataGroups.iterator().next());
             
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         // Get submitted species IDs
@@ -112,6 +112,6 @@ public class CommandSpecies extends CommandParent {
                 .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
                 .collect(Collectors.toList()));
 
-        log.exit();
+        log.traceExit();
     }
 }

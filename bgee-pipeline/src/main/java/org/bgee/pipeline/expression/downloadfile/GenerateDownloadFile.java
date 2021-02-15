@@ -521,7 +521,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
                     "\" does not correspond to any element of " + fileType.getName()));
         }
         
-        return log.exit(fileTypes);
+        return log.traceExit(fileTypes);
     }
 
     /**
@@ -535,12 +535,12 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertDataStateToString(DataState dataState) {
         log.entry(dataState);
         if (DataState.HIGHQUALITY.equals(dataState)) {
-            return log.exit(HIGH_QUALITY_TEXT);
+            return log.traceExit(HIGH_QUALITY_TEXT);
         }
         if (DataState.LOWQUALITY.equals(dataState)) {
-            return log.exit(LOW_QUALITY_TEXT);
+            return log.traceExit(LOW_QUALITY_TEXT);
         }
-        return log.exit(NA_VALUE);
+        return log.traceExit(NA_VALUE);
     }
 
     /**
@@ -553,12 +553,12 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static DataState convertStringToDataState(String string) {
         log.entry(string);
         if (string.equals(HIGH_QUALITY_TEXT)) {
-            return log.exit(DataState.HIGHQUALITY);
+            return log.traceExit(DataState.HIGHQUALITY);
         }
         if (string.equals(LOW_QUALITY_TEXT)) {
-            return log.exit(DataState.LOWQUALITY);
+            return log.traceExit(DataState.LOWQUALITY);
         }
-        return log.exit(DataState.NODATA);
+        return log.traceExit(DataState.NODATA);
     }
 
     /**
@@ -577,9 +577,9 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         }
         switch (sum) {
         case EXPRESSED:
-            return log.exit(PRESENT_TEXT);
+            return log.traceExit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ABSENT_TEXT);
+            return log.traceExit(ABSENT_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized ExpressionSummary: " + sum);
         }
@@ -597,13 +597,13 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertExpressionToString(Expression expr) {
         log.entry(expr);
         if (expr == null) {
-            return log.exit(NO_DATA_VALUE);
+            return log.traceExit(NO_DATA_VALUE);
         }
         switch (expr) {
         case EXPRESSED:
-            return log.exit(PRESENT_TEXT);
+            return log.traceExit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ABSENT_TEXT);
+            return log.traceExit(ABSENT_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized Expression: " + expr);
         }
@@ -621,15 +621,15 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertSummaryQualityToString(SummaryQuality qual) {
         log.entry(qual);
         if (qual == null) {
-            return log.exit(NA_VALUE);
+            return log.traceExit(NA_VALUE);
         }
         switch (qual) {
         case GOLD:
-            return log.exit(GOLD_QUALITY_TEXT);
+            return log.traceExit(GOLD_QUALITY_TEXT);
         case SILVER:
-            return log.exit(SILVER_QUALITY_TEXT);
+            return log.traceExit(SILVER_QUALITY_TEXT);
         case BRONZE:
-            return log.exit(BRONZE_QUALITY_TEXT);
+            return log.traceExit(BRONZE_QUALITY_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized SummaryQuality: " + qual);
         }
@@ -645,11 +645,11 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         log.entry(string);
         switch (string) {
             case GOLD_QUALITY_TEXT:
-                return log.exit(SummaryQuality.GOLD);
+                return log.traceExit(SummaryQuality.GOLD);
             case SILVER_QUALITY_TEXT:
-                return log.exit(SummaryQuality.SILVER);
+                return log.traceExit(SummaryQuality.SILVER);
             case BRONZE_QUALITY_TEXT:
-                return log.exit(SummaryQuality.BRONZE);
+                return log.traceExit(SummaryQuality.BRONZE);
         }
         throw new IllegalArgumentException("Unrecognized summary quality text: " + string);
     }
@@ -663,9 +663,9 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertObservedDataToString(Boolean includingObservedData) {
         log.entry(includingObservedData);
         if (Boolean.TRUE.equals(includingObservedData)) {
-            return log.exit(ObservedData.OBSERVED.getStringRepresentation());
+            return log.traceExit(ObservedData.OBSERVED.getStringRepresentation());
         }
-        return log.exit(ObservedData.NOT_OBSERVED.getStringRepresentation());
+        return log.traceExit(ObservedData.NOT_OBSERVED.getStringRepresentation());
     }
 
     /**
@@ -788,7 +788,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         row.put(STAGE_ID_COLUMN_NAME, stageId);
         row.put(STAGE_NAME_COLUMN_NAME, stageName);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -799,7 +799,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     protected String formatString(String word) {
         log.entry(word);
-        return log.exit(word.replaceAll(" ", "_"));
+        return log.traceExit(word.replaceAll(" ", "_"));
     }
     
     /**
@@ -826,7 +826,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -850,6 +850,6 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

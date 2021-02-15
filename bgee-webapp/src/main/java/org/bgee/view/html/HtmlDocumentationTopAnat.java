@@ -122,6 +122,6 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
                 + "title='topGO package in Bioconductor' target='_blank' rel='noopener'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
 
-        log.exit();
+        log.traceExit();
     }
 }

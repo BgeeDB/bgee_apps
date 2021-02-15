@@ -1921,6 +1921,6 @@ public class CallServiceTest extends TestAncestor {
             throw log.throwing(new AssertionError("Incorrect calls retrieved, expected: " + expectedCalls
                     + ", but was: " + actualCalls));
         }
-        log.exit();
+        log.traceExit();
     }
 }

@@ -65,7 +65,7 @@ public class InsertCIO extends MySQLDAOUser {
         InsertCIO insert = new InsertCIO();
         insert.insert(OntologyUtils.loadOntology(args[0]));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -110,7 +110,7 @@ public class InsertCIO extends MySQLDAOUser {
             this.closeDAO();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -190,6 +190,6 @@ public class InsertCIO extends MySQLDAOUser {
             throw log.throwing(new IllegalArgumentException("The provided ontology "
                     + "did not allow to retrieve any valid CIO statements."));
         }
-        return log.exit(cioTOs);
+        return log.traceExit(cioTOs);
     }
 }

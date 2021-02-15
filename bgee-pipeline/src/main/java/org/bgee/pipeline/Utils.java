@@ -144,7 +144,7 @@ public class Utils {
             
             try {
                 //passes result to next processor in the chain
-                return log.exit(next.execute(formatMultipleValuesToString(stringList, 
+                return log.traceExit("{}", next.execute(formatMultipleValuesToString(stringList, 
                         this.blankValuesAllowed), context));
             } catch (IllegalArgumentException e) {
                 //we have already checked that elements in the List were non-null Strings, 
@@ -172,7 +172,7 @@ public class Utils {
         public boolean isComment(String line) {
             log.entry(line);
             if (line.startsWith("//")) {
-                return log.exit(true);
+                return log.traceExit(true);
             }
             //in case quotes were added by a spreadsheet software. 
             //we check whether it could be a comment line before trimming the line, 
@@ -184,10 +184,10 @@ public class Utils {
                 String trimLine = line.trim();
                 if ((line.startsWith("\"") && trimLine.endsWith("\"")) || 
                         (line.startsWith("'") && trimLine.endsWith("'"))) {
-                    return log.exit(true);
+                    return log.traceExit(true);
                 }
             }
-            return log.exit(false);
+            return log.traceExit(false);
         }
     }
 
@@ -236,7 +236,7 @@ public class Utils {
      */
     public static CsvPreference getCsvPreferenceWithQuote(boolean[] columnsToQuote) {
         log.entry(columnsToQuote);
-        return log.exit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
+        return log.traceExit(new CsvPreference.Builder(CsvPreference.TAB_PREFERENCE).
                 useQuoteMode(new ColumnQuoteMode(columnsToQuote)).
                 skipComments(new BgeeCommentMatches()).build());
     }
@@ -313,7 +313,7 @@ public class Utils {
     public static String formatMultipleValuesToString(List<String> values) 
             throws IllegalArgumentException {
         log.entry(values);
-        return log.exit(formatMultipleValuesToString(values, false));
+        return log.traceExit(formatMultipleValuesToString(values, false));
     }
     /**
      * Transform a {@code List} of {@code String}s into a {@code String} where each element 
@@ -349,7 +349,7 @@ public class Utils {
             }
             valuesToString += value;
         }
-        return log.exit(valuesToString);
+        return log.traceExit(valuesToString);
     }
     
     /**
@@ -377,7 +377,7 @@ public class Utils {
             throws IllegalArgumentException, FileNotFoundException, IOException {
         log.entry(tsvFile, columnName);
         
-        return log.exit(parseColumnAsString(tsvFile, columnName, null));
+        return log.traceExit(parseColumnAsString(tsvFile, columnName, null));
     }
     
     /**
@@ -407,7 +407,7 @@ public class Utils {
             CellProcessor columnProcessor) throws IllegalArgumentException, 
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnName, columnProcessor);
-        return log.exit(parseColumnAsString(tsvFile, Arrays.asList(columnName), 
+        return log.traceExit(parseColumnAsString(tsvFile, Arrays.asList(columnName), 
                 columnProcessor));
     }
     
@@ -439,7 +439,7 @@ public class Utils {
             CellProcessor columnProcessor) throws IllegalArgumentException, 
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnNames, columnProcessor);
-        return log.exit(parseColumn(tsvFile, columnNames, columnProcessor, 
+        return log.traceExit(parseColumn(tsvFile, columnNames, columnProcessor, 
                 String.class));
     }
    
@@ -469,7 +469,7 @@ public class Utils {
             throws IllegalArgumentException, FileNotFoundException, IOException {
         log.entry(tsvFile, columnName);
         
-        return log.exit(parseColumnAsInteger(tsvFile, columnName, null));
+        return log.traceExit(parseColumnAsInteger(tsvFile, columnName, null));
     }
     
     /**
@@ -501,7 +501,7 @@ public class Utils {
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnName, columnProcessor);
         
-        return log.exit(parseColumnAsInteger(tsvFile, Arrays.asList(columnName), 
+        return log.traceExit(parseColumnAsInteger(tsvFile, Arrays.asList(columnName), 
                 columnProcessor));
     }
 
@@ -535,7 +535,7 @@ public class Utils {
             FileNotFoundException, IOException {
         log.entry(tsvFile, columnNames, columnProcessor);
         
-        return log.exit(parseColumn(tsvFile, columnNames, columnProcessor, 
+        return log.traceExit(parseColumn(tsvFile, columnNames, columnProcessor, 
                 Integer.class));
     }
     
@@ -616,7 +616,7 @@ public class Utils {
                 } 
                 values.add(cls.cast(value));
             }
-            return log.exit(values);
+            return log.traceExit(values);
         }
     }
     
@@ -633,11 +633,11 @@ public class Utils {
         if(toTest != null){
             for(int i = 0; i < toTest.length(); i++){
                 if(Character.isWhitespace(toTest.charAt(i))){
-                    return log.exit(true);
+                    return log.traceExit(true);
                 }
             }
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
 
@@ -690,7 +690,7 @@ public class Utils {
             }
         }
          
-         return log.exit(columnIndex);
+         return log.traceExit(columnIndex);
     }
 
 
@@ -733,6 +733,6 @@ public class Utils {
                     "to only one species..."));
         }
         
-        return log.exit(namesByIds);
+        return log.traceExit(namesByIds);
     }
 }

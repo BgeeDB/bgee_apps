@@ -73,7 +73,7 @@ public class CommandSearch extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     private String getSearchTerm() throws InvalidRequestException {

@@ -150,7 +150,7 @@ public class URLParametersJsConverter extends JSConverter {
         this.writeln("        }");
         this.writeln("");
         this.writeln("};");
-        log.exit();
+        log.traceExit();
     }
 
     /**

@@ -89,7 +89,7 @@ public class InsertGO extends MySQLDAOUser {
         InsertGO insert = new InsertGO();
         insert.insert(args[0]);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -114,7 +114,7 @@ public class InsertGO extends MySQLDAOUser {
         
         this.insert(OntologyUtils.loadOntology(goFile));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -166,7 +166,7 @@ public class InsertGO extends MySQLDAOUser {
                     "The OWLOntology provided is invalid", e));
         }
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -191,7 +191,7 @@ public class InsertGO extends MySQLDAOUser {
         }
         
         log.info("Done retrieving terms.");
-        return log.exit(goTermTOs);
+        return log.traceExit(goTermTOs);
     }
     
     /**
@@ -265,7 +265,7 @@ public class InsertGO extends MySQLDAOUser {
         }
         
         log.info("Done retrieving relations between terms.");
-        return log.exit(rels);
+        return log.traceExit(rels);
     }
     
     /**

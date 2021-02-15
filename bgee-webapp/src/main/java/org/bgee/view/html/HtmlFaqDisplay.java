@@ -164,7 +164,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         
         this.writeln("</div>"); // close faq-list
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -198,6 +198,6 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
         sb.append("    </div>");
         sb.append("  </div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 }

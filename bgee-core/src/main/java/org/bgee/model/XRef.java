@@ -93,7 +93,7 @@ public class XRef {
 
         String xRefUrl = this.getSource().getXRefUrl();
         if (StringUtils.isBlank(xRefUrl)) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
 
         if (convertAmpersandToHTMLEntity) {
@@ -105,7 +105,7 @@ public class XRef {
         if (xRefUrl.contains(Source.X_REF_TAG)) {
             xRefUrl = xRefUrl.replace(Source.X_REF_TAG, urlEncode.apply(this.getXRefId()));
         }
-        return log.exit(xRefUrl);
+        return log.traceExit(xRefUrl);
     }
 
     @Override

@@ -161,15 +161,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 
             int omaIdComp = bean1.getOmaId().compareToIgnoreCase(bean2.getOmaId());
             if (omaIdComp != 0)
-                return log.exit(omaIdComp);
+                return log.traceExit(omaIdComp);
 
             int uberonIdComp = STRING_LIST_COMPARATOR.compare(bean1.getEntityIds(), bean2.getEntityIds());
             if (uberonIdComp != 0)
-                return log.exit(uberonIdComp);
+                return log.traceExit(uberonIdComp);
             
             int stageIdComp = STRING_LIST_COMPARATOR.compare(bean1.getStageIds(), bean2.getStageIds());
             if (stageIdComp != 0)
-                return log.exit(stageIdComp);
+                return log.traceExit(stageIdComp);
 
             if (bean1 instanceof MultiSpeciesCompleteDiffExprFileBean) {
                 int speciesIdComp =
@@ -179,15 +179,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
                                     Integer.valueOf(
                                         ((MultiSpeciesCompleteDiffExprFileBean)bean2).getSpeciesId()));
                 if (speciesIdComp != 0)
-                    return log.exit(speciesIdComp);
+                    return log.traceExit(speciesIdComp);
 
                 int geneIdComp = ((MultiSpeciesCompleteDiffExprFileBean)bean1).getGeneId().
                         compareToIgnoreCase(
                                 ((MultiSpeciesCompleteDiffExprFileBean)bean2).getGeneId());
                 if (geneIdComp != 0)
-                    return log.exit(geneIdComp);
+                    return log.traceExit(geneIdComp);
             }
-            return log.exit(0);
+            return log.traceExit(0);
         }
     };
 
@@ -204,15 +204,15 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             for (int i = 0; i < minLength; i++) {
                 final int compareValue = list1.get(i).compareToIgnoreCase(list2.get(i));
                 if (compareValue != 0) {
-                    return log.exit(compareValue); // They are already not equal
+                    return log.traceExit(compareValue); // They are already not equal
                 }
             }
             if (list1.size() == list2.size()) {
-                return log.exit(0); // They are equal
+                return log.traceExit(0); // They are equal
             } else if (list1.size() < list2.size()) {
-                return log.exit(-1); // list 1 is smaller
+                return log.traceExit(-1); // list 1 is smaller
             } else {
-                return log.exit(1);
+                return log.traceExit(1);
             }
         }
     };
@@ -1000,12 +1000,12 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
             log.entry(representation);
             
             if (representation == null) {
-                return log.exit(null);
+                return log.traceExit((DiffExpressionData) null);
             }
             for (DiffExpressionData element: DiffExpressionData.class.getEnumConstants()) {
                 if (element.getStringRepresentation().equals(representation) || 
                         element.name().equals(representation)) {
-                    return log.exit(element);
+                    return log.traceExit(element);
                 }
             }
             throw log.throwing(new IllegalArgumentException("\"" + representation + 
@@ -1171,7 +1171,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //                    CommandRunner.parseListArgument(args[1]), MultiSpeciesDiffExprFileType.class),
 //                args[2]);
 //        generator.generateMultiSpeciesDiffExprFiles();
-//        log.exit();
+//        log.traceExit();
 //    }
 
     /**
@@ -1310,7 +1310,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            log.info("Done generating of multi-species diff. expression files for the group {}.", 
 //                    currentGroup);
 //        }
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -1591,7 +1591,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            tmpFile.renameTo(new File(this.directory, omaFileName));
 //        }
 //
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -1627,7 +1627,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //    
 //        log.debug("Done retrieving least common ancestor, the taxon found is {}", lca);
 //    
-//        return log.exit(lca);
+//        return log.traceExit(lca);
 //    }
 //
 //    /**
@@ -1668,7 +1668,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //    
 //        log.debug("Done retrieving homologous genes, {} genes found", mapping.size());
 //    
-//        return log.exit(mapping);
+//        return log.traceExit(mapping);
 //    }
 //
 //    /**
@@ -1695,7 +1695,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            geneIds.add(entry.getKey());
 //        }
 //        
-//        return log.exit(mapOMANodeGene);
+//        return log.traceExit(mapOMANodeGene);
 //    }
 //    
 //    /**
@@ -1720,7 +1720,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //
 //        log.debug("Done retrieving comparable stages, {} found", allTOs.size());
 //
-//        return log.exit(allTOs);
+//        return log.traceExit(allTOs);
 //    }
 //    
 //    /**
@@ -1749,7 +1749,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        log.debug("Done retrieving relation from stage ID to stage group, {} found", 
 //                mappingStageIdToStageGroup.size());
 //
-//        return log.exit(mappingStageIdToStageGroup);
+//        return log.traceExit(mappingStageIdToStageGroup);
 //    }
 //
 //    /** 
@@ -1778,7 +1778,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        log.debug("Done retrieving relation from stage group to stage IDs, {} found", 
 //                mappingStageGroupToStageId.size());
 //
-//        return log.exit(mappingStageGroupToStageId);
+//        return log.traceExit(mappingStageGroupToStageId);
 //    }
 //
 //    /**
@@ -1811,7 +1811,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //    
 //        log.debug("Done retrieving summary similarity annotations, {} found", mapping.size());
 //    
-//        return log.exit(mapping);
+//        return log.traceExit(mapping);
 //    }
 //
 //    /**
@@ -1838,7 +1838,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        log.debug("Done retrieving relation between summary similarity annotation and " + 
 //                "anatomical entity for the taxon ID {}, {} found", allTOs.size());
 //    
-//        return log.exit(allTOs);
+//        return log.traceExit(allTOs);
 //    }
 //    
 //    /** 
@@ -1871,7 +1871,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        log.debug("Done retrieving relations from summary similarity annotation to " + 
 //                "anatomical entities, {} found", mappingSimAnnotToAnatEntity.size());
 //
-//        return log.exit(mappingSimAnnotToAnatEntity);
+//        return log.traceExit(mappingSimAnnotToAnatEntity);
 //    }
 //
 //    /** 
@@ -1903,7 +1903,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        log.debug("Done retrieving relations from anatomical entity to " + 
 //                "summary similarity annotations, {} found", mappingAnatEntityToSimAnnot.size());
 //
-//        return log.exit(mappingAnatEntityToSimAnnot);
+//        return log.traceExit(mappingAnatEntityToSimAnnot);
 //    }
 //    
 //    /**
@@ -1942,7 +1942,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //
 //        log.debug("Done retrieving differential expression calls");
 //    
-//        return log.exit(rs);
+//        return log.traceExit(rs);
 //    }
 //
 //    /**
@@ -1976,7 +1976,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        }
 //        assert output.size() == speciesNamesByIds.size();
 //        
-//        return log.exit(output);
+//        return log.traceExit(output);
 //    }
 //    
 //    /**
@@ -2048,7 +2048,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //                calls.add(diffExpressionCallTO);
 //            }
 //        }
-//        return log.exit(groupedCalls);
+//        return log.traceExit(groupedCalls);
 //    }
 //
 //    //NOTE: we should filter and write in the same time because filter could be according to file type
@@ -2376,7 +2376,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        
 //        if (allCompleteBeans == null || allCompleteBeans.isEmpty()) {
 //            log.trace("This OMA group doesn't have data in any condition");
-//            log.exit();
+//            log.traceExit();
 //            return;
 //        }
 //        
@@ -2397,7 +2397,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //
 //        log.debug("Done writing calls of OMA node ID {}", omaNodeId);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -2427,7 +2427,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            log.trace("Write row: {} - using writer: {}", bean, writer);
 //        }
 //
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -2543,7 +2543,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        bean.setDifferentialExpression(summary.getStringRepresentation());
 //        bean.setCallQuality(quality);
 //    
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -2670,7 +2670,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            }
 //        }
 //        
-//        return log.exit(processors);
+//        return log.traceExit(processors);
 //    }
 //    
 //    /**
@@ -2746,7 +2746,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            headers[20] = CIO_ID_COLUMN_NAME; 
 //            headers[21] = CIO_NAME_ID_COLUMN_NAME;
 //        }
-//        return log.exit(headers);
+//        return log.traceExit(headers);
 //    }
 //    
 //    /**
@@ -2807,7 +2807,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            }
 //        }
 //        
-//        return log.exit(quoteMode);
+//        return log.traceExit(quoteMode);
 //    }
 //
 //    /**
@@ -2984,7 +2984,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //                "Some of the provided species were not found in the header: expected: " 
 //                + speciesNamesOrderedByLength + " - found: " + speciesFound;
 //        }
-//        return log.exit(fieldMapping);
+//        return log.traceExit(fieldMapping);
 //    }
 //    
 //    /**
@@ -3027,7 +3027,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            }
 //        }
 //
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -3043,7 +3043,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //        headers[1] = GENE_ID_COLUMN_NAME;
 //        headers[2] = GENE_NAME_COLUMN_NAME;
 //    
-//        return log.exit(headers);
+//        return log.traceExit(headers);
 //    }
 //    
 //    /**
@@ -3075,7 +3075,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //            }
 //        }
 //    
-//        return log.exit(processors);
+//        return log.traceExit(processors);
 //    }
 //    
 //    /**
@@ -3112,6 +3112,6 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //                            "Unrecognized header: " + header[i] + " for OMA TSV file."));
 //            }
 //        }
-//        return log.exit(mapping);
+//        return log.traceExit(mapping);
 //    }
 }

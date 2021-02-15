@@ -77,16 +77,16 @@ public class GeneMatch implements Comparable<GeneMatch> {
 	    log.entry();
         switch (this.getMatchSource()) {
             case NAME:
-                return log.exit(this.getGene().getName());
+                return log.traceExit(this.getGene().getName());
             case ID:
-                return log.exit(this.getGene().getEnsemblGeneId());
+                return log.traceExit(this.getGene().getEnsemblGeneId());
             case DESCRIPTION:
-                return log.exit(this.getGene().getDescription());
+                return log.traceExit(this.getGene().getDescription());
             case SYNONYM:
             case XREF:
-                return log.exit(this.getTerm());
+                return log.traceExit(this.getTerm());
             case MULTIPLE:
-                return log.exit(null);
+                return log.traceExit((String) null);
             default:
                 throw log.throwing(new IllegalStateException("Unrecognized MatchSource: " + this.getMatchSource()));
         }
@@ -101,7 +101,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
 	    if (this.getMatch() == null) {
 	        return null;
         }
-        return log.exit(this.getMatch().length());
+        return log.traceExit(this.getMatch().length());
     }
 
     @Override

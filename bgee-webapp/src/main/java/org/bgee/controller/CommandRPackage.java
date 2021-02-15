@@ -139,7 +139,7 @@ public class CommandRPackage extends CommandParent {
             job.release();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -226,7 +226,7 @@ public class CommandRPackage extends CommandParent {
                 attrs, null);
         display.displayCalls(requestedAttrs, callStream);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -273,7 +273,7 @@ public class CommandRPackage extends CommandParent {
         
         display.displayAnatEntities(requestedAttrs, ae);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -323,7 +323,7 @@ public class CommandRPackage extends CommandParent {
                 .getAsSingleSpeciesOntology(speciesId);
         display.displayAERelations(requestedAttrs, anatEntityOnt);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -371,7 +371,7 @@ public class CommandRPackage extends CommandParent {
         
         display.displaySpecies(requestedAttrs, species);
         
-        log.exit();
+        log.traceExit();
     }
     
     private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){
@@ -393,7 +393,7 @@ public class CommandRPackage extends CommandParent {
                             "Attribute parameter not supported: " + rqAttr));
             } 
         }
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
     
     private static Set<CallService.Attribute> convertRqAttrsToCallsAttrs(List<String> rqAttrs){
@@ -418,7 +418,7 @@ public class CommandRPackage extends CommandParent {
                             "Attribute parameter not supported: " + rqAttr));
             } 
         }
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
     
     private static void checkRelationAttrs(List<String> rqAttrs){

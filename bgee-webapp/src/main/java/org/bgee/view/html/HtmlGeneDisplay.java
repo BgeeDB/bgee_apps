@@ -89,14 +89,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     public void displayGeneHomePage() {
         log.entry();
         this.displayGeneSearchPage(null, null);
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
         log.entry(searchTerm, result);
         this.displayGeneSearchPage(searchTerm, result);
-        log.exit();
+        log.traceExit();
     }
 
     private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
@@ -143,7 +143,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     private String getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
@@ -174,7 +174,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("</tbody>");
 
         sb.append("</table>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     /**
@@ -188,10 +188,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(geneMatch, searchTerm);
         
         if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
-            return log.exit("no exact match");
+            return log.traceExit("no exact match");
         }
 
-        return log.exit(highlightSearchTerm(geneMatch.getMatch(), searchTerm) +
+        return log.traceExit(highlightSearchTerm(geneMatch.getMatch(), searchTerm) +
                 " (" + htmlEntities(geneMatch.getMatchSource().toString().toLowerCase()) + ")");
     }
 
@@ -219,7 +219,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         newLabel = newLabel.replaceAll(":myStrongOpeningTag:", "<strong class='search-match'>")
                 .replace(":myStrongClosingTag:", "</strong>");
 
-        return log.exit(newLabel);
+        return log.traceExit(newLabel);
     }
     
     @Override
@@ -261,7 +261,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(geneList.toString());
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
     
     /** 
@@ -272,7 +272,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      */
     private String getSpecificGenePageLink(Gene gene) {
         log.entry(gene);
-        return log.exit(getSpecificGenePageLink(gene, null));
+        return log.traceExit(getSpecificGenePageLink(gene, null));
     }
 
     /** 
@@ -297,7 +297,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 htmlEntities(gene.getName() + " - " + gene.getEnsemblGeneId())
                         + " in " + getCompleteSpeciesName(gene.getSpecies(), false);
 
-        return log.exit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
+        return log.traceExit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
     }
 
     /**
@@ -353,7 +353,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         box.append("</div>");
         box.append("</div>");
 
-        return log.exit(box.toString());
+        return log.traceExit(box.toString());
     }
 
     @Override
@@ -533,7 +533,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // end Gene
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     /** 
@@ -591,7 +591,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>");
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -654,7 +654,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         sb.append("<tbody>").append(rowSb.toString()).append("</tbody>");
         sb.append("</table>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
 
     }
 
@@ -772,7 +772,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         sb.append("</tr>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /** Generates the HTML code displaying information about homologous genes.
@@ -914,7 +914,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         sb.append("<tbody>").append(sbRow.toString()).append("</tbody>");
         sb.append("</table>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     /**
@@ -963,7 +963,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         table.append("</table>");
         table.append("</div>");
 
-        return log.exit(table.toString());
+        return log.traceExit(table.toString());
     }
 
     /**
@@ -985,7 +985,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.toList());
 
         String display = getListDisplay("syn", orderedEscapedSynonyms);
-        return log.exit(display);
+        return log.traceExit(display);
     }
 
     /**
@@ -1032,7 +1032,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         display.append("</table>");
         display.append("</div>");
 
-        return log.exit(display.toString());
+        return log.traceExit(display.toString());
     }
 
     /**
@@ -1051,7 +1051,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             // If we have several names, we display only the first one.
             xRefName = " (" + split[0] + ")";
         }
-        return log.exit(xRefName);
+        return log.traceExit(xRefName);
     }
 
     /**
@@ -1076,7 +1076,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                     "</span>";
             display += " <span id='" + idPrefix + "_click' class='glyphicon glyphicon-plus'></span>";
         }
-        return log.exit(display);
+        return log.traceExit(display);
     }
 
     /**
@@ -1102,7 +1102,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
 
-        return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
+        return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
             return getDataSpan(type, callsByDataTypes.containsKey(type));
         }).collect(Collectors.joining()));
     }
@@ -1143,7 +1143,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 break;
         }
         sb.append("</span>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -1166,11 +1166,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
                 call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-            return log.exit(rankScore);
+            return log.traceExit(rankScore);
         }
         StringBuilder sb = new StringBuilder();
         sb.append("<span class='low-qual-score'>").append(rankScore).append("</span>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -1195,11 +1195,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
                 call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-            return log.exit(expressionScore);
+            return log.traceExit(expressionScore);
         }
         StringBuilder sb = new StringBuilder();
         sb.append("<span class='low-qual-score'>").append(expressionScore).append("</span>");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
 
@@ -1220,7 +1220,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -1240,6 +1240,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.includeJs("lib/jquery_plugins/vendor_gene.js");
             this.includeJs("script_gene.js");
         }
-        log.exit();
+        log.traceExit();
     }
 }

@@ -63,7 +63,7 @@ public class GeneHomologsService extends CommonService{
             boolean withOrthologs, boolean withParalogs) {
         log.entry(ensemblGeneId, speciesId, withOrthologs, withParalogs);
         GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
-        return log.exit(getGeneHomologs(Collections.singleton(geneFilter), null, null, 
+        return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), null, null, 
                 true, withOrthologs, withParalogs).iterator().next());
     }
     
@@ -95,7 +95,7 @@ public class GeneHomologsService extends CommonService{
         log.entry(ensemblGeneId, speciesId, homologsSpeciesIds, taxonId, withDescendantTaxon,
                 withOrthologs, withParalogs);
         GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
-        return log.exit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
+        return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs).iterator().next());
     }
 
@@ -126,7 +126,7 @@ public class GeneHomologsService extends CommonService{
         log.entry(geneFilter, homologsSpeciesIds, taxonId, withDescendantTaxon, withOrthologs, 
                 withParalogs);
         
-        return log.exit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds,
+        return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds,
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs));
 
     }
@@ -217,7 +217,7 @@ public class GeneHomologsService extends CommonService{
                 ));
         }
         
-        return log.exit(homologsGeneSet);
+        return log.traceExit(homologsGeneSet);
     }
     /**
      * create a {@code Map} where keys are bgeeGeneIds and value is a second {@code Map} with
@@ -291,12 +291,12 @@ public class GeneHomologsService extends CommonService{
             homologsGeneByTaxon = sortMapByTaxon(homologsGeneByTaxon);
             homologsGeneByTaxonBygeneId.put(entryByGeneId.getKey(), homologsGeneByTaxon);
         }
-        return log.exit(homologsGeneByTaxonBygeneId);
+        return log.traceExit(homologsGeneByTaxonBygeneId);
     }
 
     protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
         log.entry(toSort);
-        return log.exit(toSort.entrySet().stream()
+        return log.traceExit(toSort.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
                 .collect(Collectors
                     //Type hint necessary for some compilers

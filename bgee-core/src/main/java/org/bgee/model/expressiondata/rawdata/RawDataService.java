@@ -76,7 +76,7 @@ public class RawDataService extends CommonService {
             if (expectedAssayTOId == null) {
                 throw log.throwing(new IllegalArgumentException("The expected AssayTO ID cannot be null"));
             }
-            return log.exit(this.lastAssayTO != null && expectedAssayTOId.equals(this.lastAssayTO.getId()));
+            return log.traceExit(this.lastAssayTO != null && expectedAssayTOId.equals(this.lastAssayTO.getId()));
         }
 
         protected <Y> V loadAssayAdvanceTOIterator(Y expectedAssayTOId) {
@@ -93,7 +93,7 @@ public class RawDataService extends CommonService {
                         + ". Either the call sources and assays were not properly ordered, or problem in data retrieval"));
             }
             if (this.lastAssayTO == null) {
-                return log.exit(null);
+                return log.traceExit((V) null);
             }
 
             assert this.expTOIterator == null && !(this.lastAssayTO instanceof AssayPartOfExpTO) ||
@@ -111,9 +111,9 @@ public class RawDataService extends CommonService {
                 this.lastExp = mapExperimentTOToExperiment(this.lastExpTO);
             }
             if (this.lastAssayTO instanceof AssayPartOfExpTO) {
-                return log.exit(mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?, ?>) this.lastAssayTO, this.lastExp));
+                return log.traceExit("{}", mapAssayPartOfExpTOToAssayPartOfExp((AssayPartOfExpTO<?, ?>) this.lastAssayTO, this.lastExp));
             }
-            return log.exit(mapAssayTOToAssay(this.lastAssayTO));
+            return log.traceExit("{}",mapAssayTOToAssay(this.lastAssayTO));
         }
 
         protected boolean initializeTryAdvance() {
@@ -131,9 +131,9 @@ public class RawDataService extends CommonService {
                     this.expTOIterator = this.expTOStream.iterator();
                 }
                 this.assayTOIterator = this.assayTOStream.iterator();
-                return log.exit(true);
+                return log.traceExit(true);
             }
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         /**
@@ -145,14 +145,14 @@ public class RawDataService extends CommonService {
         @Override
         public Spliterator<T> trySplit() {
             log.entry();
-            return log.exit(null);
+            return log.traceExit((Spliterator<T>) null);
         }
 
         @Override
         public Comparator<? super T> getComparator() {
             log.entry();
             //TODO?
-            return log.exit(null);
+            return log.traceExit((Comparator<? super T>) null);
         }
 
         /** 
@@ -169,7 +169,7 @@ public class RawDataService extends CommonService {
                     this.isClosed = true;
                 }
             }
-            log.exit();
+            log.traceExit();
         }
     }
 
@@ -191,7 +191,7 @@ public class RawDataService extends CommonService {
 
             T assay = this.loadAssayAdvanceTOIterator(null);
             if (assay == null) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
             if (this.assayType.isInstance(assay)) {
                 action.accept(this.assayType.cast(assay));
@@ -199,7 +199,7 @@ public class RawDataService extends CommonService {
                 throw log.throwing(new IllegalStateException("Unexpected class for Assay, expected "
                         + this.assayType + " but was " + assay.getClass()));
             }
-            return log.exit(true);
+            return log.traceExit(true);
         }
     }
 
@@ -230,9 +230,9 @@ public class RawDataService extends CommonService {
             log.entry();
             if (super.initializeTryAdvance()) {
                 this.callSourceTOIterator = this.callSourceTOStream.iterator();
-                return log.exit(true);
+                return log.traceExit(true);
             }
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         @Override
@@ -246,7 +246,7 @@ public class RawDataService extends CommonService {
                 callSourceTO = this.callSourceTOIterator.next();
             } catch (NoSuchElementException e) {
                 log.catching(Level.DEBUG, e);
-                return log.exit(false);
+                return log.traceExit(false);
             }
 
             if (!this.checkLastAssayTOIsValid(callSourceTO.getAssayId())) {
@@ -259,7 +259,7 @@ public class RawDataService extends CommonService {
                 throw log.throwing(new IllegalStateException("Unexpected class for RawCallSource, expected "
                         + this.callRawSourceType + " but was " + callSource.getClass()));
             }
-            return log.exit(true);
+            return log.traceExit(true);
         }
 
         /**
@@ -275,42 +275,42 @@ public class RawDataService extends CommonService {
                     super.close();
                 }
             }
-            log.exit();
+            log.traceExit();
         }
     }
 
     private static <T extends Experiment<?>, U extends ExperimentTO<?>> T mapExperimentTOToExperiment(U expTO) {
         log.entry(expTO);
         //TODO
-        return log.exit(null);
+        return log.traceExit((T) null);
     }
     private static <T extends Assay<?>, U extends AssayTO<?>> T mapAssayTOToAssay(U assayTO) {
         log.entry(assayTO);
         //TODO
-        return log.exit(null);
+        return log.traceExit((T) null);
     }
     private static <T extends AssayPartOfExp<?, V>, U extends AssayPartOfExpTO<?, ?>, V extends Experiment<?>>
     T mapAssayPartOfExpTOToAssayPartOfExp(U assayTO, V exp) {
         log.entry(assayTO, exp);
         //TODO
-        return log.exit(null);
+        return log.traceExit((T) null);
     }
     private static <T extends  RawCallSource<V>, U extends CallSourceTO<?>, V extends Assay<?>>
     T mapRawCallSourceTOToRawCallSource(U callSourceTO, V assay) {
         log.entry(callSourceTO, assay);
         //TODO
-        return log.exit(null);
+        return log.traceExit((T) null);
     }
 
     private static DAORawDataFilter convertRawDataFilterToDAORawDataFilter(RawDataFilter rawDataFilter,
             Map<Integer, Gene> geneMap) {
         log.entry(rawDataFilter, geneMap);
         if (rawDataFilter == null) {
-            return log.exit(null);
+            return log.traceExit((DAORawDataFilter) null);
         }
         Entry<Set<Integer>, Set<Integer>> geneIdsSpeciesIdsForDAOs =
                 convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(rawDataFilter.getGeneFilters(), geneMap);
-        return log.exit(new DAORawDataFilter(
+        return log.traceExit(new DAORawDataFilter(
                 geneIdsSpeciesIdsForDAOs.getKey(), geneIdsSpeciesIdsForDAOs.getValue(),
 
                 rawDataFilter.getConditionFilters().stream()
@@ -322,9 +322,9 @@ public class RawDataService extends CommonService {
             RawDataConditionFilter condFilter) {
         log.entry(condFilter);
         if (condFilter == null) {
-            return log.exit(null);
+            return log.traceExit((DAORawDataConditionFilter) null);
         }
-        return log.exit(new DAORawDataConditionFilter(condFilter.getAnatEntityIds(), condFilter.getDevStageIds(),
+        return log.traceExit(new DAORawDataConditionFilter(condFilter.getAnatEntityIds(), condFilter.getDevStageIds(),
                 condFilter.getIncludeSubConditions(), condFilter.getIncludeParentConditions()));
     }
 
@@ -337,7 +337,7 @@ public class RawDataService extends CommonService {
 
     public RawDataLoader getRawDataLoader(RawDataFilter filter) {
         log.entry(filter);
-        return log.exit(this.getRawDataLoader(Collections.singleton(filter)));
+        return log.traceExit(this.getRawDataLoader(Collections.singleton(filter)));
     }
     private RawDataLoader getRawDataLoader(Collection<RawDataFilter> filters) {
         log.entry(filters);
@@ -360,7 +360,7 @@ public class RawDataService extends CommonService {
                 .map(f -> convertRawDataFilterToDAORawDataFilter(f, geneMap))
                 .collect(Collectors.toSet()));
 
-        return log.exit(new RawDataLoader(clonedFilters, this));
+        return log.traceExit(new RawDataLoader(clonedFilters, this));
     }
 
     Stream<AffymetrixProbeset> loadAffymetrixProbesets(Set<RawDataFilter> filters) {

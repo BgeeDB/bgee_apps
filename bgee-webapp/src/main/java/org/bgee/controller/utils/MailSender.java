@@ -234,7 +234,7 @@ public class MailSender {
         Map<String, String> to = new HashMap<>();
         to.put(toAddress, toPersonal);
         this.sendMessage(fromAddress, fromPersonal, to, subject, msgBody);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Send a mail to several recipients. 
@@ -306,7 +306,7 @@ public class MailSender {
             this.releaseLock(mailSent);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -336,7 +336,7 @@ public class MailSender {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Release lock, and save the current time where a mail was sent if {@code mailSent} is {@code true}.
@@ -353,6 +353,6 @@ public class MailSender {
         }
         LOCK.unlock();
         
-        log.exit();
+        log.traceExit();
     }
 }

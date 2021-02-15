@@ -91,6 +91,6 @@ public class BgeeUtilsTest extends TestAncestor {
         modifyFunc.accept(source);
         assertNotEquals("Collections or Maps should not be equal after modification", source, newCollection);
         
-        log.exit();
+        log.traceExit();
     }
 }

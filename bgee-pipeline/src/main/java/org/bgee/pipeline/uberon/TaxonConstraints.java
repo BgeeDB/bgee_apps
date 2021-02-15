@@ -384,7 +384,7 @@ public class TaxonConstraints {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -578,7 +578,7 @@ public class TaxonConstraints {
         
         this.uberonOntWrapper.clearCachedEdges();
         log.info("Done preparing Uberon.");
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -597,7 +597,7 @@ public class TaxonConstraints {
         utils.saveAsOBO(fileNamePrefix + ".obo", false);
         utils.saveAsOWL(fileNamePrefix + ".owl");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -687,7 +687,7 @@ public class TaxonConstraints {
         }
         
         log.debug("Axioms between taxa removed from Uberon: {}", axiomsRemoved);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Generates taxon constraints. Launches the generation of a TSV files, 
@@ -872,7 +872,7 @@ public class TaxonConstraints {
 
         writeTaxonLCAToFile(constraintsLCA, absentConstraintsLCA, taxonIds, refWrapper, outputFile);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1021,7 +1021,7 @@ public class TaxonConstraints {
                 }).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         
         log.info("Done generating taxon constraints.");
-        return log.exit(filteredConstraints);
+        return log.traceExit(filteredConstraints);
     }
     
     /**
@@ -1192,7 +1192,7 @@ public class TaxonConstraints {
                 uberonToSpecies.put(uberonId, inSpeciesIds);
             }             
         }
-        return log.exit(uberonToSpecies);
+        return log.traceExit(uberonToSpecies);
     }
     private static Set<Integer> getSpeciesIdsFromTaxonColumn(String taxColToSplit,
             Map<Integer, Set<Integer>> taxonToSpecies, int lineNumber) {
@@ -1203,7 +1203,7 @@ public class TaxonConstraints {
                 .collect(Collectors.toSet());
 
         // retrieve species corresponding to taxa
-        return log.exit(taxonIds.stream()
+        return log.traceExit(taxonIds.stream()
                 .flatMap(id -> {
                     Set<Integer> taxSpeciesIds = taxonToSpecies.get(id);
                     if (taxSpeciesIds == null) {
@@ -1238,7 +1238,7 @@ public class TaxonConstraints {
         
         //define least common ancestor and corresponding Bgee species. Generate Taxon objects
         // to be able to provide taxon scientific name in the output file
-        return log.exit(this.taxOntWrapper.getAllRealOWLClasses().stream()
+        return log.traceExit(this.taxOntWrapper.getAllRealOWLClasses().stream()
         .map(cls -> {
             Integer taxId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(cls));
             //getTaxNcbiId returns null if it is not a NCBITaxon ID
@@ -1323,7 +1323,7 @@ public class TaxonConstraints {
             uberonToTaxIds.put(uberonToSpeciesIds.getKey(), newTaxonIds);
         }
         
-        return log.exit(uberonToTaxIds);
+        return log.traceExit(uberonToTaxIds);
     }
     
     /**
@@ -1429,7 +1429,7 @@ public class TaxonConstraints {
             
             //Use the OWLGraphWrapper that was potentially already filtered for structures 
             //specific to completely unrelated taxa. 
-            return log.exit(this.getExistingOWLClasses(graph, taxClass, storeOntologyDir, true));
+            return log.traceExit(this.getExistingOWLClasses(graph, taxClass, storeOntologyDir, true));
         }
     }
     
@@ -1514,7 +1514,7 @@ public class TaxonConstraints {
         }
 
         log.info("Done examining ontology for taxon {} - removeOtherTaxa: {}.", taxClass, removeOtherTaxa);
-        return log.exit(ontWrapper.getAllRealOWLClassesFromSource());
+        return log.traceExit(ontWrapper.getAllRealOWLClassesFromSource());
     }
     
 
@@ -1541,7 +1541,7 @@ public class TaxonConstraints {
             config.getElkConfiguration().setParameter(
                 ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
         }
-        return log.exit(new ElkReasonerFactory().createReasoner(ont, config));
+        return log.traceExit(new ElkReasonerFactory().createReasoner(ont, config));
     }
     
 
@@ -1621,7 +1621,7 @@ public class TaxonConstraints {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1708,7 +1708,7 @@ public class TaxonConstraints {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1768,7 +1768,7 @@ public class TaxonConstraints {
         }
 
         SpeciesSubsetterUtil util = this.subsetterUtilSupplier.apply(this.uberonOntWrapper);
-        return log.exit(util.explainTaxonConstraint(owlClassIds, 
+        return log.traceExit(util.explainTaxonConstraint(owlClassIds, 
                 OntologyUtils.convertToTaxOntologyIds(taxonIds)));
     }
     
@@ -1892,7 +1892,7 @@ public class TaxonConstraints {
                     + taxon);
         }
         
-        return log.exit(taxon);
+        return log.traceExit(taxon);
     }
     
 
@@ -1933,7 +1933,7 @@ public class TaxonConstraints {
                 }
             }
             
-            return log.exit(taxonIds);
+            return log.traceExit(taxonIds);
         }
     }
     /**
@@ -1961,7 +1961,7 @@ public class TaxonConstraints {
             throw log.throwing(new IllegalArgumentException("The taxon constraints provided "
                     + "did not allow to retrieve taxon IDs"));
         }
-        return log.exit(taxIds);
+        return log.traceExit(taxIds);
     }
 
     /**
@@ -2025,7 +2025,7 @@ public class TaxonConstraints {
             }
         }
 
-        return log.exit(constraints);
+        return log.traceExit(constraints);
     }
     
     public static class TaxonTaxonConstraintsBean {

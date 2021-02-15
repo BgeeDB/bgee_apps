@@ -231,7 +231,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             parser.parseXML(args[0], args[1]);
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -318,7 +318,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         } finally {
             this.closeDAO();
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -372,7 +372,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 "The provided TSV gene mapping file did not allow to acquire any mapping."));
         }
 
-        return log.exit(geneMapping);
+        return log.traceExit(geneMapping);
     }
 
     /**
@@ -408,7 +408,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.info("Done retrieving gene IDs, {} genes found", this.ensemblIdToBgeeIdInBgee.values().stream().mapToInt(Set::size).sum()); // or (l -> l.size())
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -433,7 +433,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.info("Done retrieving taxon IDs, {} taxa found", this.taxonIdsInBgee.size());
         }
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -479,7 +479,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.info("Done retrieving genome species Ids of bgee species, {} genome(s) found",
                     this.speciesPrefixes.size());
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -539,7 +539,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
             this.nestedSetBoundSeed++;
         }
         log.info("Done retrieving hierarchical groups.");
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -565,7 +565,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         if (groupTaxId != null && !this.taxonIdsInBgee.contains(Integer.parseInt(groupTaxId))) {
             log.warn("{} ({}) isn't a taxon relevant to Bgee",
                     group.getProperty(TAX_RANGE_ATTRIBUTE), groupTaxId);
-            return log.exit(false);
+            return log.traceExit(false);
         } 
 
         // Second, we increment the nestedSetBoundSeed because we will create a new 
@@ -632,7 +632,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
                 }
             }
         }
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     /**
@@ -645,7 +645,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      */
     private List<String> retrieveSplittedGeneIdentifier(sbc.orthoxml.Gene gene) {
         log.entry();
-        return log.exit(Arrays.asList(gene.getGeneIdentifier().split(GENE_ID_SPLIT_PATTERN)));
+        return log.traceExit(Arrays.asList(gene.getGeneIdentifier().split(GENE_ID_SPLIT_PATTERN)));
     }
 
     /**
@@ -674,7 +674,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         this.hierarchicalNodeTOs.add(
                 new HierarchicalNodeTO(this.omaNodeId, omaXrefId, left, right, 
                         (taxId == null ? 0: Integer.valueOf(taxId)))); 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -738,7 +738,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
         
         if (!this.ensemblIdToBgeeIdInBgee.containsKey(geneTO.getGeneId())) {
             log.debug("Gene discarded because not in Bgee: {}", geneTO.getGeneId());
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         if (this.genesUpdated.containsKey(geneTO.getGeneId())
@@ -746,14 +746,14 @@ public class ParseOrthoXML extends MySQLDAOUser {
             log.warn("The gene {} is in different hierarchical orthologous groups: " +
                     "/{}/ and /{}/", geneTO.getGeneId(), this.genesUpdated.get(geneTO.getGeneId()),
                     omaXrefId);
-            return log.exit(false); 
+            return log.traceExit(false); 
         } 
         
         this.genesUpdated.put(geneTO.getId(), omaXrefId);
         // Add new {@code GeneTO} to {@code Collection} of {@code GeneTO}s to be able 
         // to update omaXrefId in gene table.
         this.geneTOs.add(geneTO);
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     /**
@@ -773,12 +773,12 @@ public class ParseOrthoXML extends MySQLDAOUser {
         // We check if the group represents a taxon presents Bgee or if it's a paralog group.
         // If wrong, no hierarchical group is inserted, so, there is no group to count.
         if (groupTaxId != null && !this.taxonIdsInBgee.contains(Integer.parseInt(groupTaxId))) {
-            return log.exit(0);
+            return log.traceExit(0);
         }
         int c = 1;
         for (Group childGroup : group.getChildren()) {
             c += this.countGroups(childGroup);
         }
-        return log.exit(c);
+        return log.traceExit(c);
     }
 }

@@ -91,9 +91,9 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             log.entry(action);
             if (MySQLDAOResultSet.this.next()) {
                 action.accept(MySQLDAOResultSet.this.getTO());
-                return log.exit(true);
+                return log.traceExit(true);
             }
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         /**
@@ -467,7 +467,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         
         this.firstStmtExecuted = false;
         this.usedInStream      = false;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -502,7 +502,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         
         MySQLDAOResultSetSpliterator spliterator = new MySQLDAOResultSetSpliterator();
         //We add a close handler to the Stream, to close this DAOResultSet when the Stream is closed
-        return log.exit(StreamSupport.stream(spliterator, false)
+        return log.traceExit(StreamSupport.stream(spliterator, false)
                 .onClose(() -> spliterator.close()));
     }
 
@@ -521,7 +521,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             //If currentResultSet is null, it means that there are no more 
             //BgeePreparedStatement to obtain results from. 
             if (this.currentResultSet == null) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
             this.checkCurrentStatementCanceled();
         
@@ -534,7 +534,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
                 //we use recursivity here: maybe the next statement did not return 
                 //any result, but another one  afterwards might. This should be invisible 
                 //to the user.
-                return log.exit(this.next());
+                return log.traceExit(this.next());
             }
             //otherwise, keep on iterating the current ResultSet. 
             //we count this iteration even if it corresponds to a duplicated TO, 
@@ -546,10 +546,10 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
                 if (to != null && !this.returnedTOs.add(to)) {
                     //duplicate TO, we do not want to return it, use recursivity to move 
                     //to next row
-                    return log.exit(this.next());
+                    return log.traceExit(this.next());
                 } 
             }
-            return log.exit(true);
+            return log.traceExit(true);
             
         } catch (SQLException e) {
             this.close();
@@ -582,7 +582,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
                 throw log.throwing(e);
             }
         }
-        return log.exit(this.lastTOGenerated);
+        return log.traceExit(this.lastTOGenerated);
     }
     /**
      * Returns the result corresponding to the current cursor position of this 
@@ -609,7 +609,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             while (this.next()) {
                 allTOs.add(this.getTO());
             }
-            return log.exit(allTOs);
+            return log.traceExit(allTOs);
         } finally {
             this.close();
         }
@@ -668,7 +668,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         this.columnLabels.clear();
         this.returnedTOs.clear();
         this.lastTOGenerated = null;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -770,7 +770,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             log.catching(e);
             throw log.throwing(new DAOException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -794,7 +794,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         }
         this.currentResultSet = null;
         this.currentResultSetIterationCount = 0;
-        log.exit();
+        log.traceExit();
     }
     /**
      * Closes {@link #currentStatement} and sets it to {@code null}.
@@ -819,7 +819,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         }
         this.currentStatement = null;
         this.currentStep = 0;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -832,15 +832,15 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     public boolean isUsingLimitFeature() {
         log.entry();
         if (this.offsetParamIndex == 0) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         if (this.rowCountParamIndex == 0) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         if (this.rowCount == 0) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
-        return log.exit(true);
+        return log.traceExit(true);
     }
     
     /**
@@ -858,7 +858,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
             this.close();
             throw log.throwing(Level.DEBUG, new QueryInterruptedException());
         }
-        log.exit();
+        log.traceExit();
     }
         
     /**
@@ -893,8 +893,8 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
         log.entry(columnLabel);
         int value = this.getCurrentResultSet().getInt(columnLabel);
         if (value == 0 && this.getCurrentResultSet().wasNull()) {
-            return log.exit(null);
+            return log.traceExit((Integer) null);
         }
-        return log.exit(value);
+        return log.traceExit(value);
     }
 }

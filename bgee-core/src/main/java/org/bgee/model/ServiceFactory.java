@@ -107,7 +107,7 @@ public class ServiceFactory implements AutoCloseable {
             throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
         }
         this.daoManager = daoManager;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -115,7 +115,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public SpeciesService getSpeciesService() {
         log.entry();
-        return log.exit(new SpeciesService(this));
+        return log.traceExit(new SpeciesService(this));
     }
 
     /**
@@ -123,7 +123,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public GeneService getGeneService() {
         log.entry();
-        return log.exit(new GeneService(this));
+        return log.traceExit(new GeneService(this));
     }
     
     /**
@@ -131,7 +131,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public GeneHomologsService getGeneHomologsService() {
         log.entry();
-        return log.exit(new GeneHomologsService(this));
+        return log.traceExit(new GeneHomologsService(this));
     }
 
     /**
@@ -139,7 +139,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public RawDataService getRawDataService() {
         log.entry();
-        return log.exit(new RawDataService(this));
+        return log.traceExit(new RawDataService(this));
     }
 
     /**
@@ -147,7 +147,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public DevStageService getDevStageService() {
         log.entry();
-        return log.exit(new DevStageService(this));
+        return log.traceExit(new DevStageService(this));
     }
 
     /**
@@ -155,7 +155,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public DevStageSimilarityService getDevStageSimilarityService() {
         log.entry();
-        return log.exit(new DevStageSimilarityService(this));
+        return log.traceExit(new DevStageSimilarityService(this));
     }
 
     /**
@@ -163,7 +163,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public DownloadFileService getDownloadFileService() {
         log.entry();
-        return log.exit(new DownloadFileService(this));
+        return log.traceExit(new DownloadFileService(this));
     }
 
     /**
@@ -171,7 +171,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public SpeciesDataGroupService getSpeciesDataGroupService() {
         log.entry();
-        return log.exit(new SpeciesDataGroupService(this));
+        return log.traceExit(new SpeciesDataGroupService(this));
     }
     
     /**
@@ -179,7 +179,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public KeywordService getKeywordService() {
     	log.entry();
-    	return log.exit(new KeywordService(this));
+    	return log.traceExit(new KeywordService(this));
     }
     
     /**
@@ -187,7 +187,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public CallService getCallService() {
         log.entry();
-        return log.exit(new CallService(this));
+        return log.traceExit(new CallService(this));
     }
     
     /**
@@ -195,7 +195,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public MultiSpeciesCallService getMultiSpeciesCallService() {
         log.entry();
-        return log.exit(new MultiSpeciesCallService(this));
+        return log.traceExit(new MultiSpeciesCallService(this));
     }
 
     /**
@@ -203,7 +203,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public AnatEntityService getAnatEntityService() {
         log.entry();
-        return log.exit(new AnatEntityService(this));
+        return log.traceExit(new AnatEntityService(this));
     }
 
     /**
@@ -211,7 +211,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public AnatEntitySimilarityService getAnatEntitySimilarityService() {
         log.entry();
-        return log.exit(new AnatEntitySimilarityService(this));
+        return log.traceExit(new AnatEntitySimilarityService(this));
     }
     
     /**
@@ -219,7 +219,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public OntologyService getOntologyService() {
         log.entry();
-        return log.exit(new OntologyService(this));
+        return log.traceExit(new OntologyService(this));
     }
     
     /**
@@ -227,7 +227,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public SourceService getSourceService() {
         log.entry();
-        return log.exit(new SourceService(this));
+        return log.traceExit(new SourceService(this));
     }
     
     /**
@@ -235,7 +235,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public TaxonConstraintService getTaxonConstraintService() {
         log.entry();
-        return log.exit(new TaxonConstraintService(this));
+        return log.traceExit(new TaxonConstraintService(this));
     }
     
     /**
@@ -243,7 +243,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public TaxonService getTaxonService() {
         log.entry();
-        return log.exit(new TaxonService(this));
+        return log.traceExit(new TaxonService(this));
     }
     
     /**
@@ -251,7 +251,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public ConditionService getConditionService() {
         log.entry();
-        return log.exit(new ConditionService(this));
+        return log.traceExit(new ConditionService(this));
     }
 
     /**
@@ -259,7 +259,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     public ConditionGraphService getConditionGraphService() {
         log.entry();
-        return log.exit(new ConditionGraphService(this));
+        return log.traceExit(new ConditionGraphService(this));
     }
 
     //XXX: is there a way to get the BgeeProperties from the instantiation of the ServiceFactory?
@@ -268,11 +268,11 @@ public class ServiceFactory implements AutoCloseable {
     //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
     public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
         log.entry(props);
-        return log.exit(new GeneMatchResultService(props, this));
+        return log.traceExit(new GeneMatchResultService(props, this));
     }
     public GeneMatchResultService getGeneMatchResultService(SphinxClient sphinxClient) {
         log.entry(sphinxClient);
-        return log.exit(new GeneMatchResultService(sphinxClient, this));
+        return log.traceExit(new GeneMatchResultService(sphinxClient, this));
     }
 
     /**
@@ -290,6 +290,6 @@ public class ServiceFactory implements AutoCloseable {
     public void close() {
         log.entry();
         this.daoManager.close();
-        log.exit();
+        log.traceExit();
     }
 }

@@ -58,14 +58,14 @@ public class JsonFactory extends ViewFactory {
     @Override
     public ErrorDisplay getErrorDisplay() throws IOException {
         log.entry();
-        return log.exit(new JsonErrorDisplay(this.response, this.requestParameters,
+        return log.traceExit(new JsonErrorDisplay(this.response, this.requestParameters,
             this.prop, this.jsonHelper, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
         log.entry();
-        return log.exit(new JsonTopAnatDisplay(this.response, this.requestParameters,
+        return log.traceExit(new JsonTopAnatDisplay(this.response, this.requestParameters,
             this.prop, this.jsonHelper, this));
     }
 
@@ -117,7 +117,7 @@ public class JsonFactory extends ViewFactory {
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
         log.entry();
-        return log.exit(new JsonSpeciesDisplay(this.response, this.requestParameters,
+        return log.traceExit(new JsonSpeciesDisplay(this.response, this.requestParameters,
             this.prop, this.jsonHelper, this));
     }
 	@Override
@@ -141,7 +141,7 @@ public class JsonFactory extends ViewFactory {
     @Override
     public JobDisplay getJobDisplay() throws IOException {
         log.entry();
-        return log.exit(new JsonJobDisplay(this.response, this.requestParameters,
+        return log.traceExit(new JsonJobDisplay(this.response, this.requestParameters,
             this.prop, this.jsonHelper, this));
     }
     @Override

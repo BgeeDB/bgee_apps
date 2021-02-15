@@ -66,6 +66,6 @@ public class CommandAnatomicalSimilarity extends CommandParent {
         display.displayAnatSimilarityResult(allSpecies, speciesList, taxonOntology, 
                 anatEntityList, anatEntitySimilarityAnalysis);
 
-        log.exit();
+        log.traceExit();
     }
 }

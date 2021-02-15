@@ -97,7 +97,7 @@ public class SimilarityAnnotationUtils {
 //                        context, this));
 //            }
 //            //passes result to next processor in the chain
-//            return log.exit(next.execute(converted, context));
+//            return log.traceExit(next.execute(converted, context));
 //        }
 //    }
     
@@ -141,7 +141,7 @@ public class SimilarityAnnotationUtils {
                 negate = true;
             }
             //passes result to next processor in the chain
-            return log.exit(next.execute(negate, context));
+            return log.traceExit("{}", next.execute(negate, context));
         }
         
     }
@@ -1399,18 +1399,18 @@ public class SimilarityAnnotationUtils {
             log.entry(o1, o2);
             
             if (o1.equals(o2)) {
-                return log.exit(0);
+                return log.traceExit(0);
             }
             
             if (o1 instanceof RawAnnotationBean && !(o2 instanceof RawAnnotationBean)) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (!(o1 instanceof RawAnnotationBean) && o2 instanceof RawAnnotationBean) {
-                return log.exit(1);
+                return log.traceExit(1);
             }
             if (o1 instanceof SummaryAnnotationBean && !(o2 instanceof SummaryAnnotationBean)) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (!(o1 instanceof SummaryAnnotationBean) && o2 instanceof SummaryAnnotationBean) {
-                return log.exit(1);
+                return log.traceExit(1);
             }
             
             String homId1 = (o1.getHomId() == null)? "": o1.getHomId().trim();
@@ -1420,7 +1420,7 @@ public class SimilarityAnnotationUtils {
             }
             int comp = homId1.compareTo(homId2);
             if (comp != 0) {
-                return log.exit(comp);
+                return log.traceExit(comp);
             }
             
             String elementId1 = "";
@@ -1435,30 +1435,30 @@ public class SimilarityAnnotationUtils {
             }
             comp = elementId1.compareTo(elementId2);
             if (comp != 0) {
-                return log.exit(comp);
+                return log.traceExit(comp);
             }
             
             int taxonId1 = o1.getNcbiTaxonId();
             int taxonId2 = o2.getNcbiTaxonId();
             if (taxonId1 < taxonId2) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (taxonId1 > taxonId2) {
-                return log.exit(1);
+                return log.traceExit(1);
             }
             
             if (!o1.isNegated() && o2.isNegated()) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (o1.isNegated() && !o2.isNegated()) {
-                return log.exit(1);
+                return log.traceExit(1);
             }
             
             if (o1 instanceof SummaryAnnotationBean && o2 instanceof SummaryAnnotationBean) {
                 if (((SummaryAnnotationBean) o1).isTrusted() && 
                         !((SummaryAnnotationBean) o2).isTrusted()) {
-                    return log.exit(-1);
+                    return log.traceExit(-1);
                 } else if (!((SummaryAnnotationBean) o1).isTrusted() && 
                         ((SummaryAnnotationBean) o2).isTrusted()) {
-                    return log.exit(1);
+                    return log.traceExit(1);
                 }
             }
             
@@ -1469,7 +1469,7 @@ public class SimilarityAnnotationUtils {
             }
             comp = confId1.compareTo(confId2);
             if (comp != 0) {
-                return log.exit(comp);
+                return log.traceExit(comp);
             }
             
             
@@ -1480,7 +1480,7 @@ public class SimilarityAnnotationUtils {
                     ((RawAnnotationBean) o2).getEcoId().trim();
                 comp = ecoId1.compareTo(ecoId2);
                 if (comp != 0) {
-                    return log.exit(comp);
+                    return log.traceExit(comp);
                 }
                 
                 String refId1 = (((RawAnnotationBean) o1).getRefId() == null)? "": 
@@ -1489,7 +1489,7 @@ public class SimilarityAnnotationUtils {
                     ((RawAnnotationBean) o2).getRefId().trim();
                 comp = refId1.compareTo(refId2);
                 if (comp != 0) {
-                    return log.exit(comp);
+                    return log.traceExit(comp);
                 }
                 
                 String assignedBy1 = (((RawAnnotationBean) o1).getAssignedBy() == null)? "": 
@@ -1498,21 +1498,21 @@ public class SimilarityAnnotationUtils {
                     ((RawAnnotationBean) o2).getAssignedBy().trim();
                 comp = assignedBy1.compareTo(assignedBy2);
                 if (comp != 0) {
-                    return log.exit(comp);
+                    return log.traceExit(comp);
                 }
                 
                 if (((RawAnnotationBean) o1).getCurationDate() != null && 
                         ((RawAnnotationBean) o2).getCurationDate() == null) {
-                    return log.exit(-1);
+                    return log.traceExit(-1);
                 } else if (((RawAnnotationBean) o1).getCurationDate() == null && 
                         ((RawAnnotationBean) o2).getCurationDate() != null) {
-                    return log.exit(1);
+                    return log.traceExit(1);
                 } else if (((RawAnnotationBean) o1).getCurationDate() != null && 
                         ((RawAnnotationBean) o2).getCurationDate() != null) {
                     comp = ((RawAnnotationBean) o1).getCurationDate().compareTo(
                             ((RawAnnotationBean) o2).getCurationDate());
                     if (comp != 0) {
-                        return log.exit(comp);
+                        return log.traceExit(comp);
                     }
                 }
                 
@@ -1522,7 +1522,7 @@ public class SimilarityAnnotationUtils {
                     ((RawAnnotationBean) o2).getCurator().trim();
                 comp = curator1.compareTo(curator2);
                 if (comp != 0) {
-                    return log.exit(comp);
+                    return log.traceExit(comp);
                 }
             }
             
@@ -1532,11 +1532,11 @@ public class SimilarityAnnotationUtils {
                 ((RawAnnotationBean) o2).getSupportingText().trim();
             comp = supportText1.compareTo(supportText2);
             if (comp != 0) {
-                return log.exit(comp);
+                return log.traceExit(comp);
             }
             
             
-            return log.exit(0);
+            return log.traceExit(0);
         }
         
     };
@@ -1747,7 +1747,7 @@ public class SimilarityAnnotationUtils {
     public static List<RawAnnotationBean> extractRawAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
-        return log.exit(extractAnnotations(similarityFile, RawAnnotationBean.class));
+        return log.traceExit(extractAnnotations(similarityFile, RawAnnotationBean.class));
     }
 
     /**
@@ -1769,7 +1769,7 @@ public class SimilarityAnnotationUtils {
     public static List<SummaryAnnotationBean> extractSummaryAnnotations(String similarityFile) 
             throws FileNotFoundException, IOException, IllegalArgumentException {
         log.entry(similarityFile);
-        return log.exit(extractAnnotations(similarityFile, SummaryAnnotationBean.class));
+        return log.traceExit(extractAnnotations(similarityFile, SummaryAnnotationBean.class));
     }
 
     /**
@@ -1792,7 +1792,7 @@ public class SimilarityAnnotationUtils {
             String similarityFile) throws FileNotFoundException, IOException, 
             IllegalArgumentException {
         log.entry(similarityFile);
-        return log.exit(extractAnnotations(similarityFile, AncestralTaxaAnnotationBean.class));
+        return log.traceExit(extractAnnotations(similarityFile, AncestralTaxaAnnotationBean.class));
     }
 
     /**
@@ -1837,7 +1837,7 @@ public class SimilarityAnnotationUtils {
                 throw log.throwing(new IllegalArgumentException("The provided file " 
                         + similarityFile + " did not allow to retrieve any annotation"));
             }
-            return log.exit(annots);
+            return log.traceExit(annots);
             
         } catch (SuperCsvException e) {
             //hide implementation details
@@ -1994,7 +1994,7 @@ public class SimilarityAnnotationUtils {
 //                        + header[i] + " for AnnotationBean type: " + beanType.getSimpleName()));
 //            }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
 
     /**
@@ -2110,7 +2110,7 @@ public class SimilarityAnnotationUtils {
                         + header[i] + " for AnnotationBean type: " + beanType));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
     
     /**
@@ -2208,7 +2208,7 @@ public class SimilarityAnnotationUtils {
                     + relatedAnnotMapper.values()));
         }
         
-        return log.exit(groupedAnnots);
+        return log.traceExit(groupedAnnots);
     }
     
     /**
@@ -2228,6 +2228,6 @@ public class SimilarityAnnotationUtils {
             }
         }
         Collections.sort(trimOrdered);
-        return log.exit(trimOrdered);
+        return log.traceExit(trimOrdered);
     }
 }

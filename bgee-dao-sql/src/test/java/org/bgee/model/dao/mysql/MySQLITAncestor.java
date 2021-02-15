@@ -175,7 +175,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
     protected void useEmptyDB() {
         log.entry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(EMPTYDBKEY));
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -190,7 +190,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         log.entry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEY));
         this.populateAndUseDatabase();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -246,7 +246,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         Resource resource = new FileSystemResource(System.getProperty(SCHEMAFILEKEY));
         ScriptUtils.executeSqlScript(con.getRealConnection(), resource);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -270,7 +270,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 }
             }
         }
-        log.exit();
+        log.traceExit();
    }
    
     /**
@@ -291,7 +291,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
 
         this.getMySQLDAOManager().setDatabaseToUse(null);
         
-        log.exit();
+        log.traceExit();
     }
        
     /**
@@ -313,7 +313,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         }
         manager.setDatabaseToUse(null);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**

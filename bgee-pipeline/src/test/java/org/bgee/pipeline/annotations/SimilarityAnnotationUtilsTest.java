@@ -278,7 +278,7 @@ public class SimilarityAnnotationUtilsTest {
                         SimilarityAnnotationUtilsTest.class.
                         getResource("/similarity_annotations/raw_similarity_annotations.tsv").getFile()));
         
-        log.exit();
+        log.traceExit();
     }
     
 
@@ -452,7 +452,7 @@ public class SimilarityAnnotationUtilsTest {
                         SimilarityAnnotationUtilsTest.class.
                         getResource("/similarity_annotations/summary_similarity_annotations.tsv").getFile()));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -504,7 +504,7 @@ public class SimilarityAnnotationUtilsTest {
                         SimilarityAnnotationUtilsTest.class.
                         getResource("/similarity_annotations/historical_homology_ancestral_taxa.tsv").getFile()));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**

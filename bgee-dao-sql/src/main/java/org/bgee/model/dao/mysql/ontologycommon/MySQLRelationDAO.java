@@ -213,7 +213,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 stmt.setEnumDAOFields(startIndex, clonedRelStatus, true);
                 startIndex += clonedRelStatus.size();
             }
-            return log.exit(new MySQLRelationTOResultSet<String>(stmt, String.class));
+            return log.traceExit(new MySQLRelationTOResultSet<String>(stmt, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -224,7 +224,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationTypes, relationStatus);    
 
-        return log.exit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
+        return log.traceExit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
                 relationTypes, relationStatus, this.getAttributes()));
     }
     
@@ -291,7 +291,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                  stmt.setIntegers(index, clonedTargetFilter, true);
                  index += clonedTargetFilter.size();
              }
-             return log.exit(new MySQLRelationTOResultSet<Integer>(stmt, Integer.class));
+             return log.traceExit(new MySQLRelationTOResultSet<Integer>(stmt, Integer.class));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));
          }
@@ -301,7 +301,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationStatus> relationStatus) {
         log.entry(speciesIds, relationStatus);
-        return log.exit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
+        return log.traceExit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
                 this.getAttributes()));        
     }
 
@@ -312,7 +312,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Collection<RelationDAO.Attribute> attributes) {
         log.entry(speciesIds, anySpecies, sourceDevStageIds, targetDevStageIds, sourceOrTarget,
                 relationStatus, attributes);
-        return log.exit(this.getNestedSetModelFakeRelations(speciesIds, anySpecies, 
+        return log.traceExit(this.getNestedSetModelFakeRelations(speciesIds, anySpecies, 
                 sourceDevStageIds, targetDevStageIds, sourceOrTarget, relationStatus, attributes, 
                 "stage", "stageTaxonConstraint", "stageId", "stageLeftBound", "stageRightBound", "stageLevel", 
                 String.class));
@@ -394,7 +394,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
              BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
              parameterizeStmtNestedSetModelFakeRelations(stmt, speciesIds, sourceIds, targetIds,
                      relationStatus, cls);
-             return log.exit(new MySQLRelationTOResultSet<T>(stmt, cls));
+             return log.traceExit(new MySQLRelationTOResultSet<T>(stmt, cls));
          } catch (SQLException e) {
              throw log.throwing(new DAOException(e));
          }
@@ -495,7 +495,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
         }
         sql += ") AS " + NESTED_SET_MODEL_FAKE_RELATIONS_TEMP_TABLE_NAME + " ";
 
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
     private static <T> String getNestedSetModelFakeRelationsWhereClause(
             Collection<T> sourceIds, Collection<T> targetIds, 
@@ -560,7 +560,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             sql += " )";
         }
 
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
     private static <T> int parameterizeStmtNestedSetModelFakeRelations(BgeePreparedStatement stmt,
             Collection<Integer> speciesIds, Collection<T> sourceIds, Collection<T> targetIds, 
@@ -610,7 +610,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             startIndex += clonedRelStatus.size();
         }
 
-        return log.exit(startIndex);
+        return log.traceExit(startIndex);
     }
 
     /** 
@@ -643,7 +643,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     attribute.toString() + ") is unknown for " + RelationDAO.class.getName()));
         }
         
-        return log.exit(label);
+        return log.traceExit(label);
     }
     /** 
      * Returns a {@code String} that correspond to the given {@code RelationDAO.Attribute}, 
@@ -677,7 +677,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     attribute.toString() + ") is unknown for " + RelationDAO.class.getName()));
         }
         
-        return log.exit(label);
+        return log.traceExit(label);
     }
 
     @Override
@@ -715,7 +715,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(relationInsertedCount);
+        return log.traceExit(relationInsertedCount);
     }
 
     @Override
@@ -744,7 +744,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                 stmt.clearParameters();
             }
             
-            return log.exit(relInsertedCount);
+            return log.traceExit(relInsertedCount);
             
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -817,7 +817,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new RelationTO<T>(relationId, sourceId, targetId, 
+            return log.traceExit(new RelationTO<T>(relationId, sourceId, targetId, 
                     relationType, relationStatus));
         }
     }

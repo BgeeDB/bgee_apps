@@ -97,7 +97,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
         
     }
 
@@ -165,7 +165,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
         
     }
 
@@ -247,7 +247,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();        
+        log.traceExit();        
     }
 
     @Override
@@ -299,7 +299,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();         
+        log.traceExit();         
     }
 
     private String getSoftwareSourceCodeProperty(String idSuffix, String name, String description, 
@@ -310,7 +310,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
 
-        return log.exit(
+        return log.traceExit(
                 "    {" +
                 "       \"@type\": \"SoftwareSourceCode\"," +
                 "       \"@id\": \"" + url.getRequestURL() + "#" + idSuffix + "\"," +
@@ -330,7 +330,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(requestParametersAction);
 
-        return log.exit("    {" +
+        return log.traceExit("    {" +
                         "       \"@type\": \"CreativeWork\"," +
                         "       \"@id\": \"" + url.getRequestURL() + "#" + idSuffix + "\"," +
                         "       \"name\": \"" + name + "\"," +
@@ -348,7 +348,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
 
-        return log.exit("{" +
+        return log.traceExit("{" +
                         "   \"@type\": \"SoftwareApplication\"," +
                         "   \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#" + idSuffix + "\"," +
                         "   \"name\": \"" + name + "\"," +

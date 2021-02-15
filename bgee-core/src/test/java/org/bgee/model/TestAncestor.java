@@ -145,7 +145,7 @@ public abstract class TestAncestor {
         IsCollectionEqual(Collection<T> expectedCollection) {
             log.entry(expectedCollection);
             this.expectedCollection = expectedCollection;
-            log.exit();
+            log.traceExit();
         }
 
         @Override
@@ -154,24 +154,24 @@ public abstract class TestAncestor {
             log.trace("Trying to match expected Collection [" + expectedCollection + "] versus "
                     + "provided argument [" + argument + "]");
             if (expectedCollection == argument) {
-                return log.exit(true);
+                return log.traceExit(true);
             }
             if (expectedCollection == null) {
                 if (argument == null) {
-                    return log.exit(true);
+                    return log.traceExit(true);
                 } 
-                return log.exit(false);
+                return log.traceExit(false);
             } else if (argument == null) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
             if (!(argument instanceof Collection)) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
             Collection<?> arg = (Collection<?>) argument;
             if (arg.size() != expectedCollection.size()) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
-            return log.exit(arg.containsAll(expectedCollection));
+            return log.traceExit(arg.containsAll(expectedCollection));
         }
     }
     /**

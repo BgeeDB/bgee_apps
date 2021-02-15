@@ -143,7 +143,7 @@ public class Job {
     public void completeWithSuccess() {
         log.entry();
         this.complete(true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Method called to indicate that the job was terminated, either because of an error, 
@@ -158,7 +158,7 @@ public class Job {
     public void complete() {
         log.entry();
         this.complete(false);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Method called to indicate that the job was terminated with success or not.
@@ -175,7 +175,7 @@ public class Job {
             this.terminated = true;
             this.successful = success;
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -200,7 +200,7 @@ public class Job {
             //of the executor Thread to do so once the job will be effectively stopped 
             //(see checkInterrupted()). 
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Throws an {@code InterruptedException} and interrupts this {@code Job} if the {@code Thread} 
@@ -236,7 +236,7 @@ public class Job {
             //throw. We don't log it as an error
             throw log.throwing(Level.DEBUG, new InterruptedException());
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Release this {@code Job} so that no reference to it or to the {@code Thread} it holds are kept 
@@ -254,7 +254,7 @@ public class Job {
             //important to set 'released' to true *after* calling 'releaseJob'
             this.released = true;
         }
-        log.exit();
+        log.traceExit();
     }
     
 
@@ -428,7 +428,7 @@ public class Job {
             //nothing here, this method only increments the index if it is in the range 
             //of the total number of sub-tasks, it does not throw any exception
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Inform the {@code Job} that a new sub-task has been started.
@@ -436,7 +436,7 @@ public class Job {
     public void nextTask() {
         log.entry();
         this.nextTask("");
-        log.exit();
+        log.traceExit();
     }
     /**
      * Inform the {@code Job} that a new sub-task has been started.
@@ -448,7 +448,7 @@ public class Job {
         log.debug("Starting new sub-task {}", subTaskName);
         this.incrementCurrentTaskIndex();
         this.setCurrentTaskName(subTaskName);
-        log.exit();
+        log.traceExit();
     }
 
 

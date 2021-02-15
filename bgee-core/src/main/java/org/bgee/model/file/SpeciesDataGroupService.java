@@ -76,7 +76,7 @@ public class SpeciesDataGroupService extends Service {
         
         LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> orderAttrs2 = new LinkedHashMap<>();
         orderAttrs2.put(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER, DAO.Direction.ASC);
-        return log.exit(getDaoManager().getSpeciesDataGroupDAO()
+        return log.traceExit(getDaoManager().getSpeciesDataGroupDAO()
                 .getAllSpeciesDataGroup(null, orderAttrs2).stream()
                 .map(e -> newSpeciesDataGroup(e, groupIdToSpeciesMap.get(e.getId()), 
                         groupIdToDownloadFilesMap.get(e.getId())))
@@ -101,7 +101,7 @@ public class SpeciesDataGroupService extends Service {
         final Map<Integer, Species> speciesMap = species.stream()
                 .collect(Collectors.toMap(Entity::getId, Function.identity()));
         
-        return log.exit(speciesToDataGroupRs.stream().collect(Collectors.groupingBy(
+        return log.traceExit(speciesToDataGroupRs.stream().collect(Collectors.groupingBy(
                 //group the SpeciesToDataGroupTOs by groupId
                 SpeciesDataGroupDAO.SpeciesToDataGroupTO::getGroupId, 
                 //make the value associated to a groupId to be the all the Species associated to 
@@ -122,7 +122,7 @@ public class SpeciesDataGroupService extends Service {
     private static Map<Integer, Set<DownloadFile>> buildDownloadFileMap(
             Collection<DownloadFile> downloadFiles) {
         log.entry(downloadFiles);
-        return log.exit(downloadFiles.stream()
+        return log.traceExit(downloadFiles.stream()
                 .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId, Collectors.toSet())));
     }
 
@@ -137,7 +137,7 @@ public class SpeciesDataGroupService extends Service {
     private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, 
             List<Species> species, Set<DownloadFile> files) {
         log.entry(groupTO, species, files);
-        return log.exit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
+        return log.traceExit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
                 species, files));
     }
 
@@ -155,7 +155,7 @@ public class SpeciesDataGroupService extends Service {
     private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
             List<Species> species, Set<DownloadFile> files) {
         log.entry(id, name, description, species, files);
-        return log.exit(new SpeciesDataGroup(id, name, description, species, files));
+        return log.traceExit(new SpeciesDataGroup(id, name, description, species, files));
     }
 
 

@@ -47,27 +47,27 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
     @Override
     public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.entry(speciesIds);       
-        return log.exit(getStagesBySpeciesIds(speciesIds, null, null));
+        return log.traceExit(getStagesBySpeciesIds(speciesIds, null, null));
     }
 
     @Override
     public StageTOResultSet getStagesBySpeciesIds(Collection<Integer> speciesIds, Boolean isGroupingStage,
             Integer level) throws DAOException {
         log.entry(speciesIds, isGroupingStage, level);
-        return log.exit(getStages(speciesIds, null, isGroupingStage, level));
+        return log.traceExit(getStages(speciesIds, null, isGroupingStage, level));
     }
 
     @Override
     public StageTOResultSet getStagesByIds(Collection<String> stagesIds) throws DAOException {
         log.entry(stagesIds);
-        return log.exit(getStages(null, stagesIds, null, null));
+        return log.traceExit(getStages(null, stagesIds, null, null));
     }
 
     @Override
     public StageTOResultSet getStages(Collection<Integer> speciesIds, Collection<String> stageIds, 
             Boolean isGroupingStage, Integer level) throws DAOException {
         log.entry(speciesIds, stageIds, isGroupingStage, level);
-        return log.exit(this.getStages(speciesIds, true, stageIds, isGroupingStage, level, 
+        return log.traceExit(this.getStages(speciesIds, true, stageIds, isGroupingStage, level, 
                 this.getAttributes()));
     }
 
@@ -191,7 +191,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                 stmt.setInt(offsetParamIndex, level);
             }
 
-            return log.exit(new MySQLStageTOResultSet(stmt));
+            return log.traceExit(new MySQLStageTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -211,21 +211,21 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
         
         switch (attribute) {
             case ID: 
-                return log.exit("stageId");
+                return log.traceExit("stageId");
             case NAME: 
-                return log.exit("stageName");
+                return log.traceExit("stageName");
             case DESCRIPTION: 
-                return log.exit("stageDescription");
+                return log.traceExit("stageDescription");
             case LEFT_BOUND: 
-                return log.exit("stageLeftBound");
+                return log.traceExit("stageLeftBound");
             case RIGHT_BOUND: 
-                return log.exit("stageRightBound");
+                return log.traceExit("stageRightBound");
             case LEVEL: 
-                return log.exit("stageLevel");
+                return log.traceExit("stageLevel");
             case GRANULAR: 
-                return log.exit("tooGranular");
+                return log.traceExit("tooGranular");
             case GROUPING: 
-                return log.exit("groupingStage");
+                return log.traceExit("groupingStage");
             default: 
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + StageDAO.class.getName()));
@@ -274,7 +274,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -332,7 +332,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new StageTO(stageId, stageName, stageDescription, 
+            return log.traceExit(new StageTO(stageId, stageName, stageDescription, 
                     leftBound, rightBound, level, tooGranular, groupingStage));
         }
     }

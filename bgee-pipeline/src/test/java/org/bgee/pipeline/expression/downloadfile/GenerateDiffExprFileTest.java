@@ -999,7 +999,7 @@ public class GenerateDiffExprFileTest extends GenerateDownloadFileTest {
 //                    EnumSet.of(DiffExprCallType.OVER_EXPRESSED, DiffExprCallType.UNDER_EXPRESSED));
 //        }
 //        
-//        return log.exit(diffExprParams);
+//        return log.traceExit(diffExprParams);
 //    }
 //
 

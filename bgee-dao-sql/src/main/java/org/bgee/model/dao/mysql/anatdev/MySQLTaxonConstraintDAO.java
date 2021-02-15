@@ -53,7 +53,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throws DAOException {
         log.entry(speciesIds, attributes);
 
-        return log.exit(this.getTaxonConstraints(
+        return log.traceExit(this.getTaxonConstraints(
                 speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
     }
 
@@ -68,7 +68,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
-        return log.exit(this.getAnatEntityRelationTaxonConstraints(speciesIds, null, attributes));
+        return log.traceExit(this.getAnatEntityRelationTaxonConstraints(speciesIds, null, attributes));
     }
     @Override
     /*
@@ -137,7 +137,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                 stmt.setIntegers(i, clonedRelIds, true);
                 i += clonedRelIds.size();
             }
-            return log.exit(new MySQLTaxonConstraintTOResultSet<>(stmt, Integer.class));
+            return log.traceExit(new MySQLTaxonConstraintTOResultSet<>(stmt, Integer.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -148,7 +148,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
         log.entry(speciesIds, attributes);
-        return log.exit(this.getTaxonConstraints(
+        return log.traceExit(this.getTaxonConstraints(
                 speciesIds, attributes, "stageTaxonConstraint", "stageId", String.class));
     }
 
@@ -216,7 +216,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             if (filterBySpeciesIDs) {
                 stmt.setIntegers(1, speciesIds, true);
             }
-            return log.exit(new MySQLTaxonConstraintTOResultSet<>(stmt, cls));
+            return log.traceExit(new MySQLTaxonConstraintTOResultSet<>(stmt, cls));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -261,7 +261,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(contraintInsertedCount);
+        return log.traceExit(contraintInsertedCount);
     }
 
     @Override
@@ -303,7 +303,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(contraintInsertedCount);
+        return log.traceExit(contraintInsertedCount);
     }
 
     @Override
@@ -345,7 +345,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(contraintInsertedCount);
+        return log.traceExit(contraintInsertedCount);
     }
     
     /**
@@ -396,7 +396,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
                 }
             }
            
-            return log.exit(new TaxonConstraintTO<T>(entityId, speciesId));
+            return log.traceExit(new TaxonConstraintTO<T>(entityId, speciesId));
         }
     }
 }

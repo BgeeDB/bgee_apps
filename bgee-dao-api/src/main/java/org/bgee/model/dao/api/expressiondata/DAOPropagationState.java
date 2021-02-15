@@ -41,7 +41,7 @@ public enum DAOPropagationState implements EnumDAOField {
      */
     public static final DAOPropagationState convertToPropagationState(String representation) {
         log.entry(representation);
-        return log.exit(TransferObject.convert(DAOPropagationState.class, representation));
+        return log.traceExit(TransferObject.convert(DAOPropagationState.class, representation));
     }
 
     private final boolean observedState;

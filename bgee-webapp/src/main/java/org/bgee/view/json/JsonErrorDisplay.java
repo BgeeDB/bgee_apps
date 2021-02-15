@@ -65,7 +65,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                  + "We apologize for any inconvenience.", 
                  data);
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 + "and will be investigated. We apologize for any inconvenience.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, "This operation is not supported "
                 + "for the requested view or the requested parameters.", data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -105,7 +105,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 "One of the request parameters has an incorrect format.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -118,7 +118,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         this.sendResponse(HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -132,7 +132,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 "One of the request parameters was incorrectly assigned multiple values.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -145,7 +145,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 "Request maximum size exceeded.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -159,7 +159,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 "One of the request parameters exceeded its maximum allowed length.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -170,7 +170,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         data.put(EXCEPTION_TYPE_KEY, e.getClass().getSimpleName());
         this.sendResponse(HttpServletResponse.SC_NOT_FOUND, "Page not found.", data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -187,7 +187,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 + "by setting all the parameters again. We apologize for any inconvenience.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -201,7 +201,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
                 + "We apologize for any inconvenience.", 
                 data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -214,6 +214,6 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
         //send HTTP status code 429 "Too Many Requests"
         this.sendResponse(429, "Too Many Requests - " + e.getMessage(), data);
         
-        log.exit();
+        log.traceExit();
     }
 }

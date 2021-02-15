@@ -87,7 +87,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -209,7 +209,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "      \"dataset\": [" + datasets + "]" +
                 "    }")));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -237,7 +237,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>");
         this.writeln("</div>");
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -268,7 +268,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     
         this.writeln("</div>"); // close bgee_hero row
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -295,7 +295,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
         this.writeln("</div>"); // close start_buttons
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -333,7 +333,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("</div>"); // close bgee_explanations
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -358,7 +358,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln(homePageSpeciesSection);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -413,7 +413,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         banner.append("</ul>");
         banner.append("</div>"); // close 
 
-        return log.exit(banner.toString());
+        return log.traceExit(banner.toString());
     }
     
     /**
@@ -818,7 +818,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>"); // close panel-body
         this.writeln("</div>"); // close panel
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -847,7 +847,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("</div>"); // close bgee_more_info row
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -868,7 +868,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>");
         this.writeln("</div>");
         
-        log.exit();
+        log.traceExit();
     }
     
     @Override
@@ -878,7 +878,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeJs("general.js");
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -888,6 +888,6 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("general.css");
-        log.exit();
+        log.traceExit();
     }
 }

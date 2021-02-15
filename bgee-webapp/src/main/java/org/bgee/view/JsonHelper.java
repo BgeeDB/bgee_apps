@@ -131,14 +131,14 @@ public class JsonHelper {
             log.entry(gson, typeToken);
             
             if (!Stream.class.isAssignableFrom(typeToken.getRawType())) {
-              return log.exit(null);
+              return log.traceExit((TypeAdapter<T>) null);
             }
             //it is mandatory to cast the returned factory, the test isAssignableFrom 
             //is not enough for the warning to disappear. Note that this is also the case 
             //in Gson factory implementations
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
-            return log.exit(result);
+            return log.traceExit(result);
         }
     }
     /**
@@ -171,7 +171,7 @@ public class JsonHelper {
             log.entry(out, stream);
             if (stream == null) {
                 out.nullValue();
-                log.exit(); return;
+                log.traceExit(); return;
             }
             log.trace("Start writing Stream elements.");
             out.beginArray();
@@ -202,7 +202,7 @@ public class JsonHelper {
             
             log.trace("End writing Stream elements.");
             out.endArray();
-            log.exit();
+            log.traceExit();
         }
         
         @Override
@@ -239,7 +239,7 @@ public class JsonHelper {
             log.entry(out, value);
             if (value == null) {
                 out.nullValue();
-                log.exit(); return;
+                log.traceExit(); return;
             }
             out.beginObject();
             
@@ -260,7 +260,7 @@ public class JsonHelper {
             }
             out.endArray();
             out.endObject();
-            log.exit();
+            log.traceExit();
         }
         
         @Override
@@ -289,7 +289,7 @@ public class JsonHelper {
             log.entry(out, rqParams);
             if (rqParams == null) {
                 out.nullValue();
-                log.exit(); return;
+                log.traceExit(); return;
             }
             log.trace("Start writing object RequestParameters.");
             out.beginObject();
@@ -333,7 +333,7 @@ public class JsonHelper {
 
             log.trace("End writing object RequestParameters.");
             out.endObject();
-            log.exit();
+            log.traceExit();
         }
         
         @Override
@@ -366,7 +366,7 @@ public class JsonHelper {
             log.entry(out, results);
             if (results == null) {
                 out.nullValue();
-                log.exit(); return;
+                log.traceExit(); return;
             }
             if (this.requestParameters == null) {
                 throw log.throwing(new IllegalStateException("It is not possible to determine "
@@ -415,7 +415,7 @@ public class JsonHelper {
 
             log.trace("End writing object TopAnatResults.");
             out.endObject();
-            log.exit();
+            log.traceExit();
         }
 
         @Override
@@ -442,7 +442,7 @@ public class JsonHelper {
             log.entry(out, value);
             if (value == null) {
                 out.nullValue();
-                log.exit(); return;
+                log.traceExit(); return;
             }
             out.beginObject();
             
@@ -461,7 +461,7 @@ public class JsonHelper {
             
             
             out.endObject();
-            log.exit();
+            log.traceExit();
         }
         
         @Override
@@ -540,7 +540,7 @@ public class JsonHelper {
      */
     public String toJson(Object object) {
         log.entry(object);
-        return log.exit(gson.toJson(object));
+        return log.traceExit(gson.toJson(object));
     }
     
     /**
@@ -555,6 +555,6 @@ public class JsonHelper {
     public void toJson(LinkedHashMap<String, Object> response, Appendable out) {
         log.entry(response, out);
         gson.toJson(response, out);
-        log.exit();
+        log.traceExit();
     }
 }

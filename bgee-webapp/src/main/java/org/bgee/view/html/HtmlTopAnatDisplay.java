@@ -97,7 +97,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -127,7 +127,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
                 "}");
 
         this.writeln("</script>");
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -191,7 +191,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeJs("vendor_topanat.js");
             this.includeJs("script_topanat.js");
         }
-        log.exit();
+        log.traceExit();
     }
     @Override
     protected void includeCss() {
@@ -220,7 +220,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
-        log.exit();
+        log.traceExit();
     }
 
 }

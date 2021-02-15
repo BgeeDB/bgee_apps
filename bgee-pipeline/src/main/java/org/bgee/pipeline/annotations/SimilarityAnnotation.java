@@ -162,7 +162,7 @@ public class SimilarityAnnotation {
             super.setRefTitle(null);
             
             if (StringUtils.isBlank(refIdAndTitle)) {
-                log.exit(); return;
+                log.traceExit(); return;
             }
             
             Matcher m = REF_COL_PATTERN.matcher(refIdAndTitle);
@@ -182,7 +182,7 @@ public class SimilarityAnnotation {
                     super.setRefTitle(refTitle);
                 }
             }
-            log.exit();
+            log.traceExit();
         }
         
         /**
@@ -531,7 +531,7 @@ public class SimilarityAnnotation {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -587,7 +587,7 @@ public class SimilarityAnnotation {
                     throw log.throwing(new IllegalArgumentException("The provided file " 
                             + similarityFile + " did not allow to retrieve any annotation"));
                 }
-                return log.exit(annots);
+                return log.traceExit(annots);
                 
             } catch (SuperCsvException e) {
                 //hide implementation details
@@ -666,7 +666,7 @@ public class SimilarityAnnotation {
                     break;
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
 
 
@@ -712,7 +712,7 @@ public class SimilarityAnnotation {
                 mapping[i] = null;
             }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
 
     /**
@@ -762,7 +762,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -864,7 +864,7 @@ public class SimilarityAnnotation {
         }
         
         assert header.length > 0;
-        return log.exit(header);
+        return log.traceExit(header);
     }
 
     /**
@@ -967,7 +967,7 @@ public class SimilarityAnnotation {
                         + header[i] + " for AnnotationBean type: " + beanType));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
         
     }
 
@@ -1005,7 +1005,7 @@ public class SimilarityAnnotation {
                     break;
             }
         }
-        return log.exit(quoteModes);
+        return log.traceExit(quoteModes);
         
     }
 
@@ -1039,7 +1039,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1064,7 +1064,7 @@ public class SimilarityAnnotation {
             IOException, UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException {
         log.entry(annotFile, uberonOntFile);
-        return log.exit(getAnatEntitiesWithNoTransformationOf(annotFile, 
+        return log.traceExit(getAnatEntitiesWithNoTransformationOf(annotFile, 
                     new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile))));
     }
     /**
@@ -1128,7 +1128,7 @@ public class SimilarityAnnotation {
             withNoTransfOf.add(anatEntity);
         }
         
-        return log.exit(withNoTransfOf);
+        return log.traceExit(withNoTransfOf);
     }
     /**
      * Delegates to {@link #writeAnatEntitiesWithNoTransformationOfToFile(String, 
@@ -1156,7 +1156,7 @@ public class SimilarityAnnotation {
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
                 outputFile);
                 
-        log.exit();
+        log.traceExit();
     }
     /**
      * Call {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
@@ -1239,7 +1239,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1736,7 +1736,7 @@ public class SimilarityAnnotation {
         }
 
         log.debug("Done checking {} annotations", annots.size());
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -2208,7 +2208,7 @@ public class SimilarityAnnotation {
             this.idsNotExistingInTaxa.putAll(idsNotExistingInTaxa);
         }
 
-        return log.exit(allGood);
+        return log.traceExit(allGood);
     }
 
 
@@ -2277,7 +2277,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(missingNegativeAnnots);
+        return log.traceExit(missingNegativeAnnots);
     }
 
 
@@ -2403,7 +2403,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(negAnnotsWithMissingPosAnnots);
+        return log.traceExit(negAnnotsWithMissingPosAnnots);
     }
 
     /**
@@ -2491,7 +2491,7 @@ public class SimilarityAnnotation {
             this.reinitErrors();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2507,7 +2507,7 @@ public class SimilarityAnnotation {
         this.duplicates.clear();
         this.incorrectFormat.clear();
         this.idsNotExistingInTaxa.clear();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -2561,7 +2561,7 @@ public class SimilarityAnnotation {
         List<RawAnnotationBean> sortedRawAnnots = new ArrayList<>(rawAnnots);
         Collections.sort(sortedRawAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedRawAnnots);
+        return log.traceExit(sortedRawAnnots);
     }
 
     /**
@@ -2678,7 +2678,7 @@ public class SimilarityAnnotation {
                     + annot + " - did not allow to generate a clean-transformed annotation."));
         }
         
-        return log.exit(rawAnnot);
+        return log.traceExit(rawAnnot);
     }
 
     private String logUberonNames(List<String> entityIds) {
@@ -2748,7 +2748,7 @@ public class SimilarityAnnotation {
                 .filter(a -> checkAnnotation(a, null, false))
                 .collect(Collectors.toSet());
         log.info("End of ERRORs are for discarded inferred annotations");
-        return log.exit(filteredInferredAnnots);
+        return log.traceExit(filteredInferredAnnots);
     }
     
     /**
@@ -2864,7 +2864,7 @@ public class SimilarityAnnotation {
         log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
                 inferredAnnots.size());
         //the keyset is unmodifiable, wrap it into a new HashSet
-        return log.exit(new HashSet<>(inferredAnnots.keySet()));
+        return log.traceExit(new HashSet<>(inferredAnnots.keySet()));
     }
     
     /**
@@ -2902,7 +2902,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(filteredAnnots);
+        return log.traceExit(filteredAnnots);
     }
     
     /**
@@ -3001,7 +3001,7 @@ public class SimilarityAnnotation {
             }
             if (!toPropagate) {
                 log.trace("No propagation to perform.");
-                return log.exit(inferredAnnots);
+                return log.traceExit(inferredAnnots);
             }
             
             //important to order Uberon IDs for comparison to existing annotations
@@ -3014,7 +3014,7 @@ public class SimilarityAnnotation {
             toCompare.setEntityIds(transfOfEntityIds);
             if (existingAnnots.contains(toCompare)) {
                 log.trace("Propagated annotation already exists, not added.");
-                return log.exit(inferredAnnots);
+                return log.traceExit(inferredAnnots);
             }
             
             //OK, create the inferred annotation
@@ -3078,7 +3078,7 @@ public class SimilarityAnnotation {
             existingAnnots.add(existingAnnot);
         }
         
-        return log.exit(existingAnnots);
+        return log.traceExit(existingAnnots);
     }
 
     /**
@@ -3302,7 +3302,7 @@ public class SimilarityAnnotation {
 
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
                 inferredAnnots.size());
-        return log.exit(inferredAnnots);
+        return log.traceExit(inferredAnnots);
     }
     
     /**
@@ -3345,7 +3345,7 @@ public class SimilarityAnnotation {
         
         log.trace("Done filtering inferred annotations, {} annotations removed", 
                 toRemove.size());
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -3479,7 +3479,7 @@ public class SimilarityAnnotation {
             entityIdsToAnnotsPerIntersectClass.putAll(newMappings);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -3548,7 +3548,7 @@ public class SimilarityAnnotation {
             if (intersectTaxCls.size() == 0) {
                 log.trace("No annotation for intersect class {} in related taxa of {}.", 
                         intersectClsId, taxId);
-                return log.exit(null);
+                return log.traceExit((Set<Set<CuratorAnnotationBean>>) null);
             }
             
             //now, we will only consider annotations to the leaf valid taxon
@@ -3577,7 +3577,7 @@ public class SimilarityAnnotation {
         //already have returned null in the previous loop.
         assert annotsPerIntersectClass.size() == intersectClassIds.size();
         
-        return log.exit(annotsPerIntersectClass);
+        return log.traceExit(annotsPerIntersectClass);
     }
     
     /**
@@ -3620,7 +3620,7 @@ public class SimilarityAnnotation {
         log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
         assert intersectClassIds.size() == annotsPerIntersectClass.size();
         
-        return log.exit(annotsPerIntersectClass);
+        return log.traceExit(annotsPerIntersectClass);
     }
     
     /**
@@ -3650,7 +3650,7 @@ public class SimilarityAnnotation {
                 mappedAnnots.add(annot);
             }
         }
-        return log.exit(entityIdToAnnots);
+        return log.traceExit(entityIdToAnnots);
     }
     
     /**
@@ -3689,7 +3689,7 @@ public class SimilarityAnnotation {
                 taxToSelfAndAncestors.put(annot.getNcbiTaxonId(), selfAndAncestorsIds);
             }
         }
-        return log.exit(taxToSelfAndAncestors);
+        return log.traceExit(taxToSelfAndAncestors);
     }
     
     /**
@@ -3752,7 +3752,7 @@ public class SimilarityAnnotation {
         
         log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
                 intersectMapping.size());
-        return log.exit(intersectMapping);
+        return log.traceExit(intersectMapping);
     }
     
     /**
@@ -3942,7 +3942,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(posAndNegAnnot);
+        return log.traceExit(posAndNegAnnot);
     }
     
     /**
@@ -4067,7 +4067,7 @@ public class SimilarityAnnotation {
         Collections.sort(sortedSummaryAnnots, 
                 SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedSummaryAnnots);
+        return log.traceExit(sortedSummaryAnnots);
     }
 
     /**
@@ -4194,7 +4194,7 @@ public class SimilarityAnnotation {
                     "multiple evidence lines confidence code."));
         }
         
-        return log.exit(summaryConf);
+        return log.traceExit(summaryConf);
     }
 
     /**
@@ -4388,7 +4388,7 @@ public class SimilarityAnnotation {
                 new ArrayList<AncestralTaxaAnnotationBean>(newAnnots);
         Collections.sort(sortedAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedAnnots);
+        return log.traceExit(sortedAnnots);
     }
 
     
@@ -4551,7 +4551,7 @@ public class SimilarityAnnotation {
 //                this.extractSummaryAnnotationsForTaxon(similarityFile, taxOntFile, taxonId);
 //        this.writeAnnotationsToFile(outputFile, fileType, summarizedAnnotations);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -4638,6 +4638,6 @@ public class SimilarityAnnotation {
 //            }
 //        }
 //        
-//        return log.exit(filteredAnnotations);
+//        return log.traceExit(filteredAnnotations);
 //    }
 }

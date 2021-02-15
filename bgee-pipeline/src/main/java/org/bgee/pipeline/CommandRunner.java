@@ -142,7 +142,7 @@ public class CommandRunner {
                     logLevel);
             System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -313,7 +313,7 @@ public class CommandRunner {
                     "is not recognized: " + args[0]));
         }
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -327,9 +327,9 @@ public class CommandRunner {
     public static String parseArgument(String arg) {
         log.entry(arg);
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
-        return log.exit(arg.trim());
+        return log.traceExit(arg.trim());
     }
 
     /**
@@ -344,9 +344,9 @@ public class CommandRunner {
         log.entry(arg);
         if (arg != null && (arg.trim().equalsIgnoreCase("1") ||
                 arg.trim().equalsIgnoreCase("true"))) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -359,7 +359,7 @@ public class CommandRunner {
     public static List<String> parseListArgument(String listArg) {
         log.entry(listArg);
 
-        return log.exit(CommandRunner.parseListArgument(listArg, String.class));
+        return log.traceExit(CommandRunner.parseListArgument(listArg, String.class));
     }
     /**
      * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
@@ -371,7 +371,7 @@ public class CommandRunner {
     public static List<Integer> parseListArgumentAsInt(String listArg) {
         log.entry(listArg);
 
-        return log.exit(CommandRunner.parseListArgument(listArg, Integer.class));
+        return log.traceExit(CommandRunner.parseListArgument(listArg, Integer.class));
     }
     /**
      * Split {@code listArg} based on {@link #LIST_SEPARATOR}. The resulting {@code value}s
@@ -405,7 +405,7 @@ public class CommandRunner {
             }
         }
 
-        return log.exit(resultingList);
+        return log.traceExit(resultingList);
     }
 
     /**
@@ -420,7 +420,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<String, List<String>> parseMapArgument(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -434,7 +434,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<String, List<Integer>> parseMapArgumentAsInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -448,7 +448,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -462,7 +462,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<Integer, List<String>> parseMapArgumentAsIntKeysStringValues(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
     }
 
     /**
@@ -535,6 +535,6 @@ public class CommandRunner {
             }
         }
 
-        return log.exit(resultingMap);
+        return log.traceExit(resultingMap);
     }
 }

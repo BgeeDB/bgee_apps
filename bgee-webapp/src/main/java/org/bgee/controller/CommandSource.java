@@ -59,6 +59,6 @@ public class CommandSource extends CommandParent {
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 
                 " parameter value."));
         }
-        log.exit();
+        log.traceExit();
     }
 }

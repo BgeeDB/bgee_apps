@@ -652,7 +652,7 @@ public class RequestParameters {
             throw log.throwing(new AssertionError("Unreachable code reached in default constructor", e));
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -753,7 +753,7 @@ public class RequestParameters {
         this.urlHash = null;
         this.constructor(request);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -790,7 +790,7 @@ public class RequestParameters {
 
         this.loadParameters(request.getParameterMap());
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -854,7 +854,7 @@ public class RequestParameters {
             this.loadParametersFromRequest(paramValues, false);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -969,7 +969,7 @@ public class RequestParameters {
             }
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1027,7 +1027,7 @@ public class RequestParameters {
             this.removeLockIfPossible(key);
         }
 
-        log.exit();
+        log.traceExit();
 
     }
 
@@ -1096,7 +1096,7 @@ public class RequestParameters {
                     this.getKeyParam()));
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1134,7 +1134,7 @@ public class RequestParameters {
             }
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1170,7 +1170,7 @@ public class RequestParameters {
             }
         }
 
-        return log.exit(readWritelock);
+        return log.traceExit(readWritelock);
     }
 
     /**
@@ -1248,7 +1248,7 @@ public class RequestParameters {
                     searchOrHashParams, areSearchParams);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1381,7 +1381,7 @@ public class RequestParameters {
             log.trace("URL fragment at the end of the pass: {}", urlFragment);
         }
 
-        return log.exit(urlFragment);
+        return log.traceExit(urlFragment);
     }
     
     /**
@@ -1405,7 +1405,7 @@ public class RequestParameters {
             List<?> parameterValues, String parameterSeparator) {
         log.entry(parameter, parameterValues, parameterSeparator);
         if (parameterValues == null || parameterValues.isEmpty()) {
-            return log.exit("");
+            return log.traceExit("");
         }
 
         //If the parameter can hold several values provided as a single String 
@@ -1420,7 +1420,7 @@ public class RequestParameters {
             valuesToUse = Arrays.asList(separatedValues);
         } 
         
-        return log.exit(valuesToUse.stream()
+        return log.traceExit(valuesToUse.stream()
             .filter(value -> value != null && StringUtils.isNotBlank(value.toString()))
             .map(value -> {
                 if (!parameter.getType().equals(value.getClass())) {
@@ -1452,9 +1452,9 @@ public class RequestParameters {
                     this.parametersQuery.length(), prop.getUrlMaxLength());
         }
         if (this.parametersQuery.length() > prop.getUrlMaxLength()) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -1495,7 +1495,7 @@ public class RequestParameters {
         log.info("Key generated: {}", this.getFirstValue(
                 this.getKeyParam()));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1536,7 +1536,7 @@ public class RequestParameters {
         } catch (Exception e) {
             log.error("Error while URLencoding", e);
         }
-        return log.exit(encodeString);
+        return log.traceExit(encodeString);
     }
 
     /**
@@ -1549,7 +1549,7 @@ public class RequestParameters {
      */
     private String urlDecode(String url) throws UnsupportedEncodingException {
         log.entry(url);
-        return log.exit(java.net.URLDecoder.decode(url, this.getCharacterEncoding()));
+        return log.traceExit(java.net.URLDecoder.decode(url, this.getCharacterEncoding()));
     }
 
     /**
@@ -1557,7 +1557,7 @@ public class RequestParameters {
      */
     private Parameter<String> getKeyParam(){
         log.entry();
-        return log.exit(this.urlParametersInstance.getParamData());
+        return log.traceExit(this.urlParametersInstance.getParamData());
     }
 
     /**
@@ -1574,7 +1574,7 @@ public class RequestParameters {
      */
     public String getRequestURL() throws RequestParametersNotStorableException {
         log.entry();
-        return log.exit(this.getRequestURL(this.parametersSeparator));
+        return log.traceExit(this.getRequestURL(this.parametersSeparator));
     }
 
     /**
@@ -1591,7 +1591,7 @@ public class RequestParameters {
      */
     public String getStableRequestURL() throws RequestParametersNotStorableException {
         log.entry();
-        return log.exit(this.getRequestURL(parametersSeparator, null, false, true));
+        return log.traceExit(this.getRequestURL(parametersSeparator, null, false, true));
     }
 
     /**
@@ -1613,7 +1613,7 @@ public class RequestParameters {
     public String getRequestURL(String parametersSeparator) 
             throws RequestParametersNotStorableException {
         log.entry(parametersSeparator);
-        return log.exit(this.getRequestURL(parametersSeparator, null, false, false));
+        return log.traceExit(this.getRequestURL(parametersSeparator, null, false, false));
     }
     /**
      * Return the URL corresponding to this {@code RequestParameters} instance using 
@@ -1654,7 +1654,7 @@ public class RequestParameters {
             boolean areSearchParams) throws RequestParametersNotStorableException, 
             IllegalStateException {
         log.entry(searchOrHashParams, areSearchParams);
-        return log.exit(this.getRequestURL(this.parametersSeparator, 
+        return log.traceExit(this.getRequestURL(this.parametersSeparator, 
                 searchOrHashParams, areSearchParams, false));
     }
     /**
@@ -1740,7 +1740,7 @@ public class RequestParameters {
             }
             url += "#" + this.getURLHash();
         }
-        return log.exit(url);
+        return log.traceExit(url);
     }
 
     /**
@@ -1767,10 +1767,10 @@ public class RequestParameters {
             // Return a copy of the list and not the original list
             // As the values contained are only immutable object, such as String
             // Integer, Boolean, Long, there is no need to clone the content
-            return log.exit(new ArrayList<T>(values));
+            return log.traceExit(new ArrayList<T>(values));
 
         } catch(NullPointerException e){
-            return log.exit(null);
+            return log.traceExit((List<T>) null);
         }
     }
 
@@ -1793,10 +1793,10 @@ public class RequestParameters {
         log.entry(parameter);
         try{
 
-        	return log.exit(((List<T>) this.values.get(parameter)).get(0));
+        	return log.traceExit(((List<T>) this.values.get(parameter)).get(0));
 
         } catch(IndexOutOfBoundsException | NullPointerException e){
-            return log.exit(null);            
+            return log.traceExit((T) null);            
         }
     }
 
@@ -1825,11 +1825,11 @@ public class RequestParameters {
         log.entry(parameter, value);
 
         if (value == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         this.addValues(parameter, Arrays.asList(value));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Add values to the given {@code URLParameters.Parameter<T>}
@@ -1853,7 +1853,7 @@ public class RequestParameters {
     
         this.addAnyValues(parameter, values);
     
-        log.exit();
+        log.traceExit();
     }
     /**
      * Add values associated to the {@code URLParameters.Parameter}.
@@ -1879,7 +1879,7 @@ public class RequestParameters {
         log.entry(parameter, values);
 
         if (values == null || values.isEmpty()) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (values.stream().anyMatch(e -> !parameter.getType().equals(e.getClass()))) {
             throw log.throwing(new IllegalArgumentException("The class of one of the provided value ("
@@ -1899,7 +1899,7 @@ public class RequestParameters {
         .collect(Collectors.toList());
         
         if (newVals.isEmpty()) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         
         // fetch the existing values for the given parameter and try to add the value
@@ -1942,7 +1942,7 @@ public class RequestParameters {
             this.throwIfParamValueTooLong(parameter, urlFragment.substring(fragmentStart.length()));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1957,7 +1957,7 @@ public class RequestParameters {
     {
         log.entry(parameter);
         this.values.put(parameter, null);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1970,7 +1970,7 @@ public class RequestParameters {
      */
     public RequestParameters cloneWithAllParameters(){
         log.entry();
-        return log.exit(this.cloneRequestParameter(true));
+        return log.traceExit(this.cloneRequestParameter(true));
     }
 
     /**
@@ -1983,7 +1983,7 @@ public class RequestParameters {
      */
     public RequestParameters cloneWithStorableParameters(){
         log.entry();
-        return log.exit(this.cloneRequestParameter(false));
+        return log.traceExit(this.cloneRequestParameter(false));
     }
 
     /**
@@ -2019,7 +2019,7 @@ public class RequestParameters {
         } catch (InstantiationException | IllegalAccessException e) {
             throw log.throwing(new IllegalStateException(e));
         }
-        return log.exit(clonedRequestParameters);
+        return log.traceExit(clonedRequestParameters);
     }
 
     /**
@@ -2478,9 +2478,9 @@ public class RequestParameters {
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_XML)){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2493,9 +2493,9 @@ public class RequestParameters {
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_CSV)){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2508,9 +2508,9 @@ public class RequestParameters {
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_TSV)){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2523,9 +2523,9 @@ public class RequestParameters {
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_JSON)){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2540,9 +2540,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamAjax()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamAjax())) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2561,9 +2561,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit())) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2575,9 +2575,9 @@ public class RequestParameters {
     public boolean isTheHomePage(){
         log.entry();
         if(this.getFirstValue(this.urlParametersInstance.getParamPage()) == null){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2590,9 +2590,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPECIES)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2603,9 +2603,9 @@ public class RequestParameters {
         log.entry();
         if (isASpeciesPageCategory() && 
                 this.getAction() != null && this.getAction().equals(ACTION_SPECIES_UPLOAD)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2619,9 +2619,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ABOUT)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2635,9 +2635,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PRIVACY_POLICY)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2651,9 +2651,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_COLLABORATIONS)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2663,9 +2663,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_JOB)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to DAO queries.
@@ -2674,9 +2674,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2686,9 +2686,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2699,9 +2699,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2712,9 +2712,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PUBLICATION)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2725,9 +2725,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPARQL)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to queries for usage statistics 
@@ -2737,9 +2737,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_STATS)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether it is requested to cancel a job.
@@ -2748,9 +2748,9 @@ public class RequestParameters {
         log.entry();
         if (this.isAJobPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_CANCEL_JOB)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2763,9 +2763,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_TOP_ANAT)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
 //    /**
@@ -2780,9 +2780,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("admin")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
 //    /**
@@ -2797,9 +2797,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("anatomy")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
     /**
@@ -2810,9 +2810,9 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() && 
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GENE_VALIDATION)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to
@@ -2822,9 +2822,9 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SUBMIT_JOB)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to
@@ -2834,9 +2834,9 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} to tell whether the request is related to
@@ -2846,9 +2846,9 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GET_RESULT)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * @return  A {@code boolean} defining whether it is requested to send to client a result file 
@@ -2858,9 +2858,9 @@ public class RequestParameters {
         log.entry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_DOWNLOAD)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2873,9 +2873,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ANAT_SIM)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -2888,9 +2888,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOCUMENTATION)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2904,9 +2904,9 @@ public class RequestParameters {
         log.entry();
         if(this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOWNLOAD)){
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }    
 
 //    /**
@@ -2921,9 +2921,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("expression")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
     /**
@@ -2937,9 +2937,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_GENE)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2953,9 +2953,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_EXPR_COMPARISON)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2969,9 +2969,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2983,9 +2983,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SOURCE)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -2997,9 +2997,9 @@ public class RequestParameters {
         log.entry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SEARCH)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     //    /**
@@ -3014,9 +3014,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene_family")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
 //    /**
@@ -3031,9 +3031,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("log")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
 //    /**
@@ -3048,9 +3048,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("news")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
 //    /**
@@ -3065,9 +3065,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("registration")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
 //    /**
@@ -3082,9 +3082,9 @@ public class RequestParameters {
 //        log.entry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("search")) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
 
     /**
@@ -3101,7 +3101,7 @@ public class RequestParameters {
     {
         log.entry();
         //TODO: implement when necessary (logging page, registration page, ...)
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -3123,22 +3123,22 @@ public class RequestParameters {
         log.entry();
         // Do not cache pages containing sensitive information
         if (this.isASecuredPage()) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         // Do not cache responses to HEAD requests, would lead to cache blank page
         // for security, we only accept POST and GET requests to be cached.
         // @see org.bgee.controller.servletUtils.BgeeWebCache#calculateKey(HttpServletRequest)
         if (!this.getHttpMethod().equalsIgnoreCase("get") && 
                 !this.getHttpMethod().equalsIgnoreCase("post")) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         //do not cache POST request that are not AJAX requets: 
         //they should never send any response, and redirect the user to another page 
         //to avoid warning messages when pressing the back button.
         if(! this.isAnAjaxRequest() && this.getHttpMethod().equalsIgnoreCase("post")){
-            return log.exit(false);
+            return log.traceExit(false);
         }
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     /**
@@ -3160,11 +3160,11 @@ public class RequestParameters {
             throws InvalidFormatException, ValueSizeExceededException {
         log.entry(value, parameter);
         if (value == null) {
-            return log.exit("");
+            return log.traceExit("");
         }
         this.throwIfParamValueTooLong(parameter, value);
         this.throwIfInvalidFormatParamValue(parameter, value);
-        return log.exit(value.trim());
+        return log.traceExit(value.trim());
     }
     
     /**
@@ -3179,7 +3179,7 @@ public class RequestParameters {
             throws ValueSizeExceededException {
         log.entry(parameter, value);
         if (value == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (value.length() > parameter.getMaxSize()) {
             log.error("Value too long for parameter {}. Value length: {} - Max allowed length: {}", 
@@ -3199,7 +3199,7 @@ public class RequestParameters {
             throws InvalidFormatException {
         log.entry(parameter, value);
         if (value == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         log.trace("Trying to validate {} against format {}", value, parameter.getFormat());
         if (parameter.getFormat() != null && !value.trim().matches(parameter.getFormat())) {
@@ -3225,9 +3225,9 @@ public class RequestParameters {
         if (paramValue.equalsIgnoreCase("on") || 
                 paramValue.equalsIgnoreCase("true") || 
                 paramValue.equalsIgnoreCase("1")) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**

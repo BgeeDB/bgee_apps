@@ -166,7 +166,7 @@ public interface DiffExpressionCallDAO
              */
             public static final DiffExprCallType convertToDiffExprCallType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(DiffExprCallType.class, representation));
+                return log.traceExit(TransferObject.convert(DiffExprCallType.class, representation));
             }
             
             /**
@@ -224,7 +224,7 @@ public interface DiffExpressionCallDAO
              */
             public static final ComparisonFactor convertToComparisonFactor(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(ComparisonFactor.class, representation));
+                return log.traceExit(TransferObject.convert(ComparisonFactor.class, representation));
             }
             
             /**
@@ -383,7 +383,7 @@ public interface DiffExpressionCallDAO
             typesToStates.put(Attribute.DIFF_EXPR_AFFYMETRIX_DATA, this.getAffymetrixData());
             typesToStates.put(Attribute.DIFF_EXPR_RNA_SEQ_DATA, this.getRNASeqData());
             
-            return log.exit(typesToStates);
+            return log.traceExit(typesToStates);
         }
         /**
          * Retrieve from this {@code CallTO} the data types with a filtering requested, 
@@ -416,7 +416,7 @@ public interface DiffExpressionCallDAO
          */
         protected EnumMap<Attribute, DataState> extractFilteringDataTypes() {
             log.entry();
-            return log.exit(super.extractFilteringDataTypes(Attribute.class));
+            return log.traceExit(super.extractFilteringDataTypes(Attribute.class));
         }
         
         /**

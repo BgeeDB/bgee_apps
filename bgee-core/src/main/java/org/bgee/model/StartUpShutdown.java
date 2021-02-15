@@ -33,7 +33,7 @@ public class StartUpShutdown {
     	DAOManager.closeAll();
     	//Should we have something like 'JobService.releaseAll()'?
     	//Would mean to store all JobService instances, not sure how we can make sure they would be deallocated.
-    	log.exit();
+    	log.traceExit();
     }
     
     /**
@@ -51,6 +51,6 @@ public class StartUpShutdown {
         log.entry(t);
         //Kill any running DAO queries
         DAOManager.kill(t);
-        log.exit();
+        log.traceExit();
     }
 }

@@ -329,7 +329,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
              */
             public static final RelationType convertToRelationType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(RelationType.class, representation));
+                return log.traceExit(TransferObject.convert(RelationType.class, representation));
             }
 
             /**
@@ -393,7 +393,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
              */
             public static final RelationStatus convertToRelationStatus(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(RelationStatus.class, representation));
+                return log.traceExit(TransferObject.convert(RelationStatus.class, representation));
             }
 
             /**

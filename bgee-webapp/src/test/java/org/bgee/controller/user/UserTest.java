@@ -335,14 +335,14 @@ public class UserTest extends TestAncestor {
                     !Objects.equals(expected.getPath(), actual.getPath()) || 
                     !Objects.equals(expected.getDomain(), actual.getDomain()) || 
                     !Objects.equals(expected.getMaxAge(), actual.getMaxAge()));
-            log.exit(); return;
+            log.traceExit(); return;
         }
         
         if (actual == null && expected != null || expected == null && actual != null ) {
             throw new AssertionError("Null and not-null cookies");
         }
         if (actual == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         
         assertEquals("Incorrect name of tracking cookie", expected.getName(), actual.getName());
@@ -351,6 +351,6 @@ public class UserTest extends TestAncestor {
         assertEquals("Incorrect domain of tracking cookie", expected.getDomain(), actual.getDomain());
         assertEquals("Incorrect max age of tracking cookie", expected.getMaxAge(), actual.getMaxAge());
         
-        log.exit();
+        log.traceExit();
     }
 }

@@ -177,7 +177,7 @@ public class FrontController extends HttpServlet {
         MailSender.setWaitTimeInMs(this.prop.getMailWaitTime());
         this.mailSender = checkMailSender;
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -375,7 +375,7 @@ public class FrontController extends HttpServlet {
             }
             if (errorDisplay == null) {
                 log.error("Could not display error message to caller: {}", realException);
-                log.exit();
+                log.traceExit();
                 return;
             }
             
@@ -404,21 +404,21 @@ public class FrontController extends HttpServlet {
             } 
         } 
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
         doRequest(request, response, false);
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
         log.entry(request, response);
         doRequest(request, response, true);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -438,7 +438,7 @@ public class FrontController extends HttpServlet {
         String[] paramValues = request.getParameterValues(
                 this.urlParameters.getParamDisplayType().getName());
         if (paramValues == null || paramValues.length == 0) {
-            return log.exit(null);
+            return log.traceExit((DisplayType) null);
         }
         if (paramValues.length > 1) {
             throw log.throwing(new InvalidRequestException("It is not possible to request "
@@ -453,15 +453,15 @@ public class FrontController extends HttpServlet {
             RequestParameters fakeParams = new RequestParameters(fakeRequest, this.urlParameters, 
                     this.prop, true, "&");
             if (fakeParams.isXmlDisplayType()) {
-                return log.exit(DisplayType.XML);
+                return log.traceExit(DisplayType.XML);
             } else if (fakeParams.isTsvDisplayType()) {
-                return log.exit(DisplayType.TSV);
+                return log.traceExit(DisplayType.TSV);
             } else if (fakeParams.isCsvDisplayType()) {
-                return log.exit(DisplayType.CSV);
+                return log.traceExit(DisplayType.CSV);
             } else if (fakeParams.isJsonDisplayType()) {
-                return log.exit(DisplayType.JSON);
+                return log.traceExit(DisplayType.JSON);
             } else {
-                return log.exit(DisplayType.HTML);
+                return log.traceExit(DisplayType.HTML);
             }
         } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException e) {
             throw log.throwing(new AssertionError("Error, code block supposed to be unreachable", e));

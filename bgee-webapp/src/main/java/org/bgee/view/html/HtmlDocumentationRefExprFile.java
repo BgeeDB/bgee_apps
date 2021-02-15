@@ -29,7 +29,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      */
     private static String getAffyDocMenu() {
         log.entry();
-        return log.exit("<ul>"
+        return log.traceExit("<ul>"
                 + "<li><a href='#affy_exp' title='Quick jump to this section'>" + 
                 "Experiments</a></li>"
                 + "<li><a href='#affy_chip' title='Quick jump to this section'>" + 
@@ -44,7 +44,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      */
     private static String getRNASeqDocMenu() {
         log.entry();
-        return log.exit("<ul>"
+        return log.traceExit("<ul>"
                 + "<li><a href='#rna-seq_exp' title='Quick jump to this section'>" + 
                 "Experiments</a></li>"
                 + "<li><a href='#rna-seq_lib' title='Quick jump to this section'>" + 
@@ -112,7 +112,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         this.writeRNASeqRefExprFileDoc();
         this.writeln("</div>"); // end of RNA-Seq
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -145,7 +145,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
                 "Troubleshooting</a>");
         this.writeln("</ul></div>");// end of documentationmenu
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -186,7 +186,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         
         this.writeln("</div>"); //end of doc_content
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -218,6 +218,6 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
         
         this.writeln("</div>"); //end of doc_content
         
-        log.exit();
+        log.traceExit();
     }
 }

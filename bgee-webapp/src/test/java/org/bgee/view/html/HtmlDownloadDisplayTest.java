@@ -90,6 +90,6 @@ public class HtmlDownloadDisplayTest extends TestAncestor {
         } catch (IllegalArgumentException e) {
             //test passed
         }
-        log.exit();
+        log.traceExit();
     }
 }

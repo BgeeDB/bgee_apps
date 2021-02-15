@@ -243,13 +243,13 @@ public class TopAnatResults {
             validateInputNotNull(value, context);  
             
             if (value.toString().contains("-Inf")) {
-                return log.exit(next.execute(Double.NEGATIVE_INFINITY, context));
+                return log.traceExit("{}", next.execute(Double.NEGATIVE_INFINITY, context));
             } else if (value.toString().contains("Inf")) {
-                return log.exit(next.execute(Double.POSITIVE_INFINITY, context));
+                return log.traceExit("{}", next.execute(Double.POSITIVE_INFINITY, context));
             } 
             //actually, Double seems to manage "NaN" values
             /*else if (value.toString().contains("NaN")) {
-                return log.exit(next.execute(Double.NaN, context));
+                return log.traceExit(next.execute(Double.NaN, context));
             }*/
             
             //passes result to a ParseDouble, chained with the next processor in the chain if possible
@@ -259,7 +259,7 @@ public class TopAnatResults {
             } else {
                 parse = new ParseDouble();
             } 
-            return log.exit(parse.execute(value, context));
+            return log.traceExit(parse.execute(value, context));
         }
     }
 
@@ -306,7 +306,7 @@ public class TopAnatResults {
 
             this.controller.releaseReadLock(resultFile.getPath());
 
-            return log.exit(listToReturn);
+            return log.traceExit(listToReturn);
    
     }
     

@@ -216,7 +216,7 @@ public class RequestParametersTest extends TestAncestor {
         log.entry(rp);
         rp.addValue(testURLParameters.getParamTestInteger(),987654321);
         rp.addValue(testURLParameters.getParamTestInteger(),987654322);
-        log.exit();
+        log.traceExit();
     }
 
     /**

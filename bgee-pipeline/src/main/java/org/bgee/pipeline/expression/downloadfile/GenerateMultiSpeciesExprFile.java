@@ -162,7 +162,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 //            args[3]);
 //        generator.generateMultiSpeciesExprFiles();
 //    
-//        log.exit();
+//        log.traceExit();
 //    }
 
     /**
@@ -647,7 +647,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.info("Done generating of multi-species expression files for the group {}.", 
                 this.groupPrefix);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -775,7 +775,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -822,7 +822,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, calls);
 
-        return log.exit(calls.map(c -> {
+        return log.traceExit(calls.map(c -> {
             int i = 0;
             for (Entry<MultiSpExprFileType, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
 //                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
@@ -918,7 +918,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.entry(fileType);
     
         if (fileType.isSimpleFileType()) {
-            return log.exit(new String[] {
+            return log.traceExit(new String[] {
                     OMA_ID_COLUMN_NAME, GENE_ID_LIST_COLUMN_NAME ,GENE_NAME_LIST_COLUMN_NAME,
                     ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
                     STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME,
@@ -926,7 +926,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                     CONSERVATION_SCORE_COLUMN_NAME});
         }
     
-        return log.exit(new String[] { 
+        return log.traceExit(new String[] { 
                 OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
                 ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
@@ -974,7 +974,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         
         //Second, we build the CellProcessor
         if (fileType.isSimpleFileType()) {
-            return log.exit(new CellProcessor[] {
+            return log.traceExit(new CellProcessor[] {
                     new StrNotNullOrEmpty(),    // OMA ID
                     new StrNotNullOrEmpty(),    // gene ID list
                     new NotNull(),              // gene name list
@@ -987,7 +987,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                     new StrNotNullOrEmpty(),    // species without expressed genes count
                     new StrNotNullOrEmpty()});  // conservation score
         }
-        return log.exit(new CellProcessor[] {
+        return log.traceExit(new CellProcessor[] {
                 new StrNotNullOrEmpty(),    // OMA ID
                 new StrNotNullOrEmpty(),    // gene ID
                 new NotNull(),              // gene name
@@ -1058,7 +1058,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                             "Unrecognized header: " + headers[i] + " for OMA TSV file."));
             }
         }
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 
     /**
@@ -1176,6 +1176,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
 }

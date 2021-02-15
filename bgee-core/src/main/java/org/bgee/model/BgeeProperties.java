@@ -290,7 +290,7 @@ public class BgeeProperties {
         } else {
             log.debug("{} not found in classpath.", propertyFile);
         }        
-        return log.exit(filePropsToReturn);
+        return log.traceExit(filePropsToReturn);
     }
 
     /**
@@ -356,7 +356,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(propValue);
+        return log.traceExit(propValue);
     }
     /**
      * Determines the value of a property was correctly set.
@@ -365,7 +365,7 @@ public class BgeeProperties {
      */
     private static boolean isValidValue(Object propValue) {
         log.entry(propValue);
-        return log.exit(propValue != null && 
+        return log.traceExit(propValue != null && 
                 (!(propValue instanceof String) || StringUtils.isNotBlank((String) propValue)));
     }
     
@@ -401,7 +401,7 @@ public class BgeeProperties {
             val= (String) propValue;
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
 
     /**
@@ -442,7 +442,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
     /**
      * Try to retrieve the property corresponding to {@code key}, 
@@ -482,7 +482,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
     /**
      * Try to retrieve the property corresponding to {@code key}, 
@@ -526,7 +526,7 @@ public class BgeeProperties {
             }
         }
         
-        return log.exit(val);
+        return log.traceExit(val);
     }
 
     /**
@@ -620,7 +620,7 @@ public class BgeeProperties {
         else {
             bgeeProp = bgeeProperties.get(threadId);
         }
-        return log.exit(bgeeProp);
+        return log.traceExit(bgeeProp);
     }
 
     /**
@@ -633,7 +633,7 @@ public class BgeeProperties {
      */
     public static boolean hasBgeeProperties() {
         log.entry();
-        return log.exit(bgeeProperties.containsKey(Thread.currentThread().getId()));
+        return log.traceExit(bgeeProperties.containsKey(Thread.currentThread().getId()));
     }
 
     /**
@@ -667,7 +667,7 @@ public class BgeeProperties {
         int propCount = bgeeProperties.size();
         bgeeProperties.clear();
 
-        return log.exit(propCount);
+        return log.traceExit(propCount);
     }
     
     //******************************
@@ -722,7 +722,7 @@ public class BgeeProperties {
                 MAX_JOB_COUNT_PER_USER_KEY,
                 MAX_JOB_COUNT_PER_USER_DEFAULT);
         log.debug("Initialization done.");
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -817,7 +817,7 @@ public class BgeeProperties {
      */
     public boolean release() {
         log.entry();
-        return log.exit(bgeeProperties.values().remove(this));
+        return log.traceExit(bgeeProperties.values().remove(this));
     }
     /**
      * Determines whether this {@code BgeeProperties} was released 
@@ -828,7 +828,7 @@ public class BgeeProperties {
      */
     public boolean isReleased() {
         log.entry();
-        return log.exit(!bgeeProperties.containsValue(this));
+        return log.traceExit(!bgeeProperties.containsValue(this));
     }
 
     //**************************

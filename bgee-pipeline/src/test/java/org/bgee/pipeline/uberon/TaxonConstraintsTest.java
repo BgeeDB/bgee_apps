@@ -501,7 +501,7 @@ public class TaxonConstraintsTest extends TestAncestor {
                         wrapper.getOWLClassByIdentifierNoAltIds(classId));
             }
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**

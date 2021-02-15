@@ -208,7 +208,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -220,7 +220,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 }
 

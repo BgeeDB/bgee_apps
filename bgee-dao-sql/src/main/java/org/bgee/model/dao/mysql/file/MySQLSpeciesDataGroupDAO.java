@@ -172,7 +172,7 @@ implements SpeciesDataGroupDAO {
         }
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLSpeciesDataGroupTOResultSet(stmt));
+            return log.traceExit(new MySQLSpeciesDataGroupTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -212,7 +212,7 @@ implements SpeciesDataGroupDAO {
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -257,7 +257,7 @@ implements SpeciesDataGroupDAO {
                             throw log.throwing(new UnrecognizedColumnException(colName));
                     }
                 }
-                return log.exit(new SpeciesDataGroupTO(id, name, description, preferredOrder));
+                return log.traceExit(new SpeciesDataGroupTO(id, name, description, preferredOrder));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -307,7 +307,7 @@ implements SpeciesDataGroupDAO {
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new SpeciesToDataGroupTO(speciesId,groupId));
+                return log.traceExit(new SpeciesToDataGroupTO(speciesId,groupId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -397,7 +397,7 @@ implements SpeciesDataGroupDAO {
                     clonedOrderingAttrs.containsKey(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES)) {
                 stmt.setString(1, this.speciesId);
             }
-            return log.exit(new MySQLSpeciesToDataGroupTOResultSet(stmt));
+            return log.traceExit(new MySQLSpeciesToDataGroupTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -431,7 +431,7 @@ implements SpeciesDataGroupDAO {
                 paramIndex++;
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

@@ -76,7 +76,7 @@ public class GenerateBioSODAFile {
         for (Integer taxonId: taxonIds) {
             generateBioSODA.generateFile(taxonId, outputDir);
         }
-        log.exit();
+        log.traceExit();
     }
 
     // ************************************
@@ -221,7 +221,7 @@ public class GenerateBioSODAFile {
             }
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     protected static String[] getHeader(List<String> anatSimilarityNames) {
@@ -229,7 +229,7 @@ public class GenerateBioSODAFile {
 
         List<String> cols = new ArrayList<>(Arrays.asList("Ensembl gene ID"));
         cols.addAll(anatSimilarityNames);
-        return log.exit(cols.toArray(new String[0]));
+        return log.traceExit(cols.toArray(new String[0]));
     }
     protected static CellProcessor[] getProcessors(int similarityCount) {
         log.entry(similarityCount);
@@ -242,7 +242,7 @@ public class GenerateBioSODAFile {
         for (int i = 0; i < similarityCount; i++) {
             processors.add(new IsIncludedIn(allowedExpressionCategories));
         }
-        return log.exit(processors.toArray(new CellProcessor[0]));
+        return log.traceExit(processors.toArray(new CellProcessor[0]));
     }
     private static void writeStatsFile(String outputDirectory, String fileName,
             Map<AnatEntitySimilarity, Set<Species>> anatSimToSpecies,
@@ -335,6 +335,6 @@ public class GenerateBioSODAFile {
                 }
             });
         }
-        log.exit();
+        log.traceExit();
     }
 }

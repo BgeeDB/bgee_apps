@@ -171,22 +171,22 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     private String getTitle(String title) {
         log.entry(title);
-        return log.exit("<span property='schema:headline'>" + title + "</span>.");
+        return log.traceExit("<span property='schema:headline'>" + title + "</span>.");
     }
 
     private String getAuthors(List<String> names) {
         log.entry(names);
-        return log.exit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
+        return log.traceExit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
     }
 
     private String getAuthor(String name) {
         log.entry(name);
-        return log.exit(
+        return log.traceExit(
                 "<span property='schema:author' typeof='schema:Person'>" +
                 "    <span property='schema:name'>" + name + "</span>" +
                 "</span>");
@@ -194,7 +194,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
     private String getPeriodical(String journalName) {
         log.entry(journalName);
-        return log.exit(
+        return log.traceExit(
                 "<span property='schema:isPartOf' typeof='schema:Periodical'>" +
                 "    <span property='schema:name'>" + journalName + "</span>" +
                 "</span>.");
@@ -207,7 +207,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
         this.includeCss("documentation.css");
-        log.exit();
+        log.traceExit();
     }
 }
 

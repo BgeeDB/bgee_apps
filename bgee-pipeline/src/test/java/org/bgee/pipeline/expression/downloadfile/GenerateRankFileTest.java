@@ -465,6 +465,6 @@ public class GenerateRankFileTest extends TestAncestor {
             assertEquals("Incorrect read values", expectedValues, allValues);
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

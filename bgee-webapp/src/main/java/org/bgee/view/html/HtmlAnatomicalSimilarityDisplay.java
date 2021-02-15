@@ -59,7 +59,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
         this.displayAnatSimilarityPage(allSpecies, null, null, null, null);
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -70,7 +70,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
         this.displayAnatSimilarityPage(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
         
-        log.exit();
+        log.traceExit();
     }
 
     private void displayAnatSimilarityPage(Set<Species> allSpecies, List<Integer> userSpeciesList,
@@ -101,7 +101,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
     
     private String getForm(Set<Species> allSpecies, List<Integer> userSpeciesIds,
@@ -203,7 +203,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         sb.append("    </div>");
         sb.append("</div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private String getResult(AnatEntitySimilarityAnalysis result, Ontology<Taxon, Integer> taxonOntology) {
@@ -255,7 +255,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
             sb.append("</p>");
         }
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private String getSimilarityRow(AnatEntitySimilarity sim, AnatEntitySimilarityAnalysis result,
@@ -299,7 +299,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         row.append("    </td>");
 
         row.append("</tr>");
-        return log.exit(row.toString());
+        return log.traceExit(row.toString());
     }
 
     /**
@@ -329,7 +329,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
                 "}");
 
         this.writeln("</script>");
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -349,7 +349,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -367,6 +367,6 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
             this.includeJs("lib/jquery_plugins/vendor_anat_sim.js");
             this.includeJs("script_anat_sim.js");
         }
-        log.exit();
+        log.traceExit();
     }
 }

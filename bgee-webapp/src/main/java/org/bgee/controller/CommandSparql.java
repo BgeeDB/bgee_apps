@@ -58,6 +58,6 @@ public class CommandSparql extends CommandParent {
                     " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

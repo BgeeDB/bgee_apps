@@ -46,7 +46,7 @@ public abstract class DAODataFilter<T extends DAOBaseConditionFilter> {
         this.conditionFilters = conditionFilters == null? new LinkedHashSet<>(): 
             new LinkedHashSet<>(conditionFilters);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**

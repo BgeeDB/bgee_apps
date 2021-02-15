@@ -82,7 +82,7 @@ public class CommandDownload extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -100,7 +100,7 @@ public class CommandDownload extends CommandParent {
             throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
                     + "to obtain any SpeciesDataGroup."));
         }
-        return log.exit(groups);
+        return log.traceExit(groups);
     }
     
     /**
@@ -134,6 +134,6 @@ public class CommandDownload extends CommandParent {
                     return newVals;
                 }));
 
-        return log.exit(speciesToTerms);
+        return log.traceExit(speciesToTerms);
     }
 }

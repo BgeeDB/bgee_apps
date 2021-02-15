@@ -436,7 +436,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
         .thenReturn(anatOnt);
 
-        log.exit();
+        log.traceExit();
     }
     /**
      * Unit test for method {@link AnatEntitySimilarityService#loadPositiveAnatEntitySimilarities(

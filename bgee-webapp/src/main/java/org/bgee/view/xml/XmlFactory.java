@@ -29,7 +29,7 @@ public class XmlFactory extends ViewFactory {
 	@Override
 	public DownloadDisplay getDownloadDisplay() {
 	    log.entry();
-		return log.exit(null);
+		return log.traceExit((DownloadDisplay) null);
 	}
 
     @Override
@@ -40,7 +40,7 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public ErrorDisplay getErrorDisplay() throws IOException {
-        return log.exit(new XmlErrorDisplay(this.response, this.requestParameters, this.prop, this));
+        return log.traceExit(new XmlErrorDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
@@ -96,7 +96,7 @@ public class XmlFactory extends ViewFactory {
 	@Override
 	public SearchDisplay getSearchDisplay() throws IOException {
 	    log.entry();
-		return log.exit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
+		return log.traceExit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 
 	@Override

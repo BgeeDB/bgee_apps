@@ -70,7 +70,7 @@ public class ExpressionLevelInfo {
         } else {
             throw log.throwing(new IllegalStateException("No formatter could be defined"));
         }
-        return log.exit(formatter);
+        return log.traceExit(formatter);
     }
     /**
      * @param number    The {@code BigDecimal} to format.
@@ -81,7 +81,7 @@ public class ExpressionLevelInfo {
     private static final String formatExpressionNumber(BigDecimal number) {
         log.entry(number);
         if (number == null) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
         BigDecimal threshold = new BigDecimal("0.01");
         BigDecimal numberToFormat = number;
@@ -105,7 +105,7 @@ public class ExpressionLevelInfo {
             formatter = FORMAT100;
         }
         //1E2 to 1e2
-        return log.exit(formatter.format(numberToFormat).toLowerCase(Locale.ENGLISH));
+        return log.traceExit(formatter.format(numberToFormat).toLowerCase(Locale.ENGLISH));
     }
 
     private final BigDecimal rank;
@@ -165,7 +165,7 @@ public class ExpressionLevelInfo {
      */
     public String getFormattedRank() {
         log.entry();
-        return log.exit(formatExpressionNumber(this.rank));
+        return log.traceExit(formatExpressionNumber(this.rank));
     }
     /**
      * @return  The {@code BigDecimal} corresponding to the expression score,
@@ -194,7 +194,7 @@ public class ExpressionLevelInfo {
      */
     public String getFormattedExpressionScore() {
         log.entry();
-        return log.exit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
+        return log.traceExit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
     }
     /**
      * @return  The {@code BigDecimal} corresponding to the max expression rank,

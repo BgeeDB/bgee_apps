@@ -699,7 +699,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         if(isObservedDataOnly) {
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         }
-        return log.exit(serviceOrdering);
+        return log.traceExit(serviceOrdering);
     }
     
     private Set<Attribute> getAttributes(Boolean isObservedDataOnly) {
@@ -714,7 +714,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         if(isObservedDataOnly) {
             attrs.add(Attribute.DEV_STAGE_ID);
         }
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
 
     private ExpressionCallFilter getCallFilter(Set<GeneFilter> geneFilters) {
@@ -729,7 +729,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         
         ExpressionCallFilter callFilter = 
                 new ExpressionCallFilter(summaryQuality, geneFilters, null, null, obsDataFilter, null, null);
-        return log.exit(callFilter);
+        return log.traceExit(callFilter);
     }
 
     /** 

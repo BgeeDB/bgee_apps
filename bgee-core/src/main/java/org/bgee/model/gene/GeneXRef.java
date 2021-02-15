@@ -51,7 +51,7 @@ public class GeneXRef extends XRef {
 
         String xRefUrl = super.getXRefUrl(convertAmpersandToHTMLEntity, urlEncode);
         if (xRefUrl == null) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
         if (xRefUrl.contains(Source.SPECIES_SCIENTIFIC_NAME_TAG)) {
             xRefUrl = xRefUrl.replace(Source.SPECIES_SCIENTIFIC_NAME_TAG,
@@ -60,7 +60,7 @@ public class GeneXRef extends XRef {
         if (xRefUrl.contains(Source.GENE_TAG)) {
             xRefUrl = xRefUrl.replace(Source.GENE_TAG, urlEncode.apply(this.publicGeneId));
         }
-        return log.exit(xRefUrl);
+        return log.traceExit(xRefUrl);
     }
 
     @Override

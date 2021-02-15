@@ -119,7 +119,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              */
             public static final LibraryType convertToNormalizationType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(LibraryType.class, representation));
+                return log.traceExit(TransferObject.convert(LibraryType.class, representation));
             }
 
             @Override
@@ -166,7 +166,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              */
             public static final LibraryOrientation convertToNormalizationType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(LibraryOrientation.class, representation));
+                return log.traceExit(TransferObject.convert(LibraryOrientation.class, representation));
             }
 
             @Override

@@ -127,7 +127,7 @@ public class InsertUberon extends MySQLDAOUser {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     
@@ -268,7 +268,7 @@ public class InsertUberon extends MySQLDAOUser {
             this.closeDAO();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -423,7 +423,7 @@ public class InsertUberon extends MySQLDAOUser {
 
         log.info("Done generating AnatomicalEntityTOs and related taxon constraints., {} TOs generated", 
                 this.anatEntityTOs.size());
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -476,7 +476,7 @@ public class InsertUberon extends MySQLDAOUser {
 
         log.info("Done generating RelationTOs and related taxon constraints, {} relations generated, {} taxon constraints", 
                 this.anatRelationTOs.size(), this.anatRelTaxonConstraintTOs.size());
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -566,7 +566,7 @@ public class InsertUberon extends MySQLDAOUser {
         }
         log.info("Done generating RelationTOs (first pass).");
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -616,6 +616,6 @@ public class InsertUberon extends MySQLDAOUser {
             this.anatRelTaxonConstraintTOs.addAll(relsToTCsEntry.getValue());
         }
         log.info("Done generating proper RelationTOs (second pass).");
-        log.exit();
+        log.traceExit();
     }
 }

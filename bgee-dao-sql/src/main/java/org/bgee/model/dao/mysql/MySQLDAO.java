@@ -67,11 +67,11 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         log.entry(state);
         switch(state) {
         case NODATA: 
-            return log.exit(1);
+            return log.traceExit(1);
         case LOWQUALITY: 
-            return log.exit(2);
+            return log.traceExit(2);
         case HIGHQUALITY: 
-            return log.exit(3);
+            return log.traceExit(3);
         default: 
             throw log.throwing(new IllegalStateException("DataState not supported: " + state));
         }
@@ -118,7 +118,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         if (attributes != null) {
             this.attributes.addAll(attributes);
         }
-        log.exit();
+        log.traceExit();
     }
     /*
      * (non-Javadoc)
@@ -137,20 +137,20 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
             newAttributes.add(attributes[i]);
         }
         this.setAttributes(newAttributes);
-        log.exit();
+        log.traceExit();
     }
     @Override
     @Deprecated
     public void clearAttributes() {
         log.entry();
         this.attributes.clear();
-        log.exit();
+        log.traceExit();
     }
     @Override
     @Deprecated
     public Set<T> getAttributes() {
         log.entry();
-        return log.exit(new HashSet<T>(attributes));
+        return log.traceExit(new HashSet<T>(attributes));
     }
     
     
@@ -194,7 +194,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         if (attribute == null) {
             throw log.throwing(new UnrecognizedColumnException(colName));
         } 
-        return log.exit(attribute);
+        return log.traceExit(attribute);
     }
     /**
      * Get the 'select_expr' of a SELECT clause corresponding to the {@code Attribute} {@code attr}.
@@ -234,7 +234,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
             throw log.throwing(new IllegalArgumentException(
                     "Attribute not mapped to any valid 'select_expr': " + attr));
         } 
-        return log.exit(selectExpr);
+        return log.traceExit(selectExpr);
     }
     /**
      * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s 
@@ -262,7 +262,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     protected String generateSelectClause(String tableName, Map<String, T> selectExprsToAttributes, 
             boolean distinct) throws IllegalArgumentException {
         log.entry(tableName, selectExprsToAttributes, distinct);
-        return log.exit(generateSelectClause(tableName, selectExprsToAttributes, distinct, 
+        return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes, distinct, 
                 this.getAttributes()));
     }
     /**
@@ -318,7 +318,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
             sb.append(" ");
         }
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -338,7 +338,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(tableName, columnToAttributesMap, distinct));
         sb.append(" FROM " + tableName);
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
 
@@ -356,7 +356,7 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     protected static String getAllSpeciesExistsClause(String existsPart, int speciesCount) {
         log.entry(existsPart, speciesCount);
         
-        return log.exit("(EXISTS(" + existsPart + " IS NULL) OR (" 
+        return log.traceExit("(EXISTS(" + existsPart + " IS NULL) OR (" 
                 + IntStream.range(0, speciesCount)
                         .mapToObj(i -> "EXISTS(" + existsPart + " = ?)")
                         .collect(Collectors.joining(" AND "))

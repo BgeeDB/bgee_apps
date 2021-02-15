@@ -194,10 +194,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static String htmlEntities(String stringToWrite) {
         log.entry(stringToWrite);
         try {
-            return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
+            return log.traceExit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
         } catch (Exception e) {
             log.catching(e);
-            return log.exit("");
+            return log.traceExit("");
         }
     }
 
@@ -209,7 +209,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
      protected static String getHTMLTag(String name, String content) {
          log.entry(name, content);
-         return log.exit(getHTMLTag(name, null, content));
+         return log.traceExit(getHTMLTag(name, null, content));
      }
 
      /**
@@ -220,7 +220,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       */
      protected static String getHTMLTag(String name, Map<String, String> attributes) {
          log.entry(name, attributes);
-         return log.exit(getHTMLTag(name, attributes, null));
+         return log.traceExit(getHTMLTag(name, attributes, null));
      }
 
      /**
@@ -248,7 +248,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
          if (!name.equals("img")) {
              sb.append("</").append(name).append(">");
          }
-         return log.exit(sb.toString());
+         return log.traceExit(sb.toString());
      }
 
      /**
@@ -283,7 +283,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         feature.append("</div>");
 
-        return log.exit(feature.toString());
+        return log.traceExit(feature.toString());
     }
 
     /**
@@ -345,14 +345,14 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     @Override
     protected String getContentType() {
         log.entry();
-        return log.exit("text/html");
+        return log.traceExit("text/html");
     }
 
     public void emptyDisplay() {
         log.entry();
         this.sendHeaders();
         this.writeln("");
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -364,10 +364,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String urlEncode(String stringToWrite) {
         log.entry(stringToWrite);
         try {
-            return log.exit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
+            return log.traceExit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
         } catch (Exception e) {
             log.catching(e);
-            return log.exit("");
+            return log.traceExit("");
         }
     }
 
@@ -379,7 +379,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void startDisplay(String title) {
         log.entry(title);
         this.startDisplay(title, null);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -392,7 +392,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected void startDisplay(String title, String typeOfSchemaPage) {
         log.entry(title, typeOfSchemaPage);
         this.startDisplay(title, typeOfSchemaPage, null);
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -462,7 +462,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -514,7 +514,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         this.writeln("</body>");
         this.writeln("</html>");
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -766,7 +766,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         navbar.append("</nav>"); // close navbar navbar-default
 
         this.writeln(navbar.toString());
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -782,7 +782,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             "</div>");
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -808,7 +808,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.writeln("</div>");
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -863,7 +863,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
 
-        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(
+        return log.traceExit(HtmlParentDisplay.getSingleFeatureLogo(
                 urlDocumentationGenerator.getRequestURL(), false,
                 "Bgee documentation page", "Documentation",
                 this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "doc_logo.png", null));
@@ -881,7 +881,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
 //        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
 //
-//        return log.exit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(),
+//        return log.traceExit(HtmlParentDisplay.getSingleFeatureLogo(urlDownloadGenerator.getRequestURL(),
 //                "Bgee expression data page", "Expression data",
 //                this.prop.getLogoImagesRootDirectory() + "download_logo.png",
 //                "Calls of baseline presence/absence of expression, "
@@ -922,7 +922,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 "Annotations and processed expression data (e.g., read counts, TPM and "
                 + "RPKM values, Affymetrix probeset signal intensities)."));
 
-        return log.exit(logos.toString());
+        return log.traceExit(logos.toString());
     }
 
     /**
@@ -958,7 +958,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             this.includeJs("vendor_common.js");
             this.includeJs("script_common.js");
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write the HTML code allowing to include the javascript file named {@code fileName}.
@@ -976,7 +976,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<script src='" +
                 this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() +
                 this.getVersionedJsFileName(fileName) + "'></script>");
-        log.exit();
+        log.traceExit();
     }
     /**
      * Transform the name of a javascript file into a name including version information,
@@ -1007,9 +1007,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         //return original name.
         if (StringUtils.isBlank(this.prop.getJavascriptVersionExtension()) ||
                 !this.prop.isMinify()) {
-            return log.exit(originalFileName);
+            return log.traceExit(originalFileName);
         }
-        return log.exit(originalFileName.replaceAll("(.+?)\\.js",
+        return log.traceExit(originalFileName.replaceAll("(.+?)\\.js",
                 "$1." + this.prop.getJavascriptVersionExtension() + ".js"));
     }
 
@@ -1063,7 +1063,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<link rel='stylesheet' type='text/css' href='"
                 + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory()
                 + this.getVersionedCssFileName(fileName) + "'/>");
-        log.exit();
+        log.traceExit();
     }
     /**
      * Transform the name of a CSS file into a name including version information,
@@ -1094,9 +1094,9 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         //return original name.
         if (StringUtils.isBlank(this.prop.getCssVersionExtension()) ||
                 !this.prop.isMinify()) {
-            return log.exit(originalFileName);
+            return log.traceExit(originalFileName);
         }
-        return log.exit(originalFileName.replaceAll("(.+?)\\.css",
+        return log.traceExit(originalFileName.replaceAll("(.+?)\\.css",
                 "$1." + this.prop.getCssVersionExtension() + ".css"));
     }
 
@@ -1112,7 +1112,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected RequestParameters getNewRequestParameters() {
         log.entry();
-        return log.exit(new RequestParameters(
+        return log.traceExit(new RequestParameters(
                 this.getRequestParameters().getUrlParametersInstance(),
                 this.prop, true, "&amp;"));
     }
@@ -1191,7 +1191,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         //        sources.append("<p><i>Tetraodon nigroviridis</i> picture by Starseed (Own work) [<a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0/de/deed.en'>CC-BY-SA-3.0-de</a> or <a target='_blank' rel='noopener' href='" + creativeCommons + "/licenses/by-sa/3.0'>CC-BY-SA-3.0</a>], <a target='_blank' rel='noopener' href='" + commonsWikipedia + "/File%3ATetraodon_nigroviridis_1.jpg'>See <i>T. nigroviridis</i> picture via Wikimedia Commons</a></p>");
         sources.append("</div>");
 
-        return log.exit(sources.toString());
+        return log.traceExit(sources.toString());
     }
 
     /**
@@ -1213,7 +1213,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         }
         src.append("_light.jpg");
 
-        return log.exit(src.toString());
+        return log.traceExit(src.toString());
     }
 
     /**
@@ -1229,7 +1229,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 version += "." + this.prop.getMinorVersion();
             }
         }
-        return log.exit(version);
+        return log.traceExit(version);
     }
 
     /**
@@ -1243,7 +1243,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided anat. entity should be not null"));
         }
 
-        return log.exit("<a target='_blank' rel='noopener' href='" + UBERON_ID_URL +
+        return log.traceExit("<a target='_blank' rel='noopener' href='" + UBERON_ID_URL +
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
                 "</a>");
     }
@@ -1258,7 +1258,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException("The provided taxon should be not null"));
         }
         
-        return log.exit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId() 
+        return log.traceExit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId() 
                 + "'>" + htmlEntities(taxon.getScientificName()) +
                 "</a>");
     }
@@ -1266,7 +1266,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected String getSchemaMarkupGraph(List<String> properties) {
         log.entry(properties);
 
-        return log.exit(
+        return log.traceExit(
                 "<script type='application/ld+json'>" +
                 "    {" +
                 "        \"@context\": \"https://schema.org\"," +
@@ -1285,7 +1285,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected String getCompleteSpeciesNameLink(Species species, boolean hasSchemaTag) {
         log.entry(species, hasSchemaTag);
-        return log.exit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>"
+        return log.traceExit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>"
                 + getCompleteSpeciesName(species, hasSchemaTag) + "</a>");
     }
 
@@ -1302,7 +1302,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         speciesPage.setPage(RequestParameters.PAGE_SPECIES);
         speciesPage.setSpeciesId(speciesId);
 
-        return log.exit(speciesPage.getRequestURL());
+        return log.traceExit(speciesPage.getRequestURL());
     }
     /**
      * Return the {@code String} representing the species scientific and common names.
@@ -1315,7 +1315,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static String getCompleteSpeciesName(Species species, boolean hasSchemaTag) {
         log.entry(species, hasSchemaTag);
         String schemaTag = hasSchemaTag? "property='bs:name'": "";
-        return log.exit("<em " + schemaTag + ">" + htmlEntities(species.getScientificName()) + "</em>"
+        return log.traceExit("<em " + schemaTag + ">" + htmlEntities(species.getScientificName()) + "</em>"
                 + (StringUtils.isNotBlank(species.getName()) ? " (" + htmlEntities(species.getName()) + ")" : ""));
     }
 
@@ -1344,7 +1344,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 throw log.throwing(new IllegalArgumentException(
                         "CategoryEnum not supported: " + category));
         }
-        return log.exit(getSpeciesPageUrl(speciesId) + "#" + hash);
+        return log.traceExit(getSpeciesPageUrl(speciesId) + "#" + hash);
     }
 
     /**
@@ -1360,11 +1360,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum can not be null " + category));
         } else if (category == DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE) {
-            return log.exit("expr-calls "+speciesId);
+            return log.traceExit("expr-calls "+speciesId);
         } else if (category == DownloadFile.CategoryEnum.AFFY_DATA) {
-            return log.exit("proc-values-affymetrix "+speciesId);
+            return log.traceExit("proc-values-affymetrix "+speciesId);
         } else if (category == DownloadFile.CategoryEnum.RNASEQ_DATA) {
-            return log.exit("proc-values-rna-seq "+speciesId);
+            return log.traceExit("proc-values-rna-seq "+speciesId);
         } else {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum not supported: " + category));
@@ -1384,11 +1384,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum can not be null " + category));
         } else if (category == DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE) {
-            return log.exit("Expression calls generated by Bgee for the species "+speciesId);
+            return log.traceExit("Expression calls generated by Bgee for the species "+speciesId);
         } else if (category == DownloadFile.CategoryEnum.AFFY_DATA) {
-            return log.exit("Affymetrix expression values processed for the species "+speciesId);
+            return log.traceExit("Affymetrix expression values processed for the species "+speciesId);
         } else if (category == DownloadFile.CategoryEnum.RNASEQ_DATA) {
-            return log.exit("RNA-Seq expression values processed for the species "+speciesId);
+            return log.traceExit("RNA-Seq expression values processed for the species "+speciesId);
         } else {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum not supported: " + category));

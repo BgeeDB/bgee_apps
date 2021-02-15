@@ -52,21 +52,21 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
     public SourceTOResultSet getAllDataSources(Collection<SourceDAO.Attribute> attributes) 
             throws DAOException {
         log.entry(attributes);
-        return log.exit(this.getDataSources(null, false, attributes));
+        return log.traceExit(this.getDataSources(null, false, attributes));
     }
 
     @Override
     public SourceTOResultSet getDisplayableDataSources(Collection<SourceDAO.Attribute> attributes) 
             throws DAOException {
         log.entry(attributes);
-        return log.exit(this.getDataSources(null, true, attributes));
+        return log.traceExit(this.getDataSources(null, true, attributes));
     }
 
     @Override
     public SourceTOResultSet getDataSourceByIds(Collection<Integer> dataSourceIds,
             Collection<SourceDAO.Attribute> attributes) throws DAOException, IllegalStateException {
         log.entry(dataSourceIds, attributes);
-        return log.exit(this.getDataSources(dataSourceIds, false, attributes));
+        return log.traceExit(this.getDataSources(dataSourceIds, false, attributes));
     }
     
     /**
@@ -126,7 +126,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
                 sql += sourceTableName + "." + label;
             }
         }
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
 
     /** 
@@ -187,7 +187,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
                 stmt.setBoolean(offsetParamIndex, displayableOnly);
             }
 
-            return log.exit(new MySQLSourceTOResultSet(stmt));
+            return log.traceExit(new MySQLSourceTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -271,7 +271,7 @@ public class MySQLSourceDAO extends MySQLDAO<SourceDAO.Attribute> implements Sou
                 }
 
             }
-            return log.exit(new SourceTO(sourceId, sourceName, sourceDescription, xRefUrl, experimentUrl,
+            return log.traceExit(new SourceTO(sourceId, sourceName, sourceDescription, xRefUrl, experimentUrl,
                     evidenceUrl, baseUrl, releaseDate, releaseVersion, toDisplay, category, displayOrder));
         }
     }

@@ -63,7 +63,7 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
             throw log.throwing(new IllegalArgumentException("No filters provided"));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**

@@ -81,7 +81,7 @@ public class ViewFactoryProvider {
         } else if (requestParameters.isTsvDisplayType()) {
             displayType = DisplayType.TSV;
         }
-        return log.exit(getFactory(response, displayType, requestParameters));
+        return log.traceExit(getFactory(response, displayType, requestParameters));
     }
 
     /**
@@ -116,6 +116,6 @@ public class ViewFactoryProvider {
         if (displayType == DisplayType.TSV) {
             return new CsvFactory(response, requestParameters, this.prop, Delimiter.TAB);
         }
-        return log.exit(new HtmlFactory(response, requestParameters, this.prop));
+        return log.traceExit(new HtmlFactory(response, requestParameters, this.prop));
     }
 }

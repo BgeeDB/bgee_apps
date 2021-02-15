@@ -61,7 +61,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
         try {
-            return log.exit(new MySQLCIOStatementTOResultSet(
+            return log.traceExit(new MySQLCIOStatementTOResultSet(
                     this.getManager().getConnection().prepareStatement(sql)));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -87,7 +87,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
         log.entry(attributes, tableName, distinct);
 
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT " + tableName + ".* ");
+            return log.traceExit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -121,7 +121,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
                             CIOStatementDAO.class.getName()));
                 }
             }
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
 
     @Override
@@ -161,7 +161,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(stmtInsertedCount);        
+        return log.traceExit(stmtInsertedCount);        
     }
     
     /**
@@ -256,7 +256,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new CIOStatementTO(id, name, description, trusted, 
+            return log.traceExit(new CIOStatementTO(id, name, description, trusted, 
                     confidenceLevel, evidenceConcordance, evidenceTypeConcordance));
         }
     }

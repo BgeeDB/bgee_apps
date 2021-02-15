@@ -86,7 +86,7 @@ implements Comparable<NestedSetModelEntity<T>> {
     @Override
     public int compareTo(NestedSetModelEntity<T> entity) {
         log.entry(entity);
-        return log.exit(nestedSetModelComparator.compare(this, entity));
+        return log.traceExit(nestedSetModelComparator.compare(this, entity));
     }
 
     @Override

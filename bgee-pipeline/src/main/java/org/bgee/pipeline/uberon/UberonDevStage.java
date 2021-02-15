@@ -153,7 +153,7 @@ public class UberonDevStage extends UberonCommon {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -364,7 +364,7 @@ public class UberonDevStage extends UberonCommon {
         this.getOntologyUtils().saveAsOWL(this.getModifiedOntPath() + ".owl");
         this.getOntologyUtils().saveAsOBO(this.getModifiedOntPath() + ".obo", false);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -487,7 +487,7 @@ public class UberonDevStage extends UberonCommon {
         
         this.getOntologyUtils().removeOBOProblematicAxioms();
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -549,7 +549,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -579,7 +579,7 @@ public class UberonDevStage extends UberonCommon {
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
             throws IllegalStateException {
         log.entry(root, this.getTaxonConstraints());
-        return log.exit(this.generateStageNestedSetModel(root, null));
+        return log.traceExit(this.generateStageNestedSetModel(root, null));
     }
     /**
      * Compute a nested set model from a developmental stage ontology. The stage ontology 
@@ -619,7 +619,7 @@ public class UberonDevStage extends UberonCommon {
         Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(nestedSetModelKey);
         if (nestedSetModel != null) {
             log.trace("Retrieving nested set model from cache of class {}", root);
-            return log.exit(nestedSetModel);
+            return log.traceExit(nestedSetModel);
         }
         //then check if we have a nested set model in cache for one of its ancestor
         for (OWLObject ancestor: this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(
@@ -632,7 +632,7 @@ public class UberonDevStage extends UberonCommon {
             Map<OWLClass, Map<String, Integer>> cache = this.nestedSetModels.get(ancNestedSetModelKey);
             if (cache != null) {
                 log.trace("Retrieving nested set model from cache of class {}", ancestor);
-                return log.exit(cache);
+                return log.traceExit(cache);
             }
         }
         
@@ -760,7 +760,7 @@ public class UberonDevStage extends UberonCommon {
                 globalOrdering, this.overPartOf);
         this.nestedSetModels.put(nestedSetModelKey, nestedSetModel);
         
-        return log.exit(nestedSetModel);
+        return log.traceExit(nestedSetModel);
     }
     
     /**
@@ -773,7 +773,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId) {
         log.entry(startStageId, endStageId);
-        return log.exit(this.getStageIdsBetween(startStageId, endStageId, 0));
+        return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, 0));
     }
     
     /**
@@ -791,7 +791,7 @@ public class UberonDevStage extends UberonCommon {
     public List<String> getStageIdsBetween(String startStageId, String endStageId, 
             int speciesId) {
         log.entry(startStageId, endStageId, speciesId);
-        return log.exit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
+        return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
     }
     
     /**
@@ -963,7 +963,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        return log.exit(stageIdsBetween);
+        return log.traceExit(stageIdsBetween);
     }
     
     /**
@@ -1156,7 +1156,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        return log.exit(orderedClasses);
+        return log.traceExit(orderedClasses);
     }
     
     /**
@@ -1236,7 +1236,7 @@ public class UberonDevStage extends UberonCommon {
             }
             directEdgesAlreadyTried = true;
         }
-        return log.exit(lastClass);
+        return log.traceExit(lastClass);
     }
     
     /**
@@ -1267,7 +1267,7 @@ public class UberonDevStage extends UberonCommon {
                 }
             }
         }
-        return log.exit(matches);
+        return log.traceExit(matches);
     }
 
     /**

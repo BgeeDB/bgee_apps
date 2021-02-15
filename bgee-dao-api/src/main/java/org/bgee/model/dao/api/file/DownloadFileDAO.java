@@ -143,7 +143,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
              */
             public static CategoryEnum convertToCategoryEnum(String stringRepresentation){
                 log.entry(stringRepresentation);
-                return log.exit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
+                return log.traceExit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
 
             @Override

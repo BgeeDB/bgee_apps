@@ -48,7 +48,7 @@ public class TaxonService extends Service {
      */
     public Stream<Taxon> loadTaxa(Collection<Integer> taxonIds, boolean lca) {
         log.entry(taxonIds);
-        return log.exit(this.getDaoManager().getTaxonDAO()
+        return log.traceExit(this.getDaoManager().getTaxonDAO()
                 .getTaxa(taxonIds, lca, null).stream()
                 .map(TaxonService::mapFromTO));
     }
@@ -67,7 +67,7 @@ public class TaxonService extends Service {
      */
     public Taxon loadLeastCommonAncestor(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(mapFromTO(this.getDaoManager().getTaxonDAO()
+        return log.traceExit(mapFromTO(this.getDaoManager().getTaxonDAO()
                 .getLeastCommonAncestor(speciesIds, null)));
     }
 
@@ -79,7 +79,7 @@ public class TaxonService extends Service {
      */
     private static Taxon mapFromTO(TaxonTO taxonTO) {
         log.entry(taxonTO);
-        return log.exit(new Taxon(taxonTO.getId(), taxonTO.getName(), taxonTO.getDescription(),
+        return log.traceExit(new Taxon(taxonTO.getId(), taxonTO.getName(), taxonTO.getDescription(),
                 taxonTO.getScientificName(), taxonTO.getLevel(), taxonTO.isLca()));
     }
 }

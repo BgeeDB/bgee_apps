@@ -35,7 +35,7 @@ import org.bgee.model.dao.mysql.ontologycommon.MySQLRelationDAO.MySQLRelationTOR
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.mysql.jdbc.ResultSetMetaData;
+import java.sql.ResultSetMetaData;
 
 public class MySQLDAOResultSetTest extends TestAncestor {
 	

@@ -4,13 +4,17 @@ import java.io.FileNotFoundException;
 import java.nio.file.Paths;
 import java.util.Set;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 
-import com.github.rcaller.rStuff.RCaller;
-import com.github.rcaller.rStuff.RCode;
+import com.github.rcaller.rstuff.RCaller;
+import com.github.rcaller.rstuff.RCode;
+import com.github.rcaller.util.Globals;
 
 /**
  * TODO comment me.
@@ -49,7 +53,13 @@ public class TopAnatRManager {
      * @param topAnatParams
      */
     public TopAnatRManager(BgeeProperties props, TopAnatParams topAnatParams){
-        this(new RCaller(), new RCode(), props, topAnatParams);
+        log.entry(props, topAnatParams);
+        Globals.setRscriptCurrent(props.getTopAnatRScriptExecutable());
+        this.caller = RCaller.create();
+        this.code = RCode.create();
+        this.props = props;
+        this.params = topAnatParams;
+        log.exit();
     }
 
     /**
@@ -67,7 +77,6 @@ public class TopAnatRManager {
         this.props = props;
         this.params = params;
         log.exit();
-
     }
 
     protected String generateRCode(String resultFilePath, 
@@ -77,8 +86,6 @@ public class TopAnatRManager {
             Set<String> foregroundIds) {
         log.entry(resultFilePath, resultFileName, resultPdfFileName, anatEntitiesNamesFileName, 
                 anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
-
-        caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
         
         String bioconductorRelease = this.props.getBioconductorReleaseNumber();
 
@@ -247,7 +254,7 @@ public class TopAnatRManager {
     protected void performRFunction(String consoleFileName) throws FileNotFoundException {
 
         log.info("Running statistical tests in R...");
-        if(this.code.toString().equals(new RCode().toString())){
+        if(this.code.toString().equals(RCode.create().toString())){
             throw new IllegalStateException("The R code was not set before the analysis");
         }
         caller.redirectROutputToFile(consoleFileName, true);

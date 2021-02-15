@@ -479,15 +479,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("</div>"); // end other info
         
         // Orthologs info
-        if(!( geneHomologs.getOrthologsByTaxon()== null || 
-                geneHomologs.getOrthologsByTaxon().isEmpty())) {
+        if(geneHomologs.getOrthologsByTaxon() != null &&
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
             this.writeln("<a id='orthologs' class='inactiveLink'><h2>Orthologs</h2></a>");
             this.writeln("<div id='orthologs_data' class='row'>");
             //table-container
             this.writeln("<div class='col-xs-12 col-md-12'>");
             this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(gene,geneHomologs.getOrthologsByTaxon(), true));
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getOrthologsByTaxon(), true));
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             
@@ -500,16 +500,16 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end orthologs_data 
         }
         
-     // Paralogs info
-        if(!(geneHomologs.getParalogsByTaxon() == null || 
-                geneHomologs.getParalogsByTaxon().isEmpty())) {
+        // Paralogs info
+        if(geneHomologs.getParalogsByTaxon() != null &&
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
             this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs (same species)</h2></a>");
             this.writeln("<div id='paralogs_data' class='row'>");
             //table-container
             this.writeln("<div class='col-xs-12 col-md-12'>");
             this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(gene,geneHomologs.getParalogsByTaxon(), false));
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getParalogsByTaxon(), false));
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             
@@ -778,12 +778,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /** Generates the HTML code displaying information about homologous genes.
     * 
     * @param gene               A {@code Gene} containing all homology informations
-    * @param speciesByTaxon     A {@code Map} where keys are {@code Taxon}s, 
+    * @param speciesByTaxon     A {@code LinkedHashMap} where keys are {@code Taxon}s, 
     *                           the associated value being the {@code Set} of {@code Species}
-    *                           descendant of the taxon in Bgee
+    *                           descendant of the taxon in Bgee. Ordered from more recent taxon
+    *                           to older taxon.
     * @param orthologs          A {@code boolean} used to define if orthologs or paralogs have to be 
-    *                           displayed. If true orthologs will be displayed. If false, paralogs
-    *                           will be displayed
+    *                           displayed. If {@code true}, orthologs will be displayed.
+    *                           If {@code false}, paralogs will be displayed
     * @return                   A {@code String} that is the generated HTML.
     */
     private String getHomologyHTMLByTaxon(Gene gene, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon, 
@@ -817,20 +818,23 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         StringBuilder sbRow = new StringBuilder();
         
         // all homologs of one taxon
+        // We will display to each taxon level all genes from more recent taxon
+        Set<Gene> allGenes = new HashSet<>();
         for(Entry<Taxon,Set<Gene>> homologsOneTaxon: homologsByTaxon.entrySet()) {
             sbRow.append("<tr>");
             Taxon currentTaxon= homologsOneTaxon.getKey();
+            allGenes.addAll(homologsOneTaxon.getValue());
             
             // sort genes by Id and group then by species Id in order to add a line as species 
             // separator
-            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = homologsOneTaxon
-                    .getValue().stream().sorted(GENE_HOMOLOGY_COMPARATOR)
+            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = allGenes.stream()
+                    .sorted(GENE_HOMOLOGY_COMPARATOR)
                     .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), LinkedHashMap::new,
                             Collectors.mapping(g -> g, Collectors.toList())));
             
             //taxon Info
             sbRow.append("<td>")
-                .append(getTaxonUrl(currentTaxon, currentTaxon.getScientificName()))
+                .append(getTaxonUrl(currentTaxon))
                 .append("</td>");
             
             
@@ -939,7 +943,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         // add orthologs and paralogs number
         if (geneHomologs.getOrthologsByTaxon() != null && 
-                geneHomologs.getOrthologsByTaxon().size() > 0) {
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
             table.append("<tr><th scope='row'>Orthologs(s)</th><td>")
                 .append("<a href='#orthologs' title='orthologs details'>")
                 .append(geneHomologs.getOrthologsByTaxon().entrySet().stream()
@@ -948,7 +952,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             table.append("</td></tr>");
         }
         if (geneHomologs.getParalogsByTaxon() != null && 
-                geneHomologs.getParalogsByTaxon().size() > 0) {
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
             table.append("<tr><th scope='row'>Paralog(s)</th><td>")
                     .append("<a href='#paralogs' title='paralogs details'>")
                     .append(geneHomologs.getParalogsByTaxon().entrySet().stream()

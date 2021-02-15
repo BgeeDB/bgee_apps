@@ -1,7 +1,10 @@
 package org.bgee.model.gene;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,46 +18,112 @@ import org.bgee.model.species.Taxon;
  * 
  * 
  * @author Julien Wollbrett
- * @version Bgee 15 Oct. 2020
- * @since Bgee 15 Sep. 2020
+ * @version Bgee 14.2 Feb. 2021
+ * @since Bgee 14.2 Feb. 2021
  * @see Gene 
  */
 public class GeneHomologs {
     
     private final static Logger log = LogManager.getLogger(GeneHomologs.class.getName());
-    
+
+    /**
+     * Merge the orthologs and paralogs {@code Map}s of two {@code GeneHomologs} related to a same
+     * target {@code Gene}. The {@code Map}s are re-ordered appropriatly based on the taxonomic level.
+     *
+     * @param gh1   First {@code GeneHomologs} to merge
+     * @param gh2   Second {@code GeneHomologs} to merge
+     * @return      The resulting merged {@code GeneHomologs}
+     * @throws IllegalArgumentException If the two {@code GeneHomologs} do not have the same
+     *                                  target {@code Gene}.
+     */
+    public static GeneHomologs mergeGeneHomologs(GeneHomologs gh1, GeneHomologs gh2)
+            throws IllegalArgumentException {
+        log.entry(gh1, gh2);
+        if (!gh1.getGene().equals(gh2.getGene())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Cannot merge GeneHomologs for different genes"));
+        }
+        LinkedHashMap<Taxon, Set<Gene>> orthologs = new LinkedHashMap<>(gh1.getOrthologsByTaxon());
+        for (Entry<Taxon, Set<Gene>> taxonOrthologs2: gh2.getOrthologsByTaxon().entrySet()) {
+            orthologs.merge(taxonOrthologs2.getKey(), taxonOrthologs2.getValue(),
+                    (v1, v2) -> {v1.addAll(v2); return v1;});
+        }
+        orthologs = GeneHomologsService.sortMapByTaxon(orthologs);
+
+        LinkedHashMap<Taxon, Set<Gene>> paralogs = new LinkedHashMap<>(gh1.getParalogsByTaxon());
+        for (Entry<Taxon, Set<Gene>> taxonParalogs2: gh2.getParalogsByTaxon().entrySet()) {
+            paralogs.merge(taxonParalogs2.getKey(), taxonParalogs2.getValue(),
+                    (v1, v2) -> {v1.addAll(v2); return v1;});
+        }
+        paralogs = GeneHomologsService.sortMapByTaxon(paralogs);
+
+        return log.exit(new GeneHomologs(gh1.getGene(), orthologs, paralogs));
+    }
+
     private final Gene gene;
     private final LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon;
     private final LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon;
     
     public GeneHomologs(Gene gene, LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon,
             LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon) {
-        log.entry(orthologsByTaxon, paralogsByTaxon);
+        log.entry(gene, orthologsByTaxon, paralogsByTaxon);
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("a gene can not be null"));
         }
 
         this.gene = gene;
-        this.orthologsByTaxon = orthologsByTaxon;
-        this.paralogsByTaxon = paralogsByTaxon;
+        this.orthologsByTaxon = orthologsByTaxon == null? new LinkedHashMap<>():
+            orthologsByTaxon.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(),
+                    e -> new HashSet<>(e.getValue()),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("Collision impossible"));},
+                    LinkedHashMap::new));
+        this.paralogsByTaxon = paralogsByTaxon == null? new LinkedHashMap<>():
+            paralogsByTaxon.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(),
+                    e -> new HashSet<>(e.getValue()),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("Collision impossible"));},
+                    LinkedHashMap::new));
     }
-    
+
+    /**
+     * @return  The {@code Gene} for which orthologs and/or paralogs were requested.
+     */
     public Gene getGene() {
         return gene;
     }
 
+    /**
+     * @return  A {@code LinkedHashMap} where the key is a {@code Taxon}, the associated value
+     *          being a {@code Set} of {@code Gene}s that are the orthologs of the {@code Gene}
+     *          returned by {@link #getGene()} for the associated {@code Taxon}. This {@code Map}
+     *          is ordered from the closest taxon to the oldest taxon, and is a copy
+     *          that can be safely modified.
+     */
     public LinkedHashMap<Taxon, Set<Gene>> getOrthologsByTaxon() {
-        return orthologsByTaxon;
+        //defensive copying, not possible to make an immutable LinkedHashMap in vanilla Java
+        return new LinkedHashMap<>(orthologsByTaxon);
     }
-
+    /**
+     * @return  A {@code LinkedHashMap} where the key is a {@code Taxon}, the associated value
+     *          being a {@code Set} of {@code Gene}s that are the paralogs of the {@code Gene}
+     *          returned by {@link #getGene()} for the associated {@code Taxon}. This {@code Map}
+     *          is ordered from the closest taxon to the oldest taxon, and is a copy
+     *          that can be safely modified.
+     */
     public LinkedHashMap<Taxon, Set<Gene>> getParalogsByTaxon() {
-        return paralogsByTaxon;
+        //defensive copying, not possible to make an immutable LinkedHashMap in vanilla Java
+        return new LinkedHashMap<>(paralogsByTaxon);
     }
 
     @Override
     public String toString() {
-        return "GeneHomolog [gene=" + gene + ", orthologsByTaxon=" + orthologsByTaxon + ", paralogsByTaxon="
-                + paralogsByTaxon + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("GeneHomologs [gene=").append(gene)
+               .append(", orthologsByTaxon=").append(orthologsByTaxon)
+               .append(", paralogsByTaxon=").append(paralogsByTaxon)
+               .append("]");
+        return builder.toString();
     }
 
     @Override

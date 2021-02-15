@@ -1,6 +1,7 @@
 package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,7 +19,13 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 
-
+/**
+ * Implementation of {@code GeneHomologsDAO} for MySQL. 
+ * 
+ * @author  Julien Wollbrett
+ * @version Bgee 14.2, Feb. 2021
+ * @since   Bgee 14.2, Feb. 2021
+ */
 public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> implements GeneHomologsDAO{
     
     public MySQLGeneHomologsDAO(MySQLDAOManager manager) throws IllegalArgumentException {
@@ -48,40 +55,40 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
     static {
         columnToAttributesMap = new HashMap<>();
         columnToAttributesMap.put("bgeeGeneId", GeneHomologsDAO.Attribute.BGEE_GENE_ID);
-        columnToAttributesMap.put("targetGeneId", GeneHomologsDAO.Attribute.TARGET_ENSEMBL_ID);
+        columnToAttributesMap.put("targetGeneId", GeneHomologsDAO.Attribute.TARGET_BGEE_GENE_ID);
         columnToAttributesMap.put("taxonId", GeneHomologsDAO.Attribute.TAXON_ID);
     }
 
     @Override
-    public GeneHomologsTOResultSet getOrthologousGenes(Set<Integer> bgeeGeneIds) {
+    public GeneHomologsTOResultSet getOrthologousGenes(Collection<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
         return log.exit(getOrthologousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
-    public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds) {
+    public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
+            Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds) {
         log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
         return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
                 speciesIds, HomologyType.ORTHOLOGS));
     }
 
     @Override
-    public GeneHomologsTOResultSet getParalogousGenes(Set<Integer> bgeeGeneIds) {
+    public GeneHomologsTOResultSet getParalogousGenes(Collection<Integer> bgeeGeneIds) {
         log.entry(bgeeGeneIds);
         return log.exit(getParalogousGenesAtTaxonLevel(bgeeGeneIds, null, false, null));
     }
 
     @Override
-    public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds) {
+    public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
+            Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds) {
         log.entry(bgeeGeneIds, taxonId, withDescendantTaxon, speciesIds);
         return log.exit(getOneTypeOfHomology(bgeeGeneIds, taxonId, withDescendantTaxon, 
                 speciesIds, HomologyType.PARALOGS));
     }
     
-    private GeneHomologsTOResultSet getOneTypeOfHomology(Set<Integer> bgeeGeneIds, Integer taxonId, 
-            boolean withDescendantTaxon, Set<Integer> speciesIds, HomologyType homologyType) {
+    private GeneHomologsTOResultSet getOneTypeOfHomology(Collection<Integer> bgeeGeneIds, Integer taxonId, 
+            boolean withDescendantTaxon, Collection<Integer> speciesIds, HomologyType homologyType) {
         log.entry(bgeeGeneIds, taxonId, homologyType, speciesIds);
         
      // Filter arguments
@@ -89,17 +96,16 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
                 .map(c -> new HashSet<>(c)).orElse(null);
         Set<Integer> clonedSpeciesIds = Optional.ofNullable(speciesIds)
                 .map(c -> new HashSet<>(c)).orElse(null);
-        Integer clonedTaxonId = taxonId;
-        HomologyType clonedHomologyType = homologyType;
-        if (clonedGeneIds == null || homologyType == null) {
+        if (clonedGeneIds == null || clonedGeneIds.isEmpty() ||
+                clonedGeneIds.stream().anyMatch(g -> g == null) || homologyType == null) {
             throw log.throwing(new IllegalArgumentException(
                     "homologyType and bgeeGeneId can not be null"));
         }
         // the table to query depends of the homologyType
         String tableName;
-        if (clonedHomologyType == HomologyType.ORTHOLOGS) {
+        if (homologyType == HomologyType.ORTHOLOGS) {
             tableName = ORTHOLOGS_TABLE_NAME;
-        } else if (clonedHomologyType == HomologyType.PARALOGS) {
+        } else if (homologyType == HomologyType.PARALOGS) {
             tableName = PARALOGS_TABLE_NAME;
         } else {
             throw log.throwing(new IllegalArgumentException(
@@ -114,7 +120,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
                 + tableName + ".bgeeGeneId as targetGeneId, " + tableName + ".taxonId"
                 + " from " + tableName;
         
-        if (clonedTaxonId != null && withDescendantTaxon) {
+        if (taxonId != null && withDescendantTaxon) {
             String join = " INNER JOIN taxon AS t2 ON t2.taxonId = " + tableName + ".taxonId "
                     + "INNER JOIN taxon AS t3 ON t2.taxonLeftBound >= t3.taxonLeftBound AND "
                     + "t2.taxonRightBound <= t3.taxonRightBound";
@@ -134,7 +140,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
         sqlSecondColumn += " WHERE " + tableName + ".targetGeneId IN ("
                 + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size())
                 + ")";
-        if (clonedTaxonId != null) {
+        if (taxonId != null) {
             String taxonFilter;
             if(withDescendantTaxon) {
                 taxonFilter = " AND t3.taxonId = ?";
@@ -162,8 +168,8 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
             stmt.setIntegers(1, clonedGeneIds, true);
             int offsetParamIndex = clonedGeneIds.size() + 1;
-            if (clonedTaxonId != null) {
-                stmt.setInt(offsetParamIndex, clonedTaxonId);
+            if (taxonId != null) {
+                stmt.setInt(offsetParamIndex, taxonId);
                 offsetParamIndex++;
             }
             if (clonedSpeciesIds != null) {
@@ -173,8 +179,8 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
             //same parameters for union subquery requesting second column
             stmt.setIntegers(offsetParamIndex, clonedGeneIds, true);
             offsetParamIndex += clonedGeneIds.size();
-            if (clonedTaxonId != null) {
-                stmt.setInt(offsetParamIndex, clonedTaxonId);
+            if (taxonId != null) {
+                stmt.setInt(offsetParamIndex, taxonId);
                 offsetParamIndex++;
             }
             if (clonedSpeciesIds != null) {
@@ -187,13 +193,13 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
     }
 
     @Override
-    public void insertParalogs(Set<GeneHomologsTO> paralogs) {
+    public void insertParalogs(Collection<GeneHomologsTO> paralogs) {
         // TODO Auto-generated method stub
         
     }
 
     @Override
-    public void insertOrthologs(Set<GeneHomologsTO> orthologs) {
+    public void insertOrthologs(Collection<GeneHomologsTO> orthologs) {
         // TODO Auto-generated method stub
         
     }
@@ -222,9 +228,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
         @Override
         protected GeneHomologsTO getNewTO() {
             log.entry();
-            Integer bgeeGeneId = null;
-            Integer targetGeneId = null;
-            Integer taxonId = null;
+            Integer bgeeGeneId = null, targetGeneId = null, taxonId = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {

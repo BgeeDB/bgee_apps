@@ -1,15 +1,11 @@
 package org.bgee.controller;
 
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,12 +20,10 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -262,52 +256,18 @@ public class CommandGene extends CommandParent {
                         false, true);
         // generate one unique GeneHomologs object containing both paralogs and orthologs 
         // retrieved using different filters
-        GeneHomologs geneHomologs = new GeneHomologs(gene,  geneOrthologs.getOrthologsByTaxon(), 
-                geneParalogs.getParalogsByTaxon());
-        
-        // Update how homologs are stored in order to easily show data in gene page
-        // 1. sort homologs from more recent to oldest taxon
-        LinkedHashMap<Taxon, Set<Gene>> orthologsMap = new LinkedHashMap<Taxon, Set<Gene>>();
-        if(geneHomologs.getOrthologsByTaxon() != null && 
-                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
-            orthologsMap = geneHomologs.getOrthologsByTaxon().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-        }
-        LinkedHashMap<Taxon, Set<Gene>> paralogsMap = new LinkedHashMap<Taxon, Set<Gene>>();
-        if(geneHomologs.getParalogsByTaxon() != null && 
-                !geneHomologs.getParalogsByTaxon().isEmpty()) {
-            paralogsMap = geneHomologs.getParalogsByTaxon().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-        }
-        
-        // 2. add to each taxon level all genes from more recent taxon
-        Set<Gene> genesToAdd = new HashSet<Gene>();
-        for (Entry<Taxon, Set<Gene>> orthologsOneTaxon : orthologsMap.entrySet()) {
-            orthologsOneTaxon.getValue().addAll(genesToAdd);
-            genesToAdd = orthologsOneTaxon.getValue();
-        }
-        genesToAdd = new HashSet<Gene>();
-        for (Entry<Taxon, Set<Gene>> paralogsOneTaxon : paralogsMap.entrySet()) {
-            paralogsOneTaxon.getValue().addAll(genesToAdd);
-            genesToAdd = paralogsOneTaxon.getValue();
-        }
-        
-        GeneHomologs updatedGeneHomologs = new GeneHomologs(geneHomologs.getGene(), orthologsMap, paralogsMap);
+        GeneHomologs geneHomologs = GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs);
         
         if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
             log.debug("No calls for gene {}", gene.getEnsemblGeneId());
             return log.exit(new GeneResponse(gene, true, callsByAnatEntity, 
-                    new HashMap<>(), new HashMap<>(),updatedGeneHomologs));
+                    new HashMap<>(), new HashMap<>(), geneHomologs));
         }
         
         //**************************************
         // Clustering, Building GeneResponse
         //**************************************
-        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, updatedGeneHomologs, true));
+        return log.exit(this.buildGeneResponse(gene, callsByAnatEntity, geneHomologs, true));
     }
     
     /**

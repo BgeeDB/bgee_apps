@@ -120,7 +120,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} to be used to build the URL to NCBI taxonomy.
      */
     protected static final String NCBI_TAXONOMY_URL = 
-            "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=";
+            "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&amp;id=";
 
     /**
      * A {@code String} that are the keywords defining Bgee.
@@ -1249,17 +1249,16 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     
     /**
      * @param taxon     A {@code Taxon} that is the taxon for which build the URL.
-     * @param text      A {@code String} that is the text to be displayed for the link.
-     * @return          A {@code String} that is the URLs of the provided taxon.
+     * @return          A {@code String} that is the 'a' tag for the provided taxon.
      */
-    protected String getTaxonUrl(Taxon taxon, String text) {
-        log.entry(taxon, text);
+    protected String getTaxonUrl(Taxon taxon) {
+        log.entry(taxon);
         if (taxon == null) {
             throw log.throwing(new IllegalArgumentException("The provided taxon should be not null"));
         }
         
         return log.exit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId() 
-                + "'>" + htmlEntities(text) +
+                + "'>" + htmlEntities(taxon.getScientificName()) +
                 "</a>");
     }
 

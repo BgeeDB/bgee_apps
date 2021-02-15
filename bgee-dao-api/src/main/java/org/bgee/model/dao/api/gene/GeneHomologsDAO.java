@@ -1,7 +1,6 @@
 package org.bgee.model.dao.api.gene;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -11,8 +10,8 @@ import org.bgee.model.dao.api.TransferObject;
  * DAO defining queries inserting or retrieving {@link GeneHomologsTO}s. 
  * 
  * @author  Julien Wollbrett
- * @version Bgee 15, Aug. 2020
- * @since   Bgee 15, Aug. 2020
+ * @version Bgee 14.2, Feb. 2021
+ * @since   Bgee 14.2, Feb. 2021
  * @see GeneHomologsTO
  */
 public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
@@ -22,42 +21,38 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
      * obtained from this {@code GeneHomologsDAO}.
      * <ul>
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link GeneHomologsTO#getBgeeGeneId()}.
-     * <li>{@code TARGET_ENSEMBL_ID}: corresponds to {@link GeneHomologsTO#getTargetGeneId()}.
+     * <li>{@code TARGET_BGEE_GENE_ID}: corresponds to {@link GeneHomologsTO#getTargetGeneId()}.
      * <li>{@code TAXON_ID}: corresponds to {@link GeneHomologsTO#getTaxonId()}.
      * </ul>
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Collection)
-     * @see org.bgee.model.dao.api.DAO#setAttributes(Enum[])
-     * @see org.bgee.model.dao.api.DAO#clearAttributes()
      */
     public enum Attribute implements DAO.Attribute {
-        BGEE_GENE_ID, TARGET_ENSEMBL_ID, TAXON_ID;
+        BGEE_GENE_ID, TARGET_BGEE_GENE_ID, TAXON_ID;
     }
     
-    public GeneHomologsTOResultSet getOrthologousGenes(Set<Integer> bgeeGeneIds);
+    public GeneHomologsTOResultSet getOrthologousGenes(Collection<Integer> bgeeGeneIds);
     
-    public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds);
+    public GeneHomologsTOResultSet getOrthologousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
+            Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds);
     
-    public GeneHomologsTOResultSet getParalogousGenes(Set<Integer> bgeeGeneIds);
+    public GeneHomologsTOResultSet getParalogousGenes(Collection<Integer> bgeeGeneIds);
     
-    public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Set<Integer> bgeeGeneIds, 
-            Integer taxonId, boolean withDescendantTaxon, Set<Integer> speciesIds);
+    public GeneHomologsTOResultSet getParalogousGenesAtTaxonLevel(Collection<Integer> bgeeGeneIds, 
+            Integer taxonId, boolean withDescendantTaxon, Collection<Integer> speciesIds);
     
-    public void insertParalogs(Set<GeneHomologsTO> paralogs);
+    public void insertParalogs(Collection<GeneHomologsTO> paralogs);
     
-    public void insertOrthologs(Set<GeneHomologsTO> orthologs);
+    public void insertOrthologs(Collection<GeneHomologsTO> orthologs);
     
     public interface GeneHomologsTOResultSet extends DAOResultSet<GeneHomologsTO> {
         
     }
     
     /**
-     * {@code TransfertObject} representing an homology relation between one bgee gene ID and
-     * one ensembl ID in the Bgee database.
+     * {@code TransfertObject} representing an homology relation between two genes in the Bgee database.
     * 
     * @author  Julien Wollbrett
-    * @version Bgee 15, Aug. 2020
-    * @since   Bgee 15, Aug. 2020
+    * @version Bgee 14.2, Feb. 2021
+    * @since   Bgee 14.2, Feb. 2021
     */
     
     public class GeneHomologsTO extends TransferObject {
@@ -69,7 +64,7 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
         private final Integer bgeeGeneId;
 
         /**
-         * An {@code String} that is the official gene ID of the target gene of the homology relation.
+         * An {@code String} that is the Bgee gene ID of the target gene of the homology relation.
          */
         private final Integer targetGeneId;
         
@@ -84,7 +79,7 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
          * and the taxonomical level these 2 genes are homologs at.
          *
          * @param bgeeGeneId            An {@code Integer} that is the Bgee gene ID.
-         * @param targetGeneId          A {@code String} that is the official gene ID of the target gene of the
+         * @param targetGeneId          An {@code Integer} that is the Bgee gene ID of the target gene of the
          *                              homology relation.
          * @param taxonId               An {@code Integer} that is the taxon ID of the least common 
          *                              ancestor of the 2 species these genes belongs to in Bgee.
@@ -113,8 +108,6 @@ public interface GeneHomologsDAO extends DAO<GeneHomologsDAO.Attribute>{
             return "GeneHomologsTO [sourceBgeeGeneId=" + bgeeGeneId + 
                     ", targetBgeeGeneId=" + targetGeneId + ", taxonId=" + taxonId + "]";
         }
-        
-        
     }
 
 }

@@ -872,7 +872,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             
             
             //genes info
-            int numberGenes = homologsOneTaxon.getValue().size();
+            int numberGenes = allGenes.size();
             sbRow.append("<td>")
             .append(numberGenes).append(" gene").append(numberGenes > 1? "s": "")
                 .append("<ul class='masked ortho-genes-list'>");

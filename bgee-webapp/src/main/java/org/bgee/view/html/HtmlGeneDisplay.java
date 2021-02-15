@@ -491,7 +491,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             
-            this.writeln("<div id='homology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
             this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
                     + "href='https://omabrowser.org/oma/vps/" + gene.getEnsemblGeneId() 
                     + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");
@@ -513,7 +513,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end table-container
             this.writeln("</div>"); // end class
             
-            this.writeln("<div id='homology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
             this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
                     + "href='https://omabrowser.org/oma/pps/" + gene.getEnsemblGeneId() 
                     + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");

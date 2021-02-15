@@ -39,7 +39,16 @@ div#rank_def {
 	padding-left: 2%;
 }
 
-div#homology_source {
+div#orthology_source {
+	display: inline-flex;
+	margin-top: 2em;
+	margin-bottom: 0em;
+	font-size: 0.9em;
+	/* padding disabled when max.width < 992px (bootstrap manages the placement afterwards) */
+	padding-left: 2%;
+}
+
+div#paralogy_source {
 	display: inline-flex;
 	margin-top: 2em;
 	margin-bottom: 0em;

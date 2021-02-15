@@ -186,7 +186,7 @@ public class GeneHomologsService extends CommonService{
         
         // load Species by SpeciesId
         Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesMap(speciesIdToGeneIds.keySet(), false);
+                .loadSpeciesMap(null, false);
         
         // load Genes by bgeeGeneId
         Map<Integer, Gene> genesByBgeeGeneId = geneTOs.stream()

@@ -143,15 +143,15 @@ public class BgeeProperties {
     /**
      * A {@code String} that is the key to access to the System property that contains 
      * the Bioconductor release number to use to install {@code R} packages for topAnat.
-     * 
-     * @see #BIOCONDUCTOR_RELEASE_NUMBER
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT
      */
     public final static String BIOCONDUCTOR_RELEASE_NUMBER_KEY = "org.bgee.core.bioconductorReleaseNumber";
     /**
      * A {@code String} that is the default value of the Bioconductor release number to use to load
      * {@code R} packages for the topAnat analysis.
-     * 
-     * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_KEY
      */
     public final static String BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT = "3.11";
 

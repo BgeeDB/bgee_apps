@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
@@ -319,8 +320,9 @@ public class TopAnatAnalysis {
 
             this.move(tmpFile, finalFile, false);
             //maybe it was not requested to generate the pdf, or there was no results 
-            //and this file was not generated
-            if (Files.exists(tmpPdfFile)) {
+            //and this file was not generated. Also, there is no pdf if the decorrelation type is NONE
+            if (Files.exists(tmpPdfFile) & this.params.getDecorrelationType() 
+                    != DecorrelationType.NONE) {
                 this.move(tmpPdfFile, finalPdfFile, false);
             }
 
@@ -889,6 +891,9 @@ public class TopAnatAnalysis {
             .forEach(e -> sb.append("_").append(e.toString()));
             sb.append("_").append(Optional.ofNullable(this.params.getSummaryQuality()).orElse(SummaryQuality.SILVER)
                     .toString());
+            if(params.getDecorrelationType() == DecorrelationType.NONE) {
+                sb.append("_" + DecorrelationType.NONE);
+            }
             
             paramsEncoded = sb.toString();
         } else {

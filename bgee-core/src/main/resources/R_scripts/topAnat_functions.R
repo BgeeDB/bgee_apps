@@ -270,19 +270,19 @@ getLegend <- function(pval) {
 ################################################################################
 
 ## define the test statistic which will detect underrepresentation
-if(!isGeneric("GOFisherTestUnder"))
-  setGeneric("GOFisherTestUnder", function(object) standardGeneric("GOFisherTestUnder"))
-setMethod("GOFisherTestUnder", "classicCount",
-          function(object) {
-
-            contMat <- contTable(object)
-            if(all(contMat == 0))
-              p.value <- 1
-            else
-              p.value <- fisher.test(contMat, alternative = "less")$p.value
-            ## "greater" is for over-, "less" for under-, and "two-sided" is for both alternatives
-            return(p.value)
-          })
+#if(!isGeneric("GOFisherTestUnder"))
+#  setGeneric("GOFisherTestUnder", function(object) standardGeneric("GOFisherTestUnder"))
+#setMethod("GOFisherTestUnder", "classicCount",
+#          function(object) {#
+#
+#            contMat <- contTable(object)
+#            if(all(contMat == 0))
+#              p.value <- 1
+#            else
+#              p.value <- fisher.test(contMat, alternative = "less")$p.value
+#            ## "greater" is for over-, "less" for under-, and "two-sided" is for both alternatives
+#            return(p.value)
+#          })
 
 
 ###################################################################
@@ -458,5 +458,78 @@ generateGraph <- function(GOdata, termsP.value, firstSigNodes = 10, reverse = TR
 #cat(fileName, ' --- no of nodes: ', numNodes(gT$dag), '\n') 
 #}
 
+#########
+# Feb2021
+# function to round up numbers from 5
+# x : number to round
+# n : number of digit after comma
+# solution found here : https://stackoverflow.com/questions/12688717/round-up-from-5
+#########
+roundUp = function(x, n) {
+  posneg = sign(x)
+  z <- abs(x)*10^n
+  z <- z + 0.5 + sqrt(.Machine$double.eps)
+  z <- trunc(z)
+  z <- z/10^n
+  z*posneg
+}
 
-
+#########
+# Jan2016, Author mseppey
+# Perform the enrichment fisher test without TopGO
+#########
+runTestWithoutTopGO<-function(anatomy,geneList,test="fisher",nodeSize){
+  # Count the gene of each category to generate the contingency table
+  foregroundExpressed <- length(subset(names(geneList),geneList==1 & names(geneList) %in% anatomy))
+  foregroundNotExpressed <- length(subset(names(geneList),geneList==1 & !(names(geneList) %in% anatomy)))
+  backgroundExpressed <- length(subset(names(geneList),geneList==0 & names(geneList) %in% anatomy))
+  backgroundNotExpressed <- length(subset(names(geneList),geneList==0 & !(names(geneList) %in% anatomy)))
+  totalExpressed <- foregroundExpressed + backgroundExpressed
+  # if the min node size is not reached, return null
+  if(totalExpressed < nodeSize){
+    return(NULL)
+  }
+  # Generate the contingency table and run the test
+  data <- matrix(c(
+    foregroundExpressed,
+    backgroundExpressed,
+    foregroundNotExpressed,
+    backgroundNotExpressed),
+    nrow = 2,
+    dimnames =
+      list(c("foreground", "background"),
+           c("present", "absent")))
+  if(test=="fisher"){
+    fis <- fisher.test(data,alternative="greater")
+  }else{
+    stop("Can only use Fisher test when running topAnat with propagated data (without topGo).")
+  }
+  
+  # Generate and return the result values
+  annotated <- length(subset(names(geneList),names(geneList) %in% anatomy)) # =foreground+background
+  significant <- foregroundExpressed
+  expected <- roundUp((foregroundExpressed+backgroundExpressed)*(foregroundExpressed+foregroundNotExpressed)/(backgroundNotExpressed+backgroundExpressed+foregroundExpressed+foregroundNotExpressed), 2)
+  foldEnrichment <- significant/expected
+  return(cbind(annotated, significant , expected, foldEnrichment, pval=fis$p.value))
+}
+#########
+# Jan2016, Author mseppey
+#########
+makeTableWithoutTopGO <- function(data, cutoff, names){
+  data$fdr <- p.adjust(p=data$pval, method = "fdr")
+  topTerms <- data[with(data, order(fdr) & fdr <= cutoff), ]
+  if(nrow(topTerms) != 0){
+    # Format and return the results
+    topTable <- merge(names, topTerms, by.x=0, by.y=0)
+    names(topTable) <- c("OrganId", "OrganName", "Annotated", "Significant", "Expected", "foldEnrichment" , "p", "fdr")
+    topTable <- topTable[order(as.numeric(topTable$p)), ]
+    topTable$Expected <- format(topTable$Expected, digits = 3, nsmall = 2, drop0trailing = TRUE)
+    topTable$foldEnrichment <- format(topTable$foldEnrichment, digits = 3)
+    topTable$p <- format(topTable$p, digits = 3)
+    topTable$fdr <- format(topTable$fdr, digits = 3)
+    return(topTable)
+  } else{
+    print(paste("There is no significant term with a FDR threshold of ", cutoff, sep=""))
+    return(NA)
+  }
+}

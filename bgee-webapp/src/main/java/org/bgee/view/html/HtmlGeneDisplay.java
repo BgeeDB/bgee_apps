@@ -897,7 +897,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             //expression comparison link
             RequestParameters exprComparison = this.getNewRequestParameters();
             exprComparison.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
-            List<String> genesToCompare = homologsOneTaxon.getValue().stream()
+            List<String> genesToCompare = allGenes.stream()
                     .map(Gene::getEnsemblGeneId).collect(Collectors.toList());
             genesToCompare.add(gene.getEnsemblGeneId());
             exprComparison.setGeneList(genesToCompare);

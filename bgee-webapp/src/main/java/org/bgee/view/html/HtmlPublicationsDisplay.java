@@ -62,7 +62,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         
         this.writeln("<ul>");
         
-        this.writeln("<p typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
                         "Roux J", "Niknejad A", "Comte A", 
                         "Fonseca Costa SS", "Mendes de Farias T", "Moretti S", "Parmentier G", 
                         "Rech de Laval V", "Rosikiewicz M", "Wollbrett J", "Echchiki A", 
@@ -70,13 +70,13 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                         "Moret P", "Person E", "Roelli P", "Sanjeev K", "Seppey M", 
                         "Robinson-Rechavi M"))
                 + "<br><a href='https://doi.org/10.1101/2020.05.28.119560' "
-                    + "target='_blank' rel='noopener' property='schema:url'> " 
+                    + " target='_blank' rel='noopener' property='schema:url'> " 
                     + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative "
                             + "transcriptomics in animals") 
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("bioRxiv 2020.05.28.119560")
                 + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
-                + "</p>");
+                + "</li>");
         
         this.writeln("</ul>");
 
@@ -92,7 +92,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 this.getAuthors(Arrays.asList("Komljenovic A", "Roux J", "Wollbrett J", "Robinson-Rechavi M", 
                         "Bastian F"))
                 + "<br><a href='https://f1000research.com/articles/5-2748/v2' "
-                    + "target='_blank' rel='noopener'  property='schema:url'>" 
+                    + " target='_blank' rel='noopener'  property='schema:url'>" 
                     + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
                             + "for gene list enrichment tests") 
                 + "</a>"
@@ -106,7 +106,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                     "Druzinsky RE", "Hayamizu TF", "Ibrahim N", "Lewis SE", "Mabee PM", "Niknejad A",
                     "Robinson-Rechavi M", "Sereno PC", "Mungall CJ"))
                 + "<br><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
-                    + "target='_blank' rel='noopener property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("Unification of multi-species vertebrate anatomy ontologies for comparative "
                             + "biology in Uberon")
                 + "</a>"
@@ -125,7 +125,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 "Gupta S", "Holmes E", "Kahsay R", "Keeney J", "Kincaid H", "King CH", 
                 "Liu D", "Crichton DJ", "Mazumder R"))
                 + "<br><a href='https://doi.org/10.1200/CCI.19.00117' "
-                    + "target='_blank' rel='noopener' property='schema:url'>" 
+                    + " target='_blank' rel='noopener' property='schema:url'>" 
                     + this.getTitle("OncoMX: A Knowledgebase for Exploring Cancer Biomarkers in the "
                             + "Context of Related Cancer and Healthy Data")
                 + "</a>"
@@ -136,7 +136,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 "Britto R", "Erill I", "Jeffery CJ", "Liberzon A", "Magrane M", 
                 "Onami J", "Robinson-Rechavi M", "Sponarova J", "Zobel J", "Karin Verspoor"))
                 + "<br><a href='https://doi.org/10.1016/j.gpb.2018.11.006'"
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("Quality Matters: Biocuration Experts on the Impact of Duplication and "
                             + "Other Data Quality")
                 + "</a>"     
@@ -146,7 +146,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Robinson-Rechavi M", 
                 "Rech de Laval V", "Bastian FB", "Wollbrett J", "Bgee Team"))
                 + "<br><a href='https://hal.archives-ouvertes.fr/hal-02535720'"
-                    + "target='_blank' rel='noopener' property='schema:url'>" 
+                    + " target='_blank' rel='noopener' property='schema:url'>" 
                     + this.getTitle("The Expression Comparison Tool in Bgee")
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Scornavacca, Celine; Delsuc, Frédéric; Galtier, Nicolas. "
@@ -158,7 +158,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 "Mendes de Farias T", "Zbinden E", "Anisimova M", "Gil M", "Stockinger H", 
                 "Stockinger K", "Robinson-Rechavi M", "Dessimoz C"))
                 + "<br><a href='https://doi.org/10.1093/database/baz106' "
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("Enabling semantic queries across federated bioinformatics databases")
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Database") + " Volume 2019, 2019, baz106. "
@@ -178,8 +178,8 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + 
                 this.getAuthors(Arrays.asList("SIB Swiss Institute of Bioinformatics Members"))
                 + "<br><a href='https://doi.org/10.1093/nar/gkv1310'"
-                        + "target='_blank' rel='noopener' property='schema:url'>"
-                        + this.getTitle("TThe SIB Swiss Institute of Bioinformatics’ resources: "
+                        + " target='_blank' rel='noopener' property='schema:url'>"
+                        + this.getTitle("The SIB Swiss Institute of Bioinformatics’ resources: "
                                 + "focus on curated databases")
                 +"</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Nucleic Acids Research")
@@ -191,7 +191,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 "Lewis SE", "Niknejad A", "Orchard S", "Poux S", "Skunca N", 
                 "Robinson-Rechavi M"))
                 + "<br><a href='https://doi.org/10.1093/database/bav043'"
-                        + "target='_blank' rel='noopener' property='schema:url'>"
+                        + " target='_blank' rel='noopener' property='schema:url'>"
                         + this.getTitle("The Confidence Information Ontology: a step towards a standard for "
                                 + "asserting confidence in annotations")
                 + "</a>"
@@ -201,7 +201,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Rosikiewicz M", 
                 "Robinson-Rechavi M"))
                 + "<br><a href='https://doi.org/10.1093/bioinformatics/btu027'"
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("IQRray, a new method for Affymetrix microarray quality control, and "
                             + "the homologous organ conservation score, a new benchmark method for "
                             + "quality control metrics")
@@ -213,7 +213,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Niknejad A", 
                 "Comte A", "Parmentier G", "Roux J", "Bastian FB", "Robinson-Rechavi M"))
                 + "<br><a href='https://doi.org/10.1093/bioinformatics/bts048'"
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("vHOG, a multispecies vertebrate ontology of homologous organs groups")
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Bioinformatics")
@@ -223,7 +223,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Roux J", 
                 "Robinson-Rechavi M"))
                 + "<br><a href='https://doi.org/10.1016/j.tig.2009.12.012'"
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("An ontology to clarify homology-related concepts")
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Trends Genet") + " 2010;26(3):99-102. "
@@ -233,7 +233,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian F", 
                 "Parmentier G", "Robinson-Rechavi M"))
                 + "<br><a href='https://www.nature.com/articles/npre.2009.3546.1' "
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("Generating Homology Relationships by Alignment of Anatomical "
                             + "Ontologies")
                 + "</a>"
@@ -244,7 +244,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
                 "Parmentier G", "Roux J", "Moretti S", "Laudet V", "Robinson-Rechavi M"))
                 + "<br><a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
-                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
                     + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome "
                             + "Data Among Species")
                 + "</a>"

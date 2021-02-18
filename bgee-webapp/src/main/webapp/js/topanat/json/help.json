@@ -13,7 +13,7 @@
 },
 {
     "topic": "Decorrelation type",
-    "help": "Algorithm used to take into account the topology of the anatomical ontology, to decrease the number of false positives and highly general terms in the results, owing to the inheritance problem. A precise description of these algorithms can be found in the topGO documentation."
+    "help": "Algorithm used to take into account the topology of the anatomical ontology, to decrease the number of false positives and highly general terms in the results, owing to the inheritance problem. A precise description of these algorithms can be found in the topGO documentation. Please note that using these decorrelation methods slow the analyses a lot."
 },
 {
     "topic": "Node size",

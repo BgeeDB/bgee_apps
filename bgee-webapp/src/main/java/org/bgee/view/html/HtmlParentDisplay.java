@@ -192,7 +192,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return  The escaped HTML
      */
     protected static String htmlEntities(String stringToWrite) {
-        log.entry(stringToWrite);
+        log.traceEntry("{}", stringToWrite);
         try {
             return log.traceExit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
         } catch (Exception e) {
@@ -208,7 +208,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return The HTML code as {@code String}.
      */
      protected static String getHTMLTag(String name, String content) {
-         log.entry(name, content);
+         log.traceEntry("{} - {}", name, content);
          return log.traceExit(getHTMLTag(name, null, content));
      }
 
@@ -219,7 +219,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       * @return The HTML code as {@code String}
       */
      protected static String getHTMLTag(String name, Map<String, String> attributes) {
-         log.entry(name, attributes);
+         log.traceEntry("{} - {}", name, attributes);
          return log.traceExit(getHTMLTag(name, attributes, null));
      }
 
@@ -232,7 +232,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
       * @return The HTML code as {@code String}.
       */
      protected static String getHTMLTag(String name, Map<String, String> attributes, String content) {
-         log.entry(name, attributes, content);
+         log.traceEntry("{} - {} - {}", name, attributes, content);
 
          StringBuilder sb = new StringBuilder();
          sb.append("<").append(name);
@@ -269,7 +269,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static String getSingleFeatureLogo(
             String url, boolean externalLink, String title, String figcaption,
             String imgPath, String desc) {
-        log.entry(url, externalLink, title, figcaption, imgPath, desc);
+        log.traceEntry("{} - {} - {} - {} - {} - {}", url, externalLink, title, figcaption, imgPath, desc);
 
         StringBuilder feature = new StringBuilder();
         feature.append("<div class='single_feature'>");
@@ -362,7 +362,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The encoded {@code String}.
      */
     protected String urlEncode(String stringToWrite) {
-        log.entry(stringToWrite);
+        log.traceEntry("{}", stringToWrite);
         try {
             return log.traceExit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
         } catch (Exception e) {
@@ -377,7 +377,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @param title A {@code String} that is the title to be used for the page.
      */
     protected void startDisplay(String title) {
-        log.entry(title);
+        log.traceEntry("{}", title);
         this.startDisplay(title, null);
         log.traceExit();
     }
@@ -390,7 +390,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          If {@code null}, no property will be set.
      */
     protected void startDisplay(String title, String typeOfSchemaPage) {
-        log.entry(title, typeOfSchemaPage);
+        log.traceEntry("{} - {}", title, typeOfSchemaPage);
         this.startDisplay(title, typeOfSchemaPage, null);
         log.traceExit();
     }
@@ -408,6 +408,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          be used.
      */
     protected void startDisplay(String title, String typeOfSchemaPage, String description) {
+        log.traceEntry("{} - {} - {}", title, typeOfSchemaPage, description);
         this.sendHeaders();
         this.writeln("<!DOCTYPE html>");
         this.writeln("<html lang='en' class='no-js'>");
@@ -972,7 +973,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #getVersionedJsFileName(String)
      */
     protected void includeJs(String fileName) {
-        log.entry(fileName);
+        log.traceEntry("{}", fileName);
         this.writeln("<script src='" +
                 this.prop.getBgeeRootDirectory() + this.prop.getJavascriptFilesRootDirectory() +
                 this.getVersionedJsFileName(fileName) + "'></script>");
@@ -998,7 +999,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          returned by {@link BgeeProperties#getJavascriptVersionExtension()}.
      */
     protected String getVersionedJsFileName(String originalFileName) {
-        log.entry(originalFileName);
+        log.traceEntry("{}", originalFileName);
         if (!originalFileName.endsWith(".js")) {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.js'."));
@@ -1028,6 +1029,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #includeCss(String)
      */
     protected void includeCss() {
+        log.traceEntry();
         if (!this.prop.isMinify()) {
             this.includeCss("lib/jquery_plugins/jquery-ui.min.css");
             this.includeCss("lib/jquery_plugins/jquery-ui.structure.min.css");
@@ -1046,6 +1048,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
             //we need to add the Bgee CSS files at the end, to override CSS file from bootstrap
             this.includeCss("common.css");
         }
+        log.traceExit();
     }
     /**
      * Write the HTML code allowing to include the CSS file named {@code fileName}.
@@ -1059,7 +1062,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #getVersionedCssFileName(String)
      */
     protected void includeCss(String fileName) {
-        log.entry(fileName);
+        log.traceEntry("{}", fileName);
         this.writeln("<link rel='stylesheet' type='text/css' href='"
                 + this.prop.getBgeeRootDirectory() + this.prop.getCssFilesRootDirectory()
                 + this.getVersionedCssFileName(fileName) + "'/>");
@@ -1085,7 +1088,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                          returned by {@link BgeeProperties#getCssVersionExtension()}.
      */
     protected String getVersionedCssFileName(String originalFileName) {
-        log.entry(originalFileName);
+        log.traceEntry("{}", originalFileName);
         if (!originalFileName.endsWith(".css")) {
             throw log.throwing(new IllegalArgumentException("The provided file name "
                     + "must end with an extension '.css'."));
@@ -1203,7 +1206,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *                      for the HTML 'img' element.
      */
     protected String getSpeciesImageSrc(Species species, boolean isLightImg) {
-        log.entry(species, isLightImg);
+        log.traceEntry("{} - {}", species, isLightImg);
 
         StringBuilder src = new StringBuilder();
         src.append(this.prop.getBgeeRootDirectory()).append(this.prop.getSpeciesImagesRootDirectory());
@@ -1238,7 +1241,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              A {@code String} that is the URLs of the provided anat. entity.
      */
     protected String getAnatEntityUrl(AnatEntity anatEntity, String text) {
-        log.entry(anatEntity, text);
+        log.traceEntry("{} - {}", anatEntity, text);
         if (anatEntity == null) {
             throw log.throwing(new IllegalArgumentException("The provided anat. entity should be not null"));
         }
@@ -1253,7 +1256,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return          A {@code String} that is the 'a' tag for the provided taxon.
      */
     protected String getTaxonUrl(Taxon taxon) {
-        log.entry(taxon);
+        log.traceEntry("{}", taxon);
         if (taxon == null) {
             throw log.throwing(new IllegalArgumentException("The provided taxon should be not null"));
         }
@@ -1264,7 +1267,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     }
 
     protected String getSchemaMarkupGraph(List<String> properties) {
-        log.entry(properties);
+        log.traceEntry("{}", properties);
 
         return log.traceExit(
                 "<script type='application/ld+json'>" +
@@ -1284,7 +1287,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The {@code String} that is the species scientific and common names.
      */
     protected String getCompleteSpeciesNameLink(Species species, boolean hasSchemaTag) {
-        log.entry(species, hasSchemaTag);
+        log.traceEntry("{} - {}", species, hasSchemaTag);
         return log.traceExit("<a href='" + getSpeciesPageUrl(species.getId()) + "'>"
                 + getCompleteSpeciesName(species, hasSchemaTag) + "</a>");
     }
@@ -1296,7 +1299,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return          The {@code String} that is the species page URL.
      */
     protected String getSpeciesPageUrl(Integer speciesId) {
-        log.entry(speciesId);
+        log.traceEntry("{}", speciesId);
 
         RequestParameters speciesPage = getNewRequestParameters();
         speciesPage.setPage(RequestParameters.PAGE_SPECIES);
@@ -1313,7 +1316,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The {@code String} that is the species scientific and common names.
      */
     protected static String getCompleteSpeciesName(Species species, boolean hasSchemaTag) {
-        log.entry(species, hasSchemaTag);
+        log.traceEntry("{} - {}", species, hasSchemaTag);
         String schemaTag = hasSchemaTag? "property='bs:name'": "";
         return log.traceExit("<em " + schemaTag + ">" + htmlEntities(species.getScientificName()) + "</em>"
                 + (StringUtils.isNotBlank(species.getName()) ? " (" + htmlEntities(species.getName()) + ")" : ""));
@@ -1327,7 +1330,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The {@code String} that is the Dataset schema.org id.
      */
     protected String getDatasetSchemaId(Integer speciesId, DownloadFile.CategoryEnum category) {
-        log.entry(speciesId, category);
+        log.traceEntry("{} - {}", speciesId, category);
 
         String hash;
         switch (category) {
@@ -1355,7 +1358,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The {@code String} that is the Dataset schema.org name.
      */
     protected String getDatasetSchemaName(Integer speciesId, DownloadFile.CategoryEnum category) {
-        log.entry(speciesId, category);
+        log.traceEntry("{} - {}", speciesId, category);
         if (category == null) {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum can not be null " + category));
@@ -1379,7 +1382,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return              The {@code String} that is the Dataset schema.org description.
      */
     protected String getDatasetSchemaDescription(Integer speciesId, DownloadFile.CategoryEnum category) {
-        log.entry(speciesId, category);
+        log.traceEntry("{} - {}", speciesId, category);
         if (category == null) {
             throw log.throwing(new IllegalArgumentException(
                     "CategoryEnum can not be null " + category));

@@ -102,8 +102,8 @@
         <!-- General useful library (e.g., defines StringUtils) -->
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.11</version>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
             <scope>compile</scope>
         </dependency>
 

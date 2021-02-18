@@ -107,7 +107,7 @@ public abstract class JSConverter {
      *                      is not available for any reason.
      */
     protected void writeFile() throws IOException{
-        log.entry();
+        log.traceEntry();
         this.writeJSCode();
         this.end();
         log.traceExit();
@@ -142,7 +142,7 @@ public abstract class JSConverter {
      *                      is not available for any reason.
      */
     protected void end() throws IOException{
-        log.entry();
+        log.traceEntry();
         this.writer.close();
         log.traceExit();
     }

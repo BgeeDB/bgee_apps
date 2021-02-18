@@ -1319,7 +1319,7 @@ public class OntologyUtils {
      *                                      wrapped by this object
      */
     public void removeOBOProblematicAxioms() throws UnknownOWLOntologyException {
-        log.entry();
+        log.traceEntry();
         
         for (OWLAnnotationAssertionAxiom ax: 
             this.ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
@@ -1360,7 +1360,7 @@ public class OntologyUtils {
      *          they were associated to.
      */
     public Map<String, Set<String>> getXRefMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.xRefMappings == null) {
@@ -1621,7 +1621,7 @@ public class OntologyUtils {
      * @see #getReplacedByMappings()
      */
     public Map<String, Set<String>> getConsiderMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.considerMappings == null) {
@@ -1646,7 +1646,7 @@ public class OntologyUtils {
      * @see #getConsiderMappings()
      */
     public Map<String, Set<String>> getReplacedByMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.replacedByMappings == null) {
@@ -1665,7 +1665,7 @@ public class OntologyUtils {
      * and consider obsolete classes only in both cases. 
      */
     private void loadConsiderReplacedByMappings() {
-        log.entry();
+        log.traceEntry();
         
         log.trace("Lazy loading of replaced_by and consider mappings...");
         this.replacedByMappings = new HashMap<String, Set<String>>();
@@ -1782,7 +1782,7 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLObjectPropertyExpression> getPartOfProps() {
-        log.entry();
+        log.traceEntry();
         if (this.partOfRels == null) {
             this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
@@ -1799,7 +1799,7 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLPropertyExpression> getGenericPartOfProps() {
-        log.entry();
+        log.traceEntry();
         Set<OWLPropertyExpression> props = new HashSet<OWLPropertyExpression>();
         for (OWLObjectPropertyExpression prop: this.getPartOfProps()) {
             props.add(prop);
@@ -1815,7 +1815,7 @@ public class OntologyUtils {
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
     private Set<OWLObjectPropertyExpression> getPrecededByProps() {
-        log.entry();
+        log.traceEntry();
         if (this.precededByRels == null) {
             this.precededByRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(PRECEDED_BY_ID));
@@ -1831,7 +1831,7 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLObjectPropertyExpression> getTransformationOfProps() {
-        log.entry();
+        log.traceEntry();
         if (this.transformationOfRels == null) {
             this.transformationOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(TRANSFORMATION_OF_ID));
@@ -1846,7 +1846,7 @@ public class OntologyUtils {
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
     private Set<OWLObjectPropertyExpression> getDevelopsFromProps() {
-        log.entry();
+        log.traceEntry();
         if (this.developsFromRels == null) {
             this.developsFromRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(DEVELOPS_FROM_ID));

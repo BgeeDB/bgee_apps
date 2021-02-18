@@ -44,7 +44,7 @@ public class CommandDocumentation extends CommandParent {
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
         
         DocumentationDisplay display = this.viewFactory.getDocumentationDisplay();
         

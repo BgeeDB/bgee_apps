@@ -190,7 +190,7 @@ abstract class CommandParent {
      * @see 	FrontController#doRequest(HttpServletRequest, HttpServletResponse, boolean)
      */
     public boolean preprocessRequestAndCheckIfContinue() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(false);
     }
 
@@ -263,7 +263,7 @@ abstract class CommandParent {
      * @throws InvalidRequestException  If the data type request parameter is incorrectly used.
      */
     protected Set<DataType> checkAndGetDataTypes() throws InvalidRequestException {
-        log.entry();
+        log.traceEntry();
         
         List<String> rqDatatypes  = this.requestParameters.getDataType();
         if (rqDatatypes != null && 
@@ -284,7 +284,7 @@ abstract class CommandParent {
      * @throws InvalidRequestException  If the summary quality request parameter is incorrectly used.
      */
     protected SummaryQuality checkAndGetSummaryQuality() throws InvalidRequestException {
-        log.entry();
+        log.traceEntry();
         
         String rqDataQual = this.requestParameters.getDataQuality();
         if (SummaryQuality.GOLD.name().equalsIgnoreCase(rqDataQual)) {

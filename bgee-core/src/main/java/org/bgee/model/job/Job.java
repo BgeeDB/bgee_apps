@@ -141,7 +141,7 @@ public class Job {
      * @see #isSuccessful()
      */
     public void completeWithSuccess() {
-        log.entry();
+        log.traceEntry();
         this.complete(true);
         log.traceExit();
     }
@@ -156,7 +156,7 @@ public class Job {
      * @see #completeWithSuccess()
      */
     public void complete() {
-        log.entry();
+        log.traceEntry();
         this.complete(false);
         log.traceExit();
     }
@@ -187,7 +187,7 @@ public class Job {
      * to deal with the interrupted status (see {@link #checkInterrupted()}).
      */
     public void interrupt() {
-        log.entry();
+        log.traceEntry();
         try {
             StartUpShutdown.interruptThread(this.executor);
         } finally {
@@ -219,7 +219,7 @@ public class Job {
      * @see #isInterruptRequested()
      */
     public void checkInterrupted() throws IllegalStateException, InterruptedException {
-        log.entry();
+        log.traceEntry();
         if (this.executor != Thread.currentThread()) {
             throw log.throwing(new IllegalStateException("This method is a convenience method "
                     + "only meant to be called from the thread running the job."));
@@ -244,7 +244,7 @@ public class Job {
      * Following calls to {@link #isReleased()} and {@link #isTerminated()} will return {@code true}.
      */
     public void release() {
-        log.entry();
+        log.traceEntry();
         //in case the user did not specify that the job was finished. 
         //important to call 'complete' *before* calling 'releaseJob'
         this.complete();
@@ -421,7 +421,7 @@ public class Job {
      * returned by {@link #getTaskCount()}.
      */
     public void incrementCurrentTaskIndex() {
-        log.entry();
+        log.traceEntry();
         try {
             this.setCurrentTaskIndex(this.getCurrentTaskIndex() + 1);
         } catch (IllegalArgumentException e) {
@@ -434,7 +434,7 @@ public class Job {
      * Inform the {@code Job} that a new sub-task has been started.
      */
     public void nextTask() {
-        log.entry();
+        log.traceEntry();
         this.nextTask("");
         log.traceExit();
     }

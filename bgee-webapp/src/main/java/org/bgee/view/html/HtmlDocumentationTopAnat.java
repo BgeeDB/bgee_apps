@@ -53,7 +53,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
      * @see HtmlDocumentationDisplay#displayTopAnatDocumentation()
      */
     protected void writeDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h1 property='schema:name'>TopAnat documentation</h1>");
         

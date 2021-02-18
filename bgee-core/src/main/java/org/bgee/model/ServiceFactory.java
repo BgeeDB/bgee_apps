@@ -114,7 +114,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code SpeciesService}
      */
     public SpeciesService getSpeciesService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new SpeciesService(this));
     }
 
@@ -122,7 +122,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code GeneService}
      */
     public GeneService getGeneService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new GeneService(this));
     }
     
@@ -130,7 +130,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code GeneHomologsService}
      */
     public GeneHomologsService getGeneHomologsService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new GeneHomologsService(this));
     }
 
@@ -138,7 +138,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code RawDataService}
      */
     public RawDataService getRawDataService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new RawDataService(this));
     }
 
@@ -146,7 +146,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code DevStageService}
      */
     public DevStageService getDevStageService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new DevStageService(this));
     }
 
@@ -154,7 +154,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code DevStageSimilarityService}
      */
     public DevStageSimilarityService getDevStageSimilarityService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new DevStageSimilarityService(this));
     }
 
@@ -162,7 +162,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code DownloadFileService}
      */
     public DownloadFileService getDownloadFileService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new DownloadFileService(this));
     }
 
@@ -170,7 +170,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code SpeciesDataGroupService}
      */
     public SpeciesDataGroupService getSpeciesDataGroupService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new SpeciesDataGroupService(this));
     }
     
@@ -178,7 +178,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code KeywordService}
      */
     public KeywordService getKeywordService() {
-    	log.entry();
+    	log.traceEntry();
     	return log.traceExit(new KeywordService(this));
     }
     
@@ -186,7 +186,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code CallService}
      */
     public CallService getCallService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CallService(this));
     }
     
@@ -194,7 +194,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code MultiSpeciesCallService}
      */
     public MultiSpeciesCallService getMultiSpeciesCallService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MultiSpeciesCallService(this));
     }
 
@@ -202,7 +202,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code AnatEntityService}
      */
     public AnatEntityService getAnatEntityService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new AnatEntityService(this));
     }
 
@@ -210,7 +210,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code AnatEntitySimilarityService}
      */
     public AnatEntitySimilarityService getAnatEntitySimilarityService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new AnatEntitySimilarityService(this));
     }
     
@@ -218,7 +218,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code OntologyService}
      */
     public OntologyService getOntologyService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new OntologyService(this));
     }
     
@@ -226,7 +226,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code SourceService}
      */
     public SourceService getSourceService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new SourceService(this));
     }
     
@@ -234,7 +234,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code TaxonConstraintService}
      */
     public TaxonConstraintService getTaxonConstraintService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new TaxonConstraintService(this));
     }
     
@@ -242,7 +242,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return  A newly instantiated {@code TaxonService}
      */
     public TaxonService getTaxonService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new TaxonService(this));
     }
     
@@ -250,7 +250,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code ConditionService}
      */
     public ConditionService getConditionService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new ConditionService(this));
     }
 
@@ -258,7 +258,7 @@ public class ServiceFactory implements AutoCloseable {
      * @return A newly instantiated {@code ConditionGraphService}
      */
     public ConditionGraphService getConditionGraphService() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new ConditionGraphService(this));
     }
 
@@ -288,7 +288,7 @@ public class ServiceFactory implements AutoCloseable {
      */
     @Override
     public void close() {
-        log.entry();
+        log.traceEntry();
         this.daoManager.close();
         log.traceExit();
     }

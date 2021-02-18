@@ -227,7 +227,7 @@ public class MySQLGeneHomologsDAO extends MySQLDAO<GeneHomologsDAO.Attribute> im
 
         @Override
         protected GeneHomologsTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             Integer bgeeGeneId = null, targetGeneId = null, taxonId = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {

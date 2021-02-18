@@ -409,7 +409,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
 
         @Override
         protected DiffExpressionCallTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             Integer id = null, geneId = null, conditionId = null;
             ComparisonFactor comparisonFactor = null;

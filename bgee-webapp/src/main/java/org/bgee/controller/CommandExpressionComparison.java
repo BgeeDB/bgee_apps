@@ -49,7 +49,7 @@ public class CommandExpressionComparison extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
 
         final List<String> userGeneList = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getGeneList()).orElse(new ArrayList<>()));

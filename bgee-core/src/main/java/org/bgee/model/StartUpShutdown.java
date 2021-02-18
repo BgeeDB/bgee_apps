@@ -29,7 +29,7 @@ public class StartUpShutdown {
 	 * living outside of the JVM, such as for instance, a MySQL database. 
      */
     public static void shutdownApplication() {
-        log.entry();
+        log.traceEntry();
     	DAOManager.closeAll();
     	//Should we have something like 'JobService.releaseAll()'?
     	//Would mean to store all JobService instances, not sure how we can make sure they would be deallocated.

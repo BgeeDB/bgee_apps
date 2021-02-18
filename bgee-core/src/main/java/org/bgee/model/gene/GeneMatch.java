@@ -74,7 +74,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
      * @return  A {@code String} representing the match.
      */
     public String getMatch() {
-	    log.entry();
+	    log.traceEntry();
         switch (this.getMatchSource()) {
             case NAME:
                 return log.traceExit(this.getGene().getName());
@@ -97,7 +97,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
      *          Returns {@code null}, if the match comes from multiple sources.
      */
     private Integer getMatchLength() {
-	    log.entry();
+	    log.traceEntry();
 	    if (this.getMatch() == null) {
 	        return null;
         }

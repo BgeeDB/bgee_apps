@@ -142,14 +142,14 @@ public abstract class MySQLDAO<T extends Enum<T> & DAO.Attribute> implements DAO
     @Override
     @Deprecated
     public void clearAttributes() {
-        log.entry();
+        log.traceEntry();
         this.attributes.clear();
         log.traceExit();
     }
     @Override
     @Deprecated
     public Set<T> getAttributes() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HashSet<T>(attributes));
     }
     

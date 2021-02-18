@@ -28,7 +28,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      *          formatted in HTML, with {@code ul} element including {@code li} elements.
      */
     private static String getAffyDocMenu() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("<ul>"
                 + "<li><a href='#affy_exp' title='Quick jump to this section'>" + 
                 "Experiments</a></li>"
@@ -43,7 +43,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      *          formatted in HTML, with {@code ul} element including {@code li} elements.
      */
     private static String getRNASeqDocMenu() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("<ul>"
                 + "<li><a href='#rna-seq_exp' title='Quick jump to this section'>" + 
                 "Experiments</a></li>"
@@ -87,7 +87,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
     // TODO continue to write that documentation and then add schema.org properties. 
     // We don't want to index not finished pages
     protected void writeDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h1 id='sectionname'>Reference expression download file documentation</h1>");
         RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
@@ -126,7 +126,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * @see #writeRNASeqRefExprFileDoc()
      */
     private void writeDocMenuForRefExprDownloadFiles() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div class='documentationmenu'><ul>");
         //Affymetrix
@@ -160,7 +160,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * @see #writeAffyProbesetFileDoc()
      */
     private void writeAffyRefExprFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h2 id='single'>Affymetrix data download files</h2>");
         this.writeln("<div class='doc_content'>"
@@ -201,7 +201,7 @@ public class HtmlDocumentationRefExprFile extends HtmlDocumentationDownloadFile 
      * @see #writeRNASeqGeneFileDoc()
      */
     private void writeRNASeqRefExprFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h2 id='single'>RNA-Seq data download files</h2>");
         this.writeln("<div class='doc_content'>"

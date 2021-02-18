@@ -284,7 +284,7 @@ public class MySQLDAOManager extends DAOManager {
      *                          of if this {@code MySQLDAOManager} is already closed.
      */
     public BgeeConnection getConnection() throws SQLException {
-        log.entry();
+        log.traceEntry();
 
         if (this.isClosed()) {
             throw new SQLException("This DAOManager is already closed.");
@@ -373,7 +373,7 @@ public class MySQLDAOManager extends DAOManager {
      *                                  obtain a {@code DataSource}.
      */
     private void loadDataSource() {
-        log.entry();
+        log.traceEntry();
         if (StringUtils.isBlank(this.getDataSourceResourceName())) {
             log.traceExit(); return;
         }
@@ -413,7 +413,7 @@ public class MySQLDAOManager extends DAOManager {
      *                                  {@code Driver}.
      */
     private void loadJdbcDrivers() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.getJdbcDriverNames().isEmpty()) {
             log.traceExit(); return;
         }
@@ -906,7 +906,7 @@ public class MySQLDAOManager extends DAOManager {
 
     @Override
     public void releaseResources() throws DAOException {
-        log.entry();
+        log.traceEntry();
         synchronized(this.connections) {
             //get a shallow copy of the collection, so that the removal of 
             //a connection will not interfere with the iteration
@@ -928,7 +928,7 @@ public class MySQLDAOManager extends DAOManager {
     
     @Override
     protected void closeDAOManager() throws DAOException {
-        log.entry();
+        log.traceEntry();
         //note that for now, the methods closeDAOManager and releaseResources do 
         //the same thing, but this might change in the future, according to their javadoc.
         this.releaseResources();
@@ -937,7 +937,7 @@ public class MySQLDAOManager extends DAOManager {
 
     @Override
     protected void killDAOManager() throws DAOException {
-        log.entry();
+        log.traceEntry();
         synchronized(this.connections) {
             //get a shallow copy of the collection, so that the removal of 
             //a connection will not interfere with the iteration
@@ -960,7 +960,7 @@ public class MySQLDAOManager extends DAOManager {
     
     @Override
     protected void shutdown() throws DAOException {
-        log.entry();
+        log.traceEntry();
         //reminder: this method should actually be a static method, 
         //but Java does not permit abstract static methods...
         synchronized(registeredDrivers) {
@@ -983,163 +983,163 @@ public class MySQLDAOManager extends DAOManager {
     //******************************************
     @Override
     protected MySQLSourceDAO getNewSourceDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLSourceDAO(this));
     }
     @Override
     protected MySQLSpeciesDAO getNewSpeciesDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLSpeciesDAO(this));
     }
     @Override
     protected MySQLTaxonDAO getNewTaxonDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLTaxonDAO(this));
     }
     @Override
     protected MySQLTaxonConstraintDAO getNewTaxonConstraintDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLTaxonConstraintDAO(this));
     }
     @Override
     protected MySQLGeneOntologyDAO getNewGeneOntologyDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLGeneOntologyDAO(this));
     }
     @Override
     protected MySQLGeneDAO getNewGeneDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLGeneDAO(this));
     }
     @Override
     protected MySQLGeneXRefDAO getNewGeneXRefDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLGeneXRefDAO(this));
     }
     @Override
     protected MySQLHierarchicalGroupDAO getNewHierarchicalGroupDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLHierarchicalGroupDAO(this));
     }
     @Override
     protected MySQLStageDAO getNewStageDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLStageDAO(this));
     }
     @Override
     protected MySQLRelationDAO getNewRelationDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLRelationDAO(this));
     }
     @Override
     protected MySQLRawExpressionCallDAO getNewRawExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLRawExpressionCallDAO(this));
     }
     @Override
     protected MySQLGlobalExpressionCallDAO getNewGlobalExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLGlobalExpressionCallDAO(this));
     }
     @Override
     protected ExperimentExpressionDAO getNewExperimentExpressionDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLExperimentExpressionDAO(this));
     }
     @Override
     protected MySQLDiffExpressionCallDAO getNewDiffExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLDiffExpressionCallDAO(this));
     }
     @Override
     protected MySQLAnatEntityDAO getNewAnatEntityDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLAnatEntityDAO(this));
     }
     @Override
     protected ConditionDAO getNewConditionDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLConditionDAO(this));
     }
     @Override
     protected RawDataConditionDAO getNewRawDataConditionDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLRawDataConditionDAO(this));
     }
     @Override
     protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLAffymetrixProbesetDAO(this));
     }
     @Override
     protected MySQLInSituSpotDAO getNewInSituSpotDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLInSituSpotDAO(this));
     }
     @Override
     protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLRNASeqResultDAO(this));
     }
     @Override
     protected MySQLCIOStatementDAO getNewCIOStatementDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLCIOStatementDAO(this));
     }
     @Override
     protected MySQLEvidenceOntologyDAO getNewEvidenceOntologyDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLEvidenceOntologyDAO(this));
     }
     @Override
     protected MySQLSummarySimilarityAnnotationDAO getNewSummarySimilarityAnnotationDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLSummarySimilarityAnnotationDAO(this));
     }
     @Override
     protected MySQLRawSimilarityAnnotationDAO getNewRawSimilarityAnnotationDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLRawSimilarityAnnotationDAO(this));
     }
     @Override
     protected MySQLStageGroupingDAO getNewStageGroupingDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLStageGroupingDAO(this));
     }
 
     @Override
     protected DownloadFileDAO getNewDownloadFileDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLDownloadFileDAO(this));
     }
 
     @Override
     protected SpeciesDataGroupDAO getNewSpeciesDataGroupDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLSpeciesDataGroupDAO(this));
     }
 
 	@Override
 	protected KeywordDAO getNewKeywordDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLKeywordDAO(this));
 	}
 
 	@Override
 	protected GeneNameSynonymDAO getNewGeneNameSynonymDAO() {
-		log.entry();
+		log.traceEntry();
         return log.traceExit(new MySQLGeneNameSynonymDAO(this));
 	}
 
     @Override
     protected SourceToSpeciesDAO getNewSourceToSpeciesDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLSourceToSpeciesDAO(this));
     }
     
     @Override
     protected GeneHomologsDAO getNewGeneHomologsDAO() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new MySQLGeneHomologsDAO(this));
     }
 }

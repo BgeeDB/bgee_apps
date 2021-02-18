@@ -160,7 +160,7 @@ public abstract class DAOManager implements AutoCloseable
      * @return      The <code>java.util.Properties</code> to get properties from.
      */
     private final static Properties loadProperties() {
-        log.entry();
+        log.traceEntry();
         
         Properties props = new Properties(System.getProperties());
         //try to get the properties file.
@@ -272,7 +272,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 			Empty {@code List} if no service providers could be found.
 	 */
 	private final static List<DAOManager> getServiceProviders() {
-		log.entry();
+		log.traceEntry();
 		log.debug("Loading DAOManager service providers");
         List<DAOManager> providers = new ArrayList<DAOManager>();
 		//first, we try to load the classes that are the service providers: 
@@ -523,7 +523,7 @@ public abstract class DAOManager implements AutoCloseable
 	 */
 	//TODO: we must completely get rid of these "per-thread singletons" and static methods...
 	public static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
-		log.entry();
+		log.traceEntry();
 		
 		if (hasDAOManager()) {
 		    //this will avoid useless parsing of the properties.
@@ -553,7 +553,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * 			{@code false} otherwise. 
 	 */
 	public static boolean hasDAOManager() {
-		log.entry();
+		log.traceEntry();
 		return log.traceExit(managers.containsKey(Thread.currentThread().getId()));
 	}
 	
@@ -574,7 +574,7 @@ public abstract class DAOManager implements AutoCloseable
      * @throws DAOException If an error occurred while closing the managers.
      */
     public static int closeAll() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         //this volatile boolean will act more or less like a lock 
         //(no new DAOManager can be obtained after this boolean is set to true).
@@ -684,7 +684,7 @@ public abstract class DAOManager implements AutoCloseable
      * with no parameters. 
      */
 	public DAOManager() {
-		log.entry();
+		log.traceEntry();
 		this.closed = new AtomicBoolean(false);
 		this.setKilled(false);
 		this.parameters = null;
@@ -698,7 +698,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * @return 	A {@code long} that is the ID of this {@code DAOManager}.
 	 */
 	public long getId() {
-		log.entry();
+		log.traceEntry();
 		return log.traceExit(this.id);
 	}
 	/**
@@ -727,7 +727,7 @@ public abstract class DAOManager implements AutoCloseable
      */
 	@Override
     public void close() throws DAOException {
-        log.entry();
+        log.traceEntry();
         if (this.atomicCloseAndRemoveFromPool(false)) {
         	//implementation-specific code here
         	this.closeDAOManager();
@@ -744,7 +744,7 @@ public abstract class DAOManager implements AutoCloseable
      * 			{@code false} otherwise.
      */
     public boolean isClosed() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(closed.get());
     }
     /**
@@ -769,7 +769,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill(long)
      */
     public void kill() throws DAOException {
-    	log.entry();
+    	log.traceEntry();
     	if (this.atomicCloseAndRemoveFromPool(true)) {
     		//implementation-specific code here
     		this.killDAOManager();
@@ -798,7 +798,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill(long)
      */
     public boolean isKilled() {
-    	log.entry();
+    	log.traceEntry();
     	return log.traceExit(this.killed);
     }
     /**
@@ -867,7 +867,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.source.SourceDAO SourceDAO
      */
     public SourceDAO getSourceDAO() {
-    	log.entry();
+    	log.traceEntry();
     	this.checkClosed();
     	return log.traceExit(this.getNewSourceDAO());
     }
@@ -880,7 +880,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.source.SourceToSpeciesDAO SourceToSpeciesDAO
      */
     public SourceToSpeciesDAO getSourceToSpeciesDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewSourceToSpeciesDAO());
     }
@@ -894,7 +894,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.species.SpeciesDAO SpeciesDAO
      */
     public SpeciesDAO getSpeciesDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewSpeciesDAO());
     }
@@ -908,7 +908,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.gene.GeneHomologsDOA GeneHomologsDOA
      */
     public GeneHomologsDAO getGeneHomologsDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewGeneHomologsDAO());
     }
@@ -921,7 +921,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.species.TaxonDAO TaxonDAO
      */
     public TaxonDAO getTaxonDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewTaxonDAO());
     }
@@ -934,7 +934,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.TaxonConstraintDAO TaxonConstraintDAO
      */
     public TaxonConstraintDAO getTaxonConstraintDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewTaxonConstraintDAO());
     }
@@ -947,7 +947,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.gene.GeneOntologyDAO GeneOntologyDAO
      */
     public GeneOntologyDAO getGeneOntologyDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewGeneOntologyDAO());
     }
@@ -960,7 +960,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.gene.GeneDAO GeneDAO
      */
     public GeneDAO getGeneDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewGeneDAO());
     }
@@ -973,7 +973,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.gene.GeneXRefDAO GeneXRefDAO
      */
     public GeneXRefDAO getGeneXRefDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewGeneXRefDAO());
     }
@@ -986,7 +986,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.gene.HierarchicalGroupDAO HierarchicalGroupDAO
      */
     public HierarchicalGroupDAO getHierarchicalGroupDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewHierarchicalGroupDAO());
     }
@@ -999,7 +999,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.StageDAO StageDAO
      */
     public StageDAO getStageDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewStageDAO());
     }
@@ -1012,7 +1012,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.ontologycommon.RelationDAO RelationDAO
      */
     public RelationDAO getRelationDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRelationDAO());
     }
@@ -1025,7 +1025,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO
      */
     public ConditionDAO getConditionDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewConditionDAO());
     }
@@ -1038,7 +1038,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO
      */
     public RawDataConditionDAO getRawDataConditionDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRawDataConditionDAO());
     }
@@ -1051,7 +1051,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO
      */
     public RawExpressionCallDAO getRawExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRawExpressionCallDAO());
     }
@@ -1064,7 +1064,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO
      */
     public GlobalExpressionCallDAO getGlobalExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewGlobalExpressionCallDAO());
     }
@@ -1078,7 +1078,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO
      */
     public ExperimentExpressionDAO getExperimentExpressionDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewExperimentExpressionDAO());
     }
@@ -1092,7 +1092,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO DiffExpressionCallDAO
      */
     public DiffExpressionCallDAO getDiffExpressionCallDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewDiffExpressionCallDAO());
     }
@@ -1105,7 +1105,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.AnatEntityDAO AnatEntityDAO
      */
     public AnatEntityDAO getAnatEntityDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewAnatEntityDAO());
     }
@@ -1120,7 +1120,7 @@ public abstract class DAOManager implements AutoCloseable
      * AffymetrixProbesetDAO
      */
     public AffymetrixProbesetDAO getAffymetrixProbesetDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewAffymetrixProbesetDAO());
     }
@@ -1134,7 +1134,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO
      */
     public InSituSpotDAO getInSituSpotDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewInSituSpotDAO());
     }
@@ -1149,7 +1149,7 @@ public abstract class DAOManager implements AutoCloseable
      * RNASeqResultDAO
      */
     public RNASeqResultDAO getRNASeqResultDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRNASeqResultDAO());
     }
@@ -1163,7 +1163,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO 
      */
     public CIOStatementDAO getCIOStatementDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewCIOStatementDAO());
     }
@@ -1177,7 +1177,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.ontologycommon.EvidenceOntologyDAO EvidenceOntologyDAO 
      */
     public EvidenceOntologyDAO getEvidenceOntologyDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewEvidenceOntologyDAO());
     }
@@ -1191,7 +1191,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO SummarySimilarityAnnotationDAO 
      */
     public SummarySimilarityAnnotationDAO getSummarySimilarityAnnotationDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewSummarySimilarityAnnotationDAO());
     }
@@ -1205,7 +1205,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO RawSimilarityAnnotationDAO 
      */
     public RawSimilarityAnnotationDAO getRawSimilarityAnnotationDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRawSimilarityAnnotationDAO());
     }
@@ -1219,7 +1219,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO StageGroupingDAO 
      */
     public StageGroupingDAO getStageGroupingDAO() {
-        log.entry();
+        log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewStageGroupingDAO());
     }
@@ -1233,7 +1233,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * @see DownloadFileDAO
 	 */
 	public DownloadFileDAO getDownloadFileDAO() {
-		log.entry();
+		log.traceEntry();
 		this.checkClosed();
 		return log.traceExit(this.getNewDownloadFileDAO());
 	}
@@ -1247,7 +1247,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * @see SpeciesDataGroupDAO
 	 */
 	public SpeciesDataGroupDAO getSpeciesDataGroupDAO() {
-		log.entry();
+		log.traceEntry();
 		this.checkClosed();
 		return log.traceExit(this.getNewSpeciesDataGroupDAO());
 	}
@@ -1261,7 +1261,7 @@ public abstract class DAOManager implements AutoCloseable
 	 * @see KeywordDAO
 	 */
 	public KeywordDAO getKeywordDAO() {
-		log.entry();
+		log.traceEntry();
 		this.checkClosed();
 		return log.traceExit(this.getNewKeywordDAO());
 	}
@@ -1274,7 +1274,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see GeneNameSynonymDAO
      */
 	public GeneNameSynonymDAO getGeneNameSynonymDAO() {
-		log.entry();
+		log.traceEntry();
 		this.checkClosed();
 		return log.traceExit(this.getNewGeneNameSynonymDAO());
 	}

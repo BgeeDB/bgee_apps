@@ -171,7 +171,7 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
 
         @Override
         protected SourceToSpeciesTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             Integer dataSourceId = null, speciesId = null;
             DAODataType dataType = null;
             InfoType infoType = null;

@@ -52,7 +52,7 @@ public class CommandSpecies extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
         
         SpeciesDisplay display = this.viewFactory.getSpeciesDisplay();
         

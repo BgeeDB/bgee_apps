@@ -168,7 +168,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
      * @see #queryString
      */
     private void loadParameterMap() {
-        log.entry();
+        log.traceEntry();
         this.parameterMap = new HashMap<String, String[]>();
         if (StringUtils.isBlank(this.queryString)){
             return;
@@ -253,7 +253,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
 
     @Override
     public Map<String, String[]> getParameterMap() {
-        log.entry();
+        log.traceEntry();
         if (this.parameterMap == null) {
             return log.traceExit((Map<String, String[]>) null);
         }

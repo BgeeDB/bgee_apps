@@ -258,7 +258,7 @@ public class MySQLSpeciesDAO extends MySQLDAO<SpeciesDAO.Attribute> implements S
 
         @Override
         protected SpeciesTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             Integer speciesId = null, taxonId = null, genomeSpeciesId = null, displayOrder = null, 
                     dataSourceId = null;
             String genus = null, species = null, speciesCommonName = null, 

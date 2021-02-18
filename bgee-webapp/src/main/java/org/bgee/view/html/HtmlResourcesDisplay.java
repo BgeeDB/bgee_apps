@@ -59,7 +59,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
     @Override
     public void displayRPackages() {
-        log.entry();
+        log.traceEntry();
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -103,7 +103,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
     @Override
     public void displayAnnotations() {
-        log.entry();
+        log.traceEntry();
         
         String anatSimUrl = BGEE_GITHUB_URL + "/anatomical-similarity-annotations";
         String rnaSeqSourceFileUrl = MASTER_BGEE_PIPELINE_GITHUB_URL + "/source_files/RNA_Seq";
@@ -171,7 +171,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
     @Override
     public void displayOntologies() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Ontology resources");
 
@@ -252,7 +252,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
     @Override
     public void displaySourceCode() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Source code");
 

@@ -156,7 +156,7 @@ public class CallService extends CommonService {
         }
         
         public String getCondParamName() {
-            log.entry();
+            log.traceEntry();
             if (!this.isConditionParameter()) {
                 return log.traceExit((String) null);
             }
@@ -175,7 +175,7 @@ public class CallService extends CommonService {
          *          ({@link #isConditionParameter()} returns {@code true}).
          */
         public static EnumSet<Attribute> getAllConditionParameters() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(Arrays.stream(CallService.Attribute.values())
                     .filter(a -> a.isConditionParameter())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));

@@ -100,7 +100,7 @@ extends DataFilter<ConditionFilter> {
 
         @Override
         protected void checkEmptyFilters() throws IllegalStateException {
-            log.entry();
+            log.traceEntry();
             //nothing special in this subclass, the observedData filter alone is not enough,
             //so we let the superclass decide whether it's happy about the filters it manages.
             super.checkEmptyFilters();
@@ -444,7 +444,7 @@ extends DataFilter<ConditionFilter> {
     //(this cannot be done in the sub-class constructor, as subclasses might need
     //to set their own attributes before calling checkEmptyFilters)
     protected void checkEmptyFilters() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         //To make sure we never pull all data in the database at once.
         if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
             throw log.throwing(new IllegalStateException(

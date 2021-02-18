@@ -567,7 +567,7 @@ public class BgeeDBUtils {
      */
     public static Map<String, CIOStatementTO> getCIOStatementTOsByIds(CIOStatementDAO cioStatementDAO) 
             throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         log.debug("Start retrieving all CIO TOs");
         

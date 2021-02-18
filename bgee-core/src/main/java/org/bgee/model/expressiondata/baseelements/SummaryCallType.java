@@ -88,7 +88,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public Set<DataType> getAllowedDataTypes() {
-            log.entry();
+            log.traceEntry();
             switch (this) {
             case EXPRESSED:
                 return log.traceExit(CallType.Expression.EXPRESSED.getAllowedDataTypes());
@@ -102,7 +102,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public String getStringRepresentation() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.name());
         }
 
@@ -184,7 +184,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public Set<DataType> getAllowedDataTypes() {
-            log.entry();
+            log.traceEntry();
             //For now, the same data types are allowed for all DiffExpressionSummary types.
             //So we just delegate to any type of DiffExpression CallType.
             //Just a check to make sure all allowed data types are still the same
@@ -200,7 +200,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public String getStringRepresentation() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.name());
         }
 

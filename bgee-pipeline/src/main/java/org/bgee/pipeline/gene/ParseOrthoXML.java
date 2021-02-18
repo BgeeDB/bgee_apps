@@ -383,7 +383,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #geneIdsInBgee
      */
     private void loadGeneIdsFromDb() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         log.info("Start retrieving gene IDs...");
         GeneDAO dao = this.getGeneDAO();
@@ -419,7 +419,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #taxonIdsInBgee
      */
     private void loadTaxonIdsFromDb() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         log.info("Start retrieving taxon IDs...");
         TaxonDAO dao = this.getTaxonDAO();
@@ -445,7 +445,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      * @see #speciesPrefixes                
      */
     private void loadMappingSpeciesToGenomeSpecies() throws DAOException, IllegalArgumentException {
-        log.entry();
+        log.traceEntry();
         
         log.info("Start retrieving genome species Ids of bgee species...");
         SpeciesDAO speciesDAO = this.getSpeciesDAO();
@@ -644,7 +644,7 @@ public class ParseOrthoXML extends MySQLDAOUser {
      *               OrthoXML {@code Gene}.
      */
     private List<String> retrieveSplittedGeneIdentifier(sbc.orthoxml.Gene gene) {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(Arrays.asList(gene.getGeneIdentifier().split(GENE_ID_SPLIT_PATTERN)));
     }
 

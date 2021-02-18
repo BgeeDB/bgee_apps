@@ -77,7 +77,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(getGenes(null, null, null));
     }
 
@@ -241,7 +241,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
 
     public GeneBioTypeTOResultSet getGeneBioTypes() {
-        log.entry();
+        log.traceEntry();
 
         String sql = "SELECT * FROM geneBioType";
         // we don't use a try-with-resource, because we return a pointer to the results,
@@ -364,7 +364,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         @Override
         protected GeneTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             String geneId = null, geneName = null, geneDescription = null;
             Integer id = null, speciesId = null, geneBioTypeId = null, OMAParentNodeId = null,
                     geneMappedToGeneIdCount = null;
@@ -437,7 +437,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
 
         @Override
         protected GeneBioTypeTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             String name = null;
             Integer id = null;
             // Get results

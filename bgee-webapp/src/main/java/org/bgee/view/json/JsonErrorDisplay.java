@@ -55,7 +55,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
 
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, "ServiceUnavailable");
@@ -70,7 +70,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
 
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, "UnexpectedError");
@@ -84,7 +84,7 @@ public class JsonErrorDisplay extends JsonParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
 
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put(EXCEPTION_TYPE_KEY, "UnsupportedOperationException");

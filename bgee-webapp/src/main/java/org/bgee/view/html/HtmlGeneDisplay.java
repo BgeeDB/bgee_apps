@@ -87,7 +87,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /*Genes: the terms you enter are searched in gene IDs from Ensembl, names, and synonyms.*/
     @Override
     public void displayGeneHomePage() {
-        log.entry();
+        log.traceEntry();
         this.displayGeneSearchPage(null, null);
         log.traceExit();
     }
@@ -1205,7 +1205,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -1225,7 +1225,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
         
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 

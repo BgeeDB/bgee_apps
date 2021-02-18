@@ -306,7 +306,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
      * Add schema.org markups to the page.
      */
     private void addSchemaMarkups() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_ANAT_SIM);
@@ -334,7 +334,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -354,7 +354,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
 
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 

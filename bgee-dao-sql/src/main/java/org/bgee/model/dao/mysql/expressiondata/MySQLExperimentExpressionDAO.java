@@ -38,7 +38,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
     private final static Map<String, ExperimentExpressionDAO.Attribute> colToAttrMap;
 
     static {
-        log.entry();
+        log.traceEntry();
         
         Map<String, ExperimentExpressionDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(MySQLRawExpressionCallDAO.EXPR_ID_FIELD,
@@ -67,7 +67,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         return log.traceExit(sb.toString());
     }
     private static String getWhere(Set<Integer> geneIds) {
-        log.entry();
+        log.traceEntry();
         StringBuilder sb = new StringBuilder();
         sb.append(" WHERE ").append(MySQLRawExpressionCallDAO.EXPR_TABLE_NAME)
           .append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
@@ -75,7 +75,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         return log.traceExit(sb.toString());
     }
     private static String getOrderBy() {
-        log.entry();
+        log.traceEntry();
         String expressionIdField = getSelectExprFromAttribute(
                 ExperimentExpressionDAO.Attribute.EXPRESSION_ID, colToAttrMap);
         StringBuilder sb = new StringBuilder();
@@ -340,7 +340,7 @@ public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionD
         @Override
         protected ExperimentExpressionDAO.ExperimentExpressionTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer exprId = null, presentHighCount = null, presentLowCount = null, 
                         absentHighCount = null, absentLowCount = null;

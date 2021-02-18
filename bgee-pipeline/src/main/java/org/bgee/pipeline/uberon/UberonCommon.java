@@ -386,7 +386,7 @@ public abstract class UberonCommon {
      * iii) the taxon-specific class is removed from the ontologies.
      */
     void convertTaxonECAs() {
-        log.entry();
+        log.traceEntry();
         log.info("Converting taxonomy Equivalent Classes Axioms...");
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
@@ -551,7 +551,7 @@ public abstract class UberonCommon {
     }
     
     protected void improveGCIRelations() {
-        log.entry();
+        log.traceEntry();
         
         
         

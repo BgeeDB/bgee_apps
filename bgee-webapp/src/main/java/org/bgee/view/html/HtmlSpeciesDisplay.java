@@ -352,7 +352,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.

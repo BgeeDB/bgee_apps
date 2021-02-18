@@ -127,7 +127,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      * @see #rawAnnotTOs
      */
     private void initTOs() {
-        log.entry();
+        log.traceEntry();
         this.similarityAnnotIdGenerator = 0;
         this.summaryAnnotTOs = new HashSet<SummarySimilarityAnnotationTO>();
         this.simAnnotToAnatEntityTOs = new HashSet<SimAnnotToAnatEntityTO>();
@@ -233,7 +233,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
                     groupedAnnot.getValue()));
         }
         
-        log.entry();
+        log.traceEntry();
     }
     
     /**

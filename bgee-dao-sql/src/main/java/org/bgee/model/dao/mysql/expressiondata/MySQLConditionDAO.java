@@ -92,7 +92,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      *                  the associated value being the corresponding {@code ConditionDAO.Attribute}.
      */
     private static Map<String, ConditionDAO.Attribute> getColToAttributesMap() {
-        log.entry();
+        log.traceEntry();
         Map<String, ConditionDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(GLOBAL_COND_ID_FIELD, ConditionDAO.Attribute.ID);
         //only the original condition table containing all parameters has the field "exprMappedConditionId", 
@@ -174,7 +174,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
     @Override
     public int getMaxGlobalConditionId() throws DAOException {
-        log.entry();
+        log.traceEntry();
 
         String condIdField = getSelectExprFromAttribute(ConditionDAO.Attribute.ID,
                 getColToAttributesMap());
@@ -421,7 +421,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
         @Override
         protected ConditionDAO.ConditionTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
@@ -478,7 +478,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
         @Override
         protected GlobalConditionToRawConditionTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer rawConditionId = null, globalConditionId = null;

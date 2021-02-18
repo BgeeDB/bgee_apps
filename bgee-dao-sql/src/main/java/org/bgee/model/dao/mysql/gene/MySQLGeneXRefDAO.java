@@ -204,7 +204,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
 
         @Override
         protected GeneXRefTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             Integer bgeeGeneId = null, dataSourceId = null;
             String xRefId = null, xRefName = null;
             

@@ -220,7 +220,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     @Override
     public void displayDumpsPage() {
         
-        log.entry();
+        log.traceEntry();
         
         String title = "Bgee data dumps download page";
         String description = title + ".";
@@ -364,7 +364,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return  the {@code String} that is the 'More results' HTML 'div' element.
      */
     private String getMoreResultDivs() {
-        log.entry();
+        log.traceEntry();
         
         return log.traceExit(
                 "<div id='bgee_more_results_up'>More result(s)</div>" +
@@ -377,7 +377,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
      * @return  the {@code String} that is the search box as HTML 'div' element.
      */
     private String getSearchBox() {
-        log.entry();
+        log.traceEntry();
         
         StringBuilder box = new StringBuilder();
         box.append("<div class='row'>");
@@ -950,7 +950,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     
   	@Override
   	protected void includeJs() {
-  		log.entry();
+  		log.traceEntry();
   		super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -960,7 +960,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.

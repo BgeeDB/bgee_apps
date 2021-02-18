@@ -45,7 +45,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
 
     @Override
     public ECOTermTOResultSet getAllECOTerms() throws DAOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getECOTerms());
     }
     
@@ -57,7 +57,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     private ECOTermTOResultSet getECOTerms() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         String tableName = "evidenceOntology";
         
@@ -211,7 +211,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
 
         @Override
         protected ECOTermTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String id = null, name = null, description = null;
 

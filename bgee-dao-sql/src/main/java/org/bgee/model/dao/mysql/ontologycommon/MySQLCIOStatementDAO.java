@@ -48,7 +48,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
 
     @Override
     public CIOStatementTOResultSet getAllCIOStatements() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         String tableName = "CIOStatement";
         
@@ -214,7 +214,7 @@ public class MySQLCIOStatementDAO extends MySQLDAO<CIOStatementDAO.Attribute>
 
         @Override
         protected CIOStatementTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String id = null, name = null, description = null;
             Boolean trusted = null;

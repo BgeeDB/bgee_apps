@@ -1019,7 +1019,7 @@ implements GlobalExpressionCallDAO {
 
     @Override
     public int getMaxGlobalExprId() throws DAOException {
-        log.entry();
+        log.traceEntry();
 
         String sql = "SELECT MAX(" + GLOBAL_EXPR_ID_FIELD + ") AS " + GLOBAL_EXPR_ID_FIELD 
             + " FROM " + GLOBAL_EXPR_TABLE_NAME;
@@ -1315,7 +1315,7 @@ implements GlobalExpressionCallDAO {
         @Override
         protected GlobalExpressionCallDAO.GlobalExpressionCallTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
                 Set<GlobalExpressionCallDataTO> callDataTOs = new HashSet<>();
@@ -1622,7 +1622,7 @@ implements GlobalExpressionCallDAO {
         @Override
         protected GlobalExpressionCallDAO.EntityMinMaxRanksTO<T> getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 T id = null;
                 Integer speciesId = null;

@@ -134,7 +134,7 @@ public class SimilarityAnnotationUtilsTest {
     @Test
     public void shouldExtractRawAnnotations() throws FileNotFoundException, 
         IllegalArgumentException, IOException, ParseException {
-        log.entry();
+        log.traceEntry();
         
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
         assertEquals("Incorrect RAW annotations retrieved", 
@@ -288,7 +288,7 @@ public class SimilarityAnnotationUtilsTest {
     @Test
     public void shouldExtractSummaryAnnotations() throws FileNotFoundException, 
         IllegalArgumentException, IOException {
-        log.entry();
+        log.traceEntry();
         
         assertEquals("Incorrect AGGREGATED EVIDENCE annotations retrieved", 
                 Arrays.asList(
@@ -461,7 +461,7 @@ public class SimilarityAnnotationUtilsTest {
     @Test
     public void shouldExtractAncestralTaxaAnnotations() throws FileNotFoundException, 
         IllegalArgumentException, IOException {
-        log.entry();
+        log.traceEntry();
         
         assertEquals("Incorrect ANCESTRAL TAXA annotations retrieved", 
                 Arrays.asList(

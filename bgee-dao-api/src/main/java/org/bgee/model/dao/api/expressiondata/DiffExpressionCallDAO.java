@@ -376,7 +376,7 @@ public interface DiffExpressionCallDAO
 
         @Override
         public Map<Attribute, DataState> extractDataTypesToDataStates() {
-            log.entry();
+            log.traceEntry();
             
             Map<Attribute, DataState> typesToStates = new EnumMap<>(Attribute.class);
             
@@ -415,7 +415,7 @@ public interface DiffExpressionCallDAO
          *                  when setting parameters in a query. 
          */
         protected EnumMap<Attribute, DataState> extractFilteringDataTypes() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(super.extractFilteringDataTypes(Attribute.class));
         }
         

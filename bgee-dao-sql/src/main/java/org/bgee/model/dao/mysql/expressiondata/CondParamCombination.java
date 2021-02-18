@@ -98,7 +98,7 @@ public enum CondParamCombination {
      * @return  The {@code CondParamCombination} taking into account all possible condition parameters.
      */
     public static CondParamCombination getAllParamCombination() {
-        log.entry();
+        log.traceEntry();
         Set<CondParamCombination> matchingComb = EnumSet.allOf(CondParamCombination.class)
                 .stream().filter(comb -> comb.isAllParamCombination()).collect(Collectors.toSet());
         if (matchingComb.size() != 1) {

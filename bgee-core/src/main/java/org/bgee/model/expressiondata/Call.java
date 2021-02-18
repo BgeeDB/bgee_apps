@@ -919,7 +919,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #getMeanRank()
          */
         public String getFormattedMeanRank() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.getExpressionLevelInfo() == null? null:
                 this.getExpressionLevelInfo().getFormattedRank());
         }
@@ -944,7 +944,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #getExpressionScore()
          */
         public String getFormattedExpressionScore() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.getExpressionLevelInfo() == null? null:
                 this.getExpressionLevelInfo().getFormattedExpressionScore());
         }

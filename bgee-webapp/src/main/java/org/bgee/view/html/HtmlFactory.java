@@ -69,78 +69,78 @@ public class HtmlFactory extends ViewFactory {
     
 	@Override
 	public DownloadDisplay getDownloadDisplay()  throws IOException {
-	    log.entry();
+	    log.traceEntry();
 		return log.traceExit(new HtmlDownloadDisplay(this.response, this.requestParameters,
 		        this.prop, this.jsonHelper, this));
 	}
 
 	@Override
 	public GeneralDisplay getGeneralDisplay() throws IOException {
-	    log.entry();
+	    log.traceEntry();
 		return log.traceExit(new HtmlGeneralDisplay(this.response, this.requestParameters,
 		        this.prop, this));
 	}
 
     @Override
     public ErrorDisplay getErrorDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlErrorDisplay(this.response, this.requestParameters,
                 this.prop, this));
     }
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlDocumentationDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public AboutDisplay getAboutDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlAboutDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlPrivacyPolicyDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public CollaborationDisplay getCollaborationDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlCollaborationDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlTopAnatDisplay(this.response, this.requestParameters, this.prop, this));
     }
     
 	@Override
 	public GeneDisplay getGeneDisplay() throws IOException {
-		log.entry();
+		log.traceEntry();
 		return log.traceExit(new HtmlGeneDisplay(response, requestParameters, prop, jsonHelper, this));
 	}
 
     @Override
     public ExpressionComparisonDisplay getExpressionComparisonDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlExpressionComparisonDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override
     public RawDataDisplay getRawCallDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override
 	public SourceDisplay getSourceDisplay() throws IOException {
-	    log.entry();
+	    log.traceEntry();
 	    return log.traceExit(new HtmlSourceDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 	
@@ -154,46 +154,46 @@ public class HtmlFactory extends ViewFactory {
 	}
     @Override
     public DAODisplay getDAODisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
     }
     @Override
     public JobDisplay getJobDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlJobDisplay(this.response, this.requestParameters, this.prop, this));
     }
     @Override
 	public RPackageDisplay getRPackageDisplay() throws IOException {
-	    log.entry();
+	    log.traceEntry();
 	    throw log.throwing(new UnsupportedOperationException("Not available for HTML display"));
 	}
     @Override
     public FaqDisplay getFaqDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlFaqDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public SparqlDisplay getSparqlDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlSparqlDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public ResourcesDisplay getResourceDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlResourcesDisplay(this.response, this.requestParameters, this.prop, this));
     }
 
     @Override
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlAnatomicalSimilarityDisplay(
                 this.response, this.requestParameters, this.prop, this));
     }
     @Override
     public PublicationDisplay getPublicationDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new HtmlPublicationsDisplay(this.response, this.requestParameters, this.prop, this));
     }
 }

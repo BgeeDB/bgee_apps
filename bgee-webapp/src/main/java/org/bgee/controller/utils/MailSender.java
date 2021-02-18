@@ -319,7 +319,7 @@ public class MailSender {
      * @see #releaseLock(boolean)
      */
     private void acquireLock() throws InterruptedException {
-        log.entry();
+        log.traceEntry();
         
         LOCK.lock();
         //now that we have acquire the lock, we make sure we don't send another mail too fast
@@ -346,7 +346,7 @@ public class MailSender {
      * @see #acquireLock()
      */
     private void releaseLock(boolean mailSent) {
-        log.entry();
+        log.traceEntry();
         
         if (mailSent) {
             MailSender.lastSendTime = System.currentTimeMillis();

@@ -38,7 +38,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
     private final static Map<String, RawExpressionCallDAO.Attribute> colToAttrMap;
 
     static {
-        log.entry();
+        log.traceEntry();
         Map<String, RawExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(EXPR_ID_FIELD, RawExpressionCallDAO.Attribute.ID);
         colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
@@ -103,7 +103,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
         @Override
         protected RawExpressionCallDAO.RawExpressionCallTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
 

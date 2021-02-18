@@ -166,13 +166,13 @@ extends Spliterators.AbstractSpliterator<List<T>> {
      */
     @Override
     public Spliterator<List<T>> trySplit() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit((Spliterator<List<T>>) null);
     }
     
     @Override
     public Comparator<? super List<T>> getComparator() {
-        log.entry();
+        log.traceEntry();
         //An element of the Stream is a List<T>, where all the Ts have a same entity U,
         //so retrieving the first T of the List is enough to extract the entity U and order the Lists
         //(Done by the Comparator this.elementComparator)
@@ -184,7 +184,7 @@ extends Spliterators.AbstractSpliterator<List<T>> {
      * Close the {@code Stream} provided at instantiation, if not already done.
      */
     public void close() {
-        log.entry();
+        log.traceEntry();
         if (!isClosed){
             try {
                 this.elementStream.close();

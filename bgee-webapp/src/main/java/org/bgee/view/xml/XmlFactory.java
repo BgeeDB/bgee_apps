@@ -28,13 +28,13 @@ public class XmlFactory extends ViewFactory {
 	
 	@Override
 	public DownloadDisplay getDownloadDisplay() {
-	    log.entry();
+	    log.traceEntry();
 		return log.traceExit((DownloadDisplay) null);
 	}
 
     @Override
 	public GeneralDisplay getGeneralDisplay() {
-	    log.entry();
+	    log.traceEntry();
 		throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
 	}
 
@@ -45,31 +45,31 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public DocumentationDisplay getDocumentationDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
     public AboutDisplay getAboutDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
     public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
     public CollaborationDisplay getCollaborationDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
     public TopAnatDisplay getTopAnatDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
@@ -95,7 +95,7 @@ public class XmlFactory extends ViewFactory {
 
 	@Override
 	public SearchDisplay getSearchDisplay() throws IOException {
-	    log.entry();
+	    log.traceEntry();
 		return log.traceExit(new XmlSearchDisplay(this.response, this.requestParameters, this.prop, this));
 	}
 
@@ -111,19 +111,19 @@ public class XmlFactory extends ViewFactory {
 
     @Override
     public DAODisplay getDAODisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 
     @Override
     public JobDisplay getJobDisplay() {
-        log.entry();
+        log.traceEntry();
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
     
     @Override
 	public RPackageDisplay getRPackageDisplay() {
-	    log.entry();
+	    log.traceEntry();
 	    throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
 	}
 

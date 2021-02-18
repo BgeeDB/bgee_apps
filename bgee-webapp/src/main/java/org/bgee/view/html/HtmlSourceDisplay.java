@@ -135,7 +135,7 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
         
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.

@@ -46,7 +46,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
 
     @Override
     public void displayPublications() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Publications", "Publications");
         
@@ -263,17 +263,17 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
     }
     
     private String getTitle(String title) {
-        log.entry(title);
+        log.traceEntry("{}", title);
         return log.traceExit("<span property='schema:headline'>" + title + "</span>.");
     }
 
     private String getAuthors(List<String> names) {
-        log.entry(names);
+        log.traceEntry("{}", names);
         return log.traceExit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
     }
 
     private String getAuthor(String name) {
-        log.entry(name);
+        log.traceEntry("{}", name);
         return log.traceExit(
                 "<span property='schema:author' typeof='schema:Person'>" +
                 "    <span property='schema:name'>" + name + "</span>" +
@@ -281,7 +281,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
     }
 
     private String getPeriodical(String journalName) {
-        log.entry(journalName);
+        log.traceEntry("{}", journalName);
         return log.traceExit(
                 "<span property='schema:isPartOf' typeof='schema:Periodical'>" +
                 "    <span property='schema:name'>" + journalName + "</span>" +

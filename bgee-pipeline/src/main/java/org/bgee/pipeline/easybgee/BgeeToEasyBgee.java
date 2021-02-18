@@ -726,7 +726,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      * method used to delete all data from all tables of the Easy Bgee database
      */
     private void emptyDatabaseTables() {
-        log.entry();
+        log.traceEntry();
         String serverName = "";
         Pattern pattern = Pattern.compile("^.*//(.*?):");
         Matcher matcher = pattern.matcher(getManager().getJdbcUrl());

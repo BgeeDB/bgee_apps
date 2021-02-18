@@ -46,7 +46,7 @@ public class CommandResources extends CommandParent {
     
     @Override
     public void processRequest() throws IllegalStateException, IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
 
         ResourcesDisplay display = this.viewFactory.getResourceDisplay();
         if (this.requestParameters.getAction() != null &&

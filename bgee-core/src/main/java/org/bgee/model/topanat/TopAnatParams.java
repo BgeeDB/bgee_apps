@@ -430,7 +430,7 @@ public class TopAnatParams {
          * @throws MissingParameterException    If a mandatory parameter is not properly set
          */
         public TopAnatParams build() throws MissingParameterException{
-            log.entry();
+            log.traceEntry();
             return log.traceExit(new TopAnatParams(this));
         }
     }
@@ -602,7 +602,7 @@ public class TopAnatParams {
      * @return A {@code CallFilter} to be used for the analysis
      */
     public CallFilter<?, ?> convertRawParametersToCallFilter() {
-        log.entry();
+        log.traceEntry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
@@ -665,7 +665,7 @@ public class TopAnatParams {
 //     * TODO improve comment here
 //     */
 //    private Collection<ExpressionCallData> getExpressionCallData() {
-//        log.entry();
+//        log.traceEntry();
 //
 //        return log.traceExit(this.getCallData((dataType, dataQual) -> 
 //            new ExpressionCallData(SummaryCallType.Expression.EXPRESSED,
@@ -681,7 +681,7 @@ public class TopAnatParams {
 //     * @return
 //     */
 //    private Collection<DiffExpressionCallData> getDiffExpressionCallData() {
-//        log.entry();
+//        log.traceEntry();
 //
 //        return log.traceExit(this.getCallData((dataType, dataQual) -> 
 //            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
@@ -714,7 +714,7 @@ public class TopAnatParams {
      * @return  A {@code String} that is the unique key
      */
     private String generateKey() {
-        log.entry();
+        log.traceEntry();
 
         log.info("Trying to generate a key based on all params");
 

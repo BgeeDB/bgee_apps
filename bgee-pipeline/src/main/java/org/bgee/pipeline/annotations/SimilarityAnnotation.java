@@ -2419,7 +2419,7 @@ public class SimilarityAnnotation {
      * @throws IllegalStateException    if some errors were detected and stored.
      */
     private void verifyErrors() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         
         try {
             String errorMsg = "";
@@ -2498,7 +2498,7 @@ public class SimilarityAnnotation {
      * Reinit the errors stored following a call to {@link #verifyErrors()}.
      */
     private void reinitErrors() {
-        log.entry();
+        log.traceEntry();
         this.missingUberonIds.clear();
         this.missingTaxonIds.clear();
         this.missingECOIds.clear();

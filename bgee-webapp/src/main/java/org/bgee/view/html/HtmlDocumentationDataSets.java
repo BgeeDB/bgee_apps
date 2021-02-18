@@ -52,7 +52,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
      * @see HtmlDocumentationDisplay#displayDataSets() 
      */
     protected void writeDocumentation() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlExprCalls = this.getNewRequestParameters();
         urlExprCalls.setPage(RequestParameters.PAGE_DOWNLOAD);

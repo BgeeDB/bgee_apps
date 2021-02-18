@@ -139,14 +139,14 @@ public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute,
     
     @Override
     public void clearOrderingAttributes() {
-        log.entry();
+        log.traceEntry();
         this.orderingAttributes.clear();
         log.traceExit();
     }
     
     @Override
     public LinkedHashMap<U, Direction> getOrderingAttributes() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new LinkedHashMap<U, Direction>(orderingAttributes));
     }
 }

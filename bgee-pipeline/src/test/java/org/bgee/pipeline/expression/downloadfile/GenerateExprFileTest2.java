@@ -718,7 +718,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
     }
 
     private ExpressionCallFilter getCallFilter(Set<GeneFilter> geneFilters) {
-        log.entry();
+        log.traceEntry();
         
         Map<ExpressionSummary, SummaryQuality> summaryQuality = new HashMap<>();
         summaryQuality.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);

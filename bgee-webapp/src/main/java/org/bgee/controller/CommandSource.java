@@ -44,7 +44,7 @@ public class CommandSource extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
         
         SourceDisplay display = this.viewFactory.getSourceDisplay();
 

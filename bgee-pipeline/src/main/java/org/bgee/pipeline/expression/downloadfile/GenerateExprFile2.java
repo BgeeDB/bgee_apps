@@ -291,7 +291,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
     public void generateExprFiles() throws UncheckedIOException {
-        log.entry();
+        log.traceEntry();
 
         Set<Integer> setSpecies = Collections.unmodifiableSet(this.speciesIds == null?
                 new HashSet<>() : new HashSet<>(this.speciesIds));

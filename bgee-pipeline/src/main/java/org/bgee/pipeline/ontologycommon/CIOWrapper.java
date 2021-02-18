@@ -1610,7 +1610,7 @@ public class CIOWrapper {
      * @see #CONFIDENCE_LEVEL_ID
      */
     public Set<OWLClass> getConfidenceLevels() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.wrapper.getDescendantsThroughIsA(this.confidenceLevel));
     }
     /**
@@ -1626,7 +1626,7 @@ public class CIOWrapper {
      * @see #getConfidenceLevels()
      */
     public List<OWLClass> getOrderedConfidenceLevels() {
-        log.entry();
+        log.traceEntry();
 
         List<OWLClass> orderedConfLevels = new ArrayList<OWLClass>(this.getConfidenceLevels());
         final OWLGraphWrapper wrapper = this.wrapper;

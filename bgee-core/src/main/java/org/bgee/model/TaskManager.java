@@ -437,7 +437,7 @@ public class TaskManager {
      * to notify a {@code TaskManager}, and for logging purpose.
      */
     public void endSubTask() {
-        log.entry();
+        log.traceEntry();
         log.debug("Ending sub-task {}", this.currentSubTaskName);
         log.traceExit();
     }

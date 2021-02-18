@@ -76,7 +76,7 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 
         @Override
         protected GeneNameSynonymTO getNewTO() throws DAOException, UnrecognizedColumnException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer geneId = null;

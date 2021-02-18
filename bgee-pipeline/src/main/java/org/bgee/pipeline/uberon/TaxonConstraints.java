@@ -606,7 +606,7 @@ public class TaxonConstraints {
      * with the taxonomy we use, stored in {@link #taxOntWrapper}.
      */
     private void filterUberonOntology() {
-        log.entry();
+        log.traceEntry();
         log.debug("Removing all axioms betwen taxa from Uberon");
         
         //Remove any "is_a" relations and disjoint classes axioms between taxa 

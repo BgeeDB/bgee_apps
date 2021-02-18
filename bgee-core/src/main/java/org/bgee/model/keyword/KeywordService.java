@@ -43,7 +43,7 @@ public class KeywordService extends Service {
 	 * @see #getKeywordForSpecies(Collection)
 	 */
 	public Map<Integer, Set<String>> getKeywordForAllSpecies() {
-		log.entry();
+		log.traceEntry();
 		return log.traceExit(getKeywordForSpecies(null));
 	}
 	/**

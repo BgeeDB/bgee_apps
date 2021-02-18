@@ -301,7 +301,7 @@ public class MySQLStageDAO extends MySQLDAO<StageDAO.Attribute> implements Stage
 
         @Override
         protected StageTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             
             String stageId = null, stageName = null, stageDescription = null;
             Integer leftBound = null, rightBound = null, level = null;

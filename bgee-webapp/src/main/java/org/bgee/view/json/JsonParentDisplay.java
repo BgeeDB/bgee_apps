@@ -207,7 +207,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
 
     @Override
     protected String getContentType() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("application/json");
     }
     

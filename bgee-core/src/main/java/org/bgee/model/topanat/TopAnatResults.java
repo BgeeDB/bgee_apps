@@ -271,7 +271,7 @@ public class TopAnatResults {
      */
     public List<TopAnatResults.TopAnatResultRow> getRows() throws FileNotFoundException,
     IOException{
-        log.entry();
+        log.traceEntry();
             File resultFile = Paths.get(this.props.getTopAnatResultsWritingDirectory(), 
                     this.getResultDirectory(), 
                     this.getResultFileName()).toFile();

@@ -266,7 +266,7 @@ public class User {
      * @return          A secured {@code String}.
      */
     private String secureString(String toSecure) {
-        log.entry();
+        log.traceEntry();
         //avoid weird Chinese characters etc. See UrlParameters.DEFAULT_FORMAT
         if (toSecure == null || !toSecure.matches("^[\\w~@#&$^*/()_+=\\[\\]{}|\\\\,;.?!'\": \\-%]*$")) {
             return log.traceExit((String) null);

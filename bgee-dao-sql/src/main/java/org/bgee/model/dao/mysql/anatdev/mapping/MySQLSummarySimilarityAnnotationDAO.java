@@ -168,7 +168,7 @@ public class MySQLSummarySimilarityAnnotationDAO
     @Override
     public SummarySimilarityAnnotationTOResultSet getAllSummarySimilarityAnnotations()
             throws DAOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getSummarySimilarityAnnotations(null, false, false, null, null, null));
     }
     @Override
@@ -201,7 +201,7 @@ public class MySQLSummarySimilarityAnnotationDAO
 
     @Override
     public SimAnnotToAnatEntityTOResultSet getAllSimAnnotToAnatEntity() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getSimAnnotToAnatEntity(null, false, false, null, null));
     }
     @Override
@@ -366,7 +366,7 @@ public class MySQLSummarySimilarityAnnotationDAO
 
         @Override
         protected SummarySimilarityAnnotationTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String cioId = null;
             Integer id = null, taxonId = null;
@@ -455,7 +455,7 @@ public class MySQLSummarySimilarityAnnotationDAO
         
         @Override
         protected SimAnnotToAnatEntityTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             Integer summarySimilarityAnnotationId = null;
             String anatEntityId = null; 

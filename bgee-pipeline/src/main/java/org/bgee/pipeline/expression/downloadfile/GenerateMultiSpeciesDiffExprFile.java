@@ -1255,7 +1255,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //    //TODO: re-write javadoc, either by specifying that thee parameters are provided at instantiation, 
 //    //or by pointing to public getters
 //    public void generateMultiSpeciesDiffExprFiles() throws IOException {
-//        log.entry();
+//        log.traceEntry();
 //        log.info("Start generating multi-species diff. expression files {} with parameters {} in the directory {}",
 //                this.fileTypes, this.providedGroups, this.directory);
 //
@@ -3036,7 +3036,7 @@ public class GenerateMultiSpeciesDiffExprFile   extends GenerateDownloadFile
 //     * @return              An {@code Array} of {@code String}s used to produce the header.
 //     */
 //    private String[] generateOMAFileHeader() {
-//        log.entry();
+//        log.traceEntry();
 //    
 //        String[] headers = new String[3];
 //        headers[0] = OMA_ID_COLUMN_NAME;

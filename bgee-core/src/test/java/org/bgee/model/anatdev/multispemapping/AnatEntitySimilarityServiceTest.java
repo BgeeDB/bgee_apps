@@ -55,7 +55,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
 
     @Before
     public void setMockObjects() {
-        log.entry();
+        log.traceEntry();
 
         when(this.anatEntityService.loadAnatEntities(
                 new HashSet<>(Arrays.asList(anatEntityWithNoSimilarityId, nonExistingAnatEntityId)), false))

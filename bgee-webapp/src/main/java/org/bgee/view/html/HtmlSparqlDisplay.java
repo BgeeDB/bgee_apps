@@ -70,7 +70,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
     @Override
     public void displaySparql() {
-        log.entry();
+        log.traceEntry();
 
         String easyBgeeDocUrl = MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/easybgee_creation";
         
@@ -213,7 +213,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         this.includeCss("sparql.css");
         

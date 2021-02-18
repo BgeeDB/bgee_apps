@@ -130,7 +130,7 @@ public class TopAnatAnalysis {
      */
     protected TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
     InvalidSpeciesGenesException, RAnalysisException {
-        log.entry();
+        log.traceEntry();
         log.info("Result directory: {}", this.getResultDirectory());
 
         // Validate and load the gene in the foreground and background
@@ -245,7 +245,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void runRcode() throws IOException, RAnalysisException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Run R code...");
 
@@ -348,7 +348,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void generateRCodeFile() throws IOException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Generating R code file...");
 
@@ -408,7 +408,7 @@ public class TopAnatAnalysis {
     }
 
     private void createWriteDirectoryIfNotExist() {
-        log.entry();
+        log.traceEntry();
         //acquire the write lock before checking if the directory exists, 
         //so that we can create it immediately. 
         String dir = this.getResultDirectoryPath();
@@ -428,7 +428,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void generateAnatEntitiesFiles() throws IOException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Generating AnatEntities files...");
 
@@ -575,7 +575,7 @@ public class TopAnatAnalysis {
     /**
      */
     private void generateGenesToAnatEntitiesAssociationFile() throws IOException {
-        log.entry();
+        log.traceEntry();
         log.info("Generating Gene to AnatEntities Association file...");
 
         //These files are general and are created in the general directory to be cached, 
@@ -668,7 +668,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void generateTopAnatParamsFile() throws IOException {
-        log.entry();
+        log.traceEntry();
         log.info("Generating TopAnatParams file...");
 
         String topAnatParamsFilePath = this.getParamsOutputFilePath(false);
@@ -706,7 +706,7 @@ public class TopAnatAnalysis {
     }  
 
     private void generateZipFile() throws IOException{
-        log.entry();
+        log.traceEntry();
         log.info("Generating Zip file...");
 
         String zipFilePath = this.getZipFilePath(false);
@@ -806,11 +806,11 @@ public class TopAnatAnalysis {
      *          are written.
      */
     protected String getResultDirectory() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.params.getKey() + File.separator);
     }
     protected String getResultDirectoryPath() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.props.getTopAnatResultsWritingDirectory() + this.getResultDirectory());
     }
     
@@ -844,7 +844,7 @@ public class TopAnatAnalysis {
         return TopAnatAnalysis.FILE_PREFIX + "log.R_console";
     }
     protected String getRScriptConsoleFilePath(){
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getResultDirectoryPath() + this.getRScriptConsoleFileName());
     }
 
@@ -999,7 +999,7 @@ public class TopAnatAnalysis {
      * @return
      */
     protected boolean isAnalysisDone(){
-        log.entry();
+        log.traceEntry();
         
         String finalFilePath = this.getResultFilePath(false);
         String tmpFilePath = this.getResultFilePath(true);

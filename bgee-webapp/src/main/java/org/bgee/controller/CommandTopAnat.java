@@ -161,7 +161,7 @@ public class CommandTopAnat extends CommandParent {
         
         @Override
         public void run() {
-            log.entry();
+            log.traceEntry();
             
             long startTimeInMs = System.currentTimeMillis();
             Exception exceptionThrown = null;
@@ -443,7 +443,7 @@ public class CommandTopAnat extends CommandParent {
     @Override
     public void processRequest() throws IOException, PageNotFoundException, 
     InvalidRequestException, MissingParameterException, TooManyJobsException {
-        log.entry();
+        log.traceEntry();
         
         //we initialize the display only if there is no file to download requested, 
         //otherwise we could not obtain the response outputstream to directly print 
@@ -628,7 +628,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private void launchExportDownload() throws InvalidRequestException, MissingParameterException, 
         UnsupportedEncodingException, IOException {
-        log.entry();
+        log.traceEntry();
         
         final TopAnatController controller = this.loadTopAnatController();
         if (!controller.areAnalysesDone()) {
@@ -712,7 +712,7 @@ public class CommandTopAnat extends CommandParent {
      * @throws InvalidRequestException
      */
     private LinkedHashMap<String, Object> getGeneResponses() throws InvalidRequestException {
-        log.entry();
+        log.traceEntry();
 
         //retrieve possible parameters for this query
         final List<String> fgList = Collections.unmodifiableList(Optional.ofNullable(
@@ -950,7 +950,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private TopAnatController loadTopAnatController() 
             throws InvalidRequestException, MissingParameterException {
-        log.entry();
+        log.traceEntry();
 
         // Get submitted params
         // Fg gene list cannot be null

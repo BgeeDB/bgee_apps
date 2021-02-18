@@ -43,7 +43,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
 
         this.sendServiceUnavailableHeaders();
 
@@ -171,7 +171,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
 
         this.sendBadRequestHeaders();
 
@@ -184,7 +184,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
         
         this.sendInternalErrorHeaders();
         

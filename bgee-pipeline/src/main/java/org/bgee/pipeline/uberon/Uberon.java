@@ -288,7 +288,7 @@ public class Uberon extends UberonCommon {
 
 //    public static void test() throws FileNotFoundException, IOException, 
 //    OBOFormatParserException, OWLOntologyCreationException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        String sourceOntName = "composite-metazoan.owl";
 //        
@@ -913,7 +913,7 @@ public class Uberon extends UberonCommon {
      * @throws IOException                  If {@code uberonFile} could not be read.
      */
     public Set<Integer> extractTaxonIds() throws IllegalArgumentException {
-        log.entry();
+        log.traceEntry();
 
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         Set<String> taxonIds = new HashSet<String>();

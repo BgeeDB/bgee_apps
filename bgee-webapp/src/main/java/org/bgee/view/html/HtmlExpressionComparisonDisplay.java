@@ -73,7 +73,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     @Override
     public void displayExpressionComparisonHomePage() {
-        log.entry();
+        log.traceEntry();
         
         this.displayExpressionComparison(null, null, null, null, null);
         
@@ -419,7 +419,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * Add schema.org markups to the page.
      */
     private void addSchemaMarkups() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
@@ -448,7 +448,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -469,7 +469,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
 
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 

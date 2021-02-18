@@ -56,7 +56,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
     @Override
     public void displayRawCallHomePage() {
-        log.entry();
+        log.traceEntry();
         
         // TODO add schema.org properties 
         
@@ -329,7 +329,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     }
 
     private void writeExpTableEnd() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("        </table>"); // close table assay
         this.writeln("      </td>");
@@ -383,7 +383,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     }
     
     private void writeAssayTableEnd() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("          </tbody>");
         this.writeln("        </table>");  // close call-source
@@ -438,7 +438,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         this.includeCss("raw_data.css");
 

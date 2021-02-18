@@ -49,7 +49,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
     @Override
     public RawSimilarityAnnotationTOResultSet getAllRawSimilarityAnnotations()
             throws DAOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getRawSimilarityAnnotations());
     }
 
@@ -61,7 +61,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     private RawSimilarityAnnotationTOResultSet getRawSimilarityAnnotations() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         String tableName = "rawSimilarityAnnotation";
         
@@ -253,7 +253,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
 
         @Override
         protected RawSimilarityAnnotationTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             Integer summarySimilarityAnnotationId = null;
             String ecoId = null, cioId = null, 

@@ -126,7 +126,7 @@ public class CommandRunner {
      * {@code java.util.logging} and {@code SimpleLogger}.
      */
     public static final void loadLogConfig() throws SecurityException, IOException {
-        log.entry();
+        log.traceEntry();
         if (System.getProperty("java.util.logging.config.file") == null) {
             log.trace("Reset java.util.logging configuration from property file {}", 
                     JDK_LOG_CONFIG_FILE);

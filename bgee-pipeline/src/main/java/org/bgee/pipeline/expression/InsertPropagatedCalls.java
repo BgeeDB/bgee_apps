@@ -455,13 +455,13 @@ public class InsertPropagatedCalls extends CallService {
          */
         @Override
         public Spliterator<U> trySplit() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit((Spliterator<U>) null);
         }
         
         @Override
         public Comparator<? super U> getComparator() {
-            log.entry();
+            log.traceEntry();
             //An element of the Stream is a Map where keys are RawExpressionCallTOs
             //for one specific gene, so retrieving the first RawExpressionCallTO key 
             //is enough to retrieve the gene ID and order the Maps
@@ -473,7 +473,7 @@ public class InsertPropagatedCalls extends CallService {
          * Close {@code Stream}s provided at instantiation.
          */
         public void close() {
-            log.entry();
+            log.traceEntry();
             if (!isClosed){
                 try {
                     callTOs.close();
@@ -736,7 +736,7 @@ public class InsertPropagatedCalls extends CallService {
 
         @Override
         public void run() {
-            log.entry();
+            log.traceEntry();
 
             //We need a new connection to the database for each thread, so we use
             //the ServiceFactory Supplier
@@ -937,7 +937,7 @@ public class InsertPropagatedCalls extends CallService {
          * in any thread.
          */
         private void killAllDAOManagersIfNeeded() {
-            log.entry();
+            log.traceEntry();
             if (this.callPropagator.errorOccured == null) {
                 log.traceExit(); return;
             }
@@ -1454,7 +1454,7 @@ public class InsertPropagatedCalls extends CallService {
     }
 
     private void insertOneSpecies() {
-        log.entry();
+        log.traceEntry();
         
         log.info("Start inserting of propagated calls for the species {} with combinations of condition parameters {}...",
             this.speciesId, this.condParamCombinations);
@@ -1614,7 +1614,7 @@ public class InsertPropagatedCalls extends CallService {
      * @throws IllegalStateException    If an {@code Exception} occurred in a different {@code Thread}.
      */
     private void checkErrorOccurred() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.errorOccured != null) {
             log.debug("Stop execution following error in other Thread.");
             throw new IllegalStateException("Exception thrown in another thread, stop job.");
@@ -1646,7 +1646,7 @@ public class InsertPropagatedCalls extends CallService {
     }
 
     private void interruptInsertIfNeeded(Thread insertThread) {
-        log.entry();
+        log.traceEntry();
         Set<Thread.State> waitingStates = EnumSet.of(Thread.State.BLOCKED, Thread.State.WAITING,
                 Thread.State.TIMED_WAITING);
         if (insertThread != null && waitingStates.contains(insertThread.getState()) &&

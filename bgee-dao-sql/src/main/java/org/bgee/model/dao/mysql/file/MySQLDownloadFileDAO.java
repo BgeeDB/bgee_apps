@@ -82,7 +82,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
 
     @Override
     public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException {
-        log.entry();
+        log.traceEntry();
         final String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, colToAttributesMap, false);
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
@@ -165,7 +165,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
         @Override
         protected DownloadFileDAO.DownloadFileTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesDataGroupId = null;
                 String path = null, name = null, description = null;

@@ -168,7 +168,7 @@ public class CommandGene extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
         GeneDisplay display = viewFactory.getGeneDisplay();
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
@@ -338,7 +338,7 @@ public class CommandGene extends CommandParent {
      */
     private Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> getClusteringFunction() 
             throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.prop.getGeneScoreClusteringMethod() == null) {
             throw log.throwing(new IllegalStateException("No clustering method specified."));
         }

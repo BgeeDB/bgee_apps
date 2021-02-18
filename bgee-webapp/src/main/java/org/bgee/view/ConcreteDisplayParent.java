@@ -130,7 +130,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int)
      */
     protected void sendHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_OK);
         log.traceExit();
     }
@@ -197,7 +197,7 @@ public abstract class ConcreteDisplayParent {
      * {@code getCharacterEncoding} on {@link #requestParameters}).
      */
     private void defineResponseContentTypeAndEncoding() {
-        log.entry();
+        log.traceEntry();
         log.trace("Set content type to {}", this.getContentType());
         this.response.setContentType(this.getContentType());
         log.trace("Set character encoding to {}", this.requestParameters.getCharacterEncoding());
@@ -211,7 +211,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     public void sendServiceUnavailableHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_SERVICE_UNAVAILABLE, true);
         log.traceExit();
     }
@@ -221,7 +221,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendBadRequestHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_BAD_REQUEST, true);
         log.traceExit();
     }
@@ -231,7 +231,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendTooManyRequeststHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(429, true);
         log.traceExit();
     }
@@ -241,7 +241,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendPageNotFoundHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_NOT_FOUND, true);
         log.traceExit();
     }
@@ -251,7 +251,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendInternalErrorHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, true);
         log.traceExit();
     }
@@ -262,7 +262,7 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     public void respondSuccessNoContent() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_NO_CONTENT, true);
         log.traceExit();
     }

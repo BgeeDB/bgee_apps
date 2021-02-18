@@ -233,7 +233,7 @@ implements SpeciesDataGroupDAO {
 
         @Override
         protected SpeciesDataGroupTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             final ResultSet currentResultSet = this.getCurrentResultSet();
             try {
                 String name = null, description = null;
@@ -284,7 +284,7 @@ implements SpeciesDataGroupDAO {
 
         @Override
         protected SpeciesToDataGroupTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer speciesId = null, groupId = null;

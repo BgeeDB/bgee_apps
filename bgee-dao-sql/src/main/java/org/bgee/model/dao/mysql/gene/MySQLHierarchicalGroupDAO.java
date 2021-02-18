@@ -290,7 +290,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
        
        @Override
        protected HierarchicalNodeTO getNewTO() throws DAOException {
-           log.entry();
+           log.traceEntry();
 
            String hogId = null;
            Integer taxonId = null, nodeId = null; 
@@ -371,7 +371,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
         
         @Override
         protected HierarchicalNodeToGeneTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             Integer hogId = null, geneId = null, taxonId = null; 
 
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
@@ -426,7 +426,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //    public ArrayList<String> getHierarchicalOrthologousGenes(String queryGene,
 //            String ncbiTaxonomyId) throws SQLException {
 //
-//        log.entry();
+//        log.traceEntry();
 //
 //        ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
@@ -501,7 +501,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //            String queryGene, String ncbiTaxonomyId, ArrayList<Long> speciesIds)
 //            throws SQLException {
 //
-//        log.entry();
+//        log.traceEntry();
 //
 //        ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
@@ -568,7 +568,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //    public ArrayList<String> getWithinSpeciesParalogs(String queryGene)
 //            throws SQLException {
 //
-//        log.entry();
+//        log.traceEntry();
 //
 //        ArrayList<String> paralogusGenes = new ArrayList<String>();
 //
@@ -638,7 +638,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //    public ArrayList<String> getOrthologsInClosestSpecies(String queryGene)
 //            throws SQLException {
 //
-//        log.entry();
+//        log.traceEntry();
 //
 //        ArrayList<String> orthologousGenes = new ArrayList<String>();
 //
@@ -717,7 +717,7 @@ public class MySQLHierarchicalGroupDAO extends MySQLDAO<HierarchicalGroupDAO.Att
 //    public ArrayList<String> getAllHierarchicalOrthologuesForSpecies(
 //            String queryGene, ArrayList<Long> speciesIds) throws SQLException {
 //
-//        log.entry();
+//        log.traceEntry();
 //
 //        ArrayList<String> orthologousGenes = new ArrayList<String>();
 //

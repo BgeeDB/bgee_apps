@@ -1047,7 +1047,7 @@ public class RequestParameters {
      * @see URLParameters#getParamData
      */
     private void store() throws RequestParametersNotStorableException {
-        log.entry();
+        log.traceEntry();
 
         if (StringUtils.isBlank(this.getFirstValue(
                 this.getKeyParam()))) {
@@ -1446,7 +1446,7 @@ public class RequestParameters {
      */
     private boolean isUrlTooLong() {
 
-        log.entry();
+        log.traceEntry();
         if (log.isTraceEnabled()) {
             log.trace("length of query: {} - max URL length: {}", 
                     this.parametersQuery.length(), prop.getUrlMaxLength());
@@ -1556,7 +1556,7 @@ public class RequestParameters {
      * @return The Parameter<String> that contains the key used to store the storable parameters
      */
     private Parameter<String> getKeyParam(){
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.urlParametersInstance.getParamData());
     }
 
@@ -1573,7 +1573,7 @@ public class RequestParameters {
      * 
      */
     public String getRequestURL() throws RequestParametersNotStorableException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getRequestURL(this.parametersSeparator));
     }
 
@@ -1590,7 +1590,7 @@ public class RequestParameters {
      *
      */
     public String getStableRequestURL() throws RequestParametersNotStorableException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getRequestURL(parametersSeparator, null, false, true));
     }
 
@@ -1969,7 +1969,7 @@ public class RequestParameters {
      *             
      */
     public RequestParameters cloneWithAllParameters(){
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.cloneRequestParameter(true));
     }
 
@@ -1982,7 +1982,7 @@ public class RequestParameters {
      *             but with "non-storable" parameters simply initialized.
      */
     public RequestParameters cloneWithStorableParameters(){
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.cloneRequestParameter(false));
     }
 
@@ -2474,7 +2474,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the display is Xml or not
      */
     public boolean isXmlDisplayType() {
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_XML)){
@@ -2489,7 +2489,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the display is Csv or not
      */
     public boolean isCsvDisplayType() {
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_CSV)){
@@ -2504,7 +2504,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the display is Tsv or not
      */
     public boolean isTsvDisplayType() {
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_TSV)){
@@ -2519,7 +2519,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the display is JSON or not
      */
     public boolean isJsonDisplayType() {
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_JSON)){
@@ -2537,7 +2537,7 @@ public class RequestParameters {
      * @return  {@code true} if this request was performed through AJAX
      */
     public boolean isAnAjaxRequest() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamAjax()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamAjax())) {
             return log.traceExit(true);
@@ -2558,7 +2558,7 @@ public class RequestParameters {
      *              Set, boolean, boolean, String, Collection, boolean)}) 
      */
     public boolean isPostFormSubmit() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPostFormSubmit())) {
             return log.traceExit(true);
@@ -2573,7 +2573,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the page corresponds to the homepage
      */
     public boolean isTheHomePage(){
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamPage()) == null){
             return log.traceExit(true);
         }
@@ -2587,7 +2587,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to species.
      */
     public boolean isASpeciesPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPECIES)) {
             return log.traceExit(true);
@@ -2600,7 +2600,7 @@ public class RequestParameters {
      *          species list upload.
      */
     public boolean isASpeciesUpload() {
-        log.entry();
+        log.traceEntry();
         if (isASpeciesPageCategory() && 
                 this.getAction() != null && this.getAction().equals(ACTION_SPECIES_UPLOAD)) {
             return log.traceExit(true);
@@ -2616,7 +2616,7 @@ public class RequestParameters {
      * category "about"
      */
     public boolean isAnAboutPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ABOUT)) {
             return log.traceExit(true);
@@ -2632,7 +2632,7 @@ public class RequestParameters {
      * category "privacy_policy"
      */
     public boolean isAPrivatePolicyPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PRIVACY_POLICY)) {
             return log.traceExit(true);
@@ -2648,7 +2648,7 @@ public class RequestParameters {
      * category "collaborations"
      */
     public boolean isAcollaborationsPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_COLLABORATIONS)) {
             return log.traceExit(true);
@@ -2660,7 +2660,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to job management.
      */
     public boolean isAJobPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_JOB)) {
             return log.traceExit(true);
@@ -2671,7 +2671,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to DAO queries.
      */
     public boolean isADAOPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DAO)) {
             return log.traceExit(true);
@@ -2683,7 +2683,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to BgeeDB_R package queries.
      */
     public boolean isARPackagePageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RPACKAGE)) {
             return log.traceExit(true);
@@ -2696,7 +2696,7 @@ public class RequestParameters {
      * category "resources".
      */
     public boolean isAResourcesPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RESOURCES)) {
             return log.traceExit(true);
@@ -2709,7 +2709,7 @@ public class RequestParameters {
      * category "publication".
      */
     public boolean isAPublicationPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_PUBLICATION)) {
             return log.traceExit(true);
@@ -2722,7 +2722,7 @@ public class RequestParameters {
      * category "sparql".
      */
     public boolean isASparqlPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SPARQL)) {
             return log.traceExit(true);
@@ -2734,7 +2734,7 @@ public class RequestParameters {
      *          (meaning, queries made by clients solely for us to have usage statistics).
      */
     public boolean isAStatsPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_STATS)) {
             return log.traceExit(true);
@@ -2745,7 +2745,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether it is requested to cancel a job.
      */
     public boolean isACancelJob() {
-        log.entry();
+        log.traceEntry();
         if (this.isAJobPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_CANCEL_JOB)) {
             return log.traceExit(true);
@@ -2760,7 +2760,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to topAnat.
      */
     public boolean isATopAnatPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
             this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_TOP_ANAT)) {
             return log.traceExit(true);
@@ -2777,7 +2777,7 @@ public class RequestParameters {
 //     */
 //    public boolean isAnAdminPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("admin")) {
 //            return log.traceExit(true);
@@ -2794,7 +2794,7 @@ public class RequestParameters {
 //     */
 //    public boolean isAnAnatomyPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) == null || 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("anatomy")) {
 //            return log.traceExit(true);
@@ -2807,7 +2807,7 @@ public class RequestParameters {
      *          gene list upload in topAnat.
      */
     public boolean isATopAnatGeneUpload() {
-        log.entry();
+        log.traceEntry();
         if (isATopAnatPageCategory() && 
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GENE_VALIDATION)) {
             return log.traceExit(true);
@@ -2819,7 +2819,7 @@ public class RequestParameters {
      *          a submission of a submission of a new job in topAnat.
      */
     public boolean isATopAnatSubmitJob() {
-        log.entry();
+        log.traceEntry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_SUBMIT_JOB)) {
             return log.traceExit(true);
@@ -2831,7 +2831,7 @@ public class RequestParameters {
      *          a tracking job in topAnat.
      */
     public boolean isATopAnatTrackingJob() {
-        log.entry();
+        log.traceEntry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_TRACKING_JOB)) {
             return log.traceExit(true);
@@ -2843,7 +2843,7 @@ public class RequestParameters {
      *          get a job in topAnat.
      */
     public boolean isATopAnatGetResult() {
-        log.entry();
+        log.traceEntry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_GET_RESULT)) {
             return log.traceExit(true);
@@ -2855,7 +2855,7 @@ public class RequestParameters {
      *          from TopAnat.
      */
     public boolean isATopAnatDownloadFile() {
-        log.entry();
+        log.traceEntry();
         if (isATopAnatPageCategory() &&
                 this.getAction() != null && this.getAction().equals(ACTION_TOP_ANAT_DOWNLOAD)) {
             return log.traceExit(true);
@@ -2870,7 +2870,7 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request is related to anat. similarity page.
      */
     public boolean isAAnatSimilarityPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_ANAT_SIM)) {
             return log.traceExit(true);
@@ -2885,7 +2885,7 @@ public class RequestParameters {
      * category "documentation"
      */
     public boolean isADocumentationPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOCUMENTATION)) {
             return log.traceExit(true);
@@ -2901,7 +2901,7 @@ public class RequestParameters {
      * category "download"
      */
     public boolean isADownloadPageCategory(){
-        log.entry();
+        log.traceEntry();
         if(this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DOWNLOAD)){
             return log.traceExit(true);
@@ -2918,7 +2918,7 @@ public class RequestParameters {
 //     */
 //    public boolean isAnExpressionPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("expression")) {
 //            return log.traceExit(true);
@@ -2934,7 +2934,7 @@ public class RequestParameters {
      * category "gene"
      */
     public boolean isAGenePageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_GENE)) {
             return log.traceExit(true);
@@ -2950,7 +2950,7 @@ public class RequestParameters {
      * category "expression_comparison"
      */
     public boolean isAExprComparisonPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_EXPR_COMPARISON)) {
             return log.traceExit(true);
@@ -2966,7 +2966,7 @@ public class RequestParameters {
      *          category "raw_data"
      */
     public boolean isARawDataPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
             return log.traceExit(true);
@@ -2980,7 +2980,7 @@ public class RequestParameters {
      * category "source"
      */
     public boolean isASourcePageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SOURCE)) {
             return log.traceExit(true);
@@ -2994,7 +2994,7 @@ public class RequestParameters {
      * category "search"
      */
     public boolean isASearchPageCategory() {
-        log.entry();
+        log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_SEARCH)) {
             return log.traceExit(true);
@@ -3011,7 +3011,7 @@ public class RequestParameters {
 //     */
 //    public boolean isAGeneFamilyPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("gene_family")) {
 //            return log.traceExit(true);
@@ -3028,7 +3028,7 @@ public class RequestParameters {
 //     */
 //    public boolean isALogPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("log")) {
 //            return log.traceExit(true);
@@ -3045,7 +3045,7 @@ public class RequestParameters {
 //     */
 //    public boolean isANewsPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("news")) {
 //            return log.traceExit(true);
@@ -3062,7 +3062,7 @@ public class RequestParameters {
 //     */
 //    public boolean isARegistrationPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("registration")) {
 //            return log.traceExit(true);
@@ -3079,7 +3079,7 @@ public class RequestParameters {
 //     */
 //    public boolean isASearchPageCategory()
 //    {
-//        log.entry();
+//        log.traceEntry();
 //        if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null && 
 //                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals("search")) {
 //            return log.traceExit(true);
@@ -3099,7 +3099,7 @@ public class RequestParameters {
      */
     public boolean isASecuredPage() 
     {
-        log.entry();
+        log.traceEntry();
         //TODO: implement when necessary (logging page, registration page, ...)
         return log.traceExit(false);
     }
@@ -3120,7 +3120,7 @@ public class RequestParameters {
      */
     public boolean isACacheableRequest()
     {
-        log.entry();
+        log.traceEntry();
         // Do not cache pages containing sensitive information
         if (this.isASecuredPage()) {
             return log.traceExit(false);

@@ -43,7 +43,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     @Override
     public void displayPrivacyPolicyPage() {
-        log.entry();
+        log.traceEntry();
 
         this.startDisplay("Bgee privacy notice", "WebPage");
 
@@ -202,7 +202,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     }
 
     private String getUnilEmail() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%31%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%67%3A%65%77%61%6E" +
@@ -219,7 +219,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     }
 
     private String getSibDpoEmail() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%35%39%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%64%3A%6F%70%73%40%62" +
@@ -237,7 +237,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.

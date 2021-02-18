@@ -344,12 +344,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
     @Override
     protected String getContentType() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("text/html");
     }
 
     public void emptyDisplay() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders();
         this.writeln("");
         log.traceExit();
@@ -469,7 +469,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Display the end of the HTML page (common to all pages).
      */
     protected void endDisplay() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlPublication = this.getNewRequestParameters();
         urlPublication.setPage(RequestParameters.PAGE_PUBLICATION);
@@ -521,7 +521,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * Display the Bgee header of the HTML page.
      */
     private void displayBgeeHeader() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -774,7 +774,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * returns a non-blank value (see {@link #prop}).
      */
     private void displayWarningMessage() {
-        log.entry();
+        log.traceEntry();
 
         if (StringUtils.isNotBlank(this.prop.getWarningMessage())) {
             this.writeln("<div class='alert alert-warning'>" +
@@ -790,7 +790,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * returns {@code true} (see {@link #prop}).
      */
     private void displayArchiveMessage() {
-        log.entry();
+        log.traceEntry();
 
         if (this.prop.isArchive()) {
             this.write("<div class='alert alert-danger'> This is an archived version of Bgee ");
@@ -858,7 +858,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *          formated in HTML and HTML escaped if necessary.
      */
     protected String getMainDocumentationLogo() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
         urlDocumentationGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -876,7 +876,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 //     *          formated in HTML and HTML escaped if necessary.
 //     */
 //    protected String getMainDownloadLogo() {
-//        log.entry();
+//        log.traceEntry();
 //
 //        RequestParameters urlDownloadGenerator = this.getNewRequestParameters();
 //        urlDownloadGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -895,7 +895,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *          formated in HTML and HTML escaped if necessary.
      */
     protected String getFeatureDownloadLogos() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlDownloadRefExprGenerator = this.getNewRequestParameters();
         urlDownloadRefExprGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -940,7 +940,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @see #includeJs(String)
      */
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
         if (!this.prop.isMinify()) {
             this.includeJs("lib/jquery.min.js");
             this.includeJs("lib/jquery_plugins/jquery.visible.min.js");
@@ -1111,7 +1111,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return  A newly created RequestParameters object.
      */
     protected RequestParameters getNewRequestParameters() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new RequestParameters(
                 this.getRequestParameters().getUrlParametersInstance(),
                 this.prop, true, "&amp;"));
@@ -1149,7 +1149,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * @return  the {@code String} that is the images sources as HTML 'div' element.
      */
     protected static String getImageSources() {
-        log.entry();
+        log.traceEntry();
 
         String commonsWikipedia = "https://commons.wikimedia.org/wiki";
         String gnuOrg           = "https://www.gnu.org/copyleft/fdl.html";
@@ -1221,7 +1221,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      *          {@code null} if this information is not available.
      */
     protected String getWebAppVersion() {
-        log.entry();
+        log.traceEntry();
         String version = null;
         if (StringUtils.isNotBlank(this.prop.getMajorVersion())) {
             version = this.prop.getMajorVersion();

@@ -196,7 +196,7 @@ public class GenerateOncoMXFile {
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(EnumSet.of(CallService.Attribute.GENE,
                 CallService.Attribute.ANAT_ENTITY_ID,
                 CallService.Attribute.DEV_STAGE_ID,
@@ -207,7 +207,7 @@ public class GenerateOncoMXFile {
     }
     protected static LinkedHashMap<CallService.OrderingAttribute, Service.Direction>
     getGeneServiceOrdering() {
-        log.entry();
+        log.traceEntry();
         //For ordering by gene and rank score, to retrieve the min and max ranks per gene
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -218,7 +218,7 @@ public class GenerateOncoMXFile {
         return log.traceExit(serviceOrdering);
     }
     protected static String[] getHeader() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new String[] { "Ensembl gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",

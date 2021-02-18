@@ -61,7 +61,7 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
     
 
     protected void startDisplay() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders();
         log.traceExit();
     }
@@ -70,7 +70,7 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
      * you must make sure to flsuh it before calling this method.
      */
     protected void endDisplay() {
-        log.entry();
+        log.traceEntry();
         //we end the file with 5 (why not!) blank lines. 
         //This is because, without a checksum mechanism, it is not possible to tell 
         //whether a file transfer was completed successfully. We do not want to compute 

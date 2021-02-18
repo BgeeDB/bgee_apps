@@ -169,7 +169,7 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If a transaction is already ongoing.
      */
     public void startTransaction() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("A transaction is already ongoing, " +
             		"cannot start a new one"));
@@ -189,7 +189,7 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If no transaction was ongoing.
      */
     public void commit() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (!this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("Try to commit a transaction, " +
                     "but there was no ongoing transactions"));
@@ -210,7 +210,7 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If no transaction was ongoing.
      */
     public void rollback() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (!this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("Try to rollback a transaction, " +
                     "but there was no ongoing transactions"));
@@ -266,7 +266,7 @@ public class BgeeConnection implements AutoCloseable {
      */
     @Override
     public void close() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             //rollback any ongoing transaction
             if (this.isOngoingTransaction()) {

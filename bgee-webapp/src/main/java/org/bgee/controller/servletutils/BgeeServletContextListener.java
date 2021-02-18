@@ -33,7 +33,7 @@ public class BgeeServletContextListener implements ServletContextListener {
 
 	@Override
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
-	    log.entry();
+	    log.traceEntry();
 		DAOManager.closeAll();
 		BgeeProperties.releaseAll();
 		log.traceExit();
@@ -41,7 +41,7 @@ public class BgeeServletContextListener implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
-		log.entry();
+		log.traceEntry();
 		//nothing for now. Should launch the cache and the data source in the future. 
 		log.traceExit();
 	}

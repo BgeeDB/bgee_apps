@@ -244,7 +244,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * Display the Bgee hero unit.
      */
     private void displayHeroUnit() {
-        log.entry();
+        log.traceEntry();
         
         String archiveClass = this.prop.isArchive()? "archive": "";
 
@@ -302,7 +302,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * Display explanations on Bgee web site.
      */
     private void displayExplanations() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
         
@@ -368,7 +368,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      *          as a HTML 'div' element.
      */
     private String getDownloadPageLinkBanner() {
-        log.entry();
+        log.traceEntry();
 
         StringBuilder banner = new StringBuilder();
         // This section is empty, it will be filled by JavaScript.
@@ -420,7 +420,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * Display Bgee news.
      */
     private void displayNews() {
-        log.entry();
+        log.traceEntry();
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -825,7 +825,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * Display more information (for instance, image sources or 'view x site' link).
      */
     private void displayMoreInfo() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div id='bgee_more_info' class='row'>");
         
@@ -873,7 +873,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -883,7 +883,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.

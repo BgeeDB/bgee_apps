@@ -30,25 +30,25 @@ public class XmlParentDisplay extends ConcreteDisplayParent {
 	}
 
 	protected void startDisplay() {
-		log.entry();
+		log.traceEntry();
 		this.sendHeaders();
 		this.writeln("<?xml version='1.0' encoding='UTF-8' ?>");
 		log.traceExit();
 	}
 	
 	protected void endDisplay() {
-		log.entry();
+		log.traceEntry();
 		log.traceExit();
 	}
 
 	@Override
 	protected String getContentType() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit("text/xml");
 	}
 
 	protected static String xmlEntities(String stringToWrite) {
-		log.entry();
+		log.traceEntry();
 		try {
     		return log.traceExit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
     	} catch (Exception e) {

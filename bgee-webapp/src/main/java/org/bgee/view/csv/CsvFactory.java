@@ -46,7 +46,7 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public ErrorDisplay getErrorDisplay() throws IllegalArgumentException, IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CsvErrorDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
@@ -93,7 +93,7 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public SpeciesDisplay getSpeciesDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CsvSpeciesDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
@@ -115,21 +115,21 @@ public class CsvFactory extends ViewFactory {
 
     @Override
     public DAODisplay getDAODisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CsvDAODisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
 
     @Override
     public JobDisplay getJobDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CsvJobDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }
     
     @Override
     public RPackageDisplay getRPackageDisplay() throws IOException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(new CsvRPackageDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
     }

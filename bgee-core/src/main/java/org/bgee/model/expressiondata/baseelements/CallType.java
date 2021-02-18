@@ -97,7 +97,7 @@ public interface CallType {
         
         @Override
         public String getStringRepresentation() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.name());
         }
         
@@ -177,7 +177,7 @@ public interface CallType {
         }
         @Override
         public String getStringRepresentation() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit(this.name());
         }
         /**

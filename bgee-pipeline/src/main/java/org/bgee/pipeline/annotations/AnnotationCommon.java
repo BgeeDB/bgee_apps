@@ -132,7 +132,7 @@ public class AnnotationCommon {
          *          potentially containing multiple values.
          */
         private final static String generateSplitValuePattern() {
-            log.entry();
+            log.traceEntry();
             String splitPattern = "";
             for (String separator: Utils.VALUE_SEPARATORS) {
                 if (!splitPattern.equals("")) {

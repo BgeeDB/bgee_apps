@@ -327,7 +327,7 @@ public class GeneService extends CommonService {
     }
 
     public Set<GeneBioType> loadGeneBioTypes() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.geneDAO.getGeneBioTypes()
                 .stream().map(to -> mapGeneBioTypeTOToGeneBioType(to))
                 .collect(Collectors.toSet()));

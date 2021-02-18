@@ -28,7 +28,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
 
     @Override
     public void writeFaqPage() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlCallPage = this.getNewRequestParameters();
         urlCallPage.setPage(RequestParameters.PAGE_DOWNLOAD);

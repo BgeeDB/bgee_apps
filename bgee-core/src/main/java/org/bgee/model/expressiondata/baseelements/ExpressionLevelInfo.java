@@ -164,7 +164,7 @@ public class ExpressionLevelInfo {
      * @see #getRank()
      */
     public String getFormattedRank() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(formatExpressionNumber(this.rank));
     }
     /**
@@ -193,7 +193,7 @@ public class ExpressionLevelInfo {
      * @see #getExpressionScore()
      */
     public String getFormattedExpressionScore() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(String.format("%,.2f", this.expressionScore.setScale(2, RoundingMode.HALF_UP)));
     }
     /**

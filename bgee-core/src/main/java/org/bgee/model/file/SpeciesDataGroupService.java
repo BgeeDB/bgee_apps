@@ -56,7 +56,7 @@ public class SpeciesDataGroupService extends Service {
      */ 
     public List<SpeciesDataGroup> loadAllSpeciesDataGroup() 
             throws DAOException, QueryInterruptedException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         
         final Map<Integer, Set<DownloadFile>> groupIdToDownloadFilesMap = 
                 buildDownloadFileMap(this.getServiceFactory().getDownloadFileService().getAllDownloadFiles());

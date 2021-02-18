@@ -160,7 +160,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
 
         @Override
         protected GroupToStageTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String groupId = null, stageId = null;
 

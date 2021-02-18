@@ -283,7 +283,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          *                  when setting parameters in a query. 
          */
         protected EnumMap<T, DataState> extractFilteringDataTypes(Class<T> attributeType) {
-            log.entry();
+            log.traceEntry();
             
             final Map<T, DataState> typesToStates = this.extractDataTypesToDataStates();
             

@@ -41,7 +41,7 @@ public class DownloadFileService extends Service {
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
     public List<DownloadFile> getAllDownloadFiles() throws DAOException, QueryInterruptedException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(getDaoManager().getDownloadFileDAO().getAllDownloadFiles().stream()
                 .map(DownloadFileService::mapFromTO)
                 .collect(Collectors.toList()));

@@ -226,7 +226,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
 
         @Override
         protected TaxonTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             String taxonName = null, taxonScientificName = null;
             Integer taxonId = null, taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;

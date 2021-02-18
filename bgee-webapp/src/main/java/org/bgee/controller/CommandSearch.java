@@ -50,7 +50,7 @@ public class CommandSearch extends CommandParent {
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException, InvalidRequestException {
-        log.entry();
+        log.traceEntry();
         
         SearchDisplay display = this.viewFactory.getSearchDisplay();
         GeneMatchResultService geneMatchService = serviceFactory.getGeneMatchResultService(this.prop);

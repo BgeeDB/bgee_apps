@@ -109,7 +109,7 @@ public class CommandDownloadTest extends TestAncestor {
      *          download files.
      */
     public static List<SpeciesDataGroup> getTestGroups() {
-        log.entry();
+        log.traceEntry();
         //Species:
         Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", new Source(1), 1234, null, null, null, null);
         Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", new Source(1), 2322, null, null, null, null);
@@ -186,7 +186,7 @@ public class CommandDownloadTest extends TestAncestor {
      *          {@link KeywordService#getKeywordForAllSpecies()}.
      */
     public static Map<Integer, Set<String>> getTestSpeToKeywords() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(Stream.of(
             //regression test, no keywords associated to species 9606 on purpose, 
             //a previous version of the code threw a NPE
@@ -205,7 +205,7 @@ public class CommandDownloadTest extends TestAncestor {
      *          {@link #getTestSpeToKeywords()}.
      */
     public static Map<Integer, Set<String>> getTestSpeciesToTerms() {
-        log.entry();
+        log.traceEntry();
         List<SpeciesDataGroup> groups = getTestGroups();
         return log.traceExit(Stream.of(
                 new AbstractMap.SimpleEntry<>(groups.get(0).getMembers().get(0).getId(), new HashSet<>(

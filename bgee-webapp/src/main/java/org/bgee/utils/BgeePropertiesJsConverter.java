@@ -43,7 +43,7 @@ public class BgeePropertiesJsConverter extends JSConverter {
 
     @Override
     public void writeJSCode() throws IOException {
-        log.entry();
+        log.traceEntry();
         this.writeln("/**");
         this.writeln(" * Provides the webapp properties");
         this.writeln(" * @author  Mathieu Seppey");

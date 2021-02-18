@@ -52,7 +52,7 @@ public class CommandJob extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
         
         JobDisplay display = this.viewFactory.getJobDisplay();
         

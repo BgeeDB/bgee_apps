@@ -177,7 +177,7 @@ public class TopAnatController {
      * @return a {@code Stream} of {@code TopAnatResults}
      */
     public Stream<TopAnatResults> proceedToTopAnatAnalyses() {
-        log.entry();
+        log.traceEntry();
 
         // Create TopAnatAnalysis for each TopAnatParams
         //TODO: TopAnatAnalysis should be provided with the Job instance to be able to use 
@@ -475,7 +475,7 @@ public class TopAnatController {
      * @return a {@code boolean} that tells whether all analyses are done
      */
     public boolean areAnalysesDone(){
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.topAnatParams.stream()
                 .map(params -> this.topAnatAnalysisSupplier.apply(params, this.props, 
                         this.serviceFactory, new TopAnatRManager(this.props, params), this))

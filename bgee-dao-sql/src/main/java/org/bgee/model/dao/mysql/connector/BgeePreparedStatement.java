@@ -623,7 +623,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                      statement does not return a {@code ResultSet} object.
      */
     ResultSet executeQuery() throws QueryInterruptedException, SQLException {
-        log.entry();
+        log.traceEntry();
         //generic type hint needed for some compilers
         return log.traceExit(this.<ResultSet>execute(this.getRealPreparedStatement()::executeQuery));
     }
@@ -636,7 +636,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      * @throws SQLException See {@link PreparedStatement#executeUpdate()}. 
      */
     public int executeUpdate() throws QueryInterruptedException, SQLException {
-        log.entry();
+        log.traceEntry();
         //generic type hint needed for some compilers
         return log.traceExit(this.<Integer>execute(this.getRealPreparedStatement()::executeUpdate));
     }
@@ -695,7 +695,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          wraps throws a {@code SQLException}.  
      */
     public void clearParameters() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             this.getRealPreparedStatement().clearParameters();
         } catch (SQLException e) {
@@ -714,7 +714,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     @Override
     public void close() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             if (!this.getRealPreparedStatement().isClosed()) {
                 this.getRealPreparedStatement().close();

@@ -73,7 +73,7 @@ public class SimilarityAnnotationTest extends TestAncestor {
     @Test
     public void shouldExtractCuratorAnnotations() throws FileNotFoundException, 
         IllegalArgumentException, IOException, ParseException {
-        log.entry();
+        log.traceEntry();
         
         SimpleDateFormat sdf = new SimpleDateFormat(SimilarityAnnotationUtils.DATE_FORMAT);
         assertEquals("Incorrect CURATOR annotations retrieved", 

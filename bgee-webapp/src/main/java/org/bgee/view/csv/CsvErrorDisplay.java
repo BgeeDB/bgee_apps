@@ -31,7 +31,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
         
         this.sendServiceUnavailableHeaders();
 
@@ -46,7 +46,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
         
         this.sendInternalErrorHeaders();
         
@@ -174,7 +174,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
         
         this.sendBadRequestHeaders();
         
@@ -188,7 +188,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayControllerException(TooManyJobsException e) {
-        log.entry();
+        log.traceEntry();
         
         this.sendTooManyRequeststHeaders();
         

@@ -132,7 +132,7 @@ public class BgeeWebCache extends CachingFilter
      */
     @Override
     protected CacheManager getCacheManager() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(CacheManager.create(BgeeWebCache.class
                 .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
                         .getWebpagesCacheConfigFileName())));

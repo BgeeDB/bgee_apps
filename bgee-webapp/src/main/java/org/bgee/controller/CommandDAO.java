@@ -81,7 +81,7 @@
 //    @Override
 //    public void processRequest() throws IllegalStateException, IOException, 
 //        PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
-//        log.entry();
+//        log.traceEntry();
 //        throw log.throwing(new UnsupportedOperationException(
 //                "To be implemented, not used anymore for R package"));
 //
@@ -127,7 +127,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetExpressionCalls() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -246,7 +246,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAnatEntities() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -284,7 +284,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAnatEntitiyRelations() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -324,7 +324,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAllSpecies() throws IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();

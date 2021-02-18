@@ -489,7 +489,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      */
     @Override
     public Stream<T> stream() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.firstStmtExecuted) {
             throw log.throwing(new IllegalStateException("This DAOResultSet has already started "
                     + "to be iterated, it is thus not possible to stream it anymore."));
@@ -508,7 +508,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
 
     @Override
     public boolean next() throws DAOException, QueryInterruptedException {
-        log.entry();
+        log.traceEntry();
         this.lastTOGenerated = null;
 
         try {
@@ -565,7 +565,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     
     @Override
     public T getTO() throws DAOException {
-        log.entry();
+        log.traceEntry();
         //as TransferObjects should be immutable, it is safe to return a same instance 
         //even if getTO is called several times. This will save memory usage.
         //this attribute is reset to null each time the next method is called.
@@ -603,7 +603,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     
     @Override
     public List<T> getAllTOs() throws DAOException {
-        log.entry();
+        log.traceEntry();
         List<T> allTOs = new ArrayList<T>();
         try {
             while (this.next()) {
@@ -653,7 +653,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
     
     @Override
     public void close() throws DAOException {
-        log.entry();
+        log.traceEntry();
         this.closeCurrentResultSet();
         this.closeCurrentPreparedStatement();
         for (BgeePreparedStatement stmt: this.statements) {
@@ -687,7 +687,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      *                      {@code executeQuery}.
      */
     private void executeNextStatementQuery() throws DAOException, QueryInterruptedException {
-        log.entry();
+        log.traceEntry();
         try {
             if (this.isUsingLimitFeature() && 
                     this.stepCount != 0 && this.currentStep > this.stepCount) {
@@ -778,7 +778,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @throws  DAOException if an error occurred while closing the {@code ResultSet}.
      */
     private void closeCurrentResultSet() throws DAOException{
-        log.entry();
+        log.traceEntry();
         try {
             if (this.currentResultSet != null && !this.currentResultSet.isClosed()) {
                 this.currentResultSet.close();
@@ -801,7 +801,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @throws  DAOException if an error occurred while closing the {@code BgeePreparedStatement}.
      */
     private void closeCurrentPreparedStatement() throws DAOException{
-        log.entry();
+        log.traceEntry();
         //closing the statement is supposed to close the ResultSet, but we are 
         //never too careful
         try {
@@ -830,7 +830,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @return  {@code true} if the LIMIT feature is used.
      */
     public boolean isUsingLimitFeature() {
-        log.entry();
+        log.traceEntry();
         if (this.offsetParamIndex == 0) {
             return log.traceExit(false);
         }
@@ -852,7 +852,7 @@ public abstract class MySQLDAOResultSet<T extends TransferObject> implements DAO
      * @throws QueryInterruptedException    if {@link #currentStatement} was canceled.
      */
     private void checkCurrentStatementCanceled() throws QueryInterruptedException {
-        log.entry();
+        log.traceEntry();
         if (this.currentStatement.isCanceled()) {
             //to close remaining BgeePreparedStatements
             this.close();

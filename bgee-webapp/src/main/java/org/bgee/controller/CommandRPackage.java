@@ -106,7 +106,7 @@ public class CommandRPackage extends CommandParent {
     @Override
     public void processRequest() throws IllegalStateException, IOException, 
         PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
-        log.entry();
+        log.traceEntry();
         
 
         Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
@@ -149,7 +149,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results.
      */
     private void processGetExpressionCalls() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
 
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
@@ -236,7 +236,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results. 
      */
     private void processGetAnatEntities() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
         
         AnatEntityService aeService = this.serviceFactory.getAnatEntityService();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
@@ -285,7 +285,7 @@ public class CommandRPackage extends CommandParent {
      */
     //TODO: test
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
         OntologyService ontologyService = this.serviceFactory.getOntologyService();
 
@@ -333,7 +333,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results. 
      */
     private void processGetAllSpecies() throws IOException {
-        log.entry();
+        log.traceEntry();
         
         SpeciesService spService = this.serviceFactory.getSpeciesService();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();

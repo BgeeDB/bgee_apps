@@ -117,7 +117,7 @@ public class RawDataService extends CommonService {
         }
 
         protected boolean initializeTryAdvance() {
-            log.entry();
+            log.traceEntry();
             if (this.isClosed) {
                 throw log.throwing(new IllegalStateException("Already close"));
             }
@@ -144,13 +144,13 @@ public class RawDataService extends CommonService {
          */
         @Override
         public Spliterator<T> trySplit() {
-            log.entry();
+            log.traceEntry();
             return log.traceExit((Spliterator<T>) null);
         }
 
         @Override
         public Comparator<? super T> getComparator() {
-            log.entry();
+            log.traceEntry();
             //TODO?
             return log.traceExit((Comparator<? super T>) null);
         }
@@ -160,7 +160,7 @@ public class RawDataService extends CommonService {
          */
         @Override
         public void close() {
-            log.entry();
+            log.traceEntry();
             if (!this.isClosed){
                 try {
                     this.assayTOStream.close();
@@ -227,7 +227,7 @@ public class RawDataService extends CommonService {
 
         @Override
         protected boolean initializeTryAdvance() {
-            log.entry();
+            log.traceEntry();
             if (super.initializeTryAdvance()) {
                 this.callSourceTOIterator = this.callSourceTOStream.iterator();
                 return log.traceExit(true);
@@ -267,7 +267,7 @@ public class RawDataService extends CommonService {
          */
         @Override
         public void close() {
-            log.entry();
+            log.traceEntry();
             if (!this.isClosed){
                 try {
                     this.callSourceTOStream.close();

@@ -50,7 +50,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
         this.sendServiceUnavailableHeaders();
 
         this.startDisplay("Service unavailable for maintenance");
@@ -65,7 +65,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
         this.sendInternalErrorHeaders();
         this.startDisplay("500 internal server error");
         this.writeln("<p class='alert'>Woops, something wrong happened.</p>");
@@ -197,7 +197,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
         
         this.sendBadRequestHeaders();
         this.startDisplay("Invalid request!");
@@ -224,7 +224,7 @@ public class HtmlErrorDisplay extends HtmlParentDisplay implements ErrorDisplay 
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.

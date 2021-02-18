@@ -262,7 +262,7 @@ public class BgeeProperties {
      * {@link #PROPERTIES_FILE_NAME_KEY}).
      */
     private static Properties loadFileProps() {
-        log.entry();
+        log.traceEntry();
         Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
@@ -632,7 +632,7 @@ public class BgeeProperties {
      *          {@code false} otherwise. 
      */
     public static boolean hasBgeeProperties() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(bgeeProperties.containsKey(Thread.currentThread().getId()));
     }
 
@@ -657,7 +657,7 @@ public class BgeeProperties {
      * @return  An {@code int} that is the number of {@code BgeeProperties}s that were released
      */
     public static int releaseAll() {
-        log.entry();
+        log.traceEntry();
 
         //this AtomicBoolean will act more or less like a lock 
         //(no new BgeeProperties can be obtained after this AtomicBoolean is set to true).
@@ -816,7 +816,7 @@ public class BgeeProperties {
      *          {@code false} if it was already released.
      */
     public boolean release() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(bgeeProperties.values().remove(this));
     }
     /**
@@ -827,7 +827,7 @@ public class BgeeProperties {
      *          {@code false} otherwise.
      */
     public boolean isReleased() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(!bgeeProperties.containsValue(this));
     }
 

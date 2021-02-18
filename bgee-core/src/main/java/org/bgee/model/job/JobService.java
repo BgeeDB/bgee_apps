@@ -97,7 +97,7 @@ public class JobService {
      * @see #registerNewJob(long, String, String, int)
      */
     public Job registerNewJob() throws ThreadAlreadyWorkingException {
-        log.entry();
+        log.traceEntry();
         try {
             return log.traceExit(this.registerNewJob((String) null));
         } catch (TooManyJobsException e) {
@@ -347,7 +347,7 @@ public class JobService {
      *                                 in reasonable amount of retries. 
      */
     public long reserveAndGetJobId() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.reserveAndGetJobId(0));
     }
     /**
@@ -425,7 +425,7 @@ public class JobService {
      * @see #getJob(long)
      */
     public Job getJob() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.threadIdsToLivingJobs.get(Thread.currentThread().getId()));
     }
     /**

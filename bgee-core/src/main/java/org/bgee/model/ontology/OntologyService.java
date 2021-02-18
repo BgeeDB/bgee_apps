@@ -401,7 +401,7 @@ public class OntologyService extends CommonService {
      *          for all the species included in Bgee.
      */
     public Ontology<Taxon, Integer> getTaxonOntology() {
-        log.entry();
+        log.traceEntry();
         return log.traceExit(this.getTaxonOntologyFromTaxonIds(null, false, false, false));
     }
     /**

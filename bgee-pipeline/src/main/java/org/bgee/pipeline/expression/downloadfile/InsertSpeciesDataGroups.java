@@ -425,7 +425,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //     * @throws IOException  If a file could not be read.
 //     */
 //    public void insert() throws IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        // FIXME enable creation of SpeciesDataGroupTOs and SpeciesToDataGroupTOs
 ////        // First, we create SpeciesDataGroupTOs and SpeciesToDataGroupTOs

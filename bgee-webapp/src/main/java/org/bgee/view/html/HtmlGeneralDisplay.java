@@ -58,7 +58,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.traceEntry("{}", groups);
         
-        this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
+        this.startDisplay("Bgee: a database for gene expression data in animals");
 
         this.addSchemaMarkups(groups);
         

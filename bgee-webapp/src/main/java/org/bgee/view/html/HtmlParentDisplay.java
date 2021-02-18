@@ -133,9 +133,10 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} that is the description of Bgee.
      */
     protected static final String BGEE_DESCRIPTION =
-            "Bgee allows to automatically compare gene expression patterns between species, " +
-                    "by referencing expression data on anatomical ontologies, and designing homology " +
-                    "relationships between them.";
+            "Bgee is a database for retrieval and comparison of gene expression patterns "
+            + "across multiple animal species. It provides an intuitive answer to the question "
+            + "\"where is a gene expressed?\" and supports research in cancer and agriculture "
+            + "as well as evolutionary biology.";
 
     /**
      * A {@code String} that is the URL of the licence CC0 of Creative Commons.
@@ -416,9 +417,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("<meta charset='UTF-8'>");
         this.writeln("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         this.writeln("<title>"+title+"</title>");
+        this.write("<meta name='description' content='");
         if (description != null) {
-            this.writeln("<meta name='description' content='" + description + " " + BGEE_DESCRIPTION + "'/>");
+            this.write(description);
+        } else {
+            this.write(BGEE_DESCRIPTION);
         }
+        this.writeln("' />");
 
         this.writeln("<meta name='keywords' content='" + BGEE_KEYWORDS + "'/>");
         this.writeln("<meta name='dcterms.rights' content='Bgee copyright 2007/"

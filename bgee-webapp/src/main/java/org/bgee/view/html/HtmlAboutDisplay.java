@@ -1,9 +1,6 @@
 package org.bgee.view.html;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,7 +44,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
     @Override
     public void displayAboutPage() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlDownloadCallsGenerator = this.getNewRequestParameters();
         urlDownloadCallsGenerator.setPage(RequestParameters.PAGE_DOWNLOAD);
@@ -174,35 +171,9 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         log.traceExit();
     }
 
-    private String getTitle(String title) {
-        log.entry(title);
-        return log.traceExit("<span property='schema:headline'>" + title + "</span>.");
-    }
-
-    private String getAuthors(List<String> names) {
-        log.entry(names);
-        return log.traceExit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
-    }
-
-    private String getAuthor(String name) {
-        log.entry(name);
-        return log.traceExit(
-                "<span property='schema:author' typeof='schema:Person'>" +
-                "    <span property='schema:name'>" + name + "</span>" +
-                "</span>");
-    }
-
-    private String getPeriodical(String journalName) {
-        log.entry(journalName);
-        return log.traceExit(
-                "<span property='schema:isPartOf' typeof='schema:Periodical'>" +
-                "    <span property='schema:name'>" + journalName + "</span>" +
-                "</span>.");
-    }
-
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.

@@ -69,12 +69,13 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                         "Escoriza A", "Gharib W", "Gonzales-Porta M", "Jarosz Y", "Laurenczy B", 
                         "Moret P", "Person E", "Roelli P", "Sanjeev K", "Seppey M", 
                         "Robinson-Rechavi M"))
-                + "<br><a href='https://doi.org/10.1101/2020.05.28.119560' "
+                + "<br><a href='https://doi.org/10.1093/nar/gkaa793' "
                     + " target='_blank' rel='noopener' property='schema:url'> " 
                     + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative "
                             + "transcriptomics in animals") 
                 + "</a>"
-                + "<br><em>in</em> " + this.getPeriodical("bioRxiv 2020.05.28.119560")
+                + "<br><em>in</em> " + this.getPeriodical("Nucleic Acids Research, Volume 49, "
+                        + "Issue D1, 8 January 2021, Pages D831–D847")
                 + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
                 + "</li>");
         

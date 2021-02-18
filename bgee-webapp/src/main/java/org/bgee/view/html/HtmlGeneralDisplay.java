@@ -56,7 +56,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     @Override
     public void displayHomePage(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
         this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
 
@@ -94,7 +94,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * Add schema.org markup to the page.
      */
     private void addSchemaMarkups(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
         // We build the RequestParameters without geneId to keep '{' and '}' instead of replace them due to by secureString() 
         RequestParameters urlActionTarget = this.getNewRequestParameters();
@@ -218,7 +218,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displaySpeciesBanner(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
     
         StringBuilder homePageSpeciesSection = new StringBuilder();
         
@@ -277,7 +277,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param divId    A {@code String} that is the ID of HTML 'div' element.
      */
     private void displayBgeeButtons(String divId) {
-        log.entry(divId);
+        log.traceEntry("{}", divId);
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -305,11 +305,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         log.traceEntry();
         
         this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
+
+        this.writeln("<p>Bgee is a database for retrieval and comparison of gene expression patterns "
+                + "across multiple animal species.<br />It provides an intuitive answer to the question "
+                + "\"where is a gene expressed?\" and supports research in cancer and agriculture "
+                + "as well as evolutionary biology.</p>");
         
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Gene expression data</h2>");
-        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species, produced from multiple data types "
+        this.writeln("<p>Bgee is a database for retrieval and comparison of gene expression patterns "
+                + "across multiple animal species, produced from multiple data types "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
                 + "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
                 " title='GTEx portal' target='_blank' rel='noopener'>GTEx data</a>).</p>");
@@ -317,7 +322,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Simply normal</h2>");
-        this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy, expression data "
+        this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy wild-type, expression data "
                 + "(e.g., no gene knock-out, no treatment, no disease), "
                 + "to provide a comparable reference of normal gene expression.</p>");
         this.writeln("</div>");
@@ -342,7 +347,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
         // Single species part
         String homePageSpeciesSection;
@@ -857,7 +862,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param description   A {@code String} that is the description of the news.
      */
     private void writeOneNews(String date, String description) {
-        log.entry(date, description);
+        log.traceEntry("{} - {}", date, description);
         
         this.writeln("<div class='row'>");
         this.writeln("<div class='col-sm-offset-1 col-sm-2 col-lg-1 news-date'>");

@@ -91,6 +91,11 @@
 	margin: 30px 5%;
 }
 
+#bgee_explanations > p {
+	text-align: center;
+	font-size: 1.1em;
+}
+
 #bgee_explanations h2 {
 	color: #626262;
 	font-size: 1.5em;

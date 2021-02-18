@@ -59,6 +59,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         urlGeneSearchGenerator.setPage(RequestParameters.PAGE_GENE);
         RequestParameters urlTopAnatGenerator = this.getNewRequestParameters();
         urlTopAnatGenerator.setPage(RequestParameters.PAGE_TOP_ANAT);
+        RequestParameters urlExprCompGenerator = this.getNewRequestParameters();
+        urlExprCompGenerator.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
         RequestParameters urlPublicationsGenerator = this.getNewRequestParameters();
         urlPublicationsGenerator.setPage(RequestParameters.PAGE_PUBLICATION);
         RequestParameters urlDocumentationGenerator = this.getNewRequestParameters();
@@ -83,30 +85,71 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
 
         this.writeln("<h2 property='schema:description'>What is Bgee?</h2>");
 
-        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species, produced from multiple data types "
-                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data). "
-                + "Bgee is based exclusively on curated \"normal\", healthy, expression data "
+        this.writeln("<p>Bgee is a database for retrieval and comparison of gene expression patterns "
+                + "across multiple animal species. It provides an intuitive answer to the question "
+                + "\"where is a gene expressed?\" and supports research in cancer and agriculture "
+                + "as well as evolutionary biology.</p>"
+                + "<ul>"
+                + "<li>Bgee data are produced from multiple data types "
+                + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, EST data), "
+                + "and multiple data sets, that are all integrated consistently to provide a single answer "
+                + "to the question: \"where is this gene expressed?\"</li>"
+                + "<li>Bgee is based exclusively on curated \"normal\", healthy wild-type expression data "
                 + "(e.g., no gene knock-out, no treatment, no disease), "
-                + "to provide a comparable reference of normal gene expression. "
-                + "Bgee produces calls of presence/absence of expression, "
+                + "to provide a comparable reference of normal gene expression.</li>"
+                + "<li>Bgee produces calls of presence/absence of expression, "
                 + "and of differential over-/under-expression, "
                 + "integrated along with information of gene orthology, and of homology "
                 + "between organs. This allows comparisons of expression patterns "
-                + "between species.</p>");
-        this.writeln("<p>Data can be browsed through <a href='" + urlGeneSearchGenerator.getRequestURL() +
-                "'>gene search</a> or <a href='" + urlTopAnatGenerator.getRequestURL() +
-                "'>expression enrichment analysis</a>. It is also possible to download <a href='" +
-                urlDownloadCallsGenerator.getRequestURL() + "'>gene expression calls</a>, <a href='" +
-                urlDownloadProcsGenerator.getRequestURL() + "'>processed expression values</a>, or " +
-                "<a href='" + urlDataDownloadGenerator.getRequestURL() + "'>data dumps</a>.</p>");
+                + "between species.</li>"
+                + "</ul>");
+        this.writeln("<h4>Bgee provides several tools on this website to study gene expression:</h4>"
+                + "<ul>"
+                + "<li>a <a href='" + urlGeneSearchGenerator.getRequestURL() +
+                "'>gene search</a>, to retrieve the preferred conditions of expression of any gene in Bgee</li>"
+                + "<li><a href='" + urlTopAnatGenerator.getRequestURL() +
+                "'>TopAnat expression enrichment analysis</a>, to discover the conditions with expression "
+                + "over-associated with a list of genes, as compared to the whole genome or a custom background</li>"
+                + "<li><a href='" + urlExprCompGenerator.getRequestURL() +
+                "'>Expression comparison</a>, to compare expression between genes, within a given species or between multiple species</li>"
+                + "</ul>");
+        this.writeln("<h4>Bgee also provides two Bioconductor R packages for your analyses: </h4>"
+                + "<ul>"
+                + "<li><a href='" + BGEEDB_R_PACKAGE_URL + "' title='Bioconductor BgeeDB package' "
+                        + "target='_blank'>BgeeDB</a>, "
+                        + "allowing to download the Affymetrix and RNA-Seq data and metadata used in Bgee,"
+                        + "and to perform TopAnat analyses. </li>"
+                + "<li><a href='" + BGEECALL_R_PACKAGE_URL + "' title='Bioconductor BgeeCall package' "
+                        + "target='_blank'>BgeeCall</a>, "
+                        + "to analyze your own RNA-Seq or scRNA-Seq data and produce calls of presence/absence of expression. </li>"
+                + "</ul>");
+        this.writeln("<h4>All Bgee data can also be directly downloaded from the relevant pages: </h4>"
+                + "<ul>"
+                + "<li><a href='" + urlDownloadCallsGenerator.getRequestURL()
+                + "'>gene expression calls</a>, providing the integrated summarized "
+                + "calls of presence/absence of expression produced by Bgee</li>"
+                + "<li><a href='" + urlDownloadProcsGenerator.getRequestURL()
+                + "'>processed expression values</a>, allowing you to download the raw data used by Bgee "
+                + "along with their annotations</li>"
+                + "<li><a href='" + urlDataDownloadGenerator.getRequestURL() + "'>data dumps</a>, "
+                + "for more advanced users, providing SQL and RDF dumps of the data found in Bgee.</li>"
+                + "</ul>");
+        this.writeln("<h4>You might find these videos useful: </h4>"
+                + "<ul>"
+                + "<li><a href='https://www.youtube.com/watch?v=hbpEJO2IzxA' target='_blank'>"
+                + "Bgee, an overview</a>, the introduction of a course on Bgee</li>"
+                + "<li><a href='https://www.sib.swiss/about-sib/news/10821-from-v1-to-v14"
+                + "-the-gene-expression-database-bgee-under-the-spotlight' target='_blank'>"
+                + "Bgee under the spotlight</a>, an interview of the group leaders of Bgee, "
+                + "retracing its evolutions</li>"
+                + "</ul>");
         this.writeln("<p>More information is provided in the <a href='" +
                 urlDocumentationGenerator.getRequestURL() + "'>documentation</a>.</p>");
 
         this.writeln("<h2>Who are we?</h2>");
 
         this.writeln("<p>Bgee is developed by the " +
-                "<a href='http://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
+                "<a href='https://bioinfo.unil.ch' title='External link to the Robinson-Rechavi " +
                 "group webpage' target='_blank' rel='noopener'>Evolutionary Bioinformatics group</a>, part of " +
                 "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank' rel='noopener'>" +
                 "SIB Swiss Institute of Bioinformatics</a>, at the "
@@ -120,6 +163,12 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "or transcriptome studies, whilst providing an improved integration "
                 + "of homology and related concepts into bioinformatics through ontologies "
                 + "and ontology tools.</p>");
+        
+        this.writeln("<h2>How to cite us?</h2>");
+        
+        this.writeln("<p>The list of all Bgee related publications including the most recent one to use to "
+                + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() + 
+                "' title ='Bgee publications' >Bgee publications</a> page.</p>");
 
         this.writeln("<h2>Which license did we choose?</h2>");
 
@@ -142,12 +191,6 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "   see notably \"information about original images\" at the bottom of our homepage" +
                 "   for the animal photos copyright." +
                 "</p>");
-        
-        this.writeln("<h2>How to cite us?</h2>");
-        
-        this.writeln("<p>The list of all Bgee related publications including the most recent one to use to "
-                + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() + 
-                "' title ='Bgee publications' >Bgee publications</a> page.</p>");
 
         this.writeln("<h2>What is our privacy policy?</h2>");
         this.writeln("<p>You can find all details about our privacy policy in the dedicated page " +

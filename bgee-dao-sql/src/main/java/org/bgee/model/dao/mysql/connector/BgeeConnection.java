@@ -100,7 +100,7 @@ public class BgeeConnection implements AutoCloseable {
                 new ConcurrentHashMap<BgeePreparedStatement, Boolean>());
         this.setOngoingTransaction(false);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -134,7 +134,7 @@ public class BgeeConnection implements AutoCloseable {
         BgeePreparedStatement bgeeStmt = new BgeePreparedStatement(this, 
                 this.getRealConnection().prepareStatement(sql));
         this.preparedStatements.add(bgeeStmt);
-        return log.exit(bgeeStmt);
+        return log.traceExit(bgeeStmt);
     }
     
     /**
@@ -154,7 +154,7 @@ public class BgeeConnection implements AutoCloseable {
         BgeeCallableStatement bgeeCallStmt = new BgeeCallableStatement(this, 
                 this.getRealConnection().prepareCall(sql));
         this.preparedStatements.add(bgeeCallStmt);
-        return log.exit(bgeeCallStmt);
+        return log.traceExit(bgeeCallStmt);
     }
     
     /**
@@ -169,14 +169,14 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If a transaction is already ongoing.
      */
     public void startTransaction() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("A transaction is already ongoing, " +
             		"cannot start a new one"));
         }
         this.getRealConnection().setAutoCommit(false);
         this.setOngoingTransaction(true);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -189,7 +189,7 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If no transaction was ongoing.
      */
     public void commit() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (!this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("Try to commit a transaction, " +
                     "but there was no ongoing transactions"));
@@ -197,7 +197,7 @@ public class BgeeConnection implements AutoCloseable {
         this.getRealConnection().commit();
         this.getRealConnection().setAutoCommit(true);
         this.setOngoingTransaction(false);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -210,7 +210,7 @@ public class BgeeConnection implements AutoCloseable {
      * @throws IllegalStateException    If no transaction was ongoing.
      */
     public void rollback() throws SQLException, IllegalStateException {
-        log.entry();
+        log.traceEntry();
         if (!this.isOngoingTransaction()) {
             throw log.throwing(new IllegalStateException("Try to rollback a transaction, " +
                     "but there was no ongoing transactions"));
@@ -218,7 +218,7 @@ public class BgeeConnection implements AutoCloseable {
         this.getRealConnection().rollback();
         this.getRealConnection().setAutoCommit(true);
         this.setOngoingTransaction(false);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -244,7 +244,7 @@ public class BgeeConnection implements AutoCloseable {
     {
         log.entry(stmt);
         this.preparedStatements.remove(stmt);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -266,7 +266,7 @@ public class BgeeConnection implements AutoCloseable {
      */
     @Override
     public void close() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             //rollback any ongoing transaction
             if (this.isOngoingTransaction()) {
@@ -286,7 +286,7 @@ public class BgeeConnection implements AutoCloseable {
         } finally {
             this.manager.connectionClosed(this.getId());
         }
-        log.exit();
+        log.traceExit();
     }    
     /**
      * Retrieves whether this {@code BgeeConnection} object has been closed. 

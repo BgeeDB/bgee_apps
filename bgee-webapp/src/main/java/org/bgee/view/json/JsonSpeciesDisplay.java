@@ -64,7 +64,7 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
         
         this.sendResponse("List of requested species", data);
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override

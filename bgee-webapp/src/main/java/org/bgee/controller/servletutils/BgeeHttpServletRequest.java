@@ -28,6 +28,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 
 import org.apache.commons.lang3.StringUtils;
@@ -141,7 +142,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
             throw log.throwing(new IllegalArgumentException("Error, could not match query string: " 
                 + queryString));
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -155,7 +156,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
         log.entry(queryString);
         this.queryString = queryString;
         this.loadParameterMap();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -167,7 +168,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
      * @see #queryString
      */
     private void loadParameterMap() {
-        log.entry();
+        log.traceEntry();
         this.parameterMap = new HashMap<String, String[]>();
         if (StringUtils.isBlank(this.queryString)){
             return;
@@ -208,7 +209,7 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
         for (String key : mapOfLists.keySet()) {
             this.parameterMap.put(key, mapOfLists.get(key).toArray(new String[] {}));
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -238,26 +239,26 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
         log.entry(parameterName);
         String[] values = this.getParameterValues(parameterName);
         if (values != null && values.length > 0) {
-            return log.exit(values[0]);
+            return log.traceExit(values[0]);
         }
-        return log.exit(null);
+        return log.traceExit((String) null);
     }
 
     @Override
     public String[] getParameterValues(String parameterName) {
         log.entry(parameterName);
         String[] vals = this.parameterMap.get(parameterName);
-        return log.exit(vals == null? null: vals.clone());
+        return log.traceExit(vals == null? null: vals.clone());
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
-        log.entry();
+        log.traceEntry();
         if (this.parameterMap == null) {
-            return log.exit(null);
+            return log.traceExit((Map<String, String[]>) null);
         }
         //deep cloning the map
-        return log.exit(this.parameterMap.entrySet().stream()
+        return log.traceExit(this.parameterMap.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), 
                                           e -> e.getValue() == null ? null: e.getValue().clone())));
     }
@@ -575,6 +576,24 @@ public class BgeeHttpServletRequest implements HttpServletRequest {
     @Override
     public Part getPart(String name) throws IOException, IllegalStateException,
     ServletException {
+        return null;
+    }
+
+    @Override
+    public long getContentLengthLong() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public String changeSessionId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
+        // TODO Auto-generated method stub
         return null;
     }
 

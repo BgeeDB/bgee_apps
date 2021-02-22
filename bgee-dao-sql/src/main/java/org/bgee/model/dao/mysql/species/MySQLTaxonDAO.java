@@ -92,7 +92,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
             if (!clonedTaxIds.isEmpty()) {
                 stmt.setIntegers(1, clonedTaxIds, true);
             }
-            return log.exit(new MySQLTaxonTOResultSet(stmt));
+            return log.traceExit(new MySQLTaxonTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -146,7 +146,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
                 stmt.setIntegers(1, clonedSpeIds, true);
             }
             try(MySQLTaxonTOResultSet rs = new MySQLTaxonTOResultSet(stmt)) {
-                return log.exit(rs.stream().findFirst().get());
+                return log.traceExit(rs.stream().findFirst().get());
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -197,7 +197,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
                 stmt.setBoolean(paramIndex, taxonTO.isLca());
                 paramIndex++;
             }
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
             
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -226,7 +226,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
 
         @Override
         protected TaxonTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             String taxonName = null, taxonScientificName = null;
             Integer taxonId = null, taxonLeftBound = null, taxonRightBound = null, taxonLevel = null;
             Boolean bgeeSpeciesLCA = null;
@@ -263,7 +263,7 @@ public class MySQLTaxonDAO extends MySQLDAO<TaxonDAO.Attribute> implements Taxon
                     }
                 }
                 //Set TaxonTO
-                return log.exit(new TaxonTO(taxonId, taxonName, taxonScientificName, 
+                return log.traceExit(new TaxonTO(taxonId, taxonName, taxonScientificName, 
                         taxonLeftBound, taxonRightBound, taxonLevel, bgeeSpeciesLCA));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));

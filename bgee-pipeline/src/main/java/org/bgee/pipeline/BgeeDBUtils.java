@@ -62,7 +62,7 @@ public class BgeeDBUtils {
             while (rsSpecies.next()) {
                 speciesIdsInBgee.add(rsSpecies.getTO().getId());
             }
-            return log.exit(speciesIdsInBgee); 
+            return log.traceExit(speciesIdsInBgee); 
         } 
     }
     
@@ -90,7 +90,7 @@ public class BgeeDBUtils {
         
         List<Integer> speciesIdsFromDb = BgeeDBUtils.getSpeciesIdsFromDb(speciesDAO); 
         if (speciesIds == null || speciesIds.isEmpty()) {
-            return log.exit(speciesIdsFromDb);
+            return log.traceExit(speciesIdsFromDb);
         } else if (!speciesIdsFromDb.containsAll(speciesIds)) {
             //copy to avoid modifying user input, maybe the caller 
             //will recover from the exception
@@ -99,7 +99,7 @@ public class BgeeDBUtils {
             throw log.throwing(new IllegalArgumentException("Some species IDs " +
                     "could not be found in Bgee: " + debugSpeciesIds));
         } 
-        return log.exit(speciesIds);
+        return log.traceExit(speciesIds);
     }
     
     /**
@@ -127,7 +127,7 @@ public class BgeeDBUtils {
     public static Map<String, Set<String>> getAnatEntityChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
-        return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
+        return log.traceExit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
                 speciesIds, true, true, relationDAO));
         
     }
@@ -156,7 +156,7 @@ public class BgeeDBUtils {
     public static Map<String, Set<String>> getAnatEntityParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
-        return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
+        return log.traceExit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
                 speciesIds, true, false, relationDAO));
         
     }
@@ -185,7 +185,7 @@ public class BgeeDBUtils {
     public static Map<String, Set<String>> getStageChildrenFromParents(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
-        return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
+        return log.traceExit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
                 speciesIds, false, true, relationDAO));
         
     } 
@@ -214,7 +214,7 @@ public class BgeeDBUtils {
     public static Map<String, Set<String>> getStageParentsFromChildren(Set<Integer> speciesIds, 
             RelationDAO relationDAO) throws DAOException {
         log.entry(speciesIds, relationDAO);
-        return log.exit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
+        return log.traceExit(BgeeDBUtils.getIsAPartOfRelativesFromDb(
                 speciesIds, false, false, relationDAO));
         
     }
@@ -308,7 +308,7 @@ public class BgeeDBUtils {
         //restore relationDAO in proper state
         relationDAO.setAttributes(attributes);
         
-        return log.exit(relativesMap);
+        return log.traceExit(relativesMap);
     }
     
     /**
@@ -350,7 +350,7 @@ public class BgeeDBUtils {
         } finally {
             rs.close();
         }
-        return log.exit(tosByIds);
+        return log.traceExit(tosByIds);
     }
 
     /**
@@ -388,7 +388,7 @@ public class BgeeDBUtils {
             assert(previousName == null);
         }
             
-        return log.exit(namesByIds);
+        return log.traceExit(namesByIds);
     }
 
     /**
@@ -421,7 +421,7 @@ public class BgeeDBUtils {
         
         log.debug("Done retrieving gene names for species: {}, {} names retrieved", 
                 speciesIds, geneNamesByIds.size());
-        return log.exit(geneNamesByIds);
+        return log.traceExit(geneNamesByIds);
     }
     
     /**
@@ -447,7 +447,7 @@ public class BgeeDBUtils {
         log.debug("Done retrieving gene TOs for species: {}, {} TOs retrieved", 
                 speciesIds, geneTOsByIds.size());
         
-        return log.exit(geneTOsByIds);
+        return log.traceExit(geneTOsByIds);
     }
     
     /**
@@ -481,7 +481,7 @@ public class BgeeDBUtils {
         
         log.debug("Done retrieving stage names for species: {}, {} names retrieved", 
                 speciesIds, stageNamesByIds.size());
-        return log.exit(stageNamesByIds);
+        return log.traceExit(stageNamesByIds);
     }
     
     /**
@@ -516,7 +516,7 @@ public class BgeeDBUtils {
         
         log.debug("Done retrieving anatomical entity names for species: {}, {} names retrieved", 
                 speciesIds, anatEntityNamesByIds.size());
-        return log.exit(anatEntityNamesByIds);
+        return log.traceExit(anatEntityNamesByIds);
     }
 
     /**
@@ -551,7 +551,7 @@ public class BgeeDBUtils {
 
         log.debug("Done retrieving CIO names, {} names retrieved", cioByNames.size());
         
-        return log.exit(cioByNames);
+        return log.traceExit(cioByNames);
     }
 
     /**
@@ -567,7 +567,7 @@ public class BgeeDBUtils {
      */
     public static Map<String, CIOStatementTO> getCIOStatementTOsByIds(CIOStatementDAO cioStatementDAO) 
             throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         log.debug("Start retrieving all CIO TOs");
         
@@ -576,6 +576,6 @@ public class BgeeDBUtils {
         
         log.debug("Done retrieving CIO TOs, {} TOs retrieved", cioByIds.size());
         
-        return log.exit(cioByIds);
+        return log.traceExit(cioByIds);
     }
 }

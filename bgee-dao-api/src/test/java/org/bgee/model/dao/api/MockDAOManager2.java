@@ -21,6 +21,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.gene.GeneOntologyDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
@@ -234,5 +235,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected SourceToSpeciesDAO getNewSourceToSpeciesDAO() {
         return instanceMockManager.getNewSourceToSpeciesDAO();
+    }
+
+    @Override
+    protected GeneHomologsDAO getNewGeneHomologsDAO() {
+        return instanceMockManager.getNewGeneHomologsDAO();
     }
 }

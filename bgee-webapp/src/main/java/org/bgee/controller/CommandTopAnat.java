@@ -156,12 +156,12 @@ public class CommandTopAnat extends CommandParent {
             this.props = props;
             this.mailSender = mailSender;
             this.serviceFactoryProvider = serviceFactoryProvider;
-            log.exit();
+            log.traceExit();
         }
         
         @Override
         public void run() {
-            log.entry();
+            log.traceEntry();
             
             long startTimeInMs = System.currentTimeMillis();
             Exception exceptionThrown = null;
@@ -256,7 +256,7 @@ public class CommandTopAnat extends CommandParent {
                 throw log.throwing(new IllegalStateException(exceptionThrown));
             }
             
-            log.exit();
+            log.traceExit();
         }
         
         /**
@@ -377,7 +377,7 @@ public class CommandTopAnat extends CommandParent {
             this.mailSender.sendMessage(this.props.getTopAnatFromAddress(), 
                     this.props.getTopAnatFromPersonal(), this.sendToAddress, null, subject, msgBody);
             
-            log.exit();
+            log.traceExit();
         }
     }
     
@@ -443,7 +443,7 @@ public class CommandTopAnat extends CommandParent {
     @Override
     public void processRequest() throws IOException, PageNotFoundException, 
     InvalidRequestException, MissingParameterException, TooManyJobsException {
-        log.entry();
+        log.traceEntry();
         
         //we initialize the display only if there is no file to download requested, 
         //otherwise we could not obtain the response outputstream to directly print 
@@ -451,7 +451,7 @@ public class CommandTopAnat extends CommandParent {
         if (this.requestParameters.isATopAnatDownloadFile()) {
             // Download result zip file
             this.launchExportDownload();
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         TopAnatDisplay display = this.viewFactory.getTopAnatDisplay();
@@ -560,7 +560,7 @@ public class CommandTopAnat extends CommandParent {
                 + " parameter value."));
         }
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -615,7 +615,7 @@ public class CommandTopAnat extends CommandParent {
         
         newThread.start();
         
-        return log.exit(jobId);
+        return log.traceExit(jobId);
     }
     
     /**
@@ -628,7 +628,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private void launchExportDownload() throws InvalidRequestException, MissingParameterException, 
         UnsupportedEncodingException, IOException {
-        log.entry();
+        log.traceEntry();
         
         final TopAnatController controller = this.loadTopAnatController();
         if (!controller.areAnalysesDone()) {
@@ -674,7 +674,7 @@ public class CommandTopAnat extends CommandParent {
                 }
                 this.launchFileDownload(filePath, fileName);
                 //OK, we stop here, we have sent the requested file
-                log.exit(); return;
+                log.traceExit(); return;
             }
         }
         
@@ -704,7 +704,7 @@ public class CommandTopAnat extends CommandParent {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -712,7 +712,7 @@ public class CommandTopAnat extends CommandParent {
      * @throws InvalidRequestException
      */
     private LinkedHashMap<String, Object> getGeneResponses() throws InvalidRequestException {
-        log.entry();
+        log.traceEntry();
 
         //retrieve possible parameters for this query
         final List<String> fgList = Collections.unmodifiableList(Optional.ofNullable(
@@ -739,7 +739,7 @@ public class CommandTopAnat extends CommandParent {
                     this.getGeneResponse(bgList,
                             this.requestParameters.getUrlParametersInstance().getParamBackgroundList().getName()));
         }
-        return log.exit(data);
+        return log.traceExit(data);
     }
 
     /**
@@ -862,7 +862,7 @@ public class CommandTopAnat extends CommandParent {
 
 
         }
-        return log.exit(new GeneListResponse(
+        return log.traceExit(new GeneListResponse(
                 responseSpeciesIdToGeneCount,
                 //provide a TreeMap species ID -> species
                 speciesToGeneCount.keySet().stream().collect(Collectors.toMap(
@@ -914,7 +914,7 @@ public class CommandTopAnat extends CommandParent {
             msg.append(", none identified");
         }
         
-        return log.exit(msg.toString());
+        return log.traceExit(msg.toString());
     }
     
     /**
@@ -940,7 +940,7 @@ public class CommandTopAnat extends CommandParent {
             throw log.throwing(new IllegalStateException("A DevStageService did not allow "
                     + "to obtain any DevStage."));
         }
-        return log.exit(new HashSet<>(devStages));
+        return log.traceExit(new HashSet<>(devStages));
     }
 
     /**
@@ -950,7 +950,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private TopAnatController loadTopAnatController() 
             throws InvalidRequestException, MissingParameterException {
-        log.entry();
+        log.traceEntry();
 
         // Get submitted params
         // Fg gene list cannot be null
@@ -1104,7 +1104,7 @@ public class CommandTopAnat extends CommandParent {
         
         TopAnatController controller = new TopAnatController(allTopAnatParams, this.prop, 
                 this.serviceFactory);
-        return log.exit(controller);
+        return log.traceExit(controller);
     }
 
     /**
@@ -1133,7 +1133,7 @@ public class CommandTopAnat extends CommandParent {
                     + "are in selected species from background gene ID list"));
         }
         
-        return log.exit(cleanGeneIds);
+        return log.traceExit(cleanGeneIds);
     }
 
     /**
@@ -1146,7 +1146,7 @@ public class CommandTopAnat extends CommandParent {
     private Set<String> loadBgeeIds(Collection<String> ids) {
         log.entry(ids);
 
-        return log.exit(Collections.unmodifiableSet(
+        return log.traceExit(Collections.unmodifiableSet(
                 serviceFactory.getGeneService().loadGenesByAnyId(
                         Optional.ofNullable(ids).orElse(new HashSet<>()), false)
                         .flatMap(m -> m.getValue().stream())
@@ -1169,7 +1169,7 @@ public class CommandTopAnat extends CommandParent {
             // 'null' means all stages
             HashSet<String> allDevStages = new HashSet<>();
             allDevStages.add(null);
-            return log.exit(allDevStages);
+            return log.traceExit(allDevStages);
         }
         Set<String> cleanDevStageIds = new HashSet<>(devStageIds);
         if (!allDevStageIds.containsAll(cleanDevStageIds)) {
@@ -1177,7 +1177,7 @@ public class CommandTopAnat extends CommandParent {
                     "are not from selected species"));
         }
         
-        return log.exit(cleanDevStageIds);
+        return log.traceExit(cleanDevStageIds);
     }
 
     /**
@@ -1241,7 +1241,7 @@ public class CommandTopAnat extends CommandParent {
             this.stages = stages.stream().sorted().collect(Collectors.toList());
             this.notInSelectedSpeciesGeneIds = notInSelectedSpeciesGeneIds;
             this.undeterminedGeneIds = undeterminedGeneIds;
-            log.exit();
+            log.traceExit();
         }
         
         /**
@@ -1381,7 +1381,7 @@ public class CommandTopAnat extends CommandParent {
             this.jobId = jobId;
             this.jobStatus = jobStatus;
             this.data = data;
-            log.exit();
+            log.traceExit();
         }
         
         /**

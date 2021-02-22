@@ -36,7 +36,7 @@ public class DevStageSimilarityService extends Service {
 
     public Set<DevStageSimilarity> loadDevStageSimilarities(Integer taxonId, Set<Integer> speciesIds) {
         log.entry(taxonId, speciesIds);
-        return log.exit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(
+        return log.traceExit(this.getDaoManager().getStageGroupingDAO().getGroupToStage(
                 taxonId, speciesIds == null? null: new HashSet<>(speciesIds)).stream()
               .collect(Collectors.groupingBy(GroupToStageTO::getGroupId)) // group by groupId
                    .entrySet().stream()

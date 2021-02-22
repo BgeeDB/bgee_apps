@@ -92,13 +92,13 @@ public enum CondParamCombination {
             throw log.throwing(new IllegalArgumentException(
                     "No condition parameter combination could be found for " + conditionParameters));
         }
-        return log.exit(matchingComb.iterator().next());
+        return log.traceExit(matchingComb.iterator().next());
     }
     /**
      * @return  The {@code CondParamCombination} taking into account all possible condition parameters.
      */
     public static CondParamCombination getAllParamCombination() {
-        log.entry();
+        log.traceEntry();
         Set<CondParamCombination> matchingComb = EnumSet.allOf(CondParamCombination.class)
                 .stream().filter(comb -> comb.isAllParamCombination()).collect(Collectors.toSet());
         if (matchingComb.size() != 1) {
@@ -109,7 +109,7 @@ public enum CondParamCombination {
         assert comb.getRawExprTable().equals(ORIGINAL_RAW_EXPR_TABLE);
         assert comb.getCondIdField().equals(ORIGINAL_RAW_COND_ID_FIELD);
         assert comb.getCondTable().equals(ORIGINAL_RAW_COND_TABLE);
-        return log.exit(comb);
+        return log.traceExit(comb);
     }
 
     

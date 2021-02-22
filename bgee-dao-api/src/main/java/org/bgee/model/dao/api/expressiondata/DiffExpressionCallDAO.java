@@ -166,7 +166,7 @@ public interface DiffExpressionCallDAO
              */
             public static final DiffExprCallType convertToDiffExprCallType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(DiffExprCallType.class, representation));
+                return log.traceExit(TransferObject.convert(DiffExprCallType.class, representation));
             }
             
             /**
@@ -224,7 +224,7 @@ public interface DiffExpressionCallDAO
              */
             public static final ComparisonFactor convertToComparisonFactor(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(ComparisonFactor.class, representation));
+                return log.traceExit(TransferObject.convert(ComparisonFactor.class, representation));
             }
             
             /**
@@ -376,14 +376,14 @@ public interface DiffExpressionCallDAO
 
         @Override
         public Map<Attribute, DataState> extractDataTypesToDataStates() {
-            log.entry();
+            log.traceEntry();
             
             Map<Attribute, DataState> typesToStates = new EnumMap<>(Attribute.class);
             
             typesToStates.put(Attribute.DIFF_EXPR_AFFYMETRIX_DATA, this.getAffymetrixData());
             typesToStates.put(Attribute.DIFF_EXPR_RNA_SEQ_DATA, this.getRNASeqData());
             
-            return log.exit(typesToStates);
+            return log.traceExit(typesToStates);
         }
         /**
          * Retrieve from this {@code CallTO} the data types with a filtering requested, 
@@ -415,8 +415,8 @@ public interface DiffExpressionCallDAO
          *                  when setting parameters in a query. 
          */
         protected EnumMap<Attribute, DataState> extractFilteringDataTypes() {
-            log.entry();
-            return log.exit(super.extractFilteringDataTypes(Attribute.class));
+            log.traceEntry();
+            return log.traceExit(super.extractFilteringDataTypes(Attribute.class));
         }
         
         /**

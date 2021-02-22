@@ -234,7 +234,7 @@ public class MailSender {
         Map<String, String> to = new HashMap<>();
         to.put(toAddress, toPersonal);
         this.sendMessage(fromAddress, fromPersonal, to, subject, msgBody);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Send a mail to several recipients. 
@@ -306,7 +306,7 @@ public class MailSender {
             this.releaseLock(mailSent);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -319,7 +319,7 @@ public class MailSender {
      * @see #releaseLock(boolean)
      */
     private void acquireLock() throws InterruptedException {
-        log.entry();
+        log.traceEntry();
         
         LOCK.lock();
         //now that we have acquire the lock, we make sure we don't send another mail too fast
@@ -336,7 +336,7 @@ public class MailSender {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Release lock, and save the current time where a mail was sent if {@code mailSent} is {@code true}.
@@ -346,13 +346,13 @@ public class MailSender {
      * @see #acquireLock()
      */
     private void releaseLock(boolean mailSent) {
-        log.entry();
+        log.traceEntry();
         
         if (mailSent) {
             MailSender.lastSendTime = System.currentTimeMillis();
         }
         LOCK.unlock();
         
-        log.exit();
+        log.traceExit();
     }
 }

@@ -601,8 +601,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #GENE_NAME_COL_NAME
      */
     private static String getGeneNameColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Name of the gene defined by <code>" + GENE_ID_COL_NAME 
+        log.traceEntry();
+        return log.traceExit("<p>Name of the gene defined by <code>" + GENE_ID_COL_NAME 
                 + "</code> (column " + colNumber + ")</p>");
     }
 
@@ -615,8 +615,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #OMA_ID_COL_NAME
      */
     private static String getOMAIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the OMA gene orthology group. Note that "
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifier of the OMA gene orthology group. Note that "
                 + "these identifiers are not stable between releases, and cannot be used "
                 + "to retrieve data from <a target='_blank' rel='noopener' "
                 + "href='http://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
@@ -636,8 +636,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #STAGE_ID_COL_NAME
      */
     private static String getMultiSpeciesStageIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the developmental stage, from the Uberon ontology. "
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifier of the developmental stage, from the Uberon ontology. "
                 + "For multi-species analyses, only broad developmental stages are used, "
                 + "common to the species being compared.</p>");
     }
@@ -648,8 +648,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #MULTI_ANAT_ENTITY_IDS_COL_NAME
      */
     private static String getMultiAnatEntityIdsColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifiers of the homologous anatomical entities, "
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifiers of the homologous anatomical entities, "
                 + "from the Uberon ontology. Cardinality 1 or greater. When more than "
                 + "one anatomical entity is used, they are separated with the character "
                 + "<code>|</code>.</p>"
@@ -684,8 +684,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #MULTI_ANAT_ENTITY_NAMES_COL_NAME
      */
     private static String getMultiAnatEntityNamesColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Names of the anatomical entities defined by <code>" 
+        log.traceEntry();
+        return log.traceExit("<p>Names of the anatomical entities defined by <code>" 
             + MULTI_ANAT_ENTITY_IDS_COL_NAME + "</code> (column " + colNumber + "). "
             + "Cardinality 1 or greater. When more than "
             + "one anatomical entity is used, they are separated with the character "
@@ -720,7 +720,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getColumnListForCall(int geneIdColNumber, int stageIdColNumber, 
             int anatEntityIdColNumber, boolean singleSpecies) {
         log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber, singleSpecies);
-        return log.exit("<code>" + GENE_ID_COL_NAME + "</code> (column " 
+        return log.traceExit("<code>" + GENE_ID_COL_NAME + "</code> (column " 
                 + geneIdColNumber + "), in <code>" 
                 + (singleSpecies ? ANAT_ENTITY_ID_COL_NAME : MULTI_ANAT_ENTITY_IDS_COL_NAME) 
                 + "</code> (column " 
@@ -758,7 +758,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
             int anatEntityIdColNumber, int exprQualColNumber, boolean singleSpecies) {
         log.entry(geneIdColNumber, stageIdColNumber, anatEntityIdColNumber, 
                 exprQualColNumber, singleSpecies);
-        return log.exit("<p>Call generated from all data types for " 
+        return log.traceExit("<p>Call generated from all data types for " 
                 + getColumnListForCall(geneIdColNumber, stageIdColNumber, 
                         anatEntityIdColNumber, singleSpecies) + ". Permitted values:</p>"
                 + "<ul class='doc_content'>"
@@ -781,8 +781,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #EXPR_RANK_COL_NAME
      */
     private static String getExprRankColDescription() {
-        log.entry();
-        return log.exit("<p>Rank score associated to the call. "
+        log.traceEntry();
+        return log.traceExit("<p>Rank score associated to the call. "
                 + "Rank scores of expression calls are normalized across genes, conditions and species. </p>"
                 + "<p>A low score means that the gene is highly expressed in the condition.</p>" );
     }
@@ -800,7 +800,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getExprQualColDescription(int exprStateColNumber) {
         log.entry(exprStateColNumber);
         
-        return log.exit("<p>Quality associated to the call. Permitted values:</p>"
+        return log.traceExit("<p>Quality associated to the call. Permitted values:</p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>high quality</span>: "
                 + "presence or absence of expression reported as high quality "
@@ -866,7 +866,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                         + observedDataColName));
         } 
         
-        return log.exit(desc);
+        return log.traceExit(desc);
     }
     
     /**
@@ -955,7 +955,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         }
         desc += "</ul>";
         
-        return log.exit(desc);
+        return log.traceExit(desc);
     }
     /**
      * Generates description of the expression state column. 
@@ -1017,7 +1017,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         }
         desc += "</ul>";
         
-        return log.exit(desc);
+        return log.traceExit(desc);
     }
     /**
      * Generates the description of the column storing best p-values for each data type 
@@ -1036,7 +1036,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getDiffExprPvalColDescription(String dataType, String diffExprStateColName, 
             int diffExprStateColIndex) {
         log.entry(dataType, diffExprStateColName, diffExprStateColIndex);
-        return log.exit("<p>Best p-value from the " + dataType + " analyses supporting the "
+        return log.traceExit("<p>Best p-value from the " + dataType + " analyses supporting the "
                 + dataType + " call provided in <code>" + diffExprStateColName 
                 + "</code> (column " + diffExprStateColIndex + "). Set to 1.0 if no data available "
                 + "by " + dataType + ".</p>");
@@ -1059,7 +1059,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getDiffSupportCountColDescription(String dataType, String diffExprStateColName, 
             int diffExprStateColIndex) {
         log.entry(dataType, diffExprStateColName, diffExprStateColIndex);
-        return log.exit("<p>Number of " + dataType + " analyses supporting the " 
+        return log.traceExit("<p>Number of " + dataType + " analyses supporting the " 
                 + dataType + " call provided in <code>" + diffExprStateColName + "</code> (column " 
                 + diffExprStateColIndex + "). Set to 0 if no data available by " + dataType 
                 + ".</p>");
@@ -1082,7 +1082,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getDiffConflictCountColDescription(String dataType, String diffExprStateColName, 
             int diffExprStateColIndex) {
         log.entry(dataType, diffExprStateColName, diffExprStateColIndex);
-        return log.exit("<p>Number of " + dataType + " analyses in conflict, generating "
+        return log.traceExit("<p>Number of " + dataType + " analyses in conflict, generating "
                 + "a call different from the call provided in <code>" + diffExprStateColName 
                 + "</code> (column " + diffExprStateColIndex + "). Set to 0 if no data available by " 
                 + dataType + ".</p>");
@@ -1131,7 +1131,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "a single differential expression call, taking into account all analyses "
                 + "from a given data type.</p>";
         
-        return log.exit(desc);
+        return log.traceExit(desc);
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the description 
@@ -1139,9 +1139,9 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getSingleSpeciesSimpleExprFileHeaderDesc() {
-        log.entry();
+        log.traceEntry();
         //TODO: change when we split the state and the qual
-        return log.exit("<table class='download_file_header_desc'>"
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td></tr>" + getSingleSpeciesSimpleExprFileHeader(true)
@@ -1153,8 +1153,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a single species simple expression file.
      */
     public static String getSingleSpeciesSimpleExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species simple expression file</caption>"
                 + "<thead>" 
@@ -1190,7 +1190,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
@@ -1208,8 +1208,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getSingleSpeciesAdvancedExprFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td>"
@@ -1224,8 +1224,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a single species advanced expression file.
      */
     public static String getSingleSpeciesAdvancedExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species advanced expression file</caption>"
                 + "<thead>" 
@@ -1287,7 +1287,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
@@ -1328,8 +1328,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getSingleSpeciesSimpleDiffExprFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td></tr>"
@@ -1342,8 +1342,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a single species simple differential expression file.
      */
     public static String getSingleSpeciesSimpleDiffExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species simple differential expression file</caption>"
                 + "<thead>" 
@@ -1378,7 +1378,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
@@ -1395,8 +1395,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getSingleSpeciesCompleteDiffExprFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td>"
@@ -1410,8 +1410,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a single species complete differential expression file.
      */
     public static String getSingleSpeciesCompleteDiffExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for single species complete differential expression file</caption>"
                 + "<thead>" 
@@ -1455,7 +1455,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + ANAT_ENTITY_ID_COL_NAME + "</" + colType + ">"
@@ -1482,8 +1482,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          of the header of OMA HOG files (can be used in "help" links).
      */
     public static String getOMAGroupFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td></tr>" 
                 + getOMAGroupFileHeader(true)
@@ -1495,8 +1495,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a OMA HOG file.
      */
     public static String getOMAGroupFileExample() {
-        log.entry();
-        return log.exit("<table class='call_download_file_example'>"
+        log.traceEntry();
+        return log.traceExit("<table class='call_download_file_example'>"
                 + "<caption>Example lines for a OMA Hierarchical orthologous groups file</caption>"
                 + "<thead>" 
                 + getOMAGroupFileHeader(false) 
@@ -1521,7 +1521,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + OMA_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
@@ -1533,8 +1533,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getMultiSpeciesSimpleDiffExprFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>...</td>"
@@ -1565,8 +1565,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a multi species simple differential expression file.
      */
     public static String getMultiSpeciesSimpleDiffExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for multi-species simple differential expression file</caption>"
                 + "<thead>" 
@@ -1614,8 +1614,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          in "help" links).
      */
     public static String getMultiSpeciesCompleteDiffExprFileHeaderDesc() {
-        log.entry();
-        return log.exit("<table class='download_file_header_desc'>"
+        log.traceEntry();
+        return log.traceExit("<table class='download_file_header_desc'>"
                 + "<tbody>"
                 + "<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>"
                 + "<td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td>"
@@ -1630,8 +1630,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      *          and example lines of a multi species complete differential expression file.
      */
     public static String getMultiSpeciesCompleteDiffExprFileExample() {
-        log.entry();
-        return log.exit("<div class='large-table'>"
+        log.traceEntry();
+        return log.traceExit("<div class='large-table'>"
         		+ "<table class='call_download_file_example'>"
                 + "<caption>Example lines for multi-species complete differential expression file</caption>"
                 + "<thead>" 
@@ -1683,7 +1683,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         if (!withTd) {
             colType = "th";
         }
-        return log.exit("<tr>"
+        return log.traceExit("<tr>"
                 + "<" + colType + ">" + OMA_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_ID_COL_NAME + "</" + colType + ">"
                 + "<" + colType + ">" + GENE_NAME_COL_NAME + "</" + colType + ">"
@@ -1737,7 +1737,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see HtmlDocumentationDisplay#displayCallDownloadFileDocumentation()
      */
     protected void writeDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h1 property='schema:name'>Expression call download file documentation</h1>");
         
@@ -1840,7 +1840,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("</div>");   //end of doc_content
         this.writeln("</div>"); // end of multi-species download file
 
-        log.exit();
+        log.traceExit();
     }
     
 
@@ -1859,7 +1859,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #writeMultiSpeciesDiffExprCallFileDoc()
      */
     private void writeDocMenuForCallDownloadFiles() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div class='documentationmenu'><ul>");
         //Single-species
@@ -1928,7 +1928,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
 //                "Troubleshooting</a>");
         this.writeln("</ul></div>");// end of documentationmenu
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1942,7 +1942,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #writeSingleSpeciesAdvancedExprCallFileDoc()
      */
     private void writeSingleSpeciesExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         //presence/absence of expression
         this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
@@ -2001,7 +2001,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeSingleSpeciesAdvancedExprCallFileDoc(); //end of presence/absence of expression
         
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write the documentation related to single species simple presence/absence of expression 
@@ -2014,7 +2014,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getSingleSpeciesSimpleExprFileHeaderDesc()
      */
     private void writeSingleSpeciesSimpleExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_SIMPLE 
                 + "'>Simple file</h4>");
@@ -2099,7 +2099,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR 
                 + "'>Back to presence/absence of expression menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2113,7 +2113,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getSingleSpeciesAdvancedExprFileHeaderDesc()
      */
     private void writeSingleSpeciesAdvancedExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_EXPR_ADVANCED+ "'>Advanced file</h4>");
         this.writeln("<p>Simple and advanced files contain the same expression calls (same number of lines) "
@@ -2412,7 +2412,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p>This corresponds to the same expression state summary column "
                 + "as in simple files (column 7 of presence/absence simple file)</p>");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2426,7 +2426,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #writeSingleSpeciesCompleteDiffExprCallFileDoc()
      */
     private void writeSingleSpeciesDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         //presence/absence of expression
         this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF 
@@ -2462,7 +2462,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeSingleSpeciesCompleteDiffExprCallFileDoc(); //end of presence/absence of expression
         
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2476,7 +2476,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getSingleSpeciesSimpleDiffExprFileHeaderDesc()
      */
     private void writeSingleSpeciesSimpleDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_SIMPLE 
                 + "'>Simple file</h4>");
@@ -2552,7 +2552,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
                 + "'>Back to over-/under-expression menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -2566,7 +2566,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getSingleSpeciesCompleteDiffExprFileHeaderDesc()
      */
     private void writeSingleSpeciesCompleteDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF_COMPLETE 
                 + "'>Complete file</h4>");
@@ -2749,7 +2749,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_SINGLE_DIFF
                 + "'>Back to over-/under-expression menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2763,7 +2763,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #writeMultiSpeciesCompleteDiffExprCallFileDoc()
      */
     private void writeMultiSpeciesDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         //presence/absence of expression
         this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
@@ -2812,7 +2812,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeMultiSpeciesCompleteDiffExprCallFileDoc(); 
         
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write the documentation related to OMA Groups 
@@ -2825,7 +2825,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getOMAGroupFileHeaderDesc()
      */
     private void writeOMAGroupFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h3 id='" + RequestParameters.HASH_DOC_CALL_OMA 
                 + "'>OMA Hierarchical orthologous groups file</h3>");
@@ -2871,7 +2871,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI
                 + "'>Back to multi-species download files menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write the documentation related to multi-species simple over-/under-expression 
@@ -2884,7 +2884,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getMultiSpeciesSimpleDiffExprFileHeaderDesc()
      */
     private void writeMultiSpeciesSimpleDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_SIMPLE 
                 + "'>Simple file</h4>");
@@ -3076,7 +3076,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
                 + "'>Back to over-/under-expression menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -3090,7 +3090,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      * @see #getMultiSpeciesCompleteDiffExprFileHeaderDesc()
      */
     private void writeMultiSpeciesCompleteDiffExprCallFileDoc() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h4 id='" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF_COMPLETE 
                 + "'>Complete file</h4>");
@@ -3341,6 +3341,6 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         this.writeln("<p><a href='#" + RequestParameters.HASH_DOC_CALL_MULTI_DIFF
                 + "'>Back to over-/under-expression menu</a></p>");
         
-        log.exit();
+        log.traceExit();
     }
 }

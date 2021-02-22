@@ -34,6 +34,7 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneService;
@@ -129,7 +130,7 @@ public class TopAnatAnalysis {
      */
     protected TopAnatResults proceedToAnalysis() throws IOException, InvalidForegroundException, 
     InvalidSpeciesGenesException, RAnalysisException {
-        log.entry();
+        log.traceEntry();
         log.info("Result directory: {}", this.getResultDirectory());
 
         // Validate and load the gene in the foreground and background
@@ -181,7 +182,7 @@ public class TopAnatAnalysis {
         }
 
         // return the result
-        return log.exit(new TopAnatResults(
+        return log.traceExit(new TopAnatResults(
                 this.params,
                 this.getResultDirectory(), 
                 this.getResultFileName(false),
@@ -244,7 +245,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void runRcode() throws IOException, RAnalysisException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Run R code...");
 
@@ -281,7 +282,7 @@ public class TopAnatAnalysis {
             //acquires the lock)
             if (Files.exists(finalFile)) {
                 log.info("Result files already generated.");
-                log.exit();return;
+                log.traceExit();return;
             }
 
             try {
@@ -319,8 +320,9 @@ public class TopAnatAnalysis {
 
             this.move(tmpFile, finalFile, false);
             //maybe it was not requested to generate the pdf, or there was no results 
-            //and this file was not generated
-            if (Files.exists(tmpPdfFile)) {
+            //and this file was not generated. Also, there is no pdf if the decorrelation type is NONE
+            if (Files.exists(tmpPdfFile) & this.params.getDecorrelationType() 
+                    != DecorrelationType.NONE) {
                 this.move(tmpPdfFile, finalPdfFile, false);
             }
 
@@ -338,7 +340,7 @@ public class TopAnatAnalysis {
 
         log.info("Result file path: {}", this.getResultFilePath(false));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -346,7 +348,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void generateRCodeFile() throws IOException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Generating R code file...");
 
@@ -381,7 +383,7 @@ public class TopAnatAnalysis {
 
         log.info("Rcode file path: {}", 
                 this.getRScriptAnalysisFilePath(false));
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -402,11 +404,11 @@ public class TopAnatAnalysis {
                     this.params.getSubmittedForegroundIds()));
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     private void createWriteDirectoryIfNotExist() {
-        log.entry();
+        log.traceEntry();
         //acquire the write lock before checking if the directory exists, 
         //so that we can create it immediately. 
         String dir = this.getResultDirectoryPath();
@@ -419,14 +421,14 @@ public class TopAnatAnalysis {
         } finally {
             this.controller.releaseWriteLock(dir);
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * 
      * @throws IOException
      */
     private void generateAnatEntitiesFiles() throws IOException {
-        log.entry();
+        log.traceEntry();
 
         log.info("Generating AnatEntities files...");
 
@@ -489,7 +491,7 @@ public class TopAnatAnalysis {
         log.info("anatEntitiesNamesFilePath: {} - relationshipsFilePath: {}", 
                 this.getAnatEntitiesNamesFilePath(false), 
                 this.getAnatEntitiesRelationshipsFilePath(false));
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -543,7 +545,7 @@ public class TopAnatAnalysis {
                             (descentId) -> out.println(descentId + '\t' + id)));
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -567,13 +569,13 @@ public class TopAnatAnalysis {
                     )
                 );
         }
-        log.exit();
+        log.traceExit();
     }    
 
     /**
      */
     private void generateGenesToAnatEntitiesAssociationFile() throws IOException {
-        log.entry();
+        log.traceEntry();
         log.info("Generating Gene to AnatEntities Association file...");
 
         //These files are general and are created in the general directory to be cached, 
@@ -626,7 +628,7 @@ public class TopAnatAnalysis {
 
 
         log.info("GeneToAnatEntitiesAssociationFilePath: {}", this.getGeneToAnatEntitiesFilePath(false));
-        log.exit();
+        log.traceExit();
     }    
 
     /**
@@ -658,7 +660,7 @@ public class TopAnatAnalysis {
             out.print(this.params.toString(nameValueSeparator, lineSeparator, true) + lineSeparator);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -666,7 +668,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void generateTopAnatParamsFile() throws IOException {
-        log.entry();
+        log.traceEntry();
         log.info("Generating TopAnatParams file...");
 
         String topAnatParamsFilePath = this.getParamsOutputFilePath(false);
@@ -686,7 +688,7 @@ public class TopAnatAnalysis {
             //acquired the lock)
             if (Files.exists(finalTopAnatParamsFile)) {
                 log.info("TopAnatParams file already generated.");
-                log.exit(); return;
+                log.traceExit(); return;
             }
 
             this.writeToTopAnatParamsFile(tmpFileName);
@@ -700,11 +702,11 @@ public class TopAnatAnalysis {
         }
 
         log.info("TopAnatParamsFilePath: {}", this.getParamsOutputFilePath(false));
-        log.exit();
+        log.traceExit();
     }  
 
     private void generateZipFile() throws IOException{
-        log.entry();
+        log.traceEntry();
         log.info("Generating Zip file...");
 
         String zipFilePath = this.getZipFilePath(false);
@@ -724,7 +726,7 @@ public class TopAnatAnalysis {
             //acquired the lock)
             if (Files.exists(finalZipFile)) {
                 log.info("Zip file already generated.");
-                log.exit(); return;
+                log.traceExit(); return;
             }
 
             this.writeZipFile(tmpFileName);
@@ -738,7 +740,7 @@ public class TopAnatAnalysis {
         }
 
         log.info("ZIP file path: {}", getZipFilePath(false));
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -804,12 +806,12 @@ public class TopAnatAnalysis {
      *          are written.
      */
     protected String getResultDirectory() {
-        log.entry();
-        return log.exit(this.params.getKey() + File.separator);
+        log.traceEntry();
+        return log.traceExit(this.params.getKey() + File.separator);
     }
     protected String getResultDirectoryPath() {
-        log.entry();
-        return log.exit(this.props.getTopAnatResultsWritingDirectory() + this.getResultDirectory());
+        log.traceEntry();
+        return log.traceExit(this.props.getTopAnatResultsWritingDirectory() + this.getResultDirectory());
     }
     
     //TODO: refactor all the getXXXName and getXXXPath methods
@@ -822,7 +824,7 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     /**
      * Return the path to the result file of this analysis.
@@ -832,7 +834,7 @@ public class TopAnatAnalysis {
      */
     protected String getResultFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getResultFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getResultFileName(tmpFile));
     }
 
     /**
@@ -842,8 +844,8 @@ public class TopAnatAnalysis {
         return TopAnatAnalysis.FILE_PREFIX + "log.R_console";
     }
     protected String getRScriptConsoleFilePath(){
-        log.entry();
-        return log.exit(this.getResultDirectoryPath() + this.getRScriptConsoleFileName());
+        log.traceEntry();
+        return log.traceExit(this.getResultDirectoryPath() + this.getRScriptConsoleFileName());
     }
 
     /**
@@ -855,11 +857,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getResultPDFFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getResultPDFFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getResultPDFFileName(tmpFile));
     }
 
     /**
@@ -889,6 +891,9 @@ public class TopAnatAnalysis {
             .forEach(e -> sb.append("_").append(e.toString()));
             sb.append("_").append(Optional.ofNullable(this.params.getSummaryQuality()).orElse(SummaryQuality.SILVER)
                     .toString());
+            if(params.getDecorrelationType() == DecorrelationType.NONE) {
+                sb.append("_" + DecorrelationType.NONE);
+            }
             
             paramsEncoded = sb.toString();
         } else {
@@ -900,11 +905,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getGeneToAnatEntitiesFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getGeneToAnatEntitiesFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getGeneToAnatEntitiesFileName(tmpFile));
     }
 
     /**
@@ -917,11 +922,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getAnatEntitiesNamesFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getAnatEntitiesNamesFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getAnatEntitiesNamesFileName(tmpFile));
     }
 
     /**
@@ -934,11 +939,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getAnatEntitiesRelationshipsFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getAnatEntitiesRelationshipsFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getAnatEntitiesRelationshipsFileName(tmpFile));
     }
 
     /**
@@ -950,11 +955,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getRScriptAnalysisFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getRScriptAnalysisFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getRScriptAnalysisFileName(tmpFile));
     }
 
     /**
@@ -966,11 +971,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getParamsOutputFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getParamsOutputFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getParamsOutputFileName(tmpFile));
     }
 
     /**
@@ -982,11 +987,11 @@ public class TopAnatAnalysis {
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
-        return log.exit(fileName);
+        return log.traceExit(fileName);
     }
     protected String getZipFilePath(boolean tmpFile){
         log.entry(tmpFile);
-        return log.exit(this.getResultDirectoryPath() + this.getZipFileName(tmpFile));
+        return log.traceExit(this.getResultDirectoryPath() + this.getZipFileName(tmpFile));
     }
 
     /**
@@ -994,7 +999,7 @@ public class TopAnatAnalysis {
      * @return
      */
     protected boolean isAnalysisDone(){
-        log.entry();
+        log.traceEntry();
         
         String finalFilePath = this.getResultFilePath(false);
         String tmpFilePath = this.getResultFilePath(true);
@@ -1010,14 +1015,14 @@ public class TopAnatAnalysis {
         //to wait for the lock on the file: results are not generated, period.
         if (this.controller.getReadWriteLock(finalFilePath).isWriteLocked() || 
                 this.controller.getReadWriteLock(tmpFilePath).isWriteLocked()) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         File file = new File(finalFilePath);
         //no need to acquire read lock to test for file existence, as it has been written already.
         if (file.exists()) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**

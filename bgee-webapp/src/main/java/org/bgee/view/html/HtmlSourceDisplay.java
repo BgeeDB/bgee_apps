@@ -65,7 +65,7 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     /** 
@@ -130,16 +130,16 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
             }
             sb.append("</div>"); // close source-list
         }
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
         
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
         this.includeCss("source.css");
-        log.exit();
+        log.traceExit();
     }
 }

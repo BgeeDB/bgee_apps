@@ -34,6 +34,6 @@ public class UserService {
      */
     public User createNewUser(HttpServletRequest request, RequestParameters requestParams) {
         log.entry(request, requestParams);
-        return log.exit(new User(request, requestParams));
+        return log.traceExit(new User(request, requestParams));
     }
 }

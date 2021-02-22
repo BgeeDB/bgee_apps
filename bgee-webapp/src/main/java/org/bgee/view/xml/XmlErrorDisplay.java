@@ -43,7 +43,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
 
         this.sendServiceUnavailableHeaders();
 
@@ -52,7 +52,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "We are working to restore Bgee as soon as possible. " +
                 "We apologize for any inconvenience.");
 
-        log.exit();
+        log.traceExit();
     }
     
     @Override
@@ -65,7 +65,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "One of the request parameters has an incorrect format. " +
                 "Incorrect parameter: " + e.getURLParameter().getName());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -76,7 +76,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
         this.displayError("Invalid request!", e.getMessage());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -89,7 +89,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "One of the request parameters was incorrectly assigned multiple values. " +
                 "Incorrect parameter: " + e.getURLParameter().getName());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
         this.displayError("Invalid request!", "Request maximum size exceeded.");
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -113,7 +113,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "One of the request parameters exceeded its maximum allowed length. " +
                 "Incorrect parameter: " + e.getURLParameter().getName());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -124,7 +124,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
         this.displayError("404 not found", "Something wrong happened! We could not understand your query.");
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -141,7 +141,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "by setting all the parameters again. We apologize for any inconvenience. " +
                 "Invalid key: " + e.getKey());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -155,7 +155,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "We could not store your parameters, or a key could not be generated to retrieve them. " +
                 "We apologize for any inconvenience.");
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -166,12 +166,12 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
         this.displayError("Too many jobs!", "Too Many Requests - " + e.getMessage());
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
 
         this.sendBadRequestHeaders();
 
@@ -179,12 +179,12 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "Something wrong happened! This operation is not supported " +
                 "for the requested view or the requested parameters.");
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
         
         this.sendInternalErrorHeaders();
         
@@ -193,7 +193,7 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
                 "An error occurred on our side. This error was logged and will be investigated. " +
                 "We apologize for any inconvenience.");
         
-        log.exit();
+        log.traceExit();
     }
 
     private void displayError(String title, String message) {
@@ -208,6 +208,6 @@ public class XmlErrorDisplay extends XmlParentDisplay implements ErrorDisplay {
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 }

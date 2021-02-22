@@ -50,21 +50,21 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     public GeneXRefTOResultSet getAllGeneXRefs(Collection<GeneXRefDAO.Attribute> attributes)
             throws DAOException {
         log.entry(attributes);
-        return log.exit(this.getGeneXRefs(null, null, null, attributes));
+        return log.traceExit(this.getGeneXRefs(null, null, null, attributes));
     }
 
     @Override
     public GeneXRefTOResultSet getGeneXRefsByBgeeGeneIds(Collection<Integer> bgeeGeneIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
         log.entry(bgeeGeneIds, attributes);
-        return log.exit(this.getGeneXRefs(bgeeGeneIds, null, null, attributes));
+        return log.traceExit(this.getGeneXRefs(bgeeGeneIds, null, null, attributes));
     }
     
     @Override
     public GeneXRefTOResultSet getGeneXRefsByXRefIds(Collection<String> xRefIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
         log.entry(xRefIds, attributes);
-        return log.exit(this.getGeneXRefs(null, xRefIds, null, attributes));
+        return log.traceExit(this.getGeneXRefs(null, xRefIds, null, attributes));
     }
     
     @Override
@@ -130,7 +130,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
             if (clonedDataSourceIds != null) {
                 stmt.setIntegers(offsetParamIndex, clonedDataSourceIds, true);
             }
-            return log.exit(new MySQLGeneXRefTOResultSet(stmt));
+            return log.traceExit(new MySQLGeneXRefTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -179,7 +179,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
                 }
             }
         }
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
 
     /**
@@ -204,7 +204,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
 
         @Override
         protected GeneXRefTO getNewTO() {
-            log.entry();
+            log.traceEntry();
             Integer bgeeGeneId = null, dataSourceId = null;
             String xRefId = null, xRefName = null;
             
@@ -231,7 +231,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
                 }
             }
             // Set GeneXRefTO
-            return log.exit(new GeneXRefTO(bgeeGeneId, xRefId, xRefName, dataSourceId));
+            return log.traceExit(new GeneXRefTO(bgeeGeneId, xRefId, xRefName, dataSourceId));
         }
     }
 }

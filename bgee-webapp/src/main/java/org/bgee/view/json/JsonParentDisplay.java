@@ -62,13 +62,13 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
             }
             //determine ReponseStatus from this first digit
             if (firstDigit == 5) {
-                return log.exit(ResponseStatus.FAIL);
+                return log.traceExit(ResponseStatus.FAIL);
             }
             if (firstDigit == 4) {
-                return log.exit(ResponseStatus.ERROR);
+                return log.traceExit(ResponseStatus.ERROR);
             }
             if (firstDigit >= 1 && firstDigit <= 3) {
-                return log.exit(ResponseStatus.SUCCESS);
+                return log.traceExit(ResponseStatus.SUCCESS);
             }
             throw log.throwing(new IllegalArgumentException("Unsupported HTTP status code: " + code));
         }
@@ -127,7 +127,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
     protected void sendResponse(String msg, LinkedHashMap<String, Object> data) {
         log.entry(msg, data);
         this.sendResponse(HttpServletResponse.SC_OK, msg, data);
-        log.exit();   
+        log.traceExit();   
     }
     /**
      * Send a standard JSON response to client. The response include the HTTP response status code, 
@@ -167,7 +167,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         this.sendAppropriateHeaders(code);
         this.jsonHelper.toJson(jsonResponse, this.getOut());
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -180,35 +180,35 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         log.entry(code);
         if (ResponseStatus.getResponseStatusFromCode(code).equals(ResponseStatus.SUCCESS)) {
             super.sendHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (code == HttpServletResponse.SC_SERVICE_UNAVAILABLE) {
             super.sendServiceUnavailableHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (code == HttpServletResponse.SC_BAD_REQUEST) {
             super.sendBadRequestHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (code == HttpServletResponse.SC_NOT_FOUND) {
             super.sendPageNotFoundHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (code == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
             super.sendInternalErrorHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (code == 429) {
             super.sendTooManyRequeststHeaders();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         throw log.throwing(new IllegalArgumentException("Unsupported HTTP status code: " + code));
     }
 
     @Override
     protected String getContentType() {
-        log.entry();
-        return log.exit("application/json");
+        log.traceEntry();
+        return log.traceExit("application/json");
     }
     
     //*****************************************************************

@@ -69,7 +69,7 @@ public class InsertECO extends MySQLDAOUser {
         InsertECO insert = new InsertECO();
         insert.insert(OntologyUtils.loadOntology(args[0]));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -114,7 +114,7 @@ public class InsertECO extends MySQLDAOUser {
             this.closeDAO();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -167,6 +167,6 @@ public class InsertECO extends MySQLDAOUser {
             throw log.throwing(new IllegalArgumentException("The provided ontology "
                     + "did not allow to retrieve any valid ECO terms."));
         }
-        return log.exit(ecoTOs);
+        return log.traceExit(ecoTOs);
     }
 }

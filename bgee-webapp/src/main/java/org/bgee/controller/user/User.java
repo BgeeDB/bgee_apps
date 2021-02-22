@@ -131,7 +131,7 @@ public class User {
         this.preferredLanguage = Optional.ofNullable(tmpLanguage);
 
         log.debug("User created: {}", this);
-        log.exit();
+        log.traceExit();
     }
     
     //***************************************
@@ -183,7 +183,7 @@ public class User {
         String id = sb.toString();
         log.debug("ID String generated: {} ", id);
         
-        return log.exit(new BgeeUUID(id, UUIDSource.GENERATED, System.currentTimeMillis()));
+        return log.traceExit(new BgeeUUID(id, UUIDSource.GENERATED, System.currentTimeMillis()));
     }
 
     /**
@@ -199,7 +199,7 @@ public class User {
         //split the IP address info based on the first char that is not valid in IP v4 or v6 addresses.
         String ipInfo = this.extractIPAddressInfo(request);
         log.debug("IP Info: {}", ipInfo);
-        return log.exit(ipInfo == null? null: ipInfo.split("[^a-f0-9\\.:%/]", 2)[0]);
+        return log.traceExit(ipInfo == null? null: ipInfo.split("[^a-f0-9\\.:%/]", 2)[0]);
     }
     /**
      * Try to identify the IP address of the user. There is no guarantee that the user IP address 
@@ -219,29 +219,29 @@ public class User {
         
         String ip = this.filterIP(request.getHeader("X-Forwarded-For"));
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
         ip = this.filterIP(request.getHeader("Proxy-Client-IP")); 
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
         ip = this.filterIP(request.getHeader("WL-Proxy-Client-IP"));
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
         ip = this.filterIP(request.getHeader("HTTP_CLIENT_IP"));
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
         ip = this.filterIP(request.getHeader("HTTP_X_FORWARDED_FOR"));
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
         ip = this.filterIP(request.getHeader("X-Real-IP"));
         if (ip != null) {
-            return log.exit(ip);
+            return log.traceExit(ip);
         }
-        return log.exit(this.filterIP(request.getRemoteAddr()));
+        return log.traceExit(this.filterIP(request.getRemoteAddr()));
     }
     /**
      * @param ip    A {@code String} that is an IP address info to be filtered.
@@ -251,10 +251,10 @@ public class User {
     private String filterIP(String ip) {
         log.entry(ip);
         if (StringUtils.isBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
         //lower case for IPv6 addresses
-        return log.exit(this.secureString(ip).trim().toLowerCase(Locale.US));
+        return log.traceExit(this.secureString(ip).trim().toLowerCase(Locale.US));
     }
     
     /**
@@ -266,13 +266,13 @@ public class User {
      * @return          A secured {@code String}.
      */
     private String secureString(String toSecure) {
-        log.entry();
+        log.traceEntry();
         //avoid weird Chinese characters etc. See UrlParameters.DEFAULT_FORMAT
         if (toSecure == null || !toSecure.matches("^[\\w~@#&$^*/()_+=\\[\\]{}|\\\\,;.?!'\": \\-%]*$")) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
         int maxLength = 5000;
-        return log.exit(toSecure.substring(0, 
+        return log.traceExit(toSecure.substring(0, 
                 toSecure.length() < maxLength? toSecure.length(): maxLength));
     }
     
@@ -292,11 +292,11 @@ public class User {
             //XXX: as long as we do not enforce users to request a real API key, 
             //we merge this info with the IP address (API keys in our R package are produced 
             //based on the 'sys.getEnv()' information, two users could have the same)
-            return log.exit(new BgeeUUID(
+            return log.traceExit(new BgeeUUID(
                     "apiKey: " + requestParams.getApiKey() + "; " + this.extractIPAddressInfo(request), 
                     UUIDSource.API_KEY, 0));
         }
-        return log.exit(null);
+        return log.traceExit((BgeeUUID) null);
     }
     
     /**
@@ -310,18 +310,18 @@ public class User {
         
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            return log.exit(null);
+            return log.traceExit((BgeeUUID) null);
         }
         Cookie bgeeCookie = Arrays.stream(request.getCookies())
                 .filter(c -> BGEE_UUID_COOKIE_NAME.equals(c.getName()) && 
                         StringUtils.isNotBlank(c.getValue()))
                 .findFirst().orElse(null);
         if (bgeeCookie == null) {
-            return log.exit(null);
+            return log.traceExit((BgeeUUID) null);
         }
         String value = this.secureString(bgeeCookie.getValue()); //can return null if unsecured string
         if (value == null) {
-            return log.exit(null);
+            return log.traceExit((BgeeUUID) null);
         }
         
         //In the Bgee cookie, we store both the UUID and the last update timestamp, 
@@ -337,7 +337,7 @@ public class User {
             
             BgeeUUID uuid = new BgeeUUID(bgeeUUID, UUIDSource.BGEE_COOKIE, lastUpdate);
             log.debug("BgeeUUID retrieved from Bgee cookie: {}", uuid);
-            return log.exit(uuid);
+            return log.traceExit(uuid);
             
         } catch (NumberFormatException e) {
             throw log.throwing(new IllegalArgumentException(
@@ -370,7 +370,7 @@ public class User {
     public Optional<Cookie> manageTrackingCookie(HttpServletRequest request, String rootDomain) 
             throws IllegalArgumentException {
         log.entry(request, rootDomain);
-        return log.exit(this.manageTrackingCookie(request, rootDomain, System.currentTimeMillis()));
+        return log.traceExit(this.manageTrackingCookie(request, rootDomain, System.currentTimeMillis()));
     }
     /**
      * Create or update the Bgee tracking cookie for this user. If an UUID has just been generated 
@@ -459,7 +459,7 @@ public class User {
             log.debug("No cookie updated");
         }
         
-        return log.exit(Optional.ofNullable(bgeeCookie));
+        return log.traceExit(Optional.ofNullable(bgeeCookie));
     }
     
     //*****************************

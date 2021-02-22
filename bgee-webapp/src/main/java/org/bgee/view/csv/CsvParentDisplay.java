@@ -51,9 +51,9 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
     @Override
     protected String getContentType() {
         if (Delimiter.TAB.equals(this.delimiter)) {
-            return log.exit("text/tab-separated-values");
+            return log.traceExit("text/tab-separated-values");
         } else if (Delimiter.COMMA.equals(this.delimiter)) {
-            return log.exit("text/csv");
+            return log.traceExit("text/csv");
         } else {
             throw log.throwing(new IllegalStateException("Unsupported delimiter type: " + this.delimiter));
         }
@@ -61,16 +61,16 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
     
 
     protected void startDisplay() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders();
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write end of CSV file. If you used another writer to write the content of the file, 
      * you must make sure to flsuh it before calling this method.
      */
     protected void endDisplay() {
-        log.entry();
+        log.traceEntry();
         //we end the file with 5 (why not!) blank lines. 
         //This is because, without a checksum mechanism, it is not possible to tell 
         //whether a file transfer was completed successfully. We do not want to compute 
@@ -81,6 +81,6 @@ public class CsvParentDisplay extends ConcreteDisplayParent {
         this.writeln("");
         this.writeln("");
         this.writeln("");
-        log.exit();
+        log.traceExit();
     }
 }

@@ -278,7 +278,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                 stmtIndex += diffExprCallTypeRNASeq.size();
             }             
             
-            return log.exit(new MySQLDiffExpressionCallTOResultSet(stmt));
+            return log.traceExit(new MySQLDiffExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -303,7 +303,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
         log.entry(attributes, diffExprTableName, distinct);
         
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT " + diffExprTableName + ".* ");
+            return log.traceExit("SELECT " + diffExprTableName + ".* ");
         }
         
         String sql = "";
@@ -356,7 +356,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
             }
         }
         sql += " ";
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
     
     /**
@@ -409,7 +409,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
 
         @Override
         protected DiffExpressionCallTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             Integer id = null, geneId = null, conditionId = null;
             ComparisonFactor comparisonFactor = null;
@@ -485,7 +485,7 @@ public class MySQLDiffExpressionCallDAO extends MySQLOrderingDAO<DiffExpressionC
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new DiffExpressionCallTO(id, geneId, conditionId, 
+            return log.traceExit(new DiffExpressionCallTO(id, geneId, conditionId, 
                     comparisonFactor, diffExprCallTypeAffymetrix, diffExprAffymetrixData, 
                     bestPValueAffymetrix, consistentDEACountAffymetrix, inconsistentDEACountAffymetrix, 
                     diffExprCallTypeRNASeq, diffExprRNASeqData, bestPValueRNASeq, 

@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -73,45 +72,45 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     @Override
     public void displayExpressionComparisonHomePage() {
-        log.entry();
+        log.traceEntry();
         
         this.displayExpressionComparison(null, null, null, null, null);
         
-        log.exit();
+        log.traceExit();
     }
     
     public void displayExpressionComparison(String errorMsg) {
-        log.entry(errorMsg);
+        log.traceEntry("{}", errorMsg);
 
         this.displayExpressionComparison(null, null, null, null, errorMsg);
 
-        log.exit();
+        log.traceExit();
     }
     
     @Override
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, SingleSpeciesExprAnalysis result) {
-        log.entry(searchResult, result);
+        log.traceEntry("{} - {}", searchResult, result);
 
         Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
         this.displayExpressionComparison(searchResult, result, fun, false, null);
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiSpeciesExprAnalysis result) {
-        log.entry(searchResult, result);
+        log.traceEntry("{} - {}", searchResult, result);
 
         Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
         this.displayExpressionComparison(searchResult, result, fun, true, null);
 
-        log.exit();
+        log.traceExit();
     }
 
     private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
                                                  Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies,
                                                  String errorMsg) {
-        log.entry(searchResult, result, function, isMultiSpecies, errorMsg);
+        log.traceEntry("{} - {} - {} - {} - {}", searchResult, result, function, isMultiSpecies, errorMsg);
         
         this.startDisplay("Expression comparison page");
 
@@ -139,11 +138,11 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     private String getForm(String errorMsg) {
-        log.entry(errorMsg);
+        log.traceEntry("{}", errorMsg);
 
         StringBuilder sb = new StringBuilder();
 
@@ -206,12 +205,12 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("    </div>");
         sb.append("</div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private <T> String getResult(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
             Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
-        log.entry(result, function, isMultiSpecies);
+        log.traceEntry("{} - {} - {}", result, function, isMultiSpecies);
 
         StringBuilder sb = new StringBuilder();
 
@@ -226,7 +225,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<h2>Results</h2>");
 
-        sb.append("<p>Results are ordered by 'Conservation score', then 'Maximum expression score'. " +
+        sb.append("<p>Results are ordered by default by descendant \"Conservation score\", "
+                + "then ascendant \"Genes with absence of expression\", then descendant \"Max expression score\". " +
                 "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
@@ -262,13 +262,13 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         sb.append("    </table>");
         sb.append("</div>");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
 
     }
 
     private <T> String getRow(Map.Entry<T, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts,
                               Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
-        log.entry(condToCounts, function, isMultiSpecies);
+        log.traceEntry("{} - {} - {}", condToCounts, function, isMultiSpecies);
 
         StringBuilder row = new StringBuilder();
         row.append("<tr>");
@@ -335,7 +335,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         }
 
         row.append("</tr>");
-        return log.exit(row.toString());
+        return log.traceExit(row.toString());
     }
 
     /**
@@ -345,7 +345,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return          The {@code String} that is the HTML of the cell.
      */
     private String getGeneCountCell(Set<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
 
         Function<Gene, String> f = g -> {
             RequestParameters geneUrl = this.getNewRequestParameters();
@@ -357,7 +357,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         };
 
         //Need a compiler hint of generic type for my Java version
-        return log.exit(this.<Gene>getCell(genes.stream()
+        return log.traceExit(this.<Gene>getCell(genes.stream()
                         .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
                         .collect(Collectors.toList()),
                 "gene" + (genes.size() > 1? "s": ""),
@@ -372,9 +372,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return          The {@code String} that is the HTML of the cell.
      */
     private String getSpeciesCountCell(Set<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
         //Need a compiler hint of generic type for my Java version
-        return log.exit(this.<Species>getCell(genes.stream()
+        return log.traceExit(this.<Species>getCell(genes.stream()
                         .map(Gene::getSpecies)
                         .distinct()
                         .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
@@ -395,7 +395,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return              The {@code String} that is the HTML of the cell.
      */
     private <T> String getCell(List<T> set, String mainText, Function<T, String> getDetailText) {
-        log.entry(set, mainText, getDetailText);
+        log.traceEntry("{} - {} - {}", set, mainText, getDetailText);
 
         StringBuilder cell = new StringBuilder();
 
@@ -412,14 +412,14 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         cell.append("    </ul>");
         cell.append("</td>");
 
-        return log.exit(cell.toString());
+        return log.traceExit(cell.toString());
     }
 
     /**
      * Add schema.org markups to the page.
      */
     private void addSchemaMarkups() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
@@ -443,12 +443,12 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("</script>");
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -464,12 +464,12 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
 
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
@@ -486,7 +486,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
             this.includeJs("lib/jquery_plugins/vendor_expr_comp.js");
             this.includeJs("script_expr_comp.js");
         }
-        log.exit();
+        log.traceExit();
     }
 }
 

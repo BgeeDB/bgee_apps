@@ -288,7 +288,7 @@ public class TopAnatParams {
             this.submittedBackgroundIds = submittedBackgroundIds;
             this.speciesId = speciesId;
             this.callType = callType;
-            log.exit();
+            log.traceExit();
         }
 
         /**
@@ -301,7 +301,7 @@ public class TopAnatParams {
         public Builder summaryQuality(SummaryQuality summaryQuality){
             log.entry(summaryQuality);
             this.summaryQuality = summaryQuality;
-            return log.exit(this);
+            return log.traceExit(this);
         } 
 
         /**
@@ -315,7 +315,7 @@ public class TopAnatParams {
             log.entry(dataTypes);
             this.callType.checkCallTypeDataTypes(dataTypes);
             this.dataTypes = dataTypes;
-            return log.exit(this);
+            return log.traceExit(this);
         }  
 
         /**
@@ -328,7 +328,7 @@ public class TopAnatParams {
         public Builder devStageId(String devStageId){
             log.entry(devStageId);
             this.devStageId = devStageId;
-            return log.exit(this);
+            return log.traceExit(this);
         }         
 
         /**
@@ -341,7 +341,7 @@ public class TopAnatParams {
         public Builder decorrelationType(DecorrelationType decorrelationType){
             log.entry(decorrelationType);
             this.decorrelationType = decorrelationType;
-            return log.exit(this);
+            return log.traceExit(this);
         } 
 
         /**
@@ -354,7 +354,7 @@ public class TopAnatParams {
         public Builder statisticTest(StatisticTest statisticTest){
             log.entry(statisticTest);
             this.statisticTest = statisticTest;
-            return log.exit(this);
+            return log.traceExit(this);
         } 
 
         /**
@@ -367,7 +367,7 @@ public class TopAnatParams {
         public Builder nodeSize(int nodeSize){
             log.entry(nodeSize);
             this.nodeSize = nodeSize;
-            return log.exit(this);
+            return log.traceExit(this);
         }  
 
         /**
@@ -380,7 +380,7 @@ public class TopAnatParams {
         public Builder fdrThreshold(double fdrThreshold){
             log.entry(fdrThreshold);
             this.fdrThreshold = fdrThreshold;
-            return log.exit(this);
+            return log.traceExit(this);
         }   
 
         /**
@@ -393,7 +393,7 @@ public class TopAnatParams {
         public Builder pvalueThreshold(double pvalueThreshold){
             log.entry(pvalueThreshold);
             this.pvalueThreshold = pvalueThreshold;
-            return log.exit(this);
+            return log.traceExit(this);
         }   
 
         /**
@@ -407,7 +407,7 @@ public class TopAnatParams {
         public Builder numberOfSignificantNode(int numberOfSignificantNode){
             log.entry(numberOfSignificantNode);
             this.numberOfSignificantNode = numberOfSignificantNode;
-            return log.exit(this);
+            return log.traceExit(this);
         }  
 
         /**
@@ -420,7 +420,7 @@ public class TopAnatParams {
         public Builder isWithZip(boolean isWithZip){
             log.entry(isWithZip);
             this.isWithZip = isWithZip;
-            return log.exit(this);
+            return log.traceExit(this);
         }  
 
         /**
@@ -430,8 +430,8 @@ public class TopAnatParams {
          * @throws MissingParameterException    If a mandatory parameter is not properly set
          */
         public TopAnatParams build() throws MissingParameterException{
-            log.entry();
-            return log.exit(new TopAnatParams(this));
+            log.traceEntry();
+            return log.traceExit(new TopAnatParams(this));
         }
     }
 
@@ -480,7 +480,7 @@ public class TopAnatParams {
             Collections.unmodifiableSet(new HashSet<>(builder.submittedBackgroundIds));
         this.key = this.generateKey();
         this.isWithZip = builder.isWithZip == null ? true : builder.isWithZip;
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -602,7 +602,7 @@ public class TopAnatParams {
      * @return A {@code CallFilter} to be used for the analysis
      */
     public CallFilter<?, ?> convertRawParametersToCallFilter() {
-        log.entry();
+        log.traceEntry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
@@ -621,7 +621,7 @@ public class TopAnatParams {
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
-            return log.exit(new ExpressionCallFilter(
+            return log.traceExit(new ExpressionCallFilter(
                     //call type and quality filter
                     callQualFilter,
                     //gene filter 
@@ -635,14 +635,18 @@ public class TopAnatParams {
                     //TODO: investigate whether results are the same if we use all data,
                     //including redundant calls with observed data
                     //(if we just give values null, null, null)
-                    obsDataFilter, true, null
+                    obsDataFilter, 
+                    //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
+                    //without running topGo 
+                    (this.decorrelationType != DecorrelationType.NONE) ? true : null,
+                    null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {
             //TODO: to implement, and use method getDiffExpressionCallData
             throw log.throwing(new UnsupportedOperationException(
                     "CallService for diff. expression not yet implemented"));
-//            return log.exit(new DiffExpressionCallFilter(
+//            return log.traceExit(new DiffExpressionCallFilter(
 //                //gene filter 
 //                geneFilter, 
 //                //condition filter
@@ -661,9 +665,9 @@ public class TopAnatParams {
 //     * TODO improve comment here
 //     */
 //    private Collection<ExpressionCallData> getExpressionCallData() {
-//        log.entry();
+//        log.traceEntry();
 //
-//        return log.exit(this.getCallData((dataType, dataQual) -> 
+//        return log.traceExit(this.getCallData((dataType, dataQual) -> 
 //            new ExpressionCallData(SummaryCallType.Expression.EXPRESSED,
 //                dataQual, dataType, 
 //                new DataPropagation(PropagationState.SELF, 
@@ -677,9 +681,9 @@ public class TopAnatParams {
 //     * @return
 //     */
 //    private Collection<DiffExpressionCallData> getDiffExpressionCallData() {
-//        log.entry();
+//        log.traceEntry();
 //
-//        return log.exit(this.getCallData((dataType, dataQual) -> 
+//        return log.traceExit(this.getCallData((dataType, dataQual) -> 
 //            new DiffExpressionCallData(DiffExpressionFactor.ANATOMY, 
 //                SummaryCallType.DiffExpression.OVER_EXPRESSED, dataQual, dataType)));
 //    }
@@ -697,9 +701,9 @@ public class TopAnatParams {
 //
 //        if (this.dataTypes == null || this.dataTypes.isEmpty() || 
 //                this.dataTypes.containsAll(this.callType.getAllowedDataTypes())) {
-//            return log.exit(Collections.singleton(callDataSupplier.apply(null, dataQual)));
+//            return log.traceExit(Collections.singleton(callDataSupplier.apply(null, dataQual)));
 //        }
-//        return log.exit(this.dataTypes.stream()
+//        return log.traceExit(this.dataTypes.stream()
 //                .map(dataType -> callDataSupplier.apply(dataType, dataQual))
 //                .collect(Collectors.toSet()));
 //    }
@@ -710,7 +714,7 @@ public class TopAnatParams {
      * @return  A {@code String} that is the unique key
      */
     private String generateKey() {
-        log.entry();
+        log.traceEntry();
 
         log.info("Trying to generate a key based on all params");
 
@@ -749,7 +753,7 @@ public class TopAnatParams {
         
         log.info("Key generated: {}", keyToReturn);
 
-        return log.exit(keyToReturn);
+        return log.traceExit(keyToReturn);
     }
 
     @Override

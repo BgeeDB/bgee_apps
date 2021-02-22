@@ -43,7 +43,7 @@ public class CommandAbout extends CommandParent {
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
         
         AboutDisplay display = this.viewFactory.getAboutDisplay();
         
@@ -56,6 +56,6 @@ public class CommandAbout extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

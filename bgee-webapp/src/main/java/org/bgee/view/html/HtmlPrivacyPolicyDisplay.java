@@ -43,7 +43,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     @Override
     public void displayPrivacyPolicyPage() {
-        log.entry();
+        log.traceEntry();
 
         this.startDisplay("Bgee privacy notice", "WebPage");
 
@@ -146,7 +146,6 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
                 "the service is live, even if you stop using the service. We will keep the personal " +
                 "data for the minimum amount of time possible to ensure legal compliance and to " +
                 "facilitate internal and external audits if they arise.</p>");
-        this.writeln("<p>Most data are kept maximum 24 months (26 months for Google Analytics statistics).</p>");
         this.writeln("<p>Only <strong>Help desk</strong> data are kept longer.</p>");
         
         this.writeln("<h2>Cookies</h2>");
@@ -199,12 +198,12 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     private String getUnilEmail() {
-        log.entry();
-        return log.exit("<script>eval(unescape("
+        log.traceEntry();
+        return log.traceExit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%31%32%30%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%67%3A%65%77%61%6E" +
                 "%6C%65%65%6C%67%2E%6C%69%69%6C%72%65%6E%6F%75%40%69%6E%2E%6C%68%63%27%3B%76%61%72" +
@@ -220,8 +219,8 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     }
 
     private String getSibDpoEmail() {
-        log.entry();
-        return log.exit("<script>eval(unescape("
+        log.traceEntry();
+        return log.traceExit("<script>eval(unescape("
                 + "'%66%75%6E%63%74%69%6F%6E%20%73%65%62%5F%74%72%61%6E%73%70%6F%73%65%32%31%30%38" +
                 "%35%39%28%68%29%20%7B%76%61%72%20%73%3D%27%61%6D%6C%69%6F%74%64%3A%6F%70%73%40%62" +
                 "%69%73%2E%69%77%73%73%27%3B%76%61%72%20%72%3D%27%27%3B%66%6F%72%28%76%61%72%20%69" +
@@ -238,11 +237,11 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("documentation.css");
-        log.exit();
+        log.traceExit();
     }
 }

@@ -13,7 +13,7 @@
 },
 {
     "topic": "Decorrelation type",
-    "help": "Algorithm used to take into account the topology of the anatomical ontology, to decrease the number of false positives and highly general terms in the results, owing to the inheritance problem. A precise description of these algorithms can be found in the topGO documentation."
+    "help": "Algorithm used to take into account the topology of the anatomical ontology, to decrease the number of false positives and highly general terms in the results, owing to the inheritance problem. A precise description of these algorithms can be found in the topGO documentation. Please note that using these decorrelation methods slow the analyses a lot."
 },
 {
     "topic": "Node size",
@@ -41,22 +41,22 @@
 },
 {
     "topic": "Example 1",
-    "help": "Mouse genes mapped to the GO term \"spermatogenesis\"."
+    "help": "Autism spectrum associated genes from Satterstrom et al. 2020 https://doi.org/10.1016/j.cell.2019.12.036"
 },
 {
     "topic": "Example 2",
-    "help": "Human genes involved in autism and epilepsy."
+    "help": "Mouse genes mapped to the GO term \"spermatogenesis\"."
 },
 {
     "topic": "Example 3",
-    "help": "Mouse genes mapped to the GO term \"neurological system process\"."
+    "help": "Zebrafish 3R ohnologs from Roux et al. 2017 https://doi.org/10.1093/molbev/msx199 showing nervous system expression of 3R duplicates."
 },
 {
     "topic": "Example 4",
-    "help": "Cow genes with the keyword \"muscle\" in their UniProtKB/Swiss-Prot description."
+    "help": "Pigmentation genes in rabbit."
 },
 {
     "topic": "Example 5",
-    "help": "Platypus genes located on X chromosome."
+    "help": "COVID-19 related human genes."
 }
 ]

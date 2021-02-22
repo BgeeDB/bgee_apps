@@ -91,7 +91,7 @@ public class MySQLGeneOntologyDAO extends MySQLDAO<GeneOntologyDAO.Attribute>
                     }
                 }
             }
-            return log.exit(termInsertedCount);
+            return log.traceExit(termInsertedCount);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

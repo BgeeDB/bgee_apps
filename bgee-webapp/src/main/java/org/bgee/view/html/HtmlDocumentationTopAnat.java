@@ -53,7 +53,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
      * @see HtmlDocumentationDisplay#displayTopAnatDocumentation()
      */
     protected void writeDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<h1 property='schema:name'>TopAnat documentation</h1>");
         
@@ -122,6 +122,6 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
                 + "title='topGO package in Bioconductor' target='_blank' rel='noopener'>topGO</a>. "
         		+ "Adaptation of topGO courtesy of Adrian Alexa.</p>");
 
-        log.exit();
+        log.traceExit();
     }
 }

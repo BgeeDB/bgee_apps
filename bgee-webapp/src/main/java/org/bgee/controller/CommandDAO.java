@@ -81,7 +81,7 @@
 //    @Override
 //    public void processRequest() throws IllegalStateException, IOException, 
 //        PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
-//        log.entry();
+//        log.traceEntry();
 //        throw log.throwing(new UnsupportedOperationException(
 //                "To be implemented, not used anymore for R package"));
 //
@@ -117,7 +117,7 @@
 //            job.release();
 //        }
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -127,7 +127,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetExpressionCalls() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -236,7 +236,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -246,7 +246,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAnatEntities() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -273,7 +273,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -284,7 +284,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAnatEntitiyRelations() throws InvalidRequestException, IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -314,7 +314,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -324,7 +324,7 @@
 //     * @throws IOException              In case of issue when writing results. 
 //     */
 //    private void processGetAllSpecies() throws IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        DAOManager daoManager = this.serviceFactory.getDAOManager();
 //        DAODisplay display = this.viewFactory.getDAODisplay();
@@ -344,7 +344,7 @@
 //        
 //        display.displayTOs(attrs, rs);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -362,12 +362,12 @@
 //        List<String> requestedAttrs = rqParams.getValues(
 //                rqParams.getUrlParametersInstance().getParamAttributeList());
 //        if (requestedAttrs == null || requestedAttrs.isEmpty()) {
-//            return log.exit(Arrays.asList(attrType.getEnumConstants()));
+//            return log.traceExit(Arrays.asList(attrType.getEnumConstants()));
 //        }
 //        //we don't use Enum.valueOf to be able to get parameters in lower case. 
 //        final Map<String, T> nameToAttr = Arrays.stream(attrType.getEnumConstants())
 //                .collect(Collectors.toMap(attr -> attr.name().toLowerCase(), attr -> attr));
-//        return log.exit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
+//        return log.traceExit(requestedAttrs.stream().map(rqAttr -> nameToAttr.get(rqAttr.toLowerCase()))
 //                .collect(Collectors.toList()));
 //    }
 //}

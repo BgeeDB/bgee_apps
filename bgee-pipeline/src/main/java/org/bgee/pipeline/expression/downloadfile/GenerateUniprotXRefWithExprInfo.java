@@ -91,7 +91,7 @@ public class GenerateUniprotXRefWithExprInfo {
         GenerateUniprotXRefWithExprInfo expressionInfoGenerator = new GenerateUniprotXRefWithExprInfo();
         expressionInfoGenerator.generate(args[0], args[1]);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -117,7 +117,7 @@ public class GenerateUniprotXRefWithExprInfo {
         // write XRef file
         this.writeXrefWithExpressionInfo(outputFileName, sortedEnsemblIdToXrefLines);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -150,7 +150,7 @@ public class GenerateUniprotXRefWithExprInfo {
             throw log.throwing(new UncheckedIOException("Can not read file " + file, e));
         }
         
-        return log.exit(xrefUniprotList);
+        return log.traceExit(xrefUniprotList);
     }
 
     /**
@@ -213,7 +213,7 @@ public class GenerateUniprotXRefWithExprInfo {
         log.info("Time needed to retrieve expressionSummary of {} genes is {} hours", xrefList.size(),
                 Duration.between(start, end).toHours());
         
-        return log.exit(xrefList.parallelStream().map( xref -> {
+        return log.traceExit(xrefList.parallelStream().map( xref -> {
             String expressionInfo = expressionInfoByGene.get(xref);
             if (expressionInfo == null) {
                 return new AbstractMap.SimpleEntry<String, String>(xref.getEnsemblId(), null);
@@ -244,7 +244,7 @@ public class GenerateUniprotXRefWithExprInfo {
      */
     private static List<String> sortXrefByUniprotId(Map<String, Set<String>> ensemblIdToXrefLines) {
         log.entry(ensemblIdToXrefLines);
-        return log.exit(ensemblIdToXrefLines.entrySet().stream()
+        return log.traceExit(ensemblIdToXrefLines.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(e -> e.getValue().stream())
                 .collect(Collectors.toList()));

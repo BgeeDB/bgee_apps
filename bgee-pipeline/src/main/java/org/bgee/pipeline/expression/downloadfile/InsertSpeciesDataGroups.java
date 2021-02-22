@@ -184,7 +184,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //                CommandRunner.parseArgument(args[5]));
 //        insert.insert();
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    /**
@@ -414,7 +414,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //                new ArrayList<Integer>(this.groupToSpecies.values().stream()
 //                .flatMap(e -> e.stream()).collect(Collectors.toSet())), this.getSpeciesDAO());
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -425,7 +425,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //     * @throws IOException  If a file could not be read.
 //     */
 //    public void insert() throws IOException {
-//        log.entry();
+//        log.traceEntry();
 //        
 //        // FIXME enable creation of SpeciesDataGroupTOs and SpeciesToDataGroupTOs
 ////        // First, we create SpeciesDataGroupTOs and SpeciesToDataGroupTOs
@@ -582,7 +582,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //        }
 //
 //        log.info("Done inserting species data groups.");
-//        log.exit();
+//        log.traceExit();
 //    }
 //
 //    private CategoryEnum getCategoryEnum(String category) {
@@ -592,9 +592,9 @@ import org.bgee.pipeline.MySQLDAOUser;
 //                DownloadFile.CategoryEnum.convertToCategoryEnum(category.replace("_dev", ""));
 //        switch (serviceCategory) {
 //                case EXPR_CALLS_SIMPLE:
-//                    return log.exit(DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE);
+//                    return log.traceExit(DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE);
 //                case EXPR_CALLS_COMPLETE:
-//                    return log.exit(DownloadFileTO.CategoryEnum.EXPR_CALLS_COMPLETE);
+//                    return log.traceExit(DownloadFileTO.CategoryEnum.EXPR_CALLS_COMPLETE);
 //                case DIFF_EXPR_ANAT_SIMPLE:
 //                case DIFF_EXPR_ANAT_COMPLETE:
 //                case DIFF_EXPR_DEV_COMPLETE:
@@ -604,7 +604,7 @@ import org.bgee.pipeline.MySQLDAOUser;
 //                case AFFY_DATA:
 //                case RNASEQ_ANNOT:
 //                case RNASEQ_DATA:
-//                    return log.exit(DownloadFileTO.CategoryEnum.convertToCategoryEnum(
+//                    return log.traceExit(DownloadFileTO.CategoryEnum.convertToCategoryEnum(
 //                            serviceCategory.getStringRepresentation()));
 //                default:
 //                    throw new IllegalArgumentException("Category not supported: " + serviceCategory);
@@ -627,8 +627,8 @@ import org.bgee.pipeline.MySQLDAOUser;
 //        //to get more info about them see issue #69
 //        //In the meantime, we define a threshold based on the size
 ////        try (Stream<String> lines = Files.lines(Paths.get(filePath)).limit(MIN_LINE_NUMBER)) {
-////            return log.exit(lines.count() >= MIN_LINE_NUMBER);
+////            return log.traceExit(lines.count() >= MIN_LINE_NUMBER);
 ////        }
-//        return log.exit(file.length() >= 1024L);
+//        return log.traceExit(file.length() >= 1024L);
 //    }
 //}

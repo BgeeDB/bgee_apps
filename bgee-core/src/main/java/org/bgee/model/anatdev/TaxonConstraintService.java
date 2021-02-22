@@ -43,7 +43,7 @@ public class TaxonConstraintService extends CommonService {
     public Stream<TaxonConstraint<String>> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        return log.exit(getDaoManager().getTaxonConstraintDAO()
+        return log.traceExit(getDaoManager().getTaxonConstraintDAO()
                     .getAnatEntityTaxonConstraints(speciesIds, null).stream()
                     .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
@@ -60,7 +60,7 @@ public class TaxonConstraintService extends CommonService {
             Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        return log.exit(getDaoManager().getTaxonConstraintDAO()
+        return log.traceExit(getDaoManager().getTaxonConstraintDAO()
                     .getAnatEntityRelationTaxonConstraints(speciesIds, null).stream()
                     .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
@@ -76,7 +76,7 @@ public class TaxonConstraintService extends CommonService {
     public Stream<TaxonConstraint<String>> loadDevStageTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        return log.exit(getDaoManager().getTaxonConstraintDAO()
+        return log.traceExit(getDaoManager().getTaxonConstraintDAO()
                     .getStageTaxonConstraints(speciesIds, null).stream()
                     .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }

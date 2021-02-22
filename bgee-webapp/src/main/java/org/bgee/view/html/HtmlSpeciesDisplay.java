@@ -74,7 +74,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -113,7 +113,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     private String getSchemaMarkup(SpeciesDataGroup sdg) {
@@ -136,6 +136,12 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), EXPR_CALLS_COMPLETE) + "\"," +
                 "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
                 "    \"description\": \"" + species.getScientificName() + " calls of baseline presence/absence of expression\"," +
                 (callUrl == null? "" :
@@ -147,6 +153,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -155,6 +163,12 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"@type\": \"Dataset\"," +
                 "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(), RNASEQ_DATA) + "\"," +
                 "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, library information), " +
@@ -170,6 +184,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -177,8 +193,14 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         props.add(
                 "{" +
                 "    \"@type\": \"Dataset\"," +
-                        "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(),AFFY_DATA) + "\"," +
-                        "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"@id\": \"" + this.getDatasetSchemaId(species.getId(),AFFY_DATA) + "\"," +
+                "    \"url\": \"" + this.getSpeciesPageUrl(species.getId()) + "\"," +
+                "    \"creator\": [" +
+                "        {" +
+                "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                "        } " +
+                "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
                             "to anatomy and development, quality scores used in QCs, chip information), " +
@@ -195,11 +217,13 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"includedInDataCatalog\": {" +
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
+                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
         
-        return log.exit(getSchemaMarkupGraph(props));
+        return log.traceExit(getSchemaMarkupGraph(props));
     }
 
     private String getGeneralInfo(Species species) {
@@ -230,7 +254,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         table.append("</table>");
         table.append("</div>");
 
-        return log.exit(table.toString());
+        return log.traceExit(table.toString());
     }
 
     private String getCallFileSection(SpeciesDataGroup speciesDataGroup) {
@@ -268,14 +292,14 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         text.append(getFileLi(file, "File with advanced columns"));
         text.append("</ul>");
 
-        return log.exit(text.toString());
+        return log.traceExit(text.toString());
     }
 
     private Optional<DownloadFile> getCallFile(SpeciesDataGroup speciesDataGroup, CategoryEnum category,
                                                Set<CallService.Attribute> attrs) {
         log.entry(speciesDataGroup, category, attrs);
         
-        return log.exit(speciesDataGroup.getDownloadFiles().stream()
+        return log.traceExit(speciesDataGroup.getDownloadFiles().stream()
                     .filter(f -> category.equals(f.getCategory()))
                     .filter(f -> attrs.equals(f.getConditionParameters()))
                     .findFirst());
@@ -309,7 +333,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         section.append(getFileLi(file, "Data (read counts, TPMs, and FPKMs)"));
         section.append("</ul>");
 
-        return log.exit(section.toString());
+        return log.traceExit(section.toString());
     }
 
     private String getFileLi(Optional<DownloadFile> file, String label) {
@@ -317,18 +341,18 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         
         if (file.isPresent()) {
             DownloadFile downloadFile = file.get();
-            return log.exit("<li><p>" + label + ": " +
+            return log.traceExit("<li><p>" + label + ": " +
                     "<a class='btn btn-default btn-xs' href='" + 
                     this.prop.getDownloadRootDirectory() + downloadFile.getPath() + "'>" + 
                     downloadFile.getName() + "</a> (" +
                     FileUtils.byteCountToDisplaySize(downloadFile.getSize()) + ")</p></li>");
         }
-        return log.exit("");
+        return log.traceExit("");
     }
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
@@ -337,6 +361,6 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 }

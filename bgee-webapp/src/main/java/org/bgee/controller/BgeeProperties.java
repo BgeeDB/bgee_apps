@@ -684,7 +684,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         else {
             bgeeProp = (BgeeProperties) bgeeProperties.get(threadId);
         }
-        return log.exit(bgeeProp);
+        return log.traceExit(bgeeProp);
     }
 
     /**
@@ -1004,7 +1004,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         geneScoreClusteringThreshold = getDoubleOption(prop, SYS_PROPS, FILE_PROPS, 
                 GENE_SCORE_CLUSTERING_THRESHOLD_KEY, GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT);
         log.debug("Initialization done.");
-        log.exit();
+        log.traceExit();
     }
 
     /**

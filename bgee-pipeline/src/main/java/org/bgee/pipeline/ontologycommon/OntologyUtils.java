@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
+
 import owltools.graph.OWLGraphManipulator;
 import org.obolibrary.obo2owl.Owl2Obo;
 import org.obolibrary.oboformat.model.OBODoc;
@@ -290,7 +292,7 @@ public class OntologyUtils {
         ParserWrapper parserWrapper = new ParserWrapper();
         parserWrapper.setCheckOboDoc(false);
         try {
-            return log.exit(parserWrapper.parse(ontFile));
+            return log.traceExit(parserWrapper.parse(ontFile));
         } catch(UnloadableImportException e) {
             //we sometimes have the problem that an import ontology cannot be accessed 
             //because of network errors. In that case, we retry 3 times before throwing 
@@ -327,7 +329,7 @@ public class OntologyUtils {
      */
     public static String getTaxOntologyId(int ncbiId) {
         log.entry(ncbiId);
-        return log.exit(TAX_ONTOLOGY_ID_PREFIX + ncbiId);
+        return log.traceExit(TAX_ONTOLOGY_ID_PREFIX + ncbiId);
     }
     /**
      * Transform the ID of a taxonomy term in the generated ontology (which are strings 
@@ -337,11 +339,15 @@ public class OntologyUtils {
      * @param ontologyTermId    A {@code String} that is the ID of a term in 
      *                          the taxonomy ontology.
      * @return                  An {@code int} that is the corresponding ID 
-     *                          on the NCBI website. 
+     *                          on the NCBI website. {@code null} if {@code ontologyTermId}
+     *                          is not an ontology NCBI taxon ID.
      */
-    public static int getTaxNcbiId(String ontologyTermId) {
+    public static Integer getTaxNcbiId(String ontologyTermId) {
         log.entry(ontologyTermId);
-        return log.exit(Integer.parseInt(
+        if (!ontologyTermId.startsWith(TAX_ONTOLOGY_ID_PREFIX)) {
+            return log.traceExit((Integer) null);
+        }
+        return log.traceExit(Integer.parseInt(
                 ontologyTermId.substring(TAX_ONTOLOGY_ID_PREFIX.length())));
     }
     /**
@@ -362,7 +368,7 @@ public class OntologyUtils {
         for (int ncbiId: taxNcbiIds) {
             ontTaxonIds.add(OntologyUtils.getTaxOntologyId(ncbiId));
         }
-        return log.exit(ontTaxonIds);
+        return log.traceExit(ontTaxonIds);
     }
     /**
      * Convert {@code taxOntIds} containing taxonomy ontology IDs (which are strings, 
@@ -381,7 +387,7 @@ public class OntologyUtils {
         for (String id: taxOntIds) {
             convertIds.add(OntologyUtils.getTaxNcbiId(id));
         }
-        return log.exit(convertIds);
+        return log.traceExit(convertIds);
     }
 
     /**
@@ -534,7 +540,7 @@ public class OntologyUtils {
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root) 
             throws UnknownOWLOntologyException, IllegalStateException {
         log.entry(root);
-        return log.exit(this.computeNestedSetModelParams(root, null));
+        return log.traceExit(this.computeNestedSetModelParams(root, null));
     }
     
     /**
@@ -550,7 +556,7 @@ public class OntologyUtils {
     public Map<OWLClass, Map<String, Integer>> computeNestedSetModelParams(OWLClass root, 
             List<OWLClass> classOrder) throws UnknownOWLOntologyException {
         log.entry(root, classOrder);
-        return log.exit(this.computeNestedSetModelParams(root, classOrder, null));
+        return log.traceExit(this.computeNestedSetModelParams(root, classOrder, null));
     }
     
 
@@ -615,7 +621,7 @@ public class OntologyUtils {
         //params will be populated along the walk
         this.recursiveNestedSetModelParams(params, root, classOrder, overProps);
         
-        return log.exit(params);
+        return log.traceExit(params);
     }
     
     /**
@@ -734,7 +740,7 @@ public class OntologyUtils {
         params.get(classInspected).put(RIGHT_BOUND_KEY, rightBound);
         
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -915,18 +921,18 @@ public class OntologyUtils {
             }
             
             
-            log.exit();
+            log.traceExit();
         }
 
         @Override
         public int compare(T o1, T o2) {
             log.entry(o1, o2);
-            return log.exit(this.compare(o1, o2, false, false));
+            return log.traceExit(this.compare(o1, o2, false, false));
         }
         private int compare(T o1, T o2, boolean strict, boolean undeterminedZero) {
             log.entry(o1, o2, strict, undeterminedZero);
             if (Objects.equals(o1, o2)) {
-                return log.exit(0);
+                return log.traceExit(0);
             }
 
             boolean before = false;
@@ -1014,9 +1020,9 @@ public class OntologyUtils {
             }
             
             if (before) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (after) {
-                return log.exit(1);
+                return log.traceExit(1);
             } else if (strict) {
                 throw log.throwing(Level.TRACE, new IllegalArgumentException(
                         "Elements could not be ordered from unique list or overlapping lists: " 
@@ -1082,13 +1088,13 @@ public class OntologyUtils {
 
             assert before || after: "An ordering should be defined at this point, even conflicting";
             if (before && !after) {
-                return log.exit(-1);
+                return log.traceExit(-1);
             } else if (after && !before) {
-                return log.exit(1);
+                return log.traceExit(1);
             }
             
             if (undeterminedZero) {
-                return log.exit(0);
+                return log.traceExit(0);
             }
             log.warn("Elements are conflictingly sorted from list orders: " + o1 + " - " + o2);
             
@@ -1096,15 +1102,15 @@ public class OntologyUtils {
             //then we don't care about the ordering of the former and put it after
             if (o1ListMinSize == 1 && o2ListMinSize > 1) {
                 log.debug("Resolved by list of size 1");
-                return log.exit(1);
+                return log.traceExit(1);
             } else if (o2ListMinSize == 1 && o1ListMinSize > 1) {
                 log.debug("Resolved by list of size 1");
-                return log.exit(-1);
+                return log.traceExit(-1);
             }
 
             log.debug("Resolved by index of largest list");
             //we consider the index of the largest list for each element
-            return log.exit(o1MaxListIndex - o2MaxListIndex);
+            return log.traceExit(o1MaxListIndex - o2MaxListIndex);
         }
         
         /**
@@ -1184,7 +1190,7 @@ public class OntologyUtils {
                 } 
             }
             log.debug("End sorting, took {} ms.", System.currentTimeMillis() - startTime);
-            log.exit();
+            log.traceExit();
         }
     }
 
@@ -1218,7 +1224,7 @@ public class OntologyUtils {
                 //order of the lists is critical
                 Arrays.asList(list1, list2)));
         
-        return log.exit(mergedList);
+        return log.traceExit(mergedList);
     }
     
     /**
@@ -1232,10 +1238,10 @@ public class OntologyUtils {
      * @throws IllegalArgumentException
      */
     public void saveAsOBO(String outputFile) 
-            throws IOException, IllegalArgumentException, OWLOntologyCreationException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
         this.saveAsOBO(outputFile, true);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1255,7 +1261,7 @@ public class OntologyUtils {
      *                                      a correct name.
      */
     public void saveAsOBO(String outputFile, boolean checkStructure) 
-            throws IOException, IllegalArgumentException, OWLOntologyCreationException {
+            throws IOException, IllegalArgumentException {
         log.entry(outputFile);
 
         if (!outputFile.endsWith(".obo")) {
@@ -1269,7 +1275,7 @@ public class OntologyUtils {
         writer.setCheckStructure(checkStructure);
         writer.write(oboOntology, outputFile);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1300,7 +1306,7 @@ public class OntologyUtils {
         } 
         manager.saveOntology(this.ontology, owlRdfFormat, IRI.create(rdfFile.toURI()));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1313,7 +1319,7 @@ public class OntologyUtils {
      *                                      wrapped by this object
      */
     public void removeOBOProblematicAxioms() throws UnknownOWLOntologyException {
-        log.entry();
+        log.traceEntry();
         
         for (OWLAnnotationAssertionAxiom ax: 
             this.ontology.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
@@ -1335,7 +1341,7 @@ public class OntologyUtils {
      */
     public boolean isObsolete(OWLObject obj) {
         log.entry(obj);
-        return log.exit(this.getWrapper().isObsolete(obj) || 
+        return log.traceExit(this.getWrapper().isObsolete(obj) || 
                 this.getWrapper().getIsObsolete(obj));
     }
     
@@ -1354,7 +1360,7 @@ public class OntologyUtils {
      *          they were associated to.
      */
     public Map<String, Set<String>> getXRefMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.xRefMappings == null) {
@@ -1416,7 +1422,7 @@ public class OntologyUtils {
             log.trace("Lazy loading done, {} xrefs loaded.", this.xRefMappings.size());
         }
         
-        return log.exit(this.xRefMappings);
+        return log.traceExit(this.xRefMappings);
     }
     
     /**
@@ -1443,7 +1449,7 @@ public class OntologyUtils {
             this.getECAIntersectionOf(cls, prop, fillerParentClass)) {
             targets.add((OWLClass) this.convertECAIntersectionOfToEdge(eca, null).getTarget());
         }
-        return log.exit(targets);
+        return log.traceExit(targets);
     }
     
     /**
@@ -1510,7 +1516,7 @@ public class OntologyUtils {
                 }
             }
         }
-        return log.exit(ecas);
+        return log.traceExit(ecas);
     }
     
     /**
@@ -1596,7 +1602,7 @@ public class OntologyUtils {
                     "a filler and a property: " + eca);
         }
         
-        return log.exit(new OWLGraphEdge(sourceCls, clsOperand, null, Quantifier.IDENTITY, 
+        return log.traceExit(new OWLGraphEdge(sourceCls, clsOperand, null, Quantifier.IDENTITY, 
                 ont, eca, filler, gciRel));
     }
     
@@ -1615,14 +1621,14 @@ public class OntologyUtils {
      * @see #getReplacedByMappings()
      */
     public Map<String, Set<String>> getConsiderMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.considerMappings == null) {
             this.loadConsiderReplacedByMappings();
         }
         
-        return log.exit(this.considerMappings);
+        return log.traceExit(this.considerMappings);
     }
     
     /**
@@ -1640,14 +1646,14 @@ public class OntologyUtils {
      * @see #getConsiderMappings()
      */
     public Map<String, Set<String>> getReplacedByMappings() {
-        log.entry();
+        log.traceEntry();
         
         //lazy loading
         if (this.replacedByMappings == null) {
             this.loadConsiderReplacedByMappings();
         }
         
-        return log.exit(this.replacedByMappings);
+        return log.traceExit(this.replacedByMappings);
     }
     
     /**
@@ -1659,7 +1665,7 @@ public class OntologyUtils {
      * and consider obsolete classes only in both cases. 
      */
     private void loadConsiderReplacedByMappings() {
-        log.entry();
+        log.traceEntry();
         
         log.trace("Lazy loading of replaced_by and consider mappings...");
         this.replacedByMappings = new HashMap<String, Set<String>>();
@@ -1693,7 +1699,7 @@ public class OntologyUtils {
         log.trace("Lazy loading done, {} replaced_by mappings loaded, {} consider mappings loaded.", 
                 this.replacedByMappings.size(), this.considerMappings.size());
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1729,7 +1735,7 @@ public class OntologyUtils {
             } 
         }
         
-        return log.exit(isAPartOfEdges);
+        return log.traceExit(isAPartOfEdges);
     }
     
     /**
@@ -1764,7 +1770,7 @@ public class OntologyUtils {
             }
         }
         
-        return log.exit(subgraphMembers);
+        return log.traceExit(subgraphMembers);
     }
     
     /**
@@ -1776,12 +1782,12 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLObjectPropertyExpression> getPartOfProps() {
-        log.entry();
+        log.traceEntry();
         if (this.partOfRels == null) {
             this.partOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(PART_OF_ID));
         }
-        return log.exit(this.partOfRels);
+        return log.traceExit(this.partOfRels);
     }
     
     /**
@@ -1793,12 +1799,12 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLPropertyExpression> getGenericPartOfProps() {
-        log.entry();
+        log.traceEntry();
         Set<OWLPropertyExpression> props = new HashSet<OWLPropertyExpression>();
         for (OWLObjectPropertyExpression prop: this.getPartOfProps()) {
             props.add(prop);
         }
-        return log.exit(props);
+        return log.traceExit(props);
     }
 
     /**
@@ -1809,12 +1815,12 @@ public class OntologyUtils {
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
     private Set<OWLObjectPropertyExpression> getPrecededByProps() {
-        log.entry();
+        log.traceEntry();
         if (this.precededByRels == null) {
             this.precededByRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(PRECEDED_BY_ID));
         }
-        return log.exit(this.precededByRels);
+        return log.traceExit(this.precededByRels);
     }
     /**
      * Get "transformation_of" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
@@ -1825,12 +1831,12 @@ public class OntologyUtils {
      */
     //TODO: add unit test
     public Set<OWLObjectPropertyExpression> getTransformationOfProps() {
-        log.entry();
+        log.traceEntry();
         if (this.transformationOfRels == null) {
             this.transformationOfRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(TRANSFORMATION_OF_ID));
         }
-        return log.exit(this.transformationOfRels);
+        return log.traceExit(this.transformationOfRels);
     }
     /**
      * Get "develops_from" related {@code OWLObjectPropertyExpression}s, that are lazy loaded 
@@ -1840,12 +1846,12 @@ public class OntologyUtils {
      *          {@code OWLObjectPropertyExpression}, and all its children.
      */
     private Set<OWLObjectPropertyExpression> getDevelopsFromProps() {
-        log.entry();
+        log.traceEntry();
         if (this.developsFromRels == null) {
             this.developsFromRels = this.getWrapper().getSubPropertyReflexiveClosureOf(
                     this.getWrapper().getOWLObjectPropertyByIdentifier(DEVELOPS_FROM_ID));
         }
-        return log.exit(this.developsFromRels);
+        return log.traceExit(this.developsFromRels);
     }
 
     /**
@@ -1858,7 +1864,7 @@ public class OntologyUtils {
     public boolean isASubClassOfEdge(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(edge.getSingleQuantifiedProperty().getProperty() == null && 
+        return log.traceExit(edge.getSingleQuantifiedProperty().getProperty() == null && 
                             edge.getSingleQuantifiedProperty().isSubClassOf());
     }
 
@@ -1871,7 +1877,7 @@ public class OntologyUtils {
      */
     public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
-        return log.exit(this.isImmediatelyPrecededByRelation(edge, null));
+        return log.traceExit(this.isImmediatelyPrecededByRelation(edge, null));
     }
     /**
      * Determines whether {@code edge} is a immediately_preceded_by relation (see 
@@ -1885,7 +1891,7 @@ public class OntologyUtils {
     //TODO: unit test
     public boolean isImmediatelyPrecededByRelation(OWLGraphEdge edge, Set<OWLClass> validFillers) {
         log.entry(edge, validFillers);
-        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+        return log.traceExit(edge.getQuantifiedPropertyList().size() == 1 && 
 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getWrapper().getOWLObjectPropertyByIdentifier(
@@ -1908,7 +1914,7 @@ public class OntologyUtils {
      */
     public boolean isPrecededByRelation(OWLGraphEdge edge) {
         log.entry(edge);
-        return log.exit(this.isPrecededByRelation(edge, null));
+        return log.traceExit(this.isPrecededByRelation(edge, null));
     }
     
     /**
@@ -1927,11 +1933,11 @@ public class OntologyUtils {
         log.entry(edge, validFillers);
         
         if (edge.getGCIFiller() != null && validFillers != null && !validFillers.contains(edge.getGCIFiller())) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         if (edge.getQuantifiedPropertyList().size() == 1) {
-            return log.exit(
+            return log.traceExit(
                     edge.getSingleQuantifiedProperty().getProperty() != null &&
                     this.getPrecededByProps().contains(
                     edge.getSingleQuantifiedProperty().getProperty()) && 
@@ -1956,13 +1962,13 @@ public class OntologyUtils {
                     }
                 } else {
                     log.trace("Invalid QP");
-                    return log.exit(false);
+                    return log.traceExit(false);
                 }
             }
-            return log.exit(atLeastOnePrecededBy);
+            return log.traceExit(atLeastOnePrecededBy);
         }
         
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -1976,7 +1982,7 @@ public class OntologyUtils {
     public boolean isPartOfRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+        return log.traceExit(edge.getQuantifiedPropertyList().size() == 1 && 
 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getPartOfProps().contains(
@@ -1996,7 +2002,7 @@ public class OntologyUtils {
     public boolean isTransformationOfRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+        return log.traceExit(edge.getQuantifiedPropertyList().size() == 1 && 
                 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getTransformationOfProps().contains(
@@ -2016,7 +2022,7 @@ public class OntologyUtils {
     public boolean isDevelopsFromRelation(OWLGraphEdge edge) {
         log.entry(edge);
         
-        return log.exit(edge.getQuantifiedPropertyList().size() == 1 && 
+        return log.traceExit(edge.getQuantifiedPropertyList().size() == 1 && 
                 
                 edge.getSingleQuantifiedProperty().getProperty() != null &&
                 this.getDevelopsFromProps().contains(
@@ -2048,7 +2054,7 @@ public class OntologyUtils {
         
         //identity
         if (source.equals(target)) {
-            return log.exit(0);
+            return log.traceExit(0);
         }
         
         //we will walk each OWLClass on the path from source to target, 
@@ -2097,7 +2103,7 @@ public class OntologyUtils {
                     " is not reachable from source " + source));
         }
         
-        return log.exit(minDistance);
+        return log.traceExit(minDistance);
     }
     
     /**
@@ -2126,7 +2132,7 @@ public class OntologyUtils {
         this.retainParentClasses(providedClasses, overProps);
         //if collection has changed as a result
         if (providedClasses.size() == 1) {
-            return log.exit(providedClasses);
+            return log.traceExit(providedClasses);
         }
         
         Set<OWLClass> commonAncestors = new HashSet<OWLClass>();
@@ -2143,7 +2149,7 @@ public class OntologyUtils {
             lcas.removeAll(this.getWrapper().getNamedAncestorsWithGCI(ancestor, overProps));
         }
         
-        return log.exit(lcas);
+        return log.traceExit(lcas);
     }
 
     /**
@@ -2163,7 +2169,7 @@ public class OntologyUtils {
     public void retainLeafClasses(Set<OWLClass> classes, Set<OWLPropertyExpression> overProps) {
         log.entry(classes, overProps);
         this.retainRelativeClasses(classes, overProps, true);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -2183,7 +2189,7 @@ public class OntologyUtils {
     public void retainParentClasses(Set<OWLClass> classes, Set<OWLPropertyExpression> overProps) {
         log.entry(classes, overProps);
         this.retainRelativeClasses(classes, overProps, false);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -2257,7 +2263,7 @@ public class OntologyUtils {
         classes.removeAll(toRemove);
         log.trace("Resulting Set after filtering: {}", classes);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -2273,7 +2279,7 @@ public class OntologyUtils {
      */
     public boolean containsUnrelatedClassesByIsAPartOf(Collection<OWLClass> classes) {
         log.entry(classes);
-        return log.exit(this.containsUnrelatedClassesByIsAPartOf(classes, classes));
+        return log.traceExit(this.containsUnrelatedClassesByIsAPartOf(classes, classes));
     }
     
     /**
@@ -2325,12 +2331,12 @@ public class OntologyUtils {
             testClasses.removeAll(relatedClasses);
             if (!testClasses.isEmpty()) {
                 log.trace("Unrelated OWLClasses in Collection to compare to: {}", testClasses);
-                return log.exit(true);
+                return log.traceExit(true);
             }
             log.trace("No Unrelated OWLClasses in Collection to compare to.");
         }
         
-        return log.exit(false);
+        return log.traceExit(false);
     }
     
     /**
@@ -2386,5 +2392,72 @@ public class OntologyUtils {
             return "[OntologyUtils wrapping " + this.ontology.toString() + "]";
         } 
         return super.toString();
+    }
+
+    /**
+     * Class used solely to implement equals/hashCode. Indeed, {@code TransferObject}s
+     * do not implement such methods.
+     *
+     * @author Frederic Bastian
+     * @version Bgee 14.1 Aug. 2020
+     * @since Bgee 14.1 Aug. 2020
+     *
+     * @param <T>   The type of ID of source and target of the relation
+     */
+    public static class PipelineRelationTO<T> extends RelationTO<T> {
+        private static final long serialVersionUID = -6285169266195060397L;
+
+        public PipelineRelationTO(T sourceId, T targetId) {
+            this(null, sourceId, targetId, null, null);
+        }
+        public PipelineRelationTO(T sourceId, T targetId, RelationType relType,
+                RelationStatus relationStatus) {
+            this(null, sourceId, targetId, relType, relationStatus);
+        }
+        public PipelineRelationTO(Integer relationId, T sourceId, T targetId,
+                RelationType relType, RelationStatus relationStatus) {
+            super(relationId, sourceId, targetId, relType, relationStatus);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.getId() == null)? 0: this.getId().hashCode());
+            result = prime * result + ((this.getTargetId() == null)? 0: this.getTargetId().hashCode());
+            result = prime * result + ((this.getSourceId() == null)? 0: this.getSourceId().hashCode());
+            result = prime * result + ((this.getRelationType() == null)? 0: this.getRelationType().hashCode());
+            result = prime * result + ((this.getRelationStatus() == null)? 0: this.getRelationStatus().hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            RelationTO<?> other = (RelationTO<?>) obj;
+            if (!Objects.equals(this.getId(), other.getId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getTargetId(), other.getTargetId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getSourceId(), other.getSourceId())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationType(), other.getRelationType())) {
+                return false;
+            }
+            if (!Objects.equals(this.getRelationStatus(), other.getRelationStatus())) {
+                return false;
+            }
+            return true;
+        }
     }
 }

@@ -126,7 +126,7 @@ public class CommandRunner {
      * {@code java.util.logging} and {@code SimpleLogger}.
      */
     public static final void loadLogConfig() throws SecurityException, IOException {
-        log.entry();
+        log.traceEntry();
         if (System.getProperty("java.util.logging.config.file") == null) {
             log.trace("Reset java.util.logging configuration from property file {}", 
                     JDK_LOG_CONFIG_FILE);
@@ -142,7 +142,7 @@ public class CommandRunner {
                     logLevel);
             System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -313,7 +313,7 @@ public class CommandRunner {
                     "is not recognized: " + args[0]));
         }
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -327,9 +327,26 @@ public class CommandRunner {
     public static String parseArgument(String arg) {
         log.entry(arg);
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
-            return log.exit(null);
+            return log.traceExit((String) null);
         }
-        return log.exit(arg.trim());
+        return log.traceExit(arg.trim());
+    }
+
+    /**
+     * Return a {@code boolean} value corresponding to {@code arg}: if {@code arg} is equal to
+     * '1' or to 'true', ignoring case, this method returns {@code true}, otherwise returns
+     * {@code false} in all other cases.
+     *
+     * @param arg   A {@code String} that is an argument from a command line usage.
+     * @return      A {@code boolean} value corresponding to {@code arg}.
+     */
+    public static boolean parseArgumentAsBoolean(String arg) {
+        log.entry(arg);
+        if (arg != null && (arg.trim().equalsIgnoreCase("1") ||
+                arg.trim().equalsIgnoreCase("true"))) {
+            return log.traceExit(true);
+        }
+        return log.traceExit(false);
     }
 
     /**
@@ -342,7 +359,7 @@ public class CommandRunner {
     public static List<String> parseListArgument(String listArg) {
         log.entry(listArg);
 
-        return log.exit(CommandRunner.parseListArgument(listArg, String.class));
+        return log.traceExit(CommandRunner.parseListArgument(listArg, String.class));
     }
     /**
      * Delegates to {@link #parseListArgument(String, Class)} with {@code Class} argument 
@@ -354,7 +371,7 @@ public class CommandRunner {
     public static List<Integer> parseListArgumentAsInt(String listArg) {
         log.entry(listArg);
 
-        return log.exit(CommandRunner.parseListArgument(listArg, Integer.class));
+        return log.traceExit(CommandRunner.parseListArgument(listArg, Integer.class));
     }
     /**
      * Split {@code listArg} based on {@link #LIST_SEPARATOR}. The resulting {@code value}s
@@ -388,7 +405,7 @@ public class CommandRunner {
             }
         }
 
-        return log.exit(resultingList);
+        return log.traceExit(resultingList);
     }
 
     /**
@@ -403,7 +420,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<String, List<String>> parseMapArgument(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -417,7 +434,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<String, List<Integer>> parseMapArgumentAsInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -431,7 +448,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
     /**
      * Parses a command line argument and returns a corresponding {@code Map}.
@@ -445,7 +462,7 @@ public class CommandRunner {
      */
     public static LinkedHashMap<Integer, List<String>> parseMapArgumentAsIntKeysStringValues(String mapArg) {
         log.entry(mapArg);
-        return log.exit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
+        return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
     }
 
     /**
@@ -518,6 +535,6 @@ public class CommandRunner {
             }
         }
 
-        return log.exit(resultingMap);
+        return log.traceExit(resultingMap);
     }
 }

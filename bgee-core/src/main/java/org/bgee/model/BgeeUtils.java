@@ -32,7 +32,7 @@ public class BgeeUtils {
      */
     public static <T> List<T> toList(Collection<T> c) {
         log.entry(c);
-        return log.exit(Collections.unmodifiableList(c == null? new ArrayList<>(): new ArrayList<>(c)));
+        return log.traceExit(Collections.unmodifiableList(c == null? new ArrayList<>(): new ArrayList<>(c)));
     }
     /**
      * Returns an unmodifiable view of a new {@code Set} initialized from the specified {@code Collection}. 
@@ -43,7 +43,7 @@ public class BgeeUtils {
      */
     public static <T> Set<T> toSet(Collection<T> c) {
         log.entry(c);
-        return log.exit(Collections.unmodifiableSet(c == null? new HashSet<>(): new HashSet<>(c)));
+        return log.traceExit(Collections.unmodifiableSet(c == null? new HashSet<>(): new HashSet<>(c)));
     }
     /**
      * Returns an unmodifiable view of a new {@code Map} initialized from the specified {@code Map}. 
@@ -54,6 +54,6 @@ public class BgeeUtils {
      */
     public static <T, U> Map<T, U> toMap(Map<T, U> m) {
         log.entry(m);
-        return log.exit(Collections.unmodifiableMap(m == null? new HashMap<>(): new HashMap<>(m)));
+        return log.traceExit(Collections.unmodifiableMap(m == null? new HashMap<>(): new HashMap<>(m)));
     }
 }

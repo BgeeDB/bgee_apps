@@ -61,7 +61,7 @@ public enum ExpressionLevelCategory {
         //First, if maxRank - minRank <= MIN_RANK_DIFF_FOR_LEVELS,
         //everything is considered highest expression
         if (diff.compareTo(MIN_RANK_DIFF_FOR_LEVELS) <= 0) {
-            return log.exit(ExpressionLevelCategory.valuesWithoutAbsent()[0]);
+            return log.traceExit(ExpressionLevelCategory.valuesWithoutAbsent()[0]);
         }
         //Otherwise, we compute the threshold and levels
         int levelCount = ExpressionLevelCategory.valuesWithoutAbsent().length;
@@ -75,12 +75,12 @@ public enum ExpressionLevelCategory {
             //Plus, we don't want to evaluate the last level because of rouding error
             //on the levelMax computation
             if (i == levelCount - 1) {
-                return log.exit(level);
+                return log.traceExit(level);
             }
             BigDecimal levelMax = minRank.add(threshold.multiply(new BigDecimal(i + 1)));
             log.trace("Rank max for level {}: {}", level, levelMax);
             if (rank.compareTo(levelMax) <= 0) {
-                return log.exit(level);
+                return log.traceExit(level);
             }
         }
         throw log.throwing(new AssertionError("A level should always be assigned"));

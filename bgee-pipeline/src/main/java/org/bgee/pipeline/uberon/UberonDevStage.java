@@ -153,7 +153,7 @@ public class UberonDevStage extends UberonCommon {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -226,67 +226,44 @@ public class UberonDevStage extends UberonCommon {
      *                                      the import closure of the ontology.
      */
     public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils) throws OWLOntologyCreationException {
-        this(uberonOntUtils, taxOntUtils, null);
+        this(uberonOntUtils, taxOntUtils, (Map<String, Set<Integer>>) null);
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
      * the path the a file containing taxon constraints, as parsable by 
-     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
-     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
-     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
      * This argument can be {@code null}, but as usage of the developmental stage ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
      * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
-     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+    public UberonDevStage(OntologyUtils uberonOntUtils, String pathToTaxonConstraints) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         this(uberonOntUtils, TaxonConstraints.extractTaxonConstraints(
-                pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
-                uberonOntUtils.getWrapper().getAllRealOWLClasses()
-                        .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
-                        .collect(Collectors.toSet())));
+                pathToTaxonConstraints));
     }
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
      * the path the a file containing taxon constraints, as parsable by 
-     * {@link TaxonConstraints#extractTaxonConstraints(String)}, and 
-     * {@code idStartsToOverridenTaxonIds}, allowing to override constraints 
-     * retrieved from the file (see {@link TaxonConstraints#extractTaxonConstraints(String, Map)}). 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
      * This argument can be {@code null}, but as usage of the developmental stage ontology 
      * requires precise taxon constraints, this is unlikely. 
      * 
      * @param pathToUberon              A {@code String} that is the path to the Uberon ontology. 
      * @param pathToTaxOnt              A {@code String} that is the path to the taxonomy ontology. 
-     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints. 
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds) 
+    public UberonDevStage(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils, String pathToTaxonConstraints) 
             throws OWLOntologyCreationException, OBOFormatParserException, IOException {
         this(uberonOntUtils, taxOntUtils, 
-                TaxonConstraints.extractTaxonConstraints(
-                        pathToTaxonConstraints, idStartsToOverridenTaxonIds, 
-                        uberonOntUtils.getWrapper().getAllRealOWLClasses()
-                                .stream().map(c -> uberonOntUtils.getWrapper().getIdentifier(c))
-                                .collect(Collectors.toSet())));
+                TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
@@ -387,7 +364,7 @@ public class UberonDevStage extends UberonCommon {
         this.getOntologyUtils().saveAsOWL(this.getModifiedOntPath() + ".owl");
         this.getOntologyUtils().saveAsOBO(this.getModifiedOntPath() + ".obo", false);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -510,7 +487,7 @@ public class UberonDevStage extends UberonCommon {
         
         this.getOntologyUtils().removeOBOProblematicAxioms();
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -572,7 +549,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -602,7 +579,7 @@ public class UberonDevStage extends UberonCommon {
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
             throws IllegalStateException {
         log.entry(root, this.getTaxonConstraints());
-        return log.exit(this.generateStageNestedSetModel(root, null));
+        return log.traceExit(this.generateStageNestedSetModel(root, null));
     }
     /**
      * Compute a nested set model from a developmental stage ontology. The stage ontology 
@@ -642,7 +619,7 @@ public class UberonDevStage extends UberonCommon {
         Map<OWLClass, Map<String, Integer>> nestedSetModel = this.nestedSetModels.get(nestedSetModelKey);
         if (nestedSetModel != null) {
             log.trace("Retrieving nested set model from cache of class {}", root);
-            return log.exit(nestedSetModel);
+            return log.traceExit(nestedSetModel);
         }
         //then check if we have a nested set model in cache for one of its ancestor
         for (OWLObject ancestor: this.getOntologyUtils().getWrapper().getNamedAncestorsWithGCI(
@@ -655,7 +632,7 @@ public class UberonDevStage extends UberonCommon {
             Map<OWLClass, Map<String, Integer>> cache = this.nestedSetModels.get(ancNestedSetModelKey);
             if (cache != null) {
                 log.trace("Retrieving nested set model from cache of class {}", ancestor);
-                return log.exit(cache);
+                return log.traceExit(cache);
             }
         }
         
@@ -783,7 +760,7 @@ public class UberonDevStage extends UberonCommon {
                 globalOrdering, this.overPartOf);
         this.nestedSetModels.put(nestedSetModelKey, nestedSetModel);
         
-        return log.exit(nestedSetModel);
+        return log.traceExit(nestedSetModel);
     }
     
     /**
@@ -796,7 +773,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId) {
         log.entry(startStageId, endStageId);
-        return log.exit(this.getStageIdsBetween(startStageId, endStageId, 0));
+        return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, 0));
     }
     
     /**
@@ -814,7 +791,7 @@ public class UberonDevStage extends UberonCommon {
     public List<String> getStageIdsBetween(String startStageId, String endStageId, 
             int speciesId) {
         log.entry(startStageId, endStageId, speciesId);
-        return log.exit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
+        return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
     }
     
     /**
@@ -986,7 +963,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        return log.exit(stageIdsBetween);
+        return log.traceExit(stageIdsBetween);
     }
     
     /**
@@ -1179,7 +1156,7 @@ public class UberonDevStage extends UberonCommon {
             }
         }
         
-        return log.exit(orderedClasses);
+        return log.traceExit(orderedClasses);
     }
     
     /**
@@ -1259,7 +1236,7 @@ public class UberonDevStage extends UberonCommon {
             }
             directEdgesAlreadyTried = true;
         }
-        return log.exit(lastClass);
+        return log.traceExit(lastClass);
     }
     
     /**
@@ -1290,7 +1267,7 @@ public class UberonDevStage extends UberonCommon {
                 }
             }
         }
-        return log.exit(matches);
+        return log.traceExit(matches);
     }
 
     /**

@@ -49,7 +49,7 @@ public class DevStageService extends Service {
      */
     public Set<DevStage> loadGroupingDevStages(Collection<Integer> speciesIds, Integer level) {
         log.entry(speciesIds, level);
-        return log.exit(getDaoManager().getStageDAO().getStages(
+        return log.traceExit(getDaoManager().getStageDAO().getStages(
                     speciesIds == null? null: new HashSet<>(speciesIds),
                     true, null, true, level, null)
                 .stream()
@@ -77,7 +77,7 @@ public class DevStageService extends Service {
     public Stream<DevStage> loadDevStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds) {
         log.entry(speciesIds, anySpecies, stageIds, true);
-        return log.exit(this.loadDevStages(speciesIds, anySpecies, stageIds, true));
+        return log.traceExit(this.loadDevStages(speciesIds, anySpecies, stageIds, true));
     }
     /**
      * Retrieve {@code DevStage}s for the requested species filtering and developmental stage IDs. 
@@ -99,7 +99,7 @@ public class DevStageService extends Service {
     public Stream<DevStage> loadDevStages(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> stageIds, boolean withDescription) {
         log.entry(speciesIds, anySpecies, stageIds, withDescription);
-        return log.exit(getDaoManager().getStageDAO().getStages(
+        return log.traceExit(getDaoManager().getStageDAO().getStages(
                     speciesIds, anySpecies, stageIds, null, null,
                     withDescription? null: EnumSet.complementOf(EnumSet.of(StageDAO.Attribute.DESCRIPTION)))
                 .stream()
@@ -115,10 +115,10 @@ public class DevStageService extends Service {
     private static DevStage mapFromTO(StageTO stageTO) {
         log.entry(stageTO);
         if (stageTO == null) {
-            return log.exit(null);
+            return log.traceExit((DevStage) null);
         }
 
-        return log.exit(new DevStage(stageTO.getId(), stageTO.getName(), 
+        return log.traceExit(new DevStage(stageTO.getId(), stageTO.getName(), 
                 stageTO.getDescription(), stageTO.getLeftBound(), stageTO.getRightBound(), 
                 stageTO.getLevel(), stageTO.isTooGranular(), stageTO.isGroupingStage()));
     }

@@ -100,11 +100,11 @@ extends DataFilter<ConditionFilter> {
 
         @Override
         protected void checkEmptyFilters() throws IllegalStateException {
-            log.entry();
+            log.traceEntry();
             //nothing special in this subclass, the observedData filter alone is not enough,
             //so we let the superclass decide whether it's happy about the filters it manages.
             super.checkEmptyFilters();
-            log.exit();
+            log.traceExit();
         }
 
         /**
@@ -173,7 +173,7 @@ extends DataFilter<ConditionFilter> {
         public boolean test(ExpressionCall call) {
             // Filter on common fields of Calls
             if (!super.test(call)) {
-                return log.exit(false);
+                return log.traceExit(false);
             }
             // Filter on observed data
             //XXX: actually, we can now filter calls based on this information directly in the DAO,
@@ -196,7 +196,7 @@ extends DataFilter<ConditionFilter> {
                                 "The provided Call does not allow to retrieve observedData information"));
                     }
                     if (!call.getDataPropagation().isIncludingObservedData().equals(callObservedData.get(null))) {
-                        return log.exit(false);
+                        return log.traceExit(false);
                     }
                 }
 
@@ -209,7 +209,7 @@ extends DataFilter<ConditionFilter> {
                 }
                 if (!anatEntityObservedData.equals(call.getDataPropagation()
                         .getAnatEntityPropagationState().isIncludingObservedData())) {
-                    return log.exit(false);
+                    return log.traceExit(false);
                 }
 
                 if (devStageObservedData != null &&
@@ -221,10 +221,10 @@ extends DataFilter<ConditionFilter> {
                 }
                 if (!devStageObservedData.equals(call.getDataPropagation()
                         .getDevStagePropagationState().isIncludingObservedData())) {
-                    return log.exit(false);
+                    return log.traceExit(false);
                 }
             }
-            return log.exit(true);
+            return log.traceExit(true);
         }
 
         @Override
@@ -444,13 +444,13 @@ extends DataFilter<ConditionFilter> {
     //(this cannot be done in the sub-class constructor, as subclasses might need
     //to set their own attributes before calling checkEmptyFilters)
     protected void checkEmptyFilters() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         //To make sure we never pull all data in the database at once.
         if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
             throw log.throwing(new IllegalStateException(
                     "At least a GeneFilter or a ConditionFilter must be provided."));
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -532,13 +532,13 @@ extends DataFilter<ConditionFilter> {
         // Filter according GeneFilter
         if (getGeneFilters() != null && !getGeneFilters().isEmpty()
                 && getGeneFilters().stream().noneMatch(f -> f.test(call.getGene()))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
 
         // Filter according ConditionFilters
         if (getConditionFilters() != null && !getConditionFilters().isEmpty()
                 && getConditionFilters().stream().noneMatch(f -> f.test(call.getCondition()))) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         // Filter according DataTypeFilter
@@ -549,7 +549,7 @@ extends DataFilter<ConditionFilter> {
             && dataTypeFilters != null && !dataTypeFilters.isEmpty()
             && dataTypeFilters.stream().noneMatch(f -> dataTypes.contains(f))) {
             log.debug("Data type {} not validated: not in {}", dataTypes, dataTypeFilters);
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
         // Filter according SummaryCallTypeQualityFilter
@@ -559,9 +559,9 @@ extends DataFilter<ConditionFilter> {
 
             log.debug("Summary call type and quality {}-{} not validated, should be one of {}",
                 call.getSummaryCallType(), call.getSummaryQuality(), summaryCallTypeQualityFilter);
-            return log.exit(false);
+            return log.traceExit(false);
         }
         
-        return log.exit(true);
+        return log.traceExit(true);
     }
 }

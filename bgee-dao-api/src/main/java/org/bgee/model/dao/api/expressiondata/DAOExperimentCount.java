@@ -66,7 +66,7 @@ public class DAOExperimentCount {
         this.daoPropagationState = daoPropagationState;
         this.count = count;
         
-        log.exit();
+        log.traceExit();
     }
 
     public CallType getCallType() {

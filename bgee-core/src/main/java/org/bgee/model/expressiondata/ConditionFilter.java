@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 14, Sept 2018
  * @since   Bgee 13, Oct. 2015
  */
+//TODO: be able to EXCLUDE anat. entities/stages. It would be convenient to discard
+//non-informative anat. entities.
 public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
 

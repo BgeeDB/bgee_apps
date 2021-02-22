@@ -74,7 +74,7 @@ public class Gene {
      * The {@code GeneBioType} of this {@code Gene}.
      */
     private final GeneBioType geneBioType;
-	
+    
 	/**
 	 * @see #getGeneMappedToSameEnsemblGeneIdCount()
 	 */
@@ -197,8 +197,8 @@ public class Gene {
     public GeneBioType getGeneBioType() {
         return this.geneBioType;
     }
-	/**
-	 * @return  An {@code Integer} that is the number of genes in the Bgee database
+    /**
+     * @return  An {@code Integer} that is the number of genes in the Bgee database
      *          with the same Ensembl gene ID. In Bgee, for some species with no genome available,
      *          we use the genome of a closely-related species, such as chimpanzee genome
      *          for analyzing bonobo data. For this reason, a same Ensembl gene ID

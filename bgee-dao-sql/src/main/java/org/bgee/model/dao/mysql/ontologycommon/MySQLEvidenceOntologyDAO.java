@@ -45,8 +45,8 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
 
     @Override
     public ECOTermTOResultSet getAllECOTerms() throws DAOException {
-        log.entry();
-        return log.exit(this.getECOTerms());
+        log.traceEntry();
+        return log.traceExit(this.getECOTerms());
     }
     
     /**
@@ -57,7 +57,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     private ECOTermTOResultSet getECOTerms() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         String tableName = "evidenceOntology";
         
@@ -71,7 +71,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql.toString());
-            return log.exit(new MySQLECOTermTOResultSet(stmt));
+            return log.traceExit(new MySQLECOTermTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -93,7 +93,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
         log.entry(attributes, tableName);
 
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT " + tableName + ".* ");
+            return log.traceExit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -122,7 +122,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
                             EvidenceOntologyDAO.class.getName()));
                 }
             }
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
 
 
@@ -158,7 +158,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(termInsertedCount);        
+        return log.traceExit(termInsertedCount);        
     }
     
     /**
@@ -211,7 +211,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
 
         @Override
         protected ECOTermTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String id = null, name = null, description = null;
 
@@ -233,7 +233,7 @@ public class MySQLEvidenceOntologyDAO extends MySQLDAO<EvidenceOntologyDAO.Attri
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new ECOTermTO(id, name, description));
+            return log.traceExit(new ECOTermTO(id, name, description));
         }
     }
 }

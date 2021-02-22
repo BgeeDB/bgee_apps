@@ -76,7 +76,7 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
 
         @Override
         protected GeneNameSynonymTO getNewTO() throws DAOException, UnrecognizedColumnException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer geneId = null;
@@ -97,7 +97,7 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
                         log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new GeneNameSynonymTO(geneId, geneNameSynonym));
+                return log.traceExit(new GeneNameSynonymTO(geneId, geneNameSynonym));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -128,7 +128,7 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
             // results,
             // not the actual results, so we should not close this
             // BgeePreparedStatement.
-            return log.exit(new MySQLGeneNameSynonymTOResultSet(stmt));
+            return log.traceExit(new MySQLGeneNameSynonymTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }

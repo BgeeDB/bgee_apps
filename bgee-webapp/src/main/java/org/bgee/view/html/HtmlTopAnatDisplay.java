@@ -44,7 +44,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 
     @Override
     public void displayTopAnatHomePage() {
-        log.entry();
+        log.traceEntry();
         
         String description = "TopAnat - Gene Expression Enrichment tool in Bgee.";
         this.startDisplay("Bgee TopAnat page", null, description);
@@ -97,14 +97,14 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
      * Add schema.org markups to the page.
      */
     private void addSchemaMarkups() {
-        log.entry();
+        log.traceEntry();
 
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -127,7 +127,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
                 "}");
 
         this.writeln("</script>");
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -152,7 +152,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
 
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
         super.includeJs();
         if (!this.prop.isMinify()) {
             //external libs used only by TopAnat
@@ -191,11 +191,11 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
             this.includeJs("vendor_topanat.js");
             this.includeJs("script_topanat.js");
         }
-        log.exit();
+        log.traceExit();
     }
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         //the CSS files need to keep their relative location to other paths the same, 
         //this is why we keep their location and don't merge them all. 
         //And all merged css files are already included by super.includeCss().
@@ -220,7 +220,7 @@ public class HtmlTopAnatDisplay extends HtmlParentDisplay implements TopAnatDisp
         
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
-        log.exit();
+        log.traceExit();
     }
 
 }

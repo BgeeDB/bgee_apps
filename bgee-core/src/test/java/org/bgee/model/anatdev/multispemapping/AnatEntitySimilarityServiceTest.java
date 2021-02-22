@@ -55,7 +55,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
 
     @Before
     public void setMockObjects() {
-        log.entry();
+        log.traceEntry();
 
         when(this.anatEntityService.loadAnatEntities(
                 new HashSet<>(Arrays.asList(anatEntityWithNoSimilarityId, nonExistingAnatEntityId)), false))
@@ -436,7 +436,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 EnumSet.of(RelationType.TRANSFORMATIONOF), true, true))
         .thenReturn(anatOnt);
 
-        log.exit();
+        log.traceExit();
     }
     /**
      * Unit test for method {@link AnatEntitySimilarityService#loadPositiveAnatEntitySimilarities(

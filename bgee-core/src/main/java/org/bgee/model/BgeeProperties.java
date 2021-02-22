@@ -143,15 +143,15 @@ public class BgeeProperties {
     /**
      * A {@code String} that is the key to access to the System property that contains 
      * the Bioconductor release number to use to install {@code R} packages for topAnat.
-     * 
-     * @see #BIOCONDUCTOR_RELEASE_NUMBER
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT
      */
     public final static String BIOCONDUCTOR_RELEASE_NUMBER_KEY = "org.bgee.core.bioconductorReleaseNumber";
     /**
      * A {@code String} that is the default value of the Bioconductor release number to use to load
      * {@code R} packages for the topAnat analysis.
-     * 
-     * @see #TOP_ANAT_R_WORKING_DIRECTORY_KEY
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_KEY
      */
     public final static String BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT = "3.11";
 
@@ -262,7 +262,7 @@ public class BgeeProperties {
      * {@link #PROPERTIES_FILE_NAME_KEY}).
      */
     private static Properties loadFileProps() {
-        log.entry();
+        log.traceEntry();
         Properties filePropsToReturn = null;
         //try to get the properties file.
         //default name is bgee.properties
@@ -290,7 +290,7 @@ public class BgeeProperties {
         } else {
             log.debug("{} not found in classpath.", propertyFile);
         }        
-        return log.exit(filePropsToReturn);
+        return log.traceExit(filePropsToReturn);
     }
 
     /**
@@ -356,7 +356,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(propValue);
+        return log.traceExit(propValue);
     }
     /**
      * Determines the value of a property was correctly set.
@@ -365,7 +365,7 @@ public class BgeeProperties {
      */
     private static boolean isValidValue(Object propValue) {
         log.entry(propValue);
-        return log.exit(propValue != null && 
+        return log.traceExit(propValue != null && 
                 (!(propValue instanceof String) || StringUtils.isNotBlank((String) propValue)));
     }
     
@@ -401,7 +401,7 @@ public class BgeeProperties {
             val= (String) propValue;
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
 
     /**
@@ -442,7 +442,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
     /**
      * Try to retrieve the property corresponding to {@code key}, 
@@ -482,7 +482,7 @@ public class BgeeProperties {
             }
         }
     
-        return log.exit(val);
+        return log.traceExit(val);
     }
     /**
      * Try to retrieve the property corresponding to {@code key}, 
@@ -526,7 +526,7 @@ public class BgeeProperties {
             }
         }
         
-        return log.exit(val);
+        return log.traceExit(val);
     }
 
     /**
@@ -620,7 +620,7 @@ public class BgeeProperties {
         else {
             bgeeProp = bgeeProperties.get(threadId);
         }
-        return log.exit(bgeeProp);
+        return log.traceExit(bgeeProp);
     }
 
     /**
@@ -632,8 +632,8 @@ public class BgeeProperties {
      *          {@code false} otherwise. 
      */
     public static boolean hasBgeeProperties() {
-        log.entry();
-        return log.exit(bgeeProperties.containsKey(Thread.currentThread().getId()));
+        log.traceEntry();
+        return log.traceExit(bgeeProperties.containsKey(Thread.currentThread().getId()));
     }
 
     /**
@@ -657,7 +657,7 @@ public class BgeeProperties {
      * @return  An {@code int} that is the number of {@code BgeeProperties}s that were released
      */
     public static int releaseAll() {
-        log.entry();
+        log.traceEntry();
 
         //this AtomicBoolean will act more or less like a lock 
         //(no new BgeeProperties can be obtained after this AtomicBoolean is set to true).
@@ -667,7 +667,7 @@ public class BgeeProperties {
         int propCount = bgeeProperties.size();
         bgeeProperties.clear();
 
-        return log.exit(propCount);
+        return log.traceExit(propCount);
     }
     
     //******************************
@@ -722,7 +722,7 @@ public class BgeeProperties {
                 MAX_JOB_COUNT_PER_USER_KEY,
                 MAX_JOB_COUNT_PER_USER_DEFAULT);
         log.debug("Initialization done.");
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -816,8 +816,8 @@ public class BgeeProperties {
      *          {@code false} if it was already released.
      */
     public boolean release() {
-        log.entry();
-        return log.exit(bgeeProperties.values().remove(this));
+        log.traceEntry();
+        return log.traceExit(bgeeProperties.values().remove(this));
     }
     /**
      * Determines whether this {@code BgeeProperties} was released 
@@ -827,8 +827,8 @@ public class BgeeProperties {
      *          {@code false} otherwise.
      */
     public boolean isReleased() {
-        log.entry();
-        return log.exit(!bgeeProperties.containsValue(this));
+        log.traceEntry();
+        return log.traceExit(!bgeeProperties.containsValue(this));
     }
 
     //**************************

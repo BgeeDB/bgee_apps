@@ -259,7 +259,7 @@ public class Condition extends BaseCondition<Condition> {
      */
     public boolean isConditionMorePrecise(Condition other, ConditionGraph graph) throws IllegalArgumentException {
         log.entry(other, graph);
-        return log.exit(graph.isConditionMorePrecise(this, other));
+        return log.traceExit(graph.isConditionMorePrecise(this, other));
     }
 
     //*********************************

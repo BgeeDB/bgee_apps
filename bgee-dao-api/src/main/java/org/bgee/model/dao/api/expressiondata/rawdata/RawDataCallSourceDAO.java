@@ -163,7 +163,7 @@ public class RawDataCallSourceDAO {
              */
             public static final DetectionFlag convertToDetectionFlag(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(DetectionFlag.class, representation));
+                return log.traceExit(TransferObject.convert(DetectionFlag.class, representation));
             }
 
             /**
@@ -233,7 +233,7 @@ public class RawDataCallSourceDAO {
              */
             public static final ExclusionReason convertToExclusionReason(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(ExclusionReason.class, representation));
+                return log.traceExit(TransferObject.convert(ExclusionReason.class, representation));
             }
         
             /**

@@ -42,7 +42,7 @@ public class CommandCollaborations extends CommandParent {
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
 
         CollaborationDisplay display = this.viewFactory.getCollaborationDisplay();
         
@@ -55,6 +55,6 @@ public class CommandCollaborations extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

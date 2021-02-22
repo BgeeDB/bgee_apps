@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.species.Taxon;
 import org.bgee.pipeline.CommandRunner;
 import org.bgee.pipeline.Utils;
 import org.bgee.pipeline.annotations.AnnotationCommon;
@@ -52,13 +55,18 @@ import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.OWLEntityRemover;
 import org.supercsv.cellprocessor.FmtBool;
+import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.constraint.NotNull;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvBeanReader;
+import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvBeanReader;
+import org.supercsv.io.ICsvBeanWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.io.ICsvMapWriter;
@@ -108,6 +116,7 @@ public class TaxonConstraints {
     /**
      * An {@code int} that is the maximum number of workers when using the 
      * {@code ElkResoner}, see {@link #createReasoner(OWLOntology)}.
+     * NOTE: we now use HermiT which does not allow this configuration.
      */
     private final static int MAX_WORKER_COUNT = 10;
     
@@ -123,23 +132,60 @@ public class TaxonConstraints {
     public final static String UBERON_NAME_COLUMN_NAME = "Uberon name";
     
     /**
+     * A {@code String} that is the name of the column containing Taxon IDs
+     * with constraints, in the taxon constraints file.
+     */
+    public final static String WITH_CONSTRAINTS_ID = "Only in Taxon IDs";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon Names
+     * with constraints, in the taxon constraints file.
+     */
+    public final static String WITH_CONSTRAINTS_NAME = "Only in Taxon Names";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon IDs
+     * without constraints, in the taxon constraints file.
+     */
+    public final static String WITHOUT_CONSTRAINTS_ID = "Never in Taxon IDs";
+    
+    /**
+     * A {@code String} that is the name of the column containing Taxon Names
+     * without constraints, in the taxon constraints file.
+     */
+    public final static String WITHOUT_CONSTRAINTS_NAME = "Never in Taxon Names";
+    
+    /**
+     * A {@code String} that is the name of the column containing comments, 
+     * in the taxon constraints file.
+     */
+    public final static String COMMENTS = "Comments";
+    
+    
+    
+    /**
      * Several actions can be launched from this main method, depending on the first 
      * element in {@code args}: 
      * <ul>
-     * <li>If the first element in {@code args} is "generateTaxonConstraints", 
-     * it will launch the generation of a TSV files, allowing to know, 
-     * for each {@code OWLClass} in the Uberon ontology, in which taxa it exits, 
-     * among the taxa provided through another TSV file, containing their NCBI IDs. 
+     * <li>If the first element in {@code args} is "generateTaxonConstraints" or
+     * "generateTaxonConstraintsFromMergedOntology", it will launch the generation of a TSV files,
+     * allowing to know, for each {@code OWLClass} in the Uberon ontology, in which taxa it exits,
+     * among the taxa provided through another TSV file, containing their NCBI IDs.
      * See {@link #generateTaxonConstraints(String, Map, String, Map, String, String)} 
-     * for more details. Following elements in {@code args} must then be: 
+     * for more details. Following elements in {@code args} must then be:
      *   <ol>
      *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
      *   contain the taxon constraints ("in taxon" and "never_in_taxon" relations, 
-     *   not all Uberon versions contain them).
-     *   <li>path to the NCBI taxonomy ontology. This taxonomy must contain disjoint 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "generateTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology with proper disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "generateTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. This taxonomy must contain disjoint
      *   classes axioms between sibling taxa, as explained in a Chris Mungall 
      *   <a href='http://douroucouli.wordpress.com/2012/04/24/taxon-constraints-in-owl/'>
      *   blog post</a>, see also {@link org.bgee.pipeline.species.GenerateTaxonOntology}.
+     *   If the first element in {@code args} is "generateTaxonConstraintsFromMergedOntology",
+     *   this argument must be empty (see {@link CommandRunner#EMPTY_ARG}).
      *   <li>path to the TSV files containing the IDs of the taxa for which we want 
      *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
      *   for human). The first line should be a header line, defining a column to get 
@@ -160,11 +206,7 @@ public class TaxonConstraints {
      *   <li>path to a version of the Uberon ontology different to the one 
      *   containing taxon constraints. The taxon constraints will be produced 
      *   for the classes present in this ontology. If equal to {@link CommandRunner#EMPTY_ARG}, 
-     *   then the Uberon ontology containing taxon constraints will be used. 
-     *   <li>A {@code Map} to potentially override taxon constraints, see {@link 
-     *   org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it. Can be empty (see {@link CommandRunner#EMPTY_LIST}). Example 
-     *   of command line argument: {@code EV:/9606,MA:/10090}.
+     *   then the Uberon ontology containing taxon constraints will be used.
      *   <li>path to the generated TSV file, output of the method.
      *   <li>OPTIONNAL: a path to a directory where to store the intermediate generated 
      *   ontologies. If this parameter is provided, an ontology will be generated 
@@ -172,22 +214,74 @@ public class TaxonConstraints {
      *   the {@code OWLClass}es existing in this taxon. If not provided, the intermediate 
      *   ontologies will not be stored. 
      *   </ol>
-     * <li>If the first element in {@code args} is "explainTaxonConstraints", 
-     * the action will be to display the explanation for the existence or absence 
-     * of existence of a Uberon term in a given taxon. See {@link 
-     * #explainTaxonExistence(Collection, Collection)} for more details. 
-     * The explanation will be displayed using the logger of this class with an 
-     * {@code info} level.
-     * Following elements in {@code args} must then be: 
+     * <li>If the first element in {@code args} is "generateCuratedTaxonConstraints" or
+     * "generateCuratedTaxonConstraintsFromMergedOntology", the action will be to generate
+     * a tsv file allowing to know for each {@code OWLClass} in the Uberon ontology,
+     * in which species it exists, among the species provided through another TSV file,
+     * containing their NCBI IDs. The generation of this file takes as input two files containing
+     * taxon constraints information. One file with taxon constraints automatically generated from the
+     * uberon ontology and one file corresponding to manual curation of these automatically
+     * generated taxon constraints.
+     * See {@link #generateCuratedTaxonConstraints(String, String, String, String)}.
+     * Following elements in {@code args} must then be:
      *   <ol>
      *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
      *   contain the taxon constraints ("in taxon" and "only_in_taxon" relations, 
-     *   not all Uberon versions contain them).
-     *   <li>path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy 
-     *   to include disjoint classes axioms between sibling taxa. 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "explainCuratedTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology. It is not mandatory for this taxonomy to include
+     *   disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "explainCuratedTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy
+     *   to include disjoint classes axioms between sibling taxa. If the first element in {@code args}
+     *   is "explainCuratedTaxonConstraintsFromMergedOntology", this argument must be empty
+     *   (see {@link CommandRunner#EMPTY_ARG}).
+     *   <li> path to the taxon constraints tsv file automatically generated using the
+     *   uberon ontology. See {@link generateTaxonConstraints(String,  Map, String, 
+     *   Map, String, String)} for more details.
+     *   <li> path to the curated taxon constraints tsv file manually created by Bgee curators.
+     *   This file contains same columns than the automatically generated one and each 
+     *   row correspond to a modification to the automatically generated file.
+     *   <li>path to the TSV files containing the IDs of the species for which we want 
+     *   to generate the taxon constraints, corresponding to the NCBI ID (e.g., 9606 
+     *   for human). The first line should be a header line, defining a column to get 
+     *   IDs from, named exactly "taxon ID" (other columns are optional and will be ignored).
+     *   <li>path to the generated TSV file, output of the method.
+     *   </ol>
+     * <li>If the first element in {@code args} is "explainTaxonConstraints" or
+     * "explainTaxonConstraintsFromMergedOntology", the action will be to display the explanation
+     * for the existence or absence of existence of a Uberon term in a given taxon. See {@link
+     * #explainTaxonExistence(Collection, Collection)} for more details. 
+     * The explanation will be displayed using the logger of this class with an 
+     * {@code info} level.
+     * Following elements in {@code args} must then be:
+     *   <ol>
+     *   <li>path to the source Uberon OWL ontology file. This Uberon ontology must 
+     *   contain the taxon constraints ("in taxon" and "only_in_taxon" relations, 
+     *   not all Uberon versions contain them). If the first element in {@code args} is
+     *   "explainTaxonConstraintsFromMergedOntology", it must also contains our version of
+     *   the taxonomy ontology. It is not mandatory for this taxonomy to include
+     *   disjoint classes axioms between sibling taxa.
+     *   <li>If the first element in {@code args} is "explainTaxonConstraints",
+     *   path to the NCBI taxonomy ontology. It is not mandatory for this taxonomy
+     *   to include disjoint classes axioms between sibling taxa. If the first element in {@code args}
+     *   is "explainTaxonConstraintsFromMergedOntology", this argument must be empty
+     *   (see {@link CommandRunner#EMPTY_ARG}).
      *   <li>OBO-like ID of the Uberon term for which we want an explanation
      *   <li>NCBI ID (for instance, 9606) of the taxon in which we want to explain 
      *   existence or nonexistence of the requested Uberon term.
+     *   </ol>
+     * <li>If the first element in {@code args} is "mergeUberonAndTaxonomy", the action will be
+     * to save an ontology merging the provided Uberon and taxonomy ontologies.
+     * Uberon will be cleaned from redundant information present in the taxonomy not to have conflicts,
+     * and the two ontologies will be merged, and saved into a OWL file and an OBO file.
+     * Following elements in {@code args} must then be:
+     *   <ol>
+     *   <li>path to the source Uberon OWL ontology file.
+     *   <li>path to the taxonomy ontology.
+     *   <li>path to output file, without specifying ".owl" nor ".obo" at the end
+     *   (the two formats will be automatically saved and the proper extensions added to the path)
+     *   </ol>
      * </ul>
      * 
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
@@ -206,40 +300,76 @@ public class TaxonConstraints {
         IllegalArgumentException, FileNotFoundException, OWLOntologyCreationException, 
         OBOFormatParserException, IOException, OWLOntologyStorageException {
         log.entry((Object[]) args);
-        
-        if (args[0].equalsIgnoreCase("explainTaxonConstraints")) {
+
+        //The path to the taxonomy ontology is for all calls the third argument provided
+        String taxPath = CommandRunner.parseArgument(args[2]);
+        TaxonConstraints taxonConstraints;
+        if (taxPath != null) {
+            if (args[0].equalsIgnoreCase("explainTaxonConstraintsFromMergedOntology") ||
+                    args[0].equalsIgnoreCase("generateTaxonConstraintsFromMergedOntology") ||
+                    args[0].equalsIgnoreCase("generateCuratedTaxonConstraintsFromMergedOntology")) {
+                throw log.throwing(new IllegalArgumentException("According to the arguments provided, "
+                        + "the taxonomy ontology should already have been merged within Uberon"));
+            }
+            //The path to Uberon is for all calls the second argument provided
+            taxonConstraints = new TaxonConstraints(args[1], taxPath);
+        } else {
+            if (args[0].equalsIgnoreCase("explainTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("generateTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("generateCuratedTaxonConstraints") ||
+                    args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
+                throw log.throwing(new IllegalArgumentException("The taxonomy ontology must be provided"));
+            }
+            //The path to Uberon is for all calls the second argument provided
+            taxonConstraints = new TaxonConstraints(args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("explainTaxonConstraints") ||
+                args[0].equalsIgnoreCase("explainTaxonConstraintsFromMergedOntology")) {
             if (args.length != 5) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "3 arguments, " + args.length + " provided."));
+                        "5 arguments, " + args.length + " provided."));
             }
             
             String clsId = args[3];
             String taxId = args[4];
-            new TaxonConstraints(args[1], args[2]).explainAndPrintTaxonExistence(
+            taxonConstraints.explainAndPrintTaxonExistence(
                             Arrays.asList(clsId), 
                             Arrays.asList(Integer.parseInt(taxId)), 
                             System.out::println);
             
-        } else if (args[0].equalsIgnoreCase("generateTaxonConstraints")) {
+        } else if (args[0].equalsIgnoreCase("generateTaxonConstraints") ||
+                args[0].equalsIgnoreCase("generateTaxonConstraintsFromMergedOntology")) {
         
-            if (args.length < 8 || args.length > 9) {
+            if (args.length < 7 || args.length > 8) {
                 throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                        "provided, expected 8 to 9 arguments, " + args.length + 
+                        "provided, expected 7 to 8 arguments, " + args.length + 
                         " provided."));
             }
             
             String storeDir = null;
-            if (args.length == 9) {
-                storeDir = args[8];
+            if (args.length == 8) {
+                storeDir = args[7];
             }
-            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
-            generate.generateTaxonConstraints(args[3], 
+            taxonConstraints.generateTaxonConstraints(args[3],
                     CommandRunner.parseMapArgumentAsAllInteger(args[4]), 
-                    CommandRunner.parseArgument(args[5]), 
-                    CommandRunner.parseMapArgumentAsInteger(args[6]).entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue()))), 
-                    args[7], storeDir);
+                    CommandRunner.parseArgument(args[5]),
+                    args[6], storeDir);
+        } else if (args[0].equalsIgnoreCase("generateCuratedTaxonConstraints") ||
+                args[0].equalsIgnoreCase("generateCuratedTaxonConstraintsFromMergedOntology")) {
+            
+            if (args.length != 7) {
+                throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                        "provided, expected 7 arguments, " + args.length +
+                        " provided."));
+            }
+            String generatedTaxonConstraintsFile = args[3];
+            String curatedTaxonConstraintsFile= args[4];
+            String speciesFile = args[5];
+            String outputFile = args[6];
+            taxonConstraints.generateCuratedTaxonConstraints(generatedTaxonConstraintsFile,
+                    curatedTaxonConstraintsFile, speciesFile, outputFile);
         } else if (args[0].equalsIgnoreCase("mergeUberonAndTaxonomy")) {
         
             if (args.length != 4) {
@@ -247,17 +377,16 @@ public class TaxonConstraints {
                         "provided, expected 4 arguments, " + args.length + 
                         " provided."));
             }
-            TaxonConstraints generate = new TaxonConstraints(args[1], args[2]);
-            generate.saveUberonToFile(args[3]);
+            taxonConstraints.saveUberonToFile(args[3]);
             
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
-    
+
     /**
      * A {@code OWLGraphWrapper} provided at instantiation, wrapping the Uberon 
      * {@code OWLOntology}, used to generate or retrieve taxon constraints.
@@ -276,19 +405,10 @@ public class TaxonConstraints {
     private final Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier;
 
     /**
-     * Constructor private, the Uberon and the taxonomy ontologies must be provided.
-     * @see #TaxonConstraints(OWLOntology, OWLOntology)
-     * @see #TaxonConstraints(String, String)
-     */
-    @SuppressWarnings("unused")
-    private TaxonConstraints() throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        this((OWLGraphWrapper) null, (OWLGraphWrapper) null);
-    }
-    /**
      * Constructor accepting the path to the Uberon ontology and the path to the taxonomy 
      * ontology, allowing to generate or retrieve taxon constraints. 
-     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil} 
-     * will be used (see 
+     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil}
+     * will be used (see
      * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
      * 
      * @param uberonFile    A {@code String} that is the path to the Uberon ontology.
@@ -299,11 +419,31 @@ public class TaxonConstraints {
      * @throws IOException                  If the provided files could not be read.
      * @see #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper)
      */
-    public TaxonConstraints(String uberonFile, String taxOntFile) 
-            throws UnknownOWLOntologyException, OWLOntologyCreationException, 
+    public TaxonConstraints(String uberonFile, String taxOntFile)
+            throws UnknownOWLOntologyException, OWLOntologyCreationException,
             OBOFormatParserException, IOException {
         this(new OWLGraphWrapper(OntologyUtils.loadOntology(uberonFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)));
+    }
+    /**
+     * Constructor accepting the path to the ontology containing Uberon and the taxonomy
+     * already merged, allowing to generate or retrieve taxon constraints.
+     * If it is requested to generate constraints, a default {@code SpeciesSubsetterUtil}
+     * will be used (see
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
+     *
+     * @param mergedUberonAndTaxonomyFile   A {@code String} that is the path to the ontology
+     *                                      containing Uberon and the taxonomy already merged.
+     * @throws UnknownOWLOntologyException  If the provided ontology could not be used.
+     * @throws OWLOntologyCreationException If the provided ontology could not be used.
+     * @throws OBOFormatParserException     If the provided ontology could not be used.
+     * @throws IOException                  If the provided file could not be read.
+     * @see #TaxonConstraints(OWLGraphWrapper)
+     */
+    public TaxonConstraints(String mergedUberonAndTaxonomyFile)
+            throws UnknownOWLOntologyException, OWLOntologyCreationException,
+            OBOFormatParserException, IOException {
+        this(new OWLGraphWrapper(OntologyUtils.loadOntology(mergedUberonAndTaxonomyFile)));
     }
     /**
      * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
@@ -322,6 +462,49 @@ public class TaxonConstraints {
     public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException {
         this(uberonOntGraph, taxOntGraph, SpeciesSubsetterUtil::new);
+    }
+
+    /**
+     * Constructor accepting an {@code OWLGraphWrapper} wrapping the ontology containing Uberon
+     * and the taxonomy already merged, allowing to generate or retrieve taxon constraints.
+     * If it is requested to generate constraints, default {@code SpeciesSubsetterUtil} 
+     * class will be used (see 
+     * {@link #TaxonConstraints(OWLGraphWrapper, OWLGraphWrapper, Function)}).
+     *
+     * @param mergedUberonAndTaxonomyOntGraph   An {@code OWLGraphWrapper} containing the ontology
+     *                                          containing Uberon and the taxonomy already merged.
+     * @throws UnknownOWLOntologyException      if {@code mergedUberonAndTaxonomyOntGraph}
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code mergedUberonAndTaxonomyOntGraph}
+     *                                          could not be used.
+     */
+    public TaxonConstraints(OWLGraphWrapper mergedUberonAndTaxonomyOntGraph) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this(mergedUberonAndTaxonomyOntGraph, SpeciesSubsetterUtil::new);
+    }
+    /**
+     * Constructor accepting an {@code OWLGraphWrapper} wrapping the ontology containing Uberon
+     * and the taxonomy already merged, allowing to generate or retrieve taxon constraints,
+     * as well as a {@code Function} that will act as a supplier of {@code SpeciesSubsetterUtil}s, 
+     * accepting an {@code OWLGraphWrapper} as input. This will be used if it is requested 
+     * to generate taxon constraints, to obtain a fresh {@code SpeciesSubsetterUtil} 
+     * for each taxon for which constraints must be analyzed. 
+     * 
+     * @param mergedUberonAndTaxonomyOntGraph   An {@code OWLGraphWrapper} containing the ontology
+     *                                          containing Uberon and the taxonomy already merged.
+     * @param subsetterUtilSupplier             A {@code Function} accepting an {@code OWLGraphWrapper} 
+     *                                          as input and returning a fresh {@code SpeciesSubsetterUtil}, 
+     *                                          used as supplier of new {@code SpeciesSubsetterUtil}s 
+     *                                          for each taxon . 
+     * @throws UnknownOWLOntologyException      if {@code mergedUberonAndTaxonomyOntGraph} 
+     *                                          could not be used.
+     * @throws OWLOntologyCreationException     if {@code mergedUberonAndTaxonomyOntGraph} 
+     *                                          could not be used.
+     */
+    public TaxonConstraints(OWLGraphWrapper mergedUberonAndTaxonomyOntGraph,
+            Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier) 
+            throws UnknownOWLOntologyException, OWLOntologyCreationException {
+        this(mergedUberonAndTaxonomyOntGraph, null, subsetterUtilSupplier);
     }
     /**
      * Constructor accepting the Uberon {@code OWLGraphWrapper} and the taxonomy 
@@ -345,43 +528,57 @@ public class TaxonConstraints {
     public TaxonConstraints(OWLGraphWrapper uberonOntGraph, OWLGraphWrapper taxOntGraph, 
             Function<OWLGraphWrapper, SpeciesSubsetterUtil> subsetterUtilSupplier) 
             throws UnknownOWLOntologyException, OWLOntologyCreationException {
-        if (uberonOntGraph == null || taxOntGraph == null) {
+        if (uberonOntGraph == null) {
             throw log.throwing(new IllegalStateException("You must provide the Uberon " +
-                    "ontology and the taxonomy ontology at instantiation."));
+                    "ontology at instantiation."));
         }
         this.uberonOntWrapper = uberonOntGraph;
-        this.taxOntWrapper = taxOntGraph;
+        if (taxOntGraph == null) {
+            log.info("The Uberon ontology provided should have been merged properly "
+                    + "with the taxonomy ontology already.");
+            //Uberon in that case will be also the source for taxonomy information.
+            this.taxOntWrapper = this.uberonOntWrapper;
+        } else {
+            this.taxOntWrapper = taxOntGraph;
+        }
         this.subsetterUtilSupplier = subsetterUtilSupplier;
         
-        this.prepareUberon();
+        this.prepareUberon(taxOntGraph == null);
     }
     
     /**
-     * Prepares {@link #uberonOntWrapper} to be used to generate or retrieve taxon constraints, 
-     * by using {@link #taxOntWrapper}. This method notably removes any "is_a" relations 
-     * and disjoint classes axioms between taxa that might be present in Uberon, 
-     * they can be inconsistent with the taxonomy we use. Then it merges the Uberon 
-     * ontology and the taxonomy ontology, for a reasoner to work properly.
+     * Prepares {@link #uberonOntWrapper} to be used to generate or retrieve taxon constraints,
+     * by merging the import closures and clearing the cached edges.
+     * If the taxonomy ontology was not already merged within Uberon, this method will remove
+     * any "is_a" relations and disjoint classes axioms between taxa that might be present in Uberon,
+     * they can be inconsistent with the taxonomy ontology we use.
+     * Uberon and the taxonomy ontology will then be merged, for a reasoner to work properly.
+     *
+     * @param alreadyMergedUberonAndTaxonomy    A {@code boolean} defining whether the taxonomy ontology
+     *                                          is already properly merged within the provided Uberon
+     *                                          ontology (if {@code true}).
      */
-    private void prepareUberon() throws OWLOntologyCreationException {
-        log.entry();
-        log.info("Merging Uberon and taxonomy ontology...");
+    private void prepareUberon(boolean alreadyMergedUberonAndTaxonomy) throws OWLOntologyCreationException {
+        log.entry(alreadyMergedUberonAndTaxonomy);
+        log.info("Preparing Uberon...");
         //we need to merge the import closure, otherwise the classes in the imported ontologies 
         //will be seen by the method #getAllRealOWLClasses(), but not by the reasoner.
         this.uberonOntWrapper.mergeImportClosure(true);
-        
-        //then, we remove any "is_a" relations and disjoint classes axioms between taxa 
-        //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
-        this.filterUberonOntology();
-        
-        //now we merge the Uberon ontology and the taxonomy ontology for the reasoner 
-        //to work properly, just importing them in a same OWLGraphWrapper woud not 
-        //be enough
-        this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
+
+        if (!alreadyMergedUberonAndTaxonomy) {
+            //then, we remove any "is_a" relations and disjoint classes axioms between taxa
+            //that might be present in Uberon, they can be inconsistent with the taxonomy we use.
+            this.filterUberonOntology();
+
+            //now we merge the Uberon ontology and the taxonomy ontology for the reasoner
+            //to work properly, just importing them in a same OWLGraphWrapper woud not
+            //be enough
+            this.uberonOntWrapper.mergeOntology(this.taxOntWrapper.getSourceOntology());
+        }
         
         this.uberonOntWrapper.clearCachedEdges();
-        log.info("Done merging Uberon and taxonomy ontology.");
-        log.exit();
+        log.info("Done preparing Uberon.");
+        log.traceExit();
     }
     
     /**
@@ -393,14 +590,14 @@ public class TaxonConstraints {
      * @throws OWLOntologyStorageException 
      */
     public void saveUberonToFile(String fileNamePrefix) throws IllegalArgumentException, IOException, 
-    OWLOntologyCreationException, OWLOntologyStorageException {
+    OWLOntologyStorageException {
         log.entry(fileNamePrefix);
         
         OntologyUtils utils = new OntologyUtils(this.uberonOntWrapper);
-        utils.saveAsOBO(fileNamePrefix + ".obo");
+        utils.saveAsOBO(fileNamePrefix + ".obo", false);
         utils.saveAsOWL(fileNamePrefix + ".owl");
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -409,7 +606,7 @@ public class TaxonConstraints {
      * with the taxonomy we use, stored in {@link #taxOntWrapper}.
      */
     private void filterUberonOntology() {
-        log.entry();
+        log.traceEntry();
         log.debug("Removing all axioms betwen taxa from Uberon");
         
         //Remove any "is_a" relations and disjoint classes axioms between taxa 
@@ -490,7 +687,7 @@ public class TaxonConstraints {
         }
         
         log.debug("Axioms between taxa removed from Uberon: {}", axiomsRemoved);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Generates taxon constraints. Launches the generation of a TSV files, 
@@ -502,17 +699,9 @@ public class TaxonConstraints {
      * containing taxon constraints does not include all possible classes part of Uberon. 
      * In that case, it is recommended to define overriding taxon constraints 
      * for the {@code OWLClass}es not part of the Uberon version provided at instantiation, 
-     * otherwise, by default they will be considered as existing in all the requested taxa 
-     * (see explanations below to override taxon constraints). 
+     * otherwise, by default they will be considered as existing in all the requested taxa. 
      * In any case, the {@code OWLClass}es part of the taxonomy ontology provided at instantiation 
-     * will not be considered. 
-     * <p>
-     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override the constraints 
-     * generated: when the OBO-like ID of an Uberon term starts with 
-     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
-     * are replaced with the taxon IDs defined in the associated value, expanded to also include 
-     * all their ancestral taxon IDs. If the start of the OBO-like ID matches 
-     * several keys, then the longest match will be considered.
+     * will not be considered.
      * <p>
      * To provide the requested taxon IDs through {@code taxonIdFile}, the first line 
      * of this file should be a header line, defining a column to get IDs from, 
@@ -561,18 +750,13 @@ public class TaxonConstraints {
      *                                      provided at instantiation, containing the classes 
      *                                      that should be considered to define taxon constraints 
      *                                      for. If blank, the Uberon version provided 
-     *                                      at instantiation is used. 
-     * @param idStartsToOverridingTaxonIds  A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @param outputFile        A {@code String} that is the path to the generated 
+     *                                      at instantiation is used.
+     * @param outputFile        A {@code String} that is the path to the generated
      *                          TSV file, output of the method. It will have one header line. 
-     *                          The columns will be: ID of the Uberon classes, IDs of each 
-     *                          of the taxa that were examined. For each of the taxon column, 
-     *                          a boolean is provided as "T" or "F", to define whether 
-     *                          the associated Uberon class exists in it.
+     *                          The columns will be: ID of the Uberon classes, IDs of taxa 
+     *                          where the Uberon class exists, Names of taxa where the Uberon
+     *                          class exists, IDS of taxa where Uberon class does not exist, 
+     *                          Names of the taxa where the Uberon class does not exist.
      * @param storeOntologyDir  A {@code String} that is the path to a directory 
      *                          where to store intermediate ontologies. If {@code null} 
      *                          the generated ontologies will not be stored.
@@ -593,16 +777,14 @@ public class TaxonConstraints {
      */
     public void generateTaxonConstraints(String taxonIdFile, 
             Map<Integer, List<Integer>> taxaSimplificationSteps, String completeUberonFile, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds, String outputFile, 
-            String storeOntologyDir) throws IllegalArgumentException, IOException, 
+            String outputFile, String storeOntologyDir) throws IllegalArgumentException, IOException, 
             OBOFormatParserException, OWLOntologyStorageException, OWLOntologyCreationException {
-        log.entry(taxonIdFile, taxaSimplificationSteps, completeUberonFile, idStartsToOverridingTaxonIds, 
-                outputFile, storeOntologyDir);
+        log.entry(taxonIdFile, taxaSimplificationSteps, completeUberonFile, outputFile, storeOntologyDir);
         
         //retrieve all tax IDs in taxonIdFile
         Set<Integer> taxonIds = AnnotationCommon.getTaxonIds(taxonIdFile);
         
-        //get the simplification steps associated to requeted taxa. 
+        //get the simplification steps associated to requested taxa. 
         //We first clone taxaSimplificationSteps to avoid changes while streaming, 
         //we use a LinkedHashMap in case the generation order must be predicatable. 
         final Map<Integer, List<Integer>> clonedSteps = 
@@ -655,17 +837,44 @@ public class TaxonConstraints {
             refWrapper = new OWLGraphWrapper(OntologyUtils.loadOntology(completeUberonFile));
         }
         Set<String> refClassIds = refWrapper.getAllRealOWLClasses().stream()
-                .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
+                //We don't simply check whether the taxonomy ontology contains the class,
+                //because as of Bgee 15 we can use a version of Uberon already merged with the taxonomy
+                .filter(cls -> !UberonCommon.TAXONOMY_ROOT_ID.equals(this.taxOntWrapper.getIdentifier(cls)) &&
+                               this.taxOntWrapper.getAncestorsThroughIsA(cls).stream()
+                                   .map(a -> this.taxOntWrapper.getIdentifier(a))
+                                   .noneMatch(id -> UberonCommon.TAXONOMY_ROOT_ID.equals(id)))
                 .map(refWrapper::getIdentifier).collect(Collectors.toSet());
         
-        //launch the generation of taxon constraints and write them to file. 
+        //launch the generation of taxon constraints. 
         Map<String, Set<Integer>> constraints = this.generateTaxonConstraints(
-                taxIdsWithSteps, refClassIds, idStartsToOverridingTaxonIds, storeOntologyDir);
-        writeToFile(constraints, taxonIds, refWrapper, outputFile);
+                taxIdsWithSteps, refClassIds, storeOntologyDir);
+        //create Map where values correspond to speciesIds without constraints.
+        // this Map will be useful to generate column of output file containing IDs of taxa
+        // where the Uberon term does not exist.
+        Map<String, Set<Integer>> absentConstraints = constraints.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> {
+                    Set<Integer> absConstraints = new HashSet<Integer>(taxonIds);
+                    absConstraints.removeAll(e.getValue());
+                    return absConstraints;
+                }));
         
-        log.exit();
+
+        LinkedHashMap<Taxon, Set<Integer>> taxonToDescendantSpeciesMap =
+                generateTaxonToDescendantSpecies(taxonIds);
+        
+        // update constraints to only contains taxon where all descendant species are present.
+        // This step is used to generate an "easy" to read/maintain taxonContraint file that Bgee
+        // curators can check manually.
+        Map<String, Set<Taxon>> constraintsLCA = fromSpeciesToTaxonConstraints(constraints, 
+                taxonToDescendantSpeciesMap, taxonIds);
+        Map<String, Set<Taxon>>  absentConstraintsLCA = fromSpeciesToTaxonConstraints(absentConstraints, 
+                taxonToDescendantSpeciesMap, taxonIds);
+
+        writeTaxonLCAToFile(constraintsLCA, absentConstraintsLCA, taxonIds, refWrapper, outputFile);
+        
+        log.traceExit();
     }
-    
+
     /**
      * Returns a {@code Map} representing the taxon constraints generated using  
      * the Uberon ontology and taxonomy ontology provided at instantiation, 
@@ -677,16 +886,7 @@ public class TaxonConstraints {
      * then it means that the associated {@code OWLClass} existed in none of the provided taxa.
      * <p> 
      * If an {@code OWLClass} defined in {@code refClassIds} does not exist in the Uberon ontology 
-     * provided at instantiation, it will be considered as existing in all the requested taxa. 
-     * To change this behavior, it is possible to override taxon constraints for such terms, 
-     * see below. 
-     * <p>
-     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override the constraints 
-     * generated: when the OBO-like ID of an Uberon term starts with 
-     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
-     * are replaced with the taxon IDs defined in the associated value, expanded to also include 
-     * all their ancestral taxon IDs. If the start of the OBO-like ID matches 
-     * several keys, then the longest match will be considered.
+     * provided at instantiation, it will be considered as existing in all the requested taxa.
      * <p>
      * The approach is, for each taxon provided, to generate a custom version of 
      * the ontology, that will contain only the {@code OWLClass}es existing in this taxon. 
@@ -720,13 +920,8 @@ public class TaxonConstraints {
      *                          in which the simplifications should be performed.
      * @param refClassIds                   A {@code Set} of {@code String}s that are 
      *                                      the OBO-like IDs of the classes that should be considered 
-     *                                      to define taxon constraints for. 
-     * @param idStartsToOverridingTaxonIds  A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @param storeOntologyDir  A {@code String} that is the path to a directory 
+     *                                      to define taxon constraints for.
+     * @param storeOntologyDir  A {@code String} that is the path to a directory
      *                          where to store intermediate ontologies. If {@code null} 
      *                          the generated ontologies will not be stored.
      * @return                  A {@code Map} where keys are IDs of the {@code OWLClass}es 
@@ -746,10 +941,9 @@ public class TaxonConstraints {
      *                                      intermediate ontologies in owl. 
      */
     public Map<String, Set<Integer>> generateTaxonConstraints(Map<Integer, List<Integer>> taxonIds, 
-            Set<String> refClassIds, Map<String, Set<Integer>> idStartsToOverridingTaxonIds, 
-            String storeOntologyDir) throws IllegalArgumentException, IOException, 
+            Set<String> refClassIds, String storeOntologyDir) throws IllegalArgumentException, IOException, 
             OWLOntologyCreationException, OWLOntologyStorageException {
-        log.entry(taxonIds, refClassIds, idStartsToOverridingTaxonIds, storeOntologyDir);
+        log.entry(taxonIds, refClassIds, storeOntologyDir);
         log.info("Start generating taxon constraints: {}", taxonIds);
         
         //if we want to store the intermediate ontologies
@@ -782,46 +976,32 @@ public class TaxonConstraints {
                 existsInTaxa.add(taxonId);
             }
         }
-        
-        
-        //Now, replace/add taxon constraints when needed. 
-        
-        //we first expand all overriding taxa to also include their ancestors
-        Map<String, Set<Integer>> idsToExpandedTaxIds = expandOverridingTaxonIds(
-                this.taxOntWrapper, idStartsToOverridingTaxonIds);
+
         //then we get the IDs of all OWLClasses existing in the Uberon ontology 
         //used to generate taxon constraints. 
         Set<String> existingClassIds = this.uberonOntWrapper.getAllRealOWLClasses().stream()
-                .filter(e ->!this.taxOntWrapper.getSourceOntology().containsClassInSignature(e.getIRI()))
+                //We don't simply check whether the taxonomy ontology contains the class,
+                //because as of Bgee 15 we can use a version of Uberon already merged with the taxonomy
+                .filter(cls -> !UberonCommon.TAXONOMY_ROOT_ID.equals(this.taxOntWrapper.getIdentifier(cls)) &&
+                               this.taxOntWrapper.getAncestorsThroughIsA(cls).stream()
+                                   .map(a -> this.taxOntWrapper.getIdentifier(a))
+                                   .noneMatch(id -> UberonCommon.TAXONOMY_ROOT_ID.equals(id)))
                 .map(this.uberonOntWrapper::getIdentifier).collect(Collectors.toSet());
         log.trace("Existing OWLClasses in source Uberon ontology: {}", existingClassIds);
         
         //OK, let's check each requested OWLClass
         for (String refClassId: refClassIds) {
-            
-            //first, check whether it was requested to override the taxon constraints 
-            //for this class
-            Set<Integer> overridingConstraints = getOverridingTaxonIds(refClassId, 
-                    idsToExpandedTaxIds);
-            if (overridingConstraints != null) {
-                //we replace taxon constraints of this class with the provided taxa, 
-                //that are part of the requested taxa in taxonIds
-                Set<Integer> replacement = overridingConstraints.stream()
-                        .filter(taxonIds.keySet()::contains).collect(Collectors.toSet());
-                log.trace("Overriding taxon constraints for class {} with constraints {}", 
-                        refClassId, replacement);
-                taxonConstraints.put(refClassId, replacement);
-            } 
+
             //now, if the requested class did not exist in the Uberon ontology used 
             //to generate constraints, then we consider that this class exist in all requested taxa
-            else if (!existingClassIds.contains(refClassId)) {
-                log.warn("The class {} was not present in the Uberon ontology used to compute "
-                        + "taxon constraints, and no override of taxon constraints was requested for it, "
-                        + "it will be considered as valid in all the requested taxa", refClassId);
+            if (!existingClassIds.contains(refClassId)) {
+                log.debug("The class {} was not present in the Uberon ontology used to compute "
+                        + "taxon constraints, it will be considered as valid in all the requested taxa",
+                        refClassId);
                 taxonConstraints.put(refClassId, new HashSet<Integer>(taxonIds.keySet()));
             } 
-            //otherwise, we simply use the taxon constraints computed, as no override is requested, 
-            //and as the class is present in the Uberon ontology used. 
+            //otherwise, we simply use the taxon constraints computed, as the class is present 
+            //in the Uberon ontology used. 
             //If it is not present in taxonConstraints, it means it exists in none 
             //of the requested taxa, but we need to add it to the Map anyway.
             else if (!taxonConstraints.keySet().contains(refClassId)) {
@@ -841,7 +1021,309 @@ public class TaxonConstraints {
                 }).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         
         log.info("Done generating taxon constraints.");
-        return log.exit(filteredConstraints);
+        return log.traceExit(filteredConstraints);
+    }
+    
+    /**
+     * Generate the final taxon constraints file that will be used to insert taxon constraints
+     * in the database. In this file each line correspond to one {@code OWLClass} of the uberon 
+     * ontology and the list of species ID it is present (T) or absent(F) in.
+     * <p>
+     * Two files containing taxon constraints are used to generate this final file.
+     * <p> 
+     * The first one is the file generated automatically from the Uberon ontology ({@link 
+     * generateTaxonConstraints(String,  Map, String, Map, String, String)})
+     * <p>
+     * The second one is the file provided by Bgee curators that contains only taxon constraints
+     * not properly defined automatically. Each line of this file will be used to overwrite the
+     * corresponding information in the automatically generated file.
+     * 
+     * @param generatedTaxonConstraintsFile     path to the file containing taxon constraints generated 
+     *                                          automatically from the Uberon ontology ({@link 
+     *                                          generateTaxonConstraints(String,  Map, String, 
+     *                                          Map, String, String)})
+     * @param curatedTaxonConstraintsFile       path to the file containing manually generated taxon
+     *                                          constraints to overwrite.
+     * @param speciesFile                       path to the file containing all species IDs
+     * @param outputFile                        path to the file where corrected taxon constraints will
+     *                                          be written
+     * @throws IOException
+     */
+    public void generateCuratedTaxonConstraints(String generatedTaxonConstraintsFile,
+            String curatedTaxonConstraintsFile, String speciesFile, String outputFile) 
+                    throws IOException {
+        
+        //retrieve all tax IDs in taxonIdFile
+        Set<Integer> speciesIds = AnnotationCommon.getTaxonIds(speciesFile);
+        
+       // generate Mapping between LCA taxon IDs and descendant species IDs
+        Map<Integer, Set<Integer>> taxonToSpecies = 
+                generateTaxonToDescendantSpecies(speciesIds).entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().getId(), 
+                        e -> new HashSet<>(e.getValue())));
+        
+        Map <String, Set<Integer>> uberonIdToSpeciesIdsGeneratedMap = 
+                fromTaxonTCFileToUberonToSpeciesMap(generatedTaxonConstraintsFile, 
+                        taxonToSpecies, speciesIds);
+        Map <String, Set<Integer>> uberonIdToSpeciesIdsCuratedMap = 
+                fromTaxonTCFileToUberonToSpeciesMap(curatedTaxonConstraintsFile, 
+                        taxonToSpecies, speciesIds);
+        
+        // apply curators updates
+        uberonIdToSpeciesIdsGeneratedMap = uberonIdToSpeciesIdsGeneratedMap.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, e -> {
+                String uberonId = e.getKey();
+                //iterate all curated constraints to find the longest match possible with uberonId
+                Set<Integer> replacementConstraints = null;
+                String matchingPrefix = "";
+                for (Entry<String, Set<Integer>> uberonIdToSpeciesIdsCuratedEntry:
+                    uberonIdToSpeciesIdsCuratedMap.entrySet()) {
+                    if (uberonId.startsWith(uberonIdToSpeciesIdsCuratedEntry.getKey()) &&
+                            uberonIdToSpeciesIdsCuratedEntry.getKey().length() > matchingPrefix.length()) {
+                        matchingPrefix = uberonIdToSpeciesIdsCuratedEntry.getKey();
+                        log.trace("Uberon ID {} matching prefix {}, taxon constraints overriden: {}",
+                                uberonId, matchingPrefix, uberonIdToSpeciesIdsCuratedEntry.getValue());
+                        replacementConstraints =
+                                new HashSet<Integer>(uberonIdToSpeciesIdsCuratedEntry.getValue());
+                        //continue iterations anyway in case there is a longest match
+                    }
+                }
+                if(replacementConstraints != null) {
+                    log.debug("Use taxon constraints overriden for Uberon ID {}: {}",
+                            uberonId, replacementConstraints);
+                    return replacementConstraints;
+                }
+                log.trace("Use taxon constraints generated for Uberon ID {}: {}", uberonId, e.getValue());
+                return e.getValue();
+            }));
+            
+        writeToFile(uberonIdToSpeciesIdsGeneratedMap, speciesIds, this.uberonOntWrapper, 
+                outputFile);
+    }
+    
+    /**
+     * From a file containing Uberon terms associated to taxon IDs where the terms are present, create a 
+     * {@code Map} with Uberon IDs as key and {@code Set} of all species IDs where the uberon ID is present 
+     * as value.
+     * <p> 
+     * Basically this method use a mapping between taxon IDs to descendant species IDs to transform taxon IDs
+     * present in the input file to all descendant species IDs.
+     * 
+     * @param pathToFile            Path to the file containing taxon constraints at taxon level
+     * @param taxonToSpecies        A {@code Map} with {@code Integer} corresponding to taxon IDs as key and
+     *                              {@code Set} of {@code Integer} corresponding to descendant species IDs as
+     *                              value.
+     * @param allSpeciesIds         A {@code Set} of {@code Integer} containing the IDs of all species.
+     * 
+     * @return                      A {@code Map} of {@code String} corresponding to Uberon IDs as key associated 
+     *                              to a {@code Set} of {@code Integer} corresponding to all species IDs the uberon
+     *                              term is present in as values. 
+     * @throws IOException
+     */
+    private static Map<String, Set<Integer>> fromTaxonTCFileToUberonToSpeciesMap(String pathToFile,
+            Map<Integer, Set<Integer>> taxonToSpecies, Set<Integer> allSpeciesIds) throws IOException {
+        log.entry(pathToFile, taxonToSpecies, allSpeciesIds);
+        
+        Map<String, Set<Integer>> uberonToSpecies = new HashMap<String, Set<Integer>>();
+        
+        //read the uberon to taxon file
+        try (ICsvBeanReader beanReader =
+                new CsvBeanReader(new FileReader(pathToFile), Utils.TSVCOMMENTED)) {
+            
+            // using null value in header allows not to consider this column
+            String[] fieldMapping = new String[] { "uberonId", null, "taxonIdWithConstraints",
+                    null, "taxonIdWithoutConstraints", null, null};
+            
+            // using null as CellProcessor allows not to process data in this column
+            final CellProcessor[] processors = new CellProcessor[] { 
+                    new UniqueHashCode(), //uberon ID
+                    null,  // uberon Name
+                    new Optional(), // taxon IDs present
+                    null, // taxon names present
+                    new Optional(), // taxon IDs absent
+                    null, // taxon names absent
+                    null  // comment
+            };
+            beanReader.getHeader(true);
+            TaxonTaxonConstraintsBean taxonTC;
+            while ( (taxonTC = beanReader.read(TaxonTaxonConstraintsBean.class, fieldMapping,
+                    processors)) != null ) {
+
+                String uberonId = taxonTC.getUberonId();
+                int lineNumber = beanReader.getLineNumber();
+
+                //By default, without constraints the anat. entity exists in all species
+                Set<Integer> inSpeciesIds = new HashSet<>(allSpeciesIds);
+                //And we can exclude species from the list
+                //(that is either all species if there is no constraint,
+                //or the list of "only_in_taxon" species)
+                Set<Integer> neverInSpeciesIds = new HashSet<>();
+                //Retrieve taxon Ids with and/or without TC.
+                if ( (taxonTC.getTaxonIdWithoutConstraints() == null ||
+                        taxonTC.getTaxonIdWithoutConstraints().isEmpty()) &&
+                        (taxonTC.getTaxonIdWithConstraints() == null ||
+                        taxonTC.getTaxonIdWithConstraints().isEmpty()) ) {
+                    throw log.throwing(new IllegalArgumentException("Both the columns "
+                            + WITH_CONSTRAINTS_ID + " and " + WITHOUT_CONSTRAINTS_ID + " are empty. "
+                            + "Uberon ID: " + uberonId + " - Line number: " + lineNumber));
+                }
+                if (taxonTC.getTaxonIdWithConstraints() != null &&
+                        !taxonTC.getTaxonIdWithConstraints().isEmpty()) {
+                    inSpeciesIds = getSpeciesIdsFromTaxonColumn(
+                            taxonTC.getTaxonIdWithConstraints(), taxonToSpecies, lineNumber);
+                }
+                if (taxonTC.getTaxonIdWithoutConstraints() != null &&
+                        !taxonTC.getTaxonIdWithoutConstraints().isEmpty()) {
+                    neverInSpeciesIds = getSpeciesIdsFromTaxonColumn(
+                            taxonTC.getTaxonIdWithoutConstraints(), taxonToSpecies, lineNumber);
+                }
+
+                if (!inSpeciesIds.containsAll(neverInSpeciesIds)) {
+                    throw log.throwing(new IllegalArgumentException("The taxa in column "
+                            + WITHOUT_CONSTRAINTS_ID
+                            + " are not a subset of the taxa where the anat. entity exists. "
+                            + "Uberon ID: " + uberonId + " - Line number: " + lineNumber
+                            + " - In species IDs: " + inSpeciesIds.stream()
+                                .map(id -> id.toString()).collect(Collectors.joining(", "))
+                            + " - Never in species IDs: " + neverInSpeciesIds.stream()
+                                .map(id -> id.toString()).collect(Collectors.joining(", "))));
+                }
+                inSpeciesIds.removeAll(neverInSpeciesIds);
+                uberonToSpecies.put(uberonId, inSpeciesIds);
+            }             
+        }
+        return log.traceExit(uberonToSpecies);
+    }
+    private static Set<Integer> getSpeciesIdsFromTaxonColumn(String taxColToSplit,
+            Map<Integer, Set<Integer>> taxonToSpecies, int lineNumber) {
+        log.entry(taxColToSplit, taxonToSpecies, lineNumber);
+
+        Set<Integer> taxonIds = Arrays.stream(taxColToSplit.split(","))
+                .map(e -> Integer.valueOf(e.trim()))
+                .collect(Collectors.toSet());
+
+        // retrieve species corresponding to taxa
+        return log.traceExit(taxonIds.stream()
+                .flatMap(id -> {
+                    Set<Integer> taxSpeciesIds = taxonToSpecies.get(id);
+                    if (taxSpeciesIds == null) {
+                        throw log.throwing(new IllegalStateException("Could not find taxon ID: "
+                                + id + ", line: " + lineNumber));
+                    }
+                    return taxSpeciesIds.stream();
+                })
+                .collect(Collectors.toSet()));
+    }
+    
+    /**
+     * Returns the Mapping between taxa in the taxonomy ontology and the Set
+     * of all Bgee species descendant to this taxon.
+     * This method is useful to generate an easier to read output file listing taxon constraints at LCA level
+     * and not for each species (e.g if all Bgee mammalian species have a taxonConstraint for an anatomical 
+     * entity, the output file will contain only Mammalia and not all species).
+     * Return a linkedHashMap ordered by descending size of the Set of values. This ordering allows to always 
+     * find the highest LCA taxon level first when iterating on the entries.
+     * The returned {@code LinkedHashMap} also contains {@Taxon} corresponding to bgee species as keys mapped to
+     * a {@code Set} of one {@Taxon} corresponding to this species as value. This one to one mapping is useful to
+     * store species scientific name and then provide this information in the output file to help curators.
+     * 
+     * 
+     * @param   speciesIds A {@code Set} containing all Bgee species IDs
+     * @return  A {@code LinkedHashMap} with {@code Taxon} as key, and {@code Set} of {@code Integer}s
+     *          as values that are the NCBI IDs of the descendant species of the associated {@code Taxon}.
+     *          The {@code LinkedHashMap} is ordered by reversed size of the {@code Set} of values.
+     */
+    private LinkedHashMap<Taxon, Set<Integer>> generateTaxonToDescendantSpecies(Set<Integer> speciesIds) {
+        log.entry(speciesIds);
+        
+        //define least common ancestor and corresponding Bgee species. Generate Taxon objects
+        // to be able to provide taxon scientific name in the output file
+        return log.traceExit(this.taxOntWrapper.getAllRealOWLClasses().stream()
+        .map(cls -> {
+            Integer taxId = OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(cls));
+            //getTaxNcbiId returns null if it is not a NCBITaxon ID
+            if (taxId == null) {
+                return null;
+            }
+            Taxon taxon = new Taxon(taxId,
+                    null, null, this.taxOntWrapper.getLabel(cls),
+                    1, false);
+            Set<Integer> taxSpeIds = new HashSet<>();
+            if (speciesIds.contains(taxId)) {
+                taxSpeIds.add(taxId);
+            } else {
+                taxSpeIds = this.taxOntWrapper
+                        .getDescendantsThroughIsA(cls).stream()
+                        .map(d -> OntologyUtils.getTaxNcbiId(this.taxOntWrapper.getIdentifier(d)))
+                        // Keep only Bgee species Ids
+                        .filter(id -> id != null && speciesIds.contains(id))
+                        .collect(Collectors.toSet());
+                if (taxSpeIds.isEmpty()) {
+                    return null;
+                }
+            }
+            return new AbstractMap.SimpleEntry<>(taxon, taxSpeIds);
+        })
+        .filter(e -> e != null)
+        .sorted(Entry.<Taxon, Set<Integer>>comparingByValue(
+                Comparator.comparingInt(Set::size)).reversed())
+        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                (v1, v2) -> v1, () -> new LinkedHashMap<Taxon, Set<Integer>>())));
+    }
+    
+    /**
+     * Return the mapping between an Uberon ID and all LCA taxon with taxon constraint information.
+     * This information can be LCAs with presence of a taxon constraint for a given Uberon ID if the 
+     * {@code constraints} Map provided as parameter correspond to the mapping between uberon IDs and all species 
+     * with a taxon constraint OR LCAs with absence of taxon constraint for a given uberon ID if the
+     * {@code constraints} Map provided as parameter correspond to the mapping between uberon IDs an all species
+     * without a taxon constraint. The information of LCAs with absence of taxon constraints is useful
+     * to generate an easier to read output file containing rather the LCAs with taxon constraints or
+     * the LCAs without taxon constraints depending of the number of taxon associated. If for a given
+     * uberon ID the size of the list of LCAs without taxon constraint is smaller than the one with 
+     * taxon constraints then only LCAs without taxon constraints will be written in the output file.
+     *  
+     * 
+     * @param constraints                       A {@code Map} where keys are {@code String} corresponding
+     *                                          to uberon IDs and values are a {@code Set} of {@code Integer}
+     *                                          corresponding to Bgee species IDs with presence or absence of
+     *                                          taxon constraints
+     * @param taxonToDescendantSpeciesMap       A {@code LinkedHashMap} with {@code Taxon} as key and
+     *                                          {@code Set} of {@code Integer}s as values that are IDs
+     *                                          of species belonging to the associated taxon. The {@code LinkedHashMap}
+     *                                          is ordered by reversed size of the {@code Set} of values.
+     * @param speciesIds                        A {@code Set} of {@code Integer}s corresponding to all Bgee
+     *                                          species IDs
+     * @return                                  A {@code Map} where keys are {@code String} correpsonding
+     *                                          to uberon IDs and values are a {@code Set} of {@code Taxon}
+     *                                          corresponding to LCAs taxons with presence or absence of
+     *                                          taxon constraints
+     */
+    private Map<String, Set<Taxon>> fromSpeciesToTaxonConstraints(Map<String, Set<Integer>> constraints,
+            LinkedHashMap<Taxon, Set<Integer>> taxonToDescendantSpeciesMap, Set<Integer> speciesIds) {
+        log.entry(constraints, speciesIds);
+        
+        Map<String, Set<Taxon>> uberonToTaxIds = new HashMap<String, Set<Taxon>>();
+        for(Entry<String, Set<Integer>> uberonToSpeciesIds : constraints.entrySet()) {
+            Set<Integer> remainingSpeciesIds = new HashSet<>(uberonToSpeciesIds.getValue());
+            Set<Taxon> newTaxonIds = new HashSet<Taxon>();
+            for(Entry<Taxon, Set<Integer>> taxonToDescendantSpeciesEntry:
+                taxonToDescendantSpeciesMap.entrySet()) {
+                Set<Integer> descendantspeciesIds = taxonToDescendantSpeciesEntry.getValue();
+                if(remainingSpeciesIds.containsAll(descendantspeciesIds)) {
+                    newTaxonIds.add(taxonToDescendantSpeciesEntry.getKey());
+                    remainingSpeciesIds.removeAll(descendantspeciesIds);
+                    if(remainingSpeciesIds.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+            assert remainingSpeciesIds.isEmpty():
+                "No corresponding taxon found for species IDs: " + remainingSpeciesIds;
+            uberonToTaxIds.put(uberonToSpeciesIds.getKey(), newTaxonIds);
+        }
+        
+        return log.traceExit(uberonToTaxIds);
     }
     
     /**
@@ -947,7 +1429,7 @@ public class TaxonConstraints {
             
             //Use the OWLGraphWrapper that was potentially already filtered for structures 
             //specific to completely unrelated taxa. 
-            return log.exit(this.getExistingOWLClasses(graph, taxClass, storeOntologyDir, true));
+            return log.traceExit(this.getExistingOWLClasses(graph, taxClass, storeOntologyDir, true));
         }
     }
     
@@ -1032,7 +1514,7 @@ public class TaxonConstraints {
         }
 
         log.info("Done examining ontology for taxon {} - removeOtherTaxa: {}.", taxClass, removeOtherTaxa);
-        return log.exit(ontWrapper.getAllRealOWLClassesFromSource());
+        return log.traceExit(ontWrapper.getAllRealOWLClassesFromSource());
     }
     
 
@@ -1051,15 +1533,95 @@ public class TaxonConstraints {
     private OWLReasoner createReasoner(OWLOntology ont) {
         log.entry(ont);
         ElkReasonerConfiguration config = new ElkReasonerConfiguration();
-        //we need to set the number of workers because on our ubber machines, 
-        //we have too many processors, so that we have too many workers, 
-        //and too many memory consumed. 
+        //we need to set the number of workers because on our ubber machines,
+        //we have too many processors, so that we have too many workers,
+        //and too many memory consumed.
         if (config.getElkConfiguration().getParameterAsInt(
                 ReasonerConfiguration.NUM_OF_WORKING_THREADS) > MAX_WORKER_COUNT) {
             config.getElkConfiguration().setParameter(
                 ReasonerConfiguration.NUM_OF_WORKING_THREADS, String.valueOf(MAX_WORKER_COUNT));
         }
-        return log.exit(new ElkReasonerFactory().createReasoner(ont, config));
+        return log.traceExit(new ElkReasonerFactory().createReasoner(ont, config));
+    }
+    
+
+    private static void writeTaxonLCAToFile(Map<String, Set<Taxon>> uberonToTaxonConstraints, 
+            Map<String, Set<Taxon>> uberonToNoTaxonConstraints, Set<Integer> taxonIds, 
+            OWLGraphWrapper refUberonWrapper, String outputFile) throws IOException {
+        log.entry(uberonToTaxonConstraints, uberonToNoTaxonConstraints, taxonIds, 
+                refUberonWrapper, outputFile);
+        
+        //order uberon IDs to have same row ordering between releases
+        List<String> uberonIds = new ArrayList<String>(uberonToTaxonConstraints.keySet());
+        Collections.sort(uberonIds);
+        
+        final CellProcessor[] processors = new CellProcessor[] { 
+                new UniqueHashCode(new NotNull()), 
+                new NotNull(), 
+                new Optional(),
+                new Optional(),
+                new Optional(),
+                new Optional(),
+                new Optional()
+        };
+        String[] header= new String[] {
+                UBERON_ID_COLUMN_NAME, UBERON_NAME_COLUMN_NAME,
+                WITH_CONSTRAINTS_ID, WITH_CONSTRAINTS_NAME,
+                WITHOUT_CONSTRAINTS_ID, WITHOUT_CONSTRAINTS_NAME, COMMENTS           
+        };
+        String[] fieldMapping = new String[] { "uberonId", "uberonName", "taxonIdWithConstraints",
+                "taxonNameWithConstraints", "taxonIdWithoutConstraints", "taxonNameWithoutConstraints",
+                "description"};
+        try (ICsvBeanWriter beanWriter = new CsvBeanWriter(new FileWriter(outputFile),
+                Utils.TSVCOMMENTED)) {
+            
+            beanWriter.writeHeader(header);
+            for(String uberonId : uberonIds) {
+                //boolean to remember in which columns to write taxon info
+                boolean withConstraintsColumn = true;
+                
+                // retrieve taxa to write
+                List<Taxon> taxaToWrite;
+                int noTaxonConstraintsSize = uberonToNoTaxonConstraints.get(uberonId).size();
+                int taxonConstraintsSize = uberonToTaxonConstraints.get(uberonId).size();
+                if( (noTaxonConstraintsSize > 0 && noTaxonConstraintsSize < taxonConstraintsSize)
+                        || taxonConstraintsSize == 0) {
+                    taxaToWrite = new ArrayList<Taxon>(uberonToNoTaxonConstraints
+                            .get(uberonId));
+                    withConstraintsColumn = false;  
+                } else {
+                    taxaToWrite = new ArrayList<Taxon>(uberonToTaxonConstraints
+                            .get(uberonId));
+                }
+                // sort taxa by Taxon Id
+                taxaToWrite.sort((Taxon t1, Taxon t2) -> t1.getId()-t2.getId());
+                
+                OWLClass cls = refUberonWrapper.getOWLClassByIdentifier(uberonId, true);
+                String label = "-";
+                if (cls != null) {
+                    label = refUberonWrapper.getLabelOrDisplayId(cls);
+                }
+                //generate text from list of taxon
+                String taxonIdsText = String.join(", ", taxaToWrite.stream()
+                        .map(t  -> t.getId().toString()).collect(Collectors.toList()));
+                String taxonNamesText = String.join(", ", taxaToWrite.stream()
+                        .map(t  -> t.getScientificName()).collect(Collectors.toList()));
+                
+                // add values to corresponding columns
+                TaxonTaxonConstraintsBean taxonTCBean = null;
+                if(withConstraintsColumn) {
+                    taxonTCBean = new TaxonTaxonConstraintsBean(uberonId, label, taxonIdsText,
+                            taxonNamesText, null, null, null);
+                } else {
+                    taxonTCBean = new TaxonTaxonConstraintsBean(uberonId, label, null, null, 
+                            taxonIdsText, taxonNamesText, null);
+                }
+                beanWriter.write(taxonTCBean, fieldMapping, processors);
+             
+            }
+        }
+        
+        log.traceExit();
     }
     
     /**
@@ -1146,7 +1708,7 @@ public class TaxonConstraints {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -1206,7 +1768,7 @@ public class TaxonConstraints {
         }
 
         SpeciesSubsetterUtil util = this.subsetterUtilSupplier.apply(this.uberonOntWrapper);
-        return log.exit(util.explainTaxonConstraint(owlClassIds, 
+        return log.traceExit(util.explainTaxonConstraint(owlClassIds, 
                 OntologyUtils.convertToTaxOntologyIds(taxonIds)));
     }
     
@@ -1330,7 +1892,7 @@ public class TaxonConstraints {
                     + taxon);
         }
         
-        return log.exit(taxon);
+        return log.traceExit(taxon);
     }
     
 
@@ -1340,117 +1902,7 @@ public class TaxonConstraints {
     public OWLGraphWrapper getTaxOntWrapper() {
         return taxOntWrapper;
     }
-    /**
-     * Expand the providing overriding taxon constraints to also include all parent taxa 
-     * of the taxa stored as values in {@code idStartsToOverridingTaxonIds}. This method returns 
-     * a {@code Map} identical to {@code idStartsToOverridingTaxonIds}, except that 
-     * each {@code Set} stored as value is modified to also include the ancestor IDs 
-     * of the taxa in the {@code Set}, retrieved using the provided taxonomy ontology. 
-     * 
-     * @param taxOntWrapper                 An {@code OWLGraphWrapper} storing the taxonomy ontology 
-     *                                      used to retrieve ancestors of taxa.
-     * @param idStartsToOverridingTaxonIds  A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @return                              A {@code Map} identical to {@code idStartsToOverridingTaxonIds}, 
-     *                                      except that it is expanded to also include parent taxa. 
-     * @throws IllegalArgumentException If one of the provided overriding taxa is not present 
-     *                                  in the taxonomy ontology.
-     */
-    private static Map<String, Set<Integer>> expandOverridingTaxonIds(OWLGraphWrapper taxOntWrapper, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) throws IllegalArgumentException {
-        log.entry(taxOntWrapper, idStartsToOverridingTaxonIds);
-        
-        if (idStartsToOverridingTaxonIds == null || idStartsToOverridingTaxonIds.isEmpty()) {
-            return log.exit(new HashMap<String, Set<Integer>>());
-        }
-        //retrieve ancestors of all overriding taxa. 
-        Map<Integer, Set<Integer>> taxonIdToAncestorIds = new HashMap<>();
-        //Collect all tax IDs in all overridden constraints, and iterate them one by one, 
-        //to retrieve their ancestors
-        for (int taxId: idStartsToOverridingTaxonIds.values().stream()
-                .flatMap(Set::stream).collect(Collectors.toSet())) {
-            
-            OWLClass taxCls = taxOntWrapper.getOWLClassByIdentifier(
-                    OntologyUtils.getTaxOntologyId(taxId), true);
-            if (taxCls == null) {
-                throw log.throwing(new IllegalArgumentException("A taxon provided "
-                        + "in overriding constraints is not present in the taxonomy ontology: "
-                        + taxId));
-            }
-            Set<Integer> ancestorIds = taxOntWrapper.getAncestorsThroughIsA(taxCls).stream()
-                    .map(e -> OntologyUtils.getTaxNcbiId(taxOntWrapper.getIdentifier(e)))
-                    .collect(Collectors.toSet());
-            taxonIdToAncestorIds.put(taxId, ancestorIds);
-        }
-        
-        //now, re replace the overriding taxa to also include their ancestors
-        Map<String, Set<Integer>> expanded = idStartsToOverridingTaxonIds.entrySet().stream()
-            .collect(Collectors.toMap(Entry::getKey, 
-                    e -> {
-                        Set<Integer> expandedOverridingTaxIds = new HashSet<Integer>();
-                        for (int overridingTaxId: e.getValue()) {
-                            expandedOverridingTaxIds.add(overridingTaxId);
-                            Set<Integer> ancestorIds = taxonIdToAncestorIds.get(overridingTaxId);
-                            if (ancestorIds != null) {
-                                expandedOverridingTaxIds.addAll(ancestorIds);
-                            }
-                        }
-                        log.trace("For class {}, original constraints: {} - expanded constraints: {}", 
-                                e.getKey(), e.getValue(), expandedOverridingTaxIds);
-                        return expandedOverridingTaxIds;
-                    }
-            ));
-        
-        return log.exit(expanded);
-    }
-    /**
-     * Return the taxon IDs to override the taxon constraints for the OWLClass with ID {@code clsId}.
-     * This method tries to find the longest matching prefix of {@code clsId} in the keys 
-     * of {@code idStartsToOverridingTaxonIds}, and returns the associated value. 
-     * For instance, if {@clsId} is "EV:00001" and {@code idStartsToOverridingTaxonIds} 
-     * contains some entries {@code "EV:" -> {9605}, "EV:00001" -> {9606}}, this methods 
-     * will return {@code {9606}}. If there is no match found, this method will return {@code null}.
-     * 
-     * @param clsId                         A {@code String} that is the ID of a term to find 
-     *                                      overriding taxon constraints for. 
-     * @param idStartsToOverridingTaxonIds  A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @return                              A {@code Set} of {@code Integer}s that are the IDs 
-     *                                      of taxa to override taxon constraints for class 
-     *                                      with ID {@code clsId}, {@code null} if there was 
-     *                                      no overriding constraints for {@code clsId}.
-     */
-    private static Set<Integer> getOverridingTaxonIds(String clsId, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) {
-        log.entry(clsId, idStartsToOverridingTaxonIds);
-        if (idStartsToOverridingTaxonIds == null) {
-            return log.exit(null);
-        }
-        
-        Set<Integer> replacementConstraints = null;
-        String matchingPrefix = "";
-        //iterate all overriding constraint to find the longest match possible with clsId
-        for (Entry<String, Set<Integer>> idStartToTaxonIds: idStartsToOverridingTaxonIds.entrySet()) {
-            
-            if (clsId.startsWith(idStartToTaxonIds.getKey()) && 
-                    idStartToTaxonIds.getKey().length() > matchingPrefix.length()) {
-                matchingPrefix = idStartToTaxonIds.getKey();
-                log.trace("Uberon ID {} matching prefix {}, taxon constraints overriden: {}", 
-                        clsId, matchingPrefix, idStartToTaxonIds.getValue());
-                replacementConstraints = 
-                        new HashSet<Integer>(idStartToTaxonIds.getValue());
-                //continue iterations anyway in case there is a longest match
-            }
-        }
-        
-        return log.exit(replacementConstraints);
-    }
+
     /**
      * Extract from the taxon constraints file {@code taxonConstraintsFile} 
      * the taxon IDs included. 
@@ -1481,7 +1933,7 @@ public class TaxonConstraints {
                 }
             }
             
-            return log.exit(taxonIds);
+            return log.traceExit(taxonIds);
         }
     }
     /**
@@ -1509,114 +1961,33 @@ public class TaxonConstraints {
             throw log.throwing(new IllegalArgumentException("The taxon constraints provided "
                     + "did not allow to retrieve taxon IDs"));
         }
-        return log.exit(taxIds);
+        return log.traceExit(taxIds);
     }
-    
+
     /**
-     * Delegates to {@link #extractTaxonConstraints(String, Map)} with the {@code Map} 
-     * argument {@code null} (no replacement of taxon constaints, just get them from the file).
+     * Extracts taxon constraints from the file {@code taxonConstraintsFile}. 
+     * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
+     * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
+     * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
+     * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
+     * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
+     * their NCBI IDs (for instance, 9606 for human).
      * 
-     * @param taxonConstraintsFile  See same name argument in 
-     *                              {@link #extractTaxonConstraints(String, Map)}
-     * @return                      See returned value in 
-     *                              {@link #extractTaxonConstraints(String, Map)}
-     * @throws FileNotFoundException
-     * @throws IOException
+     * @param taxonConstraintsFile          A {@code String} that is the path to the 
+     *                                      taxon constraints file.
+     * @return                          A {@code Map} where keys are IDs of the Uberon 
+     *                                  {@code OWLClass}es, and values are {@code Set}s 
+     *                                  of {@code Integer}s containing the IDs of taxa 
+     *                                  in which the {@code OWLClass} exists.
+     * @throws FileNotFoundException    If {@code taxonConstraintsFile} could not 
+     *                                  be found.
+     * @throws IOException              If {@code taxonConstraintsFile} could not 
+     *                                  be read.
      */
-    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile) 
+    //TODO: unit test with non-null allClassIds
+    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile)
             throws FileNotFoundException, IOException {
         log.entry(taxonConstraintsFile);
-        return log.exit(TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, null));
-    }
-    /**
-     * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
-     * overrides some of them. 
-     * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
-     * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
-     * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
-     * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
-     * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
-     * their NCBI IDs (for instance, 9606 for human).
-     * <p>
-     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override constraints 
-     * retrieved from the file: when the OBO-like ID of an Uberon term starts with 
-     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
-     * are replaced with the associated value. If the start of the OBO-like ID matches 
-     * several keys, then the longest match will be considered. 
-     * 
-     * @param taxonConstraintsFile          A {@code String} that is the path to the 
-     *                                      taxon constraints file.
-     * @param idStartsToOverridingTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @return                          A {@code Map} where keys are IDs of the Uberon 
-     *                                  {@code OWLClass}es, and values are {@code Set}s 
-     *                                  of {@code Integer}s containing the IDs of taxa 
-     *                                  in which the {@code OWLClass} exists.
-     * @throws FileNotFoundException    If {@code taxonConstraintsFile} could not 
-     *                                  be found.
-     * @throws IOException              If {@code taxonConstraintsFile} could not 
-     *                                  be read.
-     */
-    //XXX: should we keep this method, now that taxon constraints are directly produced 
-    //with overriding criteria? Maybe no other classes shoud now be allowed to override 
-    //constraints. Or do we consider that it is still a useful feature, to be able 
-    //to test different constraints without formally regenerating them all?
-    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds) throws FileNotFoundException, IOException {
-        log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds);
-        return log.exit(extractTaxonConstraints(taxonConstraintsFile, idStartsToOverridingTaxonIds, null));
-    }
-    /**
-     * Extracts taxon constraints from the file {@code taxonConstraintsFile} and potentially 
-     * overrides some of them. 
-     * The returned {@code Map} contains the OBO-like IDs of all Uberon terms 
-     * present in the file, as keys, associated to a {@code Set} of {@code Integer}s, 
-     * that are the IDs of the taxa in which it exists, among the taxa present in the file. 
-     * If the {@code Set} is empty, then it means that the {@code OWLClass} existed 
-     * in none of the taxa. IDs of the taxa are {@code Integer}s representing 
-     * their NCBI IDs (for instance, 9606 for human).
-     * <p>
-     * When {@code idStartsToOverridingTaxonIds} is not null, it allows to override constraints 
-     * retrieved from the file: when the OBO-like ID of an Uberon term starts with 
-     * one of the key of {@code idStartsToOverridingTaxonIds}, its taxon constraints 
-     * are replaced with the associated value. If the start of the OBO-like ID matches 
-     * several keys, then the longest match will be considered. 
-     * 
-     * @param taxonConstraintsFile          A {@code String} that is the path to the 
-     *                                      taxon constraints file.
-     * @param idStartsToOverridingTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms.
-     * @param allClassIds                   A {@code Set} of {@code String}s that are IDs 
-     *                                      of classes which to produce constraints for, 
-     *                                      even if absent from the taxon constraint file 
-     *                                      (but with a prefix present in 
-     *                                      {@code idStartsToOverridingTaxonIds})
-     * @return                          A {@code Map} where keys are IDs of the Uberon 
-     *                                  {@code OWLClass}es, and values are {@code Set}s 
-     *                                  of {@code Integer}s containing the IDs of taxa 
-     *                                  in which the {@code OWLClass} exists.
-     * @throws FileNotFoundException    If {@code taxonConstraintsFile} could not 
-     *                                  be found.
-     * @throws IOException              If {@code taxonConstraintsFile} could not 
-     *                                  be read.
-     */
-    //Should we keep this method, now that taxon constraints are directly produced 
-    //with overriding criteria? Maybe no other classes shoud now be allowed to override 
-    //constraints. Or do we consider that it is still a useful feature, to be able 
-    //to test different constraints without formally regenerating them all?
-    //=> Actually, yes it's usefule, because we don't want to mask the real constraints 
-    //from the taxon constraint file in some cases.
-    //TODO: unit test with non-null allClassIds
-    public static Map<String, Set<Integer>> extractTaxonConstraints(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridingTaxonIds, Set<String> allClassIds) 
-                throws FileNotFoundException, IOException {
-        log.entry(taxonConstraintsFile, idStartsToOverridingTaxonIds, allClassIds);
 
         Map<String, Set<Integer>> constraints = new HashMap<String, Set<Integer>>();
         
@@ -1639,43 +2010,178 @@ public class TaxonConstraints {
             while( (lineMap = mapReader.read(header, processors)) != null ) {
                 
                 String uberonId = (String) lineMap.get(UBERON_ID_COLUMN_NAME);
-                Set<Integer> replacementConstraints = getOverridingTaxonIds(uberonId, 
-                        idStartsToOverridingTaxonIds);
+
+                Set<Integer> existingConstraints = new HashSet<Integer>();
+                constraints.put(uberonId, existingConstraints);
                 
-                if (replacementConstraints != null) {
-                    constraints.put(uberonId, replacementConstraints);
-                } else {
-                    Set<Integer> existingConstraints = new HashSet<Integer>();
-                    constraints.put(uberonId, existingConstraints);
-                    
-                    for (int i = 0; i < header.length; i++) {
-                        if (!header[i].equals(UBERON_ID_COLUMN_NAME) && 
-                                !header[i].equals(UBERON_NAME_COLUMN_NAME)) {
-                            if ((Boolean) lineMap.get(header[i])) {
-                                existingConstraints.add(Integer.parseInt(header[i]));
-                            }
+                for (int i = 0; i < header.length; i++) {
+                    if (!header[i].equals(UBERON_ID_COLUMN_NAME) && 
+                            !header[i].equals(UBERON_NAME_COLUMN_NAME)) {
+                        if ((Boolean) lineMap.get(header[i])) {
+                            existingConstraints.add(Integer.parseInt(header[i]));
                         }
                     }
                 }
             }
         }
+
+        return log.traceExit(constraints);
+    }
+    
+    public static class TaxonTaxonConstraintsBean {
         
-        //now, we also add constraints for all classes that have overriding constraints 
-        //(maybe they were not present in the file)
-        if (allClassIds != null) {
-            for (String clsId: allClassIds) {
-                //constraints already defined, skip
-                if (constraints.containsKey(clsId)) {
-                    continue;
-                }
-                Set<Integer> replacementConstraints = getOverridingTaxonIds(clsId, 
-                        idStartsToOverridingTaxonIds);
-                if (replacementConstraints != null) {
-                    constraints.put(clsId, replacementConstraints);
-                }
-            }
+        private String uberonId;
+        private String uberonName;
+        private String taxonIdWithConstraints;
+        private String taxonNameWithConstraints;
+        private String taxonIdWithoutConstraints;
+        private String taxonNameWithoutConstraints;
+        private String description;
+        
+        public TaxonTaxonConstraintsBean() {}
+        
+        public TaxonTaxonConstraintsBean(String uberonId, String uberonName, String taxonIdWithConstraints,
+                String taxonNameWithConstraints, String taxonIdWithoutConstraints, 
+                String taxonNameWithoutConstraints, String description) {
+            this.uberonId = uberonId;
+            this.uberonName = uberonName;
+            this.taxonIdWithConstraints = taxonIdWithConstraints;
+            this.taxonNameWithConstraints = taxonNameWithConstraints;
+            this.taxonIdWithoutConstraints = taxonIdWithoutConstraints;
+            this.taxonNameWithoutConstraints = taxonNameWithoutConstraints;
+            this.description = description;
         }
 
-        return log.exit(constraints);
+        //GETTERS
+        public String getUberonId() {
+            return uberonId;
+        }
+
+        public void setUberonId(String uberonId) {
+            this.uberonId = uberonId;
+        }
+
+        public String getUberonName() {
+            return uberonName;
+        }
+
+        public void setUberonName(String uberonName) {
+            this.uberonName = uberonName;
+        }
+
+        public String getTaxonIdWithConstraints() {
+            return taxonIdWithConstraints;
+        }
+
+        public void setTaxonIdWithConstraints(String taxonIdWithConstraints) {
+            this.taxonIdWithConstraints = taxonIdWithConstraints;
+        }
+
+        public String getTaxonNameWithConstraints() {
+            return taxonNameWithConstraints;
+        }
+
+        public void setTaxonNameWithConstraints(String taxonNameWithConstraints) {
+            this.taxonNameWithConstraints = taxonNameWithConstraints;
+        }
+
+        public String getTaxonIdWithoutConstraints() {
+            return taxonIdWithoutConstraints;
+        }
+
+        public void setTaxonIdWithoutConstraints(String taxonIdWithoutConstraints) {
+            this.taxonIdWithoutConstraints = taxonIdWithoutConstraints;
+        }
+
+        public String getTaxonNameWithoutConstraints() {
+            return taxonNameWithoutConstraints;
+        }
+
+        public void setTaxonNameWithoutConstraints(String taxonNameWithoutConstraints) {
+            this.taxonNameWithoutConstraints = taxonNameWithoutConstraints;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return "TaxonTaxonConstraintsBean [uberonId=" + uberonId + ", uberonName=" + uberonName
+                    + ", taxonIdWithConstraints=" + taxonIdWithConstraints + ", taxonNameWithConstraints="
+                    + taxonNameWithConstraints + ", taxonIdWithoutConstraints=" + taxonIdWithoutConstraints
+                    + ", taxonNameWithoutConstraints=" + taxonNameWithoutConstraints + ", description=" + description
+                    + "]";
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((description == null) ? 0 : description.hashCode());
+            result = prime * result + ((taxonIdWithConstraints == null) ? 0 : taxonIdWithConstraints.hashCode());
+            result = prime * result + ((taxonIdWithoutConstraints == null) ? 0 : taxonIdWithoutConstraints.hashCode());
+            result = prime * result + ((taxonNameWithConstraints == null) ? 0 : taxonNameWithConstraints.hashCode());
+            result = prime * result
+                    + ((taxonNameWithoutConstraints == null) ? 0 : taxonNameWithoutConstraints.hashCode());
+            result = prime * result + ((uberonId == null) ? 0 : uberonId.hashCode());
+            result = prime * result + ((uberonName == null) ? 0 : uberonName.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TaxonTaxonConstraintsBean other = (TaxonTaxonConstraintsBean) obj;
+            if (description == null) {
+                if (other.description != null)
+                    return false;
+            } else if (!description.equals(other.description))
+                return false;
+            if (taxonIdWithConstraints == null) {
+                if (other.taxonIdWithConstraints != null)
+                    return false;
+            } else if (!taxonIdWithConstraints.equals(other.taxonIdWithConstraints))
+                return false;
+            if (taxonIdWithoutConstraints == null) {
+                if (other.taxonIdWithoutConstraints != null)
+                    return false;
+            } else if (!taxonIdWithoutConstraints.equals(other.taxonIdWithoutConstraints))
+                return false;
+            if (taxonNameWithConstraints == null) {
+                if (other.taxonNameWithConstraints != null)
+                    return false;
+            } else if (!taxonNameWithConstraints.equals(other.taxonNameWithConstraints))
+                return false;
+            if (taxonNameWithoutConstraints == null) {
+                if (other.taxonNameWithoutConstraints != null)
+                    return false;
+            } else if (!taxonNameWithoutConstraints.equals(other.taxonNameWithoutConstraints))
+                return false;
+            if (uberonId == null) {
+                if (other.uberonId != null)
+                    return false;
+            } else if (!uberonId.equals(other.uberonId))
+                return false;
+            if (uberonName == null) {
+                if (other.uberonName != null)
+                    return false;
+            } else if (!uberonName.equals(other.uberonName))
+                return false;
+            return true;
+        }
+        
+        
+        
+        
     }
 }

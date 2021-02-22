@@ -42,7 +42,7 @@ public class DAOExperimentCountFilter {
         this.expCount = expCount;
         this.qualifier = qualifier;
         
-        log.exit();
+        log.traceExit();
     }
 
     public CallType getCallType() {

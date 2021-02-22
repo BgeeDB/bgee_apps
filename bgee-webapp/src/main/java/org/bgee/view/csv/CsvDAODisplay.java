@@ -59,6 +59,6 @@ public class CsvDAODisplay extends CsvParentDisplay implements DAODisplay {
             throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

@@ -17,7 +17,7 @@ import org.bgee.view.PublicationDisplay;
  * This class displays the page having the category "publications", i.e. with the parameter
  * page=publications for the HTML view.
  * 
- * @author  Julien Wollbrett
+ * @author  Wollbrett J
  * @version Bgee 14, July 2020
  * @since   Bgee 14, July 2020
  **/
@@ -46,7 +46,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
 
     @Override
     public void displayPublications() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Publications", "Publications");
         
@@ -62,20 +62,22 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         
         this.writeln("<ul>");
         
-        this.writeln("<p typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Frederic B. Bastian", 
-                        "Julien Roux", "Anne Niknejad", "Aurélie Comte", 
-                        "Sara S. Fonseca Costa", "Tarcisio Mendes de Farias", "Sébastien Moretti", "Gilles Parmentier", 
-                        "Valentine Rech de Laval", "Marta Rosikiewicz", "Julien Wollbrett", "Amina Echchiki", 
-                        "Angélique Escoriza", "Walid Gharib", "Mar Gonzales-Porta", "Yohan Jarosz", "Balazs Laurenczy", 
-                        "Philippe Moret", "Emilie Person", "Patrick Roelli", "Komal Sanjeev", "Mathieu Seppey", 
-                        "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative transcriptomics "
-                        + "in animals")
-                + "<br><em>in</em> " + this.getPeriodical("bioRxiv 2020.05.28.119560")
-                + "[<a href='https://doi.org/10.1101/2020.05.28.119560' "
-                + "title='Bgee paper in Biorxiv' target='_blank' rel='noopener' property='schema:url'>url</a>] "
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
+                        "Roux J", "Niknejad A", "Comte A", 
+                        "Fonseca Costa SS", "Mendes de Farias T", "Moretti S", "Parmentier G", 
+                        "Rech de Laval V", "Rosikiewicz M", "Wollbrett J", "Echchiki A", 
+                        "Escoriza A", "Gharib W", "Gonzales-Porta M", "Jarosz Y", "Laurenczy B", 
+                        "Moret P", "Person E", "Roelli P", "Sanjeev K", "Seppey M", 
+                        "Robinson-Rechavi M"))
+                + "<br><a href='https://doi.org/10.1093/nar/gkaa793' "
+                    + " target='_blank' rel='noopener' property='schema:url'> " 
+                    + this.getTitle("The Bgee suite: integrated curated expression atlas and comparative "
+                            + "transcriptomics in animals") 
+                + "</a>"
+                + "<br><em>in</em> " + this.getPeriodical("Nucleic Acids Research, Volume 49, "
+                        + "Issue D1, 8 January 2021, Pages D831–D847")
                 + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
-                + "</p>");
+                + "</li>");
         
         this.writeln("</ul>");
 
@@ -90,24 +92,28 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         this.writeln("<li typeof='schema:ScholarlyArticle'>For the BgeeDB R package: <br>" +  
                 this.getAuthors(Arrays.asList("Komljenovic A", "Roux J", "Wollbrett J", "Robinson-Rechavi M", 
                         "Bastian F"))
-                + "<br>" + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
-                + "for gene list enrichment tests")
+                + "<br><a href='https://f1000research.com/articles/5-2748/v2' "
+                    + " target='_blank' rel='noopener'  property='schema:url'>" 
+                    + this.getTitle("BgeeDB, an R package for retrieval of curated expression datasets and "
+                            + "for gene list enrichment tests") 
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("F1000Research") + " 2018, 5:2748. "
-                + "[<a target='_blank' rel='noopener' href='https://f1000research.com/articles/5-2748/v2' "
-                + "title='BgeeDB, an R package for retrieval of curated expression datasets and "
-                + "for gene list enrichment tests' property='schema:url'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation05.ris' property='schema:sameAs'>RIS</a></li>");
+                + "<a href='ftp://ftp.bgee.org/general/citation05.ris' property='schema:sameAs'>RIS</a>"
+                + "</li>");
         
         this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: <br>" + this.getAuthors(Arrays.asList("Haendel MA", 
                     "Balhoff JP", "Bastian FB",
                     "Blackburn DC", "Blake JA", "Bradford Y", "Comte A", "Dahdul WM", "Dececchi TA",
                     "Druzinsky RE", "Hayamizu TF", "Ibrahim N", "Lewis SE", "Mabee PM", "Niknejad A",
                     "Robinson-Rechavi M", "Sereno PC", "Mungall CJ"))
-                + "<br>" + this.getTitle("Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon")
+                + "<br><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("Unification of multi-species vertebrate anatomy ontologies for comparative "
+                            + "biology in Uberon")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("J Biomed Semantics") + " (2014): 5:21. "
-                + "[<a target='_blank' rel='noopener' href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4089931/' "
-                + "title='Unification of multi-species vertebrate anatomy ontologies for comparative biology in Uberon'>url</a>] "
-                + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a></li>");
+                + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a>"
+                + "</li>");
         
         this.writeln("</ul>");
 
@@ -115,114 +121,136 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         
         this.writeln("<ul>");
 
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Hayley M. Dingerdissen", 
-                "Frederic Bastian", "K. Vijay-Shanker", "Marc Robinson-Rechavi", "Amanda Bell", "Nikhita Gogate", 
-                "Samir Gupta", "Evan Holmes", "Robel Kahsay", "Jonathon Keeney", "Heather Kincaid", "Charles Hadley King", 
-                "David Liu", "Daniel J. Crichton", "Raja Mazumder"))
-                + "<br>" + this.getTitle("OncoMX: A Knowledgebase for Exploring Cancer Biomarkers in the "
-                        + "Context of Related Cancer and Healthy Data")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Dingerdissen HM", 
+                "Bastian FB", "Vijay-Shanker K", "Robinson-Rechavi M", "Bell A", "Gogate N", 
+                "Gupta S", "Holmes E", "Kahsay R", "Keeney J", "Kincaid H", "King CH", 
+                "Liu D", "Crichton DJ", "Mazumder R"))
+                + "<br><a href='https://doi.org/10.1200/CCI.19.00117' "
+                    + " target='_blank' rel='noopener' property='schema:url'>" 
+                    + this.getTitle("OncoMX: A Knowledgebase for Exploring Cancer Biomarkers in the "
+                            + "Context of Related Cancer and Healthy Data")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("JCO Clinical Cancer Informatics") + " 4. 210-220. "
-                + "[<a target='_blank' rel='noopener' href='https://doi.org/10.1200/CCI.19.00117' "
-                + "property='schema:url'>url</a>]</li>");
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Qingyu Chen", 
-                "Ramona Britto", "Ivan Erill", "Constance J. Jeffery", "Arthur Liberzon", "Michele Magrane", 
-                "Jun-ichi Onami", "Marc Robinson-Rechavi", "Jana Sponarova", "Justin Zobel", "Karin Verspoor"))
-                + "<br>" + this.getTitle("Quality Matters: Biocuration Experts on the Impact of Duplication and "
-                        + "Other Data Quality")
-                + "<br><em>in</em> " + this.getPeriodical("Genomics, Proteomics & Bioinformatics")
-                + " 2020 "
-                + "[<a href='https://doi.org/10.1016/j.gpb.2018.11.006'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Chen Q", 
+                "Britto R", "Erill I", "Jeffery CJ", "Liberzon A", "Magrane M", 
+                "Onami J", "Robinson-Rechavi M", "Sponarova J", "Zobel J", "Karin Verspoor"))
+                + "<br><a href='https://doi.org/10.1016/j.gpb.2018.11.006'"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("Quality Matters: Biocuration Experts on the Impact of Duplication and "
+                            + "Other Data Quality")
+                + "</a>"     
+                + "<br><em>in</em> " + this.getPeriodical("Genomics, Proteomics & Bioinformatics")+ " 2020 "
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Marc Robinson-Rechavi", 
-                "Valentine Rech de Laval", "Frédéric B. Bastian", "Julien Wollbrett", "Bgee Team"))
-                + "<br>" + this.getTitle("The Expression Comparison Tool in Bgee")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Robinson-Rechavi M", 
+                "Rech de Laval V", "Bastian FB", "Wollbrett J", "Bgee Team"))
+                + "<br><a href='https://hal.archives-ouvertes.fr/hal-02535720'"
+                    + " target='_blank' rel='noopener' property='schema:url'>" 
+                    + this.getTitle("The Expression Comparison Tool in Bgee")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Scornavacca, Celine; Delsuc, Frédéric; Galtier, Nicolas. "
                         + "Phylogenetics in the Genomic Era")
                 + " No commercial publisher | Authors open access book, pp.4.3:1--4.3:4, 2020. "
-                + "[<a href='https://hal.archives-ouvertes.fr/hal-02535720'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Ana Claudia Sima", 
-                "Tarcisio Mendes de Farias", "Erich Zbinden", "Maria Anisimova", "Manuel Gil", "Heinz Stockinger", 
-                "Kurt Stockinger", "Marc Robinson-Rechavi", "Christophe Dessimoz"))
-                + "<br>" + this.getTitle("Enabling semantic queries across federated bioinformatics databases")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Sima AC", 
+                "Mendes de Farias T", "Zbinden E", "Anisimova M", "Gil M", "Stockinger H", 
+                "Stockinger K", "Robinson-Rechavi M", "Dessimoz C"))
+                + "<br><a href='https://doi.org/10.1093/database/baz106' "
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("Enabling semantic queries across federated bioinformatics databases")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Database") + " Volume 2019, 2019, baz106. "
-                + "[<a target='_blank' rel='noopener' href='https://doi.org/10.1093/database/baz106' "
-                + "title='Enabling semantic queries across federated bioinformatics databases' "
-                + "property='schema:url'>url</a>]</li>");
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Tarcisio Mendes de Farias", 
-                "Heinz Stockinger", "Christophe Dessimoz"))
-                + "<br>" + this.getTitle("VoIDext: Vocabulary and Patterns for Enhancing Interoperable Datasets "
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Mendes de Farias T", 
+                "Stockinger H", "Dessimoz C"))
+                + "<br><a href='https://doi.org/10.1007/978-3-030-33246-4_38' "
+                    + "target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("VoIDext: Vocabulary and Patterns for Enhancing Interoperable Datasets "
                         + "with Virtual Links")
+                +"</a>"
                 + "<br><em>in</em> " + "On the Move to Meaningful Internet Systems: OTM 2019 Conferences. "
                         + "Lecture Notes in Computer Science. vol 11877. "
-                + "[<a target='_blank' rel='noopener' href='https://doi.org/10.1007/978-3-030-33246-4_38' "
-                + "title='Enabling semantic queries across federated bioinformatics databases' "
-                + "property='schema:url'>url</a>]</li>");
+                + "</li>");
 
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + 
                 this.getAuthors(Arrays.asList("SIB Swiss Institute of Bioinformatics Members"))
-                + "<br>" + this.getTitle("TThe SIB Swiss Institute of Bioinformatics’ resources: "
-                        + "focus on curated databases")
+                + "<br><a href='https://doi.org/10.1093/nar/gkv1310'"
+                        + " target='_blank' rel='noopener' property='schema:url'>"
+                        + this.getTitle("The SIB Swiss Institute of Bioinformatics’ resources: "
+                                + "focus on curated databases")
+                +"</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Nucleic Acids Research")
-                + "Volume 44, Issue D1, 4 January 2016, Pages D27–D37. [<a href='https://doi.org/10.1093/nar/gkv1310'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+                        + "Volume 44, Issue D1, 4 January 2016, Pages D27–D37. "
+                + "</li>");
 
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Frederic B. Bastian", 
-                "Marcus C. Chibucos", "Pascale Gaudet", "Michelle Giglio", "Gemma L. Holliday", "Hong Huang", 
-                "Suzanna E. Lewis", "Anne Niknejad", "Sandra Orchard", "Sylvain Poux", "Nives Skunca", 
-                "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("The Confidence Information Ontology: a step towards a standard for "
-                        + "asserting confidence in annotations")
-                + "<br><em>in</em> " + this.getPeriodical("Database")
-                + "Volume 2015, 2015. [<a href='https://doi.org/10.1093/database/bav043'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
+                "Chibucos MC", "Gaudet P", "Giglio M", "Holliday GL", "Huang H", 
+                "Lewis SE", "Niknejad A", "Orchard S", "Poux S", "Skunca N", 
+                "Robinson-Rechavi M"))
+                + "<br><a href='https://doi.org/10.1093/database/bav043'"
+                        + " target='_blank' rel='noopener' property='schema:url'>"
+                        + this.getTitle("The Confidence Information Ontology: a step towards a standard for "
+                                + "asserting confidence in annotations")
+                + "</a>"
+                + "<br><em>in</em> " + this.getPeriodical("Database") + "Volume 2015, 2015. "
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Marta Rosikiewicz", 
-                "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("IQRray, a new method for Affymetrix microarray quality control, and "
-                        + "the homologous organ conservation score, a new benchmark method for quality control "
-                        + "metrics")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Rosikiewicz M", 
+                "Robinson-Rechavi M"))
+                + "<br><a href='https://doi.org/10.1093/bioinformatics/btu027'"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("IQRray, a new method for Affymetrix microarray quality control, and "
+                            + "the homologous organ conservation score, a new benchmark method for "
+                            + "quality control metrics")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Bioinformatics")
-                + "Volume 30, Issue 10, 15 May 2014, Pages 1392–1399. "
-                + "[<a href='https://doi.org/10.1093/bioinformatics/btu027'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+                + " Volume 30, Issue 10, 15 May 2014, Pages 1392–1399. "
+                + "</li>");
                 
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Anne Niknejad", 
-                "Aurélie Comte", "Gilles Parmentier", "Julien Roux", "Frederic B. Bastian", "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("vHOG, a multispecies vertebrate ontology of homologous organs groups")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Niknejad A", 
+                "Comte A", "Parmentier G", "Roux J", "Bastian FB", "Robinson-Rechavi M"))
+                + "<br><a href='https://doi.org/10.1093/bioinformatics/bts048'"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("vHOG, a multispecies vertebrate ontology of homologous organs groups")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Bioinformatics")
                 + "Volume 28, Issue 7, 1 April 2012, Pages 1017–1020. "
-                + "[<a href='https://doi.org/10.1093/bioinformatics/bts048'"
-                + "title='vHOG' target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+                + "</li>");
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Julien Roux", 
-                "Marc Robinson-Rechavi"))
-                + "<br>" + this.getTitle("An ontology to clarify homology-related concepts")
-                + "<br><em>in</em> " + this.getPeriodical("Trends Genet.")
-                + "2010;26(3):99-102. "
-                + "[<a href='https://doi.org/10.1016/j.tig.2009.12.012'"
-                + "target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Roux J", 
+                "Robinson-Rechavi M"))
+                + "<br><a href='https://doi.org/10.1016/j.tig.2009.12.012'"
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("An ontology to clarify homology-related concepts")
+                + "</a>"
+                + "<br><em>in</em> " + this.getPeriodical("Trends Genet") + " 2010;26(3):99-102. "
+                + "</li>");
 
         
-        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian, Frederic", 
-                "Parmentier, Gilles", "Robinson-Rechavi, Marc"))
-                + "<br>" + this.getTitle("Generating Homology Relationships by Alignment of Anatomical Ontologies")
+        this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian F", 
+                "Parmentier G", "Robinson-Rechavi M"))
+                + "<br><a href='https://www.nature.com/articles/npre.2009.3546.1' "
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("Generating Homology Relationships by Alignment of Anatomical "
+                            + "Ontologies")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Nat Prec (2009)")
-                + "[<a href='https://doi.org/10.1038/npre.2009.3547.1' "
-                + "title='Homology relationshps' target='_blank' rel='noopener' property='schema:url'>url</a>]</li>");
+                + "</li>");
         
                 
         this.writeln("<li typeof='schema:ScholarlyArticle'>" + this.getAuthors(Arrays.asList("Bastian FB", 
                 "Parmentier G", "Roux J", "Moretti S", "Laudet V", "Robinson-Rechavi M"))
-                + "<br>" + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome Data Among Species")
+                + "<br><a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
+                    + " target='_blank' rel='noopener' property='schema:url'>"
+                    + this.getTitle("Bgee: Integrating and Comparing Heterogeneous Transcriptome "
+                            + "Data Among Species")
+                + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
-                + " Lecture Notes in Computer Science. "
-                + "5109:124-131. [<a href='https://link.springer.com/chapter/10.1007/978-3-540-69828-9_12' "
-                + "title='Bgee paper in LNCS' target='_blank' rel='noopener' property='schema:url'>url</a>] "
+                + " Lecture Notes in Computer Science. " + "5109:124-131."
                 + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
 
         this.writeln("</ul>");
@@ -232,30 +260,30 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
         
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
     
     private String getTitle(String title) {
-        log.entry(title);
-        return log.exit("<span property='schema:headline'>" + title + "</span>.");
+        log.traceEntry("{}", title);
+        return log.traceExit("<span property='schema:headline'>" + title + "</span>.");
     }
 
     private String getAuthors(List<String> names) {
-        log.entry(names);
-        return log.exit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
+        log.traceEntry("{}", names);
+        return log.traceExit(names.stream().map(this::getAuthor).collect(Collectors.joining(", ", "", ".")));
     }
 
     private String getAuthor(String name) {
-        log.entry(name);
-        return log.exit(
+        log.traceEntry("{}", name);
+        return log.traceExit(
                 "<span property='schema:author' typeof='schema:Person'>" +
                 "    <span property='schema:name'>" + name + "</span>" +
                 "</span>");
     }
 
     private String getPeriodical(String journalName) {
-        log.entry(journalName);
-        return log.exit(
+        log.traceEntry("{}", journalName);
+        return log.traceExit(
                 "<span property='schema:isPartOf' typeof='schema:Periodical'>" +
                 "    <span property='schema:name'>" + journalName + "</span>" +
                 "</span>.");

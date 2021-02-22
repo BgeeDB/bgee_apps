@@ -220,9 +220,9 @@ public abstract class UberonCommon {
         
         Set<OWLClass> potentialClasses = this.getOWLClasses(id, true);
         if (potentialClasses.size() == 1) {
-            return log.exit(potentialClasses.iterator().next());
+            return log.traceExit(potentialClasses.iterator().next());
         } 
-        return log.exit(null);
+        return log.traceExit((OWLClass) null);
     }
     
     /**
@@ -365,7 +365,7 @@ public abstract class UberonCommon {
             }
         } 
         
-        return log.exit(potentialClasses);
+        return log.traceExit(potentialClasses);
     }
     
     /**
@@ -386,7 +386,7 @@ public abstract class UberonCommon {
      * iii) the taxon-specific class is removed from the ontologies.
      */
     void convertTaxonECAs() {
-        log.entry();
+        log.traceEntry();
         log.info("Converting taxonomy Equivalent Classes Axioms...");
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
@@ -500,7 +500,7 @@ public abstract class UberonCommon {
 
         log.info("Done converting taxonomy Equivalent Classes Axioms, {} ECAs removed.", 
                 ecaRemoved);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -527,12 +527,12 @@ public abstract class UberonCommon {
         
         //treat only SubClassOfAxioms
         if (existingEdge.getSubClassOfAxioms().isEmpty()) {
-            return log.exit(null);
+            return log.traceExit((OWLGraphEdge) null);
         }
         //avoid creating a cycle
         if (existingEdge.getTarget().equals(newSource) || 
                 existingEdge.getSource().equals(newTarget)) {
-            return log.exit(null);
+            return log.traceExit((OWLGraphEdge) null);
         }
         OWLClass filler = existingEdge.getGCIFiller();
         OWLObjectPropertyExpression prop = existingEdge.getGCIRelation();
@@ -544,18 +544,18 @@ public abstract class UberonCommon {
             prop = equivProp;
         }
         //change the source an target, filler and prop
-        return log.exit(new OWLGraphEdge(newSource, newTarget, 
+        return log.traceExit(new OWLGraphEdge(newSource, newTarget, 
                 existingEdge.getQuantifiedPropertyList(), 
                 existingEdge.getOntology(), null, 
                 filler, prop));
     }
     
     protected void improveGCIRelations() {
-        log.entry();
+        log.traceEntry();
         
         
         
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -585,7 +585,7 @@ public abstract class UberonCommon {
         
         Set<Integer> copiedTaxonIds = new HashSet<Integer>(taxonIds);
         if (this.getTaxonConstraints() == null) {
-            return log.exit(copiedTaxonIds);
+            return log.traceExit(copiedTaxonIds);
         }
         
         Set<Integer> validSpecies = this.getTaxonConstraints().get(
@@ -601,7 +601,7 @@ public abstract class UberonCommon {
             copiedTaxonIds.add(0);
         }
         
-        return log.exit(copiedTaxonIds);
+        return log.traceExit(copiedTaxonIds);
     }
 
     /**
@@ -626,7 +626,7 @@ public abstract class UberonCommon {
      */
     public boolean existsInSpecies(OWLClass cls, int taxonId) {
         log.entry(cls, taxonId);
-        return log.exit(this.existsInSpecies(cls, Arrays.asList(taxonId)).contains(taxonId));
+        return log.traceExit(this.existsInSpecies(cls, Arrays.asList(taxonId)).contains(taxonId));
     }
     /**
      * Determines whether {@code cls} belongs to at least one taxon with ID in {@code taxonIds}. 
@@ -657,7 +657,7 @@ public abstract class UberonCommon {
         }
         
         //if there is an intersection => valid cls
-        return log.exit(!this.existsInSpecies(cls, taxonIds).isEmpty());
+        return log.traceExit(!this.existsInSpecies(cls, taxonIds).isEmpty());
     }
     
     /**
@@ -687,7 +687,7 @@ public abstract class UberonCommon {
             throw log.throwing(new IllegalArgumentException("The provided Collection of taxon IDs " + 
                                "is empty, this method will always return true"));
         }
-        return log.exit(this.existsInSpecies(cls, taxonIds).equals(
+        return log.traceExit(this.existsInSpecies(cls, taxonIds).equals(
                 new HashSet<Integer>(taxonIds)));//make a new HashSet for the equals method
     }
 

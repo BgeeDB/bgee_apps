@@ -76,7 +76,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
     
         final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap();
-        return log.exit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+        return log.traceExit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " IS "
                         + (condParams.contains(a)? "NOT NULL": "NULL"))
@@ -92,7 +92,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      *                  the associated value being the corresponding {@code ConditionDAO.Attribute}.
      */
     private static Map<String, ConditionDAO.Attribute> getColToAttributesMap() {
-        log.entry();
+        log.traceEntry();
         Map<String, ConditionDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(GLOBAL_COND_ID_FIELD, ConditionDAO.Attribute.ID);
         //only the original condition table containing all parameters has the field "exprMappedConditionId", 
@@ -106,7 +106,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 //        }
 //        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN);
         
-        return log.exit(colToAttributesMap);
+        return log.traceExit(colToAttributesMap);
     }
 
     public MySQLConditionDAO(MySQLDAOManager manager) throws IllegalArgumentException {
@@ -118,7 +118,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 //    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds,
 //            Collection<ConditionDAO.Attribute> attributes) throws DAOException {
 //        log.entry(speciesIds, attributes);
-//        return log.exit(this.getConditionsBySpeciesIds(false, speciesIds, null, attributes));
+//        return log.traceExit(this.getConditionsBySpeciesIds(false, speciesIds, null, attributes));
 //    }
 
     @Override
@@ -126,7 +126,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
         log.entry(speciesIds, conditionParameters, attributes);
-        return log.exit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
+        return log.traceExit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
     }
 
 
@@ -166,7 +166,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             if (!speIds.isEmpty()) {
                 stmt.setIntegers(1, speIds, true);
             }
-            return log.exit(new MySQLConditionTOResultSet(stmt));
+            return log.traceExit(new MySQLConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -174,7 +174,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
     @Override
     public int getMaxGlobalConditionId() throws DAOException {
-        log.entry();
+        log.traceEntry();
 
         String condIdField = getSelectExprFromAttribute(ConditionDAO.Attribute.ID,
                 getColToAttributesMap());
@@ -184,9 +184,9 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 this.getManager().getConnection().prepareStatement(sql))) {
             
             if (resultSet.next() && resultSet.getTO().getId() != null) {
-                return log.exit(resultSet.getTO().getId());
+                return log.traceExit(resultSet.getTO().getId());
             } 
-            return log.exit(0);
+            return log.traceExit(0);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -282,7 +282,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     globalMaxRank = rs.getBigDecimal("globalMaxRank");
                     results.put(speciesId, new ConditionRankInfoTO(maxRank, globalMaxRank));
                 }
-                return log.exit(results);
+                return log.traceExit(results);
             }
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -341,7 +341,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 }
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -397,7 +397,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         })
         .sum();
         
-        return log.exit(countUpdated);
+        return log.traceExit(countUpdated);
     }
     
     /**
@@ -421,7 +421,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
         @Override
         protected ConditionDAO.ConditionTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
@@ -454,7 +454,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 }
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
-                return log.exit(new ConditionTO(id, anatEntityId, stageId, speciesId, null));
+                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -478,7 +478,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
         @Override
         protected GlobalConditionToRawConditionTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer rawConditionId = null, globalConditionId = null;
@@ -498,7 +498,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     }
                 }
 
-                return log.exit(new GlobalConditionToRawConditionTO(
+                return log.traceExit(new GlobalConditionToRawConditionTO(
                         rawConditionId, globalConditionId, relOrigin));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));

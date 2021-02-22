@@ -42,7 +42,7 @@ public class CommandPrivacyPolicy extends CommandParent {
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
 
         PrivacyPolicyDisplay display = this.viewFactory.getPrivacyPolicyDisplay();
         
@@ -55,6 +55,6 @@ public class CommandPrivacyPolicy extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

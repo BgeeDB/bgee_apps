@@ -162,7 +162,7 @@ public class SimilarityAnnotation {
             super.setRefTitle(null);
             
             if (StringUtils.isBlank(refIdAndTitle)) {
-                log.exit(); return;
+                log.traceExit(); return;
             }
             
             Matcher m = REF_COL_PATTERN.matcher(refIdAndTitle);
@@ -182,7 +182,7 @@ public class SimilarityAnnotation {
                     super.setRefTitle(refTitle);
                 }
             }
-            log.exit();
+            log.traceExit();
         }
         
         /**
@@ -464,12 +464,6 @@ public class SimilarityAnnotation {
      *   <li>the path to the file containing taxon constraints. See 
      *   {@link org.bgee.pipeline.uberon.TaxonConstraints}. Can be empty (see 
      *   {@link org.bgee.pipeline.CommandRunner#parseArgument(String)}).
-     *   <li>A {@code Map<String, Set<Integer>>} to potentially override taxon constraints, 
-     *   see {@link org.bgee.pipeline.CommandRunner#parseMapArgumentAsInteger(String)} to see 
-     *   how to provide it in command line. See constructor 
-     *   {@link SimilarityAnnotation#SimilarityAnnotation(String, Map, String, String, String, String, String)} 
-     *   for more details about overriding taxon constraints. Can be empty (see 
-     *   {@link org.bgee.pipeline.CommandRunner#EMPTY_LIST}).
      *   <li>the path to the Uberon ontology.
      *   <li>the path to the taxonomy ontology.
      *   <li>the path to the homology and related concepts (HOM) ontology.
@@ -524,22 +518,20 @@ public class SimilarityAnnotation {
             }
             writeAnatEntitiesWithNoTransformationOfToFile(args[1], args[2], args[3]);
         } else if (args[0].equalsIgnoreCase("generateReleaseFile")) {
-            if (args.length != 12) {
+            if (args.length != 11) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "12 arguments, " + args.length + " provided."));
+                        "11 arguments, " + args.length + " provided."));
             }
-            new SimilarityAnnotation(CommandRunner.parseArgument(args[1]), 
-                    CommandRunner.parseMapArgumentAsInteger(args[2]).entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<>(e.getValue()))), 
-                    args[3], args[4], args[5], args[6], args[7]).generateReleaseFiles(
-                            args[8], args[9], args[10], args[11]);
+            new SimilarityAnnotation(CommandRunner.parseArgument(args[1]),
+                    args[2], args[3], args[4], args[5], args[6]).generateReleaseFiles(
+                            args[7], args[8], args[9], args[10]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -595,7 +587,7 @@ public class SimilarityAnnotation {
                     throw log.throwing(new IllegalArgumentException("The provided file " 
                             + similarityFile + " did not allow to retrieve any annotation"));
                 }
-                return log.exit(annots);
+                return log.traceExit(annots);
                 
             } catch (SuperCsvException e) {
                 //hide implementation details
@@ -674,7 +666,7 @@ public class SimilarityAnnotation {
                     break;
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
 
 
@@ -720,7 +712,7 @@ public class SimilarityAnnotation {
                 mapping[i] = null;
             }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
 
     /**
@@ -770,7 +762,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -872,7 +864,7 @@ public class SimilarityAnnotation {
         }
         
         assert header.length > 0;
-        return log.exit(header);
+        return log.traceExit(header);
     }
 
     /**
@@ -975,7 +967,7 @@ public class SimilarityAnnotation {
                         + header[i] + " for AnnotationBean type: " + beanType));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
         
     }
 
@@ -1013,7 +1005,7 @@ public class SimilarityAnnotation {
                     break;
             }
         }
-        return log.exit(quoteModes);
+        return log.traceExit(quoteModes);
         
     }
 
@@ -1047,7 +1039,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1072,7 +1064,7 @@ public class SimilarityAnnotation {
             IOException, UnknownOWLOntologyException, OWLOntologyCreationException, 
             OBOFormatParserException {
         log.entry(annotFile, uberonOntFile);
-        return log.exit(getAnatEntitiesWithNoTransformationOf(annotFile, 
+        return log.traceExit(getAnatEntitiesWithNoTransformationOf(annotFile, 
                     new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile))));
     }
     /**
@@ -1136,7 +1128,7 @@ public class SimilarityAnnotation {
             withNoTransfOf.add(anatEntity);
         }
         
-        return log.exit(withNoTransfOf);
+        return log.traceExit(withNoTransfOf);
     }
     /**
      * Delegates to {@link #writeAnatEntitiesWithNoTransformationOfToFile(String, 
@@ -1164,7 +1156,7 @@ public class SimilarityAnnotation {
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
                 outputFile);
                 
-        log.exit();
+        log.traceExit();
     }
     /**
      * Call {@link #getAnatEntitiesWithNoTransformationOf(String, OWLGraphWrapper)}, 
@@ -1247,7 +1239,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -1342,14 +1334,6 @@ public class SimilarityAnnotation {
      *                                      in which case the taxon constraint verifications 
      *                                      will not be performed.
      *                                      See {@link org.bgee.pipeline.uberon.TaxonConstraints}
-     * @param idStartsToOverridenTaxonIds   A {@code Map} where keys are {@code String}s 
-     *                                      representing prefixes of uberon terms to match, 
-     *                                      the associated value being a {@code Set} 
-     *                                      of {@code Integer}s to replace taxon constraints 
-     *                                      of matching terms, if {@code taxonConstraintsFile} 
-     *                                      is not {@code null}. See 
-     *                                      {@link org.bgee.pipeline.uberon.TaxonConstraints#extractTaxonConstraints(String, Map)}
-     *                                      for example of use. Can be {@code null}.
      * @param uberonOntFile                 A {@code String} that is the path to the Uberon 
      *                                      ontology.
      * @param taxOntFile                    A {@code String} that is the path to the taxonomy 
@@ -1365,16 +1349,14 @@ public class SimilarityAnnotation {
      * @throws OWLOntologyCreationException If an error occurs while loading the ontologies.
      * @throws IOException                  If a file could not be read.
      */
-    public SimilarityAnnotation(String taxonConstraintsFile, 
-            Map<String, Set<Integer>> idStartsToOverridenTaxonIds, String uberonOntFile, 
+    public SimilarityAnnotation(String taxonConstraintsFile, String uberonOntFile, 
             String taxOntFile, String homOntFile, String ecoOntFile, String confOntFile) 
                     throws OBOFormatParserException, FileNotFoundException, 
                     OWLOntologyCreationException, IOException {
         this((taxonConstraintsFile == null? 
                 null: 
                 //FIXME: should provde all class IDs in Uberon to method
-                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile, 
-                        idStartsToOverridenTaxonIds)), 
+                TaxonConstraints.extractTaxonConstraints(taxonConstraintsFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(uberonOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(taxOntFile)), 
                 new OWLGraphWrapper(OntologyUtils.loadOntology(homOntFile)), 
@@ -1754,7 +1736,7 @@ public class SimilarityAnnotation {
         }
 
         log.debug("Done checking {} annotations", annots.size());
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -2226,7 +2208,7 @@ public class SimilarityAnnotation {
             this.idsNotExistingInTaxa.putAll(idsNotExistingInTaxa);
         }
 
-        return log.exit(allGood);
+        return log.traceExit(allGood);
     }
 
 
@@ -2295,7 +2277,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(missingNegativeAnnots);
+        return log.traceExit(missingNegativeAnnots);
     }
 
 
@@ -2421,7 +2403,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(negAnnotsWithMissingPosAnnots);
+        return log.traceExit(negAnnotsWithMissingPosAnnots);
     }
 
     /**
@@ -2437,7 +2419,7 @@ public class SimilarityAnnotation {
      * @throws IllegalStateException    if some errors were detected and stored.
      */
     private void verifyErrors() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         
         try {
             String errorMsg = "";
@@ -2509,14 +2491,14 @@ public class SimilarityAnnotation {
             this.reinitErrors();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
      * Reinit the errors stored following a call to {@link #verifyErrors()}.
      */
     private void reinitErrors() {
-        log.entry();
+        log.traceEntry();
         this.missingUberonIds.clear();
         this.missingTaxonIds.clear();
         this.missingECOIds.clear();
@@ -2525,7 +2507,7 @@ public class SimilarityAnnotation {
         this.duplicates.clear();
         this.incorrectFormat.clear();
         this.idsNotExistingInTaxa.clear();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -2579,7 +2561,7 @@ public class SimilarityAnnotation {
         List<RawAnnotationBean> sortedRawAnnots = new ArrayList<>(rawAnnots);
         Collections.sort(sortedRawAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedRawAnnots);
+        return log.traceExit(sortedRawAnnots);
     }
 
     /**
@@ -2696,7 +2678,7 @@ public class SimilarityAnnotation {
                     + annot + " - did not allow to generate a clean-transformed annotation."));
         }
         
-        return log.exit(rawAnnot);
+        return log.traceExit(rawAnnot);
     }
 
     private String logUberonNames(List<String> entityIds) {
@@ -2766,7 +2748,7 @@ public class SimilarityAnnotation {
                 .filter(a -> checkAnnotation(a, null, false))
                 .collect(Collectors.toSet());
         log.info("End of ERRORs are for discarded inferred annotations");
-        return log.exit(filteredInferredAnnots);
+        return log.traceExit(filteredInferredAnnots);
     }
     
     /**
@@ -2882,7 +2864,7 @@ public class SimilarityAnnotation {
         log.info("Done inferring annotations based on transformation_of relations, {} annotations inferred.", 
                 inferredAnnots.size());
         //the keyset is unmodifiable, wrap it into a new HashSet
-        return log.exit(new HashSet<>(inferredAnnots.keySet()));
+        return log.traceExit(new HashSet<>(inferredAnnots.keySet()));
     }
     
     /**
@@ -2920,7 +2902,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(filteredAnnots);
+        return log.traceExit(filteredAnnots);
     }
     
     /**
@@ -3019,7 +3001,7 @@ public class SimilarityAnnotation {
             }
             if (!toPropagate) {
                 log.trace("No propagation to perform.");
-                return log.exit(inferredAnnots);
+                return log.traceExit(inferredAnnots);
             }
             
             //important to order Uberon IDs for comparison to existing annotations
@@ -3032,7 +3014,7 @@ public class SimilarityAnnotation {
             toCompare.setEntityIds(transfOfEntityIds);
             if (existingAnnots.contains(toCompare)) {
                 log.trace("Propagated annotation already exists, not added.");
-                return log.exit(inferredAnnots);
+                return log.traceExit(inferredAnnots);
             }
             
             //OK, create the inferred annotation
@@ -3096,7 +3078,7 @@ public class SimilarityAnnotation {
             existingAnnots.add(existingAnnot);
         }
         
-        return log.exit(existingAnnots);
+        return log.traceExit(existingAnnots);
     }
 
     /**
@@ -3320,7 +3302,7 @@ public class SimilarityAnnotation {
 
         log.info("Done inferring annotations based on logical constraints, {} annotations inferred.", 
                 inferredAnnots.size());
-        return log.exit(inferredAnnots);
+        return log.traceExit(inferredAnnots);
     }
     
     /**
@@ -3363,7 +3345,7 @@ public class SimilarityAnnotation {
         
         log.trace("Done filtering inferred annotations, {} annotations removed", 
                 toRemove.size());
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -3497,7 +3479,7 @@ public class SimilarityAnnotation {
             entityIdsToAnnotsPerIntersectClass.putAll(newMappings);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -3566,7 +3548,7 @@ public class SimilarityAnnotation {
             if (intersectTaxCls.size() == 0) {
                 log.trace("No annotation for intersect class {} in related taxa of {}.", 
                         intersectClsId, taxId);
-                return log.exit(null);
+                return log.traceExit((Set<Set<CuratorAnnotationBean>>) null);
             }
             
             //now, we will only consider annotations to the leaf valid taxon
@@ -3595,7 +3577,7 @@ public class SimilarityAnnotation {
         //already have returned null in the previous loop.
         assert annotsPerIntersectClass.size() == intersectClassIds.size();
         
-        return log.exit(annotsPerIntersectClass);
+        return log.traceExit(annotsPerIntersectClass);
     }
     
     /**
@@ -3638,7 +3620,7 @@ public class SimilarityAnnotation {
         log.trace("Annotations per intersect classes: {}", annotsPerIntersectClass);
         assert intersectClassIds.size() == annotsPerIntersectClass.size();
         
-        return log.exit(annotsPerIntersectClass);
+        return log.traceExit(annotsPerIntersectClass);
     }
     
     /**
@@ -3668,7 +3650,7 @@ public class SimilarityAnnotation {
                 mappedAnnots.add(annot);
             }
         }
-        return log.exit(entityIdToAnnots);
+        return log.traceExit(entityIdToAnnots);
     }
     
     /**
@@ -3707,7 +3689,7 @@ public class SimilarityAnnotation {
                 taxToSelfAndAncestors.put(annot.getNcbiTaxonId(), selfAndAncestorsIds);
             }
         }
-        return log.exit(taxToSelfAndAncestors);
+        return log.traceExit(taxToSelfAndAncestors);
     }
     
     /**
@@ -3738,8 +3720,10 @@ public class SimilarityAnnotation {
                 log.trace("Already annotated, skip");
                 continue;
             }
-            for (OWLClassExpression clsExpr: 
-                EntitySearcher.getEquivalentClasses(cls, uberonOntWrapper.getAllOntologies())) {
+            Set<OWLClassExpression> clsExprs = uberonOntWrapper.getAllOntologies().stream()
+                    .flatMap(ont -> EntitySearcher.getEquivalentClasses(cls, ont).stream())
+                    .collect(Collectors.toSet());
+            for (OWLClassExpression clsExpr: clsExprs) {
                 if (clsExpr instanceof OWLObjectIntersectionOf) {
                     log.trace("Examining IntersectionOf expression: {}", clsExpr);
                     boolean allClassesAnnotated = true;
@@ -3768,7 +3752,7 @@ public class SimilarityAnnotation {
         
         log.debug("Done searching for IntersectionOf expressions, {} classes will be considered.", 
                 intersectMapping.size());
-        return log.exit(intersectMapping);
+        return log.traceExit(intersectMapping);
     }
     
     /**
@@ -3958,7 +3942,7 @@ public class SimilarityAnnotation {
             }
         }
         
-        return log.exit(posAndNegAnnot);
+        return log.traceExit(posAndNegAnnot);
     }
     
     /**
@@ -4083,7 +4067,7 @@ public class SimilarityAnnotation {
         Collections.sort(sortedSummaryAnnots, 
                 SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedSummaryAnnots);
+        return log.traceExit(sortedSummaryAnnots);
     }
 
     /**
@@ -4210,7 +4194,7 @@ public class SimilarityAnnotation {
                     "multiple evidence lines confidence code."));
         }
         
-        return log.exit(summaryConf);
+        return log.traceExit(summaryConf);
     }
 
     /**
@@ -4404,7 +4388,7 @@ public class SimilarityAnnotation {
                 new ArrayList<AncestralTaxaAnnotationBean>(newAnnots);
         Collections.sort(sortedAnnots, SimilarityAnnotationUtils.ANNOTATION_BEAN_COMPARATOR);
         
-        return log.exit(sortedAnnots);
+        return log.traceExit(sortedAnnots);
     }
 
     
@@ -4567,7 +4551,7 @@ public class SimilarityAnnotation {
 //                this.extractSummaryAnnotationsForTaxon(similarityFile, taxOntFile, taxonId);
 //        this.writeAnnotationsToFile(outputFile, fileType, summarizedAnnotations);
 //        
-//        log.exit();
+//        log.traceExit();
 //    }
 //    
 //    /**
@@ -4654,6 +4638,6 @@ public class SimilarityAnnotation {
 //            }
 //        }
 //        
-//        return log.exit(filteredAnnotations);
+//        return log.traceExit(filteredAnnotations);
 //    }
 }

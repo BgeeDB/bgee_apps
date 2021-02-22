@@ -42,7 +42,7 @@ public class JsonJobDisplay extends JsonParentDisplay implements JobDisplay {
             this.sendResponse("Job already gone, your job must have been already canceled.", null);
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override

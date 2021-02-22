@@ -83,17 +83,17 @@ public interface SummaryCallType extends CallType {
                 throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
-            log.exit();
+            log.traceExit();
         }
 
         @Override
         public Set<DataType> getAllowedDataTypes() {
-            log.entry();
+            log.traceEntry();
             switch (this) {
             case EXPRESSED:
-                return log.exit(CallType.Expression.EXPRESSED.getAllowedDataTypes());
+                return log.traceExit(CallType.Expression.EXPRESSED.getAllowedDataTypes());
             case NOT_EXPRESSED:
-                return log.exit(CallType.Expression.NOT_EXPRESSED.getAllowedDataTypes());
+                return log.traceExit(CallType.Expression.NOT_EXPRESSED.getAllowedDataTypes());
             default:
                 throw log.throwing(new IllegalStateException("CallType not supported: " 
                         + this));
@@ -102,8 +102,8 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public String getStringRepresentation() {
-            log.entry();
-            return log.exit(this.name());
+            log.traceEntry();
+            return log.traceExit(this.name());
         }
 
         /**
@@ -179,12 +179,12 @@ public interface SummaryCallType extends CallType {
                 throw log.throwing(new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
-            log.exit();
+            log.traceExit();
         }
 
         @Override
         public Set<DataType> getAllowedDataTypes() {
-            log.entry();
+            log.traceEntry();
             //For now, the same data types are allowed for all DiffExpressionSummary types.
             //So we just delegate to any type of DiffExpression CallType.
             //Just a check to make sure all allowed data types are still the same
@@ -195,13 +195,13 @@ public interface SummaryCallType extends CallType {
                 throw log.throwing(new IllegalStateException(
                         "Not all allowed data types are the same for all diff expression call types"));
             }
-            return log.exit(DiffExpression.DIFF_EXPRESSED.getAllowedDataTypes());
+            return log.traceExit(DiffExpression.DIFF_EXPRESSED.getAllowedDataTypes());
         }
 
         @Override
         public String getStringRepresentation() {
-            log.entry();
-            return log.exit(this.name());
+            log.traceEntry();
+            return log.traceExit(this.name());
         }
 
         /**

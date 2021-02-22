@@ -17,6 +17,7 @@ import org.bgee.model.expressiondata.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
+import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
@@ -106,151 +107,159 @@ public class ServiceFactory implements AutoCloseable {
             throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
         }
         this.daoManager = daoManager;
-        log.exit();
+        log.traceExit();
     }
     
     /**
      * @return  A newly instantiated {@code SpeciesService}
      */
     public SpeciesService getSpeciesService() {
-        log.entry();
-        return log.exit(new SpeciesService(this));
+        log.traceEntry();
+        return log.traceExit(new SpeciesService(this));
     }
 
     /**
      * @return  A newly instantiated {@code GeneService}
      */
     public GeneService getGeneService() {
-        log.entry();
-        return log.exit(new GeneService(this));
+        log.traceEntry();
+        return log.traceExit(new GeneService(this));
+    }
+    
+    /**
+     * @return  A newly instantiated {@code GeneHomologsService}
+     */
+    public GeneHomologsService getGeneHomologsService() {
+        log.traceEntry();
+        return log.traceExit(new GeneHomologsService(this));
     }
 
     /**
      * @return  A newly instantiated {@code RawDataService}
      */
     public RawDataService getRawDataService() {
-        log.entry();
-        return log.exit(new RawDataService(this));
+        log.traceEntry();
+        return log.traceExit(new RawDataService(this));
     }
 
     /**
      * @return  A newly instantiated {@code DevStageService}
      */
     public DevStageService getDevStageService() {
-        log.entry();
-        return log.exit(new DevStageService(this));
+        log.traceEntry();
+        return log.traceExit(new DevStageService(this));
     }
 
     /**
      * @return  A newly instantiated {@code DevStageSimilarityService}
      */
     public DevStageSimilarityService getDevStageSimilarityService() {
-        log.entry();
-        return log.exit(new DevStageSimilarityService(this));
+        log.traceEntry();
+        return log.traceExit(new DevStageSimilarityService(this));
     }
 
     /**
      * @return A newly instantiated {@code DownloadFileService}
      */
     public DownloadFileService getDownloadFileService() {
-        log.entry();
-        return log.exit(new DownloadFileService(this));
+        log.traceEntry();
+        return log.traceExit(new DownloadFileService(this));
     }
 
     /**
      * @return A newly instantiated {@code SpeciesDataGroupService}
      */
     public SpeciesDataGroupService getSpeciesDataGroupService() {
-        log.entry();
-        return log.exit(new SpeciesDataGroupService(this));
+        log.traceEntry();
+        return log.traceExit(new SpeciesDataGroupService(this));
     }
     
     /**
      * @return A newly instantiated {@code KeywordService}
      */
     public KeywordService getKeywordService() {
-    	log.entry();
-    	return log.exit(new KeywordService(this));
+    	log.traceEntry();
+    	return log.traceExit(new KeywordService(this));
     }
     
     /**
      * @return A newly instantiated {@code CallService}
      */
     public CallService getCallService() {
-        log.entry();
-        return log.exit(new CallService(this));
+        log.traceEntry();
+        return log.traceExit(new CallService(this));
     }
     
     /**
      * @return A newly instantiated {@code MultiSpeciesCallService}
      */
     public MultiSpeciesCallService getMultiSpeciesCallService() {
-        log.entry();
-        return log.exit(new MultiSpeciesCallService(this));
+        log.traceEntry();
+        return log.traceExit(new MultiSpeciesCallService(this));
     }
 
     /**
      * @return A newly instantiated {@code AnatEntityService}
      */
     public AnatEntityService getAnatEntityService() {
-        log.entry();
-        return log.exit(new AnatEntityService(this));
+        log.traceEntry();
+        return log.traceExit(new AnatEntityService(this));
     }
 
     /**
      * @return A newly instantiated {@code AnatEntitySimilarityService}
      */
     public AnatEntitySimilarityService getAnatEntitySimilarityService() {
-        log.entry();
-        return log.exit(new AnatEntitySimilarityService(this));
+        log.traceEntry();
+        return log.traceExit(new AnatEntitySimilarityService(this));
     }
     
     /**
      * @return A newly instantiated {@code OntologyService}
      */
     public OntologyService getOntologyService() {
-        log.entry();
-        return log.exit(new OntologyService(this));
+        log.traceEntry();
+        return log.traceExit(new OntologyService(this));
     }
     
     /**
      * @return  A newly instantiated {@code SourceService}
      */
     public SourceService getSourceService() {
-        log.entry();
-        return log.exit(new SourceService(this));
+        log.traceEntry();
+        return log.traceExit(new SourceService(this));
     }
     
     /**
      * @return  A newly instantiated {@code TaxonConstraintService}
      */
     public TaxonConstraintService getTaxonConstraintService() {
-        log.entry();
-        return log.exit(new TaxonConstraintService(this));
+        log.traceEntry();
+        return log.traceExit(new TaxonConstraintService(this));
     }
     
     /**
      * @return  A newly instantiated {@code TaxonService}
      */
     public TaxonService getTaxonService() {
-        log.entry();
-        return log.exit(new TaxonService(this));
+        log.traceEntry();
+        return log.traceExit(new TaxonService(this));
     }
     
     /**
      * @return A newly instantiated {@code ConditionService}
      */
     public ConditionService getConditionService() {
-        log.entry();
-        return log.exit(new ConditionService(this));
+        log.traceEntry();
+        return log.traceExit(new ConditionService(this));
     }
 
     /**
      * @return A newly instantiated {@code ConditionGraphService}
      */
     public ConditionGraphService getConditionGraphService() {
-        log.entry();
-        return log.exit(new ConditionGraphService(this));
+        log.traceEntry();
+        return log.traceExit(new ConditionGraphService(this));
     }
 
     //XXX: is there a way to get the BgeeProperties from the instantiation of the ServiceFactory?
@@ -259,11 +268,11 @@ public class ServiceFactory implements AutoCloseable {
     //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
     public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
         log.entry(props);
-        return log.exit(new GeneMatchResultService(props, this));
+        return log.traceExit(new GeneMatchResultService(props, this));
     }
     public GeneMatchResultService getGeneMatchResultService(SphinxClient sphinxClient) {
         log.entry(sphinxClient);
-        return log.exit(new GeneMatchResultService(sphinxClient, this));
+        return log.traceExit(new GeneMatchResultService(sphinxClient, this));
     }
 
     /**
@@ -279,8 +288,8 @@ public class ServiceFactory implements AutoCloseable {
      */
     @Override
     public void close() {
-        log.entry();
+        log.traceEntry();
         this.daoManager.close();
-        log.exit();
+        log.traceExit();
     }
 }

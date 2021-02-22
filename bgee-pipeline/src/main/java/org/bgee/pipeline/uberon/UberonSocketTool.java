@@ -6,11 +6,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -50,10 +47,6 @@ public class UberonSocketTool {
      *   <li>path to the file storing the Uberon developmental ontology.
      *   <li>path to the file storing the taxonomy ontology.
      *   <li>path to the taxon constraints file
-     *   <li>A {@code Map} where keys are {@code String}s corresponding to OBO-like IDs 
-     *   of {@code OWLClass}es, the associated value being a {@code Set} of {Integer}s 
-     *   allowing to override taxon constraints (see 
-     *   {@link org.bgee.pipeline.uberon.UberonDevStage#UberonDevStage(String, String, Map)})
      *   <li>the ID of the species to consider to retrieve stage ranges.
      *   <li>the port to connect the {@code ServerSocket} to.
      *   </ol>
@@ -77,11 +70,9 @@ public class UberonSocketTool {
         
         if (args[0].equalsIgnoreCase("stageRange")) {
             UberonSocketTool tool = new UberonSocketTool(new UberonDevStage(
-                    new OntologyUtils(args[1]), new OntologyUtils(args[2]), args[3], 
-                    CommandRunner.parseMapArgumentAsInteger(args[4]).entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<Integer>(e.getValue())))), 
-                    Integer.parseInt(args[5]), 
-                    new ServerSocket(Integer.parseInt(args[6])));
+                    new OntologyUtils(args[1]), new OntologyUtils(args[2]), args[3]), 
+                    Integer.parseInt(args[4]), 
+                    new ServerSocket(Integer.parseInt(args[5])));
             tool.startListening();
         } else if (args[0].equalsIgnoreCase("idMapping")) {
             UberonSocketTool tool = new UberonSocketTool(new Uberon(args[1]), 
@@ -92,7 +83,7 @@ public class UberonSocketTool {
                     "is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -260,7 +251,7 @@ public class UberonSocketTool {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -301,7 +292,7 @@ public class UberonSocketTool {
                     "start and end stages (" + params.get(0) + " - " + params.get(1) + ")"));
         }
         
-        return log.exit(output);
+        return log.traceExit(output);
     }
     
     /**
@@ -322,7 +313,7 @@ public class UberonSocketTool {
                 classes, this.uberonCommon.getOntologyUtils().getGenericPartOfProps());
         
         if (classes.size() == 1) {
-            return log.exit(this.uberonCommon.getOntologyUtils().getWrapper().getIdentifier(
+            return log.traceExit(this.uberonCommon.getOntologyUtils().getWrapper().getIdentifier(
                     classes.iterator().next()));
         } 
         if (log.isWarnEnabled()) {
@@ -334,6 +325,6 @@ public class UberonSocketTool {
             }
         }
         
-        return log.exit("");
+        return log.traceExit("");
     }
 }

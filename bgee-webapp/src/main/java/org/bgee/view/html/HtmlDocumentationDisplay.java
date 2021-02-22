@@ -35,8 +35,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      */
     //TODO: this needs to be generated automatically from the species table in database.
     public static String getGenomeMappingExplanation() {
-        log.entry();
-        return log.exit("Please note that "
+        log.traceEntry();
+        return log.traceExit("Please note that "
         + "for <i>P. paniscus</i> (bonobo) we use <i>P. troglodytes</i> genome (chimpanzee), "
         + "and that for <i>P. pygmaeus</i> (Bornean orangutan) we use <i>P. abelii</i> genome "
         + "(Sumatran orangutan). Only for those species (bonobo and Bornean orangutan), "
@@ -51,8 +51,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *          of the documentation, in HTML, and HTML escaped if necessary.
      */
     public static String getExprCallExplanation() {
-        log.entry();
-        return log.exit("<p>Bgee provides calls of presence/absence of expression. Each call "
+        log.traceEntry();
+        return log.traceExit("<p>Bgee provides calls of presence/absence of expression. Each call "
                 + "corresponds to a unique combination of a gene, an anatomical entity, "
                 + "and a life stage, with reported presence or absence of expression. "
                 + "Life stages describe development and aging. Only \"normal\" "
@@ -79,8 +79,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *          of the documentation, in HTML, and HTML escaped if necessary.
      */
     public static String getDiffExprCallExplanation() {
-        log.entry();
-        return log.exit("<p>Bgee provides calls of over-/under-expression. A call "
+        log.traceEntry();
+        return log.traceExit("<p>Bgee provides calls of over-/under-expression. A call "
                 + "corresponds to a gene, with significant variation of "
                 + "its level of expression, in an anatomical entity "
                 + "during a developmental stage, as compared to, either: i) other anatomical entities "
@@ -214,7 +214,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     
     @Override
     public void displayDocumentationHomePage() {
-        log.entry();
+        log.traceEntry();
 
         String version = this.getWebAppVersion();
         String releaseDoc = "Bgee ";
@@ -235,7 +235,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -245,7 +245,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
      *          formated in HTML and HTML escaped if necessary.
      */
     private String getFeatureDocumentationLogos() {
-        log.entry();
+        log.traceEntry();
         
         RequestParameters urlCallFilesGenerator = this.getNewRequestParameters();
         urlCallFilesGenerator.setPage(RequestParameters.PAGE_DOCUMENTATION);
@@ -277,7 +277,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
                 false, "Data sources of Bgee", "Bgee data sources", 
                 this.prop.getBgeeRootDirectory() + this.prop.getLogoImagesRootDirectory() + "bgee_access_logo.png", null));
 
-        return log.exit(logos.toString());
+        return log.traceExit(logos.toString());
     }
 
     //*******************************************************
@@ -285,7 +285,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
     //*******************************************************
     @Override
     public void displayCallDownloadFileDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Expression call download file documentation", "WebPage");
         
@@ -299,11 +299,11 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
     @Override
     public void displayRefExprDownloadFileDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         // TODO add schema.org property "WebPage" when the documentation will be finished
         this.startDisplay(PROCESSED_EXPR_VALUES_PAGE_NAME + " download file documentation");
@@ -318,12 +318,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayTopAnatDocumentation() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("TopAnat documentation", "WebPage");
         
@@ -337,12 +337,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayDataSets() {
-        log.entry();
+        log.traceEntry();
 
         this.startDisplay("Data sets into Bgee", "WebPage");
 
@@ -356,12 +356,12 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayFaq() {
-        log.entry();
+        log.traceEntry();
 
         this.startDisplay("Bgee FAQ", "FAQPage");
 
@@ -375,7 +375,7 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     //*******************************************************
@@ -385,17 +385,17 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
 //     * @return  the {@code String} that is the link of the back to the top.
 //     */
 //    private String getBackToTheTopLink() {
-//        log.entry();
-//        return log.exit("<a class='backlink' href='#sectionname'>Back to the top</a>");
+//        log.traceEntry();
+//        return log.traceExit("<a class='backlink' href='#sectionname'>Back to the top</a>");
 //    }
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("documentation.css");
-        log.exit();
+        log.traceExit();
     }
 }

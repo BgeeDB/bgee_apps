@@ -47,7 +47,7 @@ public class CsvJobDisplay extends CsvParentDisplay implements JobDisplay {
         }
         
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override

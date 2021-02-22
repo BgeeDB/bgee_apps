@@ -125,7 +125,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 		} catch (SQLException e) {
 			throw log.throwing(new DAOException(e));
 		}
-		return log.exit(mismatches);
+		return log.traceExit(mismatches);
 	}
 
 	private Set<Mismatch> loadMismatchesFromTSV(File file) throws Exception {
@@ -152,7 +152,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 				mapReader.close();
 			}
 		}
-		return log.exit(mismatches);
+		return log.traceExit(mismatches);
 	}
 
 	private static CellProcessor[] getProcessors() {
@@ -167,7 +167,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 			relationTaxonConstraints.addAll(Arrays.asList(constraints.split(",")).stream()
 					.filter(e -> !e.equals("NULL")).map(Integer::parseInt).collect(Collectors.toSet()));
 		}
-		return log.exit(relationTaxonConstraints);
+		return log.traceExit(relationTaxonConstraints);
 	}
 
 	private void persistMismatches(Set<Mismatch> mismatches) {
@@ -216,7 +216,7 @@ public class CorrectTaxonConstraints extends MySQLDAOUser {
 			this.closeDAO();
 		}
 
-		log.exit();
+		log.traceExit();
 	}
 }
 

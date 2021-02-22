@@ -39,7 +39,7 @@ public class CommandAnatomicalSimilarity extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
 
         final List<Integer> speciesList = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getSpeciesList()).orElse(new ArrayList<>()));
@@ -66,6 +66,6 @@ public class CommandAnatomicalSimilarity extends CommandParent {
         display.displayAnatSimilarityResult(allSpecies, speciesList, taxonOntology, 
                 anatEntityList, anatEntitySimilarityAnalysis);
 
-        log.exit();
+        log.traceExit();
     }
 }

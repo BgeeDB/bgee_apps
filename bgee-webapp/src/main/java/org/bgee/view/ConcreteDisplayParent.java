@@ -87,7 +87,7 @@ public abstract class ConcreteDisplayParent {
 
         this.headersAlreadySent = false;
         this.displayAlreadyStarted = false;
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -112,7 +112,7 @@ public abstract class ConcreteDisplayParent {
     {
         log.entry(stringToWrite);
         this.out.println(stringToWrite);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Write the provided {@code String} on the output of the {@code HttpServletResponse}
@@ -123,16 +123,16 @@ public abstract class ConcreteDisplayParent {
     {
         log.entry(stringToWrite);
         this.out.print(stringToWrite);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int)} with the status code set to {@code HttpServletResponse.SC_OK}.
      * @see #sendHeaders(int)
      */
     protected void sendHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_OK);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the {@code boolean} {@code noCache} argument 
@@ -149,7 +149,7 @@ public abstract class ConcreteDisplayParent {
     protected void sendHeaders(int statusCode) {
         log.entry(statusCode);
         this.sendHeaders(statusCode, this.getRequestParameters().isAnAjaxRequest());
-        log.exit();
+        log.traceExit();
     }
     /**
      * Send the headers of the response with the provided status code. The MIME content type is defined 
@@ -172,7 +172,7 @@ public abstract class ConcreteDisplayParent {
     protected void sendHeaders(int statusCode, boolean noCache) {
         log.entry(statusCode, noCache);
         if (this.response == null) {
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (!this.headersAlreadySent) {
             this.response.setStatus(statusCode);
@@ -188,7 +188,7 @@ public abstract class ConcreteDisplayParent {
             
             this.headersAlreadySent = true;
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -197,12 +197,12 @@ public abstract class ConcreteDisplayParent {
      * {@code getCharacterEncoding} on {@link #requestParameters}).
      */
     private void defineResponseContentTypeAndEncoding() {
-        log.entry();
+        log.traceEntry();
         log.trace("Set content type to {}", this.getContentType());
         this.response.setContentType(this.getContentType());
         log.trace("Set character encoding to {}", this.requestParameters.getCharacterEncoding());
         this.response.setCharacterEncoding(this.requestParameters.getCharacterEncoding());
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -211,9 +211,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     public void sendServiceUnavailableHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_SERVICE_UNAVAILABLE, true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
@@ -221,9 +221,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendBadRequestHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_BAD_REQUEST, true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
@@ -231,9 +231,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendTooManyRequeststHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(429, true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
@@ -241,9 +241,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendPageNotFoundHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_NOT_FOUND, true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegates to {@link #sendHeaders(int, boolean)} with the status code set to 
@@ -251,9 +251,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     protected void sendInternalErrorHeaders() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, true);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -262,9 +262,9 @@ public abstract class ConcreteDisplayParent {
      * @see #sendHeaders(int, boolean)
      */
     public void respondSuccessNoContent() {
-        log.entry();
+        log.traceEntry();
         this.sendHeaders(HttpServletResponse.SC_NO_CONTENT, true);
-        log.exit();
+        log.traceExit();
     }
     
     /**

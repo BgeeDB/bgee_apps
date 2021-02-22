@@ -106,7 +106,7 @@ public class CommandRPackage extends CommandParent {
     @Override
     public void processRequest() throws IllegalStateException, IOException, 
         PageNotFoundException, InvalidRequestException, ThreadAlreadyWorkingException, TooManyJobsException {
-        log.entry();
+        log.traceEntry();
         
 
         Job job = this.jobService.registerNewJob(this.user.getUUID().toString());
@@ -139,7 +139,7 @@ public class CommandRPackage extends CommandParent {
             job.release();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -149,7 +149,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results.
      */
     private void processGetExpressionCalls() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
 
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
@@ -226,7 +226,7 @@ public class CommandRPackage extends CommandParent {
                 attrs, null);
         display.displayCalls(requestedAttrs, callStream);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -236,7 +236,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results. 
      */
     private void processGetAnatEntities() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
         
         AnatEntityService aeService = this.serviceFactory.getAnatEntityService();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
@@ -273,7 +273,7 @@ public class CommandRPackage extends CommandParent {
         
         display.displayAnatEntities(requestedAttrs, ae);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -285,7 +285,7 @@ public class CommandRPackage extends CommandParent {
      */
     //TODO: test
     private void processGetAnatEntityRelations() throws InvalidRequestException, IOException {
-        log.entry();
+        log.traceEntry();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
         OntologyService ontologyService = this.serviceFactory.getOntologyService();
 
@@ -323,7 +323,7 @@ public class CommandRPackage extends CommandParent {
                 .getAsSingleSpeciesOntology(speciesId);
         display.displayAERelations(requestedAttrs, anatEntityOnt);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -333,7 +333,7 @@ public class CommandRPackage extends CommandParent {
      * @throws IOException              In case of issue when writing results. 
      */
     private void processGetAllSpecies() throws IOException {
-        log.entry();
+        log.traceEntry();
         
         SpeciesService spService = this.serviceFactory.getSpeciesService();
         RPackageDisplay display = this.viewFactory.getRPackageDisplay();
@@ -371,7 +371,7 @@ public class CommandRPackage extends CommandParent {
         
         display.displaySpecies(requestedAttrs, species);
         
-        log.exit();
+        log.traceExit();
     }
     
     private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){
@@ -393,7 +393,7 @@ public class CommandRPackage extends CommandParent {
                             "Attribute parameter not supported: " + rqAttr));
             } 
         }
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
     
     private static Set<CallService.Attribute> convertRqAttrsToCallsAttrs(List<String> rqAttrs){
@@ -418,7 +418,7 @@ public class CommandRPackage extends CommandParent {
                             "Attribute parameter not supported: " + rqAttr));
             } 
         }
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
     
     private static void checkRelationAttrs(List<String> rqAttrs){

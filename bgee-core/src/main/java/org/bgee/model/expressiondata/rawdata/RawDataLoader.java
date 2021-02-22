@@ -55,7 +55,7 @@ public class RawDataLoader {
      *          it means that there were no data of this type for the requested parameters.
      */
     public Stream<AffymetrixProbeset> loadAffymetrixProbesets() {
-        log.entry();
+        log.traceEntry();
         //TODO: to continue
         return null;
     }

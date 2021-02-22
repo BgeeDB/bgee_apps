@@ -63,7 +63,7 @@ public abstract class ViewFactory {
         this.response = response;
         this.requestParameters = requestParameters;
         this.prop = prop;
-        log.exit();
+        log.traceExit();
     }
 
     /**                             

@@ -29,7 +29,7 @@ import org.bgee.pipeline.MySQLDAOUser;
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 13
+ * @version Bgee 14 Sep. 2020
  * @since Bgee 13
  */
 public abstract class GenerateDownloadFile extends MySQLDAOUser {
@@ -70,7 +70,11 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String ANAT_ENTITY_NAME_COLUMN_NAME = "Anatomical entity name";
 
-    public final static String CALL_TYPE_COLUMN_NAME_SUFFIX  = " data";
+    public final static String CALL_TYPE_COLUMN_NAME_SUFFIX  = " expression";
+    public final static String CALL_QUALITY_COLUMN_NAME_SUFFIX  = " call quality";
+    public final static String EXPRESSION_RANK_COLUMN_NAME_SUFFIX  = " expression rank";
+    public final static String EXPRESSION_SCORE_COLUMN_NAME_SUFFIX  = " expression score";
+    public final static String WEIGHT_COLUMN_NAME_SUFFIX  = " weight for expression rank and score";
 
     public final static String PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX =
             " experiment count showing expression of this gene in this condition or"
@@ -99,10 +103,10 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = "Affymetrix" + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
-     * A {@code String} that is the name of the column containing call quality found 
-     * with Affymetrix experiment, in the download file.
+     * A {@code String} that is the name of the column containing call quality found with
+     * Affymetrix experiment, in the download file.
      */
-    public final static String AFFYMETRIX_CALL_QUALITY_COLUMN_NAME = "Affymetrix call quality";
+    public final static String AFFYMETRIX_QUAL_COLUMN_NAME = "Affymetrix" + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing count of Affymetrix experiments
      * showing expression of this gene in this condition or in sub-conditions with a high quality,
@@ -137,12 +141,35 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME = 
             OBSERVED_DATA_COLUMN_NAME_PREFIX + "Affymetrix" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression rank from Affymetrix data in the download file.
+     */
+    public final static String AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME = "Affymetrix"
+             + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression score from Affymetrix data in the download file.
+     */
+    public final static String AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME = "Affymetrix"
+             + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing in the download file
+     * the weight for Affymetrix data when computing mean rank/score.
+     */
+    public final static String AFFYMETRIX_WEIGHT_COLUMN_NAME = "Affymetrix"
+             + WEIGHT_COLUMN_NAME_SUFFIX;
     
     /**
      * A {@code String} that is the name of the column containing expression/no-expression found
      * with EST experiment, in the download file.
      */
     public final static String EST_DATA_COLUMN_NAME = "EST" + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing call quality found with
+     * EST experiment, in the download file.
+     */
+    public final static String EST_QUAL_COLUMN_NAME = "EST" + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing count of EST libraries
      * showing expression of this gene in this condition or in sub-conditions with a high quality,
@@ -163,12 +190,35 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String EST_OBSERVED_DATA_COLUMN_NAME =
             OBSERVED_DATA_COLUMN_NAME_PREFIX + "EST" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression rank from EST data in the download file.
+     */
+    public final static String EST_EXPRESSION_RANK_COLUMN_NAME = "EST"
+             + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression score from EST data in the download file.
+     */
+    public final static String EST_EXPRESSION_SCORE_COLUMN_NAME = "EST"
+             + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing in the download file
+     * the weight for EST data when computing mean rank/score.
+     */
+    public final static String EST_WEIGHT_COLUMN_NAME = "EST"
+             + WEIGHT_COLUMN_NAME_SUFFIX;
 
     /**
      * A {@code String} that is the name of the column containing expression/no-expression
      * found with <em>in situ</em> experiment, in the download file.
      */
     public final static String IN_SITU_DATA_COLUMN_NAME = "In situ hybridization" + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing call quality found with
+     * in situ hybridization experiment, in the download file.
+     */
+    public final static String IN_SITU_QUAL_COLUMN_NAME = "In situ hybridization" + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing count of <em>in situ</em> experiments
      * showing expression of this gene in this condition or in sub-conditions with a high quality,
@@ -203,6 +253,24 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String IN_SITU_OBSERVED_DATA_COLUMN_NAME =
             OBSERVED_DATA_COLUMN_NAME_PREFIX + "in situ hybridization" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression rank from in situ hybridization data in the download file.
+     */
+    public final static String IN_SITU_EXPRESSION_RANK_COLUMN_NAME = "In situ hybridization"
+             + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression score from in situ hybridization data in the download file.
+     */
+    public final static String IN_SITU_EXPRESSION_SCORE_COLUMN_NAME = "In situ hybridization"
+             + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing in the download file
+     * the weight for in situ hybridization data when computing mean rank/score.
+     */
+    public final static String IN_SITU_WEIGHT_COLUMN_NAME = "In situ hybridization"
+             + WEIGHT_COLUMN_NAME_SUFFIX;
 
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
@@ -210,10 +278,10 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String RNASEQ_DATA_COLUMN_NAME = "RNA-Seq" + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
-     * A {@code String} that is the name of the column containing call quality found 
-     * with RNA-Seq experiment, in the download file.
+     * A {@code String} that is the name of the column containing call quality found with
+     * RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_CALL_QUALITY_COLUMN_NAME = "RNA-Seq call quality";
+    public final static String RNASEQ_QUAL_COLUMN_NAME = "RNA-Seq" + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing count of RNA-Seq experiments
      * showing expression of this gene in this condition or in sub-conditions with a high quality,
@@ -248,6 +316,24 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String RNASEQ_OBSERVED_DATA_COLUMN_NAME =
             OBSERVED_DATA_COLUMN_NAME_PREFIX + "RNA-Seq" + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression rank from RNA-Seq data in the download file.
+     */
+    public final static String RNASEQ_EXPRESSION_RANK_COLUMN_NAME = "RNA-Seq"
+             + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing
+     * the expression score from RNA-Seq data in the download file.
+     */
+    public final static String RNASEQ_EXPRESSION_SCORE_COLUMN_NAME = "RNA-Seq"
+             + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+    /**
+     * A {@code String} that is the name of the column containing in the download file
+     * the weight for RNA-Seq data when computing mean rank/score.
+     */
+    public final static String RNASEQ_WEIGHT_COLUMN_NAME = "RNA-Seq"
+             + WEIGHT_COLUMN_NAME_SUFFIX;
 
     /**
      * A {@code String} that is the name of the column containing whether the call include
@@ -266,12 +352,12 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     public final static String QUALITY_COLUMN_NAME = "Call quality";
     /**
-     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * A {@code String} that is the name of the column containing the expression score,
      * in the download file.
      */
     public final static String EXPRESSION_SCORE_COLUMN_NAME = "Expression score";
     /**
-     * A {@code String} that is the name of the column containing the merged quality of the call,
+     * A {@code String} that is the name of the column containing the expression rank,
      * in the download file.
      */
     public final static String EXPRESSION_RANK_COLUMN_NAME = "Expression rank";
@@ -435,7 +521,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
                     "\" does not correspond to any element of " + fileType.getName()));
         }
         
-        return log.exit(fileTypes);
+        return log.traceExit(fileTypes);
     }
 
     /**
@@ -449,12 +535,12 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertDataStateToString(DataState dataState) {
         log.entry(dataState);
         if (DataState.HIGHQUALITY.equals(dataState)) {
-            return log.exit(HIGH_QUALITY_TEXT);
+            return log.traceExit(HIGH_QUALITY_TEXT);
         }
         if (DataState.LOWQUALITY.equals(dataState)) {
-            return log.exit(LOW_QUALITY_TEXT);
+            return log.traceExit(LOW_QUALITY_TEXT);
         }
-        return log.exit(NA_VALUE);
+        return log.traceExit(NA_VALUE);
     }
 
     /**
@@ -467,12 +553,12 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static DataState convertStringToDataState(String string) {
         log.entry(string);
         if (string.equals(HIGH_QUALITY_TEXT)) {
-            return log.exit(DataState.HIGHQUALITY);
+            return log.traceExit(DataState.HIGHQUALITY);
         }
         if (string.equals(LOW_QUALITY_TEXT)) {
-            return log.exit(DataState.LOWQUALITY);
+            return log.traceExit(DataState.LOWQUALITY);
         }
-        return log.exit(DataState.NODATA);
+        return log.traceExit(DataState.NODATA);
     }
 
     /**
@@ -491,9 +577,9 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         }
         switch (sum) {
         case EXPRESSED:
-            return log.exit(PRESENT_TEXT);
+            return log.traceExit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ABSENT_TEXT);
+            return log.traceExit(ABSENT_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized ExpressionSummary: " + sum);
         }
@@ -511,13 +597,13 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertExpressionToString(Expression expr) {
         log.entry(expr);
         if (expr == null) {
-            return log.exit(NO_DATA_VALUE);
+            return log.traceExit(NO_DATA_VALUE);
         }
         switch (expr) {
         case EXPRESSED:
-            return log.exit(PRESENT_TEXT);
+            return log.traceExit(PRESENT_TEXT);
         case NOT_EXPRESSED:
-            return log.exit(ABSENT_TEXT);
+            return log.traceExit(ABSENT_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized Expression: " + expr);
         }
@@ -535,15 +621,15 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertSummaryQualityToString(SummaryQuality qual) {
         log.entry(qual);
         if (qual == null) {
-            return log.exit(NA_VALUE);
+            return log.traceExit(NA_VALUE);
         }
         switch (qual) {
         case GOLD:
-            return log.exit(GOLD_QUALITY_TEXT);
+            return log.traceExit(GOLD_QUALITY_TEXT);
         case SILVER:
-            return log.exit(SILVER_QUALITY_TEXT);
+            return log.traceExit(SILVER_QUALITY_TEXT);
         case BRONZE:
-            return log.exit(BRONZE_QUALITY_TEXT);
+            return log.traceExit(BRONZE_QUALITY_TEXT);
         default:
             throw new IllegalArgumentException("Unrecognized SummaryQuality: " + qual);
         }
@@ -559,11 +645,11 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         log.entry(string);
         switch (string) {
             case GOLD_QUALITY_TEXT:
-                return log.exit(SummaryQuality.GOLD);
+                return log.traceExit(SummaryQuality.GOLD);
             case SILVER_QUALITY_TEXT:
-                return log.exit(SummaryQuality.SILVER);
+                return log.traceExit(SummaryQuality.SILVER);
             case BRONZE_QUALITY_TEXT:
-                return log.exit(SummaryQuality.BRONZE);
+                return log.traceExit(SummaryQuality.BRONZE);
         }
         throw new IllegalArgumentException("Unrecognized summary quality text: " + string);
     }
@@ -577,9 +663,9 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     protected static String convertObservedDataToString(Boolean includingObservedData) {
         log.entry(includingObservedData);
         if (Boolean.TRUE.equals(includingObservedData)) {
-            return log.exit(ObservedData.OBSERVED.getStringRepresentation());
+            return log.traceExit(ObservedData.OBSERVED.getStringRepresentation());
         }
-        return log.exit(ObservedData.NOT_OBSERVED.getStringRepresentation());
+        return log.traceExit(ObservedData.NOT_OBSERVED.getStringRepresentation());
     }
 
     /**
@@ -702,7 +788,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
         row.put(STAGE_ID_COLUMN_NAME, stageId);
         row.put(STAGE_NAME_COLUMN_NAME, stageName);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -713,7 +799,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      */
     protected String formatString(String word) {
         log.entry(word);
-        return log.exit(word.replaceAll(" ", "_"));
+        return log.traceExit(word.replaceAll(" ", "_"));
     }
     
     /**
@@ -740,7 +826,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -764,6 +850,6 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

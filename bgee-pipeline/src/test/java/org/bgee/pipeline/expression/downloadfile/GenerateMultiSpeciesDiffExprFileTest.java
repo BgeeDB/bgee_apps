@@ -705,6 +705,6 @@ public class GenerateMultiSpeciesDiffExprFileTest extends GenerateDownloadFileTe
 //        diffExprParams.addAllSpeciesIds(speciesIds);
 //        diffExprParams.setComparisonFactor(factor);
 //
-//        return log.exit(diffExprParams);
+//        return log.traceExit(diffExprParams);
 //    }
 }

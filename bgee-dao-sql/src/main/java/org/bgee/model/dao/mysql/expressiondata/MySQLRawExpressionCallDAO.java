@@ -38,7 +38,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
     private final static Map<String, RawExpressionCallDAO.Attribute> colToAttrMap;
 
     static {
-        log.entry();
+        log.traceEntry();
         Map<String, RawExpressionCallDAO.Attribute> colToAttributesMap = new HashMap<>();
         colToAttributesMap.put(EXPR_ID_FIELD, RawExpressionCallDAO.Attribute.ID);
         colToAttributesMap.put(MySQLGeneDAO.BGEE_GENE_ID, RawExpressionCallDAO.Attribute.BGEE_GENE_ID);
@@ -46,7 +46,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                 RawExpressionCallDAO.Attribute.CONDITION_ID);
  
         colToAttrMap = Collections.unmodifiableMap(colToAttributesMap);
-        log.exit();
+        log.traceExit();
     }
 
     public MySQLRawExpressionCallDAO(MySQLDAOManager manager) throws IllegalArgumentException {
@@ -75,7 +75,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.exit(new MySQLRawExpressionCallTOResultSet(stmt));
+            return log.traceExit(new MySQLRawExpressionCallTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -103,7 +103,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
         @Override
         protected RawExpressionCallDAO.RawExpressionCallTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
 
@@ -124,7 +124,7 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new RawExpressionCallTO(id, bgeeGeneId, conditionId));
+                return log.traceExit(new RawExpressionCallTO(id, bgeeGeneId, conditionId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

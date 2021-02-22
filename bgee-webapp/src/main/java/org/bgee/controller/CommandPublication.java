@@ -45,7 +45,7 @@ public class CommandPublication extends CommandParent{
 
     @Override
     public void processRequest() throws IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
         
         PublicationDisplay display = this.viewFactory.getPublicationDisplay();
         
@@ -58,6 +58,6 @@ public class CommandPublication extends CommandParent{
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

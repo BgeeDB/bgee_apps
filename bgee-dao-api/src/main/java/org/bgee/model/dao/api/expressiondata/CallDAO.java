@@ -122,7 +122,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
              */
             public static final DataState convertToDataState(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(DataState.class, representation));
+                return log.traceExit(TransferObject.convert(DataState.class, representation));
             }
             
             /**
@@ -283,7 +283,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
          *                  when setting parameters in a query. 
          */
         protected EnumMap<T, DataState> extractFilteringDataTypes(Class<T> attributeType) {
-            log.entry();
+            log.traceEntry();
             
             final Map<T, DataState> typesToStates = this.extractDataTypesToDataStates();
             
@@ -295,11 +295,11 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
                 (states.size() == 2 && states.contains(null) && 
                 states.contains(DataState.NODATA))) {
                 
-                return log.exit(new EnumMap<>(attributeType));
+                return log.traceExit(new EnumMap<>(attributeType));
             }
             
             //otherwise, get the data types with a filtering requested
-            return log.exit(typesToStates.entrySet().stream()
+            return log.traceExit(typesToStates.entrySet().stream()
                     .filter(entry -> entry.getValue() != null && entry.getValue() != DataState.NODATA)
                     .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), 
                             (k, v) -> {throw log.throwing(

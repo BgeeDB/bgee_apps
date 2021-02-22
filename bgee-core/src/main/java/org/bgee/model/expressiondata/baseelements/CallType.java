@@ -75,8 +75,9 @@ public interface CallType {
                 }
                 break;
             case NOT_EXPRESSED:
-                //for no-expression calls, propagation from parent anat. entities.
-                if (PropagationState.DESCENDANT.equals(propState)) {
+                //As of Bgee 14.2, no propagation of absent calls at all.
+                if (PropagationState.DESCENDANT.equals(propState) ||
+                        PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;
@@ -91,13 +92,13 @@ public interface CallType {
                 throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
-            log.exit();
+            log.traceExit();
         }
         
         @Override
         public String getStringRepresentation() {
-            log.entry();
-            return log.exit(this.name());
+            log.traceEntry();
+            return log.traceExit(this.name());
         }
         
         /**
@@ -172,12 +173,12 @@ public interface CallType {
                 throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
                         + "is incorrect for the CallType " + this + ": " + propState));
             }
-            log.exit();
+            log.traceExit();
         }
         @Override
         public String getStringRepresentation() {
-            log.entry();
-            return log.exit(this.name());
+            log.traceEntry();
+            return log.traceExit(this.name());
         }
         /**
          * Convert the {@code String} representation of a call type from differential expression

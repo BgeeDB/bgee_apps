@@ -177,7 +177,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         //*** Gene calls ***
         ExpressionCall gene1Call1 = new ExpressionCall(gene1, cond2_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("1"), new BigDecimal("1"),
+                null, new ExpressionLevelInfo(new BigDecimal("1"), new BigDecimal("1"), new BigDecimal("1"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene1MinMaxRanks,
                                         new BigDecimal("1")),
@@ -188,7 +188,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                                 anat2MinMaxRanks)));
         ExpressionCall gene1Call2 = new ExpressionCall(gene1, cond1_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("10.1"), new BigDecimal("99.98319"),
+                null, new ExpressionLevelInfo(new BigDecimal("10.1"), new BigDecimal("99.98319"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene1MinMaxRanks,
                                         new BigDecimal("10.1")),
@@ -199,7 +199,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                                 anat1MinMaxRanks)));
         ExpressionCall gene1Call3 = new ExpressionCall(gene1, cond3_1, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("200"), new BigDecimal("99.63242"),
+                null, new ExpressionLevelInfo(new BigDecimal("200"), new BigDecimal("99.63242"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene1MinMaxRanks,
                                         new BigDecimal("200")),
@@ -211,7 +211,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         //not expressed call, should not have been seen in the anat. entity calls
         ExpressionCall gene1Call4 = new ExpressionCall(gene1, cond3_2, null, 
                 ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, 
-                null, new ExpressionLevelInfo(new BigDecimal("500"), new BigDecimal("99.07828"),
+                null, new ExpressionLevelInfo(new BigDecimal("500"), new BigDecimal("99.07828"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene1MinMaxRanks,
                                         new BigDecimal("500")),
@@ -222,7 +222,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                                 anat3MinMaxRanks)));
         ExpressionCall gene2Call1 = new ExpressionCall(gene2, cond1_2, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("100"), new BigDecimal("99.81713"),
+                null, new ExpressionLevelInfo(new BigDecimal("100"), new BigDecimal("99.81713"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene2MinMaxRanks,
                                         new BigDecimal("100")),
@@ -233,7 +233,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                                 anat1MinMaxRanks)));
         ExpressionCall gene2Call2 = new ExpressionCall(gene2, cond3_3, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("1000"), new BigDecimal("98.15472"),
+                null, new ExpressionLevelInfo(new BigDecimal("1000"), new BigDecimal("98.15472"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene2MinMaxRanks,
                                         new BigDecimal("1000")),
@@ -244,7 +244,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                                 anat3MinMaxRanks)));
         ExpressionCall gene3Call1 = new ExpressionCall(gene3, cond1_3, null, 
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
-                null, new ExpressionLevelInfo(new BigDecimal("300"), new BigDecimal("99.44771"),
+                null, new ExpressionLevelInfo(new BigDecimal("300"), new BigDecimal("99.44771"), new BigDecimal("20000"),
                         new QualitativeExpressionLevel<>(
                                 ExpressionLevelCategory.getExpressionLevelCategory(gene3MinMaxRanks,
                                         new BigDecimal("300")),
@@ -274,7 +274,7 @@ public class GenerateOncoMXFileTest extends TestAncestor {
                 createdFolder.getPath());
 
         //Read the generated file to check it's correct
-        String fileName = "Homo_sapiens_devStage1_devStage2_RNA_SEQ.tsv";
+        String fileName = "Homo_sapiens_devStage1_devStage2_AFFYMETRIX_RNA_SEQ.tsv";
         File file = new File(createdFolder.getPath(), fileName);
         assertTrue("File  not generated", file.exists());
 

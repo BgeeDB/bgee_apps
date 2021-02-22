@@ -54,7 +54,7 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     public void sendGeneListReponse(LinkedHashMap<String, Object> data, String msg) {
         log.entry(data, msg);        
         this.sendResponse(msg, data);
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -67,13 +67,13 @@ public class JsonTopAnatDisplay extends JsonParentDisplay implements TopAnatDisp
     public void sendTrackingJobResponse(LinkedHashMap<String, Object> data, String msg) {
         log.entry(data, msg);        
         this.sendResponse(msg, data);
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void sendResultResponse(LinkedHashMap<String, Object> data, String msg) {
         log.entry(data, msg);        
         this.sendResponse(msg, data);
-        log.exit();
+        log.traceExit();
     }
 }

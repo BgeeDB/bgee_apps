@@ -95,8 +95,8 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      * @see #GENE_ID_COL_NAME
      */
     protected static String getGeneIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of gene from Ensembl. </p><p>" 
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifier of gene from Ensembl. </p><p>" 
                 + HtmlDocumentationDisplay.getGenomeMappingExplanation() + "</p>");
     }
     /**
@@ -106,8 +106,8 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      * @see #STAGE_ID_COL_NAME
      */
     protected static String getStageIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the developmental stage, from the Uberon ontology.</p>");
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifier of the developmental stage, from the Uberon ontology.</p>");
     }
     /**
      * @param colNumber An {@code int} that is the index of the column containing 
@@ -119,8 +119,8 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      * @see #STAGE_NAME_COL_NAME
      */
     protected static String getStageNameColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Name of the developmental stage defined by <code>" 
+        log.traceEntry();
+        return log.traceExit("<p>Name of the developmental stage defined by <code>" 
         + STAGE_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
     }
     /**
@@ -130,8 +130,8 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      * @see #ANAT_ENTITY_ID_COL_NAME
      */
     protected static String getAnatEntityIdColDescription() {
-        log.entry();
-        return log.exit("<p>Unique identifier of the anatomical entity, from the Uberon ontology.</p>");
+        log.traceEntry();
+        return log.traceExit("<p>Unique identifier of the anatomical entity, from the Uberon ontology.</p>");
     }
     /**
      * @param colNumber An {@code int} that is the index of the column containing 
@@ -143,8 +143,8 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      * @see #ANAT_ENTITY_NAME_COL_NAME
      */
     protected static String getAnatEntityNameColDescription(int colNumber) {
-        log.entry();
-        return log.exit("<p>Name of the anatomical entity defined by <code>" 
+        log.traceEntry();
+        return log.traceExit("<p>Name of the anatomical entity defined by <code>" 
         + ANAT_ENTITY_ID_COL_NAME + "</code> (column " + colNumber + ")</p>");
     }
 

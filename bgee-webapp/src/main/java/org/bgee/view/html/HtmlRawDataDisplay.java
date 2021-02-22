@@ -56,7 +56,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
     @Override
     public void displayRawCallHomePage() {
-        log.entry();
+        log.traceEntry();
         
         // TODO add schema.org properties 
         
@@ -74,7 +74,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         this.writeln(this.getRawDataSearchBox());
 
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -114,7 +114,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         box.append("    </div>");
         box.append("</div>");
 
-        return log.exit(box.toString());
+        return log.traceExit(box.toString());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     private void writeAffymetrixArticle(String filter, Stream<AffymetrixProbeset> affymetrixProbesets) {
@@ -215,7 +215,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
         this.writeln("</article>");
 
-        log.exit();
+        log.traceExit();
     }
     private void writeInSituArticle(String filter, Stream<InSituSpot> inSituSpots) {
         log.entry(filter, inSituSpots);
@@ -294,14 +294,14 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
         this.writeln("</article>");
 
-        log.exit();
+        log.traceExit();
     }
 
     private void writeExpTableStart(Experiment<?> experiment, String previousExpId, String expTitle, String assayName) {
         log.entry(experiment, previousExpId, expTitle);
 
         if (experiment.getId().equals(previousExpId)) {
-            log.exit();
+            log.traceExit();
             return;
         }
 
@@ -325,11 +325,11 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         this.writeln("      <td class='col-xs-11'>");
         this.writeln("        <table class='assay'>");
 
-        log.exit();
+        log.traceExit();
     }
 
     private void writeExpTableEnd() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("        </table>"); // close table assay
         this.writeln("      </td>");
@@ -337,7 +337,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         this.writeln("  </table>"); // close table experiment
         this.writeln("</section>");
         
-        log.exit();
+        log.traceExit();
     }
     
     private void writeAnnotatedAssayTableStart(AffymetrixChip assay, String previousAssayId,
@@ -345,7 +345,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         log.entry(assay, previousAssayId, callSourceColNames);
 
         if (assay.getId().equals(previousAssayId)) {
-            log.exit();
+            log.traceExit();
             return;
         }
 
@@ -379,11 +379,11 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         this.writeln("          </thead>");
         this.writeln("          <tbody>");
 
-        log.exit();
+        log.traceExit();
     }
     
     private void writeAssayTableEnd() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("          </tbody>");
         this.writeln("        </table>");  // close call-source
@@ -392,7 +392,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         this.writeln("  </td>");
         this.writeln("</tr>");
         
-        log.exit();
+        log.traceExit();
     }
     
     private String getGeneLink(Gene gene) {
@@ -403,7 +403,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         urlGenePage.setGeneId(gene.getEnsemblGeneId());
         urlGenePage.setSpeciesId(gene.getSpecies().getId());
         
-        return log.exit("<a href='" + urlGenePage.getRequestURL() + "'>" + gene.getEnsemblGeneId() + "</a>");
+        return log.traceExit("<a href='" + urlGenePage.getRequestURL() + "'>" + gene.getEnsemblGeneId() + "</a>");
     }
 
 
@@ -417,7 +417,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
     private String getDevStageField(RawDataAnnotation annotation) {
         log.entry(annotation);
         // FIXME define dev. stage url        
-        return log.exit(annotation.getRawDataCondition().getDevStage().getName() +
+        return log.traceExit(annotation.getRawDataCondition().getDevStage().getName() +
                 " [<a href='FIXME" +
                 this.urlEncode(annotation.getRawDataCondition().getDevStageId().replace(':', '_'))
                 + "' target='_blank' rel='noopener'>" +annotation.getRawDataCondition().getDevStageId() + "</a>]");
@@ -425,27 +425,27 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
     private String getSourceEvidenceLink(Source source, String id) {
         log.entry(source, id);
-        return log.exit("<a href='" + source.getEvidenceUrl().replace("[evidence_id]", String.valueOf(id))
+        return log.traceExit("<a href='" + source.getEvidenceUrl().replace("[evidence_id]", String.valueOf(id))
                 + "' target='_blank' rel='noopener'>" + id + "</a>");
     }
     
     private String getSourceExperimentField(Experiment exp) {
         log.entry(exp);
-        return log.exit(exp.getDataSource().getName() + " [<a href='" + 
+        return log.traceExit(exp.getDataSource().getName() + " [<a href='" + 
                 exp.getDataSource().getExperimentUrl().replace("[experiment_id]", String.valueOf(exp.getId()))
                 + "' target='_blank' rel='noopener'>" + exp.getId() + "</a>]");
     }
     
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
 
         this.includeCss("raw_data.css");
 
         //we need to add the Bgee CSS files at the end, to override CSS file from external libs
         super.includeCss();
 
-        log.exit();
+        log.traceExit();
     }
 
 }

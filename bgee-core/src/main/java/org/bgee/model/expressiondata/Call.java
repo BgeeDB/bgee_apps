@@ -166,7 +166,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     max = a[0];
                     min = b[0];
                 }
-                return log.exit(Math.pow(max, 1.03)/min);
+                return log.traceExit(Math.pow(max, 1.03)/min);
             }
         }
         
@@ -189,7 +189,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static final double DEFAULT_DISTANCE_THRESHOLD = 1.9;
 
-        public static final int MAX_EXPRESSION_SCORE = 1000;
+        public static final int MAX_EXPRESSION_SCORE = 100;
 
 
         /**
@@ -215,11 +215,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 Collection<ExpressionCall> calls, final ConditionGraph conditionGraph) {
             log.entry(calls, conditionGraph);
             if (calls == null) {
-                return log.exit(null);
+                return log.traceExit((List<ExpressionCall>) null);
             }
             Set<ExpressionCall> callsToSort = new HashSet<>(calls);
             if (callsToSort.size() <= 1) {
-                return log.exit(new ArrayList<>(callsToSort));
+                return log.traceExit(new ArrayList<>(callsToSort));
             }
 
             long startOrderingTimeInMs = System.currentTimeMillis();
@@ -268,7 +268,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     .collect(Collectors.toList());
 
             log.debug("Calls sorted in {} ms", System.currentTimeMillis() - startOrderingTimeInMs);
-            return log.exit(sortedCalls);
+            return log.traceExit(sortedCalls);
         }
 
         /**
@@ -304,7 +304,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             List<ExpressionCall> equalRankCalls = new ArrayList<>(equalRankCallsToOrder);
 
             if (equalRankCalls.size() <= 1) {
-                return log.exit(equalRankCalls);
+                return log.traceExit(equalRankCalls);
             }
 
             //First, we sort the equal calls by their Condition, to have a stable sorting,
@@ -314,7 +314,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
             //If we don't need to order based on relations between Conditions, we stop here
             if (graph == null) {
-                return log.exit(equalRankCalls);
+                return log.traceExit(equalRankCalls);
             }
 
             //Now, we do our best to order the calls based on the graph relations between conditions
@@ -372,7 +372,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 }
                 index1++;
             }
-            return log.exit(equalRankCalls);
+            return log.traceExit(equalRankCalls);
         }
         
         /**
@@ -402,7 +402,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             log.entry(calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using a ConditionGraph
-            return log.exit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
+            return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
                     conditionGraph));
             
         }
@@ -486,7 +486,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             }
             
             log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
-            return log.exit(redundantCalls);
+            return log.traceExit(redundantCalls);
         }
         
         /**
@@ -513,7 +513,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
             //for the computations, we need a List sorted by rank, but we don't need to take 
             //relations between Conditions into account
-            return log.exit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null),
+            return log.traceExit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null),
                     method, distanceThreshold));
             
         }
@@ -600,7 +600,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             }
             log.trace("Calls clustered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
             assert clustering != null;
-            return log.exit(clustering);
+            return log.traceExit(clustering);
         }
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
@@ -674,7 +674,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             }
             log.debug("Secondary DBScan clustering: {}", callsToGroup);
             
-            return log.exit(callsToGroup);
+            return log.traceExit(callsToGroup);
         }
         /**
          * Generate a clustering of {@code ExpressionCall}s based on their global mean rank 
@@ -778,7 +778,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 log.trace("Assign Call {} to group index {}", call, groupIndex);
             }
             
-            return log.exit(callsToGroup);
+            return log.traceExit(callsToGroup);
         }
         
         /**
@@ -830,7 +830,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 previousScore = currentScore;
             }
             
-            return log.exit(callsToGroup);
+            return log.traceExit(callsToGroup);
         }
         
         /**
@@ -847,14 +847,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 throw log.throwing(new IllegalArgumentException("Can't compute mediam of empty list"));
             }
             if (size == 1) {
-                return log.exit(calls.get(0).getMeanRank().doubleValue());
+                return log.traceExit(calls.get(0).getMeanRank().doubleValue());
             }
             if (size % 2 == 0) {
-                return log.exit((calls.get(size/2).getMeanRank().doubleValue() 
+                return log.traceExit((calls.get(size/2).getMeanRank().doubleValue() 
                            + calls.get(size/2 - 1).getMeanRank().doubleValue())
                            /2);
             } 
-            return log.exit(calls.get((size - 1)/2).getMeanRank().doubleValue());
+            return log.traceExit(calls.get((size - 1)/2).getMeanRank().doubleValue());
         }
 
         //*******************************************
@@ -919,8 +919,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #getMeanRank()
          */
         public String getFormattedMeanRank() {
-            log.entry();
-            return log.exit(this.getExpressionLevelInfo() == null? null:
+            log.traceEntry();
+            return log.traceExit(this.getExpressionLevelInfo() == null? null:
                 this.getExpressionLevelInfo().getFormattedRank());
         }
         /**
@@ -944,8 +944,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @see #getExpressionScore()
          */
         public String getFormattedExpressionScore() {
-            log.entry();
-            return log.exit(this.getExpressionLevelInfo() == null? null:
+            log.traceEntry();
+            return log.traceExit(this.getExpressionLevelInfo() == null? null:
                 this.getExpressionLevelInfo().getFormattedExpressionScore());
         }
         
@@ -1092,6 +1092,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 //        }
         this.gene = gene;
         this.condition = condition;
+        //there should be at most one CallData per data type.
+        //we simply use Collectors.toMap that throws an exception in case of key collision
+        if (callData != null) {
+            callData.stream().collect(Collectors.toMap(c -> c.getDataType(), c -> c));
+        }
         this.callData = Collections.unmodifiableSet(
             callData == null? new HashSet<>(): new HashSet<>(callData));
 //        if (callData != null && !callData.isEmpty()) {

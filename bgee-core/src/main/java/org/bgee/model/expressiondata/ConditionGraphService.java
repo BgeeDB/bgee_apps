@@ -46,7 +46,7 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions) {
         log.entry(conditions);
-        return log.exit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
     }
     
     /**
@@ -62,7 +62,7 @@ public class ConditionGraphService extends CommonService {
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds) throws IllegalArgumentException {
         log.entry(conditions, inferAncestralConds, inferDescendantConds);
-        return log.exit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds,
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds,
                 inferDescendantConds, null, null));
     }
     
@@ -79,7 +79,7 @@ public class ConditionGraphService extends CommonService {
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         log.entry(conditions, anatEntityOnt, devStageOnt);
-        return log.exit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, anatEntityOnt, devStageOnt));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, anatEntityOnt, devStageOnt));
     }
     
     /**
@@ -102,7 +102,7 @@ public class ConditionGraphService extends CommonService {
             boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
         log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
-        return log.exit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds, inferDescendantConds,
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds, inferDescendantConds,
                 anatEntityOnt, devStageOnt));
     }
 
@@ -149,7 +149,7 @@ public class ConditionGraphService extends CommonService {
                     this.getServiceFactory().getDevStageService()
                 ).values());
 
-        return log.exit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
     }
 
     /**
@@ -246,6 +246,6 @@ public class ConditionGraphService extends CommonService {
         ConditionGraph condGraph = new ConditionGraph(tempConditions, inferAncestralConds, inferDescendantConds,
                 anatEntityOntToUse, devStageOntToUse);
         log.debug("ConditionGraph created in {} ms", System.currentTimeMillis() - startTimeInMs);
-        return log.exit(condGraph);
+        return log.traceExit(condGraph);
     }
 }

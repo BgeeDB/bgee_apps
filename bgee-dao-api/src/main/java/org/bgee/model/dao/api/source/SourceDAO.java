@@ -153,7 +153,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
              */
             public static final SourceCategory convertToSourceCategory(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(SourceCategory.class, representation));
+                return log.traceExit(TransferObject.convert(SourceCategory.class, representation));
             }
 
             /**

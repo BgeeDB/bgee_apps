@@ -47,7 +47,7 @@ public class HtmlJobDisplay extends HtmlParentDisplay implements JobDisplay {
         }
         
         this.endDisplay();
-        log.exit();
+        log.traceExit();
     }
 
     @Override

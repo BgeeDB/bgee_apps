@@ -71,7 +71,7 @@ public class GenoFishProject {
             generate.writeHomologousAnatEntities(speciesIds, anatEntityIds, outputDir);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     // ************************************
@@ -101,7 +101,7 @@ public class GenoFishProject {
         writeHomologousStructures(similarityAnalysis, outputDirectory);
         writeNonHomologousStructures(similarityAnalysis, outputDirectory);
 
-        log.exit();
+        log.traceExit();
     }
 
     private static void writeHomologousStructures(AnatEntitySimilarityAnalysis similarityAnalysis,

@@ -66,7 +66,7 @@ public class AnatEntityService extends Service {
      */
     public Stream<AnatEntity> loadAnatEntities(Collection<String> anatEntityIds, boolean withDescription) {
         log.entry(anatEntityIds, withDescription);
-        return log.exit(this.loadAnatEntities(null, true, anatEntityIds, withDescription));
+        return log.traceExit(this.loadAnatEntities(null, true, anatEntityIds, withDescription));
     }
     /**
      * Retrieve {@code AnatEntity}s for the requested species IDs, with all descriptions loaded.
@@ -79,7 +79,7 @@ public class AnatEntityService extends Service {
      */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(this.loadAnatEntities(speciesIds, true, null, true));
+        return log.traceExit(this.loadAnatEntities(speciesIds, true, null, true));
     }
     /**
      * Retrieve {@code AnatEntity}s for the requested species IDs.
@@ -95,7 +95,7 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
             boolean withDescription) {
         log.entry(speciesIds);
-        return log.exit(this.loadAnatEntities(speciesIds, true, null, withDescription));
+        return log.traceExit(this.loadAnatEntities(speciesIds, true, null, withDescription));
     }
     
     /**
@@ -119,7 +119,7 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
             Boolean anySpecies, Collection<String> anatEntityIds, boolean withDescription) {
         log.entry(speciesIds, anySpecies, anatEntityIds, withDescription);
-        return log.exit(this.loadAnatEntities(speciesIds, anySpecies, anatEntityIds,
+        return log.traceExit(this.loadAnatEntities(speciesIds, anySpecies, anatEntityIds,
                 withDescription? null: EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))));
     }
 
@@ -144,7 +144,7 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
             Boolean anySpecies, Collection<String> anatEntityIds, Collection<Attribute> attrs) {
         log.entry(speciesIds, anySpecies, anatEntityIds, attrs);
-        return log.exit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
+        return log.traceExit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds, 
                     anySpecies, 
                     anatEntityIds,
@@ -166,7 +166,7 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
         
-        return log.exit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
+        return log.traceExit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
                     speciesIds).stream()
                 .map(AnatEntityService::mapFromTO));
     }
@@ -176,7 +176,7 @@ public class AnatEntityService extends Service {
     @Deprecated
     public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<Integer> speciesIds) {
         log.entry(speciesIds);
-        return log.exit(this.getDaoManager().getRelationDAO().getAnatEntityRelationsBySpeciesIds(
+        return log.traceExit(this.getDaoManager().getRelationDAO().getAnatEntityRelationsBySpeciesIds(
                     speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
                     EnumSet.of(RelationTO.RelationType.ISA_PARTOF), 
                     EnumSet.of(RelationTO.RelationStatus.DIRECT))
@@ -202,7 +202,7 @@ public class AnatEntityService extends Service {
      */
     private static AnatEntity mapFromTO(AnatEntityDAO.AnatEntityTO anatEntityTO) {
         log.entry(anatEntityTO);
-        return log.exit(new AnatEntity(anatEntityTO.getId(), anatEntityTO.getName(), 
+        return log.traceExit(new AnatEntity(anatEntityTO.getId(), anatEntityTO.getName(), 
                 anatEntityTO.getDescription()));
     }
     /**
@@ -214,15 +214,15 @@ public class AnatEntityService extends Service {
      */
     private static Entry<String, String> mapFromTO(RelationDAO.RelationTO<String> relationTO) {
         log.entry(relationTO);
-        return log.exit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
+        return log.traceExit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
     }
 
     private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(Collection<Attribute> attrs) {
         log.entry(attrs);
         if (attrs == null || attrs.isEmpty()) {
-            return log.exit(EnumSet.allOf(AnatEntityDAO.Attribute.class));
+            return log.traceExit(EnumSet.allOf(AnatEntityDAO.Attribute.class));
         }
-        return log.exit(attrs.stream()
+        return log.traceExit(attrs.stream()
                 .map(a -> {
                     switch (a) {
                         case ID:

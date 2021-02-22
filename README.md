@@ -1,4 +1,4 @@
-# Bgee application source code of Bgee release 14.1
+# Bgee application source code of Bgee release 14.2
 
 1. [Directory structure](#directory-structure)
 2. [To do for each release of Bgee](#to-do-for-each-release-of-bgee)

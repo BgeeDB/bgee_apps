@@ -278,7 +278,7 @@ implements GlobalExpressionCallDAO {
         }
 
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private static String generateMeanRankClause(Set<DAODataType> dataTypes, String globalExprTableName,
@@ -308,7 +308,7 @@ implements GlobalExpressionCallDAO {
         dataTypeToWeightSql.put(DAODataType.RNA_SEQ, 
                 globalExprTableName + ".rnaSeqDistinctRankSum ");
 
-        return log.exit(dataTypes.stream()
+        return log.traceExit(dataTypes.stream()
                 //to avoid division by 0
                 //generate, e.g.:
                 //IF (globalExpression.estRankNorm IS NULL AND globalExpression.affymetrixMeanRankNorm IS NULL, NULL, 
@@ -419,7 +419,7 @@ implements GlobalExpressionCallDAO {
         }
 
         sb.append(" ");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
             final String globalExprTableName, final String globalCondTableName,
@@ -508,7 +508,7 @@ implements GlobalExpressionCallDAO {
                 }
             }
         }
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private static String generatePropStateQuery(String globalExprTableName,
@@ -516,7 +516,7 @@ implements GlobalExpressionCallDAO {
         log.entry(globalExprTableName, dataType, condParam, isObservedRequested);
         
         String columnName = getCallCondParamObservedDataFieldName(dataType, condParam);
-        return log.exit(globalExprTableName + "." + columnName + " IN (" +
+        return log.traceExit(globalExprTableName + "." + columnName + " IN (" +
                 BgeePreparedStatement.generateParameterizedQueryString(
                         isObservedRequested? OBSERVED_STATES.size(): NON_OBSERVED_STATES.size()
                 ) + ")");
@@ -541,7 +541,7 @@ implements GlobalExpressionCallDAO {
 
         sb.append("PropagationState");
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
@@ -642,7 +642,7 @@ implements GlobalExpressionCallDAO {
                     .map(dq -> new DAOExperimentCountFilter(ct, dq, DAOPropagationState.ALL, Qualifier.GREATER_THAN, 0)))
             .collect(Collectors.toList()));
         }
-        return log.exit(daoExperimentCountFilters);
+        return log.traceExit(daoExperimentCountFilters);
     }
 
     private static String getExpCountFilterFieldName(DAODataType dataType,
@@ -711,12 +711,12 @@ implements GlobalExpressionCallDAO {
         }
 
         sb.append("Count");
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
 
     private static Set<DAODataType> getDAODataTypesFromCallDAOFilters(Collection<CallDAOFilter> callFilters) {
         log.entry(callFilters);
-        return log.exit(callFilters.stream()
+        return log.traceExit(callFilters.stream()
                 .flatMap(callFilter -> callFilter.getDataFilters().isEmpty()?
                         EnumSet.allOf(DAODataType.class).stream():
                             callFilter.getDataFilters().stream()
@@ -738,7 +738,7 @@ implements GlobalExpressionCallDAO {
             throw log.throwing(new IllegalArgumentException("The condition parameter combination "
                     + "contains some Attributes that are not condition parameters: " + condParams));
         }
-        log.exit();
+        log.traceExit();
     }
     private static void configureCallStatement(BgeePreparedStatement stmt, LinkedHashSet<CallDAOFilter> callFilters)
             throws SQLException {
@@ -798,7 +798,7 @@ implements GlobalExpressionCallDAO {
             }
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     private String generateOrderByClause(
@@ -807,10 +807,10 @@ implements GlobalExpressionCallDAO {
         log.entry(orderingAttrs, globalExprTableName, globalCondTableName, geneTableName);
 
         if (orderingAttrs.isEmpty()) {
-            return log.exit("");
+            return log.traceExit("");
         }
 
-        return log.exit(orderingAttrs.entrySet().stream()
+        return log.traceExit(orderingAttrs.entrySet().stream()
                 .map(entry -> {
                     String orderBy = "";
                     switch(entry.getKey()) {
@@ -919,7 +919,7 @@ implements GlobalExpressionCallDAO {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             configureCallStatement(stmt, clonedCallFilters);
-            return log.exit(new MySQLGlobalExpressionCallTOResultSet(stmt));
+            return log.traceExit(new MySQLGlobalExpressionCallTOResultSet(stmt));
 
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -930,13 +930,13 @@ implements GlobalExpressionCallDAO {
     public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
             Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
         log.entry(callFilters, conditionParameters);
-        return log.exit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, true, Integer.class));
+        return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, true, Integer.class));
     }
     @Override
     public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
             Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
         log.entry(callFilters, conditionParameters);
-        return log.exit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, false, String.class));
+        return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, false, String.class));
     }
     /**
      * Retrieve min and max ranks in a type of entities. For now, the only entity types that are supported
@@ -1010,7 +1010,7 @@ implements GlobalExpressionCallDAO {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             configureCallStatement(stmt, clonedCallFilters);
-            return log.exit(new MySQLEntityMinMaxRanksTOResultSet<T>(stmt, entityIdType));
+            return log.traceExit(new MySQLEntityMinMaxRanksTOResultSet<T>(stmt, entityIdType));
 
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -1019,7 +1019,7 @@ implements GlobalExpressionCallDAO {
 
     @Override
     public int getMaxGlobalExprId() throws DAOException {
-        log.entry();
+        log.traceEntry();
 
         String sql = "SELECT MAX(" + GLOBAL_EXPR_ID_FIELD + ") AS " + GLOBAL_EXPR_ID_FIELD 
             + " FROM " + GLOBAL_EXPR_TABLE_NAME;
@@ -1028,9 +1028,9 @@ implements GlobalExpressionCallDAO {
                 this.getManager().getConnection().prepareStatement(sql))) {
             
             if (resultSet.next() && resultSet.getTO().getId() != null) {
-                return log.exit(resultSet.getTO().getId());
+                return log.traceExit(resultSet.getTO().getId());
             } 
-            return log.exit(0);
+            return log.traceExit(0);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -1121,7 +1121,7 @@ implements GlobalExpressionCallDAO {
                         dataTypeToCallDataTO.get(DAODataType.RNA_SEQ), DAODataType.RNA_SEQ);
             }
             
-            return log.exit(stmt.executeUpdate());
+            return log.traceExit(stmt.executeUpdate());
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -1156,7 +1156,7 @@ implements GlobalExpressionCallDAO {
                 stmt.setInt(newParamIndex, 0);
                 newParamIndex++;
             }
-            return log.exit(newParamIndex);
+            return log.traceExit(newParamIndex);
         }
 
         //** Observed data/ propagation states **
@@ -1231,18 +1231,34 @@ implements GlobalExpressionCallDAO {
         newParamIndex++;
         if (!DAODataType.EST.equals(dataType)) {
             //absent high parent
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+            if (callDataTO.getExperimentCounts().stream()
+                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
                                  DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+            }
+            stmt.setInt(newParamIndex, 0);
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
             newParamIndex++;
             //absent low parent
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+            if (callDataTO.getExperimentCounts().stream()
+                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
                                  DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+            }
+            stmt.setInt(newParamIndex, 0);
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
             newParamIndex++;
         }
         //present high total
@@ -1279,7 +1295,7 @@ implements GlobalExpressionCallDAO {
         stmt.setInt(newParamIndex, callDataTO.getPropagatedCount());
         newParamIndex++;
 
-        return log.exit(newParamIndex);
+        return log.traceExit(newParamIndex);
     }
     
     /**
@@ -1299,7 +1315,7 @@ implements GlobalExpressionCallDAO {
         @Override
         protected GlobalExpressionCallDAO.GlobalExpressionCallTO getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
                 Set<GlobalExpressionCallDataTO> callDataTOs = new HashSet<>();
@@ -1325,7 +1341,7 @@ implements GlobalExpressionCallDAO {
                         callDataTOs.add(dataTypeDataTO);
                     }
                 }
-                return log.exit(new GlobalExpressionCallTO(id, bgeeGeneId, conditionId,
+                return log.traceExit(new GlobalExpressionCallTO(id, bgeeGeneId, conditionId,
                         globalMeanRank, callDataTOs));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
@@ -1455,9 +1471,9 @@ implements GlobalExpressionCallDAO {
                     //&& weightForMeanRank == null
                     )) {
                 // If all variables are null/empty/0, this means that there is no data for the current data type
-                return log.exit(null);
+                return log.traceExit((GlobalExpressionCallDataTO) null);
             }
-            return log.exit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
+            return log.traceExit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
                     dataPropagation, experimentCounts, propagatedCount,
                     rank, rankNorm, weightForMeanRank));
         }
@@ -1470,7 +1486,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentHighSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentHighSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentHighSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.SELF,
@@ -1480,7 +1496,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentLowSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentLowSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentLowSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.SELF,
@@ -1489,7 +1505,7 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentHighSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentHighSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentHighSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.SELF,
@@ -1498,7 +1514,7 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentLowSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentLowSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentLowSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.SELF,
@@ -1508,7 +1524,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentHighDescendantCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentHighDescendantCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentHighDescendantCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.DESCENDANT,
@@ -1518,7 +1534,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentLowDescendantCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentLowDescendantCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentLowDescendantCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.DESCENDANT,
@@ -1527,7 +1543,7 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentHighParentCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentHighParentCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentHighParentCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.ANCESTOR,
@@ -1536,7 +1552,7 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentLowParentCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentLowParentCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentLowParentCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.ANCESTOR,
@@ -1546,7 +1562,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentHighTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentHighTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentHighTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.ALL,
@@ -1556,7 +1572,7 @@ implements GlobalExpressionCallDAO {
             "affymetrixExpPresentLowTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpPresentLowTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpPresentLowTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.ALL,
@@ -1565,7 +1581,7 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentHighTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentHighTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentHighTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.HIGH,
                         DAOPropagationState.ALL,
@@ -1574,14 +1590,14 @@ implements GlobalExpressionCallDAO {
             if ("affymetrixExpAbsentLowTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
             "inSituExpAbsentLowTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
             "rnaSeqExpAbsentLowTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.exit(new DAOExperimentCount(
+                return log.traceExit(new DAOExperimentCount(
                         DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.LOW,
                         DAOPropagationState.ALL,
                         rs.getInt(columnName)));
             }
             
-            return log.exit(null);
+            return log.traceExit((DAOExperimentCount) null);
         }
     }
 
@@ -1606,7 +1622,7 @@ implements GlobalExpressionCallDAO {
         @Override
         protected GlobalExpressionCallDAO.EntityMinMaxRanksTO<T> getNewTO() throws DAOException {
             try {
-                log.entry();
+                log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 T id = null;
                 Integer speciesId = null;
@@ -1626,7 +1642,7 @@ implements GlobalExpressionCallDAO {
                         throw log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new EntityMinMaxRanksTO<>(id, minRank, maxRank, speciesId));
+                return log.traceExit(new EntityMinMaxRanksTO<>(id, minRank, maxRank, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

@@ -45,7 +45,7 @@ public class CommandSparql extends CommandParent {
 
     @Override
     public void processRequest() throws IllegalStateException, IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
         
         SparqlDisplay display = this.viewFactory.getSparqlDisplay();
         if (this.requestParameters.getAction() == null) {
@@ -58,6 +58,6 @@ public class CommandSparql extends CommandParent {
                     " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

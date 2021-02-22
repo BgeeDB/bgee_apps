@@ -75,7 +75,7 @@ public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute,
         }
         this.clearOrderingAttributes();
         this.orderingAttributes.putAll(attributesWithDir);
-        log.exit();
+        log.traceExit();
     }
     
     @Override
@@ -92,7 +92,7 @@ public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute,
         }
         this.setOrderingAttributes(newMap);
         
-        log.exit();
+        log.traceExit();
     }
     
     /*
@@ -113,7 +113,7 @@ public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute,
         }
         this.setOrderingAttributes(newMap);
         
-        log.exit();
+        log.traceExit();
     }
     
     /*
@@ -134,19 +134,19 @@ public class MySQLOrderingDAO <T extends Enum<T> & DAO.Attribute,
         }
         this.setOrderingAttributes(newAttributes);
         
-        log.exit();
+        log.traceExit();
     }
     
     @Override
     public void clearOrderingAttributes() {
-        log.entry();
+        log.traceEntry();
         this.orderingAttributes.clear();
-        log.exit();
+        log.traceExit();
     }
     
     @Override
     public LinkedHashMap<U, Direction> getOrderingAttributes() {
-        log.entry();
-        return log.exit(new LinkedHashMap<U, Direction>(orderingAttributes));
+        log.traceEntry();
+        return log.traceExit(new LinkedHashMap<U, Direction>(orderingAttributes));
     }
 }

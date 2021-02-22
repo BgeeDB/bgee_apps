@@ -113,7 +113,7 @@ public class BgeePreparedStatement implements AutoCloseable {
     public static String generateParameterizedQueryString(int size) {
         log.entry(size);
         if (size <= 0) {
-            return log.exit("");
+            return log.traceExit("");
         }
         
         StringBuilder sb = new StringBuilder((size * 2) - 1);
@@ -124,7 +124,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             sb.append("?");
          }
 
-        return log.exit(sb.toString());
+        return log.traceExit(sb.toString());
     }
     
     /**
@@ -270,7 +270,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             throws SQLException {
         log.entry(startIndex, values, toOrder);
         this.setValues(startIndex, values, (e, f) -> this.setString(e, f), toOrder);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -305,7 +305,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         } else {
             throw log.throwing(new UnsupportedOperationException("Only String and Integer types are supported."));
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Converts the {@code String}s provided in values into {@code Integer}s and use them 
@@ -330,7 +330,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         log.entry(startIndex, values, toOrder);
         this.setIntegers(startIndex, values.stream().map(e -> e == null? null: Integer.parseInt(e))
                 .collect(Collectors.toList()), toOrder);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -374,7 +374,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             throws SQLException {
         log.entry(startIndex, values, toOrder);
         this.setValues(startIndex, values, (e, f) -> this.setInt(e, f), toOrder);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Delegated to {@link java.sql.PreparedStatement#setLong(int, long)}.
@@ -456,7 +456,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             throws SQLException {
         log.entry(startIndex, values, toOrder);
         this.setValues(startIndex, values, (e, f) -> this.setBoolean(e, f), toOrder);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Converts {@code x} into a {@code String} using the method {@code getStringRepresentation} 
@@ -502,7 +502,7 @@ public class BgeePreparedStatement implements AutoCloseable {
             Collection<T> values, boolean toOrder) throws SQLException {
         log.entry(startIndex, values, toOrder);
         this.setValues(startIndex, values, (e, f) -> this.setEnumDAOField(e, f), toOrder);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -572,7 +572,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         this.setValues(startIndex, convertedValues, 
                 (e, f) -> this.setBigDecimal(e, f), 
                 toOrder);
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -623,8 +623,9 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                      statement does not return a {@code ResultSet} object.
      */
     ResultSet executeQuery() throws QueryInterruptedException, SQLException {
-        log.entry();
-        return log.exit(this.execute(this.getRealPreparedStatement()::executeQuery));
+        log.traceEntry();
+        //generic type hint needed for some compilers
+        return log.traceExit(this.<ResultSet>execute(this.getRealPreparedStatement()::executeQuery));
     }
     
     /**
@@ -635,8 +636,9 @@ public class BgeePreparedStatement implements AutoCloseable {
      * @throws SQLException See {@link PreparedStatement#executeUpdate()}. 
      */
     public int executeUpdate() throws QueryInterruptedException, SQLException {
-        log.entry();
-        return log.exit(this.execute(this.getRealPreparedStatement()::executeUpdate));
+        log.traceEntry();
+        //generic type hint needed for some compilers
+        return log.traceExit(this.<Integer>execute(this.getRealPreparedStatement()::executeUpdate));
     }
     
     /**
@@ -674,7 +676,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         //such a mechanism, the cancel method would not be able to acquire the lock 
         //before the end of the query...
         try {
-            return log.exit(executeFunction.get());
+            return log.traceExit(executeFunction.get());
         } finally {
             this.setExecuted(true);
             //check that we did not return from the executeQuery method because of 
@@ -693,13 +695,13 @@ public class BgeePreparedStatement implements AutoCloseable {
      *                          wraps throws a {@code SQLException}.  
      */
     public void clearParameters() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             this.getRealPreparedStatement().clearParameters();
         } catch (SQLException e) {
             throw log.throwing(e);
         } 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -712,7 +714,7 @@ public class BgeePreparedStatement implements AutoCloseable {
      */
     @Override
     public void close() throws SQLException {
-        log.entry();
+        log.traceEntry();
         try {
             if (!this.getRealPreparedStatement().isClosed()) {
                 this.getRealPreparedStatement().close();
@@ -722,7 +724,7 @@ public class BgeePreparedStatement implements AutoCloseable {
         } finally {
             this.bgeeConnection.statementClosed(this);
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**

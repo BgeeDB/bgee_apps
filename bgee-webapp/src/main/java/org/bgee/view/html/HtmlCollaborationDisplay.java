@@ -42,7 +42,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
     }
 
     public void displayCollaborationPage() {
-        log.entry();
+        log.traceEntry();
 
         this.startDisplay("Bgee collaborations", "WebPage", "Bgee collaborations page.");
 
@@ -143,16 +143,16 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
-        log.exit();
+        log.traceExit();
     }
 }
 

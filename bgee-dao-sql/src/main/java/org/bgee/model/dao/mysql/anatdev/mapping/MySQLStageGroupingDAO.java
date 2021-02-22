@@ -74,7 +74,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
                 stmt.setInt(1 + speciesIds.size(), speciesIds.size());
             }
             
-            return log.exit(new MySQLGroupToStageTOResultSet(stmt));
+            return log.traceExit(new MySQLGroupToStageTOResultSet(stmt));
             
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -160,7 +160,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
 
         @Override
         protected GroupToStageTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             String groupId = null, stageId = null;
 
@@ -179,7 +179,7 @@ public class MySQLStageGroupingDAO extends MySQLDAO implements StageGroupingDAO 
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new GroupToStageTO(groupId, stageId));
+            return log.traceExit(new GroupToStageTO(groupId, stageId));
         }
     }
 }

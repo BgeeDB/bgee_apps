@@ -372,7 +372,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
              */
             public static ConditionRelationOrigin convertToCondRelOrigin(String stringRepresentation){
                 log.entry(stringRepresentation);
-                return log.exit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
+                return log.traceExit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
                         stringRepresentation));
             }
         }

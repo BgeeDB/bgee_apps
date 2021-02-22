@@ -75,7 +75,7 @@ public class BgeeWebCache extends CachingFilter
     {   
         log.entry(httpRequest);
         // Return the key. Note : the order of parameters does not matter
-        return log.exit(DigestUtils.sha1Hex(httpRequest.getParameterMap().toString() 
+        return log.traceExit(DigestUtils.sha1Hex(httpRequest.getParameterMap().toString() 
                 + httpRequest.getMethod()));
     }
 
@@ -121,7 +121,7 @@ public class BgeeWebCache extends CachingFilter
             // Remove the bgee properties instance from the pool
             BgeeProperties.removeFromBgeePropertiesPool();
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -132,8 +132,8 @@ public class BgeeWebCache extends CachingFilter
      */
     @Override
     protected CacheManager getCacheManager() {
-        log.entry();
-        return log.exit(CacheManager.create(BgeeWebCache.class
+        log.traceEntry();
+        return log.traceExit(CacheManager.create(BgeeWebCache.class
                 .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
                         .getWebpagesCacheConfigFileName())));
     }
@@ -161,6 +161,6 @@ public class BgeeWebCache extends CachingFilter
         if(! returnedPageInfo.isOk()){
             throw new PageNotFoundException();
         }
-        return log.exit(returnedPageInfo);
+        return log.traceExit(returnedPageInfo);
     }
 }

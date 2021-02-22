@@ -66,12 +66,12 @@ public abstract class TransferObject implements Serializable {
         log.entry(enumField, representation);
         
         if (representation == null) {
-            return log.exit(null);
+            return log.traceExit((T) null);
         }
         for (T element: enumField.getEnumConstants()) {
             if (element.getStringRepresentation().equals(representation) || 
                     element.name().equals(representation)) {
-                return log.exit(element);
+                return log.traceExit(element);
             }
         }
         throw log.throwing(new IllegalArgumentException("\"" + representation + 
@@ -96,6 +96,6 @@ public abstract class TransferObject implements Serializable {
         for (T enumDAOField: enums) {
             stringSet.add(enumDAOField.getStringRepresentation());
         }
-        return log.exit(stringSet);
+        return log.traceExit(stringSet);
     }
 }

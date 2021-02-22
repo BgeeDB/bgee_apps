@@ -132,7 +132,7 @@ public class AnnotationCommon {
          *          potentially containing multiple values.
          */
         private final static String generateSplitValuePattern() {
-            log.entry();
+            log.traceEntry();
             String splitPattern = "";
             for (String separator: Utils.VALUE_SEPARATORS) {
                 if (!splitPattern.equals("")) {
@@ -140,7 +140,7 @@ public class AnnotationCommon {
                 }
                 splitPattern += Pattern.quote(separator);
             }
-            return log.exit(splitPattern);
+            return log.traceExit(splitPattern);
         }
         
         /**
@@ -172,7 +172,7 @@ public class AnnotationCommon {
                         context, this));
             }
             //passes result to next processor in the chain
-            return log.exit(next.execute(values, context));
+            return log.traceExit("{}", next.execute(values, context));
         }
     }
     
@@ -232,7 +232,7 @@ public class AnnotationCommon {
             		"is not recognized: " + args[0]));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     
@@ -265,7 +265,7 @@ public class AnnotationCommon {
                     taxonFile + " did not contain any valid taxon ID"));
         }
         
-        return log.exit(taxonIds);
+        return log.traceExit(taxonIds);
     }
     
     /**
@@ -543,7 +543,7 @@ public class AnnotationCommon {
         }
         
         log.info("Done filtering Uberon simplification info.");
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -613,7 +613,7 @@ public class AnnotationCommon {
                     " did not allow to retrieve any anatomical entity IDs."));
         }
         
-        return log.exit(anatEntityIds);
+        return log.traceExit(anatEntityIds);
     }
     
     
@@ -637,7 +637,7 @@ public class AnnotationCommon {
         log.entry(columnContent);
         
         if (columnContent == null) {
-            return log.exit(null);
+            return log.traceExit((List<String>) null);
         }
         String splitPattern = "";
         for (String separator: ENTITY_SEPARATORS) {
@@ -654,7 +654,7 @@ public class AnnotationCommon {
         //perform the alphabetical ordering
         Collections.sort(orderedValues);
         
-        return log.exit(orderedValues);
+        return log.traceExit(orderedValues);
     }
     
     /**
@@ -687,7 +687,7 @@ public class AnnotationCommon {
             columnContent.append(entity.trim());
         }
         
-        return log.exit(columnContent.toString());
+        return log.traceExit(columnContent.toString());
     }
     
     /**
@@ -712,7 +712,7 @@ public class AnnotationCommon {
             }
             colValue += term.trim();
         }
-        return log.exit(colValue);
+        return log.traceExit(colValue);
     }
     
 }

@@ -109,7 +109,7 @@ public class GenerateOncoMXFile {
         for (Entry<Integer, List<String>> entry: speIdToStageIds.entrySet()) {
             generateOncoMX.generateFile(entry.getKey(), entry.getValue(), pathToOncoMXUberonTermFile, outputDir);
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -152,7 +152,7 @@ public class GenerateOncoMXFile {
             }
         }
 
-        return log.exit(uberonIds);
+        return log.traceExit(uberonIds);
     }
 
     private final static <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>>
@@ -173,7 +173,7 @@ public class GenerateOncoMXFile {
                 .map(e -> e.getId())
                 .collect(Collectors.toSet());
         allEntityIds.addAll(entities.stream().map(e -> e.getId()).collect(Collectors.toSet()));
-        return log.exit(allEntityIds);
+        return log.traceExit(allEntityIds);
     }
 
     protected static ExpressionCallFilter getGeneCallFilter(int speciesId, Collection<String> anatEntityIds,
@@ -182,7 +182,7 @@ public class GenerateOncoMXFile {
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
-        return log.exit(new ExpressionCallFilter(
+        return log.traceExit(new ExpressionCallFilter(
                         null, //we want expressed/not-expressed calls of any quality
                         //all genes for the requested species
                         Collections.singleton(new GeneFilter(speciesId)),
@@ -196,8 +196,8 @@ public class GenerateOncoMXFile {
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {
-        log.entry();
-        return log.exit(EnumSet.of(CallService.Attribute.GENE,
+        log.traceEntry();
+        return log.traceExit(EnumSet.of(CallService.Attribute.GENE,
                 CallService.Attribute.ANAT_ENTITY_ID,
                 CallService.Attribute.DEV_STAGE_ID,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
@@ -207,7 +207,7 @@ public class GenerateOncoMXFile {
     }
     protected static LinkedHashMap<CallService.OrderingAttribute, Service.Direction>
     getGeneServiceOrdering() {
-        log.entry();
+        log.traceEntry();
         //For ordering by gene and rank score, to retrieve the min and max ranks per gene
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -215,11 +215,11 @@ public class GenerateOncoMXFile {
         serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-        return log.exit(serviceOrdering);
+        return log.traceExit(serviceOrdering);
     }
     protected static String[] getHeader() {
-        log.entry();
-        return log.exit(new String[] { "Ensembl gene ID", "Gene name",
+        log.traceEntry();
+        return log.traceExit(new String[] { "Ensembl gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",
                     "Expression level relative to gene",
@@ -292,7 +292,7 @@ public class GenerateOncoMXFile {
             String tmpExtension = ".tmp";
             String fileName = (speciesLatinName + "_"
                     + selectedDevStageIds.stream().collect(Collectors.joining("_")) + "_"
-                    + DATA_TYPES.stream().map(d -> d.toString()).collect(Collectors.joining("_")))
+                    + DATA_TYPES.stream().map(d -> d.toString()).sorted().collect(Collectors.joining("_")))
                     .replaceAll(" ", "_") + ".tsv";
             File tmpFile = new File(outputDirectory, fileName + tmpExtension);
             // override any existing file
@@ -381,6 +381,6 @@ public class GenerateOncoMXFile {
             }
         }
         
-        log.exit();
+        log.traceExit();
     }
 }

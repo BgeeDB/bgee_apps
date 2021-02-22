@@ -55,7 +55,7 @@ public class CommandDownload extends CommandParent {
 
     @Override
     public void processRequest() throws IllegalStateException, IOException, PageNotFoundException {
-        log.entry();
+        log.traceEntry();
 
         DownloadDisplay display = this.viewFactory.getDownloadDisplay();
         if (this.requestParameters.getAction() != null && (
@@ -82,7 +82,7 @@ public class CommandDownload extends CommandParent {
                 " parameter value."));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -93,14 +93,14 @@ public class CommandDownload extends CommandParent {
      *                                  to obtain any {@code SpeciesDataGroup}.
      */
     private List<SpeciesDataGroup> getAllSpeciesDataGroup() throws IllegalStateException {
-        log.entry();
+        log.traceEntry();
         List<SpeciesDataGroup> groups = 
                 serviceFactory.getSpeciesDataGroupService().loadAllSpeciesDataGroup();
         if (groups.isEmpty()) {
             throw log.throwing(new IllegalStateException("A SpeciesDataGroupService did not allow "
                     + "to obtain any SpeciesDataGroup."));
         }
-        return log.exit(groups);
+        return log.traceExit(groups);
     }
     
     /**
@@ -134,6 +134,6 @@ public class CommandDownload extends CommandParent {
                     return newVals;
                 }));
 
-        return log.exit(speciesToTerms);
+        return log.traceExit(speciesToTerms);
     }
 }

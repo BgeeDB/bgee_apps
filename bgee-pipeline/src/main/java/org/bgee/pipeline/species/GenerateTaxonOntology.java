@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,7 +114,7 @@ public class GenerateTaxonOntology {
         GenerateTaxonOntology generate = new GenerateTaxonOntology();
         generate.generateOntologyToFile(args[0], args[1], args[2]);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -155,7 +156,7 @@ public class GenerateTaxonOntology {
         //save in OWL
         new OntologyUtils(ont).saveAsOWL(outputFile);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -195,7 +196,7 @@ public class GenerateTaxonOntology {
         //at later steps.
         this.createTaxonDisjointAxioms(wrapper);
         
-        return log.exit(wrapper.getSourceOntology());
+        return log.traceExit(wrapper.getSourceOntology());
     }
     
     /**
@@ -219,7 +220,7 @@ public class GenerateTaxonOntology {
         log.info("Starting convertion from .dat file to OWLOntology...");
         OWLOntology ont = NCBI2OWL.convertToOWL(pathToTaxonomyData, null);
         log.info("Done converting .dat file to OWLOntology.");
-        return log.exit(ont);
+        return log.traceExit(ont);
     }
     
     /**
@@ -259,7 +260,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done filtering ontology for taxa {}.", taxonIds);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -303,11 +304,13 @@ public class GenerateTaxonOntology {
                 log.trace("New label {} will be added for class {}", newAnnot, cls);
                 
                 //and remove any already existing label
-                for (OWLAnnotation annotation : EntitySearcher.getAnnotations(cls, ont, labelProp)) {
-                    rmLabels.add(new RemoveAxiom(ont, 
-                        factory.getOWLAnnotationAssertionAxiom(cls.getIRI(), annotation)));
-                    log.trace("Existing label {} will be removed for class {}", annotation, cls);
-                }
+                rmLabels.addAll(EntitySearcher.getAnnotations(cls, ont, labelProp).stream()
+                        .map(annotation -> {
+                            log.trace("Existing label {} will be removed for class {}", annotation, cls);
+                            return new RemoveAxiom(ont, factory.getOWLAnnotationAssertionAxiom(
+                                    cls.getIRI(), annotation));
+                        })
+                        .collect(Collectors.toSet()));
             }
         }
         ChangeApplied labelsRemoved = manager.applyChanges(rmLabels);
@@ -321,7 +324,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done replacing unique names, {} labels removed, {} labels added", 
                 labelsRemoved, labelsAdded);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -386,7 +389,7 @@ public class GenerateTaxonOntology {
         
         log.info("Done creating disjoint classes axioms, created {} disjoint axioms.", 
                 axiomCount);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -426,7 +429,7 @@ public class GenerateTaxonOntology {
         }
         disjointAxioms.add(factory.getOWLDisjointClassesAxiom(expressions));
         
-        return log.exit(disjointAxioms);
+        return log.traceExit(disjointAxioms);
     }
     
     /**
@@ -471,6 +474,6 @@ public class GenerateTaxonOntology {
             }
         }
         
-        return log.exit(disjointAxioms);
+        return log.traceExit(disjointAxioms);
     }
 }

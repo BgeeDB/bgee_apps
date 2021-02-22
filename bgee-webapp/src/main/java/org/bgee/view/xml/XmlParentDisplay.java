@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -30,29 +30,29 @@ public class XmlParentDisplay extends ConcreteDisplayParent {
 	}
 
 	protected void startDisplay() {
-		log.entry();
+		log.traceEntry();
 		this.sendHeaders();
 		this.writeln("<?xml version='1.0' encoding='UTF-8' ?>");
-		log.exit();
+		log.traceExit();
 	}
 	
 	protected void endDisplay() {
-		log.entry();
-		log.exit();
+		log.traceEntry();
+		log.traceExit();
 	}
 
 	@Override
 	protected String getContentType() {
-        log.entry();
-        return log.exit("text/xml");
+        log.traceEntry();
+        return log.traceExit("text/xml");
 	}
 
 	protected static String xmlEntities(String stringToWrite) {
-		log.entry();
+		log.traceEntry();
 		try {
-    		return log.exit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
+    		return log.traceExit(StringEscapeUtils.escapeHtml4(stringToWrite).replaceAll("'", "&apos;"));
     	} catch (Exception e) {
-    		return log.exit("");
+    		return log.traceExit("");
     	}
     }
 }

@@ -56,7 +56,7 @@ public class ConditionService extends CommonService {
 //        Set<Integer> clonedSpeciesIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
 //        Set<Attribute> clonedAttributes = attributes == null? new HashSet<>(): new HashSet<>(attributes);
 //
-//        return log.exit(getDaoManager().getConditionDAO().getConditionsBySpeciesIds(
+//        return log.traceExit(getDaoManager().getConditionDAO().getConditionsBySpeciesIds(
 //                clonedSpeciesIds, convertConditionServiceAttrsToConditionDAOAttrs(clonedAttributes)).stream()
 //            .map(cTO-> mapConditionTOToCondition(cTO)));
 //    }

@@ -52,7 +52,7 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
          */
         public static final Sex convertToSex(String representation) {
             log.entry(representation);
-            return log.exit(TransferObject.convert(Sex.class, representation));
+            return log.traceExit(TransferObject.convert(Sex.class, representation));
         }
 
         @Override

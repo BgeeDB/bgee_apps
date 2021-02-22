@@ -283,13 +283,13 @@ public abstract class MySQLDAOUser {
      * @see #closeDAO()
      */
     protected void startTransaction() throws IllegalStateException, DAOException {
-        log.entry();
+        log.traceEntry();
         try {
             this.manager.getConnection().startTransaction();
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -306,13 +306,13 @@ public abstract class MySQLDAOUser {
      * @see #startTransaction()
      */
     protected void commit() throws IllegalStateException, DAOException {
-        log.entry();
+        log.traceEntry();
         try {
             this.manager.getConnection().commit();
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -320,9 +320,9 @@ public abstract class MySQLDAOUser {
      * This will also rollback any ongoing transaction.
      */
     protected void closeDAO() {
-        log.entry();
+        log.traceEntry();
         this.manager.close();
-        log.exit();
+        log.traceExit();
     }
     
     public MySQLDAOManager getManager() {

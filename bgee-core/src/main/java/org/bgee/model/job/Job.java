@@ -141,9 +141,9 @@ public class Job {
      * @see #isSuccessful()
      */
     public void completeWithSuccess() {
-        log.entry();
+        log.traceEntry();
         this.complete(true);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Method called to indicate that the job was terminated, either because of an error, 
@@ -156,9 +156,9 @@ public class Job {
      * @see #completeWithSuccess()
      */
     public void complete() {
-        log.entry();
+        log.traceEntry();
         this.complete(false);
-        log.exit();
+        log.traceExit();
     }
     /**
      * Method called to indicate that the job was terminated with success or not.
@@ -175,7 +175,7 @@ public class Job {
             this.terminated = true;
             this.successful = success;
         }
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -187,7 +187,7 @@ public class Job {
      * to deal with the interrupted status (see {@link #checkInterrupted()}).
      */
     public void interrupt() {
-        log.entry();
+        log.traceEntry();
         try {
             StartUpShutdown.interruptThread(this.executor);
         } finally {
@@ -200,7 +200,7 @@ public class Job {
             //of the executor Thread to do so once the job will be effectively stopped 
             //(see checkInterrupted()). 
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Throws an {@code InterruptedException} and interrupts this {@code Job} if the {@code Thread} 
@@ -219,7 +219,7 @@ public class Job {
      * @see #isInterruptRequested()
      */
     public void checkInterrupted() throws IllegalStateException, InterruptedException {
-        log.entry();
+        log.traceEntry();
         if (this.executor != Thread.currentThread()) {
             throw log.throwing(new IllegalStateException("This method is a convenience method "
                     + "only meant to be called from the thread running the job."));
@@ -236,7 +236,7 @@ public class Job {
             //throw. We don't log it as an error
             throw log.throwing(Level.DEBUG, new InterruptedException());
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Release this {@code Job} so that no reference to it or to the {@code Thread} it holds are kept 
@@ -244,7 +244,7 @@ public class Job {
      * Following calls to {@link #isReleased()} and {@link #isTerminated()} will return {@code true}.
      */
     public void release() {
-        log.entry();
+        log.traceEntry();
         //in case the user did not specify that the job was finished. 
         //important to call 'complete' *before* calling 'releaseJob'
         this.complete();
@@ -254,7 +254,7 @@ public class Job {
             //important to set 'released' to true *after* calling 'releaseJob'
             this.released = true;
         }
-        log.exit();
+        log.traceExit();
     }
     
 
@@ -421,22 +421,22 @@ public class Job {
      * returned by {@link #getTaskCount()}.
      */
     public void incrementCurrentTaskIndex() {
-        log.entry();
+        log.traceEntry();
         try {
             this.setCurrentTaskIndex(this.getCurrentTaskIndex() + 1);
         } catch (IllegalArgumentException e) {
             //nothing here, this method only increments the index if it is in the range 
             //of the total number of sub-tasks, it does not throw any exception
         }
-        log.exit();
+        log.traceExit();
     }
     /**
      * Inform the {@code Job} that a new sub-task has been started.
      */
     public void nextTask() {
-        log.entry();
+        log.traceEntry();
         this.nextTask("");
-        log.exit();
+        log.traceExit();
     }
     /**
      * Inform the {@code Job} that a new sub-task has been started.
@@ -448,7 +448,7 @@ public class Job {
         log.debug("Starting new sub-task {}", subTaskName);
         this.incrementCurrentTaskIndex();
         this.setCurrentTaskName(subTaskName);
-        log.exit();
+        log.traceExit();
     }
 
 

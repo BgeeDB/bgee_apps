@@ -41,8 +41,8 @@ public class DownloadFileService extends Service {
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
     public List<DownloadFile> getAllDownloadFiles() throws DAOException, QueryInterruptedException {
-        log.entry();
-        return log.exit(getDaoManager().getDownloadFileDAO().getAllDownloadFiles().stream()
+        log.traceEntry();
+        return log.traceExit(getDaoManager().getDownloadFileDAO().getAllDownloadFiles().stream()
                 .map(DownloadFileService::mapFromTO)
                 .collect(Collectors.toList()));
     }
@@ -57,9 +57,9 @@ public class DownloadFileService extends Service {
     private static DownloadFile mapFromTO(DownloadFileDAO.DownloadFileTO downloadFileTO) {
         log.entry(downloadFileTO);
         if (downloadFileTO == null) {
-            return log.exit(null);
+            return log.traceExit((DownloadFile) null);
         }
-        return log.exit(new DownloadFile(downloadFileTO.getPath(),
+        return log.traceExit(new DownloadFile(downloadFileTO.getPath(),
                 downloadFileTO.getName(),
                 mapDAOCategoryToServiceCategory(downloadFileTO.getCategory()),
                 downloadFileTO.getSize(),
@@ -75,27 +75,27 @@ public class DownloadFileService extends Service {
 
         switch (daoEnum) {
             case EXPR_CALLS_COMPLETE:
-                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
+                return log.traceExit(DownloadFile.CategoryEnum.EXPR_CALLS_COMPLETE);
             case EXPR_CALLS_SIMPLE:
-                return log.exit(DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE);
+                return log.traceExit(DownloadFile.CategoryEnum.EXPR_CALLS_SIMPLE);
             case DIFF_EXPR_ANAT_SIMPLE:
-                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_SIMPLE);
+                return log.traceExit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_SIMPLE);
             case DIFF_EXPR_ANAT_COMPLETE:
-                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE);
+                return log.traceExit(DownloadFile.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE);
             case DIFF_EXPR_DEV_COMPLETE:
-                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_COMPLETE);
+                return log.traceExit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_COMPLETE);
             case DIFF_EXPR_DEV_SIMPLE:
-                return log.exit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_SIMPLE);
+                return log.traceExit(DownloadFile.CategoryEnum.DIFF_EXPR_DEV_SIMPLE);
             case ORTHOLOG:
-                return log.exit(DownloadFile.CategoryEnum.ORTHOLOG);
+                return log.traceExit(DownloadFile.CategoryEnum.ORTHOLOG);
             case AFFY_ANNOT:
-                return log.exit(DownloadFile.CategoryEnum.AFFY_ANNOT);
+                return log.traceExit(DownloadFile.CategoryEnum.AFFY_ANNOT);
             case AFFY_DATA:
-                return log.exit(DownloadFile.CategoryEnum.AFFY_DATA);
+                return log.traceExit(DownloadFile.CategoryEnum.AFFY_DATA);
             case RNASEQ_ANNOT:
-                return log.exit(DownloadFile.CategoryEnum.RNASEQ_ANNOT);
+                return log.traceExit(DownloadFile.CategoryEnum.RNASEQ_ANNOT);
             case RNASEQ_DATA:
-                return log.exit(DownloadFile.CategoryEnum.RNASEQ_DATA);
+                return log.traceExit(DownloadFile.CategoryEnum.RNASEQ_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
         }
@@ -107,9 +107,9 @@ public class DownloadFileService extends Service {
 
         switch (daoEnum) {
             case ANAT_ENTITY_ID:
-                return log.exit(CallService.Attribute.ANAT_ENTITY_ID);
+                return log.traceExit(CallService.Attribute.ANAT_ENTITY_ID);
             case STAGE_ID:
-                return log.exit(CallService.Attribute.DEV_STAGE_ID);
+                return log.traceExit(CallService.Attribute.DEV_STAGE_ID);
             default:
                 throw log.throwing(new IllegalArgumentException("Condition parameter not supported: " + daoEnum));
         }

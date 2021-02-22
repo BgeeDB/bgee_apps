@@ -72,7 +72,7 @@ public class CommandRawData extends CommandParent {
         if (geneId == null && speciesId == null && (anatEntityIds == null || anatEntityIds.isEmpty())
                 && (devStageIds == null || devStageIds.isEmpty())) {
             display.displayRawCallHomePage();
-            log.exit();
+            log.traceExit();
             return;
         }
         
@@ -177,7 +177,7 @@ public class CommandRawData extends CommandParent {
 //                if (speciesId == null || speciesId <= 0) {
 //                    serviceFactory.getRawDataService().loadRawCallSourceContainers(new GeneFilter(speciesId, geneId));
 //                    display.displayRawCallPage(genes);
-//                    log.exit(); return;
+//                    log.traceExit(); return;
 //                }
 //
 //            } else {

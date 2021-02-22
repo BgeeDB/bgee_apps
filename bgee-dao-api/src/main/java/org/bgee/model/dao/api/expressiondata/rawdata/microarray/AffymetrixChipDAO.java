@@ -138,7 +138,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
              */
             public static final NormalizationType convertToNormalizationType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(NormalizationType.class, representation));
+                return log.traceExit(TransferObject.convert(NormalizationType.class, representation));
             }
 
             @Override
@@ -192,7 +192,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
              */
             public static final DetectionType convertToDetectionType(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(DetectionType.class, representation));
+                return log.traceExit(TransferObject.convert(DetectionType.class, representation));
             }
 
             @Override

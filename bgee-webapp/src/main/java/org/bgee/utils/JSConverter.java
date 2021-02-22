@@ -61,7 +61,7 @@ public abstract class JSConverter {
                     args.length + " provided."));
         }
         generateFile(args[0],new File(args[1]));
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -99,7 +99,7 @@ public abstract class JSConverter {
             throw log.throwing(new IllegalArgumentException("Incorrect class name provided :"
                     + className + ". It should be either bgeeproperties or urlparameters"));
         }
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -107,10 +107,10 @@ public abstract class JSConverter {
      *                      is not available for any reason.
      */
     protected void writeFile() throws IOException{
-        log.entry();
+        log.traceEntry();
         this.writeJSCode();
         this.end();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -132,7 +132,7 @@ public abstract class JSConverter {
     protected void writeln(String str) throws IOException{
         log.entry(str);
         this.writer.write(str+System.lineSeparator());
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -142,8 +142,8 @@ public abstract class JSConverter {
      *                      is not available for any reason.
      */
     protected void end() throws IOException{
-        log.entry();
+        log.traceEntry();
         this.writer.close();
-        log.exit();
+        log.traceExit();
     }
 }

@@ -49,7 +49,7 @@ public class CommandExpressionComparison extends CommandParent {
 
     @Override
     public void processRequest() throws Exception {
-        log.entry();
+        log.traceEntry();
 
         final List<String> userGeneList = Collections.unmodifiableList(Optional.ofNullable(
                 this.requestParameters.getGeneList()).orElse(new ArrayList<>()));
@@ -58,11 +58,11 @@ public class CommandExpressionComparison extends CommandParent {
 
         if (userGeneList.isEmpty()) {
             display.displayExpressionComparisonHomePage();
-            log.exit(); return;
+            log.traceExit(); return;
         }
         if (userGeneList.size() == 1) {
             display.displayExpressionComparison("At least two Ensembl IDs should be provided.");
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
@@ -72,14 +72,14 @@ public class CommandExpressionComparison extends CommandParent {
 
         if (species.isEmpty()) {
             display.displayExpressionComparison("No gene from species presents in Bgee are detected.");
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         if (species.size() == 1) {
             SingleSpeciesExprAnalysis singleSpeciesExprAnalysis = serviceFactory.getCallService()
                     .loadSingleSpeciesExprAnalysis(searchResult.getResults());
             display.displayExpressionComparison(searchResult, singleSpeciesExprAnalysis);
-            log.exit(); return;
+            log.traceExit(); return;
         }
 
         MultiSpeciesExprAnalysis multiSpeciesExprAnalysis = serviceFactory.getMultiSpeciesCallService()

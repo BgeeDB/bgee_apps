@@ -102,7 +102,7 @@ public class GeneMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.exit(new GeneMatchResult(0, null));
+            return log.traceExit(new GeneMatchResult(0, null));
         }
 
         // get mapping between attributes names and their index
@@ -120,7 +120,7 @@ public class GeneMatchResultService extends CommonService {
                 .sorted()
                 .collect(Collectors.toList());
 
-        return log.exit(new GeneMatchResult(result.totalFound, geneMatches));
+        return log.traceExit(new GeneMatchResult(result.totalFound, geneMatches));
     }
 
     /**
@@ -156,7 +156,7 @@ public class GeneMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.exit(new ArrayList<>());
+            return log.traceExit(new ArrayList<>());
         }
 
         // build list of propositions
@@ -166,7 +166,7 @@ public class GeneMatchResultService extends CommonService {
                 .sorted(Comparator.comparingInt(m -> m.length()))
                 .collect(Collectors.toList());
 
-        return log.exit(propositions);
+        return log.traceExit(propositions);
     }
 
     /**
@@ -189,7 +189,7 @@ public class GeneMatchResultService extends CommonService {
                 sphinxClient.SetRankingMode(ranker, null);
             }
             String queryTerm = "\"" + this.getFormattedTerm(searchTerm) + "\"";
-            return log.exit(sphinxClient.Query(queryTerm, index));
+            return log.traceExit(sphinxClient.Query(queryTerm, index));
         } catch (SphinxException e) {
             throw log.throwing(new IllegalStateException(
                     "Sphinx search has generated an exception", e));
@@ -240,16 +240,16 @@ public class GeneMatchResultService extends CommonService {
 
         final String geneIdLowerCase = gene.getEnsemblGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
-            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
+            return log.traceExit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
         }
 
         final String geneNameLowerCase = gene.getName().toLowerCase();
         if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.exit(new GeneMatch(gene, null, GeneMatch.MatchSource.NAME));
+            return log.traceExit(new GeneMatch(gene, null, GeneMatch.MatchSource.NAME));
         }
         final String descriptionLowerCase = gene.getDescription().toLowerCase();
         if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
-            return log.exit(new GeneMatch(gene, null, DESCRIPTION));
+            return log.traceExit(new GeneMatch(gene, null, DESCRIPTION));
         }
 
         // otherwise we fetch term and find the first match
@@ -257,16 +257,16 @@ public class GeneMatchResultService extends CommonService {
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
-            return log.exit(new GeneMatch(gene, geneNameSynonym, SYNONYM));
+            return log.traceExit(new GeneMatch(gene, geneNameSynonym, SYNONYM));
         }
 
         final String geneXRef = this.getMatch(match, "genexref", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneXRef != null) {
-            return log.exit(new GeneMatch(gene, geneXRef, XREF));
+            return log.traceExit(new GeneMatch(gene, geneXRef, XREF));
         }
         
-        return log.exit(new GeneMatch(gene, geneXRef, MULTIPLE));
+        return log.traceExit(new GeneMatch(gene, geneXRef, MULTIPLE));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
@@ -283,8 +283,8 @@ public class GeneMatchResultService extends CommonService {
                         s.contains(termLowerCaseEscaped))
                 .collect(Collectors.toList());
         if (terms.size() > 0) {
-            return log.exit(terms.get(0));
+            return log.traceExit(terms.get(0));
         }
-        return log.exit(null);
+        return log.traceExit((String) null);
     }
 }

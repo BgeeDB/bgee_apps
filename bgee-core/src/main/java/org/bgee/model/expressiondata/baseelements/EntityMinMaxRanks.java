@@ -61,9 +61,9 @@ public class EntityMinMaxRanks<T> {
             throw log.throwing(new IllegalArgumentException("The rank must be provided"));
         }
         if (rank.compareTo(this.getMinRank()) < 0 || rank.compareTo(this.getMaxRank()) > 0) {
-            return log.exit(false);
+            return log.traceExit(false);
         }
-        return log.exit(true);
+        return log.traceExit(true);
     }
 
     /**

@@ -63,7 +63,7 @@ public class AnatEntitySimilarityService extends Service {
      */
     public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
         log.entry(taxonId, onlyTrusted);
-        return log.exit(this.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted, null));
+        return log.traceExit(this.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted, null));
     }
     /**
      * Load positive anatomical entity similarities valid for the requested {@code taxonId}.
@@ -255,7 +255,7 @@ public class AnatEntitySimilarityService extends Service {
                     }));
         }
 
-        return log.exit(similarities.collect(Collectors.toSet()));
+        return log.traceExit(similarities.collect(Collectors.toSet()));
     }
 
     /**
@@ -291,9 +291,9 @@ public class AnatEntitySimilarityService extends Service {
                 lca.getId(), onlyTrusted, clonedSpeIds);
         //And now we filter the similarities to return only those related to the requested anat. entities
         if (clonedAnatEntityIds.isEmpty()) {
-            return log.exit(anatEntitySimilarities);
+            return log.traceExit(anatEntitySimilarities);
         }
-        return log.exit(anatEntitySimilarities.stream()
+        return log.traceExit(anatEntitySimilarities.stream()
                 .filter(s -> s.getAllAnatEntities().stream().anyMatch(ae -> clonedAnatEntityIds.contains(ae.getId())))
                 .collect(Collectors.toSet()));
     }
@@ -371,7 +371,7 @@ public class AnatEntitySimilarityService extends Service {
                         },
                         (v1, v2) -> {v1.addAll(v2); return v1;}));
 
-        return log.exit(new AnatEntitySimilarityAnalysis(clonedAnatEntityIds, notFoundAnatEntityIds,
+        return log.traceExit(new AnatEntitySimilarityAnalysis(clonedAnatEntityIds, notFoundAnatEntityIds,
                 clonedSpeIds, speciesIdsNotFound, requestedSpecies,
                 lca, anatEntitySimilarities, anatEntitiesNotInSimilarities,
                 anatEntityToSpecies));
@@ -471,7 +471,7 @@ public class AnatEntitySimilarityService extends Service {
                     return true;
                 }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-        return log.exit(finalAnnots);
+        return log.traceExit(finalAnnots);
     }
 
     private Set<SummarySimilarityAnnotationTO> getValidMultipleEntityAnnotations(Set<Integer> validTaxonIds,
@@ -620,7 +620,7 @@ public class AnatEntitySimilarityService extends Service {
                 .flatMap(s -> s.stream().filter(a -> !multEntAnnotsToDiscard.contains(a)))
                 .collect(Collectors.toSet());
 
-        return log.exit(validMultEntAnnots);
+        return log.traceExit(validMultEntAnnots);
     }
 
     private static AnatEntitySimilarity mapToAnatEntitySimilarity(Set<String> anatEntityIds,
@@ -667,6 +667,6 @@ public class AnatEntitySimilarityService extends Service {
                         "CIO statement was not found: " + annotTO.getCIOId()))
                 .isTrusted();
 
-        return log.exit(new AnatEntitySimilarityTaxonSummary(taxon, trusted, !annotTO.isNegated()));
+        return log.traceExit(new AnatEntitySimilarityTaxonSummary(taxon, trusted, !annotTO.isNegated()));
     }
 }

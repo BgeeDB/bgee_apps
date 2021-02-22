@@ -84,7 +84,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 		
 		this.endDisplay();
 		
-		log.exit();
+		log.traceExit();
 	}
 
 	public void displayMatchesForGeneCompletion(Collection<String> matches) {
@@ -103,7 +103,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		this.endDisplay();
 
-		log.exit();
+		log.traceExit();
 	}
 
 	@Override
@@ -129,6 +129,6 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		this.endDisplay();
 
-		log.exit();
+		log.traceExit();
 	}
 }

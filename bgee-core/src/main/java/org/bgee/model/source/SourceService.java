@@ -54,7 +54,7 @@ public class SourceService extends CommonService {
         if (withSpeciesInfo) {
             sources = this.loadSpeciesInfo(sources);
         }
-        return log.exit(sources);
+        return log.traceExit(sources);
     }
     
     /**
@@ -66,7 +66,7 @@ public class SourceService extends CommonService {
      */
     public Map<Integer, Source> loadSourcesByIds(Collection<Integer> sourceIds) {
         log.entry(sourceIds);
-        return log.exit(this.getDaoManager().getSourceDAO()
+        return log.traceExit(this.getDaoManager().getSourceDAO()
                 .getDataSourceByIds(sourceIds, null).stream()
                 .map(SourceService::mapFromTO)
                 .collect(Collectors.toMap(Source::getId, s -> s)));
@@ -90,7 +90,7 @@ public class SourceService extends CommonService {
             sources = this.loadSpeciesInfo(sources);
         }
         
-        return log.exit(sources);
+        return log.traceExit(sources);
     }
 
     /**
@@ -121,7 +121,7 @@ public class SourceService extends CommonService {
                     forData.isEmpty() ? null : forData, forAnnotation.isEmpty() ? null : forAnnotation));
         }
         
-        return log.exit(completedSources);
+        return log.traceExit(completedSources);
     }
     
     /** 
@@ -151,7 +151,7 @@ public class SourceService extends CommonService {
                     newSet.addAll(v2);
                     return newSet;
                 }));
-        return log.exit(map);
+        return log.traceExit(map);
     }
     
     /**
@@ -163,9 +163,9 @@ public class SourceService extends CommonService {
     private static Source mapFromTO(SourceTO sourceTO) {
         log.entry(sourceTO);
         if (sourceTO == null) {
-            return log.exit(null);
+            return log.traceExit((Source) null);
         }
-        return log.exit(new Source(sourceTO.getId(), sourceTO.getName(), sourceTO.getDescription(),
+        return log.traceExit(new Source(sourceTO.getId(), sourceTO.getName(), sourceTO.getDescription(),
                 sourceTO.getXRefUrl(), sourceTO.getExperimentUrl(), sourceTO.getEvidenceUrl(),
                 sourceTO.getBaseUrl(), sourceTO.getReleaseDate(), sourceTO.getReleaseVersion(),
                 sourceTO.isToDisplay(), convertSourceCategoryTOToSourceCategory(sourceTO.getSourceCategory()),
@@ -177,21 +177,21 @@ public class SourceService extends CommonService {
         log.entry(cat);
         switch(cat) {
             case NONE: 
-                return log.exit(SourceCategory.NONE);
+                return log.traceExit(SourceCategory.NONE);
             case GENOMICS:
-                return log.exit(SourceCategory.GENOMICS);
+                return log.traceExit(SourceCategory.GENOMICS);
             case PROTEOMICS: 
-                return log.exit(SourceCategory.PROTEOMICS);
+                return log.traceExit(SourceCategory.PROTEOMICS);
             case IN_SITU: 
-                return log.exit(SourceCategory.IN_SITU);
+                return log.traceExit(SourceCategory.IN_SITU);
             case AFFYMETRIX: 
-                return log.exit(SourceCategory.AFFYMETRIX);
+                return log.traceExit(SourceCategory.AFFYMETRIX);
             case EST: 
-                return log.exit(SourceCategory.EST);
+                return log.traceExit(SourceCategory.EST);
             case RNA_SEQ: 
-                return log.exit(SourceCategory.RNA_SEQ);
+                return log.traceExit(SourceCategory.RNA_SEQ);
             case ONTOLOGY: 
-                return log.exit(SourceCategory.ONTOLOGY);
+                return log.traceExit(SourceCategory.ONTOLOGY);
         default: 
             throw log.throwing(new IllegalStateException("Unsupported SourceTO.SourceCategory: " + cat));
         }

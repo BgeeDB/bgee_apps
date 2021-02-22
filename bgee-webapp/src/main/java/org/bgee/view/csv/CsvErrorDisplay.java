@@ -31,7 +31,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
 
     @Override
     public void displayServiceUnavailable() {
-        log.entry();
+        log.traceEntry();
         
         this.sendServiceUnavailableHeaders();
 
@@ -41,12 +41,12 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 "We apologize for any inconvenience.");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayUnexpectedError() {
-        log.entry();
+        log.traceEntry();
         
         this.sendInternalErrorHeaders();
         
@@ -56,7 +56,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 "We apologize for any inconvenience.");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -70,7 +70,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.displayErrorMessage(e.getMessage());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -97,7 +97,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "multiple values. Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -110,7 +110,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.displayErrorMessage("Request maximum size exceeded.");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -124,7 +124,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "its maximum allowed length. Incorrect parameter: " + e.getURLParameter().getName());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -137,7 +137,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.displayErrorMessage("404 not found. We could not understand your query.");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -154,7 +154,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "Invalid key: " + e.getKey());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
@@ -169,12 +169,12 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "We apologize for any inconvenience.</p>");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayUnsupportedOperationException() {
-        log.entry();
+        log.traceEntry();
         
         this.sendBadRequestHeaders();
         
@@ -183,12 +183,12 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
                 + "for the requesed view or the requested parameters.");
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     public void displayControllerException(TooManyJobsException e) {
-        log.entry();
+        log.traceEntry();
         
         this.sendTooManyRequeststHeaders();
         
@@ -196,7 +196,7 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
         this.displayErrorMessage("Too Many Requests - " + e.getMessage());
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -208,6 +208,6 @@ public class CsvErrorDisplay extends CsvParentDisplay implements ErrorDisplay {
     private void displayErrorMessage(String msg) {
         log.entry(msg);
         this.writeln("Query error: " + msg);
-        log.exit();
+        log.traceExit();
     }
 }

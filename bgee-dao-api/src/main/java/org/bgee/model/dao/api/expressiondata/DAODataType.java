@@ -36,7 +36,7 @@ public enum DAODataType implements EnumDAOField {
      */
     public static final DAODataType convertToDataType(String representation) {
         log.entry(representation);
-        return log.exit(TransferObject.convert(DAODataType.class, representation));
+        return log.traceExit(TransferObject.convert(DAODataType.class, representation));
     }
 
     /**

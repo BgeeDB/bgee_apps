@@ -129,7 +129,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
              */
             public static final ConfidenceLevel convertToConfidenceLevel(String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(ConfidenceLevel.class, representation));
+                return log.traceExit(TransferObject.convert(ConfidenceLevel.class, representation));
             }
 
             /**
@@ -200,7 +200,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
             public static final EvidenceConcordance convertToEvidenceConcordance(
                     String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(EvidenceConcordance.class, representation));
+                return log.traceExit(TransferObject.convert(EvidenceConcordance.class, representation));
             }
 
             /**
@@ -266,7 +266,7 @@ public interface CIOStatementDAO extends DAO<CIOStatementDAO.Attribute> {
             public static final EvidenceTypeConcordance convertToEvidenceTypeConcordance(
                     String representation) {
                 log.entry(representation);
-                return log.exit(TransferObject.convert(EvidenceTypeConcordance.class, representation));
+                return log.traceExit(TransferObject.convert(EvidenceTypeConcordance.class, representation));
             }
 
             /**

@@ -59,7 +59,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
     @Override
     public void displayRPackages() {
-        log.entry();
+        log.traceEntry();
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -97,13 +97,13 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
         
     }
 
     @Override
     public void displayAnnotations() {
-        log.entry();
+        log.traceEntry();
         
         String anatSimUrl = BGEE_GITHUB_URL + "/anatomical-similarity-annotations";
         String rnaSeqSourceFileUrl = MASTER_BGEE_PIPELINE_GITHUB_URL + "/source_files/RNA_Seq";
@@ -165,13 +165,13 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();
+        log.traceExit();
         
     }
 
     @Override
     public void displayOntologies() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Ontology resources");
 
@@ -247,12 +247,12 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();        
+        log.traceExit();        
     }
 
     @Override
     public void displaySourceCode() {
-        log.entry();
+        log.traceEntry();
         
         this.startDisplay("Source code");
 
@@ -299,7 +299,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
 
         this.endDisplay();
 
-        log.exit();         
+        log.traceExit();         
     }
 
     private String getSoftwareSourceCodeProperty(String idSuffix, String name, String description, 
@@ -310,7 +310,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(RequestParameters.ACTION_RESOURCES_SOURCE_CODE);
 
-        return log.exit(
+        return log.traceExit(
                 "    {" +
                 "       \"@type\": \"SoftwareSourceCode\"," +
                 "       \"@id\": \"" + url.getRequestURL() + "#" + idSuffix + "\"," +
@@ -330,7 +330,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(requestParametersAction);
 
-        return log.exit("    {" +
+        return log.traceExit("    {" +
                         "       \"@type\": \"CreativeWork\"," +
                         "       \"@id\": \"" + url.getRequestURL() + "#" + idSuffix + "\"," +
                         "       \"name\": \"" + name + "\"," +
@@ -348,7 +348,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
         url.setPage(RequestParameters.PAGE_RESOURCES);
         url.setAction(RequestParameters.ACTION_RESOURCES_R_PACKAGES);
 
-        return log.exit("{" +
+        return log.traceExit("{" +
                         "   \"@type\": \"SoftwareApplication\"," +
                         "   \"@id\": \"" + this.prop.getBgeeRootDirectory() + "#" + idSuffix + "\"," +
                         "   \"name\": \"" + name + "\"," +

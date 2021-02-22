@@ -172,7 +172,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             log.entry(expCounts);
             
             if (expCounts == null || expCounts.isEmpty()) {
-                return log.exit(null);
+                return log.traceExit((Expression) null);
             }
         
             Set<ExperimentExpressionCount> propAllPositiveCounts = expCounts.stream()
@@ -188,11 +188,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             
             if (propAllPositiveCounts.stream()
                     .anyMatch(c -> Expression.EXPRESSED.equals(c.getCallType()))) {
-                return log.exit(Expression.EXPRESSED);
+                return log.traceExit(Expression.EXPRESSED);
             }
             if (propAllPositiveCounts.stream()
                     .anyMatch(c -> Expression.NOT_EXPRESSED.equals(c.getCallType()))) {
-                return log.exit(Expression.NOT_EXPRESSED);
+                return log.traceExit(Expression.NOT_EXPRESSED);
             }
             //this point should be reached only if a new CallType.Expression is not supported here,
             //so it's an IllegalStateException, not an IllegalArgumentException
@@ -311,7 +311,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                         "Could not find matching ExperimentExpressionCount for parameters: "
                         + callType + " - " + dataQuality + " - " + propState));
             }
-            return log.exit(matchingExpCounts.iterator().next());
+            return log.traceExit(matchingExpCounts.iterator().next());
         }
 
         public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
@@ -324,7 +324,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                         "The provided PropagationState is invalid for ExperimentExpressionCounts: "
                         + propState));
             }
-            return log.exit(experimentCounts.stream()
+            return log.traceExit(experimentCounts.stream()
                     .filter(c -> propState.equals(c.getPropagationState()))
                     .collect(Collectors.toSet()));
         }
@@ -468,7 +468,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         this.dataType = dataType;
         this.callType = callType;
-        log.exit();
+        log.traceExit();
     }
 
 

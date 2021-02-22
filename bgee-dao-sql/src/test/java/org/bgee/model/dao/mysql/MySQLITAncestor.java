@@ -16,6 +16,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 /**
@@ -172,9 +173,9 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * name should be associated to the key {@link #EMPTYDBKEY} is System properties).
      */
     protected void useEmptyDB() {
-        log.entry();
+        log.traceEntry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(EMPTYDBKEY));
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -186,10 +187,10 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @throws SQLException     If an error occurs while updating the database.
      */
     protected void useSelectDB() throws SQLException {
-        log.entry();
+        log.traceEntry();
         this.getMySQLDAOManager().setDatabaseToUse(System.getProperty(POPULATEDDBKEY));
         this.populateAndUseDatabase();
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -243,9 +244,9 @@ public abstract class MySQLITAncestor extends TestAncestor{
         JdbcTemplate template = new JdbcTemplate(dataSource);
         //create db
         Resource resource = new FileSystemResource(System.getProperty(SCHEMAFILEKEY));
-        JdbcTestUtils.executeSqlScript(template, resource, false);
+        ScriptUtils.executeSqlScript(con.getRealConnection(), resource);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -258,7 +259,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @throws SQLException     If an error occurs while updating the database.
      */
     protected void populateAndUseDatabase() throws SQLException {
-        log.entry();
+        log.traceEntry();
         // We don't populate the database if already filled.
         try (BgeePreparedStatement stmt = this.getMySQLDAOManager().getConnection().
                 prepareStatement("select 1 from dataSource")) {
@@ -269,7 +270,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
                 }
             }
         }
-        log.exit();
+        log.traceExit();
    }
    
     /**
@@ -281,7 +282,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
      * @throws SQLException    If an error occurred while deleting the database.
      */
     protected void emptyAndUseDefaultDB() throws SQLException {
-        log.entry();
+        log.traceEntry();
 
         try (BgeeCallableStatement callStmt = this.getMySQLDAOManager().getConnection().prepareCall(
                 "{call " + System.getProperty(EMPTYPROCEDUREKEY) + "()}")) {
@@ -290,7 +291,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
 
         this.getMySQLDAOManager().setDatabaseToUse(null);
         
-        log.exit();
+        log.traceExit();
     }
        
     /**
@@ -312,7 +313,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         }
         manager.setDatabaseToUse(null);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**

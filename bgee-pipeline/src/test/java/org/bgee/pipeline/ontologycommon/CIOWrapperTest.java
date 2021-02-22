@@ -62,11 +62,11 @@ public class CIOWrapperTest {
      */
     public static void loadOntology() throws OBOFormatParserException, 
     OWLOntologyCreationException, IOException {
-        log.entry();
+        log.traceEntry();
         cioWrapper = new CIOWrapper(OntologyUtils.loadOntology(CIOWrapperTest.class.
                 getResource("/ontologies/cio.owl").getFile()));
         graphWrapper = cioWrapper.getOWLGraphWrapper();
-        log.exit();
+        log.traceExit();
     }
 
     
@@ -75,7 +75,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetConfidenceLevel() {
-        log.entry();
+        log.traceEntry();
     
         OWLClass highConf = graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.HIGH_CONF_LEVEL_ID);
         OWLClass mediumConf = graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.MEDIUM_CONF_LEVEL_ID);
@@ -133,7 +133,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getConfidenceLevel(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000038"));
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -209,7 +209,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetEvidenceConcordance() {
-        log.entry();
+        log.traceEntry();
     
         OWLClass singleConc = graphWrapper.getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.SINGLE_EVIDENCE_CONCORDANCE_ID);
@@ -302,7 +302,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getEvidenceConcordance(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000042"));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -310,7 +310,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetEvidenceTypeConcordance() {
-        log.entry();
+        log.traceEntry();
         
         OWLClass sameType = graphWrapper.getOWLClassByIdentifierNoAltIds(
                 CIOWrapper.SAME_TYPE_EVIDENCE_CONCORDANCE_ID);
@@ -389,7 +389,7 @@ public class CIOWrapperTest {
         thrown.expect(IllegalArgumentException.class);
         cioWrapper.getEvidenceTypeConcordance(graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033"));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -397,7 +397,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetBestTermWithConfidenceLevel() {
-        log.entry();
+        log.traceEntry();
         
         assertEquals("Incorrect best term retrieved", 
                 graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000003"), 
@@ -492,7 +492,7 @@ public class CIOWrapperTest {
             //test passed
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -500,7 +500,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetSingleEvidenceConfidenceStatement() {
-        log.entry();
+        log.traceEntry();
         
         assertEquals("Incorrect confidence statement retrieved", 
                 graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000003"), 
@@ -519,7 +519,7 @@ public class CIOWrapperTest {
         cioWrapper.getSingleEvidenceConfidenceStatement(
                 graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.CONFIDENCE_LEVEL_ID));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -527,7 +527,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetConfidenceStatement() {
-        log.entry();
+        log.traceEntry();
         
         OWLClass highConf = graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.HIGH_CONF_LEVEL_ID);
         OWLClass mediumConf = graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.MEDIUM_CONF_LEVEL_ID);
@@ -605,7 +605,7 @@ public class CIOWrapperTest {
                 graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000027"), 
                 cioWrapper.getConfidenceStatement(weaklyConflictingConc, differentTypes, mediumConf));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -613,7 +613,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void testIsConfidenceStatement() {
-        log.entry();
+        log.traceEntry();
         
         //check random CI statements
         assertTrue("Incorrect value returned by isConfidenceStatement", 
@@ -643,14 +643,14 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceStatement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000028")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isConfidenceElement(OWLClass)}.
      */
     @Test
     public void testIsConfidenceElement() {
-        log.entry();
+        log.traceEntry();
         
         //check random CI elements
         assertTrue("Incorrect value returned by isConfidenceElement", 
@@ -680,14 +680,14 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceElement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000006")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isEvidenceConcordance(OWLClass)}.
      */
     @Test
     public void testIsEvidenceConcordance() {
-        log.entry();
+        log.traceEntry();
         
         //check random evidence concordance terms
         assertTrue("Incorrect value returned by isEvidenceConcordance", 
@@ -714,14 +714,14 @@ public class CIOWrapperTest {
                 cioWrapper.isEvidenceConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000037")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isSingleEvidenceConcordance(OWLClass)}.
      */
     @Test
     public void testIsSingleEvidenceConcordance() {
-        log.entry();
+        log.traceEntry();
         
         //check single evidence concordance term
         assertTrue("Incorrect value returned by isSingleEvidenceConcordance", 
@@ -742,14 +742,14 @@ public class CIOWrapperTest {
                 cioWrapper.isSingleEvidenceConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000043")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isEvidenceTypeConcordance(OWLClass)}.
      */
     @Test
     public void testIsEvidenceTypeConcordance() {
-        log.entry();
+        log.traceEntry();
         
         //check random evidence type concordance terms
         assertTrue("Incorrect value returned by isEvidenceTypeConcordance", 
@@ -770,14 +770,14 @@ public class CIOWrapperTest {
                 cioWrapper.isEvidenceTypeConcordance(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000043")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isConfidenceLevel(OWLClass)}.
      */
     @Test
     public void testIsConfidenceLevel() {
-        log.entry();
+        log.traceEntry();
         
         //check random confidence level terms
         assertTrue("Incorrect value returned by isConfidenceLevel", 
@@ -804,14 +804,14 @@ public class CIOWrapperTest {
                 cioWrapper.isConfidenceLevel(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033")));
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Test method {@link CIOWrapper#isRejectedStatement(OWLClass)}.
      */
     @Test
     public void testIsRejectedStatement() {
-        log.entry();
+        log.traceEntry();
         
         //check random confidence level terms
         assertTrue("Incorrect value returned by isRejectedStatement", 
@@ -829,7 +829,7 @@ public class CIOWrapperTest {
                 cioWrapper.isRejectedStatement(
                         graphWrapper.getOWLClassByIdentifierNoAltIds("CIO:0000033")));
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -837,7 +837,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetOrderedConfidenceLevels() {
-        log.entry();
+        log.traceEntry();
         
         assertEquals("Incorrect ordered confidence levels", Arrays.asList(
                 graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.LOW_CONF_LEVEL_ID), 
@@ -845,7 +845,7 @@ public class CIOWrapperTest {
                 graphWrapper.getOWLClassByIdentifierNoAltIds(CIOWrapper.HIGH_CONF_LEVEL_ID)), 
                 cioWrapper.getOrderedConfidenceLevels());
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -857,7 +857,7 @@ public class CIOWrapperTest {
      */
     @Test
     public void shouldGetById() {
-        log.entry();
+        log.traceEntry();
         OWLGraphWrapper wrapper = cioWrapper.getOWLGraphWrapper();
         
         this.checkClass(wrapper, CIOWrapper.CONFIDENCE_ELEMENT_ID);
@@ -882,7 +882,7 @@ public class CIOWrapperTest {
         this.checkObjectProperty(wrapper, CIOWrapper.HAS_EVIDENCE_TYPE_CONCORDANCE_ID);
         this.checkObjectProperty(wrapper, CIOWrapper.PROVIDES_GREATER_CONF_THAN_ID);
         
-        log.exit();
+        log.traceExit();
     }
     /**
      * Checks that there exists, in the ontology wrapped by {@code wrapper}, 

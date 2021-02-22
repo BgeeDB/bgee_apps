@@ -140,7 +140,7 @@ public class CIOWrapper {
 //            this.evidenceConcordance = evidenceConcordance;
 //            this.evidenceTypeConcordance = evidenceTypeConcordance;
 //            
-//            log.exit();
+//            log.traceExit();
 //        }
 //        
 //        /**
@@ -178,10 +178,10 @@ public class CIOWrapper {
 //                        " - Confidence information elements of same type identified: "
 //                        + confElementsAncestors));
 //            } else if (confElementsAncestors.size() == 1) {
-//                return log.exit(confElementsAncestors.iterator().next());
+//                return log.traceExit(confElementsAncestors.iterator().next());
 //            }
 //            
-//            return log.exit(null);
+//            return log.traceExit(null);
 //        }
 //        /**
 //         * Modify {@code classes} to retain only {@code OWLClass}es with no descendants 
@@ -206,7 +206,7 @@ public class CIOWrapper {
 //            }
 //            classes.removeAll(allAncestors);
 //            log.trace("Leaf classes retained: {}", classes);
-//            log.exit();
+//            log.traceExit();
 //        }
 //        
 //        
@@ -494,7 +494,7 @@ public class CIOWrapper {
         log.entry(pathToOntology);
         ParserWrapper parserWrapper = new ParserWrapper();
         parserWrapper.setCheckOboDoc(true);
-        return log.exit(parserWrapper.parse(pathToOntology));
+        return log.traceExit(parserWrapper.parse(pathToOntology));
     }
     
     
@@ -817,12 +817,12 @@ public class CIOWrapper {
 //            public int compare(OWLClass o1, OWLClass o2) {
 //                for (OWLGraphEdge edge: wrapper.getOutgoingEdgesClosure(o1, greaterConfThanRels)) {
 //                    if (edge.getTarget().equals(o2)) {
-//                        return log.exit(1);
+//                        return log.traceExit(1);
 //                    }
 //                }
 //                for (OWLGraphEdge edge: wrapper.getOutgoingEdgesClosure(o2, greaterConfThanRels)) {
 //                    if (edge.getTarget().equals(o1)) {
-//                        return log.exit(-1);
+//                        return log.traceExit(-1);
 //                    }
 //                }
 //                throw log.throwing(new IllegalArgumentException("The CIO provided does not allow "
@@ -969,7 +969,7 @@ public class CIOWrapper {
 //            }
 //            
 //        }
-//        return log.exit(intersectingClasses);
+//        return log.traceExit(intersectingClasses);
 //    }
     
     /**
@@ -983,7 +983,7 @@ public class CIOWrapper {
      */
     public boolean isConfidenceStatement(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.confidenceStatement));
+        return log.traceExit(this.isMemberOfBranch(cls, this.confidenceStatement));
     }
     /**
      * Determines whether {@code cls} is part if the 'confidence information element' branch, 
@@ -996,7 +996,7 @@ public class CIOWrapper {
      */
     public boolean isConfidenceElement(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.confidenceElement));
+        return log.traceExit(this.isMemberOfBranch(cls, this.confidenceElement));
     }
     /**
      * Determines whether {@code cls} is of type 'evidence concordance'.
@@ -1009,7 +1009,7 @@ public class CIOWrapper {
      */
     public boolean isEvidenceConcordance(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.evidenceConcordance));
+        return log.traceExit(this.isMemberOfBranch(cls, this.evidenceConcordance));
     }
     /**
      * Determines whether {@code cls} is a type of evidence concordance 'single evidence'.
@@ -1022,7 +1022,7 @@ public class CIOWrapper {
      */
     public boolean isSingleEvidenceConcordance(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.singleEvidenceConcordance));
+        return log.traceExit(this.isMemberOfBranch(cls, this.singleEvidenceConcordance));
     }
     /**
      * Determines whether {@code cls} is of type 'evidence type concordance'.
@@ -1035,7 +1035,7 @@ public class CIOWrapper {
      */
     public boolean isEvidenceTypeConcordance(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.evidenceTypeConcordance));
+        return log.traceExit(this.isMemberOfBranch(cls, this.evidenceTypeConcordance));
     }
     /**
      * Determines whether {@code cls} is of type 'confidence level'.
@@ -1048,7 +1048,7 @@ public class CIOWrapper {
      */
     public boolean isConfidenceLevel(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.isMemberOfBranch(cls, this.confidenceLevel));
+        return log.traceExit(this.isMemberOfBranch(cls, this.confidenceLevel));
     }
     /**
      * Determines whether {@code cls} is a subclass of {@code branchRoot} 
@@ -1064,9 +1064,9 @@ public class CIOWrapper {
         log.entry(cls, branchRoot);
         if (branchRoot.equals(cls) || 
                 this.wrapper.getAncestorsThroughIsA(cls).contains(branchRoot)) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
 
     /**
@@ -1080,7 +1080,7 @@ public class CIOWrapper {
      */
     public boolean isRejectedStatement(OWLClass cls) {
         log.entry(cls);
-        return log.exit(this.rejectedStatement.equals(cls));
+        return log.traceExit(this.rejectedStatement.equals(cls));
     }
     
     /**
@@ -1100,7 +1100,7 @@ public class CIOWrapper {
     public OWLClass getConfidenceLevel(OWLClass cls) throws IllegalArgumentException, 
     IllegalStateException {
         log.entry(cls);
-        return log.exit(this.getConfidenceElement(cls, this.hasConfidenceLevel, 
+        return log.traceExit(this.getConfidenceElement(cls, this.hasConfidenceLevel, 
                 this.confidenceLevel));
     }
     /**
@@ -1117,9 +1117,9 @@ public class CIOWrapper {
         log.entry(cls);
         
         if (this.getConfidenceLevels().contains(this.getConfidenceLevel(cls))) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * Determine whether {@code cls} is one of the 'strongly conflicting' terms. 
@@ -1136,9 +1136,9 @@ public class CIOWrapper {
         log.entry(cls);
         if (STRONGLY_CONFLICTING_CONCORDANCE_ID.equals(
                 this.getOWLGraphWrapper().getIdentifier(this.getEvidenceConcordance(cls)))) {
-            return log.exit(true);
+            return log.traceExit(true);
         }
-        return log.exit(false);
+        return log.traceExit(false);
     }
     /**
      * Returns the 'evidence concordance' associated to {@code cls}. The returned {@code OWLClass} 
@@ -1168,7 +1168,7 @@ public class CIOWrapper {
                     " is not associated to any evidence concordance, all CI statements should be."));
         }
         
-        return log.exit(evidenceConcordance);
+        return log.traceExit(evidenceConcordance);
     }
     /**
      * Returns the 'evidence type concordance' associated to {@code cls}. The returned 
@@ -1187,7 +1187,7 @@ public class CIOWrapper {
     public OWLClass getEvidenceTypeConcordance(OWLClass cls) throws IllegalArgumentException, 
     IllegalStateException {
         log.entry(cls);
-        return log.exit(this.getConfidenceElement(cls, 
+        return log.traceExit(this.getConfidenceElement(cls, 
                 this.hasEvidenceTypeConcordance, this.evidenceTypeConcordance));
     }
     /**
@@ -1283,7 +1283,7 @@ public class CIOWrapper {
                     + ": " + confElements));
         }
         if (confElements.size() == 0) {
-            return log.exit(null);
+            return log.traceExit((OWLClass) null);
         }
         
         //check validity of CI element retrieved
@@ -1295,7 +1295,7 @@ public class CIOWrapper {
                     + ": " + element + " - expected ancestor: " + expectedAncestor));
         }
         
-        return log.exit(element);
+        return log.traceExit(element);
     }
     
     /**
@@ -1313,7 +1313,7 @@ public class CIOWrapper {
         if (!this.isConfidenceStatement(cls)) {
             throw log.throwing(new IllegalArgumentException("Only CI statements can be trusted."));
         }
-        return log.exit(this.wrapper.isOWLObjectInSubsets(cls, 
+        return log.traceExit(this.wrapper.isOWLObjectInSubsets(cls, 
                 Arrays.asList(BGEE_NOT_TRUSTED_SUBSET)));
     }
     
@@ -1348,7 +1348,7 @@ public class CIOWrapper {
      */
     public OWLClass getBestTermWithConfidenceLevel(Collection<OWLClass> cioTerms) {
         log.entry(cioTerms);
-        return log.exit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, true));
+        return log.traceExit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, true));
     }
     
     /**
@@ -1382,7 +1382,7 @@ public class CIOWrapper {
      */
     public OWLClass getLowestTermWithConfidenceLevel(Collection<OWLClass> cioTerms) {
         log.entry(cioTerms);
-        return log.exit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, false));
+        return log.traceExit(this.getBestOrLowestTermWithConfidenceLevel(cioTerms, false));
     }
     
     /**
@@ -1446,15 +1446,15 @@ public class CIOWrapper {
             @Override
             public int compare(OWLClass o1, OWLClass o2) {
                 log.entry(o1, o2);
-                return log.exit(orderedConfLevels.indexOf(wrapper.getConfidenceLevel(o1)) - 
+                return log.traceExit(orderedConfLevels.indexOf(wrapper.getConfidenceLevel(o1)) - 
                         orderedConfLevels.indexOf(wrapper.getConfidenceLevel(o2))); 
             }
         });
         
         if (bestTerm) {
-            return log.exit(orderedCIOTerms.get(orderedCIOTerms.size() - 1));
+            return log.traceExit(orderedCIOTerms.get(orderedCIOTerms.size() - 1));
         } 
-        return log.exit(orderedCIOTerms.get(0));
+        return log.traceExit(orderedCIOTerms.get(0));
     }
     
     /**
@@ -1477,7 +1477,7 @@ public class CIOWrapper {
      */
     public OWLClass getSingleEvidenceConfidenceStatement(OWLClass confidenceLevel) {
         log.entry(confidenceLevel);
-        return log.exit(this.getConfidenceStatement(this.singleEvidenceConcordance, 
+        return log.traceExit(this.getConfidenceStatement(this.singleEvidenceConcordance, 
                 this.evidenceTypeConcordance, confidenceLevel));
     }
     /**
@@ -1599,7 +1599,7 @@ public class CIOWrapper {
                     + " - Provided confidence level: " + confidenceLevel));
         }
         
-        return log.exit(identifiedClasses.iterator().next());
+        return log.traceExit(identifiedClasses.iterator().next());
     }
 
     /**
@@ -1610,8 +1610,8 @@ public class CIOWrapper {
      * @see #CONFIDENCE_LEVEL_ID
      */
     public Set<OWLClass> getConfidenceLevels() {
-        log.entry();
-        return log.exit(this.wrapper.getDescendantsThroughIsA(this.confidenceLevel));
+        log.traceEntry();
+        return log.traceExit(this.wrapper.getDescendantsThroughIsA(this.confidenceLevel));
     }
     /**
      * @return  A {@code List} of {@code OWLClass}es that are 
@@ -1626,7 +1626,7 @@ public class CIOWrapper {
      * @see #getConfidenceLevels()
      */
     public List<OWLClass> getOrderedConfidenceLevels() {
-        log.entry();
+        log.traceEntry();
 
         List<OWLClass> orderedConfLevels = new ArrayList<OWLClass>(this.getConfidenceLevels());
         final OWLGraphWrapper wrapper = this.wrapper;
@@ -1641,17 +1641,17 @@ public class CIOWrapper {
                 log.entry(o1, o2);
                 
                 if (wrapper.getAncestors(o1, greaterConfThanRels).contains(o2)) {
-                    return log.exit(1);
+                    return log.traceExit(1);
                 }
                 if (wrapper.getAncestors(o2, greaterConfThanRels).contains(o1)) {
-                    return log.exit(-1);
+                    return log.traceExit(-1);
                 }
                 throw log.throwing(new IllegalStateException("The CIO provided does not allow "
                         + "to order some confidence levels: " + o1 + " - " + o2));
             }
         });
         
-        return log.exit(orderedConfLevels);
+        return log.traceExit(orderedConfLevels);
     }
     
     /**
@@ -1687,7 +1687,7 @@ public class CIOWrapper {
 //            throw log.throwing(new IllegalArgumentException(cls + " does not belong to "
 //                    + "any branch among valid branches: " + this.getValidBranches()));
 //        }
-//        return log.exit(relatedClasses.iterator().next());
+//        return log.traceExit(relatedClasses.iterator().next());
 //    }
 //    /**
 //     * Retrieves {@code OWLClass}es that are the root of subgraphs containing 
@@ -1747,7 +1747,7 @@ public class CIOWrapper {
 //            throw log.throwing(new IllegalArgumentException(cls + " does not provide "
 //                    + "confidence level information"));
 //        }
-//        return log.exit(relatedClasses.iterator().next());
+//        return log.traceExit(relatedClasses.iterator().next());
 //    }
 //    /**
 //     * Determines whether {@code cls} provides a confidence level information. For instance, 
@@ -1765,9 +1765,9 @@ public class CIOWrapper {
 //        log.entry(cls);
 //        try {
 //            this.extractConfidenceLevel(cls);
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        } catch (IllegalArgumentException e) {
-//            return log.exit(false);
+//            return log.traceExit(false);
 //        }
 //    }
     //    /**
@@ -1782,7 +1782,7 @@ public class CIOWrapper {
 //     */
 //    public boolean isConfFromSingleEvidence(OWLClass cls) {
 //        log.entry(cls);
-//        return log.exit(this.isBelongingToSubgraph(cls, this.getSingleEvidenceConf()));
+//        return log.traceExit(this.isBelongingToSubgraph(cls, this.getSingleEvidenceConf()));
 //    }
 //    
 //    /**
@@ -1798,7 +1798,7 @@ public class CIOWrapper {
 //     */
 //    public boolean isConfFromCongruentEvidenceLines(OWLClass cls) {
 //        log.entry(cls);
-//        return log.exit(this.isBelongingToSubgraph(cls, this.getCongruentConcordance()));
+//        return log.traceExit(this.isBelongingToSubgraph(cls, this.getCongruentConcordance()));
 //    }
 //    /**
 //     * Determines whether {@code cls} is a term representing confidence from weakly 
@@ -1813,7 +1813,7 @@ public class CIOWrapper {
 //     */
 //    public boolean isConfFromWeakConflictEvidenceLines(OWLClass cls) {
 //        log.entry(cls);
-//        return log.exit(this.isBelongingToSubgraph(cls, this.getWeaklyConflictingConcordance()));
+//        return log.traceExit(this.isBelongingToSubgraph(cls, this.getWeaklyConflictingConcordance()));
 //    }
 //    /**
 //     * Determines whether {@code cls} is a term representing confidence from strongly 
@@ -1828,7 +1828,7 @@ public class CIOWrapper {
 //     */
 //    public boolean isConfFromStrongConflictEvidenceLines(OWLClass cls) {
 //        log.entry(cls);
-//        return log.exit(this.isBelongingToSubgraph(cls, this.getStronglyConflictingConcordance()));
+//        return log.traceExit(this.isBelongingToSubgraph(cls, this.getStronglyConflictingConcordance()));
 //    }
 //    
 //    /**
@@ -1843,7 +1843,7 @@ public class CIOWrapper {
 //     */
 //    public boolean isRejectedConfidenceInformation(OWLClass cls) {
 //        log.entry(cls);
-//        return log.exit(this.isBelongingToSubgraph(cls, this.getRejectedTerm()));
+//        return log.traceExit(this.isBelongingToSubgraph(cls, this.getRejectedTerm()));
 //    }
 //    
 //    /**
@@ -1864,12 +1864,12 @@ public class CIOWrapper {
 //    private boolean isBelongingToSubgraph(OWLClass cls, OWLClass subgraphRoot) {
 //        log.entry(cls, subgraphRoot);
 //        if (subgraphRoot.equals(cls)) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
 //        if (this.wrapper.getAncestorsThroughIsA(cls).contains(subgraphRoot)) {
-//            return log.exit(true);
+//            return log.traceExit(true);
 //        }
-//        return log.exit(false);
+//        return log.traceExit(false);
 //    }
     //*************************************
     //  GETTERS 

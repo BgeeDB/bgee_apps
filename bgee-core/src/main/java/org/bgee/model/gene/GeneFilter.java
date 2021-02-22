@@ -98,11 +98,11 @@ public class GeneFilter implements Predicate<Gene> {
 
     @Override
     public boolean test(Gene gene) {
-        log.entry();
+        log.traceEntry();
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("Cannot test null"));
         }
-        return log.exit(speciesId.equals(gene.getSpecies().getId()) &&
+        return log.traceExit(speciesId.equals(gene.getSpecies().getId()) &&
                 (geneIds == null || geneIds.isEmpty() || geneIds.contains(gene.getEnsemblGeneId())));
     }
 

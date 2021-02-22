@@ -107,7 +107,7 @@ public class CsvSpeciesDisplay extends CsvParentDisplay implements SpeciesDispla
             throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
         }
         
-        log.exit();
+        log.traceExit();
     }
 
     @Override

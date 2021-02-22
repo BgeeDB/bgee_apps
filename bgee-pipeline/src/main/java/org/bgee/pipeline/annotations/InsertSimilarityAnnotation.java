@@ -67,7 +67,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
         InsertSimilarityAnnotation insert = new InsertSimilarityAnnotation();
         insert.insert(args[0], args[1]);
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -127,12 +127,12 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
      * @see #rawAnnotTOs
      */
     private void initTOs() {
-        log.entry();
+        log.traceEntry();
         this.similarityAnnotIdGenerator = 0;
         this.summaryAnnotTOs = new HashSet<SummarySimilarityAnnotationTO>();
         this.simAnnotToAnatEntityTOs = new HashSet<SimAnnotToAnatEntityTO>();
         this.rawAnnotTOs = new HashSet<RawSimilarityAnnotationTO>();
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -177,7 +177,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
             this.closeDAO();
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -233,7 +233,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
                     groupedAnnot.getValue()));
         }
         
-        log.entry();
+        log.traceEntry();
     }
     
     /**
@@ -259,7 +259,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
                     + summaryAnnot));
         }
         this.similarityAnnotIdGenerator++;
-        return log.exit(new SummarySimilarityAnnotationTO(
+        return log.traceExit(new SummarySimilarityAnnotationTO(
                 this.similarityAnnotIdGenerator, 
                 summaryAnnot.getNcbiTaxonId(), summaryAnnot.isNegated(), 
                 summaryAnnot.getCioId()));
@@ -300,7 +300,7 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
             }
             tos.add(new SimAnnotToAnatEntityTO(annotId, entityId));
         }
-        return log.exit(tos);
+        return log.traceExit(tos);
     }
     
     /**
@@ -343,6 +343,6 @@ public class InsertSimilarityAnnotation extends MySQLDAOUser {
                     annot.getSupportingText(), annot.getAssignedBy(), annot.getCurator(), 
                     annot.getCurationDate()));
         }
-        return log.exit(tos);
+        return log.traceExit(tos);
     }
 }

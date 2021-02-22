@@ -97,9 +97,9 @@ public class JobService {
      * @see #registerNewJob(long, String, String, int)
      */
     public Job registerNewJob() throws ThreadAlreadyWorkingException {
-        log.entry();
+        log.traceEntry();
         try {
-            return log.exit(this.registerNewJob((String) null));
+            return log.traceExit(this.registerNewJob((String) null));
         } catch (TooManyJobsException e) {
             //Should never happen since we defined a null user ID
             log.catching(e);
@@ -123,7 +123,7 @@ public class JobService {
     public Job registerNewJob(String userId) throws ThreadAlreadyWorkingException, TooManyJobsException {
         log.entry(userId);
         try {
-            return log.exit(this.registerNewJob(this.reserveAndGetJobId(), userId));
+            return log.traceExit(this.registerNewJob(this.reserveAndGetJobId(), userId));
         } catch (JobIdAlreadyRegisteredException e) {
             //Should never happen, reserveAndGetJobId guarantees the job ID is not used 
             log.catching(e);
@@ -147,7 +147,7 @@ public class JobService {
     public Job registerNewJob(long jobId) throws JobIdAlreadyRegisteredException, ThreadAlreadyWorkingException {
         log.entry(jobId);
         try {
-            return log.exit(this.registerNewJob(jobId, null));
+            return log.traceExit(this.registerNewJob(jobId, null));
         } catch (TooManyJobsException e) {
             //Should never happen since we defined a null user ID
             log.catching(e);
@@ -176,7 +176,7 @@ public class JobService {
     public Job registerNewJob(long jobId, String userId) 
             throws JobIdAlreadyRegisteredException, ThreadAlreadyWorkingException, TooManyJobsException {
         log.entry(jobId, userId);
-        return log.exit(this.registerNewJob(jobId, userId, null, 0));
+        return log.traceExit(this.registerNewJob(jobId, userId, null, 0));
     }
     /**
      * Instantiate a new {@code Job} with a generated ID and no user ID defined with the provided 
@@ -194,7 +194,7 @@ public class JobService {
     public Job registerNewJob(String jobName, int taskCount) throws ThreadAlreadyWorkingException {
         log.entry(jobName, taskCount);
         try {
-            return log.exit(this.registerNewJob(null, jobName, taskCount));
+            return log.traceExit(this.registerNewJob(null, jobName, taskCount));
         } catch (TooManyJobsException  e) {
             //Should never happen since we defined a null user ID
             log.catching(e);
@@ -223,7 +223,7 @@ public class JobService {
             throws ThreadAlreadyWorkingException, TooManyJobsException {
         log.entry(userId, jobName, taskCount);
         try {
-            return log.exit(this.registerNewJob(this.reserveAndGetJobId(), userId, jobName, taskCount));
+            return log.traceExit(this.registerNewJob(this.reserveAndGetJobId(), userId, jobName, taskCount));
         } catch (JobIdAlreadyRegisteredException e) {
             //Should never happen, reserveAndGetJobId guarantees the job ID is not used 
             log.catching(e);
@@ -332,7 +332,7 @@ public class JobService {
                     userId != null? this.jobCountPerUser.get(userId): null, 
                     maxJobCount);
         }
-        return log.exit(job);
+        return log.traceExit(job);
     }
     
     /**
@@ -347,8 +347,8 @@ public class JobService {
      *                                 in reasonable amount of retries. 
      */
     public long reserveAndGetJobId() throws IllegalStateException {
-        log.entry();
-        return log.exit(this.reserveAndGetJobId(0));
+        log.traceEntry();
+        return log.traceExit(this.reserveAndGetJobId(0));
     }
     /**
      * Allows to reserve a new job ID before a {@code Job} is actually created. 
@@ -384,10 +384,10 @@ public class JobService {
         //was not "stolen" in the meantime by calling registerNewJob, as we don't provide atomicity.
         if (this.livingJobs.containsKey(jobId)) {
             //well, let's try again... number of retries is preserved
-            return log.exit(this.reserveAndGetJobId(i));
+            return log.traceExit(this.reserveAndGetJobId(i));
         }
         
-        return log.exit(jobId);
+        return log.traceExit(jobId);
     }
     
     /**
@@ -415,7 +415,7 @@ public class JobService {
         }
         log.debug("User {} currently has {} running jobs, max number of running jobs {}, it's OK", 
                 userId, jobCount, maxJobCount);
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -425,8 +425,8 @@ public class JobService {
      * @see #getJob(long)
      */
     public Job getJob() {
-        log.entry();
-        return log.exit(this.threadIdsToLivingJobs.get(Thread.currentThread().getId()));
+        log.traceEntry();
+        return log.traceExit(this.threadIdsToLivingJobs.get(Thread.currentThread().getId()));
     }
     /**
      * Get the {@code Job} associated with {@code id}. 
@@ -437,7 +437,7 @@ public class JobService {
      */
     public Job getJob(long id) {
         log.entry(id);
-        return log.exit(this.livingJobs.get(id));
+        return log.traceExit(this.livingJobs.get(id));
     }
     
     /**
@@ -479,7 +479,7 @@ public class JobService {
             this.jobCountPerUser.compute(job.getUserId(), (k, v) -> v - 1 == 0? null: v - 1);
         }
         
-        log.exit();
+        log.traceExit();
     }
     
     /**

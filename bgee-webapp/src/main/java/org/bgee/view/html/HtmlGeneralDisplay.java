@@ -56,9 +56,9 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
     @Override
     public void displayHomePage(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
-        this.startDisplay("Welcome to Bgee: a dataBase for Gene Expression Evolution");
+        this.startDisplay("Bgee: gene expression data in animals");
 
         this.addSchemaMarkups(groups);
         
@@ -87,14 +87,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.endDisplay();
         
-        log.exit();
+        log.traceExit();
     }
     
     /**
      * Add schema.org markup to the page.
      */
     private void addSchemaMarkups(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
         // We build the RequestParameters without geneId to keep '{' and '}' instead of replace them due to by secureString() 
         RequestParameters urlActionTarget = this.getNewRequestParameters();
@@ -116,7 +116,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, EXPR_CALLS_COMPLETE) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, EXPR_CALLS_COMPLETE) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}, " +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
@@ -124,7 +130,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, RNASEQ_DATA) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, RNASEQ_DATA) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}," +
                             "{" +
                             "    \"@type\": \"Dataset\"," +
@@ -132,7 +144,13 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"name\": \"" + this.getDatasetSchemaName(spId, AFFY_DATA) + "\"," +
                             "    \"description\": \"" + this.getDatasetSchemaDescription(spId, AFFY_DATA) + "\"," +
                             "    \"license\": \"" + LICENCE_CC0_URL + "\"," +
-                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"" +
+                            "    \"sameAs\": \"" + this.getSpeciesPageUrl(spId) + "\"," +
+                            "    \"creator\": [" +
+                            "        {" +
+                            "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
+                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
+                            "        } " +
+                            "    ]" +
                             "}";
                         }
                 )
@@ -191,7 +209,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "      \"dataset\": [" + datasets + "]" +
                 "    }")));
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -200,7 +218,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displaySpeciesBanner(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
     
         StringBuilder homePageSpeciesSection = new StringBuilder();
         
@@ -219,14 +237,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>");
         this.writeln("</div>");
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
      * Display the Bgee hero unit.
      */
     private void displayHeroUnit() {
-        log.entry();
+        log.traceEntry();
         
         String archiveClass = this.prop.isArchive()? "archive": "";
 
@@ -250,7 +268,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     
         this.writeln("</div>"); // close bgee_hero row
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -259,7 +277,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param divId    A {@code String} that is the ID of HTML 'div' element.
      */
     private void displayBgeeButtons(String divId) {
-        log.entry(divId);
+        log.traceEntry("{}", divId);
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -277,21 +295,26 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 "'><span class='glyphicon glyphicon-search'></span>Gene search</a>");
         this.writeln("</div>"); // close start_buttons
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
      * Display explanations on Bgee web site.
      */
     private void displayExplanations() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div id='bgee_explanations' class='row home_page_section'>");
+
+        this.writeln("<p>Bgee is a database for retrieval and comparison of gene expression patterns "
+                + "across multiple animal species.<br />It provides an intuitive answer to the question "
+                + "\"where is a gene expressed?\" and supports research in cancer and agriculture "
+                + "as well as evolutionary biology.</p>");
         
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Gene expression data</h2>");
-        this.writeln("<p>Bgee is a database to retrieve and compare gene expression patterns "
-                + "in multiple animal species, produced from multiple data types "
+        this.writeln("<p>Bgee is a database for retrieval and comparison of gene expression patterns "
+                + "across multiple animal species, produced from multiple data types "
                 + "(RNA-Seq, Affymetrix, <em>in situ</em> hybridization, and EST data) "
                 + "and from multiple data sets (including <a href='https://www.gtexportal.org/home/'" +
                 " title='GTEx portal' target='_blank' rel='noopener'>GTEx data</a>).</p>");
@@ -299,7 +322,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='col-sm-4'>");
         this.writeln("<h2>Simply normal</h2>");
-        this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy, expression data "
+        this.writeln("<p>Bgee is based exclusively on curated \"normal\", healthy wild-type, expression data "
                 + "(e.g., no gene knock-out, no treatment, no disease), "
                 + "to provide a comparable reference of normal gene expression.</p>");
         this.writeln("</div>");
@@ -315,7 +338,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("</div>"); // close bgee_explanations
 
-        log.exit();
+        log.traceExit();
     }
     
     /**
@@ -324,7 +347,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param groups    A {@code List} of {@code SpeciesDataGroup} for which display the image.
      */
     private void displayHomePageSpecies(List<SpeciesDataGroup> groups) {
-        log.entry(groups);
+        log.traceEntry("{}", groups);
         
         // Single species part
         String homePageSpeciesSection;
@@ -340,7 +363,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln(homePageSpeciesSection);
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -350,7 +373,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      *          as a HTML 'div' element.
      */
     private String getDownloadPageLinkBanner() {
-        log.entry();
+        log.traceEntry();
 
         StringBuilder banner = new StringBuilder();
         // This section is empty, it will be filled by JavaScript.
@@ -395,14 +418,14 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         banner.append("</ul>");
         banner.append("</div>"); // close 
 
-        return log.exit(banner.toString());
+        return log.traceExit(banner.toString());
     }
     
     /**
      * Display Bgee news.
      */
     private void displayNews() {
-        log.entry();
+        log.traceEntry();
         
         RequestParameters urlTopAnat = this.getNewRequestParameters();
         urlTopAnat.setPage(RequestParameters.PAGE_TOP_ANAT);
@@ -489,6 +512,50 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>"); // close panel-heading
         
         this.writeln("<div class='panel-body'>");
+
+        this.writeOneNews("2021-02-22", "Release of Bgee version 14.2"
+                + "<p>This is an incremental update of Bgee, improving data coverage "
+                + "mostly for animals of agronomic and veterinary relevance, and adding "
+                + "new functionalities to the website: </p>"
+                + "<ul>"
+                + "<li>On all gene pages you will now find links to ortholog and paralog gene pages, "
+                + "and links to directly run an <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>"
+                + "expression comparison analysis</a> on them.</li>"
+                + "<li>We have made <a href='" + urlTopAnat.getRequestURL()
+                + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a> faster "
+                + "when used with no decorrelation method.</li>"
+                + "</ul>"
+                + "<p>We have added new RNA-Seq libraries to Bgee. For animals of agronomic "
+                + "and veterinary relevance: </p>"
+                + "<ul>"
+                + "<li><i>Bos taurus</i>: 1299 RNA-Seq libraries added</li>"
+                + "<li><i>Sus scrofa</i>: 286 RNA-Seq libraries added</li>"
+                + "<li><i>Cavia porcellus</i>: 255 RNA-Seq libraries added</li>"
+                + "<li><i>Oryctolagus cuniculus</i>: 49 RNA-Seq libraries added</li>"
+                + "<li><i>Canis lupus familiaris</i>: 20 RNA-Seq libraries added</li>"
+                + "<li><i>Equus caballus</i>: 13 RNA-Seq libraries added</li>"
+                + "<li><i>Felis catus </i>: 2 RNA-Seq libraries added</li>"
+                + "</ul>"
+                + "<p>For other species in Bgee: </p>"
+                + "<ul>"
+                + "<li><i>Homo sapiens</i>: 47 RNA-Seq libraries added</li>"
+                + "<li><i>Mus musculus</i>: 176 RNA-Seq libraries added</li>"
+                + "<li><i>Macaca mulatta </i>: 22 RNA-Seq libraries added</li>"
+                + "<li><i>Rattus norvegicus</i>: 10 RNA-Seq libraries added</li>"
+                + "<li><i>Monodelphis domestica</i>: 7 RNA-Seq libraries added</li>"
+                + "<li><i>Gorilla gorilla</i>: 2 RNA-Seq libraries added</li>"
+                + "</ul>"
+                + "<p>All calls of presence/absence of expression, expression scores, "
+                + "and all the Bgee tools and download files, have been updated accordingly.</p>"
+                + "<p>Other changes in this release: </p>"
+                + "<ul>"
+                + "<li>We have made changes to the way we propagate expression calls along the graph "
+                + "of conditions: calls of absence of expression are no longer propagated to child "
+                + "anatomical entities, so that an information of absence of expression is more reliable "
+                + "from now on.</li>"
+                + "<li>We have also corrected some relations between anatomical entities that were "
+                + "incorrectly missing in our database, improving the propagation of expression calls as well.</li>"
+                + "</ul>");
 
         this.writeOneNews("2020-08-20",
                 "<ul>"
@@ -786,28 +853,28 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                           + "</ul>");
         this.writeOneNews("2015-04-16", "Release of the multi-species " +
                           "differential expression data (across anatomy) for 6 groups, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         this.writeOneNews("2015-03-03", "Release of the single-species " +
                           "differential expression data for 11 species, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         this.writeOneNews("2014-12-19", "Release of the single-species " +
                           "expression data for 17 species, see <a href='" +
-                          urlDownload.getRequestURL() + "' " + "title='Download overview'>" +
+                          urlDownloadProcValues.getRequestURL() + "' " + "title='Download overview'>" +
                           "download overview</a>.");
         
         this.writeln("</div>"); // close panel-body
         this.writeln("</div>"); // close panel
     
-        log.exit();
+        log.traceExit();
     }
 
     /**
      * Display more information (for instance, image sources or 'view x site' link).
      */
     private void displayMoreInfo() {
-        log.entry();
+        log.traceEntry();
         
         this.writeln("<div id='bgee_more_info' class='row'>");
         
@@ -818,6 +885,8 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         if (!this.prop.isArchive()) {
             this.writeln("<div class='col-xs-12 col-lg-3 archive_site'>");
             this.writeln("View archive sites:");
+            this.writeln("<a title='Archive site Bgee version 14.1' href='" +
+                this.prop.getBgeeCurrentUrl() + "bgee14_1/' target='_blank' rel='noopener'>version 14.1</a>");
             this.writeln("<a title='Archive site Bgee version 14.0' href='" +
                 this.prop.getBgeeCurrentUrl() + "bgee14/' target='_blank' rel='noopener'>version 14.0</a>");
             this.writeln("<a title='Archive site Bgee version 13' href='" +
@@ -829,7 +898,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("</div>"); // close bgee_more_info row
         
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -839,7 +908,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
      * @param description   A {@code String} that is the description of the news.
      */
     private void writeOneNews(String date, String description) {
-        log.entry(date, description);
+        log.traceEntry("{} - {}", date, description);
         
         this.writeln("<div class='row'>");
         this.writeln("<div class='col-sm-offset-1 col-sm-2 col-lg-1 news-date'>");
@@ -850,26 +919,26 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         this.writeln("</div>");
         this.writeln("</div>");
         
-        log.exit();
+        log.traceExit();
     }
     
     @Override
     protected void includeJs() {
-        log.entry();
+        log.traceEntry();
         super.includeJs();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeJs("general.js");
-        log.exit();
+        log.traceExit();
     }
 
     @Override
     protected void includeCss() {
-        log.entry();
+        log.traceEntry();
         super.includeCss();
         //If you ever add new files, you need to edit bgee-webapp/pom.xml 
         //to correctly merge/minify them.
         this.includeCss("general.css");
-        log.exit();
+        log.traceExit();
     }
 }

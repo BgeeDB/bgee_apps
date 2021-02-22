@@ -149,7 +149,7 @@ public class MultiSpeciesCall<T extends Call<?, ?>> {
     public Set<Integer> getSpeciesIds() {
         //FIXME: to reimplement
         throw new UnsupportedOperationException("To implement");
-//        return log.exit(this.getServiceFactory().getGeneService()
+//        return log.traceExit(this.getServiceFactory().getGeneService()
 //                .loadGenesByIdsAndSpeciesIds(this.getOrthologousGeneIds(), null).stream()
 //                .map(g -> g.getSpeciesId()).collect(Collectors.toSet()));
     }

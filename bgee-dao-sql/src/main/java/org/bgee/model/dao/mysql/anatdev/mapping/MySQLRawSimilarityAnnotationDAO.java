@@ -49,8 +49,8 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
     @Override
     public RawSimilarityAnnotationTOResultSet getAllRawSimilarityAnnotations()
             throws DAOException {
-        log.entry();
-        return log.exit(this.getRawSimilarityAnnotations());
+        log.traceEntry();
+        return log.traceExit(this.getRawSimilarityAnnotations());
     }
 
     /**
@@ -61,7 +61,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
      * @throws DAOException If an error occurred when accessing the data source. 
      */
     private RawSimilarityAnnotationTOResultSet getRawSimilarityAnnotations() throws DAOException {
-        log.entry();
+        log.traceEntry();
         
         String tableName = "rawSimilarityAnnotation";
         
@@ -75,7 +75,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         BgeePreparedStatement stmt = null;
         try {
             stmt = this.getManager().getConnection().prepareStatement(sql);
-            return log.exit(new MySQLRawSimilarityAnnotationTOResultSet(stmt));
+            return log.traceExit(new MySQLRawSimilarityAnnotationTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -98,7 +98,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
         log.entry(attributes, tableName);
 
         if (attributes == null || attributes.isEmpty()) {
-            return log.exit("SELECT " + tableName + ".* ");
+            return log.traceExit("SELECT " + tableName + ".* ");
         }
     
         String sql = ""; 
@@ -145,7 +145,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
                             RawSimilarityAnnotationDAO.class.getName()));
                 }
             }
-        return log.exit(sql);
+        return log.traceExit(sql);
     }
     
     @Override
@@ -198,7 +198,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
             throw log.throwing(new DAOException(e));
         }
 
-        return log.exit(annotationInsertedCount);        
+        return log.traceExit(annotationInsertedCount);        
     }
     
     /**
@@ -253,7 +253,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
 
         @Override
         protected RawSimilarityAnnotationTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
 
             Integer summarySimilarityAnnotationId = null;
             String ecoId = null, cioId = null, 
@@ -302,7 +302,7 @@ public class MySQLRawSimilarityAnnotationDAO extends MySQLDAO<RawSimilarityAnnot
                     throw log.throwing(new DAOException(e));
                 }
             }
-            return log.exit(new RawSimilarityAnnotationTO(summarySimilarityAnnotationId, negated, 
+            return log.traceExit(new RawSimilarityAnnotationTO(summarySimilarityAnnotationId, negated, 
                     ecoId, cioId, referenceId, referenceTitle, supportingText, 
                     assignedBy, curator, annotationDate));
         }

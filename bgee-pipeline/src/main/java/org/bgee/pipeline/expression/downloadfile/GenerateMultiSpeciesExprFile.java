@@ -162,7 +162,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
 //            args[3]);
 //        generator.generateMultiSpeciesExprFiles();
 //    
-//        log.exit();
+//        log.traceExit();
 //    }
 
     /**
@@ -647,7 +647,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.info("Done generating of multi-species expression files for the group {}.", 
                 this.groupPrefix);
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -775,7 +775,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -822,10 +822,9 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.entry(geneNamesByIds, stageNamesByIds, anatEntityNamesByIds, writersUsed, 
                 processors, headers, calls);
 
-        return log.exit(calls.map(c -> {
+        return log.traceExit(calls.map(c -> {
             int i = 0;
             for (Entry<MultiSpExprFileType, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
-                String omaGroupId = c.getOMAGroupId();
 //                String geneName = geneNamesByIds.containsKey(geneId)? geneNamesByIds.get(geneId) : "";
 //                String anatEntityId = c.getCondition().getAnatEntityId();
 //                String anatEntityName = anatEntityNamesByIds.get(anatEntityId);
@@ -919,7 +918,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         log.entry(fileType);
     
         if (fileType.isSimpleFileType()) {
-            return log.exit(new String[] {
+            return log.traceExit(new String[] {
                     OMA_ID_COLUMN_NAME, GENE_ID_LIST_COLUMN_NAME ,GENE_NAME_LIST_COLUMN_NAME,
                     ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
                     STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_WITH_EXPRESSION_COUNT_COLUMN_NAME,
@@ -927,16 +926,16 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                     CONSERVATION_SCORE_COLUMN_NAME});
         }
     
-        return log.exit(new String[] { 
+        return log.traceExit(new String[] { 
                 OMA_ID_COLUMN_NAME, GENE_ID_COLUMN_NAME, GENE_NAME_COLUMN_NAME,
                 ANAT_ENTITY_ID_LIST_COLUMN_NAME, ANAT_ENTITY_NAME_LIST_COLUMN_NAME,
                 STAGE_ID_COLUMN_NAME, STAGE_NAME_COLUMN_NAME, SPECIES_LATIN_NAME_COLUMN_NAME,
                 CIO_ID_COLUMN_NAME, CIO_NAME_ID_COLUMN_NAME, EXPRESSION_COLUMN_NAME,
                 QUALITY_COLUMN_NAME, INCLUDING_OBSERVED_DATA_COLUMN_NAME,
-                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_CALL_QUALITY_COLUMN_NAME,
+                AFFYMETRIX_DATA_COLUMN_NAME, AFFYMETRIX_QUAL_COLUMN_NAME,
                 EST_DATA_COLUMN_NAME, EST_CALL_QUALITY_COLUMN_NAME,
                 INSITU_DATA_COLUMN_NAME, INSITU_CALL_QUALITY_COLUMN_NAME,
-                RNASEQ_DATA_COLUMN_NAME, RNASEQ_CALL_QUALITY_COLUMN_NAME});
+                RNASEQ_DATA_COLUMN_NAME, RNASEQ_QUAL_COLUMN_NAME});
     }
 
     /**
@@ -975,7 +974,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
         
         //Second, we build the CellProcessor
         if (fileType.isSimpleFileType()) {
-            return log.exit(new CellProcessor[] {
+            return log.traceExit(new CellProcessor[] {
                     new StrNotNullOrEmpty(),    // OMA ID
                     new StrNotNullOrEmpty(),    // gene ID list
                     new NotNull(),              // gene name list
@@ -988,7 +987,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                     new StrNotNullOrEmpty(),    // species without expressed genes count
                     new StrNotNullOrEmpty()});  // conservation score
         }
-        return log.exit(new CellProcessor[] {
+        return log.traceExit(new CellProcessor[] {
                 new StrNotNullOrEmpty(),    // OMA ID
                 new StrNotNullOrEmpty(),    // gene ID
                 new NotNull(),              // gene name
@@ -1039,13 +1038,13 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 case QUALITY_COLUMN_NAME:
                 case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
                 case AFFYMETRIX_DATA_COLUMN_NAME:
-                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME:
+                case AFFYMETRIX_QUAL_COLUMN_NAME:
                 case EST_DATA_COLUMN_NAME:
                 case EST_CALL_QUALITY_COLUMN_NAME:
                 case INSITU_DATA_COLUMN_NAME:
                 case INSITU_CALL_QUALITY_COLUMN_NAME:
                 case RNASEQ_DATA_COLUMN_NAME:
-                case RNASEQ_CALL_QUALITY_COLUMN_NAME:
+                case RNASEQ_QUAL_COLUMN_NAME:
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
@@ -1059,7 +1058,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                             "Unrecognized header: " + headers[i] + " for OMA TSV file."));
             }
         }
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 
     /**
@@ -1137,7 +1136,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 case AFFYMETRIX_DATA_COLUMN_NAME: 
                     mapping[i] = "affymetrixData";
                     break;
-                case AFFYMETRIX_CALL_QUALITY_COLUMN_NAME: 
+                case AFFYMETRIX_QUAL_COLUMN_NAME:
                     mapping[i] = "affymetrixCallQuality";
                     break;
                 case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME: 
@@ -1164,7 +1163,7 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                 case RNASEQ_DATA_COLUMN_NAME: 
                     mapping[i] = "rnaSeqData";
                     break;
-                case RNASEQ_CALL_QUALITY_COLUMN_NAME: 
+                case RNASEQ_QUAL_COLUMN_NAME:
                     mapping[i] = "rnaSeqCallQuality";
                     break;
                 case RNASEQ_OBSERVED_DATA_COLUMN_NAME: 
@@ -1177,6 +1176,6 @@ public class GenerateMultiSpeciesExprFile   extends GenerateDownloadFile
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
 }

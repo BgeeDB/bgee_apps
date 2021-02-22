@@ -36,7 +36,6 @@ import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -58,7 +57,7 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2017
+ * @version Bgee 14, Sep. 2020
  * @since   Bgee 13, Sept. 2016
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
@@ -137,8 +136,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * If an empty list is provided (see {@link CommandRunner#EMPTY_LIST}), all species contained 
      * in database will be used.
      * <li>a list of files types that will be generated ('expr-simple' for
-     * {@link SingleSpExprFileType2#EXPR_SIMPLE}, and 'expr-complete' for 
-     * {@link SingleSpExprFileType2#EXPR_COMPLETE}), separated by the {@code String} 
+     * {@link SingleSpExprFileType2#EXPR_SIMPLE}, and 'expr_advanced' for
+     * {@link SingleSpExprFileType2#EXPR_ADVANCED}), separated by the {@code String}
      * {@link CommandRunner#LIST_SEPARATOR}. If an empty list is provided 
      * (see {@link CommandRunner#EMPTY_LIST}), all possible file types will be generated.
      * <li>the directory path that will be used to generate download files.
@@ -149,7 +148,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @throws IllegalArgumentException If incorrect parameters were provided.
      * @throws IOException              If an error occurred while trying to write generated files.
      */
-    public static void main(String[] args) throws IllegalArgumentException, IOException {
+    public static void main(String[] args) throws IllegalArgumentException, UncheckedIOException {
         log.entry((Object[]) args);
 
         int expectedArgLength = 4;
@@ -167,7 +166,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             GenerateExprFile2.convertToAttributes(CommandRunner.parseListArgument(args[3])));
         generator.generateExprFiles();
 
-        log.exit();
+        log.traceExit();
     }
     
     private static Set<Attribute> convertToAttributes(List<String> argumentList) {
@@ -185,7 +184,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     "\" does not correspond to any element of " + Attribute.class.getName()));
         }
         
-        return log.exit(attrs);
+        return log.traceExit(attrs);
     }
 
     /**
@@ -291,9 +290,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @param serviceFactory    A {@code ServiceFactory} to retrieve Bgee services from.
      * @throws UncheckedIOException If an error occurred while trying to write the {@code outputFile}.
      */
-    //TODO: add OMA node ID in complete files
     public void generateExprFiles() throws UncheckedIOException {
-        log.entry();
+        log.traceEntry();
 
         Set<Integer> setSpecies = Collections.unmodifiableSet(this.speciesIds == null?
                 new HashSet<>() : new HashSet<>(this.speciesIds));
@@ -339,7 +337,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             log.info("Done generating of expression files for the species {}.", speciesId);
         });
 
-        log.exit();
+        log.traceExit();
     }
 
     /**
@@ -375,7 +373,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // Load non-informative anatomical entities: 
         // calls occurring in these anatomical entities, and generated from 
         // data propagation only (no observed data in them), will be discarded.
-        // FIXME filter by non informative anat. entities in ExpressionCallFilter instead of filter stream 
+        // TODO: filter by non informative anat. entities in ExpressionCallFilter instead of filter stream,
+        // see comment in ConditionFilter class.
         Set<String> nonInformativeAnatEntities = serviceFactory.getAnatEntityService()
                 .loadNonInformativeAnatEntitiesBySpeciesIds(speciesFilter)
                 .map(AnatEntity::getId)
@@ -390,9 +389,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null);
 
-        // We retrieve calls with all non-parametric attributes plus provided params.
+        // We retrieve calls with all attributes that are not condition parameters,
+        //and we then add the requested condition parameters this.params.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
                 .filter(a -> !a.isConditionParameter())
+                //we also don't want the qualitative expression levels
+                .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
+                        !a.equals(Attribute.GENE_QUAL_EXPR_LEVEL))
                 .collect(Collectors.toSet());
         clnAttr.addAll(this.params);
 
@@ -405,7 +408,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         if (params.contains(CallService.Attribute.DEV_STAGE_ID)) {
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         }
-            
+
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
                 callFilter, clnAttr, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
@@ -504,7 +507,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
         }
 
-        log.exit();
+        log.traceExit();
     }
 
 
@@ -524,7 +527,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         List<Attribute> attributeList = new ArrayList<>(attributes);
         Collections.sort(attributeList);
 
-        return log.exit(attributes.stream()
+        return log.traceExit(attributes.stream()
                 //we use a flatMap to be able to return an empty Stream (avoid having double '_' in file name)
                 .flatMap(a -> {
                     switch (a) {
@@ -557,17 +560,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         for (ExpressionSummary sum : ExpressionSummary.values()) {
             expressionSummaries.add(convertExpressionSummaryToString(sum));
         }
-        
-        List<Object> expressions = new ArrayList<Object>();
-        for (Expression expr : Expression.values()) {
-            expressions.add(convertExpressionToString(expr));
-        }
-        expressions.add(GenerateDownloadFile.NO_DATA_VALUE);
+        expressionSummaries.add(GenerateDownloadFile.NO_DATA_VALUE);
 
         List<Object> qualitySummaries = new ArrayList<Object>();
         qualitySummaries.add(convertSummaryQualityToString(SummaryQuality.GOLD));
         qualitySummaries.add(convertSummaryQualityToString(SummaryQuality.SILVER));
         qualitySummaries.add(convertSummaryQualityToString(SummaryQuality.BRONZE));
+        qualitySummaries.add(NA_VALUE);
         
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {
@@ -590,16 +589,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 	processors[i] = new NotNull();
                     break;
                 case EXPRESSION_COLUMN_NAME:
-                	processors[i] = new IsElementOf(expressionSummaries);
+                    processors[i] = new IsElementOf(expressionSummaries);
                     break;
                 case QUALITY_COLUMN_NAME:
                 	processors[i] = new IsElementOf(qualitySummaries);
                     break;
                 case EXPRESSION_SCORE_COLUMN_NAME:
                 case EXPRESSION_RANK_COLUMN_NAME:
-                    // XXX: it's a String to be able to write values such as '3.32e4' and NA_VALUE.
-                    // It can be a Long if we don't want exponential values 
-                    // and all rows have a score and a rank.
+                    // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
+                    // It could be a Long if we didn't want exponential values
+                    // and if all rows had a score and a rank => not the case
 //                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
                     processors[i] = new StrNotNullOrEmpty();
                     break;
@@ -618,8 +617,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             	    case EST_DATA_COLUMN_NAME:
             	    case IN_SITU_DATA_COLUMN_NAME:
             	    case RNASEQ_DATA_COLUMN_NAME:
-            	        processors[i] = new IsElementOf(expressions);
+                        processors[i] = new IsElementOf(expressionSummaries);
             	        break;
+                    case AFFYMETRIX_QUAL_COLUMN_NAME:
+                    case EST_QUAL_COLUMN_NAME:
+                    case IN_SITU_QUAL_COLUMN_NAME:
+                    case RNASEQ_QUAL_COLUMN_NAME:
+                        processors[i] = new IsElementOf(qualitySummaries);
+                        break;
             	    case AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME:
             	    case AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME:
             	    case AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME:
@@ -643,6 +648,24 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             	    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
             	        processors[i] = new IsElementOf(originValues);
             	        break;
+                    case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
+                    case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
+                    case AFFYMETRIX_WEIGHT_COLUMN_NAME:
+                    case EST_EXPRESSION_SCORE_COLUMN_NAME:
+                    case EST_EXPRESSION_RANK_COLUMN_NAME:
+                    case EST_WEIGHT_COLUMN_NAME:
+                    case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
+                    case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
+                    case IN_SITU_WEIGHT_COLUMN_NAME:
+                    case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
+                    case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
+                    case RNASEQ_WEIGHT_COLUMN_NAME:
+                        // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
+                        // It could be a Long if we didn't want exponential values
+                        // and if all columns had a score and a rank => not the case
+//                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
+                        processors[i] = new StrNotNullOrEmpty();
+                        break;
             	}
             }
             if (processors[i] == null) {
@@ -650,7 +673,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
-        return log.exit(processors);
+        return log.traceExit(processors);
     }
 
     /**
@@ -664,9 +687,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.entry(fileType);
         
         String[] headers = null; 
-        int nbColumns = 5 + 2 * this.params.size();
+        int nbColumns = 6 + 2 * this.params.size();
         if (!fileType.isSimpleFileType()) {
-            nbColumns = 28 + 2 * this.params.size();
+            nbColumns = 45 + 2 * this.params.size();
         }
         headers = new String[nbColumns];
 
@@ -685,36 +708,51 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         headers[idx++] = EXPRESSION_COLUMN_NAME;
         headers[idx++] = QUALITY_COLUMN_NAME;
+        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         headers[idx++] = EXPRESSION_RANK_COLUMN_NAME;
-        // TODO: enable when expression scores will be calculated
-//        headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_DATA_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_QUAL_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_WEIGHT_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = EST_DATA_COLUMN_NAME;
+            headers[idx++] = EST_QUAL_COLUMN_NAME;
+            headers[idx++] = EST_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = EST_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = EST_WEIGHT_COLUMN_NAME;
+            headers[idx++] = EST_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = EST_PRESENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = EST_PRESENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = EST_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = IN_SITU_DATA_COLUMN_NAME;
+            headers[idx++] = IN_SITU_QUAL_COLUMN_NAME;
+            headers[idx++] = IN_SITU_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = IN_SITU_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = IN_SITU_WEIGHT_COLUMN_NAME;
+            headers[idx++] = IN_SITU_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME;
             headers[idx++] = IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = IN_SITU_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = RNASEQ_DATA_COLUMN_NAME;
+            headers[idx++] = RNASEQ_QUAL_COLUMN_NAME;
+            headers[idx++] = RNASEQ_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = RNASEQ_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = RNASEQ_WEIGHT_COLUMN_NAME;
+            headers[idx++] = RNASEQ_OBSERVED_DATA_COLUMN_NAME;
             headers[idx++] = RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = RNASEQ_OBSERVED_DATA_COLUMN_NAME;
         }
-        return log.exit(headers);
+        return log.traceExit(headers);
     }
     
     /**
@@ -815,10 +853,22 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         } else if (header[i].endsWith(ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX)) {
                             mapping[i] = "dataExprCounts[" + index + "].absentLowCount";
                             
+                        } else if (header[i].endsWith(EXPRESSION_RANK_COLUMN_NAME_SUFFIX)) {
+                            mapping[i] = "dataExprCounts[" + index + "].expressionRank";
+
+                        } else if (header[i].endsWith(EXPRESSION_SCORE_COLUMN_NAME_SUFFIX)) {
+                            mapping[i] = "dataExprCounts[" + index + "].expressionScore";
+
+                        } else if (header[i].endsWith(WEIGHT_COLUMN_NAME_SUFFIX)) {
+                            mapping[i] = "dataExprCounts[" + index + "].weight";
+
+                        } else if (header[i].endsWith(CALL_QUALITY_COLUMN_NAME_SUFFIX)) {
+                            mapping[i] = "dataExprCounts[" + index + "].callQuality";
+
                         } else if (header[i].endsWith(CALL_TYPE_COLUMN_NAME_SUFFIX)) {
                             // this should be the last tested because it's the least specific
                             mapping[i] = "dataExprCounts[" + index + "].callType";
-                            
+
                         } else {
                             throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
                                     + header[i] + " for file type: " + 
@@ -835,14 +885,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             }
         }
         // Verify that we found all data types
-        if (!fileType.isSimpleFileType()) {
-            assert dataTypeFound.containsAll(DATA_TYPE_ORDER) && 
-                DATA_TYPE_ORDER.containsAll(dataTypeFound): 
-                "Some of data types were not found in the header: expected: " 
-                + DATA_TYPE_ORDER + " - found: " + dataTypeFound;
-        }
+        assert fileType.isSimpleFileType() || dataTypeFound.containsAll(DATA_TYPE_ORDER) &&
+            DATA_TYPE_ORDER.containsAll(dataTypeFound):
+            "Some of data types were not found in the header: expected: "
+            + DATA_TYPE_ORDER + " - found: " + dataTypeFound;
 
-        return log.exit(mapping);
+        return log.traceExit(mapping);
     }
     
     /**
@@ -868,27 +916,43 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case EXPRESSION_SCORE_COLUMN_NAME:
                 case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
                 case AFFYMETRIX_DATA_COLUMN_NAME:
+                case AFFYMETRIX_QUAL_COLUMN_NAME:
+                case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
+                case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
+                case AFFYMETRIX_WEIGHT_COLUMN_NAME:
+                case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
                 case AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME: 
                 case AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME: 
                 case AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME: 
-                case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
+                case AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME:
                 case EST_DATA_COLUMN_NAME:
-                case EST_PRESENT_HIGH_COUNT_COLUMN_NAME: 
-                case EST_PRESENT_LOW_COUNT_COLUMN_NAME: 
+                case EST_QUAL_COLUMN_NAME:
+                case EST_EXPRESSION_RANK_COLUMN_NAME:
+                case EST_EXPRESSION_SCORE_COLUMN_NAME:
+                case EST_WEIGHT_COLUMN_NAME:
                 case EST_OBSERVED_DATA_COLUMN_NAME:
+                case EST_PRESENT_HIGH_COUNT_COLUMN_NAME:
+                case EST_PRESENT_LOW_COUNT_COLUMN_NAME:
                 case IN_SITU_DATA_COLUMN_NAME:
+                case IN_SITU_QUAL_COLUMN_NAME:
+                case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
+                case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
+                case IN_SITU_WEIGHT_COLUMN_NAME:
+                case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
                 case IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME: 
                 case IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME: 
                 case IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME: 
-                case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
+                case IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME:
                 case RNASEQ_DATA_COLUMN_NAME:
+                case RNASEQ_QUAL_COLUMN_NAME:
+                case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
+                case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
+                case RNASEQ_WEIGHT_COLUMN_NAME:
+                case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
                 case RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME: 
                 case RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME: 
                 case RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME: 
-                case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
+                case RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME:
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
@@ -902,7 +966,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             }
         }
         
-        return log.exit(quoteMode);
+        return log.traceExit(quoteMode);
     }
 
     /**
@@ -955,8 +1019,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
                 String expressionRank = c.getMeanRank() == null ? NA_VALUE :
                         c.getFormattedMeanRank();
-                // FIXME use c.getExpressionScore()
-                String expressionScore = NA_VALUE;// String.valueOf(c.getExpressionScore());
+                String expressionScore = c.getExpressionScore() == null ? NA_VALUE :
+                    c.getFormattedExpressionScore();
                 Boolean includingObservedData = c.getDataPropagation().isIncludingObservedData();
 
                 if (writerFileType.getKey().isSimpleFileType() && Boolean.TRUE.equals(includingObservedData)) {
@@ -980,7 +1044,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
                             summaryCallType, summaryQuality,
                             expressionRank, expressionScore,
-                            convertObservedDataToString(c.getDataPropagation().isIncludingObservedData()),
+                            convertObservedDataToString(includingObservedData),
                             counts);
                     try {
                         writerFileType.getValue().write(completeBean, processors.get(writerFileType.getKey()));
@@ -991,7 +1055,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 }
             }
         });
-        return log.exit(rowCount.get());
+        return log.traceExit(rowCount.get());
     }
 
     /**
@@ -1003,13 +1067,17 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private DataExprCounts getDataExprCountByDataType(ExpressionCall call, DataType dataType) {
         log.entry(call, dataType);
+
+        ExpressionCall callFromDataType = CallService.deriveCallForDataType(call, dataType);
         
-        Set<ExpressionCallData> dataTypeCallData = call.getCallData().stream()
-                .filter(d -> dataType.equals(d.getDataType())).collect(Collectors.toSet());
-        
-        if (dataTypeCallData.size() > 0) {
-            ExpressionCallData data = dataTypeCallData.iterator().next();
-            return log.exit(new DataExprCounts(data.getDataType(), convertExpressionToString(data.getCallType()),
+        if (callFromDataType != null) {
+            assert callFromDataType.getCallData().size() == 1;
+            ExpressionCallData data = callFromDataType.getCallData().iterator().next();
+            assert dataType.equals(data.getDataType());
+
+            return log.traceExit(new DataExprCounts(dataType,
+                    convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
+                    convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
                     this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.HIGH,
                             PropagationState.ALL),
                     this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.LOW,
@@ -1018,14 +1086,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL),
                     dataType.equals(DataType.EST)? 0: this.getCountValue(data,
                             CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL),
-                    this.resumeIncludingObservedData(data)));
-        } else if (dataTypeCallData.size() == 0) {
-            return log.exit(new DataExprCounts(dataType, NO_DATA_VALUE, 0L, 0L, 0L, 0L,
-                    convertObservedDataToString(false)));
-        } else {
-            throw log.throwing(new IllegalStateException("Several ExpressionCallData for " +
-                    dataType + " in: " + call));
+                    convertObservedDataToString(callFromDataType.getDataPropagation().isIncludingObservedData()),
+                    callFromDataType.getMeanRank() == null ? NA_VALUE : callFromDataType.getFormattedMeanRank(),
+                    callFromDataType.getExpressionScore() == null ? NA_VALUE : callFromDataType.getFormattedExpressionScore(),
+                    data.getWeightForMeanRank() == null ? NA_VALUE : data.getWeightForMeanRank().toPlainString()));
         }
+        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, 0L, 0L, 0L, 0L,
+                    convertObservedDataToString(false), NA_VALUE, NA_VALUE, NA_VALUE));
     }
 
     /** 
@@ -1042,41 +1109,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             DataQuality dataQuality, PropagationState propState) {
         log.entry(callData, expression, dataQuality, propState);
         return Long.valueOf(callData.getExperimentCount(expression, dataQuality, propState).getCount());
-    }
-
-    /**
-     * Check that all {@code CallType}s of a {code Set} of {@code ExpressionCallData},
-     * check that are equals and return the unique value as {@code String}. 
-     * 
-     * @param callData  A {code Set} of {@code ExpressionCallData} that are the expression call data. 
-     * @return          The {@code String} resuming {@code CallType}s.
-     * @throws IllegalArgumentException If no {@code CallType} or more than one are found.
-     */
-    private String resumeCallType(Set<ExpressionCallData> callData) throws IllegalArgumentException {
-        log.entry(callData);
-        Set<Expression> types = callData.stream().map(d -> d.getCallType()).collect(Collectors.toSet());
-        if (types.size() == 0) {
-            throw new IllegalArgumentException("One call data type should be found");
-        }
-        if (types.size() > 1) {
-            throw new IllegalArgumentException("Several call data types could not be found "
-                    + "for the same data type: " + callData);
-        }
-        return log.exit(convertExpressionToString(types.iterator().next()));
-    }
-
-    /**
-     * Return the resume of observed data values of an {@code ExpressionCallData}.
-     * 
-     * @param callData  An {@code ExpressionCallData} that is the expression call data.
-     * @return          The {@code String} resuming observed data values.
-     */
-    private String resumeIncludingObservedData(ExpressionCallData callData) {
-        log.entry(callData);
-        return log.exit(convertObservedDataToString(
-                callData.getExperimentCounts(PropagationState.SELF).stream()
-                .map(ExperimentExpressionCount::getCount)
-                .anyMatch(c -> c > 0)));
     }
 
     /**
@@ -1406,43 +1438,41 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     }
 
     /**
-     * Class used to store expression data by data types: present high count, 
-     * present low count, absent high count, absent low count count,
-     * and whether including observed data.
+     * Class used to store expression data by data types.
      *
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
+     * @author Frederic Bastian
+     * @version Bgee 14, Sep. 2020
      * @since   Bgee 14, Mar. 2017
      */
     public static class DataExprCounts {
         
         private DataType dataType;
         private String callType;
+        private String callQuality;
         private Long presentHighCount;
         private Long presentLowCount;
         private Long absentHighCount;
         private Long absentLowCount;
         private String observedData;
-    
-        /**
-         * Constructor providing all arguments of the class.
-         *
-         * @param dataType
-         * @param callType
-         * @param presentHighCount
-         * @param presentLowCount
-         * @param absentLowCount
-         * @param observedData
-         */
-        public DataExprCounts(DataType dataType, String callType, Long presentHighCount, Long presentLowCount,
-                Long absentHighCount, Long absentLowCount, String observedData) {
+        private String expressionRank;
+        private String expressionScore;
+        private String weight;
+
+        public DataExprCounts(DataType dataType, String callType, String callQuality,
+                Long presentHighCount, Long presentLowCount, Long absentHighCount, Long absentLowCount,
+                String observedData, String expressionRank, String expressionScore, String weight) {
             this.dataType = dataType;
             this.callType = callType;
+            this.callQuality = callQuality;
             this.presentHighCount = presentHighCount;
             this.presentLowCount = presentLowCount;
             this.absentHighCount = absentHighCount;
             this.absentLowCount = absentLowCount;
             this.observedData = observedData;
+            this.expressionRank = expressionRank;
+            this.expressionScore = expressionScore;
+            this.weight = weight;
         }
         
         public DataType getDataType() {
@@ -1456,6 +1486,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         public void setCallType(String callType) {
             this.callType = callType;
+        }
+        public String getCallQuality() {
+            return callQuality;
+        }
+        public void setCallQuality(String callQuality) {
+            this.callQuality = callQuality;
         }
         public Long getPresentHighCount() {
             return presentHighCount;
@@ -1487,21 +1523,42 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setObservedData(String observedData) {
             this.observedData = observedData;
         }
+        public String getExpressionRank() {
+            return expressionRank;
+        }
+        public void setExpressionRank(String expressionRank) {
+            this.expressionRank = expressionRank;
+        }
+        public String getExpressionScore() {
+            return expressionScore;
+        }
+        public void setExpressionScore(String expressionScore) {
+            this.expressionScore = expressionScore;
+        }
+        public String getWeight() {
+            return weight;
+        }
+        public void setWeight(String weight) {
+            this.weight = weight;
+        }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
-            result = prime * result + ((callType == null) ? 0 : callType.hashCode());
-            result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
-            result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
             result = prime * result + ((absentHighCount == null) ? 0 : absentHighCount.hashCode());
             result = prime * result + ((absentLowCount == null) ? 0 : absentLowCount.hashCode());
+            result = prime * result + ((callType == null) ? 0 : callType.hashCode());
+            result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
+            result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
+            result = prime * result + ((expressionRank == null) ? 0 : expressionRank.hashCode());
+            result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
             result = prime * result + ((observedData == null) ? 0 : observedData.hashCode());
+            result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
+            result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
+            result = prime * result + ((weight == null) ? 0 : weight.hashCode());
             return result;
         }
-
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -1514,11 +1571,18 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 return false;
             }
             DataExprCounts other = (DataExprCounts) obj;
-            if (dataType == null) {
-                if (other.dataType != null) {
+            if (absentHighCount == null) {
+                if (other.absentHighCount != null) {
                     return false;
                 }
-            } else if (!dataType.equals(other.dataType)) {
+            } else if (!absentHighCount.equals(other.absentHighCount)) {
+                return false;
+            }
+            if (absentLowCount == null) {
+                if (other.absentLowCount != null) {
+                    return false;
+                }
+            } else if (!absentLowCount.equals(other.absentLowCount)) {
                 return false;
             }
             if (callType == null) {
@@ -1526,6 +1590,37 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     return false;
                 }
             } else if (!callType.equals(other.callType)) {
+                return false;
+            }
+            if (callQuality == null) {
+                if (other.callQuality != null) {
+                    return false;
+                }
+            } else if (!callQuality.equals(other.callQuality)) {
+                return false;
+            }
+            if (dataType != other.dataType) {
+                return false;
+            }
+            if (expressionRank == null) {
+                if (other.expressionRank != null) {
+                    return false;
+                }
+            } else if (!expressionRank.equals(other.expressionRank)) {
+                return false;
+            }
+            if (expressionScore == null) {
+                if (other.expressionScore != null) {
+                    return false;
+                }
+            } else if (!expressionScore.equals(other.expressionScore)) {
+                return false;
+            }
+            if (observedData == null) {
+                if (other.observedData != null) {
+                    return false;
+                }
+            } else if (!observedData.equals(other.observedData)) {
                 return false;
             }
             if (presentHighCount == null) {
@@ -1542,25 +1637,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             } else if (!presentLowCount.equals(other.presentLowCount)) {
                 return false;
             }
-            if (absentHighCount == null) {
-                if (other.absentHighCount != null) {
+            if (weight == null) {
+                if (other.weight != null) {
                     return false;
                 }
-            } else if (!absentHighCount.equals(other.absentHighCount)) {
-                return false;
-            }
-            if (absentLowCount == null) {
-                if (other.absentLowCount != null) {
-                    return false;
-                }
-            } else if (!absentLowCount.equals(other.absentLowCount)) {
-                return false;
-            }
-            if (observedData == null) {
-                if (other.observedData != null) {
-                    return false;
-                }
-            } else if (!observedData.equals(other.observedData)) {
+            } else if (!weight.equals(other.weight)) {
                 return false;
             }
             return true;
@@ -1570,12 +1651,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("DataExprCounts [dataType=").append(dataType)
-                .append(", callType=").append(callType)
-                .append(", presentHighCount=").append(presentHighCount)
-                .append(", presentLowCount=").append(presentLowCount)
-                .append(", absentHighCount=").append(absentHighCount)
-                .append(", absentLowCount=").append(absentLowCount)
-                .append(", observedData=").append(observedData).append("]");
+                   .append(", callType=").append(callType)
+                   .append(", callQuality=").append(callQuality)
+                   .append(", presentHighCount=").append(presentHighCount)
+                   .append(", presentLowCount=").append(presentLowCount)
+                   .append(", absentHighCount=").append(absentHighCount)
+                   .append(", absentLowCount=").append(absentLowCount)
+                   .append(", observedData=").append(observedData)
+                   .append(", expressionRank=").append(expressionRank)
+                   .append(", expressionScore=").append(expressionScore)
+                   .append(", weight=").append(weight).append("]");
             return builder.toString();
         }
     }

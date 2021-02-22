@@ -59,7 +59,7 @@ public class SpeciesService extends CommonService {
     public Set<Species> loadSpeciesInDataGroups(boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(withSpeciesInfo);
-        return log.exit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
+        return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesFromDataGroups(null), null, withSpeciesInfo));
     }
 
@@ -79,7 +79,7 @@ public class SpeciesService extends CommonService {
     public Set<Species> loadSpeciesByIds(Collection<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
         log.entry(speciesIds, withSpeciesInfo);
-        return log.exit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
+        return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesByIds(ids, null), speciesIds, withSpeciesInfo));
     }
     /**
@@ -97,7 +97,7 @@ public class SpeciesService extends CommonService {
      */
     public Set<Species> loadSpeciesByTaxonIds(Collection<Integer> taxonIds, boolean withSpeciesInfo) {
         log.entry(taxonIds, withSpeciesInfo);
-        return log.exit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
+        return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesByTaxonIds(ids, null), taxonIds, withSpeciesInfo));
     }
     /**
@@ -125,12 +125,12 @@ public class SpeciesService extends CommonService {
         if (withSpeciesInfo) {
             species = this.loadDataSourceInfo(species, sourceMap);
         }
-        return log.exit(species);
+        return log.traceExit(species);
     }
     
     public Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesInfo) {
         log.entry(speciesIds, withSpeciesInfo);
-        return log.exit(this.loadSpeciesByIds(speciesIds, withSpeciesInfo)
+        return log.traceExit(this.loadSpeciesByIds(speciesIds, withSpeciesInfo)
                 .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
     }
 
@@ -161,7 +161,7 @@ public class SpeciesService extends CommonService {
                     forData, forAnnotation, species.getPreferredDisplayOrder()));
         }
 
-        return log.exit(completedSpecies);
+        return log.traceExit(completedSpecies);
     }
     
     /** 
@@ -192,7 +192,7 @@ public class SpeciesService extends CommonService {
                             newSet.addAll(v2);
                             return newSet;
                         }));
-        return log.exit(map);
+        return log.traceExit(map);
     }
 
     /**
@@ -203,7 +203,7 @@ public class SpeciesService extends CommonService {
      */
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO, Source genomeSource) {
         log.entry(speciesTO, genomeSource);
-        return log.exit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
+        return log.traceExit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
                 speciesTO.getGenomeVersion(), genomeSource, speciesTO.getGenomeSpeciesId(),
                 speciesTO.getParentTaxonId(), null, null, speciesTO.getDisplayOrder()));

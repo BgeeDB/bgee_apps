@@ -67,7 +67,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
             if (!speIds.isEmpty()) {
                 stmt.setIntegers(1, speIds, true);
             }
-            return log.exit(new MySQLRawDataConditionTOResultSet(stmt));
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -101,7 +101,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
 
         @Override
         protected RawDataConditionDAO.RawDataConditionTO getNewTO() throws DAOException {
-            log.entry();
+            log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, exprMappedCondId = null, speciesId = null;
@@ -145,7 +145,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
-                return log.exit(new RawDataConditionTO(id, exprMappedCondId, anatEntityId, stageId,
+                return log.traceExit(new RawDataConditionTO(id, exprMappedCondId, anatEntityId, stageId,
                         sex, sexInferred, strain, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));

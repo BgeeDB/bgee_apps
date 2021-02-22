@@ -67,6 +67,11 @@
         </dependency>
 
         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
@@ -88,7 +93,7 @@
             when deployed. -->
         <dependency>
             <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache-core</artifactId>
+            <artifactId>ehcache</artifactId>
         </dependency>
 
         <dependency>
@@ -135,8 +140,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}j</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}j</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}k</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}k</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify
@@ -284,7 +289,7 @@
                             </jsSourceFiles>
                             <!-- Files already provided minified. The suffix will then not be added  -->
                             <jsFinalFile>vendor_common.${filter.org.bgee.webapp.javascript.version.extension}.js</jsFinalFile>
-                            <!-- <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix> -->
+                            <!-- <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix> -->
 
                             <cssSourceDir>css/</cssSourceDir>
                             <!-- the css files need to keep their relative location -->
@@ -325,7 +330,7 @@
                                 <jsSourceFile>common.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_common.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
 
                             <cssSourceDir>css/</cssSourceDir>
                             <cssTargetDir>css/</cssTargetDir>
@@ -333,7 +338,7 @@
                                 <cssSourceFile>bgee.css</cssSourceFile>
                             </cssSourceFiles>
                             <cssFinalFile>common.css</cssFinalFile>
-                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>
                     </execution>
 
@@ -358,7 +363,7 @@
                                 <jsSourceFile>general.js</jsSourceFile>
                                 <jsSourceFile>download.js</jsSourceFile>
                             </jsSourceFiles>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
 
                             <cssSourceDir>css/</cssSourceDir>
                             <cssTargetDir>css/</cssTargetDir>
@@ -375,7 +380,7 @@
                                 <cssSourceFile>anat_sim.css</cssSourceFile>
                                 <cssSourceFile>expr_comp.css</cssSourceFile>
                             </cssSourceFiles>
-                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.css.version.extension}</suffix>
                         </configuration>
                     </execution>
 
@@ -481,7 +486,7 @@
                                 <jsSourceFile>jquery_ui_autocomplete_modif.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_gene.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
 
                             <!-- topanat.css is minified in execution with ID minify_no_merge_bgee,
                                  this should be changed if there are more than one CSS file
@@ -492,7 +497,7 @@
                                 <cssSourceFile>gene.css</cssSourceFile>
                             </cssSourceFiles>
                             <cssFinalFile>gene.css</cssFinalFile>
-                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
+                            <suffix>.${filter.org.bgee.webapp.css.version.extension}</suffix> -->
                         </configuration>
                     </execution>
 
@@ -566,7 +571,7 @@
                                 <jsSourceFile>topanat/directives/loading.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_topanat.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
 
                             <!-- topanat.css is minified in execution with ID minify_no_merge_bgee,
                                  this should be changed if there are more than one CSS file
@@ -577,7 +582,7 @@
                                 <cssSourceFile>topanat.css</cssSourceFile>
                             </cssSourceFiles>
                             <cssFinalFile>topanat.css</cssFinalFile>
-                            <suffix>${filter.org.bgee.webapp.css.version.extension}</suffix> -->
+                            <suffix>.${filter.org.bgee.webapp.css.version.extension}</suffix> -->
                         </configuration>
                     </execution>
 
@@ -635,7 +640,7 @@
                                 <jsSourceFile>anat_sim.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_anat_sim.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
 
@@ -699,7 +704,7 @@
                                 <jsSourceFile>expr_comp.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_expr_comp.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
                 </executions>

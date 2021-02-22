@@ -43,7 +43,7 @@ $( document ).ready( function(){
         "<'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-4'B><'col-sm-8'p>>";
 
-    var order = [[ 1, 'desc'], [ 2, 'desc']]; //  conservation score desc, max expression score desc
+    var order = [[ 1, 'desc'], [ 4, 'asc'], [ 2, 'desc']]; //  conservation score desc, genes with abs of expr asc, max expression score desc
 
     var responsive = {
         details: {

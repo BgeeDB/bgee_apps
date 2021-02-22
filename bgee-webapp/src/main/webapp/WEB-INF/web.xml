@@ -4,7 +4,7 @@
     version="2.4">
 
     <!-- Deployment descriptor for Bgee webapp -->
-    <display-name>Bgee: a database for gene expression data in animals</display-name>
+    <display-name>Bgee: gene expression data in animals</display-name>
     <description>
       Bgee is a database for retrieval and comparison of gene expression patterns 
       across multiple animal species. It provides an intuitive answer to the question 

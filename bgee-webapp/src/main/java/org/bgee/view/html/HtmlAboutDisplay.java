@@ -117,7 +117,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "<ul>"
                 + "<li><a href='" + BGEEDB_R_PACKAGE_URL + "' title='Bioconductor BgeeDB package' "
                         + "target='_blank'>BgeeDB</a>, "
-                        + "allowing to download the Affymetrix and RNA-Seq data and metadata used in Bgee,"
+                        + "allowing to download the Affymetrix and RNA-Seq data and metadata used in Bgee, "
                         + "and to perform TopAnat analyses. </li>"
                 + "<li><a href='" + BGEECALL_R_PACKAGE_URL + "' title='Bioconductor BgeeCall package' "
                         + "target='_blank'>BgeeCall</a>, "

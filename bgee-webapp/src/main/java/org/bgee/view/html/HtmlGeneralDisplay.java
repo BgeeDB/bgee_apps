@@ -58,7 +58,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
     public void displayHomePage(List<SpeciesDataGroup> groups) {
         log.traceEntry("{}", groups);
         
-        this.startDisplay("Bgee: a database for gene expression data in animals");
+        this.startDisplay("Bgee: gene expression data in animals");
 
         this.addSchemaMarkups(groups);
         
@@ -513,9 +513,20 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
         
         this.writeln("<div class='panel-body'>");
 
-        this.writeOneNews("2021-02-19", "Release of Bgee version 14.2"
-                + "<p>This is an incremental update of Bgee, mostly improving data coverage "
-                + "for animals of agronomic and veterinary relevance: </p>"
+        this.writeOneNews("2021-02-22", "Release of Bgee version 14.2"
+                + "<p>This is an incremental update of Bgee, improving data coverage "
+                + "mostly for animals of agronomic and veterinary relevance, and adding "
+                + "new functionalities to the website: </p>"
+                + "<ul>"
+                + "<li>On all gene pages you will now find links to ortholog and paralog gene pages, "
+                + "and links to directly run an <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>"
+                + "expression comparison analysis</a> on them.</li>"
+                + "<li>We have made <a href='" + urlTopAnat.getRequestURL()
+                + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a> faster "
+                + "when used with no decorrelation method.</li>"
+                + "</ul>"
+                + "<p>We have added new RNA-Seq libraries to Bgee. For animals of agronomic "
+                + "and veterinary relevance: </p>"
                 + "<ul>"
                 + "<li><i>Bos taurus</i>: 1299 RNA-Seq libraries added</li>"
                 + "<li><i>Sus scrofa</i>: 286 RNA-Seq libraries added</li>"
@@ -538,17 +549,11 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                 + "and all the Bgee tools and download files, have been updated accordingly.</p>"
                 + "<p>Other changes in this release: </p>"
                 + "<ul>"
-                + "<li>We have made <a href='" + urlTopAnat.getRequestURL()
-                + "' title='Perform gene expression enrichment tests with TopAnat'>TopAnat</a> faster "
-                + "when used with no decorrelation method.</li>"
-                + "<li>On all gene pages you will now find links to ortholog and paralog gene pages, "
-                + "and links to directly run an <a href='" + urlExprComp.getRequestURL() + "' title='Expression comparison'>"
-                + "expression comparison analysis</a> on them.</li>"
                 + "<li>We have made changes to the way we propagate expression calls along the graph "
                 + "of conditions: calls of absence of expression are no longer propagated to child "
                 + "anatomical entities, so that an information of absence of expression is more reliable "
                 + "from now on.</li>"
-                + "<li>We have also corrected sone relations between anatomical entities that were "
+                + "<li>We have also corrected some relations between anatomical entities that were "
                 + "incorrectly missing in our database, improving the propagation of expression calls as well.</li>"
                 + "</ul>");
 

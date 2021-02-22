@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -81,7 +80,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     }
     
     public void displayExpressionComparison(String errorMsg) {
-        log.entry(errorMsg);
+        log.traceEntry("{}", errorMsg);
 
         this.displayExpressionComparison(null, null, null, null, errorMsg);
 
@@ -90,7 +89,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     
     @Override
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, SingleSpeciesExprAnalysis result) {
-        log.entry(searchResult, result);
+        log.traceEntry("{} - {}", searchResult, result);
 
         Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
         this.displayExpressionComparison(searchResult, result, fun, false, null);
@@ -100,7 +99,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     @Override
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiSpeciesExprAnalysis result) {
-        log.entry(searchResult, result);
+        log.traceEntry("{} - {}", searchResult, result);
 
         Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
         this.displayExpressionComparison(searchResult, result, fun, true, null);
@@ -111,7 +110,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
                                                  Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies,
                                                  String errorMsg) {
-        log.entry(searchResult, result, function, isMultiSpecies, errorMsg);
+        log.traceEntry("{} - {} - {} - {} - {}", searchResult, result, function, isMultiSpecies, errorMsg);
         
         this.startDisplay("Expression comparison page");
 
@@ -143,7 +142,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     }
 
     private String getForm(String errorMsg) {
-        log.entry(errorMsg);
+        log.traceEntry("{}", errorMsg);
 
         StringBuilder sb = new StringBuilder();
 
@@ -211,7 +210,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     private <T> String getResult(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
             Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
-        log.entry(result, function, isMultiSpecies);
+        log.traceEntry("{} - {} - {}", result, function, isMultiSpecies);
 
         StringBuilder sb = new StringBuilder();
 
@@ -226,7 +225,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         sb.append("<h2>Results</h2>");
 
-        sb.append("<p>Results are ordered by 'Conservation score', then 'Maximum expression score'. " +
+        sb.append("<p>Results are ordered by default by descendant \"Conservation score\", "
+                + "then ascendant \"Genes with absence of expression\", then descendant \"Max expression score\". " +
                 "The order could be changed by clicking on one column, then press shift and click on another column.</p>");
         sb.append("<div class='table-container'>");
         String tableClass = isMultiSpecies? "multi-sp" : "single-sp";
@@ -268,7 +268,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     private <T> String getRow(Map.Entry<T, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts,
                               Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
-        log.entry(condToCounts, function, isMultiSpecies);
+        log.traceEntry("{} - {} - {}", condToCounts, function, isMultiSpecies);
 
         StringBuilder row = new StringBuilder();
         row.append("<tr>");
@@ -345,7 +345,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return          The {@code String} that is the HTML of the cell.
      */
     private String getGeneCountCell(Set<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
 
         Function<Gene, String> f = g -> {
             RequestParameters geneUrl = this.getNewRequestParameters();
@@ -372,7 +372,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return          The {@code String} that is the HTML of the cell.
      */
     private String getSpeciesCountCell(Set<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
         //Need a compiler hint of generic type for my Java version
         return log.traceExit(this.<Species>getCell(genes.stream()
                         .map(Gene::getSpecies)
@@ -395,7 +395,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
      * @return              The {@code String} that is the HTML of the cell.
      */
     private <T> String getCell(List<T> set, String mainText, Function<T, String> getDetailText) {
-        log.entry(set, mainText, getDetailText);
+        log.traceEntry("{} - {} - {}", set, mainText, getDetailText);
 
         StringBuilder cell = new StringBuilder();
 

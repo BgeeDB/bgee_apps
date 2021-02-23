@@ -139,7 +139,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                 "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
@@ -154,7 +154,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
                 "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
-                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
+                "           \"name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -166,7 +166,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                 "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
@@ -185,7 +185,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
                 "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
-                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
+                "           \"name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
@@ -198,7 +198,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                 "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
@@ -218,7 +218,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "           \"@type\": \"DataCatalog\"," +
                 "           \"@id\": \""+ this.prop.getBgeeRootDirectory() + "\"," +
                 "           \"@url\": \"" + this.prop.getBgeeRootDirectory() + "\"," +
-                "           \"@name\": \"" + SCHEMA_BGEE_NAME + "\"," +
+                "           \"name\": \"" + SCHEMA_BGEE_NAME + "\"," +
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");

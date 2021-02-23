@@ -120,7 +120,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"creator\": [" +
                             "        {" +
                             "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                            "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                             "        }" +
                             "    ]" +
                             "}, " +
@@ -134,7 +134,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"creator\": [" +
                             "        {" +
                             "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                            "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                             "        }" +
                             "    ]" +
                             "}," +
@@ -148,7 +148,7 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
                             "    \"creator\": [" +
                             "        {" +
                             "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                            "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                            "            \"name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
                             "        }" +
                             "    ]" +
                             "}";

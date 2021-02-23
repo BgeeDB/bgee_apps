@@ -25,10 +25,10 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     /**
      * Default constructor.
      *
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
+     * @param response          A {@code HttpServletResponse} that will be used to display the
      *                          page to the client.
-     * @param requestParameters A {@code RequestParameters} handling the parameters of the 
-     *                          current request, to determine the requested displayType, 
+     * @param requestParameters A {@code RequestParameters} handling the parameters of the
+     *                          current request, to determine the requested displayType,
      *                          and for display purposes.
      * @param prop              A {@code BgeeProperties} instance that contains the properties
      *                          to use.
@@ -83,7 +83,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         this.writeln("<p>Processing your personal data is necessary for our legitimate interests in " +
                 "providing services to you, to help improve our resources and for the purposes of " +
                 "day-to-day running of the Bgee resource and underlying infrastructure.</p>");
-        
+
         this.writeln("<h2>What personal data is collected from users of the service?" +
                 " How do we use these personal data?</h2>");
         this.writeln("<p>The personal data collected from the services listed below is as follows:</p>");
@@ -127,27 +127,27 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
         this.writeln("   <li>To conduct and monitor data protection activities</li>");
         this.writeln("   <li>To conduct and monitor security activities</li>");
         this.writeln("</ul>");
-        
+
         this.writeln("<h2>Who will have access to your personal data?</h2>");
         this.writeln("<p>Personal data will only be disclosed to authorized staff of Bgee." +
                 "Your personal data are stored internally and not exposed to third parties or countries. " +
                 "IP addresses are removed from log files or anonymized before being stored in case they are needed.</p>");
-        
+
         this.writeln("<h2>Will your personal data be transferred to third parties/countries " +
                 "(i.e. countries not part of EU/EAA) and/or international organisations?</h2>");
         this.writeln("<p>There are no personal data transfers to international organisations outside of Bgee.</p>");
         this.writeln("<p>Bgee uses Google Analytics as a third-party analytics service to collect " +
                 "information about website performance and how users navigate through and use our site " +
                 "to help us design better interfaces. We do not use Google Analytics to track you individually " +
-                "or collect personal data. <em>Personal data send to Google Analytics are anonymized upstream.</em></p>");
-        
+                "or collect personal data. <em>Personal data sent to Google Analytics are anonymized upstream.</em></p>");
+
         this.writeln("<h2>How long do we keep your personal data?</h2>");
         this.writeln("<p>Any personal data directly obtained from you will be retained as long as " +
                 "the service is live, even if you stop using the service. We will keep the personal " +
                 "data for the minimum amount of time possible to ensure legal compliance and to " +
                 "facilitate internal and external audits if they arise.</p>");
         this.writeln("<p>Only <strong>Help desk</strong> data are kept longer.</p>");
-        
+
         this.writeln("<h2>Cookies</h2>");
         this.writeln("<p>The user is informed that cookies may be stored on the hard drive of " +
                 "his/her/its computer to record information about his/her/its visits to this portal.</p>");
@@ -160,7 +160,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
                 "some features of this portal may require the mandatory use of cookies " +
                 "(customization, warnings, etc.). Otherwise the use of this portal may be impaired " +
                 "or even impossible.</p>");
-        
+
         this.writeln("<h2>The joint Data Controllers provide these rights regarding your personal data</h2>");
         this.writeln("<p>You have the right to:</p>");
         this.writeln("<ol>");
@@ -239,7 +239,7 @@ public class HtmlPrivacyPolicyDisplay extends HtmlParentDisplay implements Priva
     protected void includeCss() {
         log.traceEntry();
         super.includeCss();
-        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
         this.includeCss("documentation.css");
         log.traceExit();

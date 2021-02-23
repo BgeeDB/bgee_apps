@@ -163,11 +163,11 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 + "or transcriptome studies, whilst providing an improved integration "
                 + "of homology and related concepts into bioinformatics through ontologies "
                 + "and ontology tools.</p>");
-        
+
         this.writeln("<h2>How to cite us?</h2>");
-        
+
         this.writeln("<p>The list of all Bgee related publications including the most recent one to use to "
-                + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() + 
+                + "cite us are present in the dedicated <a href='" + urlPublicationsGenerator.getRequestURL() +
                 "' title ='Bgee publications' >Bgee publications</a> page.</p>");
 
         this.writeln("<h2>Which license did we choose?</h2>");

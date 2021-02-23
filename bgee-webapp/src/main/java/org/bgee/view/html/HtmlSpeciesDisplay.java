@@ -58,7 +58,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         this.writeln("<div class='species_list'>");
 
         this.writeln(speciesList.stream()
-                .map(species -> 
+                .map(species ->
                            "<a class='species_element' href='" + getSpeciesPageUrl(species.getId()) + "'>" +
                            "    <figure><img src='"+ this.getSpeciesImageSrc(species, true)+"' alt='"+ htmlEntities(species.getShortName())+"'>" +
                            "        <figcaption>" +
@@ -89,14 +89,14 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         this.startDisplay("Species: " + htmlEntities(species.getScientificName()), "WebPage", description);
 
         this.writeln(this.getSchemaMarkup(speciesDataGroup));
-        
+
         //page title
         this.writeln("<h1 property='schema:name'>");
         this.writeln("<img src='" + this.getSpeciesImageSrc(species, true)
                 + "' alt='" + htmlEntities(species.getShortName()) + "' />");
         this.writeln("Species: " + getCompleteSpeciesName(species, false));
         this.writeln("</h1>");
-        
+
         //Species general information
         this.writeln("<h2>General information</h2>");
 
@@ -118,9 +118,9 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
     private String getSchemaMarkup(SpeciesDataGroup sdg) {
         log.entry(sdg);
-        
+
         List<String> props = new ArrayList<>();
-        
+
         Species species = sdg.getMembers().get(0);
         String callUrl = null;
         for (DownloadFile f: sdg.getDownloadFiles()) {
@@ -139,8 +139,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
-                "        } " +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " gene expression calls\"," +
                 "    \"description\": \"" + species.getScientificName() + " calls of baseline presence/absence of expression\"," +
@@ -166,8 +166,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
-                "        } " +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " RNA-seq processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
@@ -189,7 +189,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
-        
+
         props.add(
                 "{" +
                 "    \"@type\": \"Dataset\"," +
@@ -198,8 +198,8 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "    \"creator\": [" +
                 "        {" +
                 "            \"@type\": \"" + SCHEMA_CREATOR_TYPE_BGEE + "\"," +
-                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"," +
-                "        } " +
+                "            \"@name\": \"" + SCHEMA_CREATOR_NAME_BGEE + "\"" +
+                "        }" +
                 "    ]," +
                 "    \"name\": \"" + species.getScientificName() + " Affymetrix processed expression values\"," +
                 "    \"description\": \"Annotations and experiment information (e.g., annotations " +
@@ -222,16 +222,16 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "           \"sameAs\": \"" + this.prop.getBgeeRootDirectory() + "\"" +
                 "    }" +
                 "}");
-        
+
         return log.traceExit(getSchemaMarkupGraph(props));
     }
 
     private String getGeneralInfo(Species species) {
         log.entry(species);
-        
+
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
         table.append("<table class='info-table'>");
-        
+
         table.append("<tr><th scope='row'>Scientific name</th><td property='bs:name'><em>")
                 .append(htmlEntities(species.getScientificName())).append("</em></td></tr>");
         if (StringUtils.isNotBlank(species.getName())) {
@@ -243,7 +243,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                         "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&amp;id=")
                 .append(species.getId()).append("'>")
                 .append(htmlEntities(String.valueOf(species.getId()))).append("</a></td></tr>");
-        String speciesSourceURL = species.getGenomeSource().getBaseUrl() + 
+        String speciesSourceURL = species.getGenomeSource().getBaseUrl() +
                 species.getScientificName().replace(" ", "_");
         table.append("<tr><th scope='row'>Genome source</th><td><a class='external_link' target='_blank' rel='noopener' " +
                 "href='").append(speciesSourceURL).append("'>")
@@ -263,7 +263,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         RequestParameters urlDoc = this.getNewRequestParameters();
         urlDoc.setPage(RequestParameters.PAGE_DOCUMENTATION);
         urlDoc.setAction(RequestParameters.ACTION_DOC_CALL_DOWLOAD_FILES);
-        
+
         StringBuilder text = new StringBuilder();
 
         text.append("<p>Bgee provides calls of presence/absence of expression. Each call " +
@@ -271,7 +271,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
                 "and a life stage, with reported presence or absence of expression. " +
                 "More information in our <a href='").append(urlDoc.getRequestURL())
                 .append("'>documentation</a></p>");
-        
+
         text.append("<h3>Anatomical entities only</h3>");
 
         text.append("<ul>");
@@ -298,7 +298,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
     private Optional<DownloadFile> getCallFile(SpeciesDataGroup speciesDataGroup, CategoryEnum category,
                                                Set<CallService.Attribute> attrs) {
         log.entry(speciesDataGroup, category, attrs);
-        
+
         return log.traceExit(speciesDataGroup.getDownloadFiles().stream()
                     .filter(f -> category.equals(f.getCategory()))
                     .filter(f -> attrs.equals(f.getConditionParameters()))
@@ -338,12 +338,12 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
     private String getFileLi(Optional<DownloadFile> file, String label) {
         log.entry(file, label);
-        
+
         if (file.isPresent()) {
             DownloadFile downloadFile = file.get();
             return log.traceExit("<li><p>" + label + ": " +
-                    "<a class='btn btn-default btn-xs' href='" + 
-                    this.prop.getDownloadRootDirectory() + downloadFile.getPath() + "'>" + 
+                    "<a class='btn btn-default btn-xs' href='" +
+                    this.prop.getDownloadRootDirectory() + downloadFile.getPath() + "'>" +
                     downloadFile.getName() + "</a> (" +
                     FileUtils.byteCountToDisplaySize(downloadFile.getSize()) + ")</p></li>");
         }
@@ -354,7 +354,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
     protected void includeCss() {
         log.traceEntry();
 
-        //If you ever add new files, you need to edit bgee-webapp/pom.xml 
+        //If you ever add new files, you need to edit bgee-webapp/pom.xml
         //to correctly merge/minify them.
         this.includeCss("species.css");
 

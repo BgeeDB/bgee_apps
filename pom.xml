@@ -66,6 +66,9 @@
             <id>bgee-local-repository</id>
             <url>file://${basedir}/../m2_local_repository/repository</url>
         </repository>
+        <!-- 
+        For now we don't use bigmemory and ehcache so we remove the dependencies
+        to avoid using the terracotta maven repository
         <repository>
             <id>terracotta-repository</id>
             <url>http://www.terracotta.org/download/reflector/releases</url>
@@ -73,6 +76,7 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        -->
     </repositories>
 
     <modules>
@@ -223,12 +227,16 @@
                 <scope>compile</scope>
             </dependency>
 
+            <!-- 
+            For now we don't use bigmemory and ehcache so we remove the dependencies
+            to avoid using the terracotta maven repository
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
                 <artifactId>ehcache-ee</artifactId>
                 <version>2.8.5</version>
                 <scope>compile</scope>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -267,6 +275,9 @@
                 if it is not used, as ehcache-core is replaced by ehcache-ee to use bigmemory.
                 The reason is that it is somehow automatically included with ehcache-web
                 if not explicitly declared here, and conflicts with ehcache-ee when deployed. -->
+            <!-- 
+            For now we don't use bigmemory and ehcache so we remove the dependencies
+            to avoid using the terracotta maven repository
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
                 <artifactId>ehcache</artifactId>
@@ -287,6 +298,7 @@
                 <version>4.1.8</version>
                 <scope>compile</scope>
             </dependency>
+            -->
 
             <!-- End for webapp -->
 

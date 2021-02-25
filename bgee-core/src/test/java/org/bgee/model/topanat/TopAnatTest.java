@@ -147,7 +147,7 @@ public class TopAnatTest extends TestAncestor {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> ordering = null;
         Stream callStream = Stream.of(mockExpressionCall1, mockExpressionCall2, mockExpressionCall3,
                 mockExpressionCall4,mockExpressionCall5);
-        when(mockCallService.loadCalls(anyString(), ((Collection<CallFilter<?>>) anyCollection()), 
+        when(mockCallService.loadCalls(anyString(), (anyCollection()), 
                 anyCollectionOf(CallService.Attribute.class), eq(ordering))) // TODO be more specific here
         .thenReturn(callStream);    
         when(mockServiceFactory.getGeneService()).thenReturn(mockGeneService);

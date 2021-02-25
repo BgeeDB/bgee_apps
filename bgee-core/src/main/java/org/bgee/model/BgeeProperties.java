@@ -112,6 +112,21 @@ public class BgeeProperties {
 
     /**
      * A {@code String} that is the key to access to the System property that contains 
+     * the Bioconductor release number to use to install {@code R} packages for topAnat.
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT
+     */
+    public final static String BIOCONDUCTOR_RELEASE_NUMBER_KEY = "org.bgee.core.bioconductorReleaseNumber";
+    /**
+     * A {@code String} that is the default value of the Bioconductor release number to use to load
+     * {@code R} packages for the topAnat analysis.
+     *
+     * @see #BIOCONDUCTOR_RELEASE_NUMBER_KEY
+     */
+    public final static String BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT = "3.11";
+
+    /**
+     * A {@code String} that is the key to access to the System property that contains 
      * the current working directory of {@code R}, where all the other files required 
      * for the processing of the topAnat analysis are kept.
      * 
@@ -654,6 +669,9 @@ public class BgeeProperties {
         topAnatRWorkingDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_WORKING_DIRECTORY_KEY,
                 TOP_ANAT_R_WORKING_DIRECTORY_DEFAULT);
+        bioconductorReleaseNumber = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
+                BIOCONDUCTOR_RELEASE_NUMBER_KEY,
+                BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT);
         topAnatFunctionFile = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_FUNCTION_FILE_KEY,
                 TOP_ANAT_FUNCTION_FILE_DEFAULT);
@@ -678,6 +696,12 @@ public class BgeeProperties {
      * (if the release is Bgee {@code v14.2}, the minor version number is {@code 2}).
      */
     private final String minorVersion;
+
+    /**
+     * A {@code String} that is the Bioconductor Release number used to download
+     * {@code R} packages.
+     */
+    private final String bioconductorReleaseNumber;
 
     /**
      * A {@code String} that is the path of RScript Executable file 
@@ -777,6 +801,13 @@ public class BgeeProperties {
 
     //TopAnat
     /**
+     * @return A {@code String} that is the Boconductor release number from which {@code R} 
+     * packages will be downloaded
+     */
+    public String getBioconductorReleaseNumber() {
+        return bioconductorReleaseNumber;
+    }
+    /**
      * @return A {@code String} that is the path of RScript Executable file which is used 
      * to execute the {@code R} code.
      */
@@ -812,5 +843,17 @@ public class BgeeProperties {
      */
     public int getMaxJobCountPerUser() {
         return maxJobCountPerUser;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("BgeeProperties [topAnatRScriptExecutable=").append(topAnatRScriptExecutable)
+                .append(", bioconductorReleaseNumber=").append(bioconductorReleaseNumber)
+                .append(", topAnatRWorkingDirectory=").append(topAnatRWorkingDirectory)
+                .append(", topAnatFunctionFile=").append(topAnatFunctionFile)
+                .append(", topAnatResultsWritingDirectory=").append(topAnatResultsWritingDirectory)
+                .append("]");
+        return builder.toString();
     }
 }

@@ -8,8 +8,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 
-import com.github.rcaller.rStuff.RCaller;
-import com.github.rcaller.rStuff.RCode;
+import com.github.rcaller.rstuff.RCaller;
+import com.github.rcaller.rstuff.RCode;
+import com.github.rcaller.util.Globals;
 
 public class TopAnatRManager {
 
@@ -39,7 +40,13 @@ public class TopAnatRManager {
      * @param topAnatParams
      */
     public TopAnatRManager(BgeeProperties props, TopAnatParams topAnatParams){
-        this(new RCaller(), new RCode(), props, topAnatParams);
+        log.entry(props, topAnatParams);
+        Globals.setRscriptCurrent(props.getTopAnatRScriptExecutable());
+        this.caller = RCaller.create();
+        this.code = RCode.create();
+        this.props = props;
+        this.params = topAnatParams;
+        log.traceExit();
     }
 
     /**
@@ -52,12 +59,12 @@ public class TopAnatRManager {
     public TopAnatRManager(RCaller caller, RCode code, BgeeProperties props, TopAnatParams params){
 
         log.entry(caller,code,props,params);
+        Globals.setRscriptCurrent(props.getTopAnatRScriptExecutable());
         this.caller = caller;
         this.code = code;
         this.props = props;
         this.params = params;
-        log.exit();
-
+        log.traceExit();
     }
 
     protected String generateRCode(String resultFilePath, 
@@ -67,32 +74,35 @@ public class TopAnatRManager {
             Set<String> foregroundIds) {
         log.entry(resultFilePath, resultFileName, resultPdfFileName, anatEntitiesNamesFileName, 
                 anatEntitiesRelationshipsFileName, geneToAnatEntitiesFileName, foregroundIds);
-
-        caller.setRscriptExecutable(this.props.getTopAnatRScriptExecutable());
         
+        String bioconductorRelease = this.props.getBioconductorReleaseNumber();
+
         code.clear();
-        code.addRCode("# Please check that you have installed the required packages");
-        code.addRCode("packageExistRgraphviz<-require(Rgraphviz)");
-        code.addRCode("if(!packageExistRgraphviz){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('Rgraphviz')}");
+        code.addRCode("# Check that you have installed the required packages");
+        code.addRCode("if(!suppressWarnings(require(BiocManager))){");
+        code.addRCode("  install.packages('BiocManager', repos='https://cloud.r-project.org')");
+        code.addRCode("}");
+        code.addRCode("if(!suppressWarnings(require(Rgraphviz))){");
+        code.addRCode("  BiocManager::install('Rgraphviz', version='" + bioconductorRelease + "')");
+        code.addRCode("}");
 
-        code.addRCode("packageExistRUniversal<-require(Runiversal)");
-        code.addRCode("if(!packageExistRUniversal){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('Runiversal')}");
+        code.addRCode("if(!suppressWarnings(require(Runiversal))){");
+        code.addRCode("  BiocManager::install('Runiversal', version='" + bioconductorRelease + "')");
+        code.addRCode("}");
 
-        code.addRCode("packageExistTopGO<-require(topGO)");
-        code.addRCode("if(!packageExistTopGO){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('topGO')}");
+        code.addRCode("if(!suppressWarnings(require(topGO))){");
+        code.addRCode("  BiocManager::install('topGO', version='" + bioconductorRelease + "')");
+        code.addRCode("}");
 
-        code.addRCode("packageExistRJava<-require(rJava)");
-        code.addRCode("if(!packageExistRJava){");
-        code.addRCode("source('http://bioconductor.org/biocLite.R')");
-        code.addRCode("biocLite('rJava')}");
+        code.addRCode("if(!suppressWarnings(require(rJava))){");
+        code.addRCode("  BiocManager::install('rJava', version='" + bioconductorRelease + "')");
+        code.addRCode("}");
 
         code.addRCode("library(topGO)");
+        code.addRCode("library(rJava)");
+        code.addRCode("library(Runiversal)");
+        code.addRCode("library(Rgraphviz)");
+
         code.addRCode("# Please change the working directory to match your file system:");
         code.addRCode("setwd('" + resultFilePath + "')");
         log.debug("Location of TopAnat functions file: {} - {}", this.props.getTopAnatFunctionFile(), 
@@ -205,7 +215,7 @@ public class TopAnatRManager {
     protected void performRFunction(String consoleFileName) throws FileNotFoundException{
 
         log.info("Running statistical tests in R...");
-        if(this.code.toString().equals(new RCode().toString())){
+        if(this.code.toString().equals(RCode.create().toString())){
             throw new IllegalStateException("The R code was not set before the analysis");
         }
         caller.redirectROutputToFile(consoleFileName, true);

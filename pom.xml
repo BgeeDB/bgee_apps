@@ -15,7 +15,7 @@
             SIB Swiss Institute of Bioinformatics -
             Department of Ecology and Evolution -
             University of Lausanne</name>
-        <url>http://bioinfo.unil.ch/</url>
+        <url>https://bioinfo.unil.ch/</url>
     </organization>
     <developers>
         <developer>
@@ -66,6 +66,9 @@
             <id>bgee-local-repository</id>
             <url>file://${basedir}/../m2_local_repository/repository</url>
         </repository>
+        <!-- 
+        For now we don't use bigmemory so we remove the dependencies
+        to avoid using the terracotta maven repository
         <repository>
             <id>terracotta-repository</id>
             <url>http://www.terracotta.org/download/reflector/releases</url>
@@ -73,6 +76,7 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        -->
     </repositories>
 
     <modules>
@@ -89,21 +93,21 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.0.2</version>
+            <version>2.14.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.0.2</version>
+            <version>2.14.0</version>
             <scope>compile</scope>
         </dependency>
 
         <!-- General useful library (e.g., defines StringUtils) -->
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
             <scope>compile</scope>
         </dependency>
 
@@ -111,14 +115,14 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <!-- Mock object during unit testing -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>1.9.5</version>
+            <version>3.7.7</version>
             <scope>test</scope>
         </dependency>
 
@@ -205,35 +209,44 @@
             <dependency>
                 <groupId>org.apache.tomcat</groupId>
                 <artifactId>tomcat-servlet-api</artifactId>
-                <version>7.0.35</version>
+                <version>10.0.2</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>4.0.1</version>
                 <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.3.4</version>
+                <version>4.5.13</version>
                 <scope>compile</scope>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
                 <artifactId>ehcache-ee</artifactId>
-                <version>2.7.2</version>
+                <version>2.10.2.2.15</version>
                 <scope>compile</scope>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-slf4j-impl</artifactId>
-                <version>2.0.2</version>
+                <version>2.14.0</version>
                 <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.7</version>
+                <version>1.7.30</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -241,7 +254,7 @@
             <dependency>
                 <groupId>com.sun.mail</groupId>
                 <artifactId>javax.mail</artifactId>
-                <version>1.5.5</version>
+                <version>1.6.2</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -251,7 +264,7 @@
             <dependency>
                 <groupId>com.thetransactioncompany</groupId>
                 <artifactId>cors-filter</artifactId>
-                <version>2.4</version>
+                <version>2.9.1</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -262,9 +275,9 @@
                 if not explicitly declared here, and conflicts with ehcache-ee when deployed. -->
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
-                <artifactId>ehcache-core</artifactId>
-                <version>2.6.9</version>
-                <scope>provided</scope>
+                <artifactId>ehcache</artifactId>
+                <version>2.10.6</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
@@ -274,12 +287,16 @@
                 <scope>compile</scope>
             </dependency>
 
+            <!-- 
+            For now we don't use bigmemory so we remove the dependencies
+            to avoid using the terracotta maven repository
             <dependency>
                 <groupId>org.terracotta.bigmemory</groupId>
                 <artifactId>bigmemory</artifactId>
-                <version>4.0.2</version>
+                <version>4.1.8</version>
                 <scope>compile</scope>
             </dependency>
+            -->
 
             <!-- End for webapp -->
 
@@ -288,21 +305,21 @@
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
-                <version>1.8</version>
+                <version>1.15</version>
                 <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.github.jbytecode</groupId>
                 <artifactId>RCaller</artifactId>
-                <version>2.8</version>
+                <version>3.0.2</version>
                 <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.4</version>
+                <version>2.8.0</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -332,7 +349,7 @@
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.27</version>
+                <version>5.1.38</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -342,19 +359,19 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-test</artifactId>
-                <version>3.2.5.RELEASE</version>
+                <version>5.3.3</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-jdbc</artifactId>
-                <version>3.2.5.RELEASE</version>
+                <version>5.3.3</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
-                <version>3.2.5.RELEASE</version>
+                <version>5.3.3</version>
                 <scope>test</scope>
             </dependency>
 
@@ -377,7 +394,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -420,7 +437,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.3.2</version>
+                <version>3.0.0</version>
                 <!-- set inherited to do it only once, and not for each sub-module -->
                 <inherited>false</inherited>
                 <executions>
@@ -442,7 +459,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.20.1</version>
+                <version>2.22.2</version>
                 <configuration>
                     <!-- Default value of enableAssertions is true, but just to make clear... -->
                     <enableAssertions>true</enableAssertions>
@@ -458,7 +475,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -472,7 +489,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -499,14 +516,14 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.3</version>
+                    <version>3.2.4</version>
                 </plugin>
 
 
                 <!-- *******Used to rename static files with version number in bgee-webapp******** -->
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
-                    <version>1.8</version>
+                    <version>3.0.0</version>
                 </plugin>
 
 
@@ -514,7 +531,7 @@
                 <plugin>
                     <groupId>com.samaxes.maven</groupId>
                     <artifactId>minify-maven-plugin</artifactId>
-                    <version>1.7.4</version>
+                    <version>1.7.6</version>
                 </plugin>
 
 
@@ -522,7 +539,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>2.20.1</version>
+                    <version>2.22.2</version>
                 </plugin>
 
                 <plugin>
@@ -564,14 +581,14 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>3.2.0</version>
                 </plugin>
 
                 <!-- to generate jar of war project -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.3.1</version>
                 </plugin>
 
             </plugins>

@@ -8,7 +8,7 @@
     <description>
       Bgee is a database for retrieval and comparison of gene expression patterns
       across multiple animal species. It provides an intuitive answer to the question
-      "where is a gene expressed?" and supports research in cancer and agriculture
+      'where is a gene expressed?' and supports research in cancer and agriculture
       as well as evolutionary biology. Gene expression data are produced from multiple data types
       (RNA-Seq, Affymetrix, in situ hybridization, and EST data) and from multiple data sets
       (including GTEx data).

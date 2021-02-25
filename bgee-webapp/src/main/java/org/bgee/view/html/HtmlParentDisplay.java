@@ -135,7 +135,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_DESCRIPTION =
             "Bgee is a database for retrieval and comparison of gene expression patterns "
             + "across multiple animal species. It provides an intuitive answer to the question "
-            + "*where is a gene expressed?* and supports research in cancer and agriculture "
+            + "'where is a gene expressed?' and supports research in cancer and agriculture "
             + "as well as evolutionary biology.";
 
     /**

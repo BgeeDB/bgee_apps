@@ -128,7 +128,6 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_KEYWORDS =
             "bgee, gene expression, evolution, ontology, anatomy, development, " +
             "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
-
     /**
      * A {@code String} that is the description of Bgee.
      */
@@ -450,8 +449,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</script>");
 
         this.writeln("</head>");
-
-        this.writeln("<body prefix='bs: http://bioschemas.org/'>");
+        
+        this.writeln("<body prefix='bs: https://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container' class='container-fluid'>");

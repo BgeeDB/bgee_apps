@@ -153,7 +153,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "group webpage' target='_blank' rel='noopener'>Evolutionary Bioinformatics group</a>, part of " +
                 "the <a href='https://www.sib.swiss/' title='External link to SIB' target='_blank' rel='noopener'>" +
                 "SIB Swiss Institute of Bioinformatics</a>, at the "
-                + "<a href='http://www.unil.ch/central/en/home.html' title='External link to UNIL' "
+                + "<a href='https://www.unil.ch/central/en/home.html' title='External link to UNIL' "
                 + "target='_blank' rel='noopener'>University of Lausanne</a>.</p>" +
 
                 "<p>Our main interest is in the evolution of animal genomes in the context of " +

@@ -323,7 +323,7 @@ public abstract class TestAncestor
 	//TODO: we use this design because CallParams is not yet stabilized, and we need 
 	//to think about the implementation of its equals/hashCode methods.
 	//To remove when it will be implemented. 
-    private static class CallParamsMatcher extends ArgumentMatcher<CallParams> {
+    private static class CallParamsMatcher implements ArgumentMatcher<CallParams> {
         
         private final CallParams expected;
         
@@ -332,7 +332,7 @@ public abstract class TestAncestor
         }
         
         @Override
-        public boolean matches(Object actual) {
+        public boolean matches(CallParams actual) {
             if (actual == null && expected == null)
                 return true;
             if (actual == null && expected != null)

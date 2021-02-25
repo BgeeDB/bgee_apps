@@ -16,6 +16,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 /**
@@ -243,7 +244,7 @@ public abstract class MySQLITAncestor extends TestAncestor{
         JdbcTemplate template = new JdbcTemplate(dataSource);
         //create db
         Resource resource = new FileSystemResource(System.getProperty(SCHEMAFILEKEY));
-        JdbcTestUtils.executeSqlScript(template, resource, false);
+        ScriptUtils.executeSqlScript(con.getRealConnection(), resource);
         
         log.exit();
     }

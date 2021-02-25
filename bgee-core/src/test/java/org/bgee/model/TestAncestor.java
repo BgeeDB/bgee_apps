@@ -117,18 +117,18 @@ public abstract class TestAncestor {
      * contains the same elements (as considered by their {@code equals} method), 
      * independently of the iteration order of the {@code Collection}s.
      */
-    protected static class IsCollectionEqual<T> extends ArgumentMatcher<Collection<T>> {
+    protected static class IsCollectionEqual<T> implements ArgumentMatcher<Collection<T>> {
         private final static Logger log = LogManager.getLogger(IsCollectionEqual.class.getName());
         private final Collection<?> expectedCollection;
         
-        IsCollectionEqual(Collection<?> expectedCollection) {
+        IsCollectionEqual(Collection<T> expectedCollection) {
             log.entry(expectedCollection);
             this.expectedCollection = expectedCollection;
             log.exit();
         }
 
         @Override
-        public boolean matches(Object argument) {
+        public boolean matches(Collection<T> argument) {
             log.entry(argument);
             log.trace("Trying to match expected Collection [" + expectedCollection + "] versus "
                     + "provided argument [" + argument + "]");

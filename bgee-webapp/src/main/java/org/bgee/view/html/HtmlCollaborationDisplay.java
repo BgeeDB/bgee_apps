@@ -76,7 +76,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<p>BioSODA uses the '" + EASY_BGEE_NAME + "' relational database to expose a " +
                 "Bgee SPARQL endpoint reachable through the following URL: " +
-                "<span class='copyable-url'>http://biosoda.expasy.org:8080/rdf4j-server/repositories/bgeelight</span>. " +
+                "<span class='copyable-url'>https://bgee.org/sparql/</span>. " +
                 "In the context of this project, the <a href='http://biosoda.expasy.org' target='_blank' rel='noopener'>" +
                 "BioQuery web application</a> provides a user-friendly interface to query '" +
                 EASY_BGEE_NAME + "' database based on the SPARQL query language.</p>");

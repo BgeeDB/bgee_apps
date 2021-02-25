@@ -7,7 +7,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/* Disable use of terracotta products for now, we're not currently using this class
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.constructs.blocking.LockTimeoutException;
 import net.sf.ehcache.constructs.web.AlreadyCommittedException;
@@ -15,7 +14,6 @@ import net.sf.ehcache.constructs.web.AlreadyGzippedException;
 import net.sf.ehcache.constructs.web.PageInfo;
 import net.sf.ehcache.constructs.web.filter.CachingFilter;
 import net.sf.ehcache.constructs.web.filter.FilterNonReentrantException;
-*/
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -60,9 +58,7 @@ import org.bgee.controller.exception.InvalidFormatException;
  * @see BgeeProperties#getWebpagesCacheConfigFileName()
  * @since Bgee 13
  */
-//NOTE: this class is not currently use and we disable the use of terracotta products
-//to avoid using their maven repository
-public class BgeeWebCache /*extends CachingFilter*/
+public class BgeeWebCache extends CachingFilter
 {
 
     private final static Logger log = LogManager.getLogger(BgeeWebCache.class.getName());
@@ -74,7 +70,7 @@ public class BgeeWebCache /*extends CachingFilter*/
      * @param httpRequest   the {@code HttpServletRequest}being currently processed
      * @return              a {@code String}corresponding to the key
      */
-//    @Override
+    @Override
     protected String calculateKey(HttpServletRequest httpRequest)
     {   
         log.entry(httpRequest);
@@ -96,37 +92,37 @@ public class BgeeWebCache /*extends CachingFilter*/
      * @param chain     the {@code FilterChain} used to invoke the next entity in the servlet
      *                  filter chain. if the page should not be cache
      */
-//    @Override
-//    public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) 
-//            throws AlreadyCommittedException, AlreadyGzippedException, FilterNonReentrantException,
-//            LockTimeoutException, IOException, ServletException, Exception
-//    {
-//        log.entry(request, response, chain);
-//        BgeeProperties prop = BgeeProperties.getBgeeProperties();
-//        try {
-//            if (new RequestParameters(request,
-//                    new URLParameters(),prop, true, "&")
-//            .isACacheableRequest()){
-//                // Cacheble, forward it to the super class
-//                super.doFilter(request, response, chain);
-//            } else {
-//                // Not cachable, leave the caching process
-//                chain.doFilter(request, response);
-//            }
-//        } catch (RequestParametersNotFoundException | InvalidFormatException
-//                | RequestParametersNotStorableException
-//                | MultipleValuesNotAllowedException | PageNotFoundException e) {
-//            // If an Exception is thrown by the RequestParameter, call the next element in chain
-//            // and leave the caching process. The corresponding error page will be displayed and
-//            // nothing will be kept in cache.
-//            chain.doFilter(request, response);
-//        }  
-//        finally{
-//            // Remove the bgee properties instance from the pool
-//            BgeeProperties.removeFromBgeePropertiesPool();
-//        }
-//        log.exit();
-//    }
+    @Override
+    public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) 
+            throws AlreadyCommittedException, AlreadyGzippedException, FilterNonReentrantException,
+            LockTimeoutException, IOException, ServletException, Exception
+    {
+        log.entry(request, response, chain);
+        BgeeProperties prop = BgeeProperties.getBgeeProperties();
+        try {
+            if (new RequestParameters(request,
+                    new URLParameters(),prop, true, "&")
+            .isACacheableRequest()){
+                // Cacheble, forward it to the super class
+                super.doFilter(request, response, chain);
+            } else {
+                // Not cachable, leave the caching process
+                chain.doFilter(request, response);
+            }
+        } catch (RequestParametersNotFoundException | InvalidFormatException
+                | RequestParametersNotStorableException
+                | MultipleValuesNotAllowedException | PageNotFoundException e) {
+            // If an Exception is thrown by the RequestParameter, call the next element in chain
+            // and leave the caching process. The corresponding error page will be displayed and
+            // nothing will be kept in cache.
+            chain.doFilter(request, response);
+        }  
+        finally{
+            // Remove the bgee properties instance from the pool
+            BgeeProperties.removeFromBgeePropertiesPool();
+        }
+        log.exit();
+    }
 
     /**
      * Gets the {@code CacheManager} for this {@code CachingFilter}.
@@ -134,13 +130,13 @@ public class BgeeWebCache /*extends CachingFilter*/
      * {@code BgeeProperties#getWebpagesCacheConfigFileName()}
      * that has to be in the resources folder.
      */
-//    @Override
-//    protected CacheManager getCacheManager() {
-//        log.entry();
-//        return log.exit(CacheManager.create(BgeeWebCache.class
-//                .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
-//                        .getWebpagesCacheConfigFileName())));
-//    }
+    @Override
+    protected CacheManager getCacheManager() {
+        log.entry();
+        return log.exit(CacheManager.create(BgeeWebCache.class
+                .getClassLoader().getResource(BgeeProperties.getBgeeProperties()
+                        .getWebpagesCacheConfigFileName())));
+    }
 
     // Overridden because CachingFilter put a null body to the returned page when the
     // response is not 200.. and get rid of our nice 404 custom page. 
@@ -156,15 +152,15 @@ public class BgeeWebCache /*extends CachingFilter*/
     // - shouldn't be better to let the ehcache behavior happen normally so the 404 are
     // cached and in case of DOS on a non existing adresse it will help. And use redirection to
     // display error pages, which seems to be what CachingFilter expects us to do.
-//    @Override
-//    protected PageInfo buildPageInfo(final HttpServletRequest request,
-//            final HttpServletResponse response, final FilterChain chain)
-//                    throws Exception {
-//        log.entry(request, response, chain);
-//        PageInfo returnedPageInfo  = super.buildPageInfo(request, response, chain);
-//        if(! returnedPageInfo.isOk()){
-//            throw new PageNotFoundException();
-//        }
-//        return log.exit(returnedPageInfo);
-//    }
+    @Override
+    protected PageInfo buildPageInfo(final HttpServletRequest request,
+            final HttpServletResponse response, final FilterChain chain)
+                    throws Exception {
+        log.entry(request, response, chain);
+        PageInfo returnedPageInfo  = super.buildPageInfo(request, response, chain);
+        if(! returnedPageInfo.isOk()){
+            throw new PageNotFoundException();
+        }
+        return log.exit(returnedPageInfo);
+    }
 }

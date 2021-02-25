@@ -76,15 +76,21 @@
             <artifactId>httpclient</artifactId>
         </dependency>
 
+        <!-- 
+        For now we don't use bigmemory so we remove the dependencies
+        to avoid using the terracotta maven repository
         <dependency>
             <groupId>org.terracotta.bigmemory</groupId>
             <artifactId>bigmemory</artifactId>
         </dependency>
+         -->
 
+        <!--
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache-ee</artifactId>
         </dependency>
+        -->
 
         <!-- IMPORTANT : Keep this dependency (with 'provided' scope in bgee-application
             pom.xml) even if it is not used, as ehcache-core is replaced by ehcache-ee

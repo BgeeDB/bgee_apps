@@ -115,11 +115,11 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      * A {@code String} to be used to build the URL to OBO terms.
      */
     protected static final String UBERON_ID_URL = "http://purl.obolibrary.org/obo/";
-    
+
     /**
      * A {@code String} to be used to build the URL to NCBI taxonomy.
      */
-    protected static final String NCBI_TAXONOMY_URL = 
+    protected static final String NCBI_TAXONOMY_URL =
             "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&amp;id=";
 
     /**
@@ -128,14 +128,13 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
     protected static final String BGEE_KEYWORDS =
             "bgee, gene expression, evolution, ontology, anatomy, development, " +
             "evo-devo database, anatomical ontology, developmental ontology, gene expression evolution";
-
     /**
      * A {@code String} that is the description of Bgee.
      */
     protected static final String BGEE_DESCRIPTION =
             "Bgee is a database for retrieval and comparison of gene expression patterns "
             + "across multiple animal species. It provides an intuitive answer to the question "
-            + "\"where is a gene expressed?\" and supports research in cancer and agriculture "
+            + "-where is a gene expressed?- and supports research in cancer and agriculture "
             + "as well as evolutionary biology.";
 
     /**
@@ -450,8 +449,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("</script>");
 
         this.writeln("</head>");
-
-        this.writeln("<body prefix='bs: http://bioschemas.org/'>");
+        
+        this.writeln("<body prefix='bs: https://bioschemas.org/'>");
         this.writeln("<noscript>Sorry, your browser does not support JavaScript!</noscript>");
         this.writeln("<div id='bgee_top'><span id='TOP'></span></div>");
         this.writeln("<div id='sib_container' class='container-fluid'>");
@@ -1255,7 +1254,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
                 this.urlEncode(anatEntity.getId().replace(':', '_')) + "'>" + htmlEntities(text) +
                 "</a>");
     }
-    
+
     /**
      * @param taxon     A {@code Taxon} that is the taxon for which build the URL.
      * @return          A {@code String} that is the 'a' tag for the provided taxon.
@@ -1265,8 +1264,8 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         if (taxon == null) {
             throw log.throwing(new IllegalArgumentException("The provided taxon should be not null"));
         }
-        
-        return log.traceExit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId() 
+
+        return log.traceExit("<a target='_blank' rel='noopener' href='" + NCBI_TAXONOMY_URL + taxon.getId()
                 + "'>" + htmlEntities(taxon.getScientificName()) +
                 "</a>");
     }

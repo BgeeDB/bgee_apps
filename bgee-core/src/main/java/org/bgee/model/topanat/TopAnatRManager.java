@@ -72,6 +72,7 @@ public class TopAnatRManager {
     public TopAnatRManager(RCaller caller, RCode code, BgeeProperties props, TopAnatParams params){
 
         log.entry(caller,code,props,params);
+        Globals.setRscriptCurrent(props.getTopAnatRScriptExecutable());
         this.caller = caller;
         this.code = code;
         this.props = props;

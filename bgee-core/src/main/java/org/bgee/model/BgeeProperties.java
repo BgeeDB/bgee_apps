@@ -139,7 +139,7 @@ public class BgeeProperties {
      * @see #TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY
      */
     public final static String TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT = "/usr/bin/Rscript";
-    
+
     /**
      * A {@code String} that is the key to access to the System property that contains 
      * the Bioconductor release number to use to install {@code R} packages for topAnat.
@@ -746,7 +746,7 @@ public class BgeeProperties {
      * A {@code String} that is the server port which is used to query a search.
      */
     private final String searchUrlPort;
-    
+
     /**
      * A {@code String} that is the Bioconductor Release number used to download
      * {@code R} packages.
@@ -908,7 +908,8 @@ public class BgeeProperties {
     public int getMaxJobCountPerUser() {
         return maxJobCountPerUser;
     }
-    
+
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

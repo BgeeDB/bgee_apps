@@ -77,27 +77,26 @@
         </dependency>
 
         <!-- 
-        For now we don't use bigmemory and ehcache so we remove the dependencies
+        For now we don't use bigmemory so we remove the dependencies
         to avoid using the terracotta maven repository
         <dependency>
             <groupId>org.terracotta.bigmemory</groupId>
             <artifactId>bigmemory</artifactId>
         </dependency>
+         -->
 
+        <!--
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache-ee</artifactId>
         </dependency>
-         -->
+        -->
 
         <!-- IMPORTANT : Keep this dependency (with 'provided' scope in bgee-application
             pom.xml) even if it is not used, as ehcache-core is replaced by ehcache-ee
             to use bigmemory. The reason is that it is somehow automatically included
             with ehcache-web if not explicitly declared here, and conflicts with ehcache-ee
             when deployed. -->
-        <!-- 
-        For now we don't use bigmemory and ehcache so we remove the dependencies
-        to avoid using the terracotta maven repository
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>
@@ -107,7 +106,6 @@
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache-web</artifactId>
         </dependency>
-        -->
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

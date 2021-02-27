@@ -127,7 +127,7 @@ public class UberonDevStage extends UberonCommon {
     public static void main(String[] args) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException, IllegalArgumentException, 
         OWLOntologyStorageException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateStageOntology")) {
             if (args.length != 8) {
@@ -327,7 +327,7 @@ public class UberonDevStage extends UberonCommon {
 
     /**
      * Modify the Uberon ontology stored in the file provided through 
-     * {@link #setPathToUberonOnt(String)} to make a deelopmental stage ontology, and saves it 
+     * {@link #setPathToUberonOnt(String)} to make a developmental stage ontology, and saves it 
      * in OWL and OBO format in the path provided through {@link #setModifiedOntPath(String)}. 
      * <p>
      * This method calls {@link #generateStageOntology()}, by loading the 
@@ -351,10 +351,10 @@ public class UberonDevStage extends UberonCommon {
      *                                          ontology in OWL.
      */
     public void generateStageOntologyAndSaveToFile() throws IOException, 
-    IllegalArgumentException, OWLOntologyCreationException, OWLOntologyStorageException {
+    IllegalArgumentException, OWLOntologyStorageException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(this.getPathToUberonOnt(), this.getModifiedOntPath(), 
+        log.traceEntry("{} - {} - {} - {} - {} - {}", this.getPathToUberonOnt(), this.getModifiedOntPath(), 
                 this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
@@ -400,7 +400,7 @@ public class UberonDevStage extends UberonCommon {
     public void generateStageOntology() {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
+        log.traceEntry("{} - {} - {} - {} - {}", this.getClassIdsToRemove(), this.getChildrenOfToRemove(), 
                 this.getRelsBetweenToRemove(), 
                 this.getRelIds(), this.getToFilterSubgraphRootIds());
         
@@ -501,7 +501,7 @@ public class UberonDevStage extends UberonCommon {
      *                          thanks to temporal ordering in comments. 
      */
     public void generatePrecededByFromComments(Set<OWLClass> classesToOrder) {
-        log.entry(classesToOrder);
+        log.traceEntry("{}", classesToOrder);
         
         //now, we transform temporal ordering in comments into preceded_by relations 
         //(it is the only way to correctly use FBdv)
@@ -578,7 +578,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root) 
             throws IllegalStateException {
-        log.entry(root, this.getTaxonConstraints());
+        log.traceEntry("{} - {}", root, this.getTaxonConstraints());
         return log.traceExit(this.generateStageNestedSetModel(root, null));
     }
     /**
@@ -612,7 +612,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root, Integer speciesId) 
             throws IllegalStateException {
-        log.entry(root, speciesId, this.getTaxonConstraints());
+        log.traceEntry("{} - {} - {}", root, speciesId, this.getTaxonConstraints());
         
         String nestedSetModelKey = root.toStringID() + "-" + (speciesId == null? 0: speciesId);
         //check if we have a nested set model in cache for this root
@@ -772,7 +772,7 @@ public class UberonDevStage extends UberonCommon {
      * @return              See returned value in {@link #getStageIdsBetween(String, String, int)}
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId) {
-        log.entry(startStageId, endStageId);
+        log.traceEntry("{} - {}", startStageId, endStageId);
         return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, 0));
     }
     
@@ -790,7 +790,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId, 
             int speciesId) {
-        log.entry(startStageId, endStageId, speciesId);
+        log.traceEntry("{} - {} - {}", startStageId, endStageId, speciesId);
         return log.traceExit(this.getStageIdsBetween(startStageId, endStageId, null, speciesId));
     }
     
@@ -830,7 +830,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public List<String> getStageIdsBetween(String startStageId, String endStageId, 
             Map<OWLClass, Map<String, Integer>> providedNestedModel, int speciesId) {
-        log.entry(startStageId, endStageId, providedNestedModel, speciesId);
+        log.traceEntry("{} - {} - {} - {}", startStageId, endStageId, providedNestedModel, speciesId);
         
         List<String> stageIdsBetween = new ArrayList<String>();
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
@@ -987,7 +987,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public List<OWLClass> orderByPrecededBy(Set<OWLClass> classesToOrder, Set<OWLClass> taxAndAncestors) 
             throws IllegalStateException {
-        log.entry(classesToOrder, taxAndAncestors);
+        log.traceEntry("{} - {}", classesToOrder, taxAndAncestors);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         List<OWLClass> orderedClasses = new ArrayList<OWLClass>();
@@ -1175,7 +1175,7 @@ public class UberonDevStage extends UberonCommon {
      *                          is never {@code null} (an exception would be thrown otherwise).  
      */
     public OWLClass getLastClassByPrecededBy(Set<OWLClass> classesToOrder, Set<OWLClass> taxAndAncestors) {
-        log.entry(classesToOrder, taxAndAncestors);
+        log.traceEntry("{} - {}", classesToOrder, taxAndAncestors);
         
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         
@@ -1251,7 +1251,7 @@ public class UberonDevStage extends UberonCommon {
      *                  equal to or ancestor of {@code cls} over part_of relations.
      */
     private Set<OWLClass> getEqualOrParentsBelongingTo(OWLObject cls, Set<OWLClass> classes) {
-        log.entry(cls, classes);
+        log.traceEntry("{} - {}", cls, classes);
         Set<OWLClass> matches = new HashSet<OWLClass>();
         if (classes.contains(cls)) {
             matches.add((OWLClass) cls);

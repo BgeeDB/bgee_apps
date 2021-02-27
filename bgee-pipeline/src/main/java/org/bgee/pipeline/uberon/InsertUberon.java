@@ -83,7 +83,7 @@ public class InsertUberon extends MySQLDAOUser {
      */
     public static void main(String[] args) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException, IllegalArgumentException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         if (args[0].equalsIgnoreCase("insertStages")) {
             if (args.length < 5 || args.length > 6) {
@@ -191,7 +191,7 @@ public class InsertUberon extends MySQLDAOUser {
      */
     public void insertStageOntologyIntoDataSource(UberonDevStage uberon, 
             Collection<Integer> speciesIds) {
-        log.entry(uberon, speciesIds);
+        log.traceEntry("{} - {}", uberon, speciesIds);
         
         //no nested set model provided, need to compute it, starting from the root 
         //of the ontology. 
@@ -284,7 +284,7 @@ public class InsertUberon extends MySQLDAOUser {
      */
     public void insertAnatOntologyIntoDataSource(Uberon uberon, 
             Collection<Integer> speciesIds) throws DAOException {
-        log.entry(uberon, speciesIds);
+        log.traceEntry("{} - {}", uberon, speciesIds);
         
         log.info("Start inserting anatomy for species: {}...", speciesIds);
         
@@ -365,7 +365,7 @@ public class InsertUberon extends MySQLDAOUser {
      */
     private void generateClassInformation(Uberon uberon, Set<OWLClass> classesToIgnore, 
             Collection<Integer> speciesIds) {
-        log.entry(uberon, classesToIgnore, speciesIds);
+        log.traceEntry("{} - {} - {}", uberon, classesToIgnore, speciesIds);
         log.info("Generating AnatomicalEntityTOs and related taxon constraints...");
         
         OntologyUtils utils = uberon.getOntologyUtils();
@@ -451,7 +451,7 @@ public class InsertUberon extends MySQLDAOUser {
      */
     private void generateRelationInformation(Uberon uberon, Set<OWLClass> classesToIgnore, 
             Collection<Integer> speciesIds) {
-        log.entry(uberon, classesToIgnore, speciesIds);
+        log.traceEntry("{} - {} - {}", uberon, classesToIgnore, speciesIds);
         log.info("Generating RelationTOs and related taxon constraints...");
         
         
@@ -535,7 +535,8 @@ public class InsertUberon extends MySQLDAOUser {
             Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
             Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs, 
             Uberon uberon, Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
-        log.entry(directRelationTOs, indirectRelationTOs, classesToIgnore, speciesIds);
+        log.traceEntry("{} - {} - {} - {}", directRelationTOs, indirectRelationTOs,
+                classesToIgnore, speciesIds);
         
         OntologyUtils utils = uberon.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -606,7 +607,7 @@ public class InsertUberon extends MySQLDAOUser {
     private void generateRelationTOsSecondPass(Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
             Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs, Uberon uberon,
             Collection<Integer> speciesIds) {
-        log.entry(directRelationTOs, indirectRelationTOs, uberon, speciesIds);
+        log.traceEntry("{} - {} - {} - {}", directRelationTOs, indirectRelationTOs, uberon, speciesIds);
 
         log.info("Generating proper RelationTOs (second pass)");
         Map<PipelineRelationTO<String>, Set<TaxonConstraintTO<Integer>>> relsToTCs =

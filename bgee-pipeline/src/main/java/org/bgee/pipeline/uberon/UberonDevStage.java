@@ -1,6 +1,9 @@
 package org.bgee.pipeline.uberon;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +65,9 @@ public class UberonDevStage extends UberonCommon {
      * @see #generateStageOntology()
      */
     public final static Pattern TEMPORAL_COMMENT_PATTERN = 
-            Pattern.compile(".*?Temporal ordering number - ([0-9]+?)\\D*?$");
+            //We really need the end to be (\\D+?.*?)?,
+            //for comment going after the number and mixing letters and numbers
+            Pattern.compile(".*?Temporal ordering number - ([0-9]+?)(\\D+?.*?)?$");
     /**
      * An {@code int} that is the index of the group capturing the temporal ordering 
      * in the {@code Pattern} {@link #TEMPORAL_COMMENT_PATTERN}.
@@ -148,6 +153,9 @@ public class UberonDevStage extends UberonCommon {
             
             ub.generateStageOntologyAndSaveToFile();
             
+        } else if (args[0].equalsIgnoreCase("generateStageNestedSetModelAndReport")) {
+            UberonDevStage ub = new UberonDevStage(args[1], args[2]);
+            ub.generateStageNestedSetModelAndReport(args[3], Integer.parseInt(args[4]), args[5]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -321,9 +329,38 @@ public class UberonDevStage extends UberonCommon {
         
         this.setTaxonConstraints(taxonConstraints);
     }
-    
-    
-    
+
+    public void generateStageNestedSetModelAndReport(String rootOBOId, int speciesId, String outputFile)
+            throws IOException {
+        log.traceEntry("{} - {} - {}", rootOBOId, speciesId, outputFile);
+
+        OWLClass rootCLass = this.getOntologyUtils().getWrapper().getOWLClassByIdentifierNoAltIds(rootOBOId);
+        Map<OWLClass, Map<String, Integer>> setModel = this.generateStageNestedSetModel(rootCLass, speciesId);
+
+        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Paths.get(outputFile)))) {
+            setModel.entrySet().stream()
+            .sorted(Comparator.comparing(e -> e.getValue().get(OntologyUtils.LEFT_BOUND_KEY)))
+            .forEach(
+                e -> {
+                    String toWrite = "";
+                    for (int i = 1; i < e.getValue().get(OntologyUtils.LEVEL_KEY); i++) {
+                        toWrite += "\t";
+                    }
+                    String name = this.getOntologyUtils().getWrapper().getLabel(e.getKey());
+                    if (StringUtils.isEmpty(name) &&
+                            this.getOntologyUtils().getWrapper().getOBOSynonyms(e.getKey()) != null) {
+                        name = this.getOntologyUtils().getWrapper().getOBOSynonyms(e.getKey()).stream()
+                        .map(s -> s.getLabel()).findFirst().orElse("");
+                    }
+                    toWrite += this.getOntologyUtils().getWrapper().getIdentifier(e.getKey())
+                            + " " + name;
+                    writer.println(toWrite);
+                }
+            );
+        }
+
+        log.traceExit();
+    }
 
     /**
      * Modify the Uberon ontology stored in the file provided through 
@@ -502,7 +539,7 @@ public class UberonDevStage extends UberonCommon {
      */
     public void generatePrecededByFromComments(Set<OWLClass> classesToOrder) {
         log.traceEntry("{}", classesToOrder);
-        
+
         //now, we transform temporal ordering in comments into preceded_by relations 
         //(it is the only way to correctly use FBdv)
         NavigableMap<Integer, OWLClass> commentOrdering = new TreeMap<Integer, OWLClass>();
@@ -511,17 +548,20 @@ public class UberonDevStage extends UberonCommon {
              if (StringUtils.isNotBlank(comment)) {
                  log.trace("Examining comment to search for temporal ordering: {}", 
                          comment);
-                 Matcher m = UberonDevStage.TEMPORAL_COMMENT_PATTERN.matcher(comment);
+                 Matcher m = UberonDevStage.TEMPORAL_COMMENT_PATTERN.matcher(Pattern.quote(comment));
                  if (m.matches()) {
                      int order = Integer.parseInt(m.group(UberonDevStage.TEMPORAL_COMMENT_GROUP));
-                     commentOrdering.put(order, cls);
+                     //The temporal ordering over 10000 are non-sense in FBdv
+                     if (order < 10000) {
+                         commentOrdering.put(order, cls);
+                     }
                      log.trace("Valid comment, order extracted: {}", order);
                  }
              }
         }
         log.trace("Classes ordered from comments: {}", commentOrdering);
         
-        //create the relations by iterating in reversed order. Wd don't use 
+        //create the relations by iterating in reversed order. We don't use
         //a descendingMap, because we will need to use a List anyway, to retrieve 
         //an OWLClass along with its predecessor.
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
@@ -545,10 +585,12 @@ public class UberonDevStage extends UberonCommon {
                         edgeToAdd.getOntology(), newAxiom);
                 log.trace("Axiom added: {}", newAxiom);
             } else {
-                log.trace("Axionm already present, not added: {}", newAxiom);
+                log.trace("Axiom already present, not added: {}", newAxiom);
             }
         }
-        
+
+        this.getOntologyUtils().getWrapper().clearCachedEdges();
+
         log.traceExit();
     }
 
@@ -1042,45 +1084,50 @@ public class UberonDevStage extends UberonCommon {
                 
                 //check first the immediately_preceded_by relations, there should be only one 
                 //leading to sibling OWLClasses
-                for (OWLGraphEdge outgoingEdge: outgoingEdges) {
-                    if (this.getOntologyUtils().isImmediatelyPrecededByRelation(
-                            outgoingEdge, taxAndAncestors)) {
-                        
-                        Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
-                                outgoingEdge.getTarget(), classesToOrder);
-                        if (classesMatching.isEmpty()) {
-                            continue;
-                        }
-                        boolean problem = false;
-                        if (classesMatching.size() > 1) {
-                            log.error("Several matching classes for {}: {}", precedingClass, 
-                                    classesMatching);
-                            problem = true;
-                        } else {
-                            OWLClass clsMatching = classesMatching.iterator().next();
-                            if (potentialPrecedingClass != null && 
-                                    !potentialPrecedingClass.equals(clsMatching)) {
-                                log.error("Different preceding classes for {}: {} and {}", 
-                                        precedingClass, potentialPrecedingClass, clsMatching);
-                                problem = true;
-                            }
-                            potentialPrecedingClass = clsMatching;
-                        }
-                        if (problem) {
-                            //several immediately_preceded_by relations leading to 
-                            //different OWLClasses; this is bad whatever it is 
-                            //with direct or indirect edges
-                            throw log.throwing(new IllegalStateException(
-                                    "An OWLClass has several immediately_preceded_by relations " +
-                                    "to several same level OWLClasses (" + precedingClass + 
-                                    "), among the following OWLClasses: " + classesToOrder));
-                        }
-                        
-                        log.debug("Preceding class found by immediately_preceded_by (through indirect edges?: {}): {}", 
-                                directEdgesAlreadyTried, potentialPrecedingClass);
-                        //continue iteration anyway to check for several immediately_preceded_by
-                    }
-                }
+                //Note: as of Bgee 15, actually we don't use any more in priority
+                //immediately_preceded_by relations. In some ontologies these relations
+                //can be conflicting, it's better to get all preceded_by and
+                //immediately_preceded_by relations, and find the correct chain of ordered stages
+                //in case of ambiguity (as it was already done below)
+//                for (OWLGraphEdge outgoingEdge: outgoingEdges) {
+//                    if (this.getOntologyUtils().isImmediatelyPrecededByRelation(
+//                            outgoingEdge, taxAndAncestors)) {
+//                        
+//                        Set<OWLClass> classesMatching = this.getEqualOrParentsBelongingTo(
+//                                outgoingEdge.getTarget(), classesToOrder);
+//                        if (classesMatching.isEmpty()) {
+//                            continue;
+//                        }
+//                        boolean problem = false;
+//                        if (classesMatching.size() > 1) {
+//                            log.error("Several matching classes for {}: {}", precedingClass, 
+//                                    classesMatching);
+//                            problem = true;
+//                        } else {
+//                            OWLClass clsMatching = classesMatching.iterator().next();
+//                            if (potentialPrecedingClass != null && 
+//                                    !potentialPrecedingClass.equals(clsMatching)) {
+//                                log.error("Different preceding classes for {}: {} and {}", 
+//                                        precedingClass, potentialPrecedingClass, clsMatching);
+//                                problem = true;
+//                            }
+//                            potentialPrecedingClass = clsMatching;
+//                        }
+//                        if (problem) {
+//                            //several immediately_preceded_by relations leading to 
+//                            //different OWLClasses; this is bad whatever it is 
+//                            //with direct or indirect edges
+//                            throw log.throwing(new IllegalStateException(
+//                                    "An OWLClass has several immediately_preceded_by relations " +
+//                                    "to several same level OWLClasses (" + precedingClass + 
+//                                    "), among the following OWLClasses: " + classesToOrder));
+//                        }
+//                        
+//                        log.debug("Preceding class found by immediately_preceded_by (through indirect edges?: {}): {}", 
+//                                directEdgesAlreadyTried, potentialPrecedingClass);
+//                        //continue iteration anyway to check for several immediately_preceded_by
+//                    }
+//                }
                 
                 //no immediately_preceded_by to sibling OWLClasses, maybe we have 
                 //simple preceded_by relations? Check only if we haven't reach the end 
@@ -1204,10 +1251,12 @@ public class UberonDevStage extends UberonCommon {
                     if (this.getOntologyUtils().isPrecededByRelation(outgoingEdge, taxAndAncestors)) {
                         Set<OWLClass> predecessors = this.getEqualOrParentsBelongingTo(
                                 outgoingEdge.getTarget(), classesToOrder);
+                        predecessors.remove(classToOrder);
+                        log.trace("Predecessors: {} - classesToOrder: {}", predecessors, classesToOrder);
                         if (!predecessors.isEmpty()) {
                             withSuccessors.addAll(predecessors);
-                            log.trace("Valid preceded_by relation leading to predecessors: {}", 
-                                    predecessors);
+                            log.trace("Valid preceded_by relation leading to predecessors: {} - edge: {}",
+                                    predecessors, outgoingEdge);
                         }
                     }
                 }

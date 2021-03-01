@@ -113,7 +113,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
                 "#id1'>human files</a></li>");
         this.writeln("  <li>Each human gene page includes GTEx data if there is any " +
                 "(search a gene <a href='" + urlSearch.getRequestURL() + "'>here</a>).</li>");
-        this.writeln("  <li>TopAnat analyses can be performs <a href='" + urlTopAnat.getRequestURL() +
+        this.writeln("  <li>TopAnat analyses can be performed <a href='" + urlTopAnat.getRequestURL() +
                 "'>here</a>, which leverage the power of the abundant GTEx data integrated " +
                 "with many smaller datasets to provide biological insight into gene lists.</li>");
         this.writeln("</ul>");
@@ -140,7 +140,7 @@ public class HtmlDocumentationDataSets extends HtmlDocumentationDownloadFile {
         this.writeln("    dataGTEx <- getData(bgee, experimentId = \"SRP012682\")");
         this.writeln("</code></pre></li>");
 
-        this.writeln("  <li>TopAnat analyses can be performs, which leverage the power of the " +
+        this.writeln("  <li>TopAnat analyses can be performed, which leverage the power of the " +
                 "abundant GTEx data integrated with many smaller datasets to provide biological " +
                 "insight into gene lists.");
         this.writeln("<pre><code>    bgee <- Bgee$new(species = \"Homo_sapiens\")");

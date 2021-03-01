@@ -225,7 +225,7 @@ public class HtmlResourcesDisplay extends HtmlParentDisplay implements Resources
                 + "version is generated are described "
                 + "<a href='" + MASTER_BGEE_PIPELINE_GITHUB_URL + "/pipeline/uberon#anatomical-ontology-todos-before-pipeline-run'"
                 + " title='Link to custom version explanations' class='external_link' "
-                + "target='_blank' rel='noopener'>on GitHub</a>. We also manually modified mapping to terms"
+                + "target='_blank' rel='noopener'>on GitHub</a>. We also manually modified mapping to terms "
                 + "from external ontologies."));
         
         this.writeln(HtmlParentDisplay.getSingleFeatureLogo(

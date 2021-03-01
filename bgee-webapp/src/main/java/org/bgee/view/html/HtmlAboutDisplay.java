@@ -173,8 +173,8 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
         this.writeln("<h2>Which license did we choose?</h2>");
 
         this.writeln("<p>" +
-                "   To the extent possible under law, Bgee team has waived all copyright and related " +
-                "   or neighboring rights to Bgee project. This work is published under the " +
+                "   To the extent possible under law, the Bgee team has waived all copyright and related " +
+                "   or neighboring rights to the Bgee project. This work is published under the " +
                 "   <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener'>" +
                 "       Creative Commons Zero license (CC0)</a> from Switzerland. " +
                 "   Although CC0 doesn’t legally require users of the data to cite the source, " +

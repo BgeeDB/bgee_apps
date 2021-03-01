@@ -85,7 +85,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + EASY_BGEE_NAME + " database (<a href='" + easyBgeeDocUrl
                 + "' class='external_link' target='_blank' rel='noopener' title='Link to "
                 + EASY_BGEE_NAME + " documentation'>see documentation on Bgee pipeline github</a>). "
-                + EASY_BGEE_NAME + " is a view of the Bgee database, that contains most useful, "
+                + EASY_BGEE_NAME + " is a view of the Bgee database that contains most useful, "
                 + "and explicit information.</p>");
 
         RequestParameters urlCollabs = this.getNewRequestParameters();
@@ -136,7 +136,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "}" +
                 "</code></pre>");
 
-        this.writeln("<p>It is possible to download result of this query in <a href='" + sparql_query_json_url + "' "
+        this.writeln("<p>It is possible to download the result of this query in <a href='" + sparql_query_json_url + "' "
                 + "title='SPARQL example query' class='external_link' target='_blank' rel='noopener'>JSON format</a> "
                 + "or in <a href='" + sparql_query_xml_url + "' title='SPARQL example query' "
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");

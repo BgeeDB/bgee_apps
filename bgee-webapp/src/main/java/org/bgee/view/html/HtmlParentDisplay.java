@@ -177,12 +177,12 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
      */
     protected static final String COND_PARAM_DESC_LIST = "<ul class='doc_content'>"
             + "<li><span class='list_element_title'>anatomical entities only (by default) </span> "
-            + "files contain one expression call for each unique pair of gene and anatomical entity."
-            + "If more than one developmental stage map this unique pair, the resulting expression "
-            + "call correspond to summarized information coming from all developmental stages. "
+            + "files contain one expression call for each unique pair of gene and anatomical entity. "
+            + "If more than one developmental stage maps this unique pair, the resulting expression "
+            + "call corresponds to summarized information coming from all developmental stages."
             + "</li>"
             + "<li><span class='list_element_title'>anatomical entities and developmental stages</span> "
-            + "files contain one expression call for each unique gene, anatomical entity and developmental stage. "
+            + "files contain one expression call for each unique gene, anatomical entity and developmental stage."
             + "</li>"
             + "</ul>";
 

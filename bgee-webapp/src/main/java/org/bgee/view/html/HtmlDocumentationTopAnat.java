@@ -62,7 +62,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         		+ "enriched anatomical terms, from the expression patterns of a list of genes.</p>");
         this.writeln("<p>It allows to discover where genes from a set are preferentially expressed, "
         		+ "as compared to a background, represented by default by all expression data in Bgee "
-        		+ "for the requested species. It is is similar to a Gene Ontology enrichment test, "
+        		+ "for the requested species. It is similar to a Gene Ontology enrichment test, "
         		+ "except that it analyzes the anatomical structures where genes are expressed, "
         		+ "rather than their GO functional annotations.</p>");
         this.writeln("<p>See also our "

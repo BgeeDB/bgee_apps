@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.pipeline.ontologycommon.OntologyUtils;
@@ -52,6 +53,7 @@ public class CorrectXrefsAndEquivalentClass {
     
     private static String XREF_ANNOTATION = "http://www.geneontology.org/formats/oboInOwl#hasDbXref";
     private static String CLASS_PREFIX = "http://purl.obolibrary.org/obo/";
+    private static String NA = "NA";
     
     public CorrectXrefsAndEquivalentClass() {}
     
@@ -158,7 +160,7 @@ public class CorrectXrefsAndEquivalentClass {
 
     
     private Set<XRefsAndEquivantClassBean> parseTextFile(String pathToFile) throws Exception {
-        log.entry(pathToFile);
+        log.traceEntry("{}", pathToFile);
         log.info("start parsing file {}", pathToFile, "containing all correction to apply.");
         Set<XRefsAndEquivantClassBean> lines = new HashSet<>();
         ICsvBeanReader beanReader = null;
@@ -179,7 +181,7 @@ public class CorrectXrefsAndEquivalentClass {
                 beanReader.close();
             }
         }
-        return log.exit(lines);
+        return log.traceExit(lines);
     }
     
     /**
@@ -224,6 +226,9 @@ public class CorrectXrefsAndEquivalentClass {
                         }
                         String content = value.toString();
                         content.replaceAll("\\s+","");
+                        if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
+                            return null;
+                        }
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         return super.execute(split, context);
                     }
@@ -236,6 +241,9 @@ public class CorrectXrefsAndEquivalentClass {
                         }
                         String content = value.toString();
                         content.replaceAll("\\s+","");
+                        if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
+                            return null;
+                        }
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         return super.execute(split, context);
                     }
@@ -248,6 +256,9 @@ public class CorrectXrefsAndEquivalentClass {
                         }
                         String content = value.toString();
                         content.replaceAll("\\s+","");
+                        if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
+                            return null;
+                        }
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         return super.execute(split, context);
                     }
@@ -260,8 +271,20 @@ public class CorrectXrefsAndEquivalentClass {
                         }
                         String content = value.toString();
                         content.replaceAll("\\s+","");
+                        if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
+                            return null;
+                        }
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         return super.execute(split, context);
+                    }
+                },
+                new Optional() {
+                    @Override
+                    public Object execute(Object value, CsvContext context) {
+                        if (value == null) {
+                            return null;
+                        }
+                        return value.toString();
                     }
                 },
                 new Optional() {
@@ -292,6 +315,7 @@ public class CorrectXrefsAndEquivalentClass {
         private Set<String> xrefsToRemove;
         private Set<String> equivalentToAdd;
         private Set<String> equivalentToRemove;
+        private String mapppingAnnotationStatus;
         private String comments;
         
         public XRefsAndEquivantClassBean(){
@@ -300,12 +324,13 @@ public class CorrectXrefsAndEquivalentClass {
         
         public XRefsAndEquivantClassBean(String classToModify, Set<String> xrefsToAdd,
                 Set<String> xrefsToRemove, Set<String> equivalentToAdd, 
-                Set<String> equivalentToRemove, String comments){
+                Set<String> equivalentToRemove, String mapppingAnnotationStatus, String comments){
             this.classToModify = classToModify;
             this.xrefsToAdd = xrefsToAdd;
             this.xrefsToRemove = xrefsToRemove;
             this.equivalentToAdd = equivalentToAdd;
             this.equivalentToRemove = equivalentToRemove;
+            this.mapppingAnnotationStatus = mapppingAnnotationStatus;
             this.comments = comments;
         }
         
@@ -339,6 +364,12 @@ public class CorrectXrefsAndEquivalentClass {
         public void setEquivalentToRemove(Set<String> equivalentToRemove) {
             this.equivalentToRemove = equivalentToRemove;
         }
+        public String getMapppingAnnotationStatus() {
+            return mapppingAnnotationStatus;
+        }
+        public void setMapppingAnnotationStatus(String mapppingAnnotationStatus) {
+            this.mapppingAnnotationStatus = mapppingAnnotationStatus;
+        }
         public String getComments() {
             return comments;
         }
@@ -353,6 +384,7 @@ public class CorrectXrefsAndEquivalentClass {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((classToModify == null) ? 0 : classToModify.hashCode());
+            result = prime * result + ((mapppingAnnotationStatus == null) ? 0 : mapppingAnnotationStatus.hashCode());
             result = prime * result + ((comments == null) ? 0 : comments.hashCode());
             result = prime * result + ((equivalentToAdd == null) ? 0 : equivalentToAdd.hashCode());
             result = prime * result + ((equivalentToRemove == null) ? 0 : equivalentToRemove.hashCode());
@@ -374,6 +406,11 @@ public class CorrectXrefsAndEquivalentClass {
                 if (other.classToModify != null)
                     return false;
             } else if (!classToModify.equals(other.classToModify))
+                return false;
+            if (mapppingAnnotationStatus == null) {
+                if (other.mapppingAnnotationStatus != null)
+                    return false;
+            } else if (!mapppingAnnotationStatus.equals(other.mapppingAnnotationStatus))
                 return false;
             if (comments == null) {
                 if (other.comments != null)
@@ -407,7 +444,9 @@ public class CorrectXrefsAndEquivalentClass {
         public String toString() {
             return "XRefsAndEquivantClassBean [classToModify=" + classToModify + ", xrefsToAdd=" + xrefsToAdd
                     + ", xrefsToRemove=" + xrefsToRemove + ", equivalentToAdd=" + equivalentToAdd
-                    + ", equivalentToRemove=" + equivalentToRemove + ", comments=" + comments + "]";
+                    + ", equivalentToRemove=" + equivalentToRemove
+                    + ", mapppingAnnotationStatus=" + mapppingAnnotationStatus
+                    + ", comments=" + comments + "]";
         }
 
         

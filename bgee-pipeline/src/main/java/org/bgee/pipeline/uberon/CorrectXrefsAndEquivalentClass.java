@@ -209,7 +209,7 @@ public class CorrectXrefsAndEquivalentClass {
                     @Override
                     public Object execute(Object value, CsvContext context) {
                         String content = value.toString();
-                        content.replaceAll("\\s+","");
+                        content.replaceAll("\\s","");
                         Set<String> split = new HashSet<String>(Arrays.asList(content.split(",")));
                         if (split.size() > 1) {
                             throw log.throwing(new IllegalArgumentException("first column must "
@@ -225,7 +225,7 @@ public class CorrectXrefsAndEquivalentClass {
                             return null;
                         }
                         String content = value.toString();
-                        content.replaceAll("\\s+","");
+                        content.replaceAll("\\s","");
                         if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
                             return null;
                         }
@@ -240,7 +240,7 @@ public class CorrectXrefsAndEquivalentClass {
                             return null;
                         }
                         String content = value.toString();
-                        content.replaceAll("\\s+","");
+                        content.replaceAll("\\s","");
                         if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
                             return null;
                         }
@@ -255,7 +255,7 @@ public class CorrectXrefsAndEquivalentClass {
                             return null;
                         }
                         String content = value.toString();
-                        content.replaceAll("\\s+","");
+                        content.replaceAll("\\s","");
                         if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
                             return null;
                         }
@@ -270,7 +270,7 @@ public class CorrectXrefsAndEquivalentClass {
                             return null;
                         }
                         String content = value.toString();
-                        content.replaceAll("\\s+","");
+                        content.replaceAll("\\s","");
                         if (StringUtils.isBlank(content) || content.equalsIgnoreCase(NA)) {
                             return null;
                         }

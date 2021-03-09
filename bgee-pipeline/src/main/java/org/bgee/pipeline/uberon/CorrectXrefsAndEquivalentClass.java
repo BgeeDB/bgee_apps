@@ -109,15 +109,28 @@ public class CorrectXrefsAndEquivalentClass {
             // triple (if restrictions applied to this equivalence)
             if (modification.getXrefsToRemove() != null && !modification.getXrefsToRemove().isEmpty()) {
                 for(String xrefToRemove : modification.getXrefsToRemove()) {
-                    // manage XRefs
-                    OWLAnnotation labelAnno = df.getOWLAnnotation(xrefAnnotProperty, 
+                 // Depending on the version of OWLAPI OWLAnnotation can be created with or without a default datatype 
+                    // (e.g ^^xsd:string). The ontology can potentially be updated with a version of OWLAPI different than
+                    // the one the ontology was created with.
+                    // Then, in order to be sure the XRef is properly removed we create 2 OWLAnnotation (with and without 
+                    // datatype) and remove both of them.
+                    
+                    // generate OWLAxiom with xsd:string datatype
+                    OWLAnnotation labelAnnoWithDatatype = df.getOWLAnnotation(xrefAnnotProperty, 
                             df.getOWLLiteral(xrefToRemove));
-                    OWLAxiom axiomToRemove = df.getOWLAnnotationAssertionAxiom(classToModify.getIRI(), 
-                            labelAnno);
-                    log.debug("label annot : " + labelAnno);
-                    if (axiomToRemove != null) {
-                        log.debug("removed xref annotation axiom : " + axiomToRemove);
-                        manager.removeAxiom(ontology, axiomToRemove);
+                    OWLAxiom axiomToRemoveWithDatatype = df.getOWLAnnotationAssertionAxiom(classToModify.getIRI(), 
+                            labelAnnoWithDatatype);
+                    
+                    // generate OWLAxiom without xsd:string litteral
+                    OWLAnnotation labelAnnoWithoutDatatype = df.getOWLAnnotation(xrefAnnotProperty, 
+                            df.getOWLLiteral(xrefToRemove, ""));
+                    OWLAxiom axiomToRemoveWithoutDatatype = df.getOWLAnnotationAssertionAxiom(classToModify.getIRI(), 
+                            labelAnnoWithoutDatatype);
+                    if (axiomToRemoveWithDatatype != null || axiomToRemoveWithoutDatatype != null) {
+                        log.debug("removed xref annotation axiom : " + axiomToRemoveWithDatatype);
+                        manager.removeAxiom(ontology, axiomToRemoveWithDatatype);
+                        log.debug("removed xref annotation axiom : " + axiomToRemoveWithoutDatatype);
+                        manager.removeAxiom(ontology, axiomToRemoveWithoutDatatype);
                     } else {
                         OWLClass equivalentClassToRemove = df.getOWLClass(
                             correctOntology.oboToOWLClassIRI(xrefToRemove));

@@ -52,6 +52,10 @@ public class Condition extends BaseCondition<Condition> {
         private final Set<String> anatEntityIds;
         private final Set<DevStage> devStages;
         private final Set<String> devStageIds;
+        private final Set<AnatEntity> cellTypes;
+        private final Set<String> cellTypeIds;
+        private final Set<String> sexes;
+        private final Set<String> strains;
         private final Set<Species> species;
         private final Set<Integer> speciesIds;
 
@@ -60,6 +64,10 @@ public class Condition extends BaseCondition<Condition> {
             Set<String> anatEntityIds = new HashSet<>();
             Set<DevStage> devStages = new HashSet<>();
             Set<String> devStageIds = new HashSet<>();
+            Set<AnatEntity> cellTypes = new HashSet<>();
+            Set<String> cellTypeIds = new HashSet<>();
+            Set<String> sexes = new HashSet<>();
+            Set<String> strains = new HashSet<>();
             Set<Species> species = new HashSet<>();
             Set<Integer> speciesIds = new HashSet<>();
             if (conditions != null) {
@@ -72,9 +80,15 @@ public class Condition extends BaseCondition<Condition> {
                         devStages.add(cond.getDevStage());
                         devStageIds.add(cond.getDevStageId());
                     }
-                    if (cond.getSpecies() != null) {
-                        species.add(cond.getSpecies());
-                        speciesIds.add(cond.getSpeciesId());
+                    if (cond.getCellType() != null) {
+                        cellTypes.add(cond.getCellType());
+                        cellTypeIds.add(cond.getCellTypeId());
+                    }
+                    if (cond.getSex() != null) {
+                        sexes.add(cond.getSex());
+                    }
+                    if (cond.getStrain() != null) {
+                        strains.add(cond.getStrain());
                     }
                 }
             }
@@ -82,6 +96,10 @@ public class Condition extends BaseCondition<Condition> {
             this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds);
             this.devStages = Collections.unmodifiableSet(devStages);
             this.devStageIds = Collections.unmodifiableSet(devStageIds);
+            this.cellTypes = Collections.unmodifiableSet(cellTypes);
+            this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds);
+            this.sexes = Collections.unmodifiableSet(sexes);
+            this.strains = Collections.unmodifiableSet(strains);
             this.species = Collections.unmodifiableSet(species);
             this.speciesIds = Collections.unmodifiableSet(speciesIds);
         }
@@ -98,6 +116,18 @@ public class Condition extends BaseCondition<Condition> {
         public Set<String> getDevStageIds() {
             return devStageIds;
         }
+        public Set<AnatEntity> getCellTypes() {
+            return cellTypes;
+        }
+        public Set<String> getCellTypeIds() {
+            return cellTypeIds;
+        }
+        public Set<String> getSexes() {
+            return sexes;
+        }
+        public Set<String> getStrains() {
+            return strains;
+        }
         public Set<Species> getSpecies() {
             return species;
         }
@@ -111,66 +141,76 @@ public class Condition extends BaseCondition<Condition> {
             int result = 1;
             result = prime * result + ((anatEntities == null) ? 0 : anatEntities.hashCode());
             result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
+            result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
+            result = prime * result + ((cellTypes == null) ? 0 : cellTypes.hashCode());
             result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
             result = prime * result + ((devStages == null) ? 0 : devStages.hashCode());
+            result = prime * result + ((sexes == null) ? 0 : sexes.hashCode());
             result = prime * result + ((species == null) ? 0 : species.hashCode());
             result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
+            result = prime * result + ((strains == null) ? 0 : strains.hashCode());
             return result;
         }
+
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) {
+            if (this == obj)
                 return true;
-            }
-            if (obj == null) {
+            if (obj == null)
                 return false;
-            }
-            if (!(obj instanceof ConditionEntities)) {
+            if (getClass() != obj.getClass())
                 return false;
-            }
             ConditionEntities other = (ConditionEntities) obj;
             if (anatEntities == null) {
-                if (other.anatEntities != null) {
+                if (other.anatEntities != null)
                     return false;
-                }
-            } else if (!anatEntities.equals(other.anatEntities)) {
+            } else if (!anatEntities.equals(other.anatEntities))
                 return false;
-            }
             if (anatEntityIds == null) {
-                if (other.anatEntityIds != null) {
+                if (other.anatEntityIds != null)
                     return false;
-                }
-            } else if (!anatEntityIds.equals(other.anatEntityIds)) {
+            } else if (!anatEntityIds.equals(other.anatEntityIds))
                 return false;
-            }
+            if (cellTypeIds == null) {
+                if (other.cellTypeIds != null)
+                    return false;
+            } else if (!cellTypeIds.equals(other.cellTypeIds))
+                return false;
+            if (cellTypes == null) {
+                if (other.cellTypes != null)
+                    return false;
+            } else if (!cellTypes.equals(other.cellTypes))
+                return false;
             if (devStageIds == null) {
-                if (other.devStageIds != null) {
+                if (other.devStageIds != null)
                     return false;
-                }
-            } else if (!devStageIds.equals(other.devStageIds)) {
+            } else if (!devStageIds.equals(other.devStageIds))
                 return false;
-            }
             if (devStages == null) {
-                if (other.devStages != null) {
+                if (other.devStages != null)
                     return false;
-                }
-            } else if (!devStages.equals(other.devStages)) {
+            } else if (!devStages.equals(other.devStages))
                 return false;
-            }
+            if (sexes == null) {
+                if (other.sexes != null)
+                    return false;
+            } else if (!sexes.equals(other.sexes))
+                return false;
             if (species == null) {
-                if (other.species != null) {
+                if (other.species != null)
                     return false;
-                }
-            } else if (!species.equals(other.species)) {
+            } else if (!species.equals(other.species))
                 return false;
-            }
             if (speciesIds == null) {
-                if (other.speciesIds != null) {
+                if (other.speciesIds != null)
                     return false;
-                }
-            } else if (!speciesIds.equals(other.speciesIds)) {
+            } else if (!speciesIds.equals(other.speciesIds))
                 return false;
-            }
+            if (strains == null) {
+                if (other.strains != null)
+                    return false;
+            } else if (!strains.equals(other.strains))
+                return false;
             return true;
         }
     }
@@ -196,25 +236,35 @@ public class Condition extends BaseCondition<Condition> {
      *                      without the descriptions loaded for lower memory usage.
      * @param devStage      The {@code DevStage} used in this gene expression condition,
      *                      without the descriptions loaded for lower memory usage.
+     * @param cellType      The {@code AnatEntity} describing a cell type used in this 
+     *                      gene expression condition, without the descriptions loaded 
+     *                      for lower memory usage.
+     * @param sex           The {@code Sex} used in this gene expression condition.
+     * @param strain        The {@code String} describing the strain used in this 
+     *                      gene expression condition.
      * @param species       The {@code Species} considered in this gene expression condition.
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, Species species)
-            throws IllegalArgumentException {
-        this(anatEntity, devStage, species, null, null);
+    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+            String strain, Species species) throws IllegalArgumentException {
+        this(anatEntity, devStage, cellType, sex, strain, species, null, null);
     }
 
     /**
      * Constructor providing the IDs of the anatomical entity, the developmental stage, 
      * and species ID of this {@code Condition}.
      *
-     * @param anatEntity                    The {@code AnatEntity} used in this gene expression
-     *                                      condition, without the descriptions loaded
+     * @param anatEntity                    The {@code AnatEntity} used in this gene expression condition,
+     *                                      without the descriptions loaded for lower memory usage.
+     * @param devStage                      The {@code DevStage} used in this gene expression condition,
+     *                                      without the descriptions loaded for lower memory usage.
+     * @param cellType                      The {@code AnatEntity} describing a cell type used in this 
+     *                                      gene expression condition, without the descriptions loaded 
      *                                      for lower memory usage.
-     * @param devStage                      The {@code DevStage} used in this gene expression
-     *                                      condition, without the descriptions loaded
-     *                                      for lower memory usage.
+     * @param sex                           The {@code Sex} used in this gene expression condition.
+     * @param strain                        The {@code String} describing the strain used in this 
+     *                                      gene expression condition.
      * @param species                       The {@code Species} considered in this gene expression condition.
      * @param maxRanksByDataType            A {@code Map} where keys are {@code DataType}s,
      *                                      the associated values being {@code BigDecimal}s
@@ -229,10 +279,10 @@ public class Condition extends BaseCondition<Condition> {
      * @throws IllegalArgumentException     If both {@code anatEntity} and {@code devStage} are blanks
      *                                      or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, Species species,
-            Map<DataType, BigDecimal> maxRanksByDataType,
+    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+            String strain, Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
-        super(anatEntity, devStage, species);
+        super(anatEntity, devStage, cellType, sex, strain, species);
         this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
                                     new HashMap<>(): maxRanksByDataType);
         this.globalMaxRanksByDataType = Collections.unmodifiableMap(
@@ -294,6 +344,9 @@ public class Condition extends BaseCondition<Condition> {
         StringBuilder builder = new StringBuilder();
         builder.append("Condition [anatEntity=").append(getAnatEntity())
                .append(", devStage=").append(getDevStage())
+               .append(", cellType=").append(getCellType())
+               .append(", sex=").append(getSex())
+               .append(", strain=").append(getStrain())
                .append(", species=").append(getSpecies())
                .append(", maxRanksByDataType=").append(maxRanksByDataType)
                .append(", globalMaxRanksByDataType=").append(globalMaxRanksByDataType)

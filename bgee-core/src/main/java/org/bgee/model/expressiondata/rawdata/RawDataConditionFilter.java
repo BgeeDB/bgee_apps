@@ -39,9 +39,10 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public RawDataConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
-            boolean includeSubConditions, boolean includeParentConditions)
+            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains, boolean includeSubConditions, 
+            boolean includeParentConditions)
             throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds);
+        super(anatEntityIds, devStageIds, cellTypeIds, sexes, strains);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty())) {
             throw log.throwing(new IllegalArgumentException(

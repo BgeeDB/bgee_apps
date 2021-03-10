@@ -99,7 +99,8 @@ public class CallFilterTest extends TestAncestor {
         //now, test when everything is fine (GeneFilter or ConditionFilter provided)
         Set<GeneFilter> geneFilter = Collections.singleton(new GeneFilter(9606));
         Set<ConditionFilter> conditionFilter = 
-                Collections.singleton(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("devStage1")));
+                Collections.singleton(new ConditionFilter(Arrays.asList("ae1", "ae2"), 
+                        Arrays.asList("devStage1"), null, null, null));
         
 
         //now, test when everything is fine

@@ -293,9 +293,9 @@ public class CallServiceTest extends TestAncestor {
         when(this.devStageOnt.getAncestors(stage3, false)).thenReturn(new HashSet<>());
 
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), stage1.getId(), spe1.getId(), null),
-                new ConditionTO(2, anatEntity1.getId(), stage2.getId(), spe1.getId(), null),
-                new ConditionTO(3, anatEntity1.getId(), stage3.getId(), spe1.getId(), null)));
+                new ConditionTO(1, anatEntity1.getId(), stage1.getId(),  null, null, null, spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), stage2.getId(),  null, null, null, spe1.getId(), null),
+                new ConditionTO(3, anatEntity1.getId(), stage3.getId(),  null, null, null, spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -310,7 +310,7 @@ public class CallServiceTest extends TestAncestor {
 
 
         List<ExpressionCall> expectedResults = Arrays.asList(
-                new ExpressionCall(g1 , new Condition(anatEntity1, stage1, spe1), 
+                new ExpressionCall(g1 , new Condition(anatEntity1, stage1, null, null, null, spe1), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, 
                         new HashSet<ExpressionCallData>(Arrays.asList(
@@ -348,7 +348,7 @@ public class CallServiceTest extends TestAncestor {
                                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true)))), 
                         new ExpressionLevelInfo(new BigDecimal("1257.34"))),
                 
-                new ExpressionCall(g1, new Condition(anatEntity1, stage2, spe1), 
+                new ExpressionCall(g1, new Condition(anatEntity1, stage2, null, null, null, spe1), 
                     new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                     ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, 
                     Arrays.asList(
@@ -387,7 +387,7 @@ public class CallServiceTest extends TestAncestor {
                                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true))),
                     new ExpressionLevelInfo(new BigDecimal("125.00"))),
                 
-                new ExpressionCall(g1, new Condition(anatEntity1, stage3, spe1), 
+                new ExpressionCall(g1, new Condition(anatEntity1, stage3, null, null, null, spe1), 
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
                         Arrays.asList(
@@ -726,12 +726,15 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
         DevStage devStage2 = new DevStage("devStage2");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null);
-        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
-        Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
-        Condition cond2 = new Condition(anatEntity1, devStage2, spe1);
-        Condition cond3 = new Condition(anatEntity2, devStage1, spe1);
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), null, null, 
+                null, spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), null, 
+                null, null, spe1.getId(), null);
+        ConditionTO condTO3 = new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), null, 
+                null, null, spe1.getId(), null);
+        Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
+        Condition cond2 = new Condition(anatEntity1, devStage2, null, null, null, spe1);
+        Condition cond3 = new Condition(anatEntity2, devStage1, null, null, null, spe1);
         
         GeneTOResultSet geneTOResultSet = getMockResultSet(GeneTOResultSet.class, Arrays.asList(
                 new GeneTO(gTO1.getId(), gTO1.getGeneId(), gTO1.getName(), gTO1.getDescription(), gTO1.getSpeciesId(), 
@@ -747,9 +750,9 @@ public class CallServiceTest extends TestAncestor {
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
         dataPropagation.put(ConditionDAO.Attribute.STAGE_ID, DAOPropagationState.SELF);
         ConditionTOResultSet condTOResultSet = getMockResultSet(ConditionTOResultSet.class, Arrays.asList(
-                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null),
-                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), spe1.getId(), null),
-                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null)));
+                new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), null, null, null, spe1.getId(), null),
+                new ConditionTO(2, anatEntity1.getId(), devStage2.getId(), null, null, null, spe1.getId(), null),
+                new ConditionTO(3, anatEntity2.getId(), devStage1.getId(), null, null, null, spe1.getId(), null)));
         when(this.condDAO.getGlobalConditionsBySpeciesIds(eq(Collections.singleton(spe1.getId())), 
                 eq(new HashSet<>(Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
                         ConditionDAO.Attribute.STAGE_ID))),
@@ -986,8 +989,8 @@ public class CallServiceTest extends TestAncestor {
         
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
-        Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), null, null, null, spe1.getId(), null);
+        Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
         
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
@@ -1094,7 +1097,7 @@ public class CallServiceTest extends TestAncestor {
                                 new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
                         Collections.singleton(
                                 new ConditionFilter(Collections.singleton(anatEntity1.getId()), 
-                                        Collections.singleton(devStage1.getId()), null)), 
+                                        Collections.singleton(devStage1.getId()), null, null, null, null)), 
                         Collections.singleton(
                                 DataType.EST), 
                         callObservedData,
@@ -1181,10 +1184,10 @@ public class CallServiceTest extends TestAncestor {
         AnatEntity anatEntity1 = new AnatEntity("anatEntity1");
         AnatEntity anatEntity2 = new AnatEntity("anatEntity2");
         DevStage devStage1 = new DevStage("devStage1");
-        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), spe1.getId(), null);
-        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), spe1.getId(), null);
-        Condition cond1 = new Condition(anatEntity1, devStage1, spe1);
-        Condition cond2 = new Condition(anatEntity2, devStage1, spe1);
+        ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), null, null, null, spe1.getId(), null);
+        ConditionTO condTO2 = new ConditionTO(2, anatEntity2.getId(), devStage1.getId(), null, null, null, spe1.getId(), null);
+        Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
+        Condition cond2 = new Condition(anatEntity2, devStage1, null, null, null, spe1);
 
         //Mock services and objects
         when(this.ontService.getAnatEntityOntology(eq(spe1.getId()), anyCollectionOf(String.class),
@@ -1669,7 +1672,8 @@ public class CallServiceTest extends TestAncestor {
         actualResultsOrdered = service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter, 
                         Collections.singleton(new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
-                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), null)), 
+                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), 
+                                null, null, null, null)), 
                         null, 
                         callObservedData,
                         null, null), 
@@ -1721,7 +1725,8 @@ public class CallServiceTest extends TestAncestor {
         actualResults = service.loadExpressionCalls(
                 new ExpressionCallFilter(summaryCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(spe1.getId())),
-                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), null)),
+                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), null, 
+                                null, null, null)),
                         null,
                         callObservedData,
                         null, null),
@@ -1829,10 +1834,10 @@ public class CallServiceTest extends TestAncestor {
                 null, null, null                   //both observed and propagated calls
                 );
 
-        Condition cond1 = new Condition(new AnatEntity("1"), null, spe1);
-        Condition cond2 = new Condition(new AnatEntity("2"), null, spe1);
-        Condition cond3 = new Condition(new AnatEntity("3"), null, spe1);
-        Condition cond4 = new Condition(new AnatEntity("4"), null, spe1);
+        Condition cond1 = new Condition(new AnatEntity("1"), null, null, null, null, spe1);
+        Condition cond2 = new Condition(new AnatEntity("2"), null, null, null, null, spe1);
+        Condition cond3 = new Condition(new AnatEntity("3"), null, null, null, null, spe1);
+        Condition cond4 = new Condition(new AnatEntity("4"), null, null, null, null, spe1);
         CallService spyCallService = spy(new CallService(this.serviceFactory));
         doReturn(Stream.of(
                 //The 2 genes are expressed in the same structure, observed data for only one of them,

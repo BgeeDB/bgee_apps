@@ -35,6 +35,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code ID}: corresponds to {@link ConditionTO#getId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ConditionTO#getStageId()}.
+     * <li>{@code CELL_TYPE_ID}: corresponds to {@link ConditionTO#getStageId()}.
      * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
      * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
@@ -45,7 +46,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("id", false), 
         SPECIES_ID("speciesId", false), 
-        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true);
+        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true),
+        CELL_TYPE_ID("cellTypeId", true), SEX("sex", true), STRAIN("strain", true);
 
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
@@ -67,8 +69,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         }
         /**
          * @return  A {@code boolean} defining whether this attribute corresponds 
-         *          to a condition parameter (anat entity, stage, sex, strain), allowing to determine 
-         *          which condition and expression tables to target for queries.
+         *          to a condition parameter (anat entity, stage, cell type, sex, strain), 
+         *          allowing to determine which condition and expression tables to target 
+         *          for queries.
          */
         public boolean isConditionParameter() {
             return this.conditionParameter;
@@ -211,9 +214,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          */
         private final Set<ConditionRankInfoTO> rankInfoTOs;
         
-        public ConditionTO(Integer id, String anatEntityId, String stageId, Integer speciesId,
+        public ConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId,
+                Sex sex, String strain, Integer speciesId,
                 Collection<ConditionRankInfoTO> rankInfoTOs) {
-            super(id, anatEntityId, stageId, null, null, speciesId);
+            super(id, anatEntityId, stageId, cellTypeId, sex, strain, speciesId);
             if (rankInfoTOs != null) {
                 this.rankInfoTOs = Collections.unmodifiableSet(new HashSet<>(rankInfoTOs));
             } else {
@@ -241,6 +245,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             builder.append("ConditionTO [id=").append(getId())
                    .append(", anatEntityId=").append(getAnatEntityId())
                    .append(", stageId=").append(getStageId())
+                   .append(", cellTypeId=").append(getCellTypeId())
+                   .append(", sex=").append(getSex())
+                   .append(", strain=").append(getStrain())
                    .append(", speciesId=").append(getSpeciesId()).append("]");
             return builder.toString();
         }

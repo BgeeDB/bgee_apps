@@ -92,16 +92,16 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Set<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
 
         // aeSim1
-        ExpressionCall call1 = new ExpressionCall(gene1, new Condition(anatEntity1a,  null, species1),
+        ExpressionCall call1 = new ExpressionCall(gene1, new Condition(anatEntity1a,  null, null, null, null, species1),
                 null, ExpressionSummary.EXPRESSED, null, null, null);
-        ExpressionCall call2 = new ExpressionCall(gene1, new Condition(anatEntity2a,  null, species1),
+        ExpressionCall call2 = new ExpressionCall(gene1, new Condition(anatEntity2a, null, null, null, null, species1),
                 null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
-        ExpressionCall call4 = new ExpressionCall(gene2a, new Condition(anatEntity2a, null, species2),
+        ExpressionCall call4 = new ExpressionCall(gene2a, new Condition(anatEntity2a, null, null, null, null, species2),
                 null, ExpressionSummary.EXPRESSED, null, null, null);
         // aeSim2
-        ExpressionCall call3 = new ExpressionCall(gene1, new Condition(anatEntity1b,  null, species1),
+        ExpressionCall call3 = new ExpressionCall(gene1, new Condition(anatEntity1b,  null, null, null, null, species1),
                 null, ExpressionSummary.EXPRESSED, null, null, null);
-        ExpressionCall call5 = new ExpressionCall(gene2b, new Condition(anatEntity1b, null, species2),
+        ExpressionCall call5 = new ExpressionCall(gene2b, new Condition(anatEntity1b, null, null, null, null, species2),
                 null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
 
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
@@ -116,9 +116,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 .thenReturn(new HashSet<>(Arrays.asList(aeSim1, aeSim2)));
 
         ConditionFilter providedCondFilter = new ConditionFilter(new HashSet<>(
-                Arrays.asList(anatEntityId1a, anatEntityId1b)), null);
+                Arrays.asList(anatEntityId1a, anatEntityId1b)), null, null, null, null);
         ConditionFilter usedCondFilter = new ConditionFilter(new HashSet<>(
-                Arrays.asList(anatEntityId1a, anatEntityId1b, anatEntityId2a)), null);
+                Arrays.asList(anatEntityId1a, anatEntityId1b, anatEntityId2a)), null, null, null, null);
 
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> qualityFilter =
                 new HashMap<>();
@@ -411,53 +411,53 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
                 null);
         MultiSpeciesCallService spyCallService = spy(new MultiSpeciesCallService(this.serviceFactory));
         Collection<ExpressionCall> sourceCalls1 = Arrays.asList(
-                new ExpressionCall(g1, new Condition(new AnatEntity("1"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("1"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
-                new ExpressionCall(g1, new Condition(new AnatEntity("1bis"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("1bis"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("2.0"))));
         Collection<ExpressionCall> sourceCalls2 = Arrays.asList(
-                new ExpressionCall(g2, new Condition(new AnatEntity("1"), null, spe1),
+                new ExpressionCall(g2, new Condition(new AnatEntity("1"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.DESCENDANT, null, false),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, null),
-                new ExpressionCall(g2, new Condition(new AnatEntity("1bis"), null, spe1),
+                new ExpressionCall(g2, new Condition(new AnatEntity("1bis"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.DESCENDANT, null, false),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, null));
         Collection<ExpressionCall> sourceCalls3 = Arrays.asList(
-                new ExpressionCall(g1, new Condition(new AnatEntity("2"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("2"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
-                new ExpressionCall(g1, new Condition(new AnatEntity("2bis"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("2bis"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("2.0"))));
         Collection<ExpressionCall> sourceCalls4 = Arrays.asList(
-                new ExpressionCall(g2, new Condition(new AnatEntity("2"), null, spe1),
+                new ExpressionCall(g2, new Condition(new AnatEntity("2"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("1.0"))),
-                new ExpressionCall(g2, new Condition(new AnatEntity("2bis"), null, spe1),
+                new ExpressionCall(g2, new Condition(new AnatEntity("2bis"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("2.0"))));
         Collection<ExpressionCall> sourceCalls5 = Arrays.asList(
-                new ExpressionCall(g1, new Condition(new AnatEntity("3"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("3"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.SELF, null, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, new ExpressionLevelInfo(new BigDecimal("20.0"))));
         Collection<ExpressionCall> sourceCalls6 = Arrays.asList(
-                new ExpressionCall(g1, new Condition(new AnatEntity("4"), null, spe1),
+                new ExpressionCall(g1, new Condition(new AnatEntity("4"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.DESCENDANT, null, false),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         null, null));
         Collection<ExpressionCall> sourceCalls7 = Arrays.asList(
-                new ExpressionCall(g2, new Condition(new AnatEntity("4"), null, spe1),
+                new ExpressionCall(g2, new Condition(new AnatEntity("4"), null, null, null, null, spe1),
                         new DataPropagation(PropagationState.ANCESTOR, null, false),
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
                         null, null));

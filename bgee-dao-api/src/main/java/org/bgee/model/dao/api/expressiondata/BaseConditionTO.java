@@ -68,15 +68,17 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
 
     private final String anatEntityId;
     private final String stageId;
+    private final String cellTypeId;
     private final Sex sex;
     private final String strain;
     private final Integer speciesId;
 
-    protected BaseConditionTO(Integer id, String anatEntityId, String stageId, Sex sex, String strain,
-            Integer speciesId) {
+    protected BaseConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId, 
+            Sex sex, String strain, Integer speciesId) {
         super(id);
         this.anatEntityId = anatEntityId;
         this.stageId = stageId;
+        this.cellTypeId = cellTypeId;
         this.sex = sex;
         this.strain = strain;
         this.speciesId = speciesId;
@@ -93,6 +95,12 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
      */
     public String getStageId() {
         return stageId;
+    }
+    /**
+     * @return  A {@code String} corresponding to the cellTypeId of this condition.
+     */
+    public String getCellTypeId() {
+        return cellTypeId;
     }
     /**
      * @return  {@code Sex} of this condition.

@@ -41,6 +41,18 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      */
     private final DevStage devStage;
     /**
+     * @see #getCellType()
+     */
+    private final AnatEntity cellType;
+    /**
+     * @see #getSex()
+     */
+    private final String sex;
+    /**
+     * @see #getStrain()
+     */
+    private final String strain;
+    /**
      * @see #getSpecies()
      */
     private final Species species;
@@ -57,16 +69,21 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, Species species) throws IllegalArgumentException {
-        if (anatEntity == null && devStage == null) {
+    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+            String strain,Species species) throws IllegalArgumentException {
+        if (anatEntity == null && devStage == null && cellType == null && sex == null & strain == null) {
             throw log.throwing(new IllegalArgumentException(
-                    "The anat. entity and the dev. stage cannot be both null."));
+                    "The anat. entity, the dev. stage, the cell type, the sex and the strain cannot be null "
+                    + "at the same time."));
         }
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The species cannot be null."));
         }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
+        this.cellType           = cellType;
+        this.sex                = sex;
+        this.strain             = strain;
         this.species            = species;
     }
 
@@ -106,6 +123,37 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         return devStage == null? null: devStage.getId();
     }
     /**
+     * @return  The {@code AnatEntity} corresponding to a cell type used in 
+     *          this gene expression condition, without the descriptions 
+     *          loaded for lower memory usage.
+     *          Can be {@code null}.
+     */
+    public AnatEntity getCellType() {
+        return cellType;
+    }
+    /**
+     * @return  A {@code String} that is the ID of the cell type 
+     *          used in this gene expression condition.
+     *          Can be {@code null}.
+     */
+    public String getCellTypeId() {
+        return cellType == null? null: cellType.getId();
+    }
+    /**
+     * @return  The {@code String} used in this gene expression condition.
+     *          Can be {@code null}.
+     */
+    public String getSex() {
+        return sex;
+    }
+    /**
+     * @return  The {@code String} corresponding to the strain used in 
+     * this gene expression condition. Can be {@code null}.
+     */
+    public String getStrain() {
+        return strain;
+    }
+    /**
      * @return  The {@code Species} considered in this gene expression condition.
      */
     public Species getSpecies() {
@@ -135,49 +183,58 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
     public int compareTo(T other) {
         return COND_COMPARATOR.compare(this, other);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((anatEntity == null) ? 0 : anatEntity.hashCode());
+        result = prime * result + ((cellType == null) ? 0 : cellType.hashCode());
         result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
+        result = prime * result + ((sex == null) ? 0 : sex.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
+        result = prime * result + ((strain == null) ? 0 : strain.hashCode());
         return result;
     }
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (!(obj instanceof BaseCondition)) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         BaseCondition<?> other = (BaseCondition<?>) obj;
         if (anatEntity == null) {
-            if (other.anatEntity != null) {
+            if (other.anatEntity != null)
                 return false;
-            }
-        } else if (!anatEntity.equals(other.anatEntity)) {
+        } else if (!anatEntity.equals(other.anatEntity))
             return false;
-        }
+        if (cellType == null) {
+            if (other.cellType != null)
+                return false;
+        } else if (!cellType.equals(other.cellType))
+            return false;
         if (devStage == null) {
-            if (other.devStage != null) {
+            if (other.devStage != null)
                 return false;
-            }
-        } else if (!devStage.equals(other.devStage)) {
+        } else if (!devStage.equals(other.devStage))
             return false;
-        }
+        if (sex != other.sex)
+            return false;
         if (species == null) {
-            if (other.species != null) {
+            if (other.species != null)
                 return false;
-            }
-        } else if (!species.equals(other.species)) {
+        } else if (!species.equals(other.species))
             return false;
-        }
+        if (strain == null) {
+            if (other.strain != null)
+                return false;
+        } else if (!strain.equals(other.strain))
+            return false;
         return true;
     }
+    
+    
 }

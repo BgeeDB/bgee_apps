@@ -81,18 +81,18 @@ public class ConditionGraphTest extends TestAncestor {
         DevStage devStage4 = new DevStage(devStageId4);
 
         Species sp = new Species(9606);
-        Condition cond1 = new Condition(anatEntity1, devStage1, sp);
-        Condition cond2 = new Condition(anatEntity2, devStage2, sp);
-        Condition cond3 = new Condition(anatEntity3, devStage3, sp);
-        Condition cond4 = new Condition(anatEntity2, devStage1, sp);
-        Condition cond5 = new Condition(anatEntity1, devStage3, sp);
-        Condition cond6 = new Condition(anatEntity2, devStage3, sp);
-        Condition cond7 = new Condition(anatEntity3, devStage2, sp);
-        Condition cond8 = new Condition(anatEntity4, devStage4, sp);
-        Condition cond1_anatOnly = new Condition(anatEntity1, null, sp);
-        Condition cond2_anatOnly = new Condition(anatEntity2, null, sp);
-        Condition cond1_stageOnly = new Condition(null, devStage1, sp);
-        Condition cond3_stageOnly = new Condition(null, devStage3, sp);
+        Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, sp);
+        Condition cond2 = new Condition(anatEntity2, devStage2, null, null, null, sp);
+        Condition cond3 = new Condition(anatEntity3, devStage3, null, null, null, sp);
+        Condition cond4 = new Condition(anatEntity2, devStage1, null, null, null, sp);
+        Condition cond5 = new Condition(anatEntity1, devStage3, null, null, null, sp);
+        Condition cond6 = new Condition(anatEntity2, devStage3, null, null, null, sp);
+        Condition cond7 = new Condition(anatEntity3, devStage2, null, null, null, sp);
+        Condition cond8 = new Condition(anatEntity4, devStage4, null, null, null, sp);
+        Condition cond1_anatOnly = new Condition(anatEntity1, null, null, null, null, sp);
+        Condition cond2_anatOnly = new Condition(anatEntity2, null, null, null, null, sp);
+        Condition cond1_stageOnly = new Condition(null, devStage1, null, null, null, sp);
+        Condition cond3_stageOnly = new Condition(null, devStage3, null, null, null, sp);
         this.conditions = Arrays.asList(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8, 
                 cond1_anatOnly, cond2_anatOnly, cond1_stageOnly, cond3_stageOnly);
         
@@ -216,7 +216,7 @@ public class ConditionGraphTest extends TestAncestor {
         //check that an Exception is correctly thrown if a condition used was not provided at instantiation
         try {
             this.conditionGraph.isConditionMorePrecise(this.conditions.get(0), 
-                    new Condition(new AnatEntity("test1"), new DevStage("test2"), new Species(3)));
+                    new Condition(new AnatEntity("test1"), new DevStage("test2"), null, null, null, new Species(3)));
             //test fail
             fail("An exception should be thrown when a Condition was not provided at instantiation.");
         } catch (IllegalArgumentException e) {

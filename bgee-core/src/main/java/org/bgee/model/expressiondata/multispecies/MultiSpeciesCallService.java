@@ -389,7 +389,10 @@ public class MultiSpeciesCallService extends CommonService {
 
             // Build ExpressionCallFilter
             Set<ConditionFilter> conditionFilters = new HashSet<>();
-            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds, null));
+            
+            //XXX: for the moment only filter on anat. entities and dev. stages. Should we use anatEntityIds
+            //to filter on cell types? No ideas if we have cell types similarities
+            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds, null, null, null, null));
             log.warn("Only expressed calls are retrieved");
             
 //            // For each species, we load propagated and reconciled calls
@@ -742,7 +745,8 @@ public class MultiSpeciesCallService extends CommonService {
     	        .map(callType -> new SimpleEntry<CallType.Expression, Boolean>(callType, true))
     	        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     	return new ExpressionCallFilter(filter.getSummaryCallTypeQualityFilter(), geneFilters, 
-    			Collections.singleton(new ConditionFilter(expressionCallAEntities, expressionCallDevStage)), 
+    			Collections.singleton(new ConditionFilter(expressionCallAEntities, expressionCallDevStage,
+    			        null, null, null)), 
     			filter.getDataTypeFilters(), callObservedData, true, true);
     }
 
@@ -806,7 +810,7 @@ public class MultiSpeciesCallService extends CommonService {
         Set<String> allAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
-        ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null);
+        ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null, null, null, null);
 
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
@@ -903,7 +907,7 @@ public class MultiSpeciesCallService extends CommonService {
         // FIXME not sure we can have only one condition filter if there are several ones in provided callFilter
         // FIXME: We can simply remove from each ConditionFilter any anat. entity ID not present
         // in the AnatEntitySimilarities.
-        ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null);
+        ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null, null, null, null);
 
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         // XXX: I don't see why we pass to the method an ExpressionCallFilter instead of GeneFilters and ConditionFilter

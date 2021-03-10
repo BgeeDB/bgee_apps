@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -97,8 +98,10 @@ public class CommonService extends Service {
      * @return              The mapped {@code Condition}.
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO,
-            AnatEntity anatEntity, DevStage devStage, Species species) {
-        log.entry(condTO, anatEntity, devStage, species);
+            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex,
+            String strain, Species species) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", condTO, anatEntity, devStage, cellType, sex, 
+                strain, species);
         if (condTO == null) {
             return log.traceExit((Condition) null);
         }
@@ -122,12 +125,55 @@ public class CommonService extends Service {
                     "Incorrect dev. stage ID in ConditionTO, expected " + devStage.getId() + " but was "
                     + condTO.getStageId()));
         }
-        return log.traceExit(new Condition(anatEntity, devStage, species));
+        if (condTO.getCellTypeId() != null && cellType != null &&
+                !condTO.getCellTypeId().equals(cellType.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect cell type ID in ConditionTO, expected " + cellType.getId() + " but was "
+                    + condTO.getCellTypeId()));
+        }
+        if (condTO.getSex() != null && sex != null &&
+                !condTO.getSex().getStringRepresentation().equals(sex)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect sex in ConditionTO, expected " + sex + " but was "
+                    + condTO.getSex().getStringRepresentation()));
+        }
+        if (condTO.getStrain() != null && strain != null &&
+                !condTO.getStrain().equals(strain)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect strain in ConditionTO, expected " + strain + " but was "
+                    + condTO.getStrain()));
+        }
+        return log.traceExit(new Condition(anatEntity, devStage, cellType, sex, strain, species));
     }
+    
     protected static ConditionTO mapConditionToConditionTO(int condId, Condition cond) {
-        log.entry(condId, cond);
+        log.traceEntry("{}, {}", condId, cond);
         return log.traceExit(new ConditionTO(condId, cond.getAnatEntityId(), cond.getDevStageId(),
+                cond.getCellTypeId(), convertStringToSex(cond.getSex()), cond.getStrain(), 
                 cond.getSpeciesId(), null));
+    }
+    
+    /**
+     * Convert a {@code String} to a {@code Sex}.
+     *
+     * @param String        A {@code String} that is the sex to map to {@code Sex}.
+     * @return              The mapped {@code Sex}.
+     */
+    protected static Sex convertStringToSex(String sex) {
+        Set<Sex> allowedSexes= EnumSet.allOf(Sex.class);
+        return(allowedSexes.stream().filter(s -> s.getStringRepresentation().equals(sex))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> {
+                            if(list.size() == 0) {
+                                throw new IllegalStateException("String [" + sex + "] does not "
+                                        + "correspond to any Sex [" + allowedSexes + "]");
+                            }else if(list.size() > 1) {
+                                throw new IllegalStateException("String [" + sex + "] match more than"
+                                        + "one Sex [" + allowedSexes +"]");
+                            }
+                            return list.get(0);
+                        })));        
     }
     
     /**
@@ -431,6 +477,9 @@ public class CommonService extends Service {
                 .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> stageIds = new HashSet<>();
+        Set<String> cellTypeIds = new HashSet<>();
+        Set<String> sexes = new HashSet<>();
+        Set<String> strains = new HashSet<>();
         Set<ConditionTO> conditionTOs = new HashSet<>();
 
         //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
@@ -451,6 +500,15 @@ public class CommonService extends Service {
             }
             if (condTO.getStageId() != null) {
                 stageIds.add(condTO.getStageId());
+            }
+            if (condTO.getCellTypeId() != null) {
+                cellTypeIds.add(condTO.getCellTypeId());
+            }
+            if (condTO.getSex() != null) {
+                sexes.add(condTO.getSex().getStringRepresentation());
+            }
+            if (condTO.getStrain() != null) {
+                strains.add(condTO.getStrain());
             }
         }
 
@@ -474,7 +532,16 @@ public class CommonService extends Service {
                     + "are not supposed to exist in the related species. Species: " + speMap.keySet()
                     + " - stages: " + stageIds));
         }
-
+        final Map<String, AnatEntity> cellTypeMap = cellTypeIds.isEmpty()? new HashMap<>():
+            anatEntityService.loadAnatEntities(
+                    speMap.keySet(), true, cellTypeIds, false)
+            .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        if (!cellTypeIds.isEmpty() && cellTypeMap.size() != cellTypeIds.size()) {
+            cellTypeIds.removeAll(cellTypeMap.keySet());
+            throw log.throwing(new IllegalStateException("Some cell types used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - cell types: " + cellTypeIds));
+        }
         return log.traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
                         cTO -> mapConditionTOToCondition(cTO,
@@ -486,6 +553,12 @@ public class CommonService extends Service {
                                     Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
                                         () -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId())),
+                                cTO.getCellTypeId() == null? null:
+                                    Optional.ofNullable(cellTypeMap.get(cTO.getCellTypeId())).orElseThrow(
+                                        () -> new IllegalStateException("Cell type not found: "
+                                                + cTO.getCellTypeId())),
+                                cTO.getSex().getStringRepresentation(),
+                                cTO.getStrain(),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "
                                                 + cTO.getSpeciesId())))

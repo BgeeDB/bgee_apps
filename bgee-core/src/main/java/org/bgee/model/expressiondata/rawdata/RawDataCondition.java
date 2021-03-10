@@ -14,8 +14,9 @@ import org.bgee.model.species.Species;
  */
 public class RawDataCondition extends BaseCondition<RawDataCondition> {
 
-    public RawDataCondition(AnatEntity anatEntity, DevStage devStage, Species species) throws IllegalArgumentException {
-        super(anatEntity, devStage, species);
+    public RawDataCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+            String strain, Species species) throws IllegalArgumentException {
+        super(anatEntity, devStage, cellType, sex, strain, species);
     }
 
     //*********************************

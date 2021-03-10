@@ -766,7 +766,7 @@ public class CallService extends CommonService {
                 //non-observed conditions.
                 //We-re happy to keep a filtering based on anat. entity IDs though
                 callFilter.getConditionFilters().stream()
-                .map(cf -> new ConditionFilter(cf.getAnatEntityIds(), null))
+                .map(cf -> new ConditionFilter(cf.getAnatEntityIds()))
                 .collect(Collectors.toSet()),
                 //we keep the same data types as requested
                 callFilter.getDataTypeFilters(),

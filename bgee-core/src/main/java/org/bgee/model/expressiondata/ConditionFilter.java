@@ -25,17 +25,39 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
 
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
+     * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the anatomical entities that this {@code ConditionFilter} 
+     *                              will specify to use.
+     * @throws IllegalArgumentException If no anatomical entity IDs are provided. 
+     */
+    public ConditionFilter(Collection<String> anatEntityIds)
+            throws IllegalArgumentException {
+        this(anatEntityIds, null, null, null, null, null);
+    }
+
+    /**
+     * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities that this {@code ConditionFilter} 
      *                              will specify to use.
      * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the developmental stages that this {@code ConditionFilter} 
      *                              will specify to use.
+     * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the anatomical entities describing cell types that this 
+     *                              {@code ConditionFilter} will specify to use.
+     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
+     *                              of the sexes that this {@code ConditionFilter} will specify 
+     *                              to use.
+     * @param strains               A {@code Collection} of {@code String}s that are the Names 
+     *                              of the strains that this {@code ConditionFilter} will 
+     *                              specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs
-     *                                  are provided. 
+     *                              are provided. 
      */
-    public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds)
+    public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
+            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains)
             throws IllegalArgumentException {
-        this(anatEntityIds, devStageIds, null);
+        this(anatEntityIds, devStageIds, cellTypeIds, sexes, strains, null);
     }
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -44,6 +66,15 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the developmental stages that this {@code ConditionFilter} 
      *                              will specify to use.
+     * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the anatomical entities describing cell types that this 
+     *                              {@code ConditionFilter} will specify to use.
+     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
+     *                              of the sexes that this {@code ConditionFilter} will specify 
+     *                              to use.
+     * @param strains               A {@code Collection} of {@code String}s that are the Names 
+     *                              of the strains that this {@code ConditionFilter} will 
+     *                              specify to use.
      * @param observedConditions    A {@code Boolean} defining whether the conditions considered
      *                              should have been observed in expression data in any species.
      *                              See {@link #getObservedConditions()} for more details.
@@ -53,13 +84,18 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     //XXX: Should we add two booleans to ask for considering sub-structures and sub-stages?
     //Because it seems it can be managed through query of data propagation in CallFilter
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
+            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains, 
             Boolean observedConditions) throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds);
+        super(anatEntityIds, devStageIds, cellTypeIds, sexes, strains);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
+                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
+                (sexes == null || sexes.isEmpty()) &&
+                (strains == null || strains.isEmpty()) &&
                 observedConditions == null) {
-            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs"
-                + " or developmental stage IDs or observed data status must be provided."));
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
+                + "developmental stage IDs, cell type IDs, sexe, strain IDs or observed data "
+                + "status must be provided."));
         }
         this.observedConditions = observedConditions;
     }
@@ -106,6 +142,9 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         StringBuilder builder = new StringBuilder();
         builder.append("ConditionFilter [anatEntityIds=").append(getAnatEntityIds())
                .append(", devStageIds=").append(getDevStageIds())
+               .append(", cellTypeIds=").append(getCellTypeIds())
+               .append(", sexes=").append(getSexes())
+               .append(", strains=").append(getStrains())
                .append(", observedConditions=").append(observedConditions).append("]");
         return builder.toString();
     }

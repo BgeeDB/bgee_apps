@@ -119,8 +119,9 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
         private final Boolean sexInferred;
 
         public RawDataConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
-                String stageId, Sex sex, Boolean sexInferred, String strain, Integer speciesId) {
-            super(id, anatEntityId, stageId, sex, strain, speciesId);
+                String stageId, String cellTypeId, Sex sex, Boolean sexInferred, String strain, 
+                Integer speciesId) {
+            super(id, anatEntityId, stageId, cellTypeId, sex, strain, speciesId);
             this.exprMappedConditionId = exprMappedConditionId;
             this.sexInferred = sexInferred;
         }

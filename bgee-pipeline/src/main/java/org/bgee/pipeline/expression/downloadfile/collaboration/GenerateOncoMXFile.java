@@ -93,7 +93,7 @@ public class GenerateOncoMXFile {
      * @throws IOException              If an error occurred while reading/writing a file.
      */
     public static void main(String[] args) throws FileNotFoundException, IOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
 
         int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
@@ -123,7 +123,7 @@ public class GenerateOncoMXFile {
      */
     private static final Set<String> retrieveRequestedUberonIds(String oncomxUberonTermFile)
             throws FileNotFoundException, IOException {
-        log.entry(oncomxUberonTermFile);
+        log.traceEntry("{}", oncomxUberonTermFile);
 
         Set<String> uberonIds = new HashSet<>();
 
@@ -157,7 +157,7 @@ public class GenerateOncoMXFile {
 
     private final static <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>>
     Set<U> getAllEntityIds(Ontology<T, U> ont, Set<U> seedEntityIds) {
-        log.entry(ont, seedEntityIds);
+        log.traceEntry("{}, {}", ont, seedEntityIds);
         Set<T> entities = seedEntityIds.stream()
                 .map(id -> {
                     T entity = ont.getElement(id);
@@ -178,7 +178,7 @@ public class GenerateOncoMXFile {
 
     protected static ExpressionCallFilter getGeneCallFilter(int speciesId, Collection<String> anatEntityIds,
             Collection<String> devStageIds) {
-        log.entry(speciesId, anatEntityIds, devStageIds);
+        log.traceEntry("{}, {}, {}", speciesId, anatEntityIds, devStageIds);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
@@ -245,7 +245,7 @@ public class GenerateOncoMXFile {
 
     public void generateFile(int speciesId, Collection<String> devStageIds,
             String oncomxUberonTermFile, String outputDirectory) throws FileNotFoundException, IOException {
-        log.entry(speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
+        log.traceEntry("{}, {}, {}, {}", speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
 
         log.info("Generating OncoMX file for species {}", speciesId);
         if (devStageIds == null || devStageIds.isEmpty()) {

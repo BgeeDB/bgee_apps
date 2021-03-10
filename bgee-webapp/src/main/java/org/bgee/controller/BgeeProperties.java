@@ -712,7 +712,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      *          thread and always return this instance when called. ("per-thread singleton")
      */
     public static BgeeProperties getBgeeProperties(Properties prop) {
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
         if (! hasBgeeProperties()) {
@@ -972,7 +972,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public BgeeProperties(Properties prop) {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         log.debug("Bgee-webapp properties initialization...");
         // load the properties from properties file, System and default values
         // Initialize all properties using the injected prop first, alternatively the System

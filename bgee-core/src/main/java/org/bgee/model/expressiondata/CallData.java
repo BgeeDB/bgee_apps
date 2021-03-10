@@ -169,7 +169,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          *                                  a {@code CallType.Expression}.
          */
         private static Expression inferCallType(Set<ExperimentExpressionCount> expCounts) {
-            log.entry(expCounts);
+            log.traceEntry("{}", expCounts);
             
             if (expCounts == null || expCounts.isEmpty()) {
                 return log.traceExit((Expression) null);
@@ -292,7 +292,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         public ExperimentExpressionCount getExperimentCount(CallType.Expression callType,
                 DataQuality dataQuality, PropagationState propState) {
-            log.entry(callType, dataQuality, propState);
+            log.traceEntry("{}, {}, {}", callType, dataQuality, propState);
             if (callType == null || dataQuality == null || propState == null) {
                 throw log.throwing(new IllegalArgumentException("No argument can be null."));
             }
@@ -315,7 +315,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
 
         public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
             if (propState == null) {
                 throw log.throwing(new IllegalArgumentException("PropagationState cannot be null."));
             }
@@ -456,7 +456,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
      */
     protected CallData(DataType dataType, T callType)
             throws IllegalArgumentException {
-        log.entry(dataType, callType);
+        log.traceEntry("{}, {}", dataType, callType);
         
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException

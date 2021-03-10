@@ -318,7 +318,7 @@ public class BgeeProperties {
      */
     protected static Object getObjectOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, String defaultValue) {
-        log.entry(prop, sysProps, fileProps, key, defaultValue);
+        log.traceEntry("{}, {}, {}, {}", prop, sysProps, fileProps, key, defaultValue);
     
         Object propValue = null;
     
@@ -364,7 +364,7 @@ public class BgeeProperties {
      * @return          {@code true} if {@code propValue} was correctly set, {@code false} otherwise.
      */
     private static boolean isValidValue(Object propValue) {
-        log.entry(propValue);
+        log.traceEntry("{}", propValue);
         return log.traceExit(propValue != null && 
                 (!(propValue instanceof String) || StringUtils.isNotBlank((String) propValue)));
     }
@@ -393,7 +393,7 @@ public class BgeeProperties {
      */
     protected static String getStringOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, String defaultValue) {
-        log.entry(prop, fileProps, sysProps, key, defaultValue);
+        log.traceEntry("{}, {}, {}, {}, {}", prop, fileProps, sysProps, key, defaultValue);
     
         Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
         String val = defaultValue;
@@ -430,7 +430,7 @@ public class BgeeProperties {
      */
     protected static Integer getIntegerOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, Integer defaultValue) {
-        log.entry(prop, fileProps, sysProps, key, defaultValue);
+        log.traceEntry("{}, {}, {}, {}, {}", prop, fileProps, sysProps, key, defaultValue);
     
         Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
         Integer val = defaultValue;
@@ -470,7 +470,7 @@ public class BgeeProperties {
      */
     protected static Double getDoubleOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, Double defaultValue) {
-        log.entry(prop, fileProps, sysProps, key, defaultValue);
+        log.traceEntry("{}, {}, {}, {}, {}", prop, fileProps, sysProps, key, defaultValue);
     
         Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
         Double val = defaultValue;
@@ -510,7 +510,7 @@ public class BgeeProperties {
      */
     protected static Boolean getBooleanOption(Properties prop, Properties sysProps, 
             Properties fileProps, String key, Boolean defaultValue) {
-        log.entry(prop, sysProps, fileProps, key, defaultValue);
+        log.traceEntry("{}, {}, {}, {}, {}", prop, sysProps, fileProps, key, defaultValue);
         
         Object propValue = getObjectOption(prop, sysProps, fileProps, key, null);
         Boolean val = defaultValue;
@@ -601,7 +601,7 @@ public class BgeeProperties {
      * @throws IllegalStateException If no {@code BgeeProperties} could be obtained anymore. 
      */
     public static BgeeProperties getBgeeProperties(Properties prop) throws IllegalStateException {
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
         log.trace("Trying to obtain a BgeeProperties instance for Thread {}", threadId);
@@ -686,7 +686,7 @@ public class BgeeProperties {
      *              to use.
      */
     protected BgeeProperties(Properties prop) {
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         log.debug("Bgee-core properties initialization...");
         // Initialize all properties using the injected prop first, alternatively the System
         // properties and then the file. The default value provided will be use if none of the

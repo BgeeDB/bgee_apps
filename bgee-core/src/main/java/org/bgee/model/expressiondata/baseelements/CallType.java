@@ -63,7 +63,7 @@ public interface CallType {
         }
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
 
             boolean incorrectPropagation = false;
 
@@ -167,7 +167,7 @@ public interface CallType {
         }
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
             //no propagation allowed for any diff. expression call type.
             //log in TRACE level, since this method can simply be used to check validity
             //of a propagation state

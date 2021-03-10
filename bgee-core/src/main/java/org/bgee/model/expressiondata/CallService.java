@@ -342,7 +342,7 @@ public class CallService extends CommonService {
             Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws GeneNotFoundException, IllegalArgumentException {
-        log.entry(callFilter, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}", callFilter, attributes, orderingAttributes);
 
         final Set<Attribute> clonedAttrs = Collections.unmodifiableSet(
             attributes == null? EnumSet.noneOf(Attribute.class): EnumSet.copyOf(attributes));
@@ -436,7 +436,7 @@ public class CallService extends CommonService {
 
     public Stream<DiffExpressionCall> loadDiffExpressionCalls(Integer speciesId, 
             DiffExpressionCallFilter callFilter) {
-        log.entry(speciesId, callFilter);
+        log.traceEntry("{} {}", speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
     }
 
@@ -458,7 +458,7 @@ public class CallService extends CommonService {
      */
     public LinkedHashMap<AnatEntity, List<ExpressionCall>>
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter) throws IllegalArgumentException {
-        log.entry(geneFilter);
+        log.traceEntry("{}", geneFilter);
         return log.traceExit(this.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(geneFilter, null));
     }
     /**
@@ -482,7 +482,7 @@ public class CallService extends CommonService {
     public LinkedHashMap<AnatEntity, List<ExpressionCall>>
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(GeneFilter geneFilter, ConditionGraph condGraph)
             throws IllegalArgumentException {
-        log.entry(geneFilter, condGraph);
+        log.traceEntry("{}, {}", geneFilter, condGraph);
         if (geneFilter.getEnsemblGeneIds().size() != 1) {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
@@ -583,7 +583,7 @@ public class CallService extends CommonService {
     loadCondCallsWithSilverAnatEntityCallsByAnatEntity(Collection<ExpressionCall> organCalls,
             List<ExpressionCall> conditionCalls, boolean callsFiltered, ConditionGraph condGraph)
                     throws IllegalArgumentException {
-        log.entry(organCalls, conditionCalls, callsFiltered, condGraph);
+        log.traceEntry("{}, {}, {}, {}", organCalls, conditionCalls, callsFiltered, condGraph);
 
         Collection<ExpressionCall> filteredOrganCalls = organCalls;
         if (!callsFiltered) {
@@ -662,7 +662,7 @@ public class CallService extends CommonService {
     //MultiGeneExprAnalysis seems enough with generic type. Which is a stronger case
     //to use a separate, dedicated service.
     public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
-        log.entry(requestedGenes);
+        log.traceEntry("{}", requestedGenes);
         if (requestedGenes == null || requestedGenes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
         }
@@ -679,7 +679,7 @@ public class CallService extends CommonService {
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
     }
     public SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter) {
-        log.entry(callFilter);
+        log.traceEntry("{}", callFilter);
         if (callFilter.getGeneFilters().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
         }
@@ -689,7 +689,7 @@ public class CallService extends CommonService {
     }
     private SingleSpeciesExprAnalysis loadSingleSpeciesExprAnalysis(ExpressionCallFilter callFilter,
             Set<Gene> genes) {
-        log.entry(callFilter, genes);
+        log.traceEntry("{}, {}", callFilter, genes);
         if (callFilter.getGeneFilters().size() != 1) {
             throw log.throwing(new IllegalArgumentException(
                     "This method is for comparing the expression of genes in a single species"));
@@ -744,7 +744,7 @@ public class CallService extends CommonService {
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
             Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
             Map<Integer, Condition> condMap, ExpressionCallFilter callFilter) {
-        log.entry(attrs, orderingAttrs, condParamCombination, geneMap, condMap, callFilter);
+        log.traceEntry("{}, {} ,{}, {}, {}, {}", attrs, orderingAttrs, condParamCombination, geneMap, condMap, callFilter);
 
         if (//qualitative expression levels relative to anat. entities not requested
             (!attrs.isEmpty() && !attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL)) ||
@@ -802,7 +802,7 @@ public class CallService extends CommonService {
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
             Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
             ExpressionCallFilter callFilter) {
-        log.entry(attrs, orderingAttrs, condParamCombination, geneMap, callFilter);
+        log.traceEntry("{}, {}, {}, {}, {}", attrs, orderingAttrs, condParamCombination, geneMap, callFilter);
 
         if (//qualitative expression levels relative to genes not requested
             (!attrs.isEmpty() && !attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)) ||
@@ -871,7 +871,7 @@ public class CallService extends CommonService {
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination,
             Set<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
-        log.entry(geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}, {}", geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
 
         //TODO: retrieve sub-structures and sub-stages depending on ConditionFilter
         Stream<GlobalExpressionCallTO> calls = this.globalExprCallDAO
@@ -901,12 +901,13 @@ public class CallService extends CommonService {
             Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks) {
-        log.entry(callFilter, attrs, orderingAttrs, condParamCombination, geneMap, condMap,
-                maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", callFilter, attrs, orderingAttrs, 
+                condParamCombination, geneMap, condMap, maxRankPerSpecies, anatEntityMinMaxRanks, 
+                geneMinMaxRanks);
 
         // Retrieve the Stream<GlobalExpressionCallTO>
-        Stream<GlobalExpressionCallTO> toStream = this.performsGlobalExprCallQuery(geneMap, callFilter, condParamCombination,
-                attrs, orderingAttrs);
+        Stream<GlobalExpressionCallTO> toStream = this.performsGlobalExprCallQuery(geneMap, callFilter, 
+                condParamCombination, attrs, orderingAttrs);
 
         //Intermediary step in case some min./max ranks are necessary
         //but can be retrieved through the main expression call query.
@@ -1018,7 +1019,7 @@ public class CallService extends CommonService {
     private static LinkedHashMap<AnatEntity, List<ExpressionCall>> groupByAnatEntAndFilterCalls(
             List<ExpressionCall> orderedCalls, Set<ExpressionCall> redundantCalls, 
             boolean filterRedundantCalls) {
-        log.entry(orderedCalls, redundantCalls, filterRedundantCalls);
+        log.traceEntry("{}, {}, {}", orderedCalls, redundantCalls, filterRedundantCalls);
         //first, filter calls and group calls by anat. entity. We need to preserve the order 
         //of the keys, as we have already sorted the calls by their rank. 
         //If filterRedundantCalls is true, we completely discard anat. entities 
@@ -1050,7 +1051,7 @@ public class CallService extends CommonService {
     private static boolean isQueryAllowingToComputeGeneQualExprLevel(ExpressionCallFilter callFilter,
             Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}", callFilter, condParamCombination, attributes, orderingAttributes);
 
         //Perform the checks for qualitative expression levels relative to any entity
         if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
@@ -1089,7 +1090,7 @@ public class CallService extends CommonService {
     private static boolean isQueryAllowingToComputeAnatEntityQualExprLevel(ExpressionCallFilter callFilter,
             Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes,
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(callFilter, condParamCombination, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}", callFilter, condParamCombination, attributes, orderingAttributes);
 
         //Perform the checks for qualitative expression levels relative to any entity
         if (!isQueryAllowingToComputeAnyQualExprLevel(callFilter, condParamCombination, attributes)) {
@@ -1127,7 +1128,7 @@ public class CallService extends CommonService {
 
     private static boolean isQueryAllowingToComputeAnyQualExprLevel(ExpressionCallFilter callFilter,
             Set<ConditionDAO.Attribute> condParamCombination, Set<Attribute> attributes) {
-        log.entry(callFilter, condParamCombination, attributes);
+        log.traceEntry("{}, {}, {}", callFilter, condParamCombination, attributes);
 
         //If ranks not requested, we can't do anything
         if (!attributes.contains(Attribute.MEAN_RANK)) {
@@ -1184,7 +1185,7 @@ public class CallService extends CommonService {
 
     private static <T> EntityMinMaxRanks<T> getMinMaxRanksFromCallGroup(
             Collection<ExpressionCall> calls, Function<ExpressionCall, T> extractEntityFun) {
-        log.entry(calls, extractEntityFun);
+        log.traceEntry("{}, {}", calls, extractEntityFun);
 
         BigDecimal minRankExpressedCalls = null;
         BigDecimal maxRankExpressedCalls = null;
@@ -1225,14 +1226,14 @@ public class CallService extends CommonService {
     private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary,
             BigDecimal rank, BigDecimal expressionScore, BigDecimal maxRankForExpressionScore,
             EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
-        log.entry(exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
+        log.traceEntry("{}, {}, {}, {}, {}", exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
         return log.traceExit(new ExpressionLevelInfo(rank, expressionScore, maxRankForExpressionScore,
                 loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
                 loadQualExprLevel(exprSummary, rank, anatEntityMinMaxRank)));
     }
     private static <T> QualitativeExpressionLevel<T> loadQualExprLevel(ExpressionSummary exprSummary, BigDecimal rank,
             EntityMinMaxRanks<T> minMaxRanks) {
-        log.entry(exprSummary, rank, minMaxRanks);
+        log.traceEntry("{}, {}, {}", exprSummary, rank, minMaxRanks);
         if (ExpressionSummary.NOT_EXPRESSED.equals(exprSummary)) {
             return log.traceExit(new QualitativeExpressionLevel<>(ExpressionLevelCategory.ABSENT, minMaxRanks));
         }
@@ -1249,7 +1250,7 @@ public class CallService extends CommonService {
     //*************************************************************************
     private static CallDAOFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
-        log.entry(geneMap, callFilter, condParamCombination);
+        log.traceEntry("{}, {}, {}", geneMap, callFilter, condParamCombination);
 
         //we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
         Set<Integer> geneIdFilter = null;
@@ -1296,7 +1297,7 @@ public class CallService extends CommonService {
     private static Set<ConditionDAO.Attribute> loadConditionParameterCombination(
             ExpressionCallFilter callFilter, Set<Attribute> serviceAttrs,
             Set<OrderingAttribute> serviceOrderingAttrs) {
-        log.entry(callFilter, serviceAttrs, serviceOrderingAttrs);
+        log.traceEntry("{}, {}, {}", callFilter, serviceAttrs, serviceOrderingAttrs);
 
         final Set<ConditionDAO.Attribute> allDAOCondParamAttrs = EnumSet.allOf(ConditionDAO.Attribute.class)
                 .stream().filter(a -> a.isConditionParameter())
@@ -1352,7 +1353,7 @@ public class CallService extends CommonService {
 
     private static Set<CallDataDAOFilter> convertCallFilterToCallDataDAOFilters(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
-        log.entry(callFilter, condParamCombination);
+        log.traceEntry("{}, {}", callFilter, condParamCombination);
 
         if (checkNoCallDataDAOFilterNeeded(callFilter)) {
             return log.traceExit((Set<CallDataDAOFilter>) null);
@@ -1397,7 +1398,7 @@ public class CallService extends CommonService {
      *                      {@code false} otherwise.
      */
     private static boolean checkNoCallDataDAOFilterNeeded(ExpressionCallFilter callFilter) {
-        log.entry(callFilter);
+        log.traceEntry("{}", callFilter);
 
         //determine whether all data types were requested
         boolean allDataTypesSelected = callFilter.getDataTypeFilters() == null ||
@@ -1420,7 +1421,7 @@ public class CallService extends CommonService {
                 MIN_LOW_BRONZE <= 1 && MIN_HIGH_BRONZE <= 1);
     }
     private static boolean checkAllCallTypesAllQualsRequested(ExpressionCallFilter callFilter) {
-        log.entry(callFilter);
+        log.traceEntry("{}", callFilter);
         //Determine whether the lowest quality level was requested
         final SummaryQuality lowestQual = SummaryQuality.BRONZE;
         //Just to make sure that qualities are in proper order and haven't changed
@@ -1439,7 +1440,7 @@ public class CallService extends CommonService {
     private static CallDataDAOFilter generateCallDataDAOFilter(ExpressionCallFilter callFilter,
             Set<ConditionDAO.Attribute> condParamCombination,
             Set<Set<DAOExperimentCountFilter>> daoExperimentCountFilters) {
-        log.entry(callFilter, condParamCombination, daoExperimentCountFilters);
+        log.traceEntry("{}, {}, {}", callFilter, condParamCombination, daoExperimentCountFilters);
 
         final Set<DAODataType> daoDataTypes = Collections.unmodifiableSet(
                 convertDataTypeToDAODataType(callFilter.getDataTypeFilters()));
@@ -1500,7 +1501,7 @@ public class CallService extends CommonService {
 
     private static Set<Set<DAOExperimentCountFilter>> generateExprQualDAOCountFilters(
             SummaryCallType.ExpressionSummary requestedCallType, SummaryQuality requestedQual) {
-        log.entry(requestedCallType, requestedQual);
+        log.traceEntry("{}, {}", requestedCallType, requestedQual);
 
         //see org.bgee.model.dao.api.expressiondata.CallDataDAOFilter.getExperimentCountFilters()
         //for more details
@@ -1610,7 +1611,7 @@ public class CallService extends CommonService {
      */
     private static Map<ConditionDAO.Attribute, Boolean> convertCallFilterToDAOObservedDataFilter(
             ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
-        log.entry(callFilter, condParamCombination);
+        log.traceEntry("{}, {}", callFilter, condParamCombination);
 
         Map<ConditionDAO.Attribute, Boolean> filter = new HashMap<>();
         if (callFilter != null && callFilter.getAnatEntityObservedData() != null) {
@@ -1632,7 +1633,7 @@ public class CallService extends CommonService {
 
     private static DAOExperimentCount.CallType convertSummaryCallTypeToDAOCallType(
             SummaryCallType.ExpressionSummary callType) {
-        log.entry(callType);
+        log.traceEntry("{}", callType);
 
         switch(callType) {
         case EXPRESSED:
@@ -1644,7 +1645,7 @@ public class CallService extends CommonService {
         }
     }
     private static DAOExperimentCount.CallType convertCallTypeToDAOCallType(CallType.Expression callType) {
-        log.entry(callType);
+        log.traceEntry("{}", callType);
 
         switch(callType) {
         case EXPRESSED:
@@ -1658,7 +1659,7 @@ public class CallService extends CommonService {
 
     private static Set<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
             Set<OrderingAttribute> attrs) {
-        log.entry(attrs);
+        log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> {
@@ -1676,7 +1677,7 @@ public class CallService extends CommonService {
 
     private static Set<GlobalExpressionCallDAO.Attribute> convertServiceAttrToGlobalExprDAOAttr(
         Set<Attribute> attributes) {
-        log.entry(attributes);
+        log.traceEntry("{}", attributes);
         
         return log.traceExit(attributes.stream().flatMap(attr -> {
             switch (attr) {
@@ -1711,7 +1712,7 @@ public class CallService extends CommonService {
     private static LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction>
     convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(
             LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(orderingAttributes);
+        log.traceEntry("{}", orderingAttributes);
         
         return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
                 e -> {
@@ -1746,7 +1747,7 @@ public class CallService extends CommonService {
 
     protected static Set<DAODataType> convertDataTypeToDAODataType(Set<DataType> dts) 
             throws IllegalStateException{
-        log.entry(dts);
+        log.traceEntry("{}", dts);
         
         if (dts == null || dts.isEmpty()) {
             return log.traceExit(EnumSet.allOf(DAODataType.class));
@@ -1793,7 +1794,7 @@ public class CallService extends CommonService {
     //rather than all being in this CallService class.
     public static ExpressionCall deriveCallForDataType(ExpressionCall call,
             DataType dataType) {
-        log.entry(call, dataType);
+        log.traceEntry("{}, {}", call, dataType);
 
         if (dataType == null) {
             throw log.throwing(new IllegalArgumentException("A DataType must be provided"));
@@ -1838,8 +1839,8 @@ public class CallService extends CommonService {
             Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks,
             Set<CallService.Attribute> attrs) {
-        log.entry(globalCallTO, geneMap, condMap, callFilter, maxRankPerSpecies, anatEntityMinMaxRanks,
-                geneMinMaxRanks, attrs);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", globalCallTO, geneMap, condMap, callFilter, 
+                maxRankPerSpecies, anatEntityMinMaxRanks, geneMinMaxRanks, attrs);
         
         Set<ExpressionCallData> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
                 attrs, callFilter.getDataTypeFilters());
@@ -1894,7 +1895,7 @@ public class CallService extends CommonService {
     }
 
     private static BigDecimal computeExpressionScore(BigDecimal rank, BigDecimal maxRank) {
-        log.entry(rank, maxRank);
+        log.traceEntry("{}, {}", rank, maxRank);
         if (maxRank == null) {
             throw log.throwing(new IllegalArgumentException("Max rank must be provided"));
         }
@@ -1927,7 +1928,7 @@ public class CallService extends CommonService {
 
     private static Set<ExpressionCallData> mapGlobalCallTOToExpressionCallData(
             GlobalExpressionCallTO globalCallTO, Set<Attribute> attrs, Set<DataType> requestedDataTypes) {
-        log.entry(globalCallTO, attrs, requestedDataTypes);
+        log.traceEntry("{}, {}, {}", globalCallTO, attrs, requestedDataTypes);
         
         if (globalCallTO.getCallDataTOs() == null || globalCallTO.getCallDataTOs().isEmpty()) {
             return log.traceExit((Set<ExpressionCallData>) null);
@@ -1989,7 +1990,7 @@ public class CallService extends CommonService {
 
     private static ExperimentExpressionCount mapDAOExperimentCountToExperimentExpressionCount(
             DAOExperimentCount count) {
-        log.entry(count);
+        log.traceEntry("{}", count);
         return log.traceExit(new ExperimentExpressionCount(
                 mapDAOCallTypeToCallType(count.getCallType()),
                 mapDAODataQualityToDataQuality(count.getDataQuality()),
@@ -1997,7 +1998,7 @@ public class CallService extends CommonService {
                 count.getCount()));
     }
     private static CallType.Expression mapDAOCallTypeToCallType(DAOExperimentCount.CallType daoCallType) {
-        log.entry(daoCallType);
+        log.traceEntry("{}", daoCallType);
         if (daoCallType == null) {
             throw log.throwing(new IllegalArgumentException("DAOCallType cannot be null"));
         }
@@ -2011,7 +2012,7 @@ public class CallService extends CommonService {
         }
     }
     private static DataQuality mapDAODataQualityToDataQuality(DAOExperimentCount.DataQuality qual) {
-        log.entry(qual);
+        log.traceEntry("{}", qual);
         if (qual == null) {
             throw log.throwing(new IllegalArgumentException("DAODataQuality cannot be null"));
         }
@@ -2026,7 +2027,7 @@ public class CallService extends CommonService {
     }
     private static Set<DataType> mapDAODataTypeToDataType(Set<DAODataType> dts,
             Set<DataType> requestedDataTypes) throws IllegalArgumentException, IllegalStateException {
-        log.entry(dts, requestedDataTypes);
+        log.traceEntry("{}, {}", dts, requestedDataTypes);
 
         Set<DataType> mappedDataTypes = null;
         if (dts == null || dts.isEmpty()) {
@@ -2063,7 +2064,7 @@ public class CallService extends CommonService {
     }
 
     private static PropagationState mapDAOPropStateToPropState(DAOPropagationState propState) {
-        log.entry(propState);
+        log.traceEntry("{}", propState);
         if (propState == null) {
             return log.traceExit((PropagationState) null);
         }
@@ -2093,7 +2094,7 @@ public class CallService extends CommonService {
     //*************************************************************************
 
     private static DataPropagation inferDataPropagation(Set<ExpressionCallData> callData) {
-        log.entry(callData);
+        log.traceEntry("{}", callData);
 
         if (callData == null || callData.isEmpty() || callData.stream()
                 .anyMatch(cd -> cd.getDataPropagation() == null ||
@@ -2112,7 +2113,7 @@ public class CallService extends CommonService {
     }
     private static DataPropagation mapDAOCallDataTOToDataPropagation(
             GlobalExpressionCallDataTO callDataTO) {
-        log.entry(callDataTO);
+        log.traceEntry("{}", callDataTO);
 
         if (callDataTO == null || callDataTO.getDataPropagation() == null ||
                 callDataTO.getDataPropagation().isEmpty()) {
@@ -2146,7 +2147,7 @@ public class CallService extends CommonService {
     }
     protected static DataPropagation mergeDataPropagations(DataPropagation dataProp1,
             DataPropagation dataProp2) {
-        log.entry(dataProp1, dataProp2);
+        log.traceEntry("{}, {}", dataProp1, dataProp2);
 
         if (dataProp1 == null && dataProp2 == null) {
             return log.traceExit(DATA_PROPAGATION_IDENTITY);
@@ -2188,7 +2189,7 @@ public class CallService extends CommonService {
     }
     private static PropagationState mergePropagationStates(PropagationState state1,
             PropagationState state2) {
-        log.entry(state1, state2);
+        log.traceEntry("{}, {}", state1, state2);
 
         if (state1 != null && !ALLOWED_PROP_STATES.contains(state1)) {
             throw log.throwing(new IllegalArgumentException("Unsupported PropagationState: "
@@ -2280,7 +2281,7 @@ public class CallService extends CommonService {
      * @return          The {@code ExpressionSummary} that is the inferred call type quality.
      */
     private static ExpressionSummary inferSummaryCallType(Set<ExpressionCallData> callData) {
-        log.entry(callData);
+        log.traceEntry("{}", callData);
 
         if (callData.stream().anyMatch(cd -> Expression.EXPRESSED.equals(cd.getCallType()))) {
             return log.traceExit(ExpressionSummary.EXPRESSED);
@@ -2304,7 +2305,7 @@ public class CallService extends CommonService {
      * @return          The {@code SummaryQuality} that is the inferred summary quality.
      */
     private static SummaryQuality inferSummaryQuality(Set<ExpressionCallData> callData) {
-        log.entry(callData);
+        log.traceEntry("{}", callData);
 
         int expPresentHigh = 0, expPresentLow = 0, expAbsentHigh = 0, expAbsentLow = 0;
 
@@ -2358,7 +2359,7 @@ public class CallService extends CommonService {
      */
     private static int retrieveExperimentCount(ExpressionCallData cd, Expression expr, DataQuality qual,
             PropagationState state) {
-        log.entry(cd, expr, qual, state);
+        log.traceEntry("{}, {}, {}, {}", cd, expr, qual, state);
         if (cd.getExperimentCounts() == null) {
             return log.traceExit(0);
         }

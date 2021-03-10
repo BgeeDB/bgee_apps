@@ -202,7 +202,7 @@ public class GenerateRankFile {
      */
     protected static File getOutputFile(Species species, boolean anatEntityOnly, DataType dataType, 
             String outputDir, boolean tmpFile) {
-        log.entry(species, anatEntityOnly, dataType, outputDir, tmpFile);
+        log.traceEntry("{}, {}, {}, {}, {}", species, anatEntityOnly, dataType, outputDir, tmpFile);
         
         String fileName = species.getId().toString();
         if (anatEntityOnly) {
@@ -237,7 +237,7 @@ public class GenerateRankFile {
      * @see #getCellProcessors(boolean, DataType)
      */
     protected static String[] getFileHeader(boolean anatEntityOnly, DataType dataType) {
-        log.entry(anatEntityOnly, dataType);
+        log.traceEntry("{}, {}", anatEntityOnly, dataType);
         
         int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         String[] header = new String[arrLength];
@@ -289,7 +289,7 @@ public class GenerateRankFile {
      * @see #getCellProcessors(boolean, DataType)
      */
     private static String[] getColToAttributeMapping(boolean anatEntityOnly, DataType dataType) {
-        log.entry(anatEntityOnly, dataType);
+        log.traceEntry("{}, {}", anatEntityOnly, dataType);
     
         int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         String[] colToAttribute = new String[arrLength];
@@ -340,7 +340,7 @@ public class GenerateRankFile {
      * @see #getColToAttributeMapping(boolean, DataType)
      */
     private static CellProcessor[] getCellProcessors(boolean anatEntityOnly, DataType dataType) {
-        log.entry(anatEntityOnly, dataType);
+        log.traceEntry("{}, {}", anatEntityOnly, dataType);
         
         int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         CellProcessor[] processors = new CellProcessor[arrLength];
@@ -408,7 +408,7 @@ public class GenerateRankFile {
      */
     public static void main(String[] args) 
             throws OBOFormatParserException, OWLOntologyCreationException, IOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         if (args[0].equalsIgnoreCase("generateRankFiles")) {
             if (args.length != 5 && args.length != 6) {
@@ -508,7 +508,7 @@ public class GenerateRankFile {
      */
     public void generateRankFiles(Set<Integer> speciesIds, boolean anatEntityOnly, Set<DataType> dataTypes, 
             String outputDir) throws IllegalArgumentException {
-        log.entry(speciesIds, anatEntityOnly, dataTypes, outputDir);
+        log.traceEntry("{}, {}, {}, {}", speciesIds, anatEntityOnly, dataTypes, outputDir);
         
         if (dataTypes == null || dataTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Data types must be specified."));
@@ -555,7 +555,7 @@ public class GenerateRankFile {
      */
     public void generateSpeciesRankFile(Integer speciesId, boolean anatEntityOnly, DataType dataType, 
             String outputDir) throws IllegalArgumentException, IOException {
-        log.entry(speciesId, anatEntityOnly, dataType, outputDir);
+        log.traceEntry("{}, {}, {}, {}", speciesId, anatEntityOnly, dataType, outputDir);
 
         //********************
         // DATA RETRIEVAL
@@ -668,7 +668,7 @@ public class GenerateRankFile {
      */
     private Stream<ExpressionCall> getExpressionCalls(Integer speciesId, boolean anatEntityOnly, 
             DataType dataType, ServiceFactory serviceFactory) {
-        log.entry(speciesId, anatEntityOnly, dataType, serviceFactory);
+        log.traceEntry("{}, {}, {}, {}", speciesId, anatEntityOnly, dataType, serviceFactory);
         
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
@@ -808,7 +808,7 @@ public class GenerateRankFile {
             Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt, 
             ICsvBeanWriter beanWriter, String[] colToAttribute, CellProcessor[] processors) 
                     throws RuntimeException {
-        log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", singleGeneExprCalls, gene, anatEntityOnt, devStageOnt, 
                 beanWriter, colToAttribute, processors);
         
         this.mapCallsToBeans(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt)
@@ -839,7 +839,7 @@ public class GenerateRankFile {
      */
     private Stream<ExpressionCallBean> mapCallsToBeans(List<ExpressionCall> singleGeneExprCalls, 
             Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt) {
-        log.entry(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}, {}", singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
 
         //Instantiate a ConditionGraph for computations and for display purpose
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
@@ -901,7 +901,7 @@ public class GenerateRankFile {
     //TODO: when Uberon xrefs will have been inserted into the database, use them, 
     //rather than needing to provide an ontology. 
     private List<String> getBTOXRefs(ExpressionCall call) {
-        log.entry(call);
+        log.traceEntry("{}", call);
         
         //hack for adult mammalian kidney UBERON:0000082
         if ("UBERON:0000082".equals(call.getCondition().getAnatEntityId())) {

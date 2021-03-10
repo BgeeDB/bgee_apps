@@ -189,7 +189,7 @@ public class CommonService extends Service {
      */
     protected static Gene mapGeneTOToGene(GeneTO geneTO, Species species,
             Collection<String> synonyms, Collection<GeneXRef> xRefs, GeneBioType geneBioType) {
-        log.entry(geneTO, species, synonyms, xRefs, geneBioType);
+        log.traceEntry("{}, {}, {}, {}, {}", geneTO, species, synonyms, xRefs, geneBioType);
         if (geneTO == null) {
             return log.traceExit((Gene) null);
         }
@@ -218,7 +218,7 @@ public class CommonService extends Service {
      * @return                  The mapped {@link TaxonConstraint}.
      */
     protected static <T> TaxonConstraint<T> mapTaxonConstraintTOToTaxonConstraint(TaxonConstraintTO<T> taxonConstraintTO) {
-        log.entry(taxonConstraintTO);
+        log.traceEntry("{}", taxonConstraintTO);
         if (taxonConstraintTO == null) {
             return log.traceExit((TaxonConstraint<T>) null);
         }
@@ -228,17 +228,17 @@ public class CommonService extends Service {
     }
 
     protected static Map<Integer, GeneBioType> loadGeneBioTypeMap(GeneDAO geneDAO) {
-        log.entry(geneDAO);
+        log.traceEntry("{}", geneDAO);
         return log.traceExit(geneDAO.getGeneBioTypes()
                 .stream().collect(Collectors.toMap(to -> to.getId(), to -> mapGeneBioTypeTOToGeneBioType(to))));
     }
     protected static GeneBioType mapGeneBioTypeTOToGeneBioType(GeneBioTypeTO geneBioTypeTO) {
-        log.entry(geneBioTypeTO);
+        log.traceEntry("{}", geneBioTypeTO);
         return log.traceExit(new GeneBioType(geneBioTypeTO.getName()));
     }
 
     protected static DataType convertDaoDataTypeToDataType(DAODataType dt) {
-        log.entry(dt);
+        log.traceEntry("{}", dt);
         switch(dt) {
             case AFFYMETRIX:
                 return log.traceExit(DataType.AFFYMETRIX);
@@ -267,7 +267,7 @@ public class CommonService extends Service {
      */
     protected static Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters,
             SpeciesService speciesService) throws IllegalArgumentException {
-        log.entry(geneFilters, speciesService);
+        log.traceEntry("{}, {}", geneFilters, speciesService);
         // Retrieve species, get a map species ID -> Species
         final Set<Integer> clnSpeIds =  Collections.unmodifiableSet(
                 geneFilters.stream().map(f -> f.getSpeciesId())
@@ -295,7 +295,7 @@ public class CommonService extends Service {
      */
     protected static Map<Integer, Gene> loadGeneMapFromGeneFilters(Set<GeneFilter> geneFilters,
             Map<Integer, Species> speciesMap, GeneDAO geneDAO) throws GeneNotFoundException {
-        log.entry(geneFilters, speciesMap, geneDAO);
+        log.traceEntry("{}, {}, {}", geneFilters, speciesMap, geneDAO);
 
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
@@ -369,7 +369,7 @@ public class CommonService extends Service {
      */
     protected static Entry<Set<Integer>, Set<Integer>> convertGeneFiltersToBgeeGeneIdsAndSpeciesIds(
             Set<GeneFilter> geneFilters, Map<Integer, Gene> geneMap) {
-        log.entry(geneFilters, geneMap);
+        log.traceEntry("{}, {}", geneFilters, geneMap);
 
         //To create the CallDAOFilter, it is important to provide a species ID only if it means:
         //give me calls for all genes in that species. Otherwise, if specific genes are targeted,
@@ -416,7 +416,7 @@ public class CommonService extends Service {
         return log.traceExit(new AbstractMap.SimpleEntry<>(geneIdFilter, speciesIds));
     }
     protected static Set<GeneFilter> convertGenesToGeneFilters(Collection<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
         if (genes == null || genes.isEmpty()) {
             return log.traceExit(new HashSet<>());
         }
@@ -454,8 +454,8 @@ public class CommonService extends Service {
             Collection<ConditionDAO.Attribute> condParamCombination,
             Collection<ConditionDAO.Attribute> conditionDAOAttrs, ConditionDAO conditionDAO,
             AnatEntityService anatEntityService, DevStageService devStageService) {
-        log.entry(species, condParamCombination, conditionDAOAttrs, conditionDAO,
-                anatEntityService, devStageService);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", species, condParamCombination, conditionDAOAttrs, 
+                conditionDAO, anatEntityService, devStageService);
 
         return log.traceExit(loadConditionMapFromResultSet(
                 (attrs) -> conditionDAO.getGlobalConditionsBySpeciesIds(
@@ -467,7 +467,8 @@ public class CommonService extends Service {
             Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> rsFunc,
             Collection<ConditionDAO.Attribute> conditionDAOAttrs, Collection<Species> species,
             AnatEntityService anatEntityService, DevStageService devStageService) {
-        log.entry(rsFunc, conditionDAOAttrs, species, anatEntityService, devStageService);
+        log.traceEntry("{}, {}, {}, {}, {}", rsFunc, conditionDAOAttrs, species, 
+                anatEntityService, devStageService);
 
         if (species == null || species.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some species must be provided"));
@@ -568,7 +569,7 @@ public class CommonService extends Service {
 
     protected static Set<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
             Collection<CallService.Attribute> attrs) {
-        log.entry(attrs);
+        log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> {

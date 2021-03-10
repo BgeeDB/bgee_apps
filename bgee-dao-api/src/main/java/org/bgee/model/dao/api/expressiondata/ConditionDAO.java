@@ -378,7 +378,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static ConditionRelationOrigin convertToCondRelOrigin(String stringRepresentation){
-                log.entry(stringRepresentation);
+                log.traceEntry("{}", stringRepresentation);
                 return log.traceExit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
                         stringRepresentation));
             }

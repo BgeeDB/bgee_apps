@@ -171,7 +171,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      */
     @Override
     public boolean test(T condition) {
-        log.entry(condition);
+        log.traceEntry("{}", condition);
 
         boolean isValid = true;
         

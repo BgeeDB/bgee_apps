@@ -45,7 +45,7 @@ public class ConditionGraphService extends CommonService {
      *                                  does not exist in the requested species.
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions) {
-        log.entry(conditions);
+        log.traceEntry("{}", conditions);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
     }
     
@@ -61,7 +61,7 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds);
+        log.traceEntry("{}, {}, {}", conditions, inferAncestralConds, inferDescendantConds);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds,
                 inferDescendantConds, null, null));
     }
@@ -78,7 +78,7 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}", conditions, anatEntityOnt, devStageOnt);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, anatEntityOnt, devStageOnt));
     }
     
@@ -101,7 +101,8 @@ public class ConditionGraphService extends CommonService {
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
             Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
+                anatEntityOnt, devStageOnt);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds, inferDescendantConds,
                 anatEntityOnt, devStageOnt));
     }
@@ -123,7 +124,7 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(int speciesId, Collection<CallService.Attribute> condParameters)
             throws IllegalArgumentException {
-        log.entry(speciesId, condParameters);
+        log.traceEntry("{}, {}", speciesId, condParameters);
         if (speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("A speciesId must be provided."));
         }
@@ -178,7 +179,8 @@ public class ConditionGraphService extends CommonService {
             boolean inferAncestralConds, boolean inferDescendantConds,
             Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt)
                     throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
+                anatEntityOnt, devStageOnt);
     
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of ConditionGraph");

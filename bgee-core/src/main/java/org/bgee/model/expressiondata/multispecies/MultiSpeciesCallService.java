@@ -143,7 +143,7 @@ public class MultiSpeciesCallService extends CommonService {
     public Stream<Entry<OrthologousGeneGroup, Set<MultiSpeciesCall<ExpressionCall>>>> loadMultiSpeciesCalls(
     		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, Set<GeneFilter> startingGeneFilters,
     		Collection<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(multiSpeciesCallFilter, startingGeneFilters, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}", multiSpeciesCallFilter, startingGeneFilters, attributes, orderingAttributes);
 //        if(multiSpeciesCallFilter == null){
 //        	throw log.throwing(new IllegalArgumentException("Provided multiSpeciesCallFilter should not be null"));
 //        }
@@ -251,7 +251,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     public Set<MultiSpeciesCall<ExpressionCall>> getConservation(
     		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, GeneFilter geneFilter){
-    	log.entry(multiSpeciesCallFilter, geneFilter);
+    	log.traceEntry("{}, {}", multiSpeciesCallFilter, geneFilter);
         if(multiSpeciesCallFilter == null){
         	throw log.throwing(new IllegalArgumentException("Provided multiSpeciesCallFilter should not be null"));
         }
@@ -298,7 +298,7 @@ public class MultiSpeciesCallService extends CommonService {
     public Stream<MultiSpeciesCall<ExpressionCall>> loadMultiSpeciesCalls(TaxonomyFilter taxonomyFilter,
             Collection<Gene> genes, ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
             LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(taxonomyFilter, genes, callFilter, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}, {}",taxonomyFilter, genes, callFilter, attributes, orderingAttributes);
         throw new UnsupportedOperationException("Not implemented");
     }
 
@@ -315,7 +315,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     public LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
             Gene gene, Collection<Integer> speciesIds) {
-        log.entry(gene, speciesIds);
+        log.traceEntry("{}, {}", gene, speciesIds);
         
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("Provided gene should not be null"));
@@ -444,7 +444,7 @@ public class MultiSpeciesCallService extends CommonService {
     		Set<AnatEntitySimilarity> anatEntitySimilarities, 
     		Set<DevStageSimilarity> devStageSimilarities, Set<ExpressionCall> calls )
                     throws IllegalArgumentException {
-        log.entry(orthoGeneGroups, anatEntitySimilarities, devStageSimilarities, calls);
+        log.traceEntry("{}, {}, {}, {}", orthoGeneGroups, anatEntitySimilarities, devStageSimilarities, calls);
         Set<AnatEntitySimilarity> unmodifiableAESims = Collections.unmodifiableSet(anatEntitySimilarities);
         Set<DevStageSimilarity> unmodifiableDSSims = Collections.unmodifiableSet(devStageSimilarities);
         Set<ExpressionCall> unmodifiablecalls = Collections.unmodifiableSet(calls);
@@ -509,7 +509,7 @@ public class MultiSpeciesCallService extends CommonService {
      *                  with computed conservation score.
      */
     public Set<MultiSpeciesCall<ExpressionCall>> computeConservationScore(Set<MultiSpeciesCall<ExpressionCall>> inputCalls) {
-        log.entry(inputCalls);
+        log.traceEntry("{}", inputCalls);
         Set<MultiSpeciesCall<ExpressionCall>> outputCalls = new HashSet<>();
         for(MultiSpeciesCall<ExpressionCall> inputCall:inputCalls){
 	        BigDecimal conservationScore = new BigDecimal(
@@ -538,7 +538,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     private static Set<CallService.Attribute> convertMultiSpeciesAttrToSpeciesAttr(
         Collection<Attribute> attributes) {
-        log.entry(attributes);
+        log.traceEntry("{}", attributes);
         
         return log.traceExit(attributes.stream().flatMap(attr -> {
             switch (attr) {
@@ -580,7 +580,7 @@ public class MultiSpeciesCallService extends CommonService {
     private static LinkedHashMap<CallService.OrderingAttribute, Service.Direction>
     convertMultiSpeciesOrderingAttrToSpeciesOrderingAttr(
             LinkedHashMap<MultiSpeciesCallService.OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(orderingAttributes);
+        log.traceEntry("{}", orderingAttributes);
         
         return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
             e -> {
@@ -613,7 +613,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     private static Map <Taxon,Set<Species>> getLeavesLCA(Ontology<Taxon, Integer> taxOnt, 
     		Set<Species> species, GeneFilter gene){
-    	log.entry(taxOnt,species,gene);
+    	log.traceEntry("{}, {}, {}", taxOnt,species,gene);
     	Map<Taxon, Set<Species>> taxonLCAToSpecies = new HashMap<>();
     	//get the parent taxon ID of the starting genes
     	Integer leafStartingGeneParentTaxonId = species.stream()
@@ -659,7 +659,7 @@ public class MultiSpeciesCallService extends CommonService {
      * 								ordered by taxa IDs  
      */
     private Set<AnatEntitySimilarity> getAnatSimByTaxonId(Map<Taxon,Set<Species>> lcaTaxonToSpecies){
-    	log.entry(lcaTaxonToSpecies);
+    	log.traceEntry("{}", lcaTaxonToSpecies);
     	Set<AnatEntitySimilarity> anatEntitySimilarities = new HashSet<>();
     	lcaTaxonToSpecies.entrySet().forEach(t -> {
     		anatEntitySimilarities.addAll(
@@ -678,7 +678,7 @@ public class MultiSpeciesCallService extends CommonService {
      * 							ordered by taxa IDs.
      */
     private Set<DevStageSimilarity> getDevStagesSimByTaxonId(Map<Taxon, Set<Species>> taxonToSpecies){
-    	log.entry(taxonToSpecies);
+    	log.traceEntry("{}", taxonToSpecies);
     	Set<DevStageSimilarity> devStageSimilarities = new HashSet<>();
     	//Retrieve dev stage sim for each taxon and a set of species
     	taxonToSpecies.entrySet().stream().forEach(t -> {
@@ -708,7 +708,7 @@ public class MultiSpeciesCallService extends CommonService {
     		Set<AnatEntitySimilarity> anatEntSims, 
     		Set<DevStageSimilarity> devStageSims,
     		Set<OrthologousGeneGroup> orthologousGenes) {
-    	log.entry(filter, anatEntSims, devStageSims, orthologousGenes);
+    	log.traceEntry("{}, {}, {}, {}", filter, anatEntSims, devStageSims, orthologousGenes);
     	//creates filter on anatEntities by taking into account anat. entity similarities of anat. entities
     	//from the MultiSpeciesConditionFilter
     	Set<String> expressionCallAEntities = new HashSet<>();
@@ -771,7 +771,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
             Collection<GeneFilter> geneFilters, ConditionFilter conditionFilter, boolean onlyTrusted) {
-        log.entry(taxonId, geneFilters, conditionFilter, onlyTrusted);
+        log.traceEntry("{}, {}, {}, {}", taxonId, geneFilters, conditionFilter, onlyTrusted);
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("taxonId must be stricly positive"));
         }
@@ -876,7 +876,7 @@ public class MultiSpeciesCallService extends CommonService {
      */
     public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
             ExpressionCallFilter callFilter, boolean onlyTrusted) {
-        log.entry(taxonId, callFilter, onlyTrusted);
+        log.traceEntry("{}, {}, {}", taxonId, callFilter, onlyTrusted);
 
         if (callFilter.getConditionFilters() == null) {
             throw log.throwing(new IllegalArgumentException("Provided conditionFilters should not be null"));
@@ -956,7 +956,7 @@ public class MultiSpeciesCallService extends CommonService {
     //(as opposed to the single species analysis, where only conditions with observed data
     //for at least one gene are retrieved)
     public MultiSpeciesExprAnalysis loadMultiSpeciesExprAnalysis(Collection<Gene> requestedGenes) {
-        log.entry(requestedGenes);
+        log.traceEntry("{}", requestedGenes);
         if (requestedGenes == null || requestedGenes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
         }

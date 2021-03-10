@@ -51,7 +51,7 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
          * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code Sex}.
          */
         public static final Sex convertToSex(String representation) {
-            log.entry(representation);
+            log.traceEntry("{}", representation);
             return log.traceExit(TransferObject.convert(Sex.class, representation));
         }
 

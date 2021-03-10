@@ -308,7 +308,7 @@ public class Condition extends BaseCondition<Condition> {
      *                                  {@code graph}.
      */
     public boolean isConditionMorePrecise(Condition other, ConditionGraph graph) throws IllegalArgumentException {
-        log.entry(other, graph);
+        log.traceEntry("{},{}", other, graph);
         return log.traceExit(graph.isConditionMorePrecise(this, other));
     }
 

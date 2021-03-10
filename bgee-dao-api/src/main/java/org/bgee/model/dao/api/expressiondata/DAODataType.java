@@ -22,7 +22,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  */
 public enum DAODataType implements EnumDAOField {
     AFFYMETRIX("affymetrix", "affymetrix"), EST("est", "est"), IN_SITU("in situ", "inSitu"), 
-    RNA_SEQ("rna-seq", "rnaSeq"), FULL_LENGTH("full length single cell RNA-Seq", "fullLength");
+    RNA_SEQ("rna-seq", "rnaSeq"), FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength");
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
     /**

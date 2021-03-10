@@ -100,13 +100,14 @@ public class GenerateRankFile {
         private final boolean estData;
         private final boolean inSituData;
         private final boolean rnaSeqData;
+        private final boolean singleCellRnaSeqFullLengthData;
         private final boolean redundant;
         private final List<String> btoXRefs;
         
         public ExpressionCallBean(String geneId, String geneName, String anatEntityId, 
                 String anatEntityName, String devStageId, String devStageName, String formattedRank, 
                 boolean affymetrixData, boolean estData, boolean inSituData, boolean rnaSeqData, 
-                boolean redundant, List<String> btoXRefs) {
+                boolean singleCellRnaSeqFullLengthData, boolean redundant, List<String> btoXRefs) {
             
             this.geneId = geneId;
             this.geneName = geneName;
@@ -119,6 +120,7 @@ public class GenerateRankFile {
             this.estData = estData;
             this.inSituData = inSituData;
             this.rnaSeqData = rnaSeqData;
+            this.singleCellRnaSeqFullLengthData = singleCellRnaSeqFullLengthData;
             this.redundant = redundant;
             this.btoXRefs = btoXRefs;
         }
@@ -155,6 +157,9 @@ public class GenerateRankFile {
         }
         public boolean isRnaSeqData() {
             return rnaSeqData;
+        }
+        public boolean isSingleCellRnaSeqFullLengthData() {
+            return singleCellRnaSeqFullLengthData;
         }
         public boolean isRedundant() {
             return redundant;
@@ -880,7 +885,8 @@ public class GenerateRankFile {
                 dataTypeToStatus.get(DataType.AFFYMETRIX), 
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 
-                dataTypeToStatus.get(DataType.RNA_SEQ), 
+                dataTypeToStatus.get(DataType.RNA_SEQ),
+                dataTypeToStatus.get(DataType.FULL_LENGTH), 
                 /*redundantCalls.contains(c)*/ false, 
                 this.getBTOXRefs(c));
         }));

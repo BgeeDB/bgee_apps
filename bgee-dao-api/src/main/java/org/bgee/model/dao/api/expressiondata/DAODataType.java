@@ -13,6 +13,7 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * <li>{@code EST}
  * <li>{@code IN_SITU}
  * <li>{@code RNA_SEQ}
+ * <li>{@code FULL_LENGTH}
  * </ul>
  * 
  * @author Freeric Bastian
@@ -20,7 +21,8 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @since Bgee 14 Mar. 2017
  */
 public enum DAODataType implements EnumDAOField {
-    AFFYMETRIX("affymetrix", "affymetrix"), EST("est", "est"), IN_SITU("in situ", "inSitu"), RNA_SEQ("rna-seq", "rnaSeq");
+    AFFYMETRIX("affymetrix", "affymetrix"), EST("est", "est"), IN_SITU("in situ", "inSitu"), 
+    RNA_SEQ("rna-seq", "rnaSeq"), FULL_LENGTH("full length single cell RNA-Seq", "fullLength");
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
     /**

@@ -72,7 +72,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * A {@code List} of {@code DataType}s used to define order of data type columns in files to be generated.
      **/
     private final static List<DataType> DATA_TYPE_ORDER = 
-            Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ);
+            Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ, DataType.FULL_LENGTH);
 
     /**
      * An {@code Enum} used to define the possible expression file types to be generated.
@@ -1039,6 +1039,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     counts.add(getDataExprCountByDataType(c, DataType.EST));
                     counts.add(getDataExprCountByDataType(c, DataType.IN_SITU));
                     counts.add(getDataExprCountByDataType(c, DataType.RNA_SEQ));
+                    counts.add(getDataExprCountByDataType(c, DataType.FULL_LENGTH));
 
                     SingleSpeciesCompleteExprFileBean completeBean = new SingleSpeciesCompleteExprFileBean(
                             geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,

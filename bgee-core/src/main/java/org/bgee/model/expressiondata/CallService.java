@@ -1762,6 +1762,8 @@ public class CallService extends CommonService {
                         return log.traceExit(DAODataType.IN_SITU);
                     case RNA_SEQ: 
                         return log.traceExit(DAODataType.RNA_SEQ);
+                    case FULL_LENGTH: 
+                        return log.traceExit(DAODataType.FULL_LENGTH);
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
                 }
@@ -2041,6 +2043,8 @@ public class CallService extends CommonService {
                             return log.traceExit(DataType.IN_SITU);
                         case RNA_SEQ:
                             return log.traceExit(DataType.RNA_SEQ);
+                        case FULL_LENGTH:
+                            return log.traceExit(DataType.FULL_LENGTH);
                         default:
                             throw log.throwing(new IllegalStateException("Unsupported DataType: " + dt));
                         }

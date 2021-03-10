@@ -229,6 +229,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 rankField = "rnaSeqMaxRank";
                 globalRankField = "rnaSeqGlobalMaxRank";
                 break;
+            case FULL_LENGTH:
+                rankField = "scRnaSeqFullLengthMaxRank";
+                globalRankField = "scRnaSeqFullLengthGlobalMaxRank";
+                break;
             default:
                 throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
             }

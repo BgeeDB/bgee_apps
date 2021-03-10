@@ -22,6 +22,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * at the developmental stage studied in the <em>in situ</em>, with no report of 
  * expression by any data type, in the organ itself, or any substructure. 
  * <li>{@code RNA_SEQ}: RNA-Seq data.
+ * <li>{@code FULL_LENGTH}: Full length single cell RNA-Seq data.
  * </ul>
  * 
  * @author Frederic Bastian
@@ -31,7 +32,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq");
+    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq"),
+    FULL_LENGTH("full length single cell RNA-Seq");
     
     private final String representation;
     

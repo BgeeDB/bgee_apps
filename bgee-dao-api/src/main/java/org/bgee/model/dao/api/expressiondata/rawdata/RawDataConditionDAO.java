@@ -24,6 +24,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      * <li>{@code EXPR_MAPPED_CONDITION_ID}: corresponds to {@link RawDataConditionTO#getExprMappedConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link RawDataConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link RawDataConditionTO#getStageId()}.
+     * <li>{@code CELL_TYPE_ID}: corresponds to {@link RawDataConditionTO#getCellTypeId()}.
      * <li>{@code SEX}: corresponds to {@link RawDataConditionTO#getSex()}.
      * <li>{@code SEX_INFERRED}: corresponds to {@link RawDataConditionTO#getSexInferred()}.
      * <li>{@code STRAIN}: corresponds to {@link RawDataConditionTO#getStrain()}.
@@ -32,8 +33,8 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      */
     public enum Attribute implements DAO.Attribute {
         ID("id"), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId"),
-        ANAT_ENTITY_ID("anatEntityId"), STAGE_ID("stageId"), SEX("sex"), SEX_INFERRED("sexInferred"),
-        STRAIN("strain"), SPECIES_ID("speciesId");
+        ANAT_ENTITY_ID("anatEntityId"), STAGE_ID("stageId"), CELL_TYPE_ID("cellTypeId"), SEX("sex"), 
+        SEX_INFERRED("sexInferred"), STRAIN("strain"), SPECIES_ID("speciesId");
 
         /**
          * A {@code String} that is the corresponding field name in {@code RawDataConditionTO} class.

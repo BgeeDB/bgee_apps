@@ -18,6 +18,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
@@ -64,7 +65,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      */
     private static String getCondParamCombinationWhereClause(final String tableName,
             Collection<ConditionDAO.Attribute> condParamCombination) throws IllegalArgumentException {
-        log.entry(tableName, condParamCombination);
+        log.traceEntry("{}, {}", tableName, condParamCombination);
         if (condParamCombination == null || condParamCombination.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "A condition parameter combination must be provided."));
@@ -125,7 +126,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
-        log.entry(speciesIds, conditionParameters, attributes);
+        log.traceEntry("{}, {}, {}", speciesIds, conditionParameters, attributes);
         return log.traceExit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
     }
 
@@ -133,7 +134,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     private ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
-        log.entry(speciesIds, conditionParameters, attributes);
+        log.traceEntry("{}, {}, {}", speciesIds, conditionParameters, attributes);
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         final Set<ConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
@@ -195,7 +196,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     @Override
     public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
             Collection<DAODataType> dataTypes, Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException {
-        log.entry(speciesIds, dataTypes, conditionParameters);
+        log.traceEntry("{}, {}, {}", speciesIds, dataTypes, conditionParameters);
 
         Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
@@ -295,7 +296,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
     @Override
     public int insertGlobalConditions(Collection<ConditionTO> conditionTOs) throws DAOException {
-        log.entry(conditionTOs);
+        log.traceEntry("{}", conditionTOs);
         
         if (conditionTOs == null || conditionTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No condition provided"));
@@ -355,7 +356,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public int insertGlobalConditionToRawCondition(
             Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
                     throws DAOException, IllegalArgumentException {
-        log.entry(globalCondToRawCondTOs);
+        log.traceEntry("{}", globalCondToRawCondTOs);
 
         if (globalCondToRawCondTOs == null || globalCondToRawCondTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No condition relation provided"));
@@ -429,7 +430,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
-                String anatEntityId = null, stageId = null;
+                String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
+                Sex sex = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
                 COL: for (String columnName : this.getColumnLabels().values()) {
@@ -452,13 +454,23 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         case STAGE_ID:
                             stageId = currentResultSet.getString(columnName);
                             break;
+                        case CELL_TYPE_ID:
+                            cellTypeId = currentResultSet.getString(columnName);
+                            break;
+                        case SEX:
+                            sex = Sex.convertToSex(currentResultSet.getString(columnName));
+                            break;
+                        case STRAIN:
+                            strain = currentResultSet.getString(columnName);
+                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
-                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, speciesId, null));
+                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, strain, 
+                        speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

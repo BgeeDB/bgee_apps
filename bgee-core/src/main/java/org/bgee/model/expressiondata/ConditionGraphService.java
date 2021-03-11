@@ -237,7 +237,7 @@ public class ConditionGraphService extends CommonService {
                 
                 return propAnatEntitys.stream()
                         .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
-                            new Condition(propAnatEntity, propStage, cond.getSpecies())))
+                            new Condition(propAnatEntity, propStage, null, null, null, cond.getSpecies())))
                         .filter(propCond -> !cond.equals(propCond));
     
             }).collect(Collectors.toSet());

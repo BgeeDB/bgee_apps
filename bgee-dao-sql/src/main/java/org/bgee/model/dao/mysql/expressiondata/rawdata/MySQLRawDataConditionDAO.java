@@ -105,7 +105,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, exprMappedCondId = null, speciesId = null;
-                String anatEntityId = null, stageId = null, strain = null;
+                String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
                 Sex sex = null;
                 Boolean sexInferred = null;
 
@@ -132,6 +132,9 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                         case STAGE_ID:
                             stageId = currentResultSet.getString(columnName);
                             break;
+                        case CELL_TYPE_ID:
+                            cellTypeId = currentResultSet.getString(columnName);
+                            break;
                         case SEX:
                             sex = Sex.convertToSex(currentResultSet.getString(columnName));
                             break;
@@ -146,7 +149,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                     }
                 }
                 return log.traceExit(new RawDataConditionTO(id, exprMappedCondId, anatEntityId, stageId,
-                        sex, sexInferred, strain, speciesId));
+                        cellTypeId, sex, sexInferred, strain, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

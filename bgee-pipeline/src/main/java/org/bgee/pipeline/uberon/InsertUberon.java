@@ -105,20 +105,23 @@ public class InsertUberon extends MySQLDAOUser {
             insert.insertStageOntologyIntoDataSource(ub, speciesIds);
             
         } else if (args[0].equalsIgnoreCase("insertAnatomy")) {
-            if (args.length < 4 || args.length > 5) {
+            if (args.length < 5 || args.length > 6) {
                 throw log.throwing(new IllegalArgumentException(
                         "Incorrect number of arguments provided, expected " + 
-                        "4 or 5 arguments, " + args.length + " provided."));
+                        "5 or 6 arguments, " + args.length + " provided."));
             }
             
             Uberon ub = new Uberon(new OntologyUtils(args[1]), args[2]);
-            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[3]));
+            //FIXME setting setToFilterSubgraphRootIds don't do anything
+            //in the method insertAnatOntologyIntoDataSource, it's not implemented
+            ub.setToFilterSubgraphRootIds(CommandRunner.parseListArgument(args[3]));
+            ub.setToIgnoreSubgraphRootIds(CommandRunner.parseListArgument(args[4]));
             
             InsertUberon insert = new InsertUberon();
             
             Collection<Integer> speciesIds = null;
-            if (args.length > 4 && StringUtils.isNotBlank(args[4])) {
-                speciesIds = AnnotationCommon.getTaxonIds(args[4]);
+            if (args.length > 5 && StringUtils.isNotBlank(args[5])) {
+                speciesIds = AnnotationCommon.getTaxonIds(args[5]);
             }
             insert.insertAnatOntologyIntoDataSource(ub, speciesIds);
             

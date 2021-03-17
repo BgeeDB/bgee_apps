@@ -653,6 +653,7 @@ public class Uberon extends UberonCommon {
      * @throws IllegalStateException            If the modifications are incorrect, 
      *                                          because of the original state of the ontology.
      */
+    //FIXME: relations to owl#thing should never be removed
     public void simplifyUberon() throws UnknownOWLOntologyException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
@@ -1336,6 +1337,7 @@ public class Uberon extends UberonCommon {
             Set<OWLClass> transfOfTargets = new HashSet<OWLClass>();
             Set<OWLClass> devFromTargets = new HashSet<OWLClass>();
             for (OWLGraphEdge outgoingEdge: allOutgoingEdges) {
+                log.trace("Iteration outgoing edge before filtering: {}", outgoingEdge);
                 if (!(outgoingEdge.getTarget() instanceof OWLClass) || 
                         !wrapper.isRealClass(outgoingEdge.getTarget())) {
                     continue;
@@ -1484,10 +1486,10 @@ public class Uberon extends UberonCommon {
                         cls));
             }
             String name = wrapper.getLabel(cls);
-            if (StringUtils.isBlank(name)) {
-                throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
-                        cls));
-            }
+//            if (StringUtils.isBlank(name)) {
+//                throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
+//                        cls));
+//            }
         }
         
         return log.traceExit(true);
@@ -1766,9 +1768,7 @@ public class Uberon extends UberonCommon {
         
         for (RelationTO<String> relTO: allRelationTOs) {
             log.trace("Iterating relation: {}", relTO);
-            
-            RelationStatus relStatus = null;
-            Set<Integer> inSpecies = null;
+
             if (relTO.getSourceId().equals(relTO.getTargetId())) {
                 //if it is not an is_a relation, it is not a reflexive relation, 
                 //but an incorrect cycle.
@@ -1778,57 +1778,94 @@ public class Uberon extends UberonCommon {
                 }
                 
                 log.trace("Relation is reflexive");
-                relStatus = RelationStatus.REFLEXIVE;
-                //reflexive relations must be stored as direct relations
-                inSpecies = directRelationTOs.get(relTO);
-                assert inSpecies != null;
                 
-            } else if (indirectRelationTOs.containsKey(relTO)) {
-                log.trace("Relation is indirect");
-                relStatus = RelationStatus.INDIRECT;
-                inSpecies = indirectRelationTOs.get(relTO);
-                
-                //if there is also an equivalent direct relation with different taxon constraints, 
-                //we keep only the taxon constraints not present in the indirect relation
-                Set<Integer> directInSpecies = directRelationTOs.get(relTO);
-                if (directInSpecies != null) {
-                    directInSpecies.removeAll(inSpecies);
-                    if (!directInSpecies.isEmpty()) {
-                        
-                        relationId++;
-                        PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
-                                relTO.getSourceId(), relTO.getTargetId(), 
-                                relTO.getRelationType(), RelationStatus.DIRECT);
-                        log.trace("An equivalent direct relation also exists, but with different " +
-                                "taxon constraints, generating direct redundant relation: {}", 
-                                newRelTO);
-                        
-                        //such a relation should never be defined for all taxa at this point
-                        if (directInSpecies.containsAll(speciesIds)) {
-                            throw log.throwing(new AssertionError("Incorrect taxon constraints " +
-                                    "for direct redundant relation: " + relTO));
-                        }
-                        relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, directInSpecies, 
-                                speciesIds));
-                    } else {
-                        log.trace("An equivalent direct relation also exists, but taxon constraints " +
-                                "are a subset of the indirect relation, discarding direct relation");
-                    }
-                }
-            } else if (directRelationTOs.containsKey(relTO)) {
-                log.trace("Relation is direct");
-                relStatus = RelationStatus.DIRECT;
-                inSpecies = directRelationTOs.get(relTO);
-            }
-            
-            relationId++;
-            PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
-                    relTO.getSourceId(), relTO.getTargetId(), 
-                    relTO.getRelationType(), relStatus);
-            log.trace("Generating proper RelationTO: {}", newRelTO);
+                relationId++;
+                PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+                        relTO.getSourceId(), relTO.getTargetId(), 
+                        relTO.getRelationType(), RelationStatus.REFLEXIVE);
+                log.trace("Generating proper RelationTO: {}", newRelTO);
 
-            relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, inSpecies, 
-                    speciesIds));
+                relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId,
+                        directRelationTOs.get(relTO), 
+                        speciesIds));
+                
+            } else {
+                //WARNING:
+                //As of Bgee 15, there has been a change in the way we store direct/indirect rels:
+                //previously, if an direct and an indirect relations both exist in the same species,
+                //we would keep only the indirect relation for those species. Indeed, there existed
+                //a long -indirect- path between the source and the target, and we wanted to keep
+                //only this one. But this is problematic when we remove relations between terms
+                //(see method OntologyTools#deletePartOfIsARelations), for instance when there is
+                //a cycle: if A part_of B, B part_of A in species1, then A part_of B...
+                //the relation A part_of B would be considered indirect in species1,
+                //and they will be no direct relation A part_of B inserted for it.
+                //When we remove the incorrect relation causing the cycle B part_of A in species1,
+                //the indirect relation A part_of B in species1 will be also deleted,
+                //because the valid direct relation would not exist in species1 to compensate it.
+                //This problem might arise not only when we fix cycles, everytime we use the method
+                //OntologyTools#deletePartOfIsARelations.
+                //And anyway, it's closer to the actual ontology to insert both the direct
+                //and indirect relation.
+                //So we comment the bunch of code later down.
+                //TODO: probably we need to stop relying on the indirect edge produced by
+                //OWLGraphWrapper and simply walk the graph of direct relation? The only problem
+                //is that we would do object property reduction ourselves, but it's not complicated
+                //considering the relations we're using.
+                if (indirectRelationTOs.containsKey(relTO)) {
+                    log.trace("Relation is indirect");
+                    
+//                    //if there is also an equivalent direct relation with different taxon constraints, 
+//                    //we keep only the taxon constraints not present in the indirect relation
+//                    Set<Integer> directInSpecies = directRelationTOs.get(relTO);
+//                    if (directInSpecies != null) {
+//                        directInSpecies.removeAll(inSpecies);
+//                        if (!directInSpecies.isEmpty()) {
+//                            
+//                            relationId++;
+//                            PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+//                                    relTO.getSourceId(), relTO.getTargetId(), 
+//                                    relTO.getRelationType(), RelationStatus.DIRECT);
+//                            log.trace("An equivalent direct relation also exists, but with different " +
+//                                    "taxon constraints, generating direct redundant relation: {}", 
+//                                    newRelTO);
+//                            
+//                            //such a relation should never be defined for all taxa at this point
+//                            if (directInSpecies.containsAll(speciesIds)) {
+//                                throw log.throwing(new AssertionError("Incorrect taxon constraints " +
+//                                        "for direct redundant relation: " + relTO));
+//                            }
+//                            relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId, directInSpecies, 
+//                                    speciesIds));
+//                        } else {
+//                            log.trace("An equivalent direct relation also exists, but taxon constraints " +
+//                                    "are a subset of the indirect relation, discarding direct relation");
+//                        }
+//                    }
+                    relationId++;
+                    PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+                            relTO.getSourceId(), relTO.getTargetId(), 
+                            relTO.getRelationType(), RelationStatus.INDIRECT);
+                    log.trace("Generating proper RelationTO: {}", newRelTO);
+
+                    relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId,
+                            indirectRelationTOs.get(relTO), 
+                            speciesIds));
+                }
+                //It used to be an 'else if' prior to Bgee 15
+                if (directRelationTOs.containsKey(relTO)) {
+                    log.trace("Relation is direct");
+                    relationId++;
+                    PipelineRelationTO<String> newRelTO = new PipelineRelationTO<>(relationId,
+                            relTO.getSourceId(), relTO.getTargetId(), 
+                            relTO.getRelationType(), RelationStatus.DIRECT);
+                    log.trace("Generating proper RelationTO: {}", newRelTO);
+
+                    relsToTCs.put(newRelTO, getRelationTaxonConstraints(relationId,
+                            directRelationTOs.get(relTO), 
+                            speciesIds));
+                }
+            }
         }
         return log.traceExit(relsToTCs);
     }

@@ -284,7 +284,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (AnatEntityTO anatEntity: anatEntities) {
                 stmt.setString(1, anatEntity.getId());
-                stmt.setString(2, anatEntity.getName());
+                if (StringUtils.isNotBlank(anatEntity.getName())) {
+                    stmt.setString(2, anatEntity.getName());
+                } else {
+                    stmt.setString(2, "");
+                }
                 stmt.setString(3, anatEntity.getDescription());
                 stmt.setString(4, anatEntity.getStartStageId());
                 stmt.setString(5, anatEntity.getEndStageId());

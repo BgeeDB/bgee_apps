@@ -154,8 +154,9 @@ public class UberonDevStage extends UberonCommon {
             ub.generateStageOntologyAndSaveToFile();
             
         } else if (args[0].equalsIgnoreCase("generateStageNestedSetModelAndReport")) {
-            UberonDevStage ub = new UberonDevStage(args[1], args[2]);
-            ub.generateStageNestedSetModelAndReport(args[3], Integer.parseInt(args[4]), args[5]);
+            log.info(Arrays.stream(args).collect(Collectors.joining(", ")));
+            UberonDevStage ub = new UberonDevStage(new OntologyUtils(args[1]), new OntologyUtils(args[2]), args[3]);
+            ub.generateStageNestedSetModelAndReport(args[4], Integer.parseInt(args[5]), args[6]);
         } else {
             throw log.throwing(new UnsupportedOperationException("The following action " +
                     "is not recognized: " + args[0]));
@@ -655,6 +656,9 @@ public class UberonDevStage extends UberonCommon {
     public Map<OWLClass, Map<String, Integer>> generateStageNestedSetModel(OWLClass root, Integer speciesId) 
             throws IllegalStateException {
         log.traceEntry("{} - {} - {}", root, speciesId, this.getTaxonConstraints());
+        if (root == null) {
+            throw log.throwing(new IllegalArgumentException("Root class cannot be null"));
+        }
         
         String nestedSetModelKey = root.toStringID() + "-" + (speciesId == null? 0: speciesId);
         //check if we have a nested set model in cache for this root
@@ -691,6 +695,7 @@ public class UberonDevStage extends UberonCommon {
         List<List<OWLClass>> allOrderedSameSpeciesChildren = new ArrayList<>();
         OWLClass classWalked = null;
         while ((classWalked = walker.pollFirst()) != null) {
+            log.debug("Walking class: {}", classWalked);
             //order the direct children of a same species, or multi-species children together.
             //store the children associated to their NCBI tax ID (or to null, if they are 
             //multi-species children).
@@ -905,6 +910,7 @@ public class UberonDevStage extends UberonCommon {
             //now we obtain a nested set model 
             //this nested set model will be used in a comparator, we make it final.
             final Map<OWLClass, Map<String, Integer>> nestedModel;
+            OWLClass lca = null;
             if (providedNestedModel != null) {
                 nestedModel = providedNestedModel;
             } else {
@@ -920,18 +926,21 @@ public class UberonDevStage extends UberonCommon {
                             startStageId + " and end stage " + endStageId + ": " + 
                             lcas));
                 }
-                OWLClass lca = lcas.iterator().next();
+                lca = lcas.iterator().next();
                 
                 nestedModel = this.generateStageNestedSetModel(lca, speciesId);
             }
             //get the parameters related to startStage and endStage
+            String errorMsg = "The provided parameters did not allow to compute relations";
+            if (lca != null) {
+                errorMsg += " from LCA: " + this.getOntologyUtils().getWrapper().getIdentifier(lca);
+            }
+            errorMsg += " in species " + speciesId;
             if (nestedModel.get(startStage) == null) {
-                throw log.throwing(new IllegalStateException("The provided parameters did not "
-                        + "allow to compute relations for start stage " + startStage));
+                throw log.throwing(new IllegalStateException(errorMsg + " for start stage " + startStage));
             }
             if (nestedModel.get(endStage) == null) {
-                throw log.throwing(new IllegalStateException("The provided parameters did not "
-                        + "allow to compute relations for end stage " + endStage));
+                throw log.throwing(new IllegalStateException(errorMsg + " for end stage " + endStage));
             }
             int startLeftBound = nestedModel.get(startStage).get(OntologyUtils.LEFT_BOUND_KEY);
             int startRightBound = nestedModel.get(startStage).get(OntologyUtils.RIGHT_BOUND_KEY);

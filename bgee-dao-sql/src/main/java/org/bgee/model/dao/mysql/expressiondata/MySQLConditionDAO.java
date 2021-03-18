@@ -18,7 +18,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
@@ -431,7 +431,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
                 String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
-                Sex sex = null;
+                DAOSex sex = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
                 COL: for (String columnName : this.getColumnLabels().values()) {
@@ -458,7 +458,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                             cellTypeId = currentResultSet.getString(columnName);
                             break;
                         case SEX:
-                            sex = Sex.convertToSex(currentResultSet.getString(columnName));
+                            sex = DAOSex.convertToDAOSex(currentResultSet.getString(columnName));
                             break;
                         case STRAIN:
                             strain = currentResultSet.getString(columnName);

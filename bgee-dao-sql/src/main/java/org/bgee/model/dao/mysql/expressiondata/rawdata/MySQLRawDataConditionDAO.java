@@ -13,7 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -46,7 +46,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
     @Override
     public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
-        log.entry(speciesIds, attributes);
+        log.traceEntry("{}, {}", speciesIds, attributes);
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         final Set<RawDataConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
@@ -106,7 +106,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, exprMappedCondId = null, speciesId = null;
                 String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
-                Sex sex = null;
+                DAOSex sex = null;
                 Boolean sexInferred = null;
 
                 //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
@@ -136,7 +136,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                             cellTypeId = currentResultSet.getString(columnName);
                             break;
                         case SEX:
-                            sex = Sex.convertToSex(currentResultSet.getString(columnName));
+                            sex = DAOSex.convertToDAOSex(currentResultSet.getString(columnName));
                             break;
                         case STRAIN:
                             strain = currentResultSet.getString(columnName);

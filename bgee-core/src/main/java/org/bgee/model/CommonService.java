@@ -26,10 +26,11 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.expressiondata.BaseCondition.Sex;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -98,7 +99,7 @@ public class CommonService extends Service {
      * @return              The mapped {@code Condition}.
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO,
-            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex,
+            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex,
             String strain, Species species) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}", condTO, anatEntity, devStage, cellType, sex, 
                 strain, species);
@@ -149,7 +150,7 @@ public class CommonService extends Service {
     protected static ConditionTO mapConditionToConditionTO(int condId, Condition cond) {
         log.traceEntry("{}, {}", condId, cond);
         return log.traceExit(new ConditionTO(condId, cond.getAnatEntityId(), cond.getDevStageId(),
-                cond.getCellTypeId(), convertStringToSex(cond.getSex()), cond.getStrain(), 
+                cond.getCellTypeId(), convertSexToDAOSex(cond.getSex()), cond.getStrain(), 
                 cond.getSpeciesId(), null));
     }
     
@@ -252,6 +253,42 @@ public class CommonService extends Service {
                 return log.traceExit(DataType.FULL_LENGTH);
         default:
             throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
+        }
+    }
+    
+    protected static DAOSex convertSexToDAOSex(Sex sex) {
+        log.traceEntry("{}", sex);
+        switch(sex) {
+            case MALE:
+                return log.traceExit(DAOSex.MALE);
+            case FEMALE:
+                return log.traceExit(DAOSex.FEMALE);
+            case HERMAPHRODITE:
+                return log.traceExit(DAOSex.HERMAPHRODITE);
+            case ANY:
+                return log.traceExit(EnumSet.allOf(DAOSex.class));
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + sex));
+        }
+    }
+    
+    protected static Sex convertDAOSexToSex(DAOSex daoSex) {
+        log.traceEntry("{}", daoSex);
+        switch(daoSex) {
+            case MALE:
+                return log.traceExit(Sex.MALE);
+            case FEMALE:
+                return log.traceExit(Sex.FEMALE);
+            case HERMAPHRODITE:
+                return log.traceExit(Sex.HERMAPHRODITE);
+            case MIXED:
+                return log.traceExit(Sex.ANY);
+            case NA:
+                return log.traceExit(EnumSet.noneOf(elementType));
+            case NOT_ANNOTATED:
+                return log.traceExit(EnumSet.allOf(DAOSex.class));
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + daoSex));
         }
     }
 
@@ -512,16 +549,20 @@ public class CommonService extends Service {
                 strains.add(condTO.getStrain());
             }
         }
+        
+        //merge anat entities and cell types to call only once loadAnatEntities
+        Set<String> anatAndCellIds = new HashSet<String>(anatEntityIds);
+        anatAndCellIds.addAll(cellTypeIds);
 
-        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
+        final Map<String, AnatEntity> anatAndCellMap = anatAndCellIds.isEmpty()? new HashMap<>():
             anatEntityService.loadAnatEntities(
-                    speMap.keySet(), true, anatEntityIds, false)
+                    speMap.keySet(), true, anatAndCellIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
-        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
-            anatEntityIds.removeAll(anatMap.keySet());
-            throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
+        if (!anatAndCellIds.isEmpty() && anatAndCellIds.size() != anatAndCellIds.size()) {
+            anatAndCellIds.removeAll(anatAndCellMap.keySet());
+            throw log.throwing(new IllegalStateException("Some anat. entities or cell type used in a condition "
                     + "are not supposed to exist in the related species. Species: " + speMap.keySet()
-                    + " - anat. entities: " + anatEntityIds));
+                    + " - anat. entities: " + anatAndCellIds));
         }
         final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
             devStageService.loadDevStages(
@@ -533,21 +574,12 @@ public class CommonService extends Service {
                     + "are not supposed to exist in the related species. Species: " + speMap.keySet()
                     + " - stages: " + stageIds));
         }
-        final Map<String, AnatEntity> cellTypeMap = cellTypeIds.isEmpty()? new HashMap<>():
-            anatEntityService.loadAnatEntities(
-                    speMap.keySet(), true, cellTypeIds, false)
-            .collect(Collectors.toMap(s -> s.getId(), s -> s));
-        if (!cellTypeIds.isEmpty() && cellTypeMap.size() != cellTypeIds.size()) {
-            cellTypeIds.removeAll(cellTypeMap.keySet());
-            throw log.throwing(new IllegalStateException("Some cell types used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
-                    + " - cell types: " + cellTypeIds));
-        }
+
         return log.traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
                         cTO -> mapConditionTOToCondition(cTO,
                                 cTO.getAnatEntityId() == null? null:
-                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
+                                    Optional.ofNullable(anatAndCellMap.get(cTO.getAnatEntityId())).orElseThrow(
                                         () -> new IllegalStateException("Anat. entity not found: "
                                                 + cTO.getAnatEntityId())),
                                 cTO.getStageId() == null? null:
@@ -555,10 +587,10 @@ public class CommonService extends Service {
                                         () -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId())),
                                 cTO.getCellTypeId() == null? null:
-                                    Optional.ofNullable(cellTypeMap.get(cTO.getCellTypeId())).orElseThrow(
+                                    Optional.ofNullable(anatAndCellMap.get(cTO.getCellTypeId())).orElseThrow(
                                         () -> new IllegalStateException("Cell type not found: "
                                                 + cTO.getCellTypeId())),
-                                cTO.getSex().getStringRepresentation(),
+                                convertDAOSexToSex(cTO.getSex()),
                                 cTO.getStrain(),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "

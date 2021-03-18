@@ -23,7 +23,7 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
      * @version Bgee 14 Sep. 2018
      * @since Bgee 14 Sep. 2018
      */
-    public enum Sex implements EnumDAOField {
+    public enum DAOSex implements EnumDAOField {
         NOT_ANNOTATED("not annotated"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male"),
         MIXED("mixed"), NA("NA");
 
@@ -36,7 +36,7 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
          *
          * @param stringRepresentation  A {@code String} corresponding to this {@code Sex}.
          */
-        private Sex(String stringRepresentation) {
+        private DAOSex(String stringRepresentation) {
             this.stringRepresentation = stringRepresentation;
         }
 
@@ -50,9 +50,9 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
          * @return                  A {@code Sex} corresponding to {@code representation}.
          * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code Sex}.
          */
-        public static final Sex convertToSex(String representation) {
+        public static final DAOSex convertToDAOSex(String representation) {
             log.traceEntry("{}", representation);
-            return log.traceExit(TransferObject.convert(Sex.class, representation));
+            return log.traceExit(TransferObject.convert(DAOSex.class, representation));
         }
 
         @Override
@@ -69,12 +69,12 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
     private final String anatEntityId;
     private final String stageId;
     private final String cellTypeId;
-    private final Sex sex;
+    private final DAOSex sex;
     private final String strain;
     private final Integer speciesId;
 
     protected BaseConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId, 
-            Sex sex, String strain, Integer speciesId) {
+            DAOSex sex, String strain, Integer speciesId) {
         super(id);
         this.anatEntityId = anatEntityId;
         this.stageId = stageId;
@@ -105,7 +105,7 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
     /**
      * @return  {@code Sex} of this condition.
      */
-    public Sex getSex() {
+    public DAOSex getSex() {
         return sex;
     }
     /**

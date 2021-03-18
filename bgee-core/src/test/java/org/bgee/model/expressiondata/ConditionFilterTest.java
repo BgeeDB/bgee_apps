@@ -10,6 +10,7 @@ import java.util.Set;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.expressiondata.BaseCondition.Sex;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 
@@ -27,10 +28,10 @@ public class ConditionFilterTest extends TestAncestor {
      */
     @Test
     public void shoudTest() {
-        Condition condition1 = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), null, "M", null, new Species(1));   // kept by filter 1
-        Condition condition1b = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), new AnatEntity("ct1"), "M", null, new Species(1));   // kept by filter 1
-        Condition condition1c = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), new AnatEntity("ct2"), "M", null, new Species(1));   // kept by filter 1
-        Condition condition2 = new Condition(new AnatEntity("ae2"), new DevStage("ds1"), null, "F", null, new Species(1));   // kept by filter 1
+        Condition condition1 = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), null, Sex.MALE, null, new Species(1));   // kept by filter 1
+        Condition condition1b = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), new AnatEntity("ct1"), Sex.MALE, null, new Species(1));   // kept by filter 1
+        Condition condition1c = new Condition(new AnatEntity("ae1"), new DevStage("ds1"), new AnatEntity("ct2"), Sex.MALE, null, new Species(1));   // kept by filter 1
+        Condition condition2 = new Condition(new AnatEntity("ae2"), new DevStage("ds1"), null, Sex.FEMALE, null, new Species(1));   // kept by filter 1
         Condition condition3 = new Condition(new AnatEntity("ae2"), new DevStage("ds2"), null, null, "wt", new Species(1));   // kept by filter 1
         Condition condition4 = new Condition(new AnatEntity("ae4"), new DevStage("ds3"), null, null, null, new Species(1));   // kept by filter 2
         Condition condition5 = new Condition(new AnatEntity("ae5"), new DevStage("ds3"), null, null, "wt", new Species(1));   // kept by filter 2

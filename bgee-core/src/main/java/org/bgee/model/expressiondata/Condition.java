@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class Condition extends BaseCondition<Condition> {
         private final Set<String> devStageIds;
         private final Set<AnatEntity> cellTypes;
         private final Set<String> cellTypeIds;
-        private final Set<String> sexes;
+        private final EnumSet<Sex> sexes;
         private final Set<String> strains;
         private final Set<Species> species;
         private final Set<Integer> speciesIds;
@@ -66,7 +67,7 @@ public class Condition extends BaseCondition<Condition> {
             Set<String> devStageIds = new HashSet<>();
             Set<AnatEntity> cellTypes = new HashSet<>();
             Set<String> cellTypeIds = new HashSet<>();
-            Set<String> sexes = new HashSet<>();
+            EnumSet<Sex> sexes = EnumSet.noneOf(Sex.class);
             Set<String> strains = new HashSet<>();
             Set<Species> species = new HashSet<>();
             Set<Integer> speciesIds = new HashSet<>();
@@ -98,7 +99,8 @@ public class Condition extends BaseCondition<Condition> {
             this.devStageIds = Collections.unmodifiableSet(devStageIds);
             this.cellTypes = Collections.unmodifiableSet(cellTypes);
             this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds);
-            this.sexes = Collections.unmodifiableSet(sexes);
+            //EnumSet is not immutable 
+            this.sexes = sexes;
             this.strains = Collections.unmodifiableSet(strains);
             this.species = Collections.unmodifiableSet(species);
             this.speciesIds = Collections.unmodifiableSet(speciesIds);
@@ -122,7 +124,7 @@ public class Condition extends BaseCondition<Condition> {
         public Set<String> getCellTypeIds() {
             return cellTypeIds;
         }
-        public Set<String> getSexes() {
+        public EnumSet<Sex> getSexes() {
             return sexes;
         }
         public Set<String> getStrains() {
@@ -246,7 +248,7 @@ public class Condition extends BaseCondition<Condition> {
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
             String strain, Species species) throws IllegalArgumentException {
         this(anatEntity, devStage, cellType, sex, strain, species, null, null);
     }
@@ -279,7 +281,7 @@ public class Condition extends BaseCondition<Condition> {
      * @throws IllegalArgumentException     If both {@code anatEntity} and {@code devStage} are blanks
      *                                      or if {@code speciesId} is less than 1.
      */
-    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+    public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
             String strain, Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
         super(anatEntity, devStage, cellType, sex, strain, species);

@@ -20,7 +20,7 @@ import org.bgee.model.dao.api.anatdev.StageDAO.StageTO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SimAnnotToAnatEntityTO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO.SummarySimilarityAnnotationTO;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionRankInfoTO;
@@ -452,35 +452,35 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreConditionTOsEqual() {
-        ConditionTO to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
-        ConditionTO to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
+        ConditionTO to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
+        ConditionTO to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         Collection<ConditionRankInfoTO> rankTOs = Arrays.asList(
                 new ConditionRankInfoTO(DAODataType.AFFYMETRIX, new BigDecimal("1000"), new BigDecimal("10000")),
                 new ConditionRankInfoTO(DAODataType.EST, new BigDecimal("1000"), new BigDecimal("10000")));
-        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, rankTOs);
-        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, rankTOs);
+        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, rankTOs);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, rankTOs);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
-        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
-        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 8, null);
+        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 8, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
-        to2 = new ConditionTO(1, "anatEntityId2", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
+        to2 = new ConditionTO(1, "anatEntityId2", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
-        to2 = new ConditionTO(86, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, null);
+        to2 = new ConditionTO(86, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, null);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
-        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", Sex.FEMALE, "wildtype", 99, rankTOs);
-        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId2", Sex.FEMALE, "wildtype", 99, rankTOs);
+        to1 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId1", DAOSex.FEMALE, "wildtype", 99, rankTOs);
+        to2 = new ConditionTO(1, "anatEntityId1", "stageId1", "cellTypeId2", DAOSex.FEMALE, "wildtype", 99, rankTOs);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -492,30 +492,30 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreRawDataConditionTOsEqual() {
         RawDataConditionTO to1 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, false, "strain1", 99);
+                DAOSex.FEMALE, false, "strain1", 99);
         RawDataConditionTO to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, false, "strain1", 99);
+                DAOSex.FEMALE, false, "strain1", 99);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new RawDataConditionTO(1, 10, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, false, "strain1", 99);
+                DAOSex.FEMALE, false, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.MALE, false, "strain1", 99);
+                DAOSex.MALE, false, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, true, "strain1", 99);
+                DAOSex.FEMALE, true, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new RawDataConditionTO(1, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, false, "strain2", 99);
+                DAOSex.FEMALE, false, "strain2", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new RawDataConditionTO(50, 2, "anatEntityId1", "stageId1", "cellTypeId1",
-                Sex.FEMALE, false, "strain1", 99);
+                DAOSex.FEMALE, false, "strain1", 99);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }

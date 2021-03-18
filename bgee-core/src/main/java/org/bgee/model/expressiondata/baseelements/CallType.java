@@ -45,8 +45,7 @@ public interface CallType {
     public static enum Expression implements CallType, BgeeEnumField {
         EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))),
         NOT_EXPRESSED(Collections.unmodifiableSet(
-                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ, 
-                        DataType.FULL_LENGTH)));
+                EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
         private final static Logger log = LogManager.getLogger(Expression.class.getName());
         
         /**
@@ -158,8 +157,7 @@ public interface CallType {
          * @see #getAllowedDataTypes()
          */
         private static final Set<DataType> DIFF_EXPR_DATA_TYPES = 
-                Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ, 
-                        DataType.FULL_LENGTH));
+                Collections.unmodifiableSet(EnumSet.of(DataType.AFFYMETRIX, DataType.RNA_SEQ));
         
         @Override
         public Set<DataType> getAllowedDataTypes() {

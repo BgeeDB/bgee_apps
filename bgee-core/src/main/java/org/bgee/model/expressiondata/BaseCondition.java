@@ -4,6 +4,7 @@ import java.util.Comparator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.species.Species;
@@ -26,7 +27,24 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
     private static final Comparator<BaseCondition<?>> COND_COMPARATOR = Comparator
             .<BaseCondition<?>, String>comparing(BaseCondition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
             .thenComparing(BaseCondition::getDevStageId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(BaseCondition::getSex, Comparator.nullsLast(Sex::compareTo))
+            .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
             .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
+    
+    public enum Sex implements BgeeEnumField{
+        MALE("male"), FEMALE("female"), HERMAPHRODITE("hermaphrodite"), ANY("any");
+        
+        private final String representation;
+        
+        private Sex(String representation) {
+            this.representation = representation;
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+    }
     
 
     //*********************************
@@ -47,7 +65,7 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
     /**
      * @see #getSex()
      */
-    private final String sex;
+    private final Sex sex;
     /**
      * @see #getStrain()
      */
@@ -69,7 +87,7 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, String sex, 
+    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
             String strain,Species species) throws IllegalArgumentException {
         if (anatEntity == null && devStage == null && cellType == null && sex == null & strain == null) {
             throw log.throwing(new IllegalArgumentException(
@@ -143,7 +161,7 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      * @return  The {@code String} used in this gene expression condition.
      *          Can be {@code null}.
      */
-    public String getSex() {
+    public Sex getSex() {
         return sex;
     }
     /**
@@ -203,7 +221,7 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
             return true;
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass())
+        if (!(obj instanceof BaseCondition))
             return false;
         BaseCondition<?> other = (BaseCondition<?>) obj;
         if (anatEntity == null) {
@@ -234,7 +252,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         } else if (!strain.equals(other.strain))
             return false;
         return true;
-    }
-    
+    }    
     
 }

@@ -215,7 +215,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         private final Set<ConditionRankInfoTO> rankInfoTOs;
         
         public ConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId,
-                Sex sex, String strain, Integer speciesId,
+                DAOSex sex, String strain, Integer speciesId,
                 Collection<ConditionRankInfoTO> rankInfoTOs) {
             super(id, anatEntityId, stageId, cellTypeId, sex, strain, speciesId);
             if (rankInfoTOs != null) {

@@ -488,7 +488,8 @@ public class Uberon extends UberonCommon {
     
     
     /**
-     * Constructor providing the path to the Uberon ontology to used to perforn operations.
+     * Constructor providing the path to the Uberon ontology to used to perform operations.
+     * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
      * @param pathToUberon  A {@code String} that is the path to the Uberon ontology. 
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
@@ -503,6 +504,7 @@ public class Uberon extends UberonCommon {
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used, and the taxon constraints 
      * that will be used to identify to which species classes belong.
+     * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      * @throws OWLOntologyCreationException If an error occurred while merging 
@@ -516,7 +518,8 @@ public class Uberon extends UberonCommon {
      * the path the a file containing taxon constraints, as parsable by 
      * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
      * This argument can be {@code null}, but as usage of the ontology 
-     * requires precise taxon constraints, this is unlikely. 
+     * requires precise taxon constraints, this is unlikely.
+     * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
      * @param ontUtils                  An {@code OntologyUtils} containing the Uberon ontology. 
      * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
@@ -530,7 +533,8 @@ public class Uberon extends UberonCommon {
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
-     * wrapping the Uberon ontology that will be used. 
+     * wrapping the Uberon ontology that will be used.
+     * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
      * @param ontUtils  the {@code OntologyUtils} that will be used. 
      * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 

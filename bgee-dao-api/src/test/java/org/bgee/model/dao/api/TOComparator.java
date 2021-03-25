@@ -745,7 +745,7 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
-                Objects.equals(to1.getSex(), to2.getSex()) &&
+                Objects.equals(to1.getSexes(), to2.getSexes()) &&
                 StringUtils.equals(to1.getStrain(), to2.getStrain()) &&
                 Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.traceExit(true);

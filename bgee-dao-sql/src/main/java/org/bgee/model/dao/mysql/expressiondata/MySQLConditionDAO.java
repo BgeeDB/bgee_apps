@@ -469,8 +469,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 }
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
-                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, strain, 
-                        speciesId, null));
+                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, Collections.singleton(sex), 
+                        strain, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

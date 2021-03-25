@@ -1,5 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.Collection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.EntityTO;
@@ -69,17 +71,17 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
     private final String anatEntityId;
     private final String stageId;
     private final String cellTypeId;
-    private final DAOSex sex;
+    private final Collection<DAOSex> sexes;
     private final String strain;
     private final Integer speciesId;
 
     protected BaseConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId, 
-            DAOSex sex, String strain, Integer speciesId) {
+            Collection<DAOSex> sexes, String strain, Integer speciesId) {
         super(id);
         this.anatEntityId = anatEntityId;
         this.stageId = stageId;
         this.cellTypeId = cellTypeId;
-        this.sex = sex;
+        this.sexes = sexes;
         this.strain = strain;
         this.speciesId = speciesId;
     }
@@ -103,10 +105,10 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
         return cellTypeId;
     }
     /**
-     * @return  {@code Sex} of this condition.
+     * @return  A {@code Collection} of {@code DAOSex} of this condition.
      */
-    public DAOSex getSex() {
-        return sex;
+    public Collection<DAOSex> getSexes() {
+        return sexes;
     }
     /**
      * @return  A {@code String} corresponding to the strain of this condition.

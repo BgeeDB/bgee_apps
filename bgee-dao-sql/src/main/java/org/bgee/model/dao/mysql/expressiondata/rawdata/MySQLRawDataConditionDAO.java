@@ -149,7 +149,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                     }
                 }
                 return log.traceExit(new RawDataConditionTO(id, exprMappedCondId, anatEntityId, stageId,
-                        cellTypeId, sex, sexInferred, strain, speciesId));
+                        cellTypeId, Collections.singleton(sex), sexInferred, strain, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

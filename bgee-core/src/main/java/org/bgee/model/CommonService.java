@@ -93,16 +93,17 @@ public class CommonService extends Service {
      *                      {@link ConditionTO#getAnatEntityId()}.
      * @param devStage      The {@code DevStage} corresponding to the ID returned by
      *                      {@link ConditionTO#getStageId()}.
+     * @param cellType      The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link ConditionTO#getCellTypeId()}.
      * @param species       A {@code Species} that is the species for which the {@code ConditionTO}s 
      *                      were retrieved. Allows to avoid requesting this attribute 
      *                      from the {@code ConditionDAO} if only one species was requested.
      * @return              The mapped {@code Condition}.
      */
     protected static Condition mapConditionTOToCondition(ConditionTO condTO,
-            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex,
-            String strain, Species species) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", condTO, anatEntity, devStage, cellType, sex, 
-                strain, species);
+            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Species species) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", condTO, anatEntity, devStage, cellType, 
+                species);
         if (condTO == null) {
             return log.traceExit((Condition) null);
         }
@@ -132,19 +133,8 @@ public class CommonService extends Service {
                     "Incorrect cell type ID in ConditionTO, expected " + cellType.getId() + " but was "
                     + condTO.getCellTypeId()));
         }
-        if (condTO.getSex() != null && sex != null &&
-                !condTO.getSex().getStringRepresentation().equals(sex)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect sex in ConditionTO, expected " + sex + " but was "
-                    + condTO.getSex().getStringRepresentation()));
-        }
-        if (condTO.getStrain() != null && strain != null &&
-                !condTO.getStrain().equals(strain)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect strain in ConditionTO, expected " + strain + " but was "
-                    + condTO.getStrain()));
-        }
-        return log.traceExit(new Condition(anatEntity, devStage, cellType, sex, strain, species));
+        return log.traceExit(new Condition(anatEntity, devStage, cellType, convertDAOSexToSex(condTO.getSexes()), 
+                condTO.getStrain(), species));
     }
     
     protected static ConditionTO mapConditionToConditionTO(int condId, Condition cond) {
@@ -256,39 +246,46 @@ public class CommonService extends Service {
         }
     }
     
-    protected static DAOSex convertSexToDAOSex(Sex sex) {
+    protected static Collection<DAOSex> convertSexToDAOSex(Sex sex) {
         log.traceEntry("{}", sex);
         switch(sex) {
             case MALE:
-                return log.traceExit(DAOSex.MALE);
+                return log.traceExit(Collections.singleton(DAOSex.MALE));
             case FEMALE:
-                return log.traceExit(DAOSex.FEMALE);
+                return log.traceExit(Collections.singleton(DAOSex.FEMALE));
             case HERMAPHRODITE:
-                return log.traceExit(DAOSex.HERMAPHRODITE);
+                return log.traceExit(Collections.singleton(DAOSex.HERMAPHRODITE));
             case ANY:
                 return log.traceExit(EnumSet.allOf(DAOSex.class));
         default:
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + sex));
+            throw log.throwing(new IllegalStateException("Unsupported BaseCondition.Sex: " + sex));
         }
     }
     
-    protected static Sex convertDAOSexToSex(DAOSex daoSex) {
-        log.traceEntry("{}", daoSex);
-        switch(daoSex) {
-            case MALE:
-                return log.traceExit(Sex.MALE);
-            case FEMALE:
-                return log.traceExit(Sex.FEMALE);
-            case HERMAPHRODITE:
-                return log.traceExit(Sex.HERMAPHRODITE);
-            case MIXED:
-                return log.traceExit(Sex.ANY);
-            case NA:
-                return log.traceExit(EnumSet.noneOf(elementType));
-            case NOT_ANNOTATED:
-                return log.traceExit(EnumSet.allOf(DAOSex.class));
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + daoSex));
+    protected static Sex convertDAOSexToSex(Collection<DAOSex> daoSexes) {
+        log.traceEntry("{}", daoSexes);
+        if (daoSexes.size() == 1) {
+            DAOSex daoSex = daoSexes.iterator().next();
+            switch(daoSex) {
+                case MALE:
+                    return log.traceExit(Sex.MALE);
+                case FEMALE:
+                    return log.traceExit(Sex.FEMALE);
+                case HERMAPHRODITE:
+                    return log.traceExit(Sex.HERMAPHRODITE);
+                case MIXED:
+                    return log.traceExit(Sex.ANY);
+                case NA:
+                    return log.traceExit(Sex.ANY);
+                case NOT_ANNOTATED:
+                    return log.traceExit(Sex.ANY);
+                default:
+                    throw log.throwing(new IllegalStateException("Unsupported BaseConditionTO.DAOSex: " + daoSex));
+            }
+        } else if (daoSexes.size() > 1) {
+            return log.traceExit(Sex.ANY);
+        }else {
+            throw log.throwing(new IllegalStateException("A BaseConditionTO.DAOSex should be provided"));
         }
     }
 
@@ -542,8 +539,9 @@ public class CommonService extends Service {
             if (condTO.getCellTypeId() != null) {
                 cellTypeIds.add(condTO.getCellTypeId());
             }
-            if (condTO.getSex() != null) {
-                sexes.add(condTO.getSex().getStringRepresentation());
+            if (condTO.getSexes() != null) {
+                sexes.addAll(condTO.getSexes().stream().map(s -> s.getStringRepresentation())
+                        .collect(Collectors.toSet()));
             }
             if (condTO.getStrain() != null) {
                 strains.add(condTO.getStrain());
@@ -590,8 +588,6 @@ public class CommonService extends Service {
                                     Optional.ofNullable(anatAndCellMap.get(cTO.getCellTypeId())).orElseThrow(
                                         () -> new IllegalStateException("Cell type not found: "
                                                 + cTO.getCellTypeId())),
-                                convertDAOSexToSex(cTO.getSex()),
-                                cTO.getStrain(),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "
                                                 + cTO.getSpeciesId())))

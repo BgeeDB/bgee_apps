@@ -23,7 +23,7 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
     /**
      * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
      */
-    protected static final Comparator<RawDataCondition> COND_COMPARATOR = Comparator
+    private static final Comparator<RawDataCondition> COND_COMPARATOR = Comparator
             .<RawDataCondition, RawDataCondition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
             .thenComparing(RawDataCondition::getSex, Comparator.nullsLast(RawDataSex::compareTo))
             .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))

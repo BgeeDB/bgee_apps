@@ -45,7 +45,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
     /**
      * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
      */
-    protected static final Comparator<Condition> COND_COMPARATOR = Comparator
+    private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .<Condition, Condition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
             .thenComparing(Condition::getSex, Comparator.nullsLast(Sex::compareTo))
             .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
@@ -151,7 +151,8 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             return cellTypeIds;
         }
         public EnumSet<Sex> getSexes() {
-            return sexes;
+            //Defensive copying because EnumSet cannot be made immutable
+            return EnumSet.copyOf(sexes);
         }
         public Set<String> getStrains() {
             return strains;
@@ -242,6 +243,12 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             return true;
         }
     }
+
+    /**
+     * A {@code String} that represents the standardized name of the root of all strains
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String STRAIN_ROOT = "wild-type";
 
     //*********************************
     //  ATTRIBUTES AND CONSTRUCTORS

@@ -1,6 +1,9 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -118,6 +121,11 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      */
     public class RawDataConditionTO extends BaseConditionTO {
         private final static Logger log = LogManager.getLogger(RawDataConditionTO.class.getName());
+
+        public final static Set<String> NO_INFO_STRAINS = new HashSet<>(Arrays.asList(
+                "wild-type", "NA", "not annotated", "confidential_restricted_data",
+                // The following were not standardized as of Bgee 15.0, maybe we can remove them later.
+                "(Missing)", "mix of breed", "mixed-breed", "multiple breeds"));
         /**
          * {@code EnumDAOField} representing the different sex info that can be used
          * in {@link RawDataConditionTO} in Bgee.

@@ -210,7 +210,7 @@ public class Uberon extends UberonCommon {
     public static void main(String[] args) throws OWLOntologyCreationException, 
         OBOFormatParserException, IOException, IllegalArgumentException, 
         OWLOntologyStorageException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         if (args[0].equalsIgnoreCase("extractTaxonIds")) {
             if (args.length != 3) {
@@ -513,6 +513,7 @@ public class Uberon extends UberonCommon {
     public Uberon(OntologyUtils ontUtils) throws OWLOntologyCreationException {
         super(ontUtils);
     }
+
     /**
      * Constructor providing the path to the Uberon ontology to used to perform operations, 
      * the path the a file containing taxon constraints, as parsable by 
@@ -521,22 +522,43 @@ public class Uberon extends UberonCommon {
      * requires precise taxon constraints, this is unlikely.
      * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
-     * @param ontUtils                  An {@code OntologyUtils} containing the Uberon ontology. 
+     * @param uberonOntUtils            An {@code OntologyUtils} containing the Uberon ontology.
      * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
      * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
      * @throws OBOFormatParserException     If the ontology is malformed.
      * @throws IOException                  If the file could not be read. 
      */
-    public Uberon(OntologyUtils ontUtils, String pathToTaxonConstraints) 
-            throws OWLOntologyCreationException, OBOFormatParserException, IOException {
-        this(ontUtils, TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
+    public Uberon(OntologyUtils uberonOntUtils, String pathToTaxonConstraints)
+            throws OBOFormatParserException, OWLOntologyCreationException, IOException {
+        this(uberonOntUtils, null, pathToTaxonConstraints);
+    }
+    /**
+     * Constructor providing the path to the Uberon ontology to used to perform operations, 
+     * the path the a file containing taxon constraints, as parsable by 
+     * {@link TaxonConstraints#extractTaxonConstraints(String)}. 
+     * This argument can be {@code null}, but as usage of the ontology 
+     * requires precise taxon constraints, this is unlikely.
+     * 
+     * @param uberonOntUtils            An {@code OntologyUtils} containing the Uberon ontology.
+     * @param taxOntUtils               the {@code OntologyUtils} that will be used for taxonomy ontology.
+     *                                  Can be null if the taxonomy is retrieve directly from
+     *                                  {@code uberonOntUtils}.
+     * @param pathToTaxonConstraints    A {@code String} that is the path to the taxon constraints.
+     * @throws OWLOntologyCreationException If an error occurred while loading the ontology.
+     * @throws OBOFormatParserException     If the ontology is malformed.
+     * @throws IOException                  If the file could not be read. 
+     */
+    public Uberon(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils,
+            String pathToTaxonConstraints) throws OWLOntologyCreationException,
+    OBOFormatParserException, IOException {
+        this(uberonOntUtils, taxOntUtils, TaxonConstraints.extractTaxonConstraints(pathToTaxonConstraints));
     }
     /**
      * Constructor providing the {@code OntologyUtils} used to perform operations, 
      * wrapping the Uberon ontology that will be used.
      * THIS ONTOLOGY MUST BE MERGED WITH THE TAXONOMY ONTOLOGY.
      * 
-     * @param ontUtils  the {@code OntologyUtils} that will be used. 
+     * @param uberonOntUtils    the {@code OntologyUtils} that will be used.
      * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
      *                          {@code OWLClass}es, and values are {@code Set}s 
      *                          of {@code Integer}s containing the IDs of taxa 
@@ -544,9 +566,39 @@ public class Uberon extends UberonCommon {
      * @throws OWLOntologyCreationException If an error occurred while merging 
      *                                      the import closure of the ontology.
      */
-    public Uberon(OntologyUtils ontUtils, Map<String, Set<Integer>> taxonConstraints) 
+    public Uberon(OntologyUtils uberonOntUtils, Map<String, Set<Integer>> taxonConstraints)
             throws OWLOntologyCreationException {
-        super(ontUtils);
+        this(uberonOntUtils, null, taxonConstraints);
+    }
+    /**
+     * Constructor providing the {@code OntologyUtils} used to perform operations, 
+     * wrapping the Uberon ontology that will be used.
+     * 
+     * @param uberonOntUtils    the {@code OntologyUtils} that will be used.
+     * @param taxOntUtils       the {@code OntologyUtils} that will be used for taxonomy ontology.
+     *                          Can be null if the taxonomy is retrieve directly from
+     *                          {@code uberonOntUtils}.
+     * @param taxonConstraints  A {@code Map} where keys are IDs of the Uberon 
+     *                          {@code OWLClass}es, and values are {@code Set}s 
+     *                          of {@code Integer}s containing the IDs of taxa 
+     *                          in which the {@code OWLClass} exists.
+     * @throws OWLOntologyCreationException If an error occurred while merging 
+     *                                      the import closure of the ontology.
+     */
+    public Uberon(OntologyUtils uberonOntUtils, OntologyUtils taxOntUtils,
+            Map<String, Set<Integer>> taxonConstraints) throws OWLOntologyCreationException {
+        super(uberonOntUtils);
+        if (taxOntUtils != null) {
+            //We cheat and use TaxonConstraints to merge Uberon and taxonomy ontology.
+            //Creating the TaxonConstraints should update the Uberon ontology we use.
+            TaxonConstraints constraints = new TaxonConstraints(uberonOntUtils.getWrapper(), 
+                    taxOntUtils.getWrapper());
+            if (!this.getOntologyUtils().getWrapper().getSourceOntology().equals(
+                    constraints.getUberonOntWrapper().getSourceOntology())) {
+                throw log.throwing(new IllegalStateException("TaxonConstraints should modified "
+                        + "the referenced ontology, not cloning/updating a new one."));
+            }
+        }
         this.setTaxonConstraints(taxonConstraints);
     }
     
@@ -588,12 +640,7 @@ public class Uberon extends UberonCommon {
             OWLOntologyStorageException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(this.getPathToUberonOnt(), this.getModifiedOntPath(), 
-                this.getClassesRemovedFilePath(), this.getClassIdsToRemove(), 
-                this.getRelsBetweenToRemove(), this.getRelIds(), 
-                this.getToRemoveSubgraphRootIds(), 
-                this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
-                this.getClassIdsExcludedFromSubsetRemoval());
+        log.traceEntry();
         
         this.simplifyUberon();
 
@@ -661,10 +708,7 @@ public class Uberon extends UberonCommon {
     public void simplifyUberon() throws UnknownOWLOntologyException {
         //we provide to the entry methods all class attributes that will be used 
         //(use to be arguments of this method)
-        log.entry(this.getClassIdsToRemove(), this.getRelsBetweenToRemove(), 
-                this.getRelIds(), this.getToRemoveSubgraphRootIds(), 
-                this.getToFilterSubgraphRootIds(), this.getSubsetNames(), 
-                this.getClassIdsExcludedFromSubsetRemoval());
+        log.traceEntry();
         
         //convert taxon ECAs
         this.convertTaxonECAs();
@@ -786,7 +830,7 @@ public class Uberon extends UberonCommon {
      */
     public void saveSimplificationInfo(OWLOntology ont, String classesRemovedFilePath, 
             Map<String, String> classesRemoved) throws IOException {
-        log.entry(ont, classesRemovedFilePath, classesRemoved);
+        log.traceEntry("{}, {}, {}", ont, classesRemovedFilePath, classesRemoved);
         
         //get a OWLGraphWrapper to obtain information about classes
         OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);
@@ -885,7 +929,7 @@ public class Uberon extends UberonCommon {
      */
     public void extractTaxonIds(String outputFile) 
             throws IllegalArgumentException, IOException {
-        log.entry(outputFile);
+        log.traceEntry("{}", outputFile);
         
         Set<Integer> taxonIds = this.extractTaxonIds();
         try(PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
@@ -1008,7 +1052,7 @@ public class Uberon extends UberonCommon {
      * @see org.bgee.pipeline.ontologycommon.OntologyUtils#getXRefMappings()
      */
     public void saveXRefMappingsToFile(String outputFile) throws IOException {
-        log.entry(outputFile);
+        log.traceEntry("{}", outputFile);
         
         //create the header of the file, and the conditions on the columns
         String[] header = new String[2];
@@ -1048,7 +1092,7 @@ public class Uberon extends UberonCommon {
      * @throws IOException  If an error occurred while writing in the output file.
      */
     public void extractSexInfoToFile(String outputFile) throws IOException {
-        log.entry(outputFile);
+        log.traceEntry("{}", outputFile);
         
         final OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         
@@ -1126,7 +1170,7 @@ public class Uberon extends UberonCommon {
      * @see #INFORMATIVE_SUBSETS
      */
     public boolean isNonInformativeSubsetMember(OWLObject object) {
-        log.entry(object);
+        log.traceEntry("{}", object);
         
         Collection<String> subsets = this.getOntologyUtils().getWrapper().getSubsets(object);
         return log.traceExit(!Collections.disjoint(NON_INFORMATIVE_SUBSETS, subsets) && 
@@ -1151,13 +1195,15 @@ public class Uberon extends UberonCommon {
      */
     public void explainRelationFromOWLClassIds(String sourceClassId, String targetClassId,
             Collection<Integer> speciesIds) {
-        log.entry(sourceClassId, targetClassId, speciesIds);
+        log.traceEntry("{}, {}, {}", sourceClassId, targetClassId, speciesIds);
 
         Map<Boolean, Set<OWLGraphEdge>> directIndirectValidOutgoingEdges =
                 this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId, speciesIds);
 
-        if (directIndirectValidOutgoingEdges == null) {
-            System.out.println("Could not find OWLClass corresponding to " + sourceClassId);
+        if (directIndirectValidOutgoingEdges == null ||
+                directIndirectValidOutgoingEdges.values().stream().noneMatch(s -> !s.isEmpty())) {
+            System.out.println("Could not find OWLClass corresponding to " + sourceClassId
+                    + ", or edges outgoing from it (to the targeted class if any).");
             log.traceExit(); return;
         }
         OntologyUtils utils = this.getOntologyUtils();
@@ -1210,7 +1256,7 @@ public class Uberon extends UberonCommon {
 
     public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
             String targetClassId, Collection<Integer> speciesIds) {
-        log.entry(sourceClassId, targetClassId, speciesIds);
+        log.traceEntry("{}, {}, {}", sourceClassId, targetClassId, speciesIds);
         return log.traceExit(this.getValidOutgoingEdgesFromOWLClassIds(sourceClassId, targetClassId,
                 speciesIds, false, new HashSet<>()));
     }
@@ -1218,7 +1264,8 @@ public class Uberon extends UberonCommon {
     public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesFromOWLClassIds(String sourceClassId,
             String targetClassId, Collection<Integer> speciesIds, boolean twoPassesValidation,
             Set<OWLClass> classesToIgnore) {
-        log.entry(sourceClassId, targetClassId, speciesIds, twoPassesValidation, classesToIgnore);
+        log.traceEntry("{}, {}, {}, {}, {}", sourceClassId, targetClassId, speciesIds,
+                twoPassesValidation, classesToIgnore);
 
         OWLClass sourceClass = this.getOWLClass(sourceClassId);
         if (sourceClass == null) {
@@ -1293,7 +1340,7 @@ public class Uberon extends UberonCommon {
      */
     public Map<Boolean, Set<OWLGraphEdge>> getValidOutgoingEdgesForOWLClass(OWLClass cls,
             Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
-        log.entry(cls, classesToIgnore, speciesIds);
+        log.traceEntry("{}, {}, {}", cls, classesToIgnore, speciesIds);
 
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -1318,6 +1365,7 @@ public class Uberon extends UberonCommon {
             if (!allClasses.contains(cls)) {
                 continue;
             }
+            log.trace("Class {} contained in ontology {}", cls, ont);
 
             //************************************
             // Relations outgoing from cls
@@ -1326,6 +1374,7 @@ public class Uberon extends UberonCommon {
             //here we retrieve the graph closure outgoing from cls
             Set<OWLGraphEdge> allOutgoingEdges = 
                     wrapper.getOutgoingEdgesNamedClosureOverSupPropsWithGCI(cls);
+            log.trace("{} OutgoingEdgesNamedClosureOverSupPropsWithGCI found", allOutgoingEdges.size());
 
             //we do not want to include develops_from or transformation_of relations 
             //propagated through is_a relations AFTER we reached the first 
@@ -1467,7 +1516,7 @@ public class Uberon extends UberonCommon {
      *                                  and a label for {@code cls}.
      */
     public boolean isValidClass(OWLClass cls, Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
-        log.entry(cls, classesToIgnore, speciesIds);
+        log.traceEntry("{}, {}, {}", cls, classesToIgnore, speciesIds);
         
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -1489,7 +1538,7 @@ public class Uberon extends UberonCommon {
                 throw log.throwing(new IllegalArgumentException("No OBO-like ID retrieved for " + 
                         cls));
             }
-            String name = wrapper.getLabel(cls);
+//            String name = wrapper.getLabel(cls);
 //            if (StringUtils.isBlank(name)) {
 //                throw log.throwing(new IllegalArgumentException("No label retrieved for " + 
 //                        cls));
@@ -1507,7 +1556,7 @@ public class Uberon extends UberonCommon {
      * @return  {@code true} if {@code o} is an {@code OWLClass} part of the taxonomy ontology.
      */
     public boolean isTaxonomyClass(OWLObject o) {
-        log.entry(o);
+        log.traceEntry("{}", o);
         OWLGraphWrapper wrapper = this.getOntologyUtils().getWrapper();
         return log.traceExit(wrapper.getAncestorsThroughIsA(o).contains(
                 wrapper.getOWLClassByIdentifier(UberonCommon.TAXONOMY_ROOT_ID, true)));
@@ -1570,7 +1619,8 @@ public class Uberon extends UberonCommon {
             Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
             Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs, 
             Set<OWLClass> classesToIgnore, Collection<Integer> speciesIds) {
-        log.entry(directRelationTOs, indirectRelationTOs, classesToIgnore, speciesIds);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", cls, directIndirectValidOutgoingEdges,
+                directRelationTOs, indirectRelationTOs, classesToIgnore, speciesIds);
         
         OntologyUtils utils = this.getOntologyUtils();
         OWLGraphWrapper wrapper = utils.getWrapper();
@@ -1763,7 +1813,8 @@ public class Uberon extends UberonCommon {
     generateRelationTOsSecondPass(Map<PipelineRelationTO<String>, Set<Integer>> directRelationTOs, 
             Map<PipelineRelationTO<String>, Set<Integer>> indirectRelationTOs,
             Collection<Integer> speciesIds, int relationIdStart) {
-        log.entry(directRelationTOs, indirectRelationTOs, speciesIds, relationIdStart);
+        log.traceEntry("{}, {}, {}, {}", directRelationTOs, indirectRelationTOs, speciesIds,
+                relationIdStart);
         
         int relationId = relationIdStart;
         Set<RelationTO<String>> allRelationTOs = new HashSet<>(directRelationTOs.keySet());
@@ -1888,9 +1939,9 @@ public class Uberon extends UberonCommon {
      *                          the arguments.
      * @see #generateRelationTOsSecondPass(Map, Map, Collection, int)
      */
-    private static Set<TaxonConstraintTO<Integer>> getRelationTaxonConstraints(int relationId, Set<Integer> inSpecies, 
-            Collection<Integer> allowedSpeciesIds) {
-        log.entry(relationId, inSpecies, allowedSpeciesIds);
+    private static Set<TaxonConstraintTO<Integer>> getRelationTaxonConstraints(int relationId,
+            Set<Integer> inSpecies, Collection<Integer> allowedSpeciesIds) {
+        log.traceEntry("{}, {}, {}", relationId, inSpecies, allowedSpeciesIds);
 
         Set<TaxonConstraintTO<Integer>> taxonConstraints = new HashSet<>();
         if (inSpecies.containsAll(allowedSpeciesIds)) {
@@ -1922,7 +1973,7 @@ public class Uberon extends UberonCommon {
      *                  can be used to retrieve {@code OWLClass}es representing taxa.
      */
     private Set<OWLObjectPropertyExpression> getTaxonObjectProperties(OWLGraphWrapper wrapper) {
-        log.entry(wrapper);
+        log.traceEntry("{}", wrapper);
         
         //get object properties "in_taxon" and "evolved_multiple_times_in", 
         //and any sub-properties
@@ -1954,7 +2005,7 @@ public class Uberon extends UberonCommon {
      *                  to retrieve {@code OWLClass}es representing taxa.
      */
     private Set<OWLAnnotationProperty> getTaxonAnnotationProperties(OWLGraphWrapper wrapper) {
-        log.entry(wrapper);
+        log.traceEntry("{}", wrapper);
         
         //get object properties "ambiguous_for_taxon", "dubious_for_taxon", 
         //"homologous_in","never_in_taxon", "RO:0002161", "present_in_taxon", 
@@ -2062,7 +2113,7 @@ public class Uberon extends UberonCommon {
 //    public void extractRelatedEdgesToOutputFile(
 //            String uberonFile, String outputFile, String relationToUseId)  throws OWLOntologyCreationException, 
 //            OBOFormatParserException, IOException {
-//        log.entry(uberonFile, outputFile, relationToUseId);
+//        log.traceEntry("{}, {}, {}", uberonFile, outputFile, relationToUseId);
 //        
 //        OWLOntology ont = OntologyUtils.loadOntology(uberonFile);
 //        OWLGraphWrapper wrapper = new OWLGraphWrapper(ont);

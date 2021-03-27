@@ -961,7 +961,7 @@ public class InsertPropagatedCalls extends CallService {
          */
         private Map<Condition, Integer> insertNewGlobalConditions(Set<PipelineCall> propagatedCalls,
                 Set<Condition> insertedGlobalConditions, ConditionDAO condDAO) {
-            log.entry(propagatedCalls, insertedGlobalConditions, condDAO);
+            log.traceEntry("{}, {}, {}", propagatedCalls, insertedGlobalConditions, condDAO);
             
             //First, we retrieve the conditions not already present in the database
             Set<Condition> conds = propagatedCalls.stream()
@@ -987,7 +987,7 @@ public class InsertPropagatedCalls extends CallService {
         private Set<PipelineGlobalCondToRawCondTO> insertGlobalCondToRawConds(
                 Set<PipelineCall> propagatedCalls, Set<PipelineGlobalCondToRawCondTO> insertedRels,
                 Map<Condition, Integer> condMap, ConditionDAO condDAO) {
-            log.entry(propagatedCalls, insertedRels, condMap, condDAO);
+            log.traceEntry("{}, {}, {}, {}", propagatedCalls, insertedRels, condMap, condDAO);
 
             //We map PipelineCalls to GlobalConditionToRawConditionTOs and remove those already inserted
             Set<PipelineGlobalCondToRawCondTO> newRels = propagatedCalls.stream()
@@ -1054,7 +1054,7 @@ public class InsertPropagatedCalls extends CallService {
 
         private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
             Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
-            log.entry(propagatedCalls, condMap, dao);
+            log.traceEntry("{}, {}, {}", propagatedCalls, condMap, dao);
         
             //Now, insert. We associate each PipelineCall to its generated TO for easier retrieval
             Map<GlobalExpressionCallTO, PipelineCall> callMap = propagatedCalls.stream()
@@ -1117,7 +1117,7 @@ public class InsertPropagatedCalls extends CallService {
 
         private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(int exprId, int condId, 
                 PipelineCall pipelineCall) {
-            log.entry(exprId, condId, pipelineCall);
+            log.traceEntry("{}, {}, {}", exprId, condId, pipelineCall);
             
             return log.traceExit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(), condId,
                     //GlobalMeanRank: not a real attribute of the table. Maybe we should
@@ -1129,7 +1129,7 @@ public class InsertPropagatedCalls extends CallService {
         
         private static Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(
                 PipelineCall pipelineCall) {
-            log.entry(pipelineCall);
+            log.traceEntry("{}", pipelineCall);
 
             return log.traceExit(pipelineCall.getCallData().stream()
                     .map(cd -> {
@@ -1176,7 +1176,7 @@ public class InsertPropagatedCalls extends CallService {
         }
         private static Map<ConditionDAO.Attribute, DAOPropagationState> convertDataPropToDAOPropStates(
                 DataPropagation dp) {
-            log.entry(dp);
+            log.traceEntry("{}", dp);
             
             Map<ConditionDAO.Attribute, DAOPropagationState> map =
                     EnumSet.allOf(ConditionDAO.Attribute.class).stream()
@@ -1204,7 +1204,7 @@ public class InsertPropagatedCalls extends CallService {
         
         private static DAOExperimentCount convertExperimentExpressionCountToDAOExperimentCount(
                 ExperimentExpressionCount count) {
-            log.entry(count);
+            log.traceEntry("{}", count);
             return log.traceExit(new DAOExperimentCount(
                     convertCallTypeToDAOCallType(count.getCallType()),
                     convertDataQualityToDAODataQuality(count.getDataQuality()),
@@ -1214,7 +1214,7 @@ public class InsertPropagatedCalls extends CallService {
         }
         private static DAOExperimentCount.CallType convertCallTypeToDAOCallType(
                 CallType.Expression callType) {
-            log.entry(callType);
+            log.traceEntry("{}", callType);
 
             switch(callType) {
             case EXPRESSED:
@@ -1226,7 +1226,7 @@ public class InsertPropagatedCalls extends CallService {
             }
         }
         private static DAOExperimentCount.DataQuality convertDataQualityToDAODataQuality(DataQuality qual) {
-            log.entry(qual);
+            log.traceEntry("{}", qual);
 
             switch(qual) {
             case LOW:
@@ -1238,7 +1238,7 @@ public class InsertPropagatedCalls extends CallService {
             }
         }
         private static DAOPropagationState convertPropStateToDAOPropState(PropagationState propState) {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
 
             if (propState == null) {
                 return log.traceExit((DAOPropagationState) null);
@@ -1274,7 +1274,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     public static void insert(List<Integer> speciesIds, 
             Set<ConditionDAO.Attribute> condParams) {
-        log.entry(speciesIds, condParams);
+        log.traceEntry("{}, {}", speciesIds, condParams);
         InsertPropagatedCalls.insert(speciesIds, condParams,
                 DAOManager::getDAOManager, ServiceFactory::new);  
         log.traceExit();
@@ -1298,7 +1298,7 @@ public class InsertPropagatedCalls extends CallService {
             Set<ConditionDAO.Attribute> condParams, 
             final Supplier<DAOManager> daoManagerSupplier, 
             final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
-        log.entry(speciesIds, condParams, daoManagerSupplier, serviceFactoryProvider);
+        log.traceEntry("{}, {}, {}, {}", speciesIds, condParams, daoManagerSupplier, serviceFactoryProvider);
 
         // Sanity checks on attributes
         if (condParams == null || condParams.isEmpty()) {
@@ -1596,7 +1596,7 @@ public class InsertPropagatedCalls extends CallService {
      * @throws RuntimeException
      */
     private void exceptionOccurs(Exception e, Thread insertThread) throws RuntimeException {
-        log.entry(e);
+        log.traceEntry("{}, {}", e, insertThread);
         //set errorOccured for all threads to know there was an error
         if (this.errorOccured == null) {
             this.errorOccured = e;
@@ -1612,7 +1612,7 @@ public class InsertPropagatedCalls extends CallService {
     }
 
     private void interruptInsertIfNeeded(Thread insertThread) {
-        log.traceEntry();
+        log.traceEntry("{}", insertThread);
         Set<Thread.State> waitingStates = EnumSet.of(Thread.State.BLOCKED, Thread.State.WAITING,
                 Thread.State.TIMED_WAITING);
         if (insertThread != null && waitingStates.contains(insertThread.getState()) &&
@@ -1624,7 +1624,7 @@ public class InsertPropagatedCalls extends CallService {
     }
     
     private Map<Integer, Condition> loadRawConditionMap(Collection<Species> species) {
-        log.entry(species);
+        log.traceEntry("{}", species);
 
         //TODO: to refactor with method org.bgee.model.CommonService.loadConditionMapFromResultSet
         Map<Integer, Species> speMap = species.stream()
@@ -1855,7 +1855,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     private Stream<RawExpressionCallTO> performsRawExpressionCallTOQuery(Set<Integer> geneIds, 
             RawExpressionCallDAO rawCallDAO) throws IllegalArgumentException {
-        log.entry(geneIds, rawCallDAO);
+        log.traceEntry("{}, {}", geneIds, rawCallDAO);
         
         Stream<RawExpressionCallTO> expr = rawCallDAO
             .getExpressionCallsOrderedByGeneIdAndExprId(geneIds)
@@ -1879,7 +1879,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     private Map<DataType, Stream<ExperimentExpressionTO>> performsExperimentExpressionQuery(
             Set<Integer> geneIds, ExperimentExpressionDAO dao) throws IllegalArgumentException {
-        log.entry(geneIds, dao);
+        log.traceEntry("{}, {}", geneIds, dao);
 
         Map<DataType, Stream<ExperimentExpressionTO>> map = new HashMap<>();
         for (DataType dt: DataType.values()) {
@@ -1926,7 +1926,7 @@ public class InsertPropagatedCalls extends CallService {
     private Map<PipelineCall, Set<PipelineCallData>> propagatePipelineCalls(
             Map<PipelineCall, Set<PipelineCallData>> data, ConditionGraph conditionGraph)
                 throws IllegalArgumentException {
-        log.entry(data, conditionGraph);
+        log.traceEntry("{}, {}", data, conditionGraph);
         log.trace(COMPUTE_MARKER, "Starting to propagate {} PipelineCalls.", data.size());
 
         Map<PipelineCall, Set<PipelineCallData>> propagatedData = new HashMap<>();
@@ -2022,7 +2022,7 @@ public class InsertPropagatedCalls extends CallService {
     private Map<PipelineCall, Set<PipelineCallData>> propagatePipelineData(
             Entry<PipelineCall, Set<PipelineCallData>> data, Set<Condition> propagatedConds, 
             boolean areAncestors) {
-        log.entry(data, propagatedConds, areAncestors);
+        log.traceEntry("{}, {}, {}", data, propagatedConds, areAncestors);
         log.trace(COMPUTE_MARKER, "Start to propagate PipelineData, to ancestor? {}.", areAncestors);
 
         Map<PipelineCall, Set<PipelineCallData>> map = new HashMap<>();
@@ -2133,7 +2133,7 @@ public class InsertPropagatedCalls extends CallService {
     //We return PipelineCall rather than ExpressionCall to be able to keep bgeeGeneId
     private PipelineCall reconcileGeneCalls(Set<PipelineCall> calls,
             Set<PipelineCallData> pipelineData) {
-        log.entry(calls, pipelineData);
+        log.traceEntry("{}, {}", calls, pipelineData);
 
         this.checkErrorOccurred();
     
@@ -2219,7 +2219,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     private ExpressionCallData mergePipelineCallDataIntoExpressionCallData(DataType dataType,
             Set<PipelineCallData> pipelineCallData) {
-        log.entry(dataType, pipelineCallData);
+        log.traceEntry("{}, {}", dataType, pipelineCallData);
 
         this.checkErrorOccurred();
 
@@ -2428,7 +2428,7 @@ public class InsertPropagatedCalls extends CallService {
     private static Set<PipelineCallData> mapExpExprTOsToPipelineCallData(
         Map<DataType, Set<ExperimentExpressionTO>> expExprsByDataTypes,
         Set<ConditionDAO.Attribute> condParams) {
-        log.entry(expExprsByDataTypes, condParams);
+        log.traceEntry("{}, {}", expExprsByDataTypes, condParams);
         return log.traceExit(expExprsByDataTypes.entrySet().stream()
             .map(eeTo -> new PipelineCallData(eeTo.getKey(), getSelfDataProp(condParams),
                 null, eeTo.getValue(), null))
@@ -2437,7 +2437,7 @@ public class InsertPropagatedCalls extends CallService {
 
     private static PipelineCall mapRawCallTOToPipelineCall(RawExpressionCallTO callTO, Condition cond,
             Set<ConditionDAO.Attribute> condParams) {
-        log.entry(callTO, cond, condParams);
+        log.traceEntry("{}, {}, {}", callTO, cond, condParams);
 
         if (cond == null) {
             throw log.throwing(new IllegalArgumentException("No Condition provided for CallTO: " 
@@ -2473,7 +2473,7 @@ public class InsertPropagatedCalls extends CallService {
     private static int getSpecificCount(Set<PipelineCallData> pipelineCallData,
             Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataToEETO,
             CallDirection callDirection, CallQuality callQuality) {
-        log.entry(pipelineCallData, funCallDataToEETO, callQuality, callDirection);
+        log.traceEntry("{}, {}, {}, {}", pipelineCallData, funCallDataToEETO, callQuality, callDirection);
         
         //to count each experiment only once in a given set of "self", "parent" or "descendant" attributes, 
         //we keep its "best" call from all ExperimentExpressionTOs.
@@ -2490,7 +2490,7 @@ public class InsertPropagatedCalls extends CallService {
     
     private static Set<ExperimentExpressionTO> getBestSelectedEETOs(Set<PipelineCallData> pipelineCallData,
             Function<PipelineCallData, Set<ExperimentExpressionTO>> funCallDataToEETO) {
-        log.entry(pipelineCallData, funCallDataToEETO);
+        log.traceEntry("{}, {}", pipelineCallData, funCallDataToEETO);
         return log.traceExit(getBestExperimentExpressionTOs(
             pipelineCallData.stream()
                 .map(p -> funCallDataToEETO.apply(p))
@@ -2512,7 +2512,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     private static int getTotalCount(Set<PipelineCallData> pipelineCallData,
             final CallDirection callDirection, CallQuality callQuality) {
-        log.entry(pipelineCallData, callQuality, callDirection);
+        log.traceEntry("{}, {}, {}", pipelineCallData, callQuality, callDirection);
 
         //to count each experiment only once in different "total" attributes, 
         //we keep its "best" call from all ExperimentExpressionTOs.
@@ -2535,7 +2535,7 @@ public class InsertPropagatedCalls extends CallService {
      * @return
      */
     private static Set<ExperimentExpressionTO> getBestTotalEETOs(Set<PipelineCallData> pipelineCallData) {
-        log.entry(pipelineCallData);
+        log.traceEntry("{}", pipelineCallData);
         return log.traceExit(getBestExperimentExpressionTOs(
             pipelineCallData.stream()
                 .map(p -> {
@@ -2584,7 +2584,7 @@ public class InsertPropagatedCalls extends CallService {
      */
     private static Set<ExperimentExpressionTO> getBestExperimentExpressionTOs(
             Collection<ExperimentExpressionTO> eeTOs) {
-        log.entry(eeTOs);
+        log.traceEntry("{}", eeTOs);
         
         return log.traceExit(new HashSet<>(eeTOs.stream()
                 //we create a Map experimentId -> ExperimentExpressionTO, 

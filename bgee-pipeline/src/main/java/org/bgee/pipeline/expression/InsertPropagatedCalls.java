@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,12 +59,14 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpre
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO.DAORawDataSex;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.Condition.Sex;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -81,7 +84,7 @@ import org.bgee.pipeline.CommandRunner;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14.2, Dec. 2020
+ * @version Bgee 15, Mar. 2021
  * @since   Bgee 14, Jan. 2017
  */
 public class InsertPropagatedCalls extends CallService {
@@ -2699,5 +2702,45 @@ public class InsertPropagatedCalls extends CallService {
                             return v1;
                         }))
                 .values()));
+    }
+
+    private static Sex mapDAORawDataSexToSex(DAORawDataSex daoRawDataSex) {
+        log.traceEntry("{}", daoRawDataSex);
+        if (daoRawDataSex == null) {
+            log.traceExit(); return null;
+        }
+        switch(daoRawDataSex) {
+        case NOT_ANNOTATED:
+        case MIXED:
+        case NA:
+            return log.traceExit(Sex.ANY);
+        case HERMAPHRODITE:
+            return log.traceExit(Sex.HERMAPHRODITE);
+        case FEMALE:
+            return log.traceExit(Sex.FEMALE);
+        case MALE:
+            return log.traceExit(Sex.MALE);
+        default:
+            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
+        }
+    }
+    private static String mapDAORawDataStrainToStrain(String strain) {
+        log.traceEntry("{}", strain);
+        if (StringUtils.isBlank(strain)) {
+            log.traceExit(); return null;
+        }
+        Function<String, String> replacement = s -> s
+                .toLowerCase()
+                .trim()
+                .replace("-", " ")
+                .replace("_", " ")
+                .replace("(", "");
+        String simplifiedStrain = replacement.apply(strain);
+
+        if (RawDataConditionTO.NO_INFO_STRAINS.stream().map(replacement)
+                .anyMatch(s -> s.equals(simplifiedStrain))) {
+            return log.traceExit(Condition.STRAIN_ROOT);
+        }
+        return log.traceExit(strain);
     }
 }

@@ -2,7 +2,6 @@ package org.bgee.pipeline.expression;
 
 import java.sql.SQLException;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,7 +9,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -119,14 +117,25 @@ public class InsertPropagatedCalls extends CallService {
             //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
             PropagationState.SELF, /*PropagationState.ANCESTOR, */PropagationState.DESCENDANT);
 
-    private final static List<Set<ConditionDAO.Attribute>> COND_PARAM_COMB_LIST;
+    //As of Bgee 15, we only need one combination of condition parameters,
+    //because anyway all calls will be propagated to the root of each parameter.
+    //So, to retrieve expression in an organ for, e.g., any stage,
+    //it is possible to simply target the root of all dev. stages.
+    //For this to work, each ontology must have only one root, so for instance
+    //we added a unique root to the Uberon anatomical ontology.
+    private final static Set<ConditionDAO.Attribute> COND_PARAMS = Collections.unmodifiableSet(
+            EnumSet.allOf(ConditionDAO.Attribute.class).stream().filter(p -> p.isConditionParameter())
+            .collect(Collectors.toSet()));
+
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
     private final static AtomicInteger EXPR_ID_COUNTER = new AtomicInteger(0);
     
     private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
-        log.entry(condParams);
+        log.traceEntry("{}", condParams);
         PropagationState anatEntityState = null;
         PropagationState stageState = null;
+        PropagationState sexState = null;
+        PropagationState strainState = null;
         for (ConditionDAO.Attribute condParam: condParams) {
             switch(condParam) {
             case ANAT_ENTITY_ID:
@@ -135,27 +144,19 @@ public class InsertPropagatedCalls extends CallService {
             case STAGE_ID:
                 stageState = PropagationState.SELF;
                 break;
+            case SEX:
+                sexState = PropagationState.SELF;
+                break;
+            case STRAIN:
+                strainState = PropagationState.SELF;
+                break;
             default:
                 throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
                         + condParam));
             }
         }
-        return log.traceExit(new DataPropagation(anatEntityState, stageState, true));
-    }
-
-    static {
-        List<Set<ConditionDAO.Attribute>> condParamList = new ArrayList<>();
-        
-        Set<ConditionDAO.Attribute> anatEntityParams = new HashSet<>();
-        anatEntityParams.add(ConditionDAO.Attribute.ANAT_ENTITY_ID);
-        condParamList.add(Collections.unmodifiableSet(anatEntityParams));
-        
-        Set<ConditionDAO.Attribute> anatEntityStageParams = new HashSet<>();
-        anatEntityStageParams.add(ConditionDAO.Attribute.ANAT_ENTITY_ID);
-        anatEntityStageParams.add(ConditionDAO.Attribute.STAGE_ID);
-        condParamList.add(Collections.unmodifiableSet(anatEntityStageParams));
-        
-        COND_PARAM_COMB_LIST = Collections.unmodifiableList(condParamList);
+        return log.traceExit(new DataPropagation(anatEntityState, stageState, sexState,
+                strainState, true));
     }
 
     /**
@@ -174,7 +175,7 @@ public class InsertPropagatedCalls extends CallService {
      * @throws DAOException  If an error occurred while inserting the data into the Bgee database.
      */
     public static void main(String[] args) throws DAOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
 
         int expectedArgLength = 2;
 
@@ -185,22 +186,22 @@ public class InsertPropagatedCalls extends CallService {
         }
 
         List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
-        LinkedHashMap<String, List<String>> condParamCombMap = CommandRunner.parseMapArgument(args[1]);
+        List<String> condParamArg = CommandRunner.parseListArgument(args[1]);
         //we keep the order of combinations requested by the user
-        List<Set<ConditionDAO.Attribute>> condParamCombinations = condParamCombMap.values().stream()
+        Set<ConditionDAO.Attribute> condParams = condParamArg.stream()
                 .distinct()
-                .map(l -> l.stream().map(s -> ConditionDAO.Attribute.valueOf(s)).collect(Collectors.toSet()))
-                .collect(Collectors.toList());
-        if (condParamCombinations.isEmpty()) {
-            condParamCombinations = COND_PARAM_COMB_LIST;
+                .map(p -> ConditionDAO.Attribute.valueOf(p))
+                .collect(Collectors.toSet());
+        if (condParams.isEmpty()) {
+            condParams = COND_PARAMS;
         }
-        if (!COND_PARAM_COMB_LIST.containsAll(condParamCombinations)) {
-            condParamCombinations.removeAll(COND_PARAM_COMB_LIST);
-            throw log.throwing(new IllegalArgumentException("Unrecognized condition parameter combination: "
-                    + condParamCombinations));
+        if (!COND_PARAMS.containsAll(condParams)) {
+            condParams.removeAll(COND_PARAMS);
+            throw log.throwing(new IllegalArgumentException("Unrecognized condition parameters: "
+                    + condParams));
         }
 
-        InsertPropagatedCalls.insert(speciesIds, condParamCombinations);
+        InsertPropagatedCalls.insert(speciesIds, condParams);
 
         log.traceExit();
     }
@@ -287,7 +288,7 @@ public class InsertPropagatedCalls extends CallService {
         @SuppressWarnings("unchecked")
         @Override
         public boolean tryAdvance(Consumer<? super U> action) {
-            log.entry(action);
+            log.traceEntry("{}", action);
             
             if (this.isClosed) {
                 throw log.throwing(new IllegalStateException("Already close"));
@@ -399,7 +400,7 @@ public class InsertPropagatedCalls extends CallService {
          *                      are {@code Set}s of {@code ExperimentExpressionTO}s.
          */
         private Map<DataType, Set<ExperimentExpressionTO>> getExpExprs(Integer expressionId) {
-            log.entry(expressionId);
+            log.traceEntry("{}", expressionId);
             
             Map<DataType, Set<ExperimentExpressionTO>> expExprTosByDataType = new HashMap<>();
             for (Entry<DataType, Iterator<ExperimentExpressionTO>> entry: mapDataTypeToIt.entrySet()) {
@@ -733,7 +734,7 @@ public class InsertPropagatedCalls extends CallService {
         private final InsertPropagatedCalls callPropagator;
 
         private InsertJob(InsertPropagatedCalls callPropagator) {
-            log.entry(callPropagator);
+            log.traceEntry("{}", callPropagator);
             this.callPropagator = callPropagator;
         }
 
@@ -757,11 +758,10 @@ public class InsertPropagatedCalls extends CallService {
             try {
                 //First, make sure there is no already propagated conditions existing for this species
                 //for all requested combinations of condition parameters
-                if (this.callPropagator.condParamCombinations.stream().anyMatch(condParams ->
-                        condDAO.getGlobalConditionsBySpeciesIds(
+                if (condDAO.getGlobalConditionsBySpeciesIds(
                                 Collections.singleton(this.callPropagator.speciesId),
-                                condParams, null)
-                        .stream().anyMatch(e -> true))) {
+                                this.callPropagator.condParams, null)
+                        .stream().anyMatch(e -> true)) {
                     throw log.throwing(new IllegalStateException(
                             "Global conditions already exist for species " + this.callPropagator.speciesId));
                 }
@@ -776,7 +776,7 @@ public class InsertPropagatedCalls extends CallService {
                        this.callPropagator.errorOccured == null) {
 
                     //wait for consuming new data
-                    Map<Set<ConditionDAO.Attribute>, Set<PipelineCall>> toInsert = null;
+                    Set<PipelineCall> toInsert = null;
                     try {
                         log.trace(BLOCKING_QUEUE_MARKER, "Trying to take Set of PipelineCalls");
                         //here we ask to wait indefinitely 
@@ -825,55 +825,52 @@ public class InsertPropagatedCalls extends CallService {
                         firstInsert = false;
                     }
 
-                    for (Entry<Set<ConditionDAO.Attribute>, Set<PipelineCall>> calls: toInsert.entrySet()) {
-                        // Here, we insert new conditions, and add them to the known conditions
-                        Map<Condition, Integer> newCondMap = this.insertNewGlobalConditions(
-                                calls.getValue(), insertedCondMap.keySet(), condDAO);
-                        if (!Collections.disjoint(insertedCondMap.keySet(), newCondMap.keySet())) {
-                            throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
-                                    + "new conditions: " + newCondMap.keySet() + " - existing conditions: "
-                                    + insertedCondMap.keySet()));
-                        }
-                        if (!Collections.disjoint(insertedCondMap.values(), newCondMap.values())) {
-                            throw log.throwing(new IllegalStateException("Error, condition IDs reused. "
-                                    + "new IDs: " + newCondMap.values() + " - existing IDs: "
-                                    + insertedCondMap.values()));
-                        }
-                        insertedCondMap.putAll(newCondMap);
-
-                        //Now, we insert relations between globalConditions and source raw conditions,
-                        //to be able to later retrieve relations between globalExpressions to expressions,
-                        //without needing the table globalExpressionToExpression, that was very much too large
-                        //(more than 10 billions rows for 29 species).
-                        Set<PipelineGlobalCondToRawCondTO> newGlobalCondToRawConds =
-                                this.insertGlobalCondToRawConds(calls.getValue(), globalCondToRawConds,
-                                        insertedCondMap, condDAO);
-                        if (!Collections.disjoint(globalCondToRawConds, newGlobalCondToRawConds)) {
-                            throw log.throwing(new IllegalStateException("Error, new condition relations already seen. "
-                                    + "new relations: " + newGlobalCondToRawConds + " - existing relations: "
-                                    + globalCondToRawConds));
-                        }
-                        //Deactivate this assert, it is very slow and, anyway, there is
-                        //a primary key(globalConditionId, conditionId) which makes
-                        //this situation impossible.
-//                        //We're not supposed to generate a same relation between a global condition
-//                        //and a raw condition having different conditionRelationOrigins.
-//                        //Since conditionRelationOrigin is taken into account in equals/hashCode,
-//                        //make an assert here based solely on global condition ID and raw condition ID.
-//                        assert newGlobalCondToRawConds.stream()
-//                        .noneMatch(r1 -> globalCondToRawConds.stream()
-//                                .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
-//                                        r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
-//                        "Incorrect new relations: " + newGlobalCondToRawConds + " - " + globalCondToRawConds;
-
-                        globalCondToRawConds.addAll(newGlobalCondToRawConds);
-
-
-                        // And we finish by inserting the computed calls
-                        this.insertPropagatedCalls(calls.getValue(), insertedCondMap, exprDAO);
-                        log.debug("{} calls inserted for one gene in combination {}",
-                                calls.getValue().size(), calls.getKey());
+                    // Here, we insert new conditions, and add them to the known conditions
+                    Map<Condition, Integer> newCondMap = this.insertNewGlobalConditions(
+                            toInsert, insertedCondMap.keySet(), condDAO);
+                    if (!Collections.disjoint(insertedCondMap.keySet(), newCondMap.keySet())) {
+                        throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
+                                + "new conditions: " + newCondMap.keySet() + " - existing conditions: "
+                                + insertedCondMap.keySet()));
                     }
+                    if (!Collections.disjoint(insertedCondMap.values(), newCondMap.values())) {
+                        throw log.throwing(new IllegalStateException("Error, condition IDs reused. "
+                                + "new IDs: " + newCondMap.values() + " - existing IDs: "
+                                + insertedCondMap.values()));
+                    }
+                    insertedCondMap.putAll(newCondMap);
+                    
+                    //Now, we insert relations between globalConditions and source raw conditions,
+                    //to be able to later retrieve relations between globalExpressions to expressions,
+                    //without needing the table globalExpressionToExpression, that was very much too large
+                    //(more than 10 billions rows for 29 species).
+                    Set<PipelineGlobalCondToRawCondTO> newGlobalCondToRawConds =
+                            this.insertGlobalCondToRawConds(toInsert, globalCondToRawConds,
+                                    insertedCondMap, condDAO);
+                    if (!Collections.disjoint(globalCondToRawConds, newGlobalCondToRawConds)) {
+                        throw log.throwing(new IllegalStateException("Error, new condition relations already seen. "
+                                + "new relations: " + newGlobalCondToRawConds + " - existing relations: "
+                                + globalCondToRawConds));
+                    }
+                    //Deactivate this assert, it is very slow and, anyway, there is
+                    //a primary key(globalConditionId, conditionId) which makes
+                    //this situation impossible.
+                    //                        //We're not supposed to generate a same relation between a global condition
+                    //                        //and a raw condition having different conditionRelationOrigins.
+                    //                        //Since conditionRelationOrigin is taken into account in equals/hashCode,
+                    //                        //make an assert here based solely on global condition ID and raw condition ID.
+                    //                        assert newGlobalCondToRawConds.stream()
+                    //                        .noneMatch(r1 -> globalCondToRawConds.stream()
+                    //                                .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
+                    //                                        r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
+                    //                        "Incorrect new relations: " + newGlobalCondToRawConds + " - " + globalCondToRawConds;
+                    
+                    globalCondToRawConds.addAll(newGlobalCondToRawConds);
+                    
+                    
+                    // And we finish by inserting the computed calls
+                    this.insertPropagatedCalls(toInsert, insertedCondMap, exprDAO);
+                    log.debug("{} calls inserted for one gene", toInsert.size());
                     
                     log.trace(INSERTION_MARKER, "Calls inserted.");
                     groupsInserted++;
@@ -1271,16 +1268,14 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * 
      * @param speciesIds
-     * @param conditionParamsCollection A {@code Collection} of {@code Set}s of 
-     *                                  {@code ConditionDAO.Attribute}s. Each {@code Collection}
-     *                                  element defines a combination of condition parameters that 
-     *                                  are requested for queries, allowing to determine 
-     *                                  which condition and expression information to target.
+     * @param condParams    A {@code Set} of {@code ConditionDAO.Attribute}s that are requested
+     *                      for queries, allowing to determine which condition
+     *                      and expression information to target.
      */
     public static void insert(List<Integer> speciesIds, 
-            Collection<Set<ConditionDAO.Attribute>> conditionParamsCollection) {
-        log.entry(speciesIds, conditionParamsCollection);
-        InsertPropagatedCalls.insert(speciesIds, conditionParamsCollection,
+            Set<ConditionDAO.Attribute> condParams) {
+        log.entry(speciesIds, condParams);
+        InsertPropagatedCalls.insert(speciesIds, condParams,
                 DAOManager::getDAOManager, ServiceFactory::new);  
         log.traceExit();
     }
@@ -1291,9 +1286,8 @@ public class InsertPropagatedCalls extends CallService {
      * to provide new ones to each thread, in case we make a parallel implementation of this code.
      * 
      * @param speciesIds
-     * @param conditionParamsCollection A {@code Collection} of {@code Set}s of 
-     *                                  {@code ConditionDAO.Attribute}s. Each {@code Collection}
-     *                                  element defines a combination of condition parameters that 
+     * @param condParams                A {@code Set} of {@code ConditionDAO.Attribute}s,
+     *                                  defining the condition parameters that 
      *                                  are requested for queries, allowing to determine 
      *                                  which condition and expression information to target.
      * @param daoManagerSupplier        The {@code Supplier} of {@code DAOManager} to use.
@@ -1301,20 +1295,17 @@ public class InsertPropagatedCalls extends CallService {
      *                                  and returning a new {@code ServiceFactory}.
      */
     public static void insert(List<Integer> speciesIds, 
-            Collection<Set<ConditionDAO.Attribute>> conditionParamsCollection, 
+            Set<ConditionDAO.Attribute> condParams, 
             final Supplier<DAOManager> daoManagerSupplier, 
             final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
-        log.entry(speciesIds, conditionParamsCollection, daoManagerSupplier, serviceFactoryProvider);
+        log.entry(speciesIds, condParams, daoManagerSupplier, serviceFactoryProvider);
 
         // Sanity checks on attributes
-        if (conditionParamsCollection == null || conditionParamsCollection.isEmpty()) {
+        if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
-        //in case a predictable iteration order of combination was requested, use a List
-        final List<Set<ConditionDAO.Attribute>> clonedCondParamList = Collections.unmodifiableList(
-                conditionParamsCollection.stream()
-                        .distinct()
-                        .collect(Collectors.toList()));
+        final Set<ConditionDAO.Attribute> clonedCondParams = Collections.unmodifiableSet(
+                condParams.stream().distinct().collect(Collectors.toSet()));
 
         
         try(DAOManager commonManager = daoManagerSupplier.get()) {
@@ -1350,7 +1341,7 @@ public class InsertPropagatedCalls extends CallService {
                 //can provide a new connection to each parallel thread.
                 InsertPropagatedCalls insert = new InsertPropagatedCalls(
                         () -> serviceFactoryProvider.apply(daoManagerSupplier.get()), 
-                        clonedCondParamList, speciesId);
+                        clonedCondParams, speciesId);
                 insert.insertOneSpecies();
             });
         }
@@ -1372,20 +1363,12 @@ public class InsertPropagatedCalls extends CallService {
      */
     private final Supplier<ServiceFactory> serviceFactorySupplier;
     /**
-     * A {@code BlockingQueue} for {@code PipelineCall}s to be inserted. Each element is
-     * a {@code Map}s where keys are {@code Set} of {@code ConditionDAO.Attribute}s representing
-     * combinations of condition parameters, the associated value being a {@code Set}
-     * of {@code ExpressionCall}s that are propagated and reconciled expression calls
-     * for one gene according to the associated combination.
-     * <p>
+     * A {@code BlockingQueue} containing {@code Set}s of {@code PipelineCall}s to be inserted.
      * Each contained {@code Set} is inserted into the database in a single INSERT statement.
-     * We use this {@code Map} rather than a simple {@code Set} of {@code PipelineCall}s
-     * so that the INSERT statements are not too big, dealing with one {@code Entry} at a time.
-     * <p>
-     * Computational threads will add new {@code PipelineCall}s to be inserted to this queue,
+     * Propagating threads will add new {@code PipelineCall}s to be inserted to this queue,
      * and the insertion thread will remove them from the queue for insertion.
      */
-    private final BlockingQueue<Map<Set<ConditionDAO.Attribute>, Set<PipelineCall>>> callsToInsert;
+    private final BlockingQueue<Set<PipelineCall>> callsToInsert;
     /**
      * An {@code AtomicBoolean} that will allow the main thread to acquire a lock and wait on it,
      * to be notified by the insert thread when all calls are inserted (computations can be faster
@@ -1400,11 +1383,10 @@ public class InsertPropagatedCalls extends CallService {
      */
     private final Set<DAOManager> daoManagers;
     /**
-     * A {@code List} of {@code ConditionDAO.Attribute}s defining the combination
-     * of condition parameters that were requested for queries, allowing to determine 
-     * how the data should be aggregated. It is a {@code List} for predictable computation order.
+     * A {@code Set} of {@code ConditionDAO.Attribute}s defining the condition parameters
+     * that were requested for queries, allowing to determine how the data should be aggregated.
      */
-    private final List<Set<ConditionDAO.Attribute>> condParamCombinations;
+    private final Set<ConditionDAO.Attribute> condParams;
     /**
      * An {@code int} that is the ID of the species to propagate calls for.
      */
@@ -1435,13 +1417,13 @@ public class InsertPropagatedCalls extends CallService {
 
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
-            List<Set<ConditionDAO.Attribute>> condParamCombinations, int speciesId) {
+            Set<ConditionDAO.Attribute> condParams, int speciesId) {
         super(serviceFactorySupplier.get());
-        if (condParamCombinations == null || condParamCombinations.isEmpty()) {
+        if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
         this.serviceFactorySupplier = serviceFactorySupplier;
-        this.condParamCombinations = Collections.unmodifiableList(new ArrayList<>(condParamCombinations));
+        this.condParams = Collections.unmodifiableSet(new HashSet<>(condParams));
         this.speciesId = speciesId;
         //use a LinkedBlockingDeque because we are going to do lots of insert/remove,
         //and because we don't care about element order. We are going to block
@@ -1460,7 +1442,7 @@ public class InsertPropagatedCalls extends CallService {
         log.traceEntry();
         
         log.info("Start inserting of propagated calls for the species {} with combinations of condition parameters {}...",
-            this.speciesId, this.condParamCombinations);
+            this.speciesId, this.condParams);
 
         //PARALLEL EXECUTION: here we create the independent thread responsible for
         //inserting the data into the data source
@@ -1473,35 +1455,16 @@ public class InsertPropagatedCalls extends CallService {
             Species species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
                     Collections.singleton(this.speciesId), false).iterator().next();
             
-            //First, we retrieve the conditions already present in database,
-            //we will then generate the Conditions according to each requested combination
-            //of condition parameters (see method generateConditionMapForCondParams).
+            //First, we retrieve the conditions already present in database.
             final Map<Integer, Condition> rawCondMap = Collections.unmodifiableMap(
                     this.loadRawConditionMap(Collections.singleton(species)));
-            Map<Set<ConditionDAO.Attribute>, Map<Integer, Condition>> condMapByComb =
-                    this.condParamCombinations.stream().map(condParams ->
-                            new AbstractMap.SimpleEntry<>(
-                                    condParams,
-                                    Collections.unmodifiableMap(this.generateConditionMapForCondParams(
-                                            condParams, rawCondMap))
-                                    )
-                    ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            assert condMapByComb.keySet().stream()
-            .noneMatch(condParams -> condMapByComb.keySet().stream()
-                .filter(condParams2 -> !condParams2.equals(condParams))
-                .anyMatch(condParams2 -> !Collections.disjoint(
-                        condMapByComb.get(condParams).values(), condMapByComb.get(condParams2).values())
-                 ));
             log.info("{} Conditions for species {}", rawCondMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
             log.info("Starting condition inference...");
             ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
-            Map<Set<ConditionDAO.Attribute>, ConditionGraph> conditionGraphByComb =
-                    condMapByComb.entrySet().stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(),
-                            condGraphService.loadConditionGraph(e.getValue().values(), true, true))
-                    ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            ConditionGraph conditionGraph = condGraphService.loadConditionGraph(rawCondMap.values(),
+                    true, true);
             log.info("Done condition inference.");
             
             //we retrieve the IDs of genes with expression data. This is because making the computation
@@ -1550,9 +1513,9 @@ public class InsertPropagatedCalls extends CallService {
                     final ExperimentExpressionDAO expExprDAO = threadDAOManager.getExperimentExpressionDAO();
                     
                     // We propagate calls. Each Map contains all propagated calls for one gene
-                    final Stream<Map<Set<ConditionDAO.Attribute>, Set<PipelineCall>>> propagatedCalls =
+                    final Stream<Set<PipelineCall>> propagatedCalls =
                             this.generatePropagatedCalls(
-                                    new HashSet<>(subsetGeneIds), condMapByComb, conditionGraphByComb,
+                                    new HashSet<>(subsetGeneIds), rawCondMap, conditionGraph,
                                     rawCallDAO, expExprDAO);
                     
                     //Provide the calls to insert to the Thread managing the insertions
@@ -1606,7 +1569,7 @@ public class InsertPropagatedCalls extends CallService {
 
 
         log.info("Done inserting of propagated calls for the species {} with combinations of condition parameters {}...",
-            this.speciesId, this.condParamCombinations);
+            this.speciesId, this.condParams);
         
         log.traceExit();
     }
@@ -1722,44 +1685,17 @@ public class InsertPropagatedCalls extends CallService {
                                     Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
                                         () -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId())),
+                                cTO.getCellTypeId() == null? null:
+                                    Optional.ofNullable(anatMap.get(cTO.getCellTypeId())).orElseThrow(
+                                        () -> new IllegalStateException("Cell type not found: "
+                                                + cTO.getCellTypeId())),
+                                mapDAORawDataSexToSex(cTO.getSex()),
+                                mapDAORawDataStrainToStrain(cTO.getStrain()),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "
                                                 + cTO.getSpeciesId())))
                         ))
                 );
-    }
-    private Map<Integer, Condition> generateConditionMapForCondParams(
-            Set<ConditionDAO.Attribute> condParams, Map<Integer, Condition> originalCondMap) {
-        log.entry(condParams, originalCondMap);
-
-        return log.traceExit(originalCondMap.entrySet().stream().map(e -> {
-            AnatEntity anatEntity = null;
-            DevStage stage = null;
-            for (ConditionDAO.Attribute condParam: condParams) {
-                switch (condParam) {
-                case ANAT_ENTITY_ID:
-                    anatEntity = e.getValue().getAnatEntity();
-                    if (anatEntity == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No raw condition should have a null anat. entity"));
-                    }
-                    break;
-                case STAGE_ID:
-                    stage = e.getValue().getDevStage();
-                    if (stage == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "No raw condition should have a null dev. stage"));
-                    }
-                    break;
-                default:
-                    throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
-                            + condParam));
-                }
-            }
-            return new AbstractMap.SimpleEntry<>(e.getKey(),
-                    new Condition(anatEntity, stage, e.getValue().getSpecies()));
-        })
-        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
     }
 
     /** 
@@ -1767,19 +1703,13 @@ public class InsertPropagatedCalls extends CallService {
      * 
      * @param geneIds               A {@code Collection} of {@code Integer}s that are the Bgee IDs
      *                              of the genes for which to return the {@code ExpressionCall}s.
-     * @param condMapByComb        A {@code Map} where keys are {@code Set} of
-     *                              {@code ConditionDAO.Attribute}s representing a combination of
-     *                              condition parameters, the associated value being a {@code Map}
-     *                              where keys are {@code Integer}s that are condition IDs,
+     * @param condMap               A {@code Map} where keys are {@code Integer}s that are condition IDs,
      *                              the associated value being the corresponding {@code Condition}
-     *                              with attributes populated according to the associated combination
-     *                              of condition parameters.
-     * @param conditionGraphByComb A {@code Map} where keys are {@code Set} of
-     *                              {@code ConditionDAO.Attribute}s representing a combination of
-     *                              condition parameters, the associated value being a {@code ConditionGraph}
-     *                              containing the {@code Condition}s and relations considering
-     *                              attributes according to the associated combination
-     *                              of condition parameters.
+     *                              with attributes populated according to the requested
+     *                              condition parameters.
+     * @param conditionGraph        A {@code ConditionGraph} containing the {@code Condition}s
+     *                              and relations considering attributes according
+     *                              to the requested condition parameters.
      * @param rawCallDAO            The {@code RawExpressionCallDAO} to use to retrieve
      *                              {@code RawExpressionCallTO}s from data source.
      * @param expExprDAO            The {@code ExperimentExpressionDAO} to use to retrieve
@@ -1790,12 +1720,10 @@ public class InsertPropagatedCalls extends CallService {
      *                              of {@code ExpressionCall}s that are propagated and reconciled
      *                              expression calls for one gene according to the associated combination.
      */
-    private Stream<Map<Set<ConditionDAO.Attribute>, Set<PipelineCall>>> generatePropagatedCalls(
-            Set<Integer> geneIds,
-            Map<Set<ConditionDAO.Attribute>, Map<Integer, Condition>> condMapByComb,
-            Map<Set<ConditionDAO.Attribute>, ConditionGraph> conditionGraphByComb, 
+    private Stream<Set<PipelineCall>> generatePropagatedCalls(
+            Set<Integer> geneIds, Map<Integer, Condition> condMap, ConditionGraph conditionGraph, 
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO) {
-        log.entry(geneIds, condMapByComb, conditionGraphByComb, rawCallDAO, expExprDAO);
+        log.traceEntry("{}, {}, {}, {}, {}", geneIds, condMap, conditionGraph, rawCallDAO, expExprDAO);
         
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
@@ -1813,119 +1741,101 @@ public class InsertPropagatedCalls extends CallService {
         
         log.trace(COMPUTE_MARKER, "Done creating Splitereator with DAO queries.");
         
-        Stream<Map<Set<ConditionDAO.Attribute>, Set<PipelineCall>>> reconciledCalls =
-        callTOsByGeneStream.map(geneData -> condParamCombinations.stream()
+        Stream<Set<PipelineCall>> reconciledCalls = callTOsByGeneStream
             // First we convert Map<RawExpressionCallTO, Map<DataType, Set<ExperimentExpressionTO>>
             // into Map<PipelineCall, Set<PipelineCallData>> having source RawExpressionCallTO,
-            // for each requested condition parameter combination. Since the raw data to use
-            // are exactly the same whatever the condition parameter combination,
-            // and that only the grouping of the conditions according to different condition parameters
-            // is different, we iterate immediately all requested combinations,
-            // so that we need less queries to the database.
-            .map(condParams ->
-
-                //This whole code was using Stream mapping when there was no iteration
-                //over several combinations of condition parameters. We could still use Streams, 
-                //but then 'condParams' would not be accessible from the different mapping steps.
-                //Rather than rewriting the mappings, use an Optional, so that we can use existing code.
-                Optional.of(geneData.entrySet().stream()
+            .map(geneData -> geneData.entrySet().stream()
                     .collect(Collectors.toMap(
                         e -> mapRawCallTOToPipelineCall(e.getKey(),
-                                condMapByComb.get(condParams).get(e.getKey().getConditionId()),
-                                condParams),
-                        e -> mapExpExprTOsToPipelineCallData(e.getValue(), condParams)))
+                                condMap.get(e.getKey().getConditionId()),
+                                this.condParams),
+                        e -> mapExpExprTOsToPipelineCallData(e.getValue(), this.condParams))))
+
+            //Now, we group all PipelineCalls and PipelineCallDatas mapped to a same Condition
+            //g: Map<PipelineCall, Set<PipelineCallData>>
+            .map(g -> g.entrySet().stream().collect(Collectors
+                //we group the entries Entry<PipelineCall, Set<PipelineCallData>> by condition
+                //and merge them.
+                .toMap(
+                    e -> e.getKey().getCondition(),
+                    e -> e,
+                    (e1, e2) -> {
+                        PipelineCall call1 = e1.getKey();
+                        PipelineCall call2 = e2.getKey();
+                        assert call1.getParentSourceCallTOs() == null ||
+                                call1.getParentSourceCallTOs().isEmpty();
+                        assert call1.getDescendantSourceCallTOs() == null ||
+                                call1.getDescendantSourceCallTOs().isEmpty();
+                        assert call1.getSelfSourceCallTOs() != null &&
+                                !call1.getSelfSourceCallTOs().isEmpty();
+                        assert call2.getParentSourceCallTOs() == null ||
+                                call2.getParentSourceCallTOs().isEmpty();
+                        assert call2.getDescendantSourceCallTOs() == null ||
+                                call2.getDescendantSourceCallTOs().isEmpty();
+                        assert call2.getSelfSourceCallTOs() != null &&
+                                !call2.getSelfSourceCallTOs().isEmpty();
+
+                        assert Integer.compare(call1.getBgeeGeneId(), call2.getBgeeGeneId()) == 0;
+                        assert call1.getCondition().equals(call2.getCondition());
+                        assert call1.getDataPropagation().equals(call2.getDataPropagation());
+                        assert call1.getDataPropagation().equals(getSelfDataProp(this.condParams));
+
+                        Set<RawExpressionCallTO> combinedTOs =
+                                new HashSet<>(call1.getSelfSourceCallTOs());
+                        combinedTOs.addAll(call2.getSelfSourceCallTOs());
+                        PipelineCall combinedCall = new PipelineCall(
+                                call1.getBgeeGeneId(), call1.getCondition(),
+                                call1.getDataPropagation(), combinedTOs);
+
+                        Set<PipelineCallData> combinedData = new HashSet<>(e1.getValue());
+                        combinedData.addAll(e2.getValue());
+
+                        return new AbstractMap.SimpleEntry<>(combinedCall, combinedData);
+                    })
                 )
+                //Now retrieve the Entries that were reduced, and collect them into a Map.
+                //The returned value of this map function is of the same type as the input element:
+                //Map<PipelineCall, Set<PipelineCallData>>
+                .values().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
+            )
+            //then we propagate all PipelineCalls of the Map (associated to one gene only), 
+            //and retrieve the original and the propagated calls.
+            //g: Map<PipelineCall, Set<PipelineCallData>>
+            .map(g -> {
+                //propagatePipelineCalls returns only the new propagated calls, 
+                //we need to add the original calls to the Map for following steps
+                Map<PipelineCall, Set<PipelineCallData>> calls = 
+                        this.propagatePipelineCalls(g, conditionGraph);
+                calls.putAll(g);
+                return calls;
+            })
+    
+            //then we reconcile calls for a same gene-condition
+            //g: Map<PipelineCall, Set<PipelineCallData>>
+            .map(g -> {
+                log.trace(COMPUTE_MARKER, "Starting to reconcile {} PipelineCalls.", g.size());
+                this.checkErrorOccurred();
+                //group calls per Condition (they all are about the same gene already)
+                final Map<Condition, Set<PipelineCall>> callGroup = g.entrySet().stream()
+                        .collect(Collectors.groupingBy(e -> e.getKey().getCondition(),
+                                 Collectors.mapping(e2 -> e2.getKey(), Collectors.toSet())));
+                //group CallData per Condition (they all are about the same gene already)
+                final Map<Condition, Set<PipelineCallData>> callDataGroup = g.entrySet().stream()
+                        .collect(Collectors.groupingBy(e -> e.getKey().getCondition(), 
+                                 Collectors.mapping(e2 -> e2.getValue(), Collectors.toSet()))) // produce Map<Condition, Set<Set<PipelineCallData>>
+                        .entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()
+                                .stream().flatMap(ps -> ps.stream()).collect(Collectors.toSet()))); // produce Map<Condition, Set<PipelineCallData>>
 
-                //Now, we group all PipelineCalls and PipelineCallDatas mapped to a same Condition
-                //for the requested condition parameter combination.
-                //g: Map<PipelineCall, Set<PipelineCallData>>
-                .map(g -> g.entrySet().stream().collect(Collectors
-                    //we group the entries Entry<PipelineCall, Set<PipelineCallData>> by condition
-                    //and merge them.
-                    .toMap(
-                        e -> e.getKey().getCondition(),
-                        e -> e,
-                        (e1, e2) -> {
-                            PipelineCall call1 = e1.getKey();
-                            PipelineCall call2 = e2.getKey();
-                            assert call1.getParentSourceCallTOs() == null ||
-                                    call1.getParentSourceCallTOs().isEmpty();
-                            assert call1.getDescendantSourceCallTOs() == null ||
-                                    call1.getDescendantSourceCallTOs().isEmpty();
-                            assert call1.getSelfSourceCallTOs() != null &&
-                                    !call1.getSelfSourceCallTOs().isEmpty();
-                            assert call2.getParentSourceCallTOs() == null ||
-                                    call2.getParentSourceCallTOs().isEmpty();
-                            assert call2.getDescendantSourceCallTOs() == null ||
-                                    call2.getDescendantSourceCallTOs().isEmpty();
-                            assert call2.getSelfSourceCallTOs() != null &&
-                                    !call2.getSelfSourceCallTOs().isEmpty();
-
-                            assert Integer.compare(call1.getBgeeGeneId(), call2.getBgeeGeneId()) == 0;
-                            assert call1.getCondition().equals(call2.getCondition());
-                            assert call1.getDataPropagation().equals(call2.getDataPropagation());
-                            assert call1.getDataPropagation().equals(getSelfDataProp(condParams));
-
-                            Set<RawExpressionCallTO> combinedTOs =
-                                    new HashSet<>(call1.getSelfSourceCallTOs());
-                            combinedTOs.addAll(call2.getSelfSourceCallTOs());
-                            PipelineCall combinedCall = new PipelineCall(
-                                    call1.getBgeeGeneId(), call1.getCondition(),
-                                    call1.getDataPropagation(), combinedTOs);
-
-                            Set<PipelineCallData> combinedData = new HashSet<>(e1.getValue());
-                            combinedData.addAll(e2.getValue());
-
-                            return new AbstractMap.SimpleEntry<>(combinedCall, combinedData);
-                        })
-                    )
-                    //Now retrieve the Entries that were reduced, and collect them into a Map.
-                    //The returned value of this map function is of the same type as the input element:
-                    //Map<PipelineCall, Set<PipelineCallData>>
-                    .values().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
-                )
-                
-                //then we propagate all PipelineCalls of the Map (associated to one gene only), 
-                //and retrieve the original and the propagated calls.
-                //g: Map<PipelineCall, Set<PipelineCallData>>
-                .map(g -> {
-                    //propagatePipelineCalls returns only the new propagated calls, 
-                    //we need to add the original calls to the Map for following steps
-                    Map<PipelineCall, Set<PipelineCallData>> calls = 
-                            this.propagatePipelineCalls(g, conditionGraphByComb.get(condParams));
-                    calls.putAll(g);
-                    return calls;
-                })
-                
-                //then we reconcile calls for a same gene-condition
-                //g: Map<PipelineCall, Set<PipelineCallData>>
-                .map(g -> {
-                    log.trace(COMPUTE_MARKER, "Starting to reconcile {} PipelineCalls.", g.size());
-                    this.checkErrorOccurred();
-                    //group calls per Condition (they all are about the same gene already)
-                    final Map<Condition, Set<PipelineCall>> callGroup = g.entrySet().stream()
-                            .collect(Collectors.groupingBy(e -> e.getKey().getCondition(),
-                                    Collectors.mapping(e2 -> e2.getKey(), Collectors.toSet())));
-                    //group CallData per Condition (they all are about the same gene already)
-                    final Map<Condition, Set<PipelineCallData>> callDataGroup = g.entrySet().stream()
-                            .collect(Collectors.groupingBy(e -> e.getKey().getCondition(), 
-                                    Collectors.mapping(e2 -> e2.getValue(), Collectors.toSet()))) // produce Map<Condition, Set<Set<PipelineCallData>>
-                            .entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()
-                                    .stream().flatMap(ps -> ps.stream()).collect(Collectors.toSet()))); // produce Map<Condition, Set<PipelineCallData>>
-                    
-                    // Reconcile calls and return all of them in one Set
-                    Set<PipelineCall> s = callGroup.keySet().stream()
-                            .map(c -> reconcileGeneCalls(callGroup.get(c), callDataGroup.get(c)))
-                            //reconcileGeneCalls return null if there was no valid data to propagate
-                            //(e.g., only "present" calls in parent conditions)
-                            .filter(c -> c != null)
-                            .collect(Collectors.toSet());
-                    log.trace(COMPUTE_MARKER, "Done reconciliation, {} PipelineCalls produced.", s.size());
-                    return new AbstractMap.SimpleEntry<>(condParams, s);
-                })
-                .get()
-            ).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
-        );
+                // Reconcile calls and return all of them in one Set
+                Set<PipelineCall> s = callGroup.keySet().stream()
+                        .map(c -> reconcileGeneCalls(callGroup.get(c), callDataGroup.get(c)))
+                        //reconcileGeneCalls return null if there was no valid data to propagate
+                        //(e.g., only "present" calls in parent conditions)
+                        .filter(c -> c != null)
+                        .collect(Collectors.toSet());
+                log.trace(COMPUTE_MARKER, "Done reconciliation, {} PipelineCalls produced.", s.size());
+                return s;
+            });
 
         return log.traceExit(reconciledCalls);
     }

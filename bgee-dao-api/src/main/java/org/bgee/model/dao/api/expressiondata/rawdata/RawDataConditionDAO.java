@@ -2,16 +2,19 @@ package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
 
 /**
- * DAO defining queries using or retrieving {@link ConditionTO}s.
+ * DAO defining queries using or retrieving {@link RawDataConditionTO}s.
  *
  * @author  Frederic Bastian
- * @version Bgee 14, Sep. 2018
+ * @version Bgee 15, Mar. 2021
  * @since   Bgee 14, Sep. 2018
  * @see RawDataConditionTO
  */
@@ -110,20 +113,72 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      * {@code BaseConditionTO} representing a raw data condition in the Bgee database.
      *
      * @author Frederic Bastian
-     * @version Bgee 14, Sep. 2018
+     * @version Bgee 15, Mar. 2021
      * @since   Bgee 14, Sep. 2018
      */
     public class RawDataConditionTO extends BaseConditionTO {
+        private final static Logger log = LogManager.getLogger(RawDataConditionTO.class.getName());
+        /**
+         * {@code EnumDAOField} representing the different sex info that can be used
+         * in {@link RawDataConditionTO} in Bgee.
+         *
+         * @author Frederic Bastian
+         * @version Bgee 15 Mar. 2021
+         */
+        public enum DAORawDataSex implements EnumDAOField {
+            NOT_ANNOTATED("not annotated"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male"),
+            MIXED("mixed"), NA("NA");
+
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+            /**
+             * Constructor providing the {@code String} representation of this {@code DAORawDataSex}.
+             *
+             * @param stringRepresentation  A {@code String} corresponding to this {@code DAORawDataSex}.
+             */
+            private DAORawDataSex(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+
+            /**
+             * Convert the {@code String} representation of a sex (for instance,
+             * retrieved from a database) into a {@code DAORawDataSex}. This method compares
+             * {@code representation} to the value returned by {@link #getStringRepresentation()},
+             * as well as to the value returned by {@link Enum#name()}, for each {@code DAORawDataSex}.
+             *
+             * @param representation    A {@code String} representing a sex.
+             * @return                  A {@code DAORawDataSex} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code DAORawDataSex}.
+             */
+            public static final DAORawDataSex convertToDAORawDataSex(String representation) {
+                log.traceEntry("{}", representation);
+                return log.traceExit(TransferObject.convert(DAORawDataSex.class, representation));
+            }
+
+            @Override
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
+
         private static final long serialVersionUID = -1084999422733426566L;
 
         private final Integer exprMappedConditionId;
+        private final DAORawDataSex sex;
         private final Boolean sexInferred;
 
         public RawDataConditionTO(Integer id, Integer exprMappedConditionId, String anatEntityId,
-                String stageId, String cellTypeId, Collection<DAOSex> sexes, Boolean sexInferred, String strain, 
+                String stageId, String cellTypeId, DAORawDataSex sex, Boolean sexInferred, String strain, 
                 Integer speciesId) {
-            super(id, anatEntityId, stageId, cellTypeId, sexes, strain, speciesId);
+            super(id, anatEntityId, stageId, cellTypeId, strain, speciesId);
             this.exprMappedConditionId = exprMappedConditionId;
+            this.sex = sex;
             this.sexInferred = sexInferred;
         }
 
@@ -135,6 +190,12 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
          */
         public Integer getExprMappedConditionId() {
             return exprMappedConditionId;
+        }
+        /**
+         * @return  A {@code DAORawDataSex} representing the sex annotated in this {@code RawDataConditionTO}.
+         */
+        public DAORawDataSex getSex() {
+            return sex;
         }
         /**
          * @return  A {@code Boolean} specifying whether sex information was retrieved from annotation (false),

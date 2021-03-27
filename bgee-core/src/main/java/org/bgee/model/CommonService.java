@@ -26,13 +26,13 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
-import org.bgee.model.expressiondata.BaseCondition.Sex;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.Condition.Sex;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
@@ -133,7 +133,8 @@ public class CommonService extends Service {
                     "Incorrect cell type ID in ConditionTO, expected " + cellType.getId() + " but was "
                     + condTO.getCellTypeId()));
         }
-        return log.traceExit(new Condition(anatEntity, devStage, cellType, convertDAOSexToSex(condTO.getSexes()), 
+        return log.traceExit(new Condition(anatEntity, devStage, cellType,
+                convertDAOSexToSex(condTO.getSex()),
                 condTO.getStrain(), species));
     }
     
@@ -142,29 +143,6 @@ public class CommonService extends Service {
         return log.traceExit(new ConditionTO(condId, cond.getAnatEntityId(), cond.getDevStageId(),
                 cond.getCellTypeId(), convertSexToDAOSex(cond.getSex()), cond.getStrain(), 
                 cond.getSpeciesId(), null));
-    }
-    
-    /**
-     * Convert a {@code String} to a {@code Sex}.
-     *
-     * @param String        A {@code String} that is the sex to map to {@code Sex}.
-     * @return              The mapped {@code Sex}.
-     */
-    protected static Sex convertStringToSex(String sex) {
-        Set<Sex> allowedSexes= EnumSet.allOf(Sex.class);
-        return(allowedSexes.stream().filter(s -> s.getStringRepresentation().equals(sex))
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toList(),
-                        list -> {
-                            if(list.size() == 0) {
-                                throw new IllegalStateException("String [" + sex + "] does not "
-                                        + "correspond to any Sex [" + allowedSexes + "]");
-                            }else if(list.size() > 1) {
-                                throw new IllegalStateException("String [" + sex + "] match more than"
-                                        + "one Sex [" + allowedSexes +"]");
-                            }
-                            return list.get(0);
-                        })));        
     }
     
     /**
@@ -246,46 +224,35 @@ public class CommonService extends Service {
         }
     }
     
-    protected static Collection<DAOSex> convertSexToDAOSex(Sex sex) {
+    protected static DAOSex convertSexToDAOSex(Sex sex) {
         log.traceEntry("{}", sex);
         switch(sex) {
             case MALE:
-                return log.traceExit(Collections.singleton(DAOSex.MALE));
+                return log.traceExit(DAOSex.MALE);
             case FEMALE:
-                return log.traceExit(Collections.singleton(DAOSex.FEMALE));
+                return log.traceExit(DAOSex.FEMALE);
             case HERMAPHRODITE:
-                return log.traceExit(Collections.singleton(DAOSex.HERMAPHRODITE));
+                return log.traceExit(DAOSex.HERMAPHRODITE);
             case ANY:
-                return log.traceExit(EnumSet.allOf(DAOSex.class));
+                return log.traceExit(DAOSex.ANY);
         default:
-            throw log.throwing(new IllegalStateException("Unsupported BaseCondition.Sex: " + sex));
+            throw log.throwing(new IllegalStateException("Unsupported Condition.Sex: " + sex));
         }
     }
     
-    protected static Sex convertDAOSexToSex(Collection<DAOSex> daoSexes) {
-        log.traceEntry("{}", daoSexes);
-        if (daoSexes.size() == 1) {
-            DAOSex daoSex = daoSexes.iterator().next();
-            switch(daoSex) {
-                case MALE:
-                    return log.traceExit(Sex.MALE);
-                case FEMALE:
-                    return log.traceExit(Sex.FEMALE);
-                case HERMAPHRODITE:
-                    return log.traceExit(Sex.HERMAPHRODITE);
-                case MIXED:
-                    return log.traceExit(Sex.ANY);
-                case NA:
-                    return log.traceExit(Sex.ANY);
-                case NOT_ANNOTATED:
-                    return log.traceExit(Sex.ANY);
-                default:
-                    throw log.throwing(new IllegalStateException("Unsupported BaseConditionTO.DAOSex: " + daoSex));
-            }
-        } else if (daoSexes.size() > 1) {
+    protected static Sex convertDAOSexToSex(DAOSex daoSex) {
+        log.traceEntry("{}", daoSex);
+        switch(daoSex) {
+        case MALE:
+            return log.traceExit(Sex.MALE);
+        case FEMALE:
+            return log.traceExit(Sex.FEMALE);
+        case HERMAPHRODITE:
+            return log.traceExit(Sex.HERMAPHRODITE);
+        case ANY:
             return log.traceExit(Sex.ANY);
-        }else {
-            throw log.throwing(new IllegalStateException("A BaseConditionTO.DAOSex should be provided"));
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported ConditionTO.DAOSex: " + daoSex));
         }
     }
 
@@ -513,8 +480,6 @@ public class CommonService extends Service {
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> stageIds = new HashSet<>();
         Set<String> cellTypeIds = new HashSet<>();
-        Set<String> sexes = new HashSet<>();
-        Set<String> strains = new HashSet<>();
         Set<ConditionTO> conditionTOs = new HashSet<>();
 
         //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
@@ -538,13 +503,6 @@ public class CommonService extends Service {
             }
             if (condTO.getCellTypeId() != null) {
                 cellTypeIds.add(condTO.getCellTypeId());
-            }
-            if (condTO.getSexes() != null) {
-                sexes.addAll(condTO.getSexes().stream().map(s -> s.getStringRepresentation())
-                        .collect(Collectors.toSet()));
-            }
-            if (condTO.getStrain() != null) {
-                strains.add(condTO.getStrain());
             }
         }
         

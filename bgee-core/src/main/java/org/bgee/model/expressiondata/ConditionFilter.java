@@ -1,6 +1,9 @@
 package org.bgee.model.expressiondata;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Sept 2018
+ * @version Bgee 15.0, Mar. 2021
  * @since   Bgee 13, Oct. 2015
  */
 //TODO: be able to EXCLUDE anat. entities/stages. It would be convenient to discard
@@ -18,6 +21,10 @@ import org.apache.logging.log4j.Logger;
 public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
 
+    /**
+     * @see #getSexes()
+     */
+    private final Set<String> sexes;
     /**
      * @see #getObservedConditions()
      */
@@ -86,7 +93,7 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains, 
             Boolean observedConditions) throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds, cellTypeIds, sexes, strains);
+        super(anatEntityIds, devStageIds, cellTypeIds, strains);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
@@ -97,9 +104,18 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
                 + "developmental stage IDs, cell type IDs, sexe, strain IDs or observed data "
                 + "status must be provided."));
         }
+        this.sexes = Collections.unmodifiableSet(sexes == null? 
+                new HashSet<>(): new HashSet<>(sexes));
         this.observedConditions = observedConditions;
     }
 
+    /**
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the sexes that this 
+     * {@code ConditionFilter} will specify to use.
+     */
+    public Set<String> getSexes() {
+        return sexes;
+    }
     /**
      * @return  A {@code Boolean} defining whether the conditions considered should have been
      *          observed in expression data. If {@code true}, only conditions
@@ -117,6 +133,7 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + ((sexes == null) ? 0 : sexes.hashCode());
         result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
         return result;
     }
@@ -129,6 +146,11 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         if (getClass() != obj.getClass())
             return false;
         ConditionFilter other = (ConditionFilter) obj;
+        if (sexes == null) {
+            if (other.sexes != null)
+                return false;
+        } else if (!sexes.equals(other.sexes))
+            return false;
         if (observedConditions == null) {
             if (other.observedConditions != null)
                 return false;
@@ -150,7 +172,32 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     }
 
 
-    //Since we cannot use the attribute "observedConditions" to check for the validity of the Condition
-    //provided to the 'test' method, we do not need to reimplement the 'test' method of BaseConditionFilter.
-    //This might change in the future if other attributes are added.
+    //Since we cannot use the attribute "observedConditions" to check for the validity of the Condition.
+
+    /**
+     * Evaluates this {@code RawDataConditionFilter} on the given {@code RawDataCondition}.
+     * 
+     * @param condition A {@code RawDataCondition} that is the condition to be evaluated.
+     * @return          {@code true} if the {@code condition} matches the {@code RawDataConditionFilter}.
+     */
+    @Override
+    public boolean test(Condition condition) {
+        log.traceEntry("{}", condition);
+
+        if (!super.test(condition)) {
+            return log.traceExit(false);
+        }
+
+        // Check sex name
+        if (condition.getSex() != null 
+            && this.getSexes() != null && !this.getSexes().isEmpty()
+            && this.getSexes().stream().map(s -> s.toLowerCase())
+            .noneMatch(s -> s.equals(condition.getSex().getStringRepresentation().toLowerCase()))) {
+            log.debug("Sex {} not validated: not in {}",
+                condition.getSex(), this.getSexes());
+            return log.traceExit(false);
+        }
+        
+        return log.traceExit(true);
+    }
 }

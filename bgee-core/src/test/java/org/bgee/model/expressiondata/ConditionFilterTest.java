@@ -10,7 +10,7 @@ import java.util.Set;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.BaseCondition.Sex;
+import org.bgee.model.expressiondata.Condition.Sex;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 
@@ -49,7 +49,7 @@ public class ConditionFilterTest extends TestAncestor {
         ConditionFilter conditionFilter = new ConditionFilter(anatEntitieIds, devStageIds, cellTypeIds, null, null);
         assertTrue(conditionFilter.test(condition1));
         assertTrue(conditionFilter.test(condition1b));
-        assertTrue(conditionFilter.test(condition1c));
+        assertFalse(conditionFilter.test(condition1c));
         assertTrue(conditionFilter.test(condition2));
         assertTrue(conditionFilter.test(condition3));
         assertFalse(conditionFilter.test(condition4));
@@ -61,7 +61,7 @@ public class ConditionFilterTest extends TestAncestor {
         assertTrue(conditionFilter.test(condition10));
         assertTrue(conditionFilter.test(condition11));
 
-        Set<String> sexes = new HashSet<>(Arrays.asList("M"));
+        Set<String> sexes = new HashSet<>(Arrays.asList("male"));
         conditionFilter = new ConditionFilter(anatEntitieIds, null, null, sexes, null);
         assertTrue(conditionFilter.test(condition1));
         assertFalse(conditionFilter.test(condition2));

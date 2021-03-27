@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -31,14 +33,38 @@ import org.bgee.model.species.Species;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Sept. 2018
+ * @version Bgee 15, Mar. 2021
  * @since   Bgee 13. Sept. 2015
  */
 //XXX: how to manage multi-species conditions? Should we have a class SingleSpeciesCondition 
 //and a class MultiSpeciesCondition? Or, only a Condition, using a "SingleSpeciesAnatEntity" 
 //or a "MultiSpeciesAnatEntity", etc?
-public class Condition extends BaseCondition<Condition> {
+public class Condition extends BaseCondition<Condition> implements Comparable<Condition> {
     private final static Logger log = LogManager.getLogger(Condition.class.getName());
+
+    /**
+     * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
+     */
+    protected static final Comparator<Condition> COND_COMPARATOR = Comparator
+            .<Condition, Condition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
+            .thenComparing(Condition::getSex, Comparator.nullsLast(Sex::compareTo))
+            .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
+            .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
+
+    public enum Sex implements BgeeEnumField{
+        MALE("male"), FEMALE("female"), HERMAPHRODITE("hermaphrodite"), ANY("any");
+        
+        private final String representation;
+        
+        private Sex(String representation) {
+            this.representation = representation;
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+    }
 
     /**
      * A class allowing to extract all the entities from the condition parameters present
@@ -221,6 +247,7 @@ public class Condition extends BaseCondition<Condition> {
     //  ATTRIBUTES AND CONSTRUCTORS
     //*********************************
 
+    private final Sex sex;
     /**
      * @see #getMaxRanksByDataType()
      */
@@ -251,6 +278,11 @@ public class Condition extends BaseCondition<Condition> {
     public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
             String strain, Species species) throws IllegalArgumentException {
         this(anatEntity, devStage, cellType, sex, strain, species, null, null);
+        if (anatEntity == null && devStage == null && cellType == null && sex == null && strain == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The anat. entity, the dev. stage, the cell type, the sex, and the strain "
+                    + "cannot be null at the same time."));
+        }
     }
 
     /**
@@ -284,7 +316,8 @@ public class Condition extends BaseCondition<Condition> {
     public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
             String strain, Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
-        super(anatEntity, devStage, cellType, sex, strain, species);
+        super(anatEntity, devStage, cellType, strain, species);
+        this.sex = sex;
         this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
                                     new HashMap<>(): maxRanksByDataType);
         this.globalMaxRanksByDataType = Collections.unmodifiableMap(
@@ -318,6 +351,12 @@ public class Condition extends BaseCondition<Condition> {
     //  GETTERS
     //*********************************
     /**
+     * @return  The {@code Sex} used in this {@code Condition}.
+     */
+    public Sex getSex() {
+        return sex;
+    }
+    /**
      * @return   A {@code Map} where keys are {@code DataType}s, the associated values being 
      *           {@code BigDecimal}s corresponding to the max rank for this data type,
      *           solely in this condition, not taking into account child conditions.
@@ -337,9 +376,45 @@ public class Condition extends BaseCondition<Condition> {
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
     //*********************************
+    /**
+     * Performs a simple comparison based on the attributes of this class. For an ordering based 
+     * on the relations between {@code Condition}s, see {@link ConditionGraph#compare(Condition, Condition)}.
+     * 
+     * @param other A {@code Condition} to be compared to this one.
+     * @return      a negative {@code int}, zero, or a positive {@code int} 
+     *              as the first argument is less than, equal to, or greater than the second.
+     * @see ConditionGraph#compare(Condition, Condition)
+     */
+    @Override
+    public int compareTo(Condition other) {
+        return COND_COMPARATOR.compare(this, other);
+    }
 
-    //Note that we don't rely on maxRanksByDataType and globalMaxRanksByDataType for equals/hashCode,
-    //so we simply use the implementation from BaseCondition. This might change if other attributes are added.
+    //Note that we don't rely on maxRanksByDataType and globalMaxRanksByDataType for equals/hashCode.
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((sex == null) ? 0 : sex.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Condition other = (Condition) obj;
+        if (sex != other.sex) {
+            return false;
+        }
+        return true;
+    }
 
     @Override
     public String toString() {

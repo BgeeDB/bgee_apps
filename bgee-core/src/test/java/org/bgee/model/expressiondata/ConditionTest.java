@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.BaseCondition.Sex;
+import org.bgee.model.expressiondata.Condition.Sex;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 

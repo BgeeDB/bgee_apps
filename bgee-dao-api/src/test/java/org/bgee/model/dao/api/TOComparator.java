@@ -745,7 +745,7 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
-                Objects.equals(to1.getSexes(), to2.getSexes()) &&
+                Objects.equals(to1.getCellTypeId(), to2.getCellTypeId()) &&
                 StringUtils.equals(to1.getStrain(), to2.getStrain()) &&
                 Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.traceExit(true);
@@ -769,6 +769,8 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+
+                Objects.equals(to1.getSex(), to2.getSex()) &&
 
                 //ConditionRankInfoTO do not implement hashCode/equals
                 (to1.getRankInfoTOs() == null && to2.getRankInfoTOs() == null || 
@@ -797,6 +799,7 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+                Objects.equals(to1.getSex(), to2.getSex()) &&
                 Objects.equals(to1.getSexInferred(), to2.getSexInferred()) &&
                 Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId())) {
             return log.traceExit(true);

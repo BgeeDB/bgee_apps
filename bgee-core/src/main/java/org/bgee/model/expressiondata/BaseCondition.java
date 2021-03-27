@@ -4,7 +4,6 @@ import java.util.Comparator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.species.Species;
@@ -13,38 +12,21 @@ import org.bgee.model.species.Species;
  * Parent class of classes describing conditions in Bgee.
  *
  * @author Frederic Bastian
- * @version Bgee 14, Sept 2018
+ * @version Bgee 15, Mar. 2021
  * @since Bgee 14, Sept 2018
  *
  * @param <T>   The precise type of the class that will extend this {@code BaseCondition} class.
  */
-public abstract class BaseCondition<T extends BaseCondition<?>> implements Comparable<T> {
+public abstract class BaseCondition<T extends BaseCondition<?>> {
     private final static Logger log = LogManager.getLogger(BaseCondition.class.getName());
 
     /**
-     * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
+     * A {@code Comparator} of {@code BaseCondition}s used for {@link #compareTo(BaseCondition)}.
      */
-    private static final Comparator<BaseCondition<?>> COND_COMPARATOR = Comparator
+    protected static final Comparator<BaseCondition<?>> COND_COMPARATOR = Comparator
             .<BaseCondition<?>, String>comparing(BaseCondition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(BaseCondition::getDevStageId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(BaseCondition::getSex, Comparator.nullsLast(Sex::compareTo))
-            .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
-            .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
-    
-    public enum Sex implements BgeeEnumField{
-        MALE("male"), FEMALE("female"), HERMAPHRODITE("hermaphrodite"), ANY("any");
-        
-        private final String representation;
-        
-        private Sex(String representation) {
-            this.representation = representation;
-        }
-
-        @Override
-        public String getStringRepresentation() {
-            return this.representation;
-        }
-    }
+            .thenComparing(BaseCondition::getCellTypeId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(BaseCondition::getDevStageId, Comparator.nullsLast(String::compareTo));
     
 
     //*********************************
@@ -63,10 +45,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      */
     private final AnatEntity cellType;
     /**
-     * @see #getSex()
-     */
-    private final Sex sex;
-    /**
      * @see #getStrain()
      */
     private final String strain;
@@ -83,24 +61,20 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      *                      without the descriptions loaded for lower memory usage.
      * @param devStage      The {@code DevStage} used in this gene expression condition,
      *                      without the descriptions loaded for lower memory usage.
+     * @param strain        The {@code String} describing the strain used in this 
+     *                      gene expression condition.
      * @param species       The {@code Species} considered in this gene expression condition.
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
-            String strain,Species species) throws IllegalArgumentException {
-        if (anatEntity == null && devStage == null && cellType == null && sex == null & strain == null) {
-            throw log.throwing(new IllegalArgumentException(
-                    "The anat. entity, the dev. stage, the cell type, the sex and the strain cannot be null "
-                    + "at the same time."));
-        }
+    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType,
+            String strain, Species species) throws IllegalArgumentException {
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The species cannot be null."));
         }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
         this.cellType           = cellType;
-        this.sex                = sex;
         this.strain             = strain;
         this.species            = species;
     }
@@ -158,13 +132,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         return cellType == null? null: cellType.getId();
     }
     /**
-     * @return  The {@code String} used in this gene expression condition.
-     *          Can be {@code null}.
-     */
-    public Sex getSex() {
-        return sex;
-    }
-    /**
      * @return  The {@code String} corresponding to the strain used in 
      * this gene expression condition. Can be {@code null}.
      */
@@ -188,20 +155,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
     //*********************************
-    /**
-     * Performs a simple comparison based on the attributes of this class. For an ordering based 
-     * on the relations between {@code Condition}s, see {@link ConditionGraph#compare(Condition, Condition)}.
-     * 
-     * @param other A {@code Condition} to be compared to this one.
-     * @return      a negative {@code int}, zero, or a positive {@code int} 
-     *              as the first argument is less than, equal to, or greater than the second.
-     * @see ConditionGraph#compare(Condition, Condition)
-     */
-    @Override
-    public int compareTo(T other) {
-        return COND_COMPARATOR.compare(this, other);
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -209,12 +162,10 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         result = prime * result + ((anatEntity == null) ? 0 : anatEntity.hashCode());
         result = prime * result + ((cellType == null) ? 0 : cellType.hashCode());
         result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
-        result = prime * result + ((sex == null) ? 0 : sex.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
         result = prime * result + ((strain == null) ? 0 : strain.hashCode());
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -239,8 +190,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
                 return false;
         } else if (!devStage.equals(other.devStage))
             return false;
-        if (sex != other.sex)
-            return false;
         if (species == null) {
             if (other.species != null)
                 return false;
@@ -252,6 +201,5 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         } else if (!strain.equals(other.strain))
             return false;
         return true;
-    }    
-    
+    }
 }

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  * Parent class of classes allowing to filter different types of {@code BaseCondition}s.
  *
  * @author Frederic Bastian
- * @version Bgee 14, Sept 2018
+ * @version Bgee 15, Mar. 2021
  * @since Bgee 14, Sept 2018
  *
  * @param <T>   The type of {@code BaseCondition} that will be treated by the subclasses.
@@ -34,10 +34,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      */
     private final Set<String> cellTypeIds;
     /**
-     * @see #getSexes()
-     */
-    private final Set<String> sexes;
-    /**
      * @see #getStrains()
      */
     private final Set<String> strains;
@@ -52,27 +48,22 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
-     *                              of the sexes that this {@code ConditionFilter} will specify 
-     *                              to use.
      * @param strains               A {@code Collection} of {@code String}s that are the Names 
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 
-            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains)
+            Collection<String> cellTypeIds, Collection<String> strains)
             throws IllegalArgumentException {
         this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntityIds));
         this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
                 new HashSet<>(): new HashSet<>(devStageIds));
         this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
-        this.sexes = Collections.unmodifiableSet(sexes == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
+                new HashSet<>(): new HashSet<>(cellTypeIds));
         this.strains = Collections.unmodifiableSet(strains == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
+                new HashSet<>(): new HashSet<>(strains));
     }
 
 
@@ -98,13 +89,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         return cellTypeIds;
     }
     /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the sexes that this 
-     * {@code ConditionFilter} will specify to use.
-     */
-    public Set<String> getSexes() {
-        return sexes;
-    }
-    /**
      * @return  An unmodifiable {@code Set} of {@code String}s that are the strains that 
      * this {@code ConditionFilter} will specify to use.
      */
@@ -117,9 +101,8 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         final int prime = 31;
         int result = 1;
         result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
         result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
-        result = prime * result + ((sexes == null) ? 0 : sexes.hashCode());
+        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
         result = prime * result + ((strains == null) ? 0 : strains.hashCode());
         return result;
     }
@@ -139,20 +122,15 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
                 return false;
         } else if (!anatEntityIds.equals(other.anatEntityIds))
             return false;
-        if (cellTypeIds == null) {
-            if (other.cellTypeIds != null)
-                return false;
-        } else if (!cellTypeIds.equals(other.cellTypeIds))
-            return false;
         if (devStageIds == null) {
             if (other.devStageIds != null)
                 return false;
         } else if (!devStageIds.equals(other.devStageIds))
             return false;
-        if (sexes == null) {
-            if (other.sexes != null)
+        if (cellTypeIds == null) {
+            if (other.cellTypeIds != null)
                 return false;
-        } else if (!sexes.equals(other.sexes))
+        } else if (!cellTypeIds.equals(other.cellTypeIds))
             return false;
         if (strains == null) {
             if (other.strains != null)
@@ -172,8 +150,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
     @Override
     public boolean test(T condition) {
         log.traceEntry("{}", condition);
-
-        boolean isValid = true;
         
         // Check dev. stage ID 
         if (condition.getDevStageId() != null 
@@ -181,7 +157,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getDevStageIds().contains(condition.getDevStageId())) {
             log.debug("Dev. stage {} not validated: not in {}",
                 condition.getDevStageId(), this.getDevStageIds());
-            isValid = false;
+            return log.traceExit(false);
         }
     
         // Check anat. entity ID 
@@ -190,7 +166,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
             log.debug("Anat. entity {} not validated: not in {}",
                 condition.getAnatEntityId(), this.getAnatEntityIds());
-            isValid = false;
+            return log.traceExit(false);
         }
         
         // Check cell type ID 
@@ -199,7 +175,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getCellTypeIds().contains(condition.getCellTypeId())) {
             log.debug("Cell type {} not validated: not in {}",
                 condition.getCellTypeId(), this.getCellTypeIds());
-            isValid = false;
+            return log.traceExit(false);
         }
         
         // Check strain name
@@ -208,17 +184,9 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getStrains().contains(condition.getStrain())) {
             log.debug("Strain {} not validated: not in {}",
                 condition.getStrain(), this.getStrains());
-            isValid = false;
-        }
-        // Check sex name
-        if (condition.getSex() != null 
-            && this.getSexes() != null && !this.getSexes().isEmpty()
-            && !this.getSexes().contains(condition.getSex())) {
-            log.debug("Sex {} not validated: not in {}",
-                condition.getSex(), this.getSexes());
-            isValid = false;
+            return log.traceExit(false);
         }
         
-        return log.traceExit(isValid);
+        return log.traceExit(true);
     }
 }

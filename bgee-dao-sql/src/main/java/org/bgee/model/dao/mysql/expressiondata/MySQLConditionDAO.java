@@ -18,7 +18,6 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
@@ -33,7 +32,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 15, Mar. 2021
  * @see org.bgee.model.dao.api.anatdev.ConditionDAO.ConditionTO
  * @since   Bgee 14, Feb. 2017
  */
@@ -409,8 +408,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      * Implementation of the {@code ConditionTOResultSet}. 
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
+     * @version Bgee 15, Mar. 2021
+     * @since Bgee 14, Feb. 2017
      */
     class MySQLConditionTOResultSet extends MySQLDAOResultSet<ConditionDAO.ConditionTO>
             implements ConditionTOResultSet {
@@ -431,7 +430,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
                 String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
-                DAOSex sex = null;
+                ConditionDAO.ConditionTO.DAOSex sex = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
                 COL: for (String columnName : this.getColumnLabels().values()) {
@@ -458,7 +457,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                             cellTypeId = currentResultSet.getString(columnName);
                             break;
                         case SEX:
-                            sex = DAOSex.convertToDAOSex(currentResultSet.getString(columnName));
+                            sex = ConditionDAO.ConditionTO.DAOSex.convertToDAOSex(
+                                    currentResultSet.getString(columnName));
                             break;
                         case STRAIN:
                             strain = currentResultSet.getString(columnName);
@@ -469,7 +469,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 }
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
-                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, Collections.singleton(sex), 
+                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, 
                         strain, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));

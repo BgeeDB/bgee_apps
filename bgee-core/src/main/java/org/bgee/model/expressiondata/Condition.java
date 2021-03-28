@@ -245,6 +245,21 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
     }
 
     /**
+     * A {@code String} that represents the ID the root of all anat. entities
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String ANAT_ENTITY_ROOT_ID = "BGEE:0000000";
+    /**
+     * A {@code String} that represents the ID the root of all dev. stages
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
+    /**
+     * A {@code Sex} that represents the root of all sexes
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static Sex SEX_ROOT = Sex.ANY;
+    /**
      * A {@code String} that represents the standardized name of the root of all strains
      * used in {@code Condition}s in Bgee.
      */

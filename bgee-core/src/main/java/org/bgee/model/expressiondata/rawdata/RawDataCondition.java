@@ -26,7 +26,7 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
     private static final Comparator<RawDataCondition> COND_COMPARATOR = Comparator
             .<RawDataCondition, RawDataCondition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
             .thenComparing(RawDataCondition::getSex, Comparator.nullsLast(RawDataSex::compareTo))
-            .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
+            .thenComparing(RawDataCondition::getStrain, Comparator.nullsLast(String::compareTo))
             .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
 
     public enum RawDataSex implements BgeeEnumField{
@@ -46,16 +46,18 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
     }
 
     private final RawDataSex sex;
+    private final String strain;
 
     public RawDataCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, RawDataSex sex, 
             String strain, Species species) throws IllegalArgumentException {
-        super(anatEntity, devStage, cellType, strain, species);
+        super(anatEntity, devStage, cellType, species);
         if (anatEntity == null && devStage == null && cellType == null && sex == null && strain == null) {
             throw log.throwing(new IllegalArgumentException(
                     "The anat. entity, the dev. stage, the cell type, the sex, and the strain "
                     + "cannot be null at the same time."));
         }
         this.sex = sex;
+        this.strain = strain;
     }
 
     /**
@@ -63,6 +65,13 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
      */
     public RawDataSex getSex() {
         return sex;
+    }
+    
+    /**
+     * @return  The {@code String} representing the strain used in this {@code RawDataCondition}.
+     */
+    public String getStrain() {
+        return strain;
     }
 
     //*********************************
@@ -85,6 +94,7 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((sex == null) ? 0 : sex.hashCode());
+        result = prime * result + ((strain == null) ? 0 : strain.hashCode());
         return result;
     }
     @Override
@@ -102,6 +112,11 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
         if (sex != other.sex) {
             return false;
         }
+        if (strain == null) {
+            if (other.strain != null)
+                return false;
+        } else if (!strain.equals(other.strain))
+            return false;
         return true;
     }
 

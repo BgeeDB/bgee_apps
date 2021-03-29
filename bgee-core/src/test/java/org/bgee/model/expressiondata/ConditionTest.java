@@ -9,7 +9,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.Condition.Sex;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.species.Species;
 import org.junit.Test;
 
@@ -64,8 +66,8 @@ public class ConditionTest extends TestAncestor {
         assertEquals("Incorrect compareTo", 0, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 0, c2.compareTo(c1));
         
-        c1 = new Condition(null, null, null, Sex.MALE, null, new Species(1));
-        c2 = new Condition(null, null, null, Sex.MALE, null, new Species(1));
+        c1 = new Condition(null, null, null, new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
+        c2 = new Condition(null, null, null, new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         assertTrue("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect hashCode", c1.hashCode(), c2.hashCode());
         assertEquals("Incorrect compareTo", 0, c1.compareTo(c2));
@@ -112,27 +114,27 @@ public class ConditionTest extends TestAncestor {
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
         // different sexes
-        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), Sex.MALE, null, new Species(1));
-        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), Sex.FEMALE, null, new Species(1));
+        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
+        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.FEMALE.getStringRepresentation()), null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
-        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), Sex.MALE, null, new Species(1));
+        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), null, null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
      // different strains
-        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), Sex.MALE, "wt", new Species(1));
-        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), Sex.MALE, "xo", new Species(1));
+        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("wt"), new Species(1));
+        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct2"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("xo"), new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));
         
-        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), Sex.MALE, "xo", new Species(1));
-        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), Sex.MALE, null, new Species(1));
+        c1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), new Strain("xo"), new Species(1));
+        c2 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), new AnatEntity("ct1"), new Sex(SexEnum.MALE.getStringRepresentation()), null, new Species(1));
         assertFalse("Incorrect equals", c1.equals(c2));
         assertEquals("Incorrect compareTo", -1, c1.compareTo(c2));
         assertEquals("Incorrect compareTo", 1, c2.compareTo(c1));

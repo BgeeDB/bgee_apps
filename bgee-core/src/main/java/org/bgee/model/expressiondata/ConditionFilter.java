@@ -22,9 +22,13 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
 
     /**
-     * @see #getSexes()
+     * @see #getSexeIds()
      */
-    private final Set<String> sexes;
+    private final Set<String> sexIds;
+    /**
+     * @see #getStrainIds()
+     */
+    private final Set<String> strainIds;
     /**
      * @see #getObservedConditions()
      */
@@ -76,10 +80,10 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
+     * @param sexeIds                 A {@code Collection} of {@code String}s that are the Names 
      *                              of the sexes that this {@code ConditionFilter} will specify 
      *                              to use.
-     * @param strains               A {@code Collection} of {@code String}s that are the Names 
+     * @param strainIds               A {@code Collection} of {@code String}s that are the Names 
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
      * @param observedConditions    A {@code Boolean} defining whether the conditions considered
@@ -91,21 +95,23 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     //XXX: Should we add two booleans to ask for considering sub-structures and sub-stages?
     //Because it seems it can be managed through query of data propagation in CallFilter
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
-            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains, 
+            Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds, 
             Boolean observedConditions) throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds, cellTypeIds, strains);
+        super(anatEntityIds, devStageIds, cellTypeIds);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
-                (sexes == null || sexes.isEmpty()) &&
-                (strains == null || strains.isEmpty()) &&
+                (sexIds == null || sexIds.isEmpty()) &&
+                (strainIds == null || strainIds.isEmpty()) &&
                 observedConditions == null) {
             throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
                 + "developmental stage IDs, cell type IDs, sexe, strain IDs or observed data "
                 + "status must be provided."));
         }
-        this.sexes = Collections.unmodifiableSet(sexes == null? 
-                new HashSet<>(): new HashSet<>(sexes));
+        this.sexIds = Collections.unmodifiableSet(sexIds == null? 
+                new HashSet<>(): new HashSet<>(sexIds));
+        this.strainIds = Collections.unmodifiableSet(strainIds == null? 
+                new HashSet<>(): new HashSet<>(strainIds));
         this.observedConditions = observedConditions;
     }
 
@@ -113,8 +119,15 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @return  An unmodifiable {@code Set} of {@code String}s that are the sexes that this 
      * {@code ConditionFilter} will specify to use.
      */
-    public Set<String> getSexes() {
-        return sexes;
+    public Set<String> getSexIds() {
+        return sexIds;
+    }
+    /**
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the strains that this 
+     * {@code ConditionFilter} will specify to use.
+     */
+    public Set<String> getStrainIds() {
+        return strainIds;
     }
     /**
      * @return  A {@code Boolean} defining whether the conditions considered should have been
@@ -133,7 +146,8 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((sexes == null) ? 0 : sexes.hashCode());
+        result = prime * result + ((sexIds == null) ? 0 : sexIds.hashCode());
+        result = prime * result + ((strainIds == null) ? 0 : strainIds.hashCode());
         result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
         return result;
     }
@@ -146,10 +160,15 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         if (getClass() != obj.getClass())
             return false;
         ConditionFilter other = (ConditionFilter) obj;
-        if (sexes == null) {
-            if (other.sexes != null)
+        if (sexIds == null) {
+            if (other.sexIds != null)
                 return false;
-        } else if (!sexes.equals(other.sexes))
+        } else if (!sexIds.equals(other.sexIds))
+            return false;
+        if (strainIds == null) {
+            if (other.strainIds != null)
+                return false;
+        } else if (!strainIds.equals(other.strainIds))
             return false;
         if (observedConditions == null) {
             if (other.observedConditions != null)
@@ -165,8 +184,8 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         builder.append("ConditionFilter [anatEntityIds=").append(getAnatEntityIds())
                .append(", devStageIds=").append(getDevStageIds())
                .append(", cellTypeIds=").append(getCellTypeIds())
-               .append(", sexes=").append(getSexes())
-               .append(", strains=").append(getStrains())
+               .append(", sexIds=").append(getSexIds())
+               .append(", strainIds=").append(getStrainIds())
                .append(", observedConditions=").append(observedConditions).append("]");
         return builder.toString();
     }
@@ -188,13 +207,20 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
             return log.traceExit(false);
         }
 
-        // Check sex name
+        // Check Sex ID
         if (condition.getSex() != null 
-            && this.getSexes() != null && !this.getSexes().isEmpty()
-            && this.getSexes().stream().map(s -> s.toLowerCase())
-            .noneMatch(s -> s.equals(condition.getSex().getStringRepresentation().toLowerCase()))) {
+            && this.getSexIds() != null && !this.getSexIds().isEmpty()
+            && !this.getSexIds().contains(condition.getSex().getId())) {
             log.debug("Sex {} not validated: not in {}",
-                condition.getSex(), this.getSexes());
+                condition.getSex().getId(), this.getSexIds());
+            return log.traceExit(false);
+        }
+        // Check Strain ID 
+        if (condition.getStrain() != null 
+            && this.getStrainIds() != null && !this.getStrainIds().isEmpty()
+            && !this.getStrainIds().contains(condition.getStrain().getId())) {
+            log.debug("Strain {} not validated: not in {}",
+                condition.getStrain().getId(), this.getStrainIds());
             return log.traceExit(false);
         }
         

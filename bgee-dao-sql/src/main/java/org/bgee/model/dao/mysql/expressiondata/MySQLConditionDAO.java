@@ -456,11 +456,11 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         case CELL_TYPE_ID:
                             cellTypeId = currentResultSet.getString(columnName);
                             break;
-                        case SEX:
+                        case SEX_ID:
                             sex = ConditionDAO.ConditionTO.DAOSex.convertToDAOSex(
                                     currentResultSet.getString(columnName));
                             break;
-                        case STRAIN:
+                        case STRAIN_ID:
                             strain = currentResultSet.getString(columnName);
                             break;
                         default:

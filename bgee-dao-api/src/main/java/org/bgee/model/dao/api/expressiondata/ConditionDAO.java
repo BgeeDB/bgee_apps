@@ -36,8 +36,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ConditionTO#getStageId()}.
      * <li>{@code CELL_TYPE_ID}: corresponds to {@link ConditionTO#getStageId()}.
-     * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
-     * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
+     * <li>{@code SEX_ID}: corresponds to {@link ConditionTO#getSex()}.
+     * <li>{@code STRAIN_ID}: corresponds to {@link ConditionTO#getStrain()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
      * </ul>
      */
@@ -47,7 +47,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         ID("id", false), 
         SPECIES_ID("speciesId", false), 
         ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true),
-        CELL_TYPE_ID("cellTypeId", true), SEX("sex", true), STRAIN("strain", true);
+        CELL_TYPE_ID("cellTypeId", true), SEX_ID("sex", true), STRAIN_ID("strain", true);
 
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.

@@ -45,10 +45,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
      */
     private final AnatEntity cellType;
     /**
-     * @see #getStrain()
-     */
-    private final String strain;
-    /**
      * @see #getSpecies()
      */
     private final Species species;
@@ -61,21 +57,18 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
      *                      without the descriptions loaded for lower memory usage.
      * @param devStage      The {@code DevStage} used in this gene expression condition,
      *                      without the descriptions loaded for lower memory usage.
-     * @param strain        The {@code String} describing the strain used in this 
-     *                      gene expression condition.
      * @param species       The {@code Species} considered in this gene expression condition.
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
     protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType,
-            String strain, Species species) throws IllegalArgumentException {
+            Species species) throws IllegalArgumentException {
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The species cannot be null."));
         }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
         this.cellType           = cellType;
-        this.strain             = strain;
         this.species            = species;
     }
 
@@ -132,13 +125,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
         return cellType == null? null: cellType.getId();
     }
     /**
-     * @return  The {@code String} corresponding to the strain used in 
-     * this gene expression condition. Can be {@code null}.
-     */
-    public String getStrain() {
-        return strain;
-    }
-    /**
      * @return  The {@code Species} considered in this gene expression condition.
      */
     public Species getSpecies() {
@@ -163,7 +149,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
         result = prime * result + ((cellType == null) ? 0 : cellType.hashCode());
         result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
-        result = prime * result + ((strain == null) ? 0 : strain.hashCode());
         return result;
     }
     @Override
@@ -194,11 +179,6 @@ public abstract class BaseCondition<T extends BaseCondition<?>> {
             if (other.species != null)
                 return false;
         } else if (!species.equals(other.species))
-            return false;
-        if (strain == null) {
-            if (other.strain != null)
-                return false;
-        } else if (!strain.equals(other.strain))
             return false;
         return true;
     }

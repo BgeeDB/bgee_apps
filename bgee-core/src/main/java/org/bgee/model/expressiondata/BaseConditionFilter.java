@@ -33,10 +33,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @see #getCellTypeIds()
      */
     private final Set<String> cellTypeIds;
-    /**
-     * @see #getStrains()
-     */
-    private final Set<String> strains;
 
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -54,7 +50,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 
-            Collection<String> cellTypeIds, Collection<String> strains)
+            Collection<String> cellTypeIds)
             throws IllegalArgumentException {
         this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntityIds));
@@ -62,8 +58,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
                 new HashSet<>(): new HashSet<>(devStageIds));
         this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? 
                 new HashSet<>(): new HashSet<>(cellTypeIds));
-        this.strains = Collections.unmodifiableSet(strains == null? 
-                new HashSet<>(): new HashSet<>(strains));
     }
 
 
@@ -88,13 +82,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
     public Set<String> getCellTypeIds() {
         return cellTypeIds;
     }
-    /**
-     * @return  An unmodifiable {@code Set} of {@code String}s that are the strains that 
-     * this {@code ConditionFilter} will specify to use.
-     */
-    public Set<String> getStrains() {
-        return strains;
-    }
 
     @Override
     public int hashCode() {
@@ -103,7 +90,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
         result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
         result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
-        result = prime * result + ((strains == null) ? 0 : strains.hashCode());
         return result;
     }
 
@@ -131,11 +117,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             if (other.cellTypeIds != null)
                 return false;
         } else if (!cellTypeIds.equals(other.cellTypeIds))
-            return false;
-        if (strains == null) {
-            if (other.strains != null)
-                return false;
-        } else if (!strains.equals(other.strains))
             return false;
         return true;
     }
@@ -175,15 +156,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getCellTypeIds().contains(condition.getCellTypeId())) {
             log.debug("Cell type {} not validated: not in {}",
                 condition.getCellTypeId(), this.getCellTypeIds());
-            return log.traceExit(false);
-        }
-        
-        // Check strain name
-        if (condition.getStrain() != null 
-            && this.getStrains() != null && !this.getStrains().isEmpty()
-            && !this.getStrains().contains(condition.getStrain())) {
-            log.debug("Strain {} not validated: not in {}",
-                condition.getStrain(), this.getStrains());
             return log.traceExit(false);
         }
         

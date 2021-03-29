@@ -24,6 +24,10 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      */
     private final Set<String> sexes;
     /**
+     * @see #getStrains()
+     */
+    private final Set<String> strains;
+    /**
      * @see #getIncludeSubConditions()
      */
     private final boolean includeSubConditions;
@@ -58,7 +62,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains, boolean includeSubConditions, 
             boolean includeParentConditions)
             throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds, cellTypeIds, strains);
+        super(anatEntityIds, devStageIds, cellTypeIds);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
@@ -70,6 +74,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         }
         this.sexes = Collections.unmodifiableSet(sexes == null? 
                 new HashSet<>(): new HashSet<>(sexes));
+        this.strains = Collections.unmodifiableSet(strains == null? 
+                new HashSet<>(): new HashSet<>(strains));
         this.includeSubConditions = includeSubConditions;
         this.includeParentConditions = includeParentConditions;
     }
@@ -80,6 +86,13 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      */
     public Set<String> getSexes() {
         return sexes;
+    }
+    /**
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the strains that this 
+     * {@code RawDataConditionFilter} will specify to use.
+     */
+    public Set<String> getStrains() {
+        return strains;
     }
     /**
      * @return  A {@code boolean} defining whether the sub-conditions of the targeted raw conditions,

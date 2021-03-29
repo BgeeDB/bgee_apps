@@ -107,6 +107,8 @@ public class CallService extends CommonService {
      * <li>{@code GENE}: corresponds to {@link Call#getGene()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link Condition#getAnatEntityId()} from {@link Call#getCondition()}.
      * <li>{@code DEV_STAGE_ID}: corresponds to {@link Condition#getDevStageId()} from {@link Call#getCondition()}.
+     * <li>{@code SEX_ID}: corresponds to {@link Condition#getSexId()} from {@link Call#getCondition()}.
+     * <li>{@code STRAIN_ID}: corresponds to {@link Condition#getStrainId()} from {@link Call#getCondition()}.
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
      * <li>{@code DATA_QUALITY}: corresponds to {@link Call#getSummaryQuality()}.
      * <li>{@code OBSERVED_DATA}: corresponds to {@link Call#getDataPropagation()}.
@@ -132,9 +134,9 @@ public class CallService extends CommonService {
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
-        GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CALL_TYPE(false),
-        DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false), EXPRESSION_SCORE(false),
-        EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false),
+        GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), SEX_ID(true),STRAIN_ID(true), 
+        CALL_TYPE(false), DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false), 
+        EXPRESSION_SCORE(false), EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false),
         GENE_QUAL_EXPR_LEVEL(false), ANAT_ENTITY_QUAL_EXPR_LEVEL(false);
         
         /**
@@ -404,7 +406,9 @@ public class CallService extends CommonService {
                     new HashMap<>():
                     loadGlobalConditionMap(speciesMap.values(),
                         condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
-                        this.conditionDAO, this.anatEntityService, this.devStageService));
+                        this.conditionDAO, this.anatEntityService, this.devStageService,
+                        this.getServiceFactory().getSexService(), 
+                        this.getServiceFactory().getStrainService()));
 
         // Retrieve min./max ranks per anat. entity if info requested
         // and if the main expression call query will not allow to obtain this information
@@ -1321,6 +1325,16 @@ public class CallService extends CommonService {
                         case STAGE_ID:
                             if (!condFilter.getDevStageIds().isEmpty()) {
                                 daoAttrs.add(ConditionDAO.Attribute.STAGE_ID);
+                            }
+                            break;
+                        case SEX_ID:
+                            if (!condFilter.getSexIds().isEmpty()) {
+                                daoAttrs.add(ConditionDAO.Attribute.SEX_ID);
+                            }
+                            break;
+                        case STRAIN_ID:
+                            if (!condFilter.getStrainIds().isEmpty()) {
+                                daoAttrs.add(ConditionDAO.Attribute.STRAIN_ID);
                             }
                             break;
                         default:

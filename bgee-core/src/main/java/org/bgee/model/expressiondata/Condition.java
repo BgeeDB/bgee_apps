@@ -15,6 +15,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
+import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.species.Species;
 
@@ -47,24 +50,9 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      */
     private static final Comparator<Condition> COND_COMPARATOR = Comparator
             .<Condition, Condition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
-            .thenComparing(Condition::getSex, Comparator.nullsLast(Sex::compareTo))
-            .thenComparing(BaseCondition::getStrain, Comparator.nullsLast(String::compareTo))
+            .thenComparing(Condition::getSexId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(Condition::getStrainId, Comparator.nullsLast(String::compareTo))
             .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
-
-    public enum Sex implements BgeeEnumField{
-        MALE("male"), FEMALE("female"), HERMAPHRODITE("hermaphrodite"), ANY("any");
-        
-        private final String representation;
-        
-        private Sex(String representation) {
-            this.representation = representation;
-        }
-
-        @Override
-        public String getStringRepresentation() {
-            return this.representation;
-        }
-    }
 
     /**
      * A class allowing to extract all the entities from the condition parameters present
@@ -81,8 +69,10 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
         private final Set<String> devStageIds;
         private final Set<AnatEntity> cellTypes;
         private final Set<String> cellTypeIds;
-        private final EnumSet<Sex> sexes;
-        private final Set<String> strains;
+        private final Set<Sex> sexes;
+        private final Set<String> sexIds;
+        private final Set<Strain> strains;
+        private final Set<String> strainIds;
         private final Set<Species> species;
         private final Set<Integer> speciesIds;
 
@@ -93,8 +83,10 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             Set<String> devStageIds = new HashSet<>();
             Set<AnatEntity> cellTypes = new HashSet<>();
             Set<String> cellTypeIds = new HashSet<>();
-            EnumSet<Sex> sexes = EnumSet.noneOf(Sex.class);
-            Set<String> strains = new HashSet<>();
+            Set<Sex> sexes = new HashSet<>();
+            Set<String> sexIds = new HashSet<>();
+            Set<Strain> strains = new HashSet<>();
+            Set<String> strainIds = new HashSet<>();
             Set<Species> species = new HashSet<>();
             Set<Integer> speciesIds = new HashSet<>();
             if (conditions != null) {
@@ -113,9 +105,11 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
                     }
                     if (cond.getSex() != null) {
                         sexes.add(cond.getSex());
+                        sexIds.add(cond.getSex().getId());
                     }
                     if (cond.getStrain() != null) {
                         strains.add(cond.getStrain());
+                        strainIds.add(cond.getStrain().getId());
                     }
                 }
             }
@@ -125,9 +119,10 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             this.devStageIds = Collections.unmodifiableSet(devStageIds);
             this.cellTypes = Collections.unmodifiableSet(cellTypes);
             this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds);
-            //EnumSet is not immutable 
-            this.sexes = sexes;
+            this.sexes = Collections.unmodifiableSet(sexes);
+            this.sexIds = Collections.unmodifiableSet(sexIds);
             this.strains = Collections.unmodifiableSet(strains);
+            this.strainIds = Collections.unmodifiableSet(strainIds);
             this.species = Collections.unmodifiableSet(species);
             this.speciesIds = Collections.unmodifiableSet(speciesIds);
         }
@@ -150,12 +145,18 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
         public Set<String> getCellTypeIds() {
             return cellTypeIds;
         }
-        public EnumSet<Sex> getSexes() {
+        public Set<Sex> getSexes() {
             //Defensive copying because EnumSet cannot be made immutable
-            return EnumSet.copyOf(sexes);
+            return sexes;
         }
-        public Set<String> getStrains() {
+        public Set<String> getSexIds() {
+            return sexIds;
+        }
+        public Set<Strain> getStrains() {
             return strains;
+        }
+        public Set<String> getStrainIds() {
+            return strainIds;
         }
         public Set<Species> getSpecies() {
             return species;
@@ -175,9 +176,11 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
             result = prime * result + ((devStages == null) ? 0 : devStages.hashCode());
             result = prime * result + ((sexes == null) ? 0 : sexes.hashCode());
+            result = prime * result + ((sexIds == null) ? 0 : sexIds.hashCode());
             result = prime * result + ((species == null) ? 0 : species.hashCode());
             result = prime * result + ((speciesIds == null) ? 0 : speciesIds.hashCode());
             result = prime * result + ((strains == null) ? 0 : strains.hashCode());
+            result = prime * result + ((strainIds == null) ? 0 : strainIds.hashCode());
             return result;
         }
 
@@ -225,6 +228,11 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
                     return false;
             } else if (!sexes.equals(other.sexes))
                 return false;
+            if (sexIds == null) {
+                if (other.sexIds != null)
+                    return false;
+            } else if (!sexIds.equals(other.sexIds))
+                return false;
             if (species == null) {
                 if (other.species != null)
                     return false;
@@ -239,6 +247,11 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
                 if (other.strains != null)
                     return false;
             } else if (!strains.equals(other.strains))
+                return false;
+            if (strainIds == null) {
+                if (other.strainIds != null)
+                    return false;
+            } else if (!strainIds.equals(other.strainIds))
                 return false;
             return true;
         }
@@ -255,21 +268,23 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      */
     public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
     /**
-     * A {@code Sex} that represents the root of all sexes
+     * A {@code String} that represents the root of all sexes
      * used in {@code Condition}s in Bgee.
      */
-    public final static Sex SEX_ROOT = Sex.ANY;
+    public final static String SEX_ROOT_ID = SexEnum.ANY.getStringRepresentation();
     /**
      * A {@code String} that represents the standardized name of the root of all strains
      * used in {@code Condition}s in Bgee.
      */
-    public final static String STRAIN_ROOT = "wild-type";
+    public final static String STRAIN_ROOT_ID = "wild-type";
 
     //*********************************
     //  ATTRIBUTES AND CONSTRUCTORS
     //*********************************
 
     private final Sex sex;
+    
+    private final Strain strain;
     /**
      * @see #getMaxRanksByDataType()
      */
@@ -291,14 +306,13 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      *                      gene expression condition, without the descriptions loaded 
      *                      for lower memory usage.
      * @param sex           The {@code Sex} used in this gene expression condition.
-     * @param strain        The {@code String} describing the strain used in this 
-     *                      gene expression condition.
+     * @param strain        The {@code Strain} used in this gene expression condition.
      * @param species       The {@code Species} considered in this gene expression condition.
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
     public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
-            String strain, Species species) throws IllegalArgumentException {
+            Strain strain, Species species) throws IllegalArgumentException {
         this(anatEntity, devStage, cellType, sex, strain, species, null, null);
         if (anatEntity == null && devStage == null && cellType == null && sex == null && strain == null) {
             throw log.throwing(new IllegalArgumentException(
@@ -336,9 +350,10 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      *                                      or if {@code speciesId} is less than 1.
      */
     public Condition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Sex sex, 
-            String strain, Species species, Map<DataType, BigDecimal> maxRanksByDataType,
+            Strain strain, Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) throws IllegalArgumentException {
-        super(anatEntity, devStage, cellType, strain, species);
+        super(anatEntity, devStage, cellType, species);
+        this.strain = strain;
         this.sex = sex;
         this.maxRanksByDataType = Collections.unmodifiableMap(maxRanksByDataType == null?
                                     new HashMap<>(): maxRanksByDataType);
@@ -377,6 +392,28 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      */
     public Sex getSex() {
         return sex;
+    }
+    /**
+     * @return  A {@code String} that is the ID of the sex 
+     *          used in this gene expression condition.
+     *          Can be {@code null}.
+     */
+    public String getSexId() {
+        return sex == null? null : sex.getId();
+    }
+    /**
+     * @return  The {@code Strain} used in this {@code Condition}.
+     */
+    public Strain getStrain() {
+        return strain;
+    }
+    /**
+     * @return  A {@code String} that is the ID of the strain 
+     *          used in this gene expression condition.
+     *          Can be {@code null}.
+     */
+    public String getStrainId() {
+        return strain == null? null : strain.getId();
     }
     /**
      * @return   A {@code Map} where keys are {@code DataType}s, the associated values being 
@@ -418,6 +455,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((sex == null) ? 0 : sex.hashCode());
+        result = prime * result + ((strain == null) ? 0 : strain.hashCode());
         return result;
     }
     @Override
@@ -432,9 +470,16 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             return false;
         }
         Condition other = (Condition) obj;
-        if (sex != other.sex) {
+        if (sex == null) {
+            if (other.sex != null)
+                return false;
+        } else if (!sex.equals(other.sex))
             return false;
-        }
+        if (strain == null) {
+            if (other.strain != null)
+                return false;
+        } else if (!strain.equals(other.strain))
+            return false;
         return true;
     }
 

@@ -99,6 +99,9 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         //allowing to map conditions used in annotations to conditions used in expression tables.
         colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
+        colToAttributesMap.put("sexId", ConditionDAO.Attribute.SEX_ID);
+        colToAttributesMap.put("strainId", ConditionDAO.Attribute.STRAIN_ID);
+        colToAttributesMap.put("cellTypeId", ConditionDAO.Attribute.STRAIN_ID);
         colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
 //        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX);
 //        if (!global) {
@@ -337,6 +340,18 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         break;
                     case STAGE_ID:
                         stmt.setString(paramIndex, conditionTO.getStageId());
+                        paramIndex++;
+                        break;
+                    case SEX_ID:
+                        stmt.setString(paramIndex, conditionTO.getSex().getStringRepresentation());
+                        paramIndex++;
+                        break;
+                    case STRAIN_ID:
+                        stmt.setString(paramIndex, conditionTO.getStrain());
+                        paramIndex++;
+                        break;
+                    case CELL_TYPE_ID:
+                        stmt.setString(paramIndex, conditionTO.getCellTypeId());
                         paramIndex++;
                         break;
                     default:

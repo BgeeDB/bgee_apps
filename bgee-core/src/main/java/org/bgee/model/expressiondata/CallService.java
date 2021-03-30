@@ -107,6 +107,7 @@ public class CallService extends CommonService {
      * <li>{@code GENE}: corresponds to {@link Call#getGene()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link Condition#getAnatEntityId()} from {@link Call#getCondition()}.
      * <li>{@code DEV_STAGE_ID}: corresponds to {@link Condition#getDevStageId()} from {@link Call#getCondition()}.
+     * <li>{@code CELL_TYPE_ID}: corresponds to {@link Condition#getCellTypeId()} from {@link Call#getCondition()}.
      * <li>{@code SEX_ID}: corresponds to {@link Condition#getSexId()} from {@link Call#getCondition()}.
      * <li>{@code STRAIN_ID}: corresponds to {@link Condition#getStrainId()} from {@link Call#getCondition()}.
      * <li>{@code CALL_TYPE}: corresponds to {@link Call#getSummaryCallType()}.
@@ -134,8 +135,8 @@ public class CallService extends CommonService {
      * </ul>
      */
     public static enum Attribute implements Service.Attribute {
-        GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), SEX_ID(true),STRAIN_ID(true), 
-        CALL_TYPE(false), DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false), 
+        GENE(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CELL_TYPE_ID(true), SEX_ID(true),
+        STRAIN_ID(true), CALL_TYPE(false), DATA_QUALITY(false), OBSERVED_DATA(false), MEAN_RANK(false), 
         EXPRESSION_SCORE(false), EXPERIMENT_COUNTS(false), DATA_TYPE_RANK_INFO(false),
         GENE_QUAL_EXPR_LEVEL(false), ANAT_ENTITY_QUAL_EXPR_LEVEL(false);
         
@@ -167,6 +168,12 @@ public class CallService extends CommonService {
                 return log.traceExit("anatomicalEntity");
             case DEV_STAGE_ID:
                 return log.traceExit("developmentalStage");
+            case CELL_TYPE_ID:
+                return log.traceExit("cellType");
+            case SEX_ID:
+                return log.traceExit("sex");
+            case STRAIN_ID:
+                return log.traceExit("strain");
             default:
                 throw log.throwing(new IllegalStateException("Cond param not supported"));
             }
@@ -185,7 +192,8 @@ public class CallService extends CommonService {
     }
 
     public static enum OrderingAttribute implements Service.OrderingAttribute {
-        GENE_ID(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), GLOBAL_RANK(false);
+        GENE_ID(false), ANAT_ENTITY_ID(true), DEV_STAGE_ID(true), CELL_TYPE_ID(true), 
+        SEX_ID(true), STRAIN_ID(true), GLOBAL_RANK(false);
         
         /**
          * @see #isConditionParameter()
@@ -252,7 +260,9 @@ public class CallService extends CommonService {
      * that might be the case in future releases of Bgee).
      */
     private static final Set<ConditionDAO.Attribute> COND_PARAM_COMBINATION_FOR_RANKS = EnumSet.of(
-            ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+            ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
+            ConditionDAO.Attribute.CELL_TYPE_ID, ConditionDAO.Attribute.SEX_ID,
+            ConditionDAO.Attribute.STRAIN_ID);
     /**
      * A {@code Map} containing a single {@code Entry} where the key is the {@code ExpressionSummary}
      * and the value is the {@code SummaryQuality} necessary to correctly retrieve all rank info.

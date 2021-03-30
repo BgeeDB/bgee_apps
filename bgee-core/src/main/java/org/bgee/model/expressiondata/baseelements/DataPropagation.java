@@ -39,6 +39,10 @@ public class DataPropagation {
      */
     private final PropagationState devStagePropagationState;
     /**
+     * @see #getCellTypePropagationState()
+     */
+    private final PropagationState cellTypePropagationState;
+    /**
      * @see #getSexPropagationState()
      */
     private final PropagationState sexPropagationState;
@@ -97,7 +101,8 @@ public class DataPropagation {
     public DataPropagation(PropagationState anatEntityPropagationState,
             PropagationState devStagePropagationState, Boolean includingObservedData)
                     throws IllegalArgumentException {
-        this(anatEntityPropagationState, devStagePropagationState, null, null, includingObservedData);
+        this(anatEntityPropagationState, devStagePropagationState, null, null, null, 
+                includingObservedData);
     }
     /**
      * Instantiate a new {@code DataPropagation} by providing the propagation state along anatomy,
@@ -109,6 +114,8 @@ public class DataPropagation {
      *                                      are propagated along anatomy.
      * @param devStagePropagationState      A {@code PropagationState} describing how data
      *                                      are propagated along dev. stages.
+     * @param cellTypePropagationState      A {@code PropagationState} describing how data
+     *                                      are propagated along cell types.
      * @param sexPropagationState           A {@code PropagationState} describing how data
      *                                      are propagated along sexes.
      * @param strainPropagationState        A {@code PropagationState} describing how data
@@ -123,9 +130,9 @@ public class DataPropagation {
      */
     //Note: it is allowed to provide only null arguments here, because see CallService.DATA_PROPAGATION_IDENTITY
     public DataPropagation(PropagationState anatEntityPropagationState,
-            PropagationState devStagePropagationState, PropagationState sexPropagationState,
-            PropagationState strainPropagationState, Boolean includingObservedData)
-                    throws IllegalArgumentException {
+            PropagationState devStagePropagationState, PropagationState cellTypePropagationState, 
+            PropagationState sexPropagationState, PropagationState strainPropagationState, 
+            Boolean includingObservedData) throws IllegalArgumentException {
         //Actually, we cannot infer the ObservedData state from looking at all individual
         //condition parameter propagation state: see comments inside method
         //org.bgee.model.expressiondata.CallService.mergeDataPropagations(DataPropagation, DataPropagation)
@@ -144,6 +151,7 @@ public class DataPropagation {
 
         this.anatEntityPropagationState = anatEntityPropagationState;
         this.devStagePropagationState = devStagePropagationState;
+        this.cellTypePropagationState = cellTypePropagationState;
         this.sexPropagationState = sexPropagationState;
         this.strainPropagationState = strainPropagationState;
         this.includingObservedData  = includingObservedData;
@@ -161,6 +169,13 @@ public class DataPropagation {
      */
     public PropagationState getDevStagePropagationState() {
         return devStagePropagationState;
+    }
+    /**
+     * @return  The {@code PropagationState} describing how data are propagated along 
+     *          cell types.
+     */
+    public PropagationState getCellTypePropagationState() {
+        return cellTypePropagationState;
     }
     /**
      * @return  The {@code PropagationState} describing how data are propagated along
@@ -192,7 +207,7 @@ public class DataPropagation {
     //this method is useful to abstract away what are the elements defining a condition.
     public EnumSet<PropagationState> getAllPropagationStates() {
         return Stream.of(anatEntityPropagationState, devStagePropagationState,
-                sexPropagationState, strainPropagationState)
+                cellTypePropagationState, sexPropagationState, strainPropagationState)
                 .map(s -> s == null? PropagationState.UNKNOWN: s)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
     }
@@ -203,6 +218,7 @@ public class DataPropagation {
         int result = 1;
         result = prime * result + ((anatEntityPropagationState == null) ? 0 : anatEntityPropagationState.hashCode());
         result = prime * result + ((devStagePropagationState == null) ? 0 : devStagePropagationState.hashCode());
+        result = prime * result + ((cellTypePropagationState == null) ? 0 : cellTypePropagationState.hashCode());
         result = prime * result + ((sexPropagationState == null) ? 0 : sexPropagationState.hashCode());
         result = prime * result + ((strainPropagationState == null) ? 0 : strainPropagationState.hashCode());
         result = prime * result + ((includingObservedData == null) ? 0 : includingObservedData.hashCode());
@@ -226,6 +242,9 @@ public class DataPropagation {
         if (devStagePropagationState != other.devStagePropagationState) {
             return false;
         }
+        if (cellTypePropagationState != other.cellTypePropagationState) {
+            return false;
+        }
         if (sexPropagationState != other.sexPropagationState) {
             return false;
         }
@@ -247,6 +266,7 @@ public class DataPropagation {
         StringBuilder builder = new StringBuilder();
         builder.append("DataPropagation [anatEntityPropagationState=").append(anatEntityPropagationState)
                 .append(", devStagePropagationState=").append(devStagePropagationState)
+                .append(", cellTypePropagationState=").append(cellTypePropagationState)
                 .append(", sexPropagationState=").append(sexPropagationState)
                 .append(", strainPropagationState=").append(strainPropagationState)
                 .append(", includingObservedData=").append(includingObservedData).append("]");

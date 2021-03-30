@@ -35,7 +35,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code ID}: corresponds to {@link ConditionTO#getId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ConditionTO#getStageId()}.
-     * <li>{@code CELL_TYPE_ID}: corresponds to {@link ConditionTO#getStageId()}.
+     * <li>{@code CELL_TYPE_ID}: corresponds to {@link ConditionTO#getCellTypeId()}.
      * <li>{@code SEX_ID}: corresponds to {@link ConditionTO#getSex()}.
      * <li>{@code STRAIN_ID}: corresponds to {@link ConditionTO#getStrain()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.

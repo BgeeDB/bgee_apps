@@ -32,6 +32,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
         columnToAttributesMap.put("exprMappedConditionId", RawDataConditionDAO.Attribute.EXPR_MAPPED_CONDITION_ID);
         columnToAttributesMap.put("anatEntityId", RawDataConditionDAO.Attribute.ANAT_ENTITY_ID);
         columnToAttributesMap.put("stageId", RawDataConditionDAO.Attribute.STAGE_ID);
+        columnToAttributesMap.put("cellTypeId", RawDataConditionDAO.Attribute.CELL_TYPE_ID);
         columnToAttributesMap.put("sex", RawDataConditionDAO.Attribute.SEX);
         columnToAttributesMap.put("sexInferred", RawDataConditionDAO.Attribute.SEX_INFERRED);
         columnToAttributesMap.put("strain", RawDataConditionDAO.Attribute.STRAIN);

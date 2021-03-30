@@ -158,7 +158,7 @@ public class ConditionGraphTest extends TestAncestor {
         if (fromService) {
             this.conditionGraph = condGraphService.loadConditionGraph(this.conditions);
         } else {
-            this.conditionGraph = condGraphService.loadConditionGraph(this.conditions, anatEntityOnt, devStageOnt);
+            this.conditionGraph = condGraphService.loadConditionGraph(this.conditions, anatEntityOnt, devStageOnt, null, null, null);
         }
     }
 

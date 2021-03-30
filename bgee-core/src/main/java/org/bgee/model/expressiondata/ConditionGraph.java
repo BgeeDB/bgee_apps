@@ -10,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
 
@@ -45,6 +47,18 @@ public class ConditionGraph {
      */
     private final Ontology<DevStage, String> devStageOnt;
     /**
+     * @see #getCellTypeOntology()
+     */
+    private final Ontology<AnatEntity, String> cellTypeOnt;
+    /**
+     * @see #getSexOntology()
+     */
+    private final Ontology<Sex, String> sexOnt;
+    /**
+     * @see #getStrainOntology()
+     */
+    private final Ontology<Strain, String> strainOnt;
+    /**
      * @see #isInferredAncestralConditions()
      */
     private final boolean inferAncestralConditions;
@@ -68,6 +82,15 @@ public class ConditionGraph {
      * @param devStageOnt           An {@code Ontology} of {@code DevStage}s present
      *                              in the provided {@code Condition}s, if any. Otherwise,
      *                              can be {@code null}.
+     * @param cellTypeOnt           An {@code Ontology} of {@code AnatEntity}s corresponding to cell 
+     *                              type present in the provided {@code Condition}s, if any. 
+     *                              Otherwise, can be {@code null}.
+     * @param sexOnt                An {@code Ontology} of {@code Sex}s present
+     *                              in the provided {@code Condition}s, if any. Otherwise,
+     *                              can be {@code null}.
+     * @param strainOnt             An {@code Ontology} of {@code Strain}s present
+     *                              in the provided {@code Condition}s, if any. Otherwise,
+     *                              can be {@code null}.
      * @throws IllegalArgumentException If {@code conditions} is {@code null} or empty, 
      *                                  or if the provided {@code Condition}s does not exist in the same species,
      *                                  or if the {@code Ontology}s are not provided appropriately,
@@ -78,9 +101,12 @@ public class ConditionGraph {
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
     public ConditionGraph(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
-            Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt)
+            Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt,
+            Ontology<AnatEntity, String> cellTypeOnt, Ontology<Sex, String> sexOnt, 
+            Ontology<Strain, String> strainOnt)
                     throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, 
+                inferDescendantConds, anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
 
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
@@ -90,7 +116,23 @@ public class ConditionGraph {
         }
         if (anatEntityOnt != null && devStageOnt != null 
                 && anatEntityOnt.getSpeciesId() != devStageOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
+            throw log.throwing(new IllegalArgumentException("Anat. entities and dev. stage ontologies "
+                    + "should be in the same species."));
+        }
+        if (anatEntityOnt != null && cellTypeOnt != null 
+                && anatEntityOnt.getSpeciesId() != cellTypeOnt.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Anat. entities and cell type ontologies "
+                    + "should be in the same species."));
+        }
+        if (strainOnt != null && anatEntityOnt != null 
+                && strainOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Anat. entities and strains ontologies "
+                    + "should be in the same species."));
+        }
+        if (sexOnt != null && anatEntityOnt != null 
+                && sexOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Anat. entities and sexes ontologies "
+                    + "should be in the same species."));
         }
 
         this.conditions = Collections.unmodifiableSet(new HashSet<>(conditions));
@@ -105,11 +147,27 @@ public class ConditionGraph {
         if (devStageOnt == null && !entities.getDevStageIds().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Dev. stage ontology must be provided."));
         }
+        if (cellTypeOnt == null && !entities.getCellTypeIds().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Cell type ontology must be provided."));
+        }
+        if (sexOnt == null && !entities.getSexes().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Sex ontology must be provided."));
+        }
+        if (strainOnt == null && !entities.getStrains().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Strain ontology must be provided."));
+        }
+
         this.checkEntityExistence(entities.getDevStageIds(), devStageOnt);
         this.checkEntityExistence(entities.getAnatEntityIds(), anatEntityOnt);
+        this.checkEntityExistence(entities.getCellTypeIds(), cellTypeOnt);
+        this.checkEntityExistence(entities.getSexIds(), sexOnt);
+        this.checkEntityExistence(entities.getStrainIds(), strainOnt);
 
         this.anatEntityOnt = anatEntityOnt;
         this.devStageOnt = devStageOnt;
+        this.cellTypeOnt = cellTypeOnt;
+        this.strainOnt = strainOnt;
+        this.sexOnt = sexOnt;
         this.inferAncestralConditions = inferAncestralConds;
         this.inferDescendantConditions = inferDescendantConds;
         log.traceExit();
@@ -129,7 +187,7 @@ public class ConditionGraph {
      */
     private <T extends Comparable<T>> void checkEntityExistence(Set<String> entityIds, Ontology<?, T> ont) 
             throws IllegalArgumentException {
-        log.entry(entityIds, ont);
+        log.traceEntry("{}, {}", entityIds, ont);
         
         if (ont == null) {
             log.traceExit(); return;
@@ -160,7 +218,7 @@ public class ConditionGraph {
      *                                  to this {@code ConditionGraph}, or one of them is {@code null}.
      */
     public boolean isConditionMorePrecise(Condition firstCond, Condition secondCond) throws IllegalArgumentException {
-        log.entry(firstCond, secondCond);
+        log.traceEntry("{}, {}", firstCond, secondCond);
 
         if (firstCond == null || secondCond == null) {
             throw log.throwing(new IllegalArgumentException("No provided Condition can be null"));
@@ -219,7 +277,7 @@ public class ConditionGraph {
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getAncestorConditions(Condition cond) {
-        log.entry(cond);
+        log.traceEntry("{}", cond);
         return log.traceExit(this.getAncestorConditions(cond, false));
     }
 
@@ -237,7 +295,7 @@ public class ConditionGraph {
      */
     public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
             throws IllegalArgumentException {
-        log.entry(cond, directRelOnly);
+        log.traceEntry("{}, {}", cond, directRelOnly);
         log.trace("Start retrieving ancestral conditions for {}", cond);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
@@ -284,7 +342,7 @@ public class ConditionGraph {
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getDescendantConditions(Condition cond) {
-        log.entry(cond);
+        log.traceEntry("{}", cond);
         return log.traceExit(this.getDescendantConditions(cond, false));
     }
     
@@ -299,7 +357,7 @@ public class ConditionGraph {
      * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
      */
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
-        log.entry(cond, directRelOnly);
+        log.traceEntry("{}, {}", cond, directRelOnly);
         return getDescendantConditions(cond, directRelOnly, true);
     }
 
@@ -318,7 +376,7 @@ public class ConditionGraph {
     // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
         boolean includeSubstages) {
-        log.entry(cond, directRelOnly, includeSubstages);
+        log.traceEntry("{}, {}, {}", cond, directRelOnly, includeSubstages);
         return log.traceExit(getDescendantConditions(cond, directRelOnly, includeSubstages, null, null));
     }
 
@@ -339,7 +397,8 @@ public class ConditionGraph {
     // TODO: refactor this method with constructor and getAncestorConditions
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
         boolean includeSubstages, Integer subAnatEntityMaxLevel, Integer subStageMaxLevel) {
-        log.entry(cond, directRelOnly, includeSubstages, subAnatEntityMaxLevel, subStageMaxLevel);
+        log.traceEntry("{}, {}, {}, {}, {}", cond, directRelOnly, includeSubstages, 
+                subAnatEntityMaxLevel, subStageMaxLevel);
 
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
@@ -411,6 +470,31 @@ public class ConditionGraph {
      */
     public Ontology<DevStage, String> getDevStageOntology() {
         return devStageOnt;
+    }
+    /**
+     * @return  An {@code Ontology} of {@code AnatEntity}s corresponding to cell type used to infer 
+     *          relations between {@code Condition}s. 
+     *          Contains only {@code AnatEntity}s and relations for entities present 
+     *          in the {@code Condition}s provided at instantiation.
+     */
+    public Ontology<AnatEntity, String> getCellTypeOntology() {
+        return cellTypeOnt;
+    }
+    /**
+     * @return  An {@code Ontology} of {@code Sex}s corresponding to sexes used to infer 
+     *          relations between {@code Condition}s. Contains only sexes and relations for entities present 
+     *          in the {@code Condition}s provided at instantiation.
+     */
+    public Ontology<Sex, String> getSexOntology() {
+        return sexOnt;
+    }
+    /**
+     * @return  An {@code Ontology} of {@code Strain}s corresponding to strains used to infer 
+     *          relations between {@code Condition}s. Contains only strains and relations for entities present 
+     *          in the {@code Condition}s provided at instantiation.
+     */
+    public Ontology<Strain, String> getStrainOntology() {
+        return strainOnt;
     }
     /** 
      * @return  The {@code boolean} defining whether the ancestral conditions should be inferred.

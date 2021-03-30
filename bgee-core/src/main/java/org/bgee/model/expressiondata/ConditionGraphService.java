@@ -333,10 +333,12 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
-                //TODO: To modify to return new propagated conditions. Have to look deeper at Stream to see how to manage (Stream.foreach(), or not use Stream ?)
                 return propAnatEntitys.stream()
-                        .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
-                            new Condition(propAnatEntity, propStage, null, null, null, cond.getSpecies())))
+                        .flatMap(propAnatEntity -> propStages.stream()
+                                .flatMap(propStage -> propCellTypes.stream()
+                                        .flatMap( propCellType -> propSexes.stream()
+                                                .flatMap( propSexe -> propStrains.stream().map( propStrain ->
+                            new Condition(propAnatEntity, propStage, propCellType, propSexe, propStrain, cond.getSpecies()))))))
                         .filter(propCond -> !cond.equals(propCond));
     
             }).collect(Collectors.toSet());

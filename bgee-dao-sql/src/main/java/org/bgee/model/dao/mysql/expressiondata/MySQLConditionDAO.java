@@ -154,7 +154,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 //since we are always going to define the NULL/NOT NULL status for
                 //all condition parameters. For raw conditions the table is small,
                 //so we don't bother and always add the DISTINCT clause.
-                false, 
+                true, 
                 attrs)).append(" FROM ").append(tableName);
         sb.append(" WHERE ")
           .append(getCondParamCombinationWhereClause(tableName, conditionParameters));

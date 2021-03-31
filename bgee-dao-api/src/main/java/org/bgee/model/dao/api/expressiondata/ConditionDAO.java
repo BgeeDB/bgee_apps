@@ -266,9 +266,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         private final Set<ConditionRankInfoTO> rankInfoTOs;
         
         public ConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId,
-                DAOSex sex, String strain, Integer speciesId,
+                DAOSex sex, String strainId, Integer speciesId,
                 Collection<ConditionRankInfoTO> rankInfoTOs) {
-            super(id, anatEntityId, stageId, cellTypeId, strain, speciesId);
+            super(id, anatEntityId, stageId, cellTypeId, strainId, speciesId);
             this.sex = sex;
             if (rankInfoTOs != null) {
                 this.rankInfoTOs = Collections.unmodifiableSet(new HashSet<>(rankInfoTOs));
@@ -305,7 +305,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
                    .append(", stageId=").append(getStageId())
                    .append(", cellTypeId=").append(getCellTypeId())
                    .append(", sex=").append(getSex())
-                   .append(", strain=").append(getStrain())
+                   .append(", strainId=").append(getStrainId())
                    .append(", speciesId=").append(getSpeciesId()).append("]");
             return builder.toString();
         }

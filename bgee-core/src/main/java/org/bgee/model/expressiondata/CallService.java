@@ -1337,6 +1337,11 @@ public class CallService extends CommonService {
                                 daoAttrs.add(ConditionDAO.Attribute.STAGE_ID);
                             }
                             break;
+                        case CELL_TYPE_ID:
+                            if (!condFilter.getCellTypeIds().isEmpty()) {
+                                daoAttrs.add(ConditionDAO.Attribute.CELL_TYPE_ID);
+                            }
+                            break;
                         case SEX_ID:
                             if (!condFilter.getSexIds().isEmpty()) {
                                 daoAttrs.add(ConditionDAO.Attribute.SEX_ID);

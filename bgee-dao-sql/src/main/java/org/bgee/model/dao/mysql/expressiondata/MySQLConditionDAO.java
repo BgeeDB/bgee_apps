@@ -99,15 +99,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         //allowing to map conditions used in annotations to conditions used in expression tables.
         colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
-        colToAttributesMap.put("sexId", ConditionDAO.Attribute.SEX_ID);
-        colToAttributesMap.put("strainId", ConditionDAO.Attribute.STRAIN_ID);
-        colToAttributesMap.put("cellTypeId", ConditionDAO.Attribute.STRAIN_ID);
+        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX_ID);
+        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN_ID);
+        colToAttributesMap.put("cellTypeId", ConditionDAO.Attribute.CELL_TYPE_ID);
         colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
-//        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX);
 //        if (!global) {
 //            colToAttributesMap.put("sexInferred", ConditionDAO.Attribute.SEX_INFERRED);
 //        }
-//        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN);
         
         return log.traceExit(colToAttributesMap);
     }
@@ -347,7 +345,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         paramIndex++;
                         break;
                     case STRAIN_ID:
-                        stmt.setString(paramIndex, conditionTO.getStrain());
+                        stmt.setString(paramIndex, conditionTO.getStrainId());
                         paramIndex++;
                         break;
                     case CELL_TYPE_ID:
@@ -444,7 +442,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
-                String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
+                String anatEntityId = null, stageId = null, cellTypeId = null, strainId = null;
                 ConditionDAO.ConditionTO.DAOSex sex = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
@@ -476,7 +474,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                                     currentResultSet.getString(columnName));
                             break;
                         case STRAIN_ID:
-                            strain = currentResultSet.getString(columnName);
+                            strainId = currentResultSet.getString(columnName);
                             break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
@@ -485,7 +483,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
                 return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, 
-                        strain, speciesId, null));
+                        strainId, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

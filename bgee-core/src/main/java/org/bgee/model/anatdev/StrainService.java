@@ -34,6 +34,7 @@ public class StrainService extends Service {
      *                          retrieve. Can be {@code null} or empty.
      * @return                  A {@code Stream} of {@code Strain}s retrieved for the requested parameters.
      */
+    //XXX: shouldn't we retrieve valid strains from the database? Maybe unnecessary?
     public Stream<Strain> loadStrains(Collection<String> strainIds) {
         log.traceEntry("{}", strainIds);
         return log.traceExit(strainIds.stream().map(s -> new Strain(s)));

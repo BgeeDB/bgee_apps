@@ -1,13 +1,13 @@
 package org.bgee.model.anatdev;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ontology.OntologyElement;
 
@@ -30,7 +30,7 @@ public class Sex extends NamedEntity<String> implements OntologyElement<Sex, Str
      **/
     public Sex(String id) {
         super(id);
-        Set <String> allowedSexRepresentations = SexEnum.getAllowedRepresentation();
+        Set <String> allowedSexRepresentations = SexEnum.getAllowedRepresentations();
         if(!allowedSexRepresentations.contains(id)) {
             throw log.throwing(new IllegalArgumentException("Can only use values from ["
                     + allowedSexRepresentations + "] to create a Sex. [" + id 
@@ -52,25 +52,14 @@ public class Sex extends NamedEntity<String> implements OntologyElement<Sex, Str
             return this.representation;
         }
         
-        private static Set<String> getAllowedRepresentation() {
+        public static Set<String> getAllowedRepresentations() {
             return EnumSet.allOf(SexEnum.class).stream().map(s -> s.getStringRepresentation())
                     .collect(Collectors.toSet());
         }
         
-        public static SexEnum fromStringToSexEnum(String representation) {
+        public static SexEnum convertToSexEnum(String representation) {
             log.traceEntry("{}", representation);
-            List<SexEnum> sexEnumList = EnumSet.allOf(SexEnum.class).stream()
-                    .filter(e -> e.representation.equals(representation))
-                    .collect(Collectors.toList());
-            if (sexEnumList == null || sexEnumList.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException("The representation [" + representation 
-                        + "] does not match any SexEnum."));
-            } else if (sexEnumList.size() > 1) {
-                throw log.throwing(new IllegalArgumentException("The representation [" + representation 
-                        + "] should match only 1 SexEnum but matched " + sexEnumList.size()));
-            }
-            return log.traceExit(sexEnumList.get(0));
+            return log.traceExit(BgeeEnum.convert(SexEnum.class, representation));
         }
     }
-
 }

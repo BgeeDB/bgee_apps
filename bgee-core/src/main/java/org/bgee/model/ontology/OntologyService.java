@@ -434,39 +434,46 @@ public class OntologyService extends CommonService {
      * @return                  The {@code Ontology} of {@code Sex}s for the requested sexes
      *                          and relation status.
      */
+    //XXX: actually, we have a table speciesToSex, so maybe we'll need indeed a query to the database
+    //to retrieve the sexes valid in a species?
     public Ontology<Sex, String> getSexOntology(Integer speciesId, Collection<String> sexIds, 
             boolean getAncestors, boolean getDescendants) {
         log.traceEntry("{}, {}, {}, {}", speciesId, sexIds, getAncestors, getDescendants);
-        if(sexIds == null || sexIds.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("sex can not be null"));
-        }
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of SexOntology");
+        Set<String> filteredSexIds = sexIds == null || sexIds.isEmpty()?
+                EnumSet.allOf(SexEnum.class).stream().map(s -> s.getStringRepresentation())
+                .collect(Collectors.toSet()) :
+                    sexIds.stream().filter(id -> SexEnum.getAllowedRepresentations().contains(id))
+                    .collect(Collectors.toSet());
         
         // retrieve all requested sexIds
-        Set<String> requestedSexIds = new HashSet<String>(sexIds);
-        if (getAncestors && !sexIds.contains(Condition.SEX_ROOT_ID)) {
+        Set<String> requestedSexIds = new HashSet<>(filteredSexIds);
+        if (getAncestors && !filteredSexIds.contains(Condition.SEX_ROOT_ID)) {
             requestedSexIds.add(Condition.SEX_ROOT_ID);
         }
-        if (getDescendants && sexIds.contains(Condition.SEX_ROOT_ID)) {
+        if (getDescendants && filteredSexIds.contains(Condition.SEX_ROOT_ID)) {
             requestedSexIds = EnumSet.allOf(SexEnum.class).stream()
                     .map(s -> s.getStringRepresentation()).collect(Collectors.toSet());
         }
-        
-        //Create REFLEXIVE RelationTOs
+
         Set<RelationTO<String>> rels = new HashSet<RelationTO<String>>();
-        rels.addAll(requestedSexIds.stream()
-                .map(s -> new RelationTO<String>(null, s, s, RelationTO.RelationType.ISA_PARTOF, 
-                        RelationTO.RelationStatus.REFLEXIVE))
-                .collect(Collectors.toSet()));
-      //Create DIRECT RelationTOs
+        //Create REFLEXIVE RelationTOs
+        //Ah, apparently, according to method getRelationTOs(QuadriFunction, RelationTOResultSet,
+        //Collection, boolean, boolean), we do not retrieve the REFLEXIVE relations to build
+        //other ontologies
+//        rels.addAll(requestedSexIds.stream()
+//                .map(s -> new RelationTO<String>(null, s, s, RelationTO.RelationType.ISA_PARTOF, 
+//                        RelationTO.RelationStatus.REFLEXIVE))
+//                .collect(Collectors.toSet()));
+        //Create DIRECT RelationTOs
         if (requestedSexIds.contains(Condition.SEX_ROOT_ID)) {
             rels.addAll(requestedSexIds.stream().filter(s -> !s.equals(Condition.SEX_ROOT_ID))
                     .map(s -> new RelationTO<String>(null, s, Condition.SEX_ROOT_ID, RelationTO.RelationType.ISA_PARTOF,
                             RelationStatus.DIRECT)).collect(Collectors.toSet()));
         }        
         
-        Set<Sex> requestedSexes = sexIds.stream().map(s -> new Sex(s)).collect(Collectors.toSet());
+        Set<Sex> requestedSexes = requestedSexIds.stream().map(s -> new Sex(s)).collect(Collectors.toSet());
         log.debug("Requested sex IDs: {}", requestedSexes);
         Ontology<Sex, String> ont = new Ontology<Sex, String>(speciesId,
                 requestedSexes, rels, EnumSet.of(RelationType.ISA_PARTOF),
@@ -490,12 +497,7 @@ public class OntologyService extends CommonService {
         if(speciesId == null) {
             throw log.throwing(new IllegalArgumentException("speciesId can not be null"));
         }
-        //retrieve all strains of selected speciesId
-        Set<String> allStrainIds = this.getServiceFactory().getDAOManager().getConditionDAO()
-                .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
-                EnumSet.noneOf(ConditionDAO.Attribute.class), EnumSet.of(ConditionDAO.Attribute.STRAIN_ID))
-                .getAllTOs().stream().map(cond -> cond.getStrain()).collect(Collectors.toSet());
-        return log.traceExit(this.getStrainOntology(speciesId, allStrainIds, false, false));
+        return log.traceExit(this.getStrainOntology(speciesId, null, false, false));
     }
     
     /**
@@ -529,27 +531,36 @@ public class OntologyService extends CommonService {
         }
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of StrainOntology");
-        
+
+        Set<String> speciesStrainIds = new HashSet<>();
+        if (strainIds == null || strainIds.isEmpty() ||
+                getDescendants && strainIds.contains(Condition.STRAIN_ROOT_ID)) {
+            speciesStrainIds = this.getServiceFactory().getDAOManager().getConditionDAO()
+                    .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
+                            EnumSet.of(ConditionDAO.Attribute.STRAIN_ID), 
+                            EnumSet.of(ConditionDAO.Attribute.STRAIN_ID))
+                            .stream().map(cond -> cond.getStrainId())
+                                .collect(Collectors.toSet());
+        }
         // retrieve all requested strainIds
-        Set<String> requestedStrainIds = new HashSet<String>(strainIds);
+        Set<String> requestedStrainIds = new HashSet<>(strainIds == null || strainIds.isEmpty()?
+                speciesStrainIds: strainIds);
         if (getAncestors && !strainIds.contains(Condition.STRAIN_ROOT_ID)) {
             requestedStrainIds.add(Condition.STRAIN_ROOT_ID);
         }
         if (getDescendants && strainIds.contains(Condition.STRAIN_ROOT_ID)) {
-            requestedStrainIds = this.getServiceFactory().getDAOManager().getConditionDAO()
-                    .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
-                            EnumSet.noneOf(ConditionDAO.Attribute.class), 
-                            EnumSet.of(ConditionDAO.Attribute.STRAIN_ID))
-                            .getAllTOs().stream().map(cond -> cond.getStrain())
-                                .collect(Collectors.toSet());
+            requestedStrainIds.addAll(speciesStrainIds);
         }
-        
-        //Create REFLEXIVE RelationTOs
+
         Set<RelationTO<String>> rels = new HashSet<RelationTO<String>>();
-        rels.addAll(requestedStrainIds.stream()
-                .map(s -> new RelationTO<String>(null, s, s, RelationTO.RelationType.ISA_PARTOF, 
-                        RelationTO.RelationStatus.REFLEXIVE))
-                .collect(Collectors.toSet()));
+        //Create REFLEXIVE RelationTOs
+        //Ah, apparently, according to method getRelationTOs(QuadriFunction, RelationTOResultSet,
+        //Collection, boolean, boolean), we do not retrieve the REFLEXIVE relations to build
+        //other ontologies
+//        rels.addAll(requestedStrainIds.stream()
+//                .map(s -> new RelationTO<String>(null, s, s, RelationTO.RelationType.ISA_PARTOF, 
+//                        RelationTO.RelationStatus.REFLEXIVE))
+//                .collect(Collectors.toSet()));
         //Create DIRECT RelationTOs
         if (requestedStrainIds.contains(Condition.STRAIN_ROOT_ID)) {
             rels.addAll(requestedStrainIds.stream().filter(s -> !s.equals(Condition.STRAIN_ROOT_ID))
@@ -557,7 +568,8 @@ public class OntologyService extends CommonService {
                             RelationStatus.DIRECT)).collect(Collectors.toSet()));
         }        
         
-        Set<Strain> requestedStrains = strainIds.stream().map(s -> new Strain(s)).collect(Collectors.toSet());
+        Set<Strain> requestedStrains = requestedStrainIds.stream().map(s -> new Strain(s))
+                .collect(Collectors.toSet());
         log.debug("Requested strains : {}", requestedStrains);
         Ontology<Strain, String> ont = new Ontology<Strain, String>(speciesId,
                 requestedStrains, rels,

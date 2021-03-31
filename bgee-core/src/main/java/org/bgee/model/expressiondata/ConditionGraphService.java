@@ -249,7 +249,7 @@ public class ConditionGraphService extends CommonService {
                 && anatEntityOntToUse.getSpeciesId() != devStageOntToUse.getSpeciesId()) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
-        final Ontology<AnatEntity, String> cellTypeOntToUse = entities.getAnatEntityIds().isEmpty()? null:
+        final Ontology<AnatEntity, String> cellTypeOntToUse = entities.getCellTypeIds().isEmpty()? null:
             cellTypeOnt != null? cellTypeOnt: 
                 this.getServiceFactory().getOntologyService().getAnatEntityOntology(
                     speciesId, entities.getCellTypeIds(), EnumSet.of(RelationType.ISA_PARTOF), 

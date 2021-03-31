@@ -148,11 +148,11 @@ public class CommonService extends Service {
                     "Incorrect sex ID in ConditionTO, expected " + sex.getId() + " but was "
                     + condTO.getSex().getStringRepresentation()));
         }
-        if (condTO.getStrain() != null && strain != null &&
-                !condTO.getStrain().equals(strain.getId())) {
+        if (condTO.getStrainId() != null && strain != null &&
+                !condTO.getStrainId().equals(strain.getId())) {
             throw log.throwing(new IllegalArgumentException(
                     "Incorrect strain ID in ConditionTO, expected " + strain.getId() + " but was "
-                    + condTO.getStrain()));
+                    + condTO.getStrainId()));
         }
         return log.traceExit(new Condition(anatEntity, devStage, cellType, sex,
                 strain, species));
@@ -246,7 +246,7 @@ public class CommonService extends Service {
     
     protected static DAOSex convertSexToDAOSex(Sex sex) {
         log.traceEntry("{}", sex);
-        SexEnum sexEnum = SexEnum.fromStringToSexEnum(sex.getId());
+        SexEnum sexEnum = SexEnum.convertToSexEnum(sex.getId());
         switch(sexEnum) {
             case MALE:
                 return log.traceExit(DAOSex.MALE);
@@ -522,8 +522,8 @@ public class CommonService extends Service {
             if (condTO.getSex() != null) {
                 sexIds.add(condTO.getSex().getStringRepresentation());
             }
-            if (condTO.getStrain() != null) {
-                strainIds.add(condTO.getStrain());
+            if (condTO.getStrainId() != null) {
+                strainIds.add(condTO.getStrainId());
             }
         }
         
@@ -552,12 +552,20 @@ public class CommonService extends Service {
                     + " - stages: " + stageIds));
         }
         final Map<String, Sex> sexMap = sexIds.isEmpty()? new HashMap<>():
+            //if a sex is not supported, an exception will be immediately thrown
             sexService.loadSexes(sexIds)
             .collect(Collectors.toMap(s -> s.getId(), s -> s));
         
         final Map<String, Strain> strainMap = strainIds.isEmpty()? new HashMap<>():
             strainService.loadStrains(strainIds)
             .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        //In case we retrieve strains from the database
+        if (!strainIds.isEmpty() && strainMap.size() != strainIds.size()) {
+            strainIds.removeAll(strainMap.keySet());
+            throw log.throwing(new IllegalStateException("Some strains used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + " - strains: " + strainIds));
+        }
         
         return log.traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
@@ -578,10 +586,10 @@ public class CommonService extends Service {
                                     Optional.ofNullable(sexMap.get(cTO.getSex().getStringRepresentation()))
                                     .orElseThrow(() -> new IllegalStateException("sex not found: "
                                                 + cTO.getSex().getStringRepresentation())),
-                                cTO.getStrain() == null? null:
-                                    Optional.ofNullable(strainMap.get(cTO.getStrain()))
+                                cTO.getStrainId() == null? null:
+                                    Optional.ofNullable(strainMap.get(cTO.getStrainId()))
                                     .orElseThrow(() -> new IllegalStateException("strain not found: "
-                                                + cTO.getStrain())),
+                                                + cTO.getStrainId())),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "
                                                 + cTO.getSpeciesId())))
@@ -600,6 +608,8 @@ public class CommonService extends Service {
                             return ConditionDAO.Attribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 
                             return ConditionDAO.Attribute.STAGE_ID;
+                        case CELL_TYPE_ID:
+                            return ConditionDAO.Attribute.CELL_TYPE_ID;
                         case SEX_ID:
                             return ConditionDAO.Attribute.SEX_ID;
                         case STRAIN_ID: 

@@ -16,16 +16,16 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
     private final String anatEntityId;
     private final String stageId;
     private final String cellTypeId;
-    private final String strain;
+    private final String strainId;
     private final Integer speciesId;
 
     protected BaseConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId, 
-            String strain, Integer speciesId) {
+            String strainId, Integer speciesId) {
         super(id);
         this.anatEntityId = anatEntityId;
         this.stageId = stageId;
         this.cellTypeId = cellTypeId;
-        this.strain = strain;
+        this.strainId = strainId;
         this.speciesId = speciesId;
     }
 
@@ -50,8 +50,8 @@ public abstract class BaseConditionTO extends EntityTO<Integer> {
     /**
      * @return  A {@code String} corresponding to the strain of this condition.
      */
-    public String getStrain() {
-        return strain;
+    public String getStrainId() {
+        return strainId;
     }
     /**
      * @return  The {@code String} that is the NCBI species taxon ID.

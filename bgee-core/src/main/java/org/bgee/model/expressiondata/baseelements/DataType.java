@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.baseelements;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.bgee.model.BgeeEnum;
@@ -62,5 +64,30 @@ public enum DataType implements BgeeEnumField {
      */
     public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
+    }
+
+    public static final Set<EnumSet<DataType>> getAllPossibleDataTypeCombinations() {
+        Set<EnumSet<DataType>> combinations = new HashSet<>();
+        DataType[] dataTypeArr = DataType.values();
+        final int n = dataTypeArr.length;
+        
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<DataType> combination = EnumSet.noneOf(DataType.class);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(dataTypeArr[j]);
+                }
+            }
+            //We don't want the combination where no data type is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return combinations;
     }
 }

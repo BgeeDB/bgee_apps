@@ -140,6 +140,7 @@ public class DataPropagation {
         if (Boolean.TRUE.equals(includingObservedData) && EnumSet.of(
                 anatEntityPropagationState == null? PropagationState.UNKNOWN: anatEntityPropagationState,
                 devStagePropagationState == null? PropagationState.UNKNOWN: devStagePropagationState,
+                cellTypePropagationState == null? PropagationState.UNKNOWN: cellTypePropagationState,
                 sexPropagationState == null? PropagationState.UNKNOWN: sexPropagationState,
                 strainPropagationState == null? PropagationState.UNKNOWN: strainPropagationState)
                 .stream().anyMatch(s -> Boolean.FALSE.equals(s.isIncludingObservedData()))) {

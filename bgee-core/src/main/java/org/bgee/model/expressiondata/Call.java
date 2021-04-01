@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,8 +27,10 @@ import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
+import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -213,7 +216,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static List<ExpressionCall> filterAndOrderCallsByRank(
                 Collection<ExpressionCall> calls, final ConditionGraph conditionGraph) {
-            log.entry(calls, conditionGraph);
+            log.traceEntry("{}, {}", calls, conditionGraph);
             if (calls == null) {
                 return log.traceExit((List<ExpressionCall>) null);
             }
@@ -298,7 +301,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static List<ExpressionCall> sortEqualRankGeneCalls(List<ExpressionCall> equalRankCallsToOrder,
                 ConditionGraph graph) {
-            log.entry(equalRankCallsToOrder, graph);
+            log.traceEntry("{}, {}", equalRankCallsToOrder, graph);
 
             //We recreate a new List to avoid side-effects.
             List<ExpressionCall> equalRankCalls = new ArrayList<>(equalRankCallsToOrder);
@@ -399,7 +402,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static Set<ExpressionCall> identifyRedundantCalls(Collection<ExpressionCall> calls, 
                 ConditionGraph conditionGraph) throws IllegalArgumentException {
-            log.entry(calls, conditionGraph);
+            log.traceEntry("{}, {}", calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using a ConditionGraph
             return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
@@ -435,7 +438,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static Set<ExpressionCall> identifyRedundantCalls(List<ExpressionCall> calls, 
                 ConditionGraph conditionGraph) throws IllegalArgumentException {
-            log.entry(calls, conditionGraph);
+            log.traceEntry("{}, {}", calls, conditionGraph);
         
             long startFilteringTimeInMs = System.currentTimeMillis();
             
@@ -509,7 +512,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
                 Collection<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
                         throws IllegalArgumentException {
-            log.entry(calls, method, distanceThreshold);
+            log.traceEntry("{}, {}, {}", calls, method, distanceThreshold);
 
             //for the computations, we need a List sorted by rank, but we don't need to take 
             //relations between Conditions into account
@@ -545,7 +548,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
                 List<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
                         throws IllegalArgumentException {
-            log.entry(calls, method, distanceThreshold);
+            log.traceEntry("{}, {}, {}", calls, method, distanceThreshold);
             long startFilteringTimeInMs = System.currentTimeMillis();
             
             //sanity check
@@ -620,7 +623,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static Map<ExpressionCall, Integer> generateDBScanClustering(
                 List<ExpressionCall> calls, double epislon, int minSize, DistanceMeasure measure) {
-            log.entry(calls, epislon, minSize, measure);
+            log.traceEntry("{}, {}, {}, {}", calls, epislon, minSize, measure);
 
             /**
              * A wrapper for {@code ExpressionCall} to implement the {@code Clusterable} interface.
@@ -701,7 +704,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         private static Map<ExpressionCall, Integer> generateDistBasedClustering(
                 List<ExpressionCall> calls, double distanceThreshold, 
                 DistanceMeasure measure, DistanceReference ref) {
-            log.entry(calls, distanceThreshold, measure, ref);
+            log.traceEntry("{}, {}, {}, {}", calls, distanceThreshold, measure, ref);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
@@ -795,7 +798,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static Map<ExpressionCall, Integer> generateFixedCanberraDistToMaxClustering(
                 List<ExpressionCall> calls, double distanceThreshold) {
-            log.entry(calls, distanceThreshold);
+            log.traceEntry("{}, {}", calls, distanceThreshold);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
@@ -841,7 +844,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @return      A {@code double} that is the median mean rank. 
          */
         private static double getMedianMeanRankScore(List<ExpressionCall> calls) {
-            log.entry(calls);
+            log.traceEntry("{}", calls);
             int size = calls.size();
             if (size == 0) {
                 throw log.throwing(new IllegalArgumentException("Can't compute mediam of empty list"));
@@ -862,6 +865,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //*******************************************
 
         private final DataPropagation dataPropagation;
+        private final Set<FDRPValue> pValues;
+        private final Set<FDRPValue> bestDescendantPValues;
         /**
          * See {@link #getExpressionLevelInfo()}
          */
@@ -875,7 +880,17 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
                     expressionLevelInfo, null);
         }
+
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData> callData,
+                ExpressionLevelInfo expressionLevelInfo,
+                Collection<ExpressionCall> sourceCalls) {
+            this(gene, condition, dataPropagation, null, null, summaryCallType, summaryQual, callData,
+                    expressionLevelInfo, sourceCalls);
+        }
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValue> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo,
@@ -886,11 +901,145 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     .collect(Collectors.toSet()));
             this.expressionLevelInfo = expressionLevelInfo;
             this.dataPropagation = dataPropagation;
+            this.pValues = Collections.unmodifiableSet(pValues == null?
+                    new HashSet<>(): pValues.stream().filter(p -> p != null).collect(Collectors.toSet()));
+            this.bestDescendantPValues = Collections.unmodifiableSet(bestDescendantPValues == null?
+                    new HashSet<>(): bestDescendantPValues.stream().filter(p -> p != null)
+                    .collect(Collectors.toSet()));
         }
 
         public DataPropagation getDataPropagation() {
             return dataPropagation;
         }
+        /**
+         * @return  A {@code Set} of {@code FDRPValue}s storing FDR-corrected p-values
+         *          for different combination of {@code DataType}s. These FDR-corrected p-values
+         *          are produced by correcting all p-values resulting from tests to detect
+         *          active signal of expression of a gene in a condition and its descendant conditions,
+         *          using the {@code DataType}s stored in the {@code FDRPValue} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValue> getPValues() {
+            return pValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValue} from the {@code Set} returned by {@link #getPValues()}.
+         *          Useful when we know that only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getPValues()} is empty.
+         */
+        public FDRPValue getFirstPValue() {
+            return pValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. {@code null} if no FDR-corrected p-value
+         *                  was produced using this exact combination of {@code DataType}s.
+         * @see #getPValues()
+         */
+        public FDRPValue getPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(pValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValue}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getPValues()
+         */
+        public Set<FDRPValue> getPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(pValues, dataTypes);
+        }
+
+        /**
+         * @return  A {@code Set} of {@code FDRPValue}s storing the best FDR-corrected p-value
+         *          over all descendant conditions of the condition considered
+         *          in this {@code ExpressionCall}, for different combination of {@code DataType}s.
+         *          It means that depending on the combination of {@code DataType}s,
+         *          maybe the best FDR-corrected p-values could come from different descendant conditions.
+         *          These FDR-corrected p-values are produced by correcting all p-values
+         *          resulting from tests to detect active signal of expression of a gene
+         *          in a condition and its descendant conditions, using the {@code DataType}s
+         *          stored in the {@code FDRPValue} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValue> getBestDescendantPValues() {
+            return bestDescendantPValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValue} from the {@code Set} returned by
+         *          {@link #getBestDescendantPValues()}. Useful when we know that
+         *          only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getBestDescendantPValues()}
+         *          is empty.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValue getFirstBestDescendantPValue() {
+            return bestDescendantPValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValue}s returned by
+         *                  {@link #getBestDescendantPValues()}. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValue}s returned by
+         *                  {@link #getBestDescendantPValues()}. {@code null}
+         *                  if no FDR-corrected p-value was produced using
+         *                  this exact combination of {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValue getBestDescendantPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(bestDescendantPValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s,
+         *                  among the {@code FDRPValue}s returned by {@link #getBestDescendantPValues()}.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValue}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s,
+         *                  among the {@code FDRPValue}s returned by {@link #getBestDescendantPValues()}.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public Set<FDRPValue> getBestDescendantPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(bestDescendantPValues, dataTypes);
+        }
+
+        private static FDRPValue getPValueWithEqualDataTypes(
+                Set<FDRPValue> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().equals(EnumSet.copyOf(dataTypes)))
+                    .findFirst().orElse(null));
+        }
+        private static Set<FDRPValue> getPValuesContainingAllDataTypes(
+                Collection<FDRPValue> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().containsAll(dataTypes))
+                    .collect(Collectors.toSet()));
+        }
+
         /**
          * @return  An {@code ExpressionLevelInfo} providing information
          *          about the expression level of this {@code ExpressionCall}.

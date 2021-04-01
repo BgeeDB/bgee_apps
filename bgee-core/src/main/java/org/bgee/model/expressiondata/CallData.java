@@ -3,11 +3,13 @@ package org.bgee.model.expressiondata;
 import java.math.BigDecimal;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -204,6 +206,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         // INSTANCE ATTRIBUTES AND CONSTRUCTORS
         //********************************************
         private final DataPropagation dataPropagation;
+
+        private final List<BigDecimal> selfPValues;
+        private final List<BigDecimal> descendantPValues;
+        private final List<BigDecimal> allPValues;
         
         private final Set<ExperimentExpressionCount> experimentCounts;
         
@@ -215,11 +221,40 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         
         private final BigDecimal weightForMeanRank;
 
+        public ExpressionCallData(DataType dataType,
+                Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
+            this(dataType, selfPValues, descendantPValues, null, null,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
         public ExpressionCallData(DataType dataType, Set<ExperimentExpressionCount> experimentCounts,
-            Integer propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
-            DataPropagation dataPropagation) {
+                Integer propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
+            this(dataType, null, null, experimentCounts, propagatedExperimentCount,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+        public ExpressionCallData(DataType dataType,
+                Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
+                Set<ExperimentExpressionCount> experimentCounts, Integer propagatedExperimentCount,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
             super(dataType, inferCallType(experimentCounts));
 
+            //Sort the p-values
+            List<BigDecimal> sortedSelfPValues = selfPValues == null? new ArrayList<>():
+                new ArrayList<>(selfPValues);
+            Collections.sort(sortedSelfPValues);
+            this.selfPValues = Collections.unmodifiableList(sortedSelfPValues);
+            List<BigDecimal> sortedDescendantPValues = descendantPValues == null? new ArrayList<>():
+                new ArrayList<>(descendantPValues);
+            Collections.sort(sortedDescendantPValues);
+            this.descendantPValues = Collections.unmodifiableList(sortedDescendantPValues);
+            List<BigDecimal> allPValues = new ArrayList<>(sortedSelfPValues);
+            allPValues.addAll(sortedDescendantPValues);
+            Collections.sort(allPValues);
+            this.allPValues = Collections.unmodifiableList(allPValues);
+            
             // sanity checks
             Set<ExperimentExpressionCount> validCounts = new HashSet<>();
             if (experimentCounts != null && !experimentCounts.isEmpty()) {
@@ -286,10 +321,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         // INSTANCE METHODS
         //********************************************
 
-        public DataPropagation getDataPropagation() {
-            return dataPropagation;
-        }
-
         public ExperimentExpressionCount getExperimentCount(CallType.Expression callType,
                 DataQuality dataQuality, PropagationState propState) {
             log.traceEntry("{}, {}, {}", callType, dataQuality, propState);
@@ -314,6 +345,41 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return log.traceExit(matchingExpCounts.iterator().next());
         }
 
+        //********************************************
+        // GETTERS
+        //********************************************
+
+        public DataPropagation getDataPropagation() {
+            return dataPropagation;
+        }
+
+        /**
+         * @return  A {@code List} of {@code BigDecimal}s representing the p-values
+         *          computed from tests to detect active signal of expression of a gene
+         *          using {@link #getDataType()}, in the condition itself.
+         *          The p-values are ordered in ascending order.
+         */
+        public List<BigDecimal> getSelfPValues() {
+            return selfPValues;
+        }
+        /**
+         * @return  A {@code List} of {@code BigDecimal}s representing the p-values
+         *          computed from tests to detect active signal of expression of a gene
+         *          using {@link #getDataType()}, in the descendant conditions
+         *          of the requested condition. The p-values are ordered in ascending order.
+         */
+        public List<BigDecimal> getDescendantPValues() {
+            return descendantPValues;
+        }
+        /**
+         * @return  A {@code List} of {@code BigDecimal}s representing the p-values
+         *          computed from tests to detect active signal of expression of a gene
+         *          using {@link #getDataType()}, in a condition itself and its descendant conditions.
+         *          The p-values are ordered in ascending order.
+         */
+        public List<BigDecimal> getAllPValues() {
+            return allPValues;
+        }
         public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
             log.traceEntry("{}", propState);
             if (propState == null) {
@@ -329,9 +395,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                     .collect(Collectors.toSet()));
         }
 
-        //********************************************
-        // GETTERS
-        //********************************************
         public Set<ExperimentExpressionCount> getExperimentCounts() {
             return experimentCounts;
         }
@@ -358,6 +421,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             final int prime = 31;
             int result = super.hashCode();
             result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
+            result = prime * result + ((selfPValues == null) ? 0 : selfPValues.hashCode());
+            result = prime * result + ((descendantPValues == null) ? 0 : descendantPValues.hashCode());
+            result = prime * result + ((allPValues == null) ? 0 : allPValues.hashCode());
             result = prime * result + ((experimentCounts == null) ? 0 : experimentCounts.hashCode());
             result = prime * result + ((propagatedExperimentCount == null) ? 0 : propagatedExperimentCount.hashCode());
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
@@ -384,6 +450,15 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                     return false;
                 }
             } else if (!dataPropagation.equals(other.dataPropagation)) {
+                return false;
+            }
+            if (!Objects.equals(selfPValues, other.selfPValues)) {
+                return false;
+            }
+            if (!Objects.equals(descendantPValues, other.descendantPValues)) {
+                return false;
+            }
+            if (!Objects.equals(allPValues, other.allPValues)) {
                 return false;
             }
             if (experimentCounts == null) {
@@ -430,6 +505,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             builder.append("ExpressionCallData [dataType=").append(getDataType())
                    .append(", callType=").append(getCallType())
                    .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", selfPValues=").append(selfPValues)
+                   .append(", descendantPValues=").append(descendantPValues)
+                   .append(", allPValues=").append(allPValues)
                    .append(", experimentCounts=").append(experimentCounts)
                    .append(", propagatedExperimentCount=").append(propagatedExperimentCount)
                    .append(", rank=").append(rank)
@@ -445,7 +523,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
     //**********************************************
     
     private final DataType dataType;
-    
+
+    //FIXME: delete this attribute, as of Bgee 15.0 callTypes are computed using
+    //aggregated p-values to produce a FDR-corrected p-value, it does not make sense
+    //to perform the p-value correction for each data type independently.
+    //Now this class only store the data per data type, the call type is computed in the Call class.
     private final T callType;
     
     /**

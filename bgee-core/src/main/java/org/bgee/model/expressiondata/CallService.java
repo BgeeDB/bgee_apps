@@ -248,7 +248,7 @@ public class CallService extends CommonService {
      */
     private final static int MIN_HIGH_GOLD = 2;
 
-    protected static final DataPropagation DATA_PROPAGATION_IDENTITY = new DataPropagation(null, null, null);
+    protected static final DataPropagation DATA_PROPAGATION_IDENTITY = new DataPropagation(null, null, null, null, null, null);
     protected final static Set<PropagationState> ALLOWED_PROP_STATES = EnumSet.of(
             //As of Bgee 14.2 we do not propagate absent calls to substructures anymore
             PropagationState.SELF, /*PropagationState.ANCESTOR,*/ PropagationState.DESCENDANT,
@@ -2192,6 +2192,12 @@ public class CallService extends CommonService {
                 dataProp1.getAnatEntityPropagationState(), dataProp2.getAnatEntityPropagationState());
         PropagationState stagePropState = mergePropagationStates(
                 dataProp1.getDevStagePropagationState(), dataProp2.getDevStagePropagationState());
+        PropagationState cellTypePropState = mergePropagationStates(
+                dataProp1.getCellTypePropagationState(), dataProp2.getCellTypePropagationState());
+        PropagationState sexPropState = mergePropagationStates(
+                dataProp1.getSexPropagationState(), dataProp2.getSexPropagationState());
+        PropagationState strainPropState = mergePropagationStates(
+                dataProp1.getStrainPropagationState(), dataProp2.getStrainPropagationState());
 
         //Here we cannot infer the ObservedData state from the condition parameter propagation states,
         //as in the method inferDataPropagation: maybe a data type observed some data in an anat. entity
@@ -2214,7 +2220,8 @@ public class CallService extends CommonService {
                     + dataProp1 + " - " + dataProp2));
         }
 
-        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, retrievedObservedData));
+        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, cellTypePropState,
+                sexPropState, strainPropState, retrievedObservedData));
     }
     private static PropagationState mergePropagationStates(PropagationState state1,
             PropagationState state2) {

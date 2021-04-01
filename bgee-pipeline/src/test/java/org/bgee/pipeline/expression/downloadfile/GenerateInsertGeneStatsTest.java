@@ -135,62 +135,62 @@ public class GenerateInsertGeneStatsTest extends TestAncestor {
 
         GeneFilter g1Sp1Filter = new GeneFilter(gene1sp1.getSpecies().getId(), gene1sp1.getEnsemblGeneId());
         List<ExpressionCall> g1s1OrganCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae1, null, sp1), null,
+                new ExpressionCall(null, new Condition(ae1, null, null, null, null, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null, null, null));
         List<ExpressionCall> g1s1ConditionCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae1, ds1, sp1), null,
+                new ExpressionCall(null, new Condition(ae1, ds1, null, null, null, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD, null,
                         new ExpressionLevelInfo(new BigDecimal(10))),
-                new ExpressionCall(null, new Condition(ae1, ds2, sp1), null,
+                new ExpressionCall(null, new Condition(ae1, ds2, null, null, null, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null,
                         new ExpressionLevelInfo(new BigDecimal(11))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp1Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 organAttrs,
                 null)).thenReturn(g1s1OrganCalls.stream());
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp1Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 condAttrs, serviceOrdering)).thenReturn(g1s1ConditionCalls.stream());
 
         GeneFilter g1Sp2Filter = new GeneFilter(gene1sp2.getSpecies().getId(), gene1sp2.getEnsemblGeneId());
         List<ExpressionCall> g1s2OrganCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae2, null, sp1), null,
+                new ExpressionCall(null, new Condition(ae2, null, null, null, null, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null, null, null));
         List<ExpressionCall> g1s2ConditionCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae2, ds1, sp1), null,
+                new ExpressionCall(null, new Condition(ae2, ds1, null, null, null, sp1), null,
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, null,
                         new ExpressionLevelInfo(new BigDecimal(10))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp2Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 organAttrs, null)).thenReturn(g1s2OrganCalls.stream());
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g1Sp2Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 condAttrs, serviceOrdering)).thenReturn(g1s2ConditionCalls.stream());
         
         GeneFilter g2Sp2Filter = new GeneFilter(gene2sp2.getSpecies().getId(), gene2sp2.getEnsemblGeneId());
         List<ExpressionCall> g2s2OrganCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae1, null, sp1), null,
+                new ExpressionCall(null, new Condition(ae1, null, null, null, null, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null, null, null),
-                new ExpressionCall(null, new Condition(ae2, null, sp1), null,
+                new ExpressionCall(null, new Condition(ae2, null, null, null, null, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.GOLD, null, null, null));
         List<ExpressionCall> g2s2ConditionCalls = Arrays.asList(
-                new ExpressionCall(null, new Condition(ae1, ds2, sp1), null,
+                new ExpressionCall(null, new Condition(ae1, ds2, null, null, null, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, null,
                         new ExpressionLevelInfo(new BigDecimal(4))),
-                new ExpressionCall(null, new Condition(ae2, ds1, sp1), null,
+                new ExpressionCall(null, new Condition(ae2, ds1, null, null, null, sp1), null,
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.GOLD, null,
                         new ExpressionLevelInfo(new BigDecimal(10))));
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g2Sp2Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 organAttrs, null)).thenReturn(g2s2OrganCalls.stream());
         when(callService.loadExpressionCalls(
                 new ExpressionCallFilter(null, Collections.singleton(g2Sp2Filter),
-                        null, null, obsDataFilter, null, null),
+                        null, null, obsDataFilter, null, null, null, null, null),
                 condAttrs, serviceOrdering)).thenReturn(g2s2ConditionCalls.stream());
 
         

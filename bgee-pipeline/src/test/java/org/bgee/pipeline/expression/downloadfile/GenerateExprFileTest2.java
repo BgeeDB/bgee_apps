@@ -189,7 +189,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         List<ExpressionCall> calls = Arrays.asList(
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
-                                new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
+                                new DevStage("ds1", "dsName1", "dsDesc1"), null, null, null, new Species(1)),
                         new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                         ExpressionSummary.EXPRESSED, SummaryQuality.GOLD,
                         Arrays.asList(new ExpressionCallData(DataType.AFFYMETRIX, exprExperimentCounts,
@@ -198,7 +198,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                         new ExpressionLevelInfo(new BigDecimal(90))),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae1", "aeName1", "aeDesc1"),
-                                new DevStage("ds2", "dsName2", "dsDesc2"), new Species(2)),
+                                new DevStage("ds2", "dsName2", "dsDesc2"), null, null, null, new Species(2)),
                         new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false),
                         ExpressionSummary.EXPRESSED, SummaryQuality.SILVER,
                         Arrays.asList(new ExpressionCallData(DataType.EST, exprExperimentCounts,
@@ -206,7 +206,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                                 new DataPropagation(PropagationState.DESCENDANT, PropagationState.SELF, false))), null),
                 new ExpressionCall(new Gene("ID1", new Species(1), new GeneBioType("type1")),
                         new Condition(new AnatEntity("ae2", "aeName2", "aeDesc2"),
-                                new DevStage("ds1", "dsName1", "dsDesc1"), new Species(1)),
+                                new DevStage("ds1", "dsName1", "dsDesc1"), null, null, null, new Species(1)),
                         new DataPropagation(PropagationState.SELF, PropagationState.ANCESTOR, false),
                         ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER,
                         Arrays.asList(new ExpressionCallData(DataType.RNA_SEQ, noExprExperimentCounts,
@@ -374,7 +374,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         // Expression calls
         List<ExpressionCall> callsSp11 = new ArrayList<ExpressionCall>();
         // Line number: simple true: 1 simple false: 1 complete: 1
-        callsSp11.add(new ExpressionCall(g1 , new Condition(ae1, ds1, spe11), 
+        callsSp11.add(new ExpressionCall(g1 , new Condition(ae1, ds1, null, null, null, spe11), 
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -405,7 +405,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         // Line number: simple true: X simple false: 2 complete: 2
-        callsSp11.add(new ExpressionCall(g1 , new Condition(ae1, parentDs2, spe11), 
+        callsSp11.add(new ExpressionCall(g1 , new Condition(ae1, parentDs2, null, null, null, spe11), 
                 new DataPropagation(PropagationState.SELF, PropagationState.DESCENDANT, false),
                 ExpressionSummary.EXPRESSED, SummaryQuality.SILVER, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -436,7 +436,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: 2 simple false: 3 complete: 3
-        callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, ds2, spe11), 
+        callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, ds2, null, null, null, spe11), 
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                 ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -454,7 +454,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         // Line number: simple true: X simple false: 4 complete: 4
-        callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, parentDs2, spe11), 
+        callsSp11.add(new ExpressionCall(g2 , new Condition(ae1, parentDs2, null, null, null, spe11), 
                 new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.ANCESTOR, false),
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -483,7 +483,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: 3 simple false: 5 complete: 5
-        callsSp11.add(new ExpressionCall(g3 , new Condition(ae1, ds2, spe11), 
+        callsSp11.add(new ExpressionCall(g3 , new Condition(ae1, ds2, null, null, null, spe11), 
                 new DataPropagation(PropagationState.SELF_AND_ANCESTOR, PropagationState.SELF, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -512,7 +512,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: X simple false: X complete: 6
-        callsSp11.add(new ExpressionCall(g3 , new Condition(ae3, ds2, spe11), 
+        callsSp11.add(new ExpressionCall(g3 , new Condition(ae3, ds2, null, null, null, spe11), 
                 new DataPropagation(PropagationState.ANCESTOR_AND_DESCENDANT, PropagationState.SELF, false),
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -563,7 +563,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         
         List<ExpressionCall> callsSp22 = new ArrayList<ExpressionCall>(); 
         // Line number: simple true: 1 simple false: 1 complete: 1
-        callsSp22.add(new ExpressionCall(g4, new Condition(ae1, ds2, spe22),
+        callsSp22.add(new ExpressionCall(g4, new Condition(ae1, ds2, null, null, null, spe22),
                 new DataPropagation(PropagationState.SELF, PropagationState.SELF, true),
                 ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -592,7 +592,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
 
         // Line number: simple true: X simple false: X complete: 2
-        callsSp22.add(new ExpressionCall(g4, new Condition(ae2, ds2, spe22),
+        callsSp22.add(new ExpressionCall(g4, new Condition(ae2, ds2, null, null, null, spe22),
                 new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false),
                 ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, 
                 new HashSet<ExpressionCallData>(Arrays.asList(
@@ -610,7 +610,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
                 new ExpressionLevelInfo(new BigDecimal(1257.34))));
         
         if (!isObservedDataOnly) {
-            callsSp22.add(new ExpressionCall(g4, new Condition(ae2, null, spe22),
+            callsSp22.add(new ExpressionCall(g4, new Condition(ae2, null, null, null, null, spe22),
                     new DataPropagation(PropagationState.ANCESTOR, PropagationState.SELF, false),
                     ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER, 
                     new HashSet<ExpressionCallData>(Arrays.asList(
@@ -728,7 +728,7 @@ public class GenerateExprFileTest2 extends GenerateDownloadFileTest {
         obsDataFilter.put(null, true);
         
         ExpressionCallFilter callFilter = 
-                new ExpressionCallFilter(summaryQuality, geneFilters, null, null, obsDataFilter, null, null);
+                new ExpressionCallFilter(summaryQuality, geneFilters, null, null, obsDataFilter, null, null, null, null, null);
         return log.traceExit(callFilter);
     }
 

@@ -118,7 +118,7 @@ implements SamplePValueDAO  {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.traceExit(new MySQLSamplePValueTOResultSet<String,Integer>(stmt));
+            return log.traceExit(new MySQLSamplePValueTOResultSet<String,Integer>(stmt, String.class, Integer.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -150,7 +150,7 @@ implements SamplePValueDAO  {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt));
+            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt, String.class, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -190,7 +190,7 @@ implements SamplePValueDAO  {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt));
+            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt, String.class, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -231,7 +231,7 @@ implements SamplePValueDAO  {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt));
+            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt, String.class, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -272,7 +272,7 @@ implements SamplePValueDAO  {
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
             stmt.setIntegers(1, clonedGeneIds, true);
-            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt));
+            return log.traceExit(new MySQLSamplePValueTOResultSet<String,String>(stmt, String.class, String.class));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
@@ -289,16 +289,20 @@ implements SamplePValueDAO  {
             extends MySQLDAOResultSet<SamplePValueDAO.SamplePValueTO<T, U>>
             implements SamplePValueTOResultSet<T, U> {
         
+        private final Class<T> experimentIdCls;
+        private final Class<U> sampleIdCls;
+        
         /**
          * @param statement The {@code BgeePreparedStatement}
          * @param comb      The {@code CondParamCombination} allowing to target the appropriate 
          *                  field and table names.
          */
-        private MySQLSamplePValueTOResultSet(BgeePreparedStatement statement) {
+        private MySQLSamplePValueTOResultSet(BgeePreparedStatement statement, Class<T> experimentIdCls, Class<U> sampleIdCls) {
             super(statement);
+            this.experimentIdCls = experimentIdCls;
+            this.sampleIdCls = sampleIdCls;
         }
 
-        @SuppressWarnings("unchecked")
         @Override        
         protected SamplePValueDAO.SamplePValueTO<T, U> getNewTO() throws DAOException {
             try {
@@ -320,25 +324,14 @@ implements SamplePValueDAO  {
                             exprId = currentResultSet.getInt(columnName);
                             break;
                         case EXPERIMENT_ID:
-                            if(experimentId.getClass().equals(String.class) || 
-                                    experimentId.getClass().equals(Integer.class)) {
-                                experimentId = (T)currentResultSet.getObject(columnName);
-                            } else {
-                                throw log.throwing(new IllegalArgumentException("experimentId should "
-                                        + "be an Integer or a String"));
-                            }
+                                experimentId = experimentIdCls.cast(currentResultSet.getObject(columnName));
+
                             break;
                         case P_VALUE:
                             pValue = currentResultSet.getBigDecimal(columnName);
                             break;
                         case SAMPLE_ID:
-                            if(sampleId.getClass().equals(String.class) || 
-                                    sampleId.getClass().equals(Integer.class)) {
-                                sampleId = (U)currentResultSet.getObject(columnName);
-                            } else {
-                                throw log.throwing(new IllegalArgumentException("sampleId should be "
-                                        + "an Integer or a String"));
-                            }
+                                sampleId = sampleIdCls.cast(currentResultSet.getObject(columnName));
                             break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));

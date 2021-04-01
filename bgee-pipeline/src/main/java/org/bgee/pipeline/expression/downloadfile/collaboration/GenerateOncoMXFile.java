@@ -187,7 +187,8 @@ public class GenerateOncoMXFile {
                         //all genes for the requested species
                         Collections.singleton(new GeneFilter(speciesId)),
                         //calls for the requested anat. entities and dev. stages
-                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds)),
+                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds,
+                                null, null, null)),
                         DATA_TYPES, //data requested by OncoMX only
                         obsDataFilter, //only observed data
                         //no filter on observed data in anat. entity and stage,

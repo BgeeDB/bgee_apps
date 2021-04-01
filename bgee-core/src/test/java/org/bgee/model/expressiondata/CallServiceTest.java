@@ -432,7 +432,7 @@ public class CallServiceTest extends TestAncestor {
                         Collections.singleton(
                                 new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId())),
                         null, null, callObservedData,
-                    null, null), 
+                    null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -892,7 +892,7 @@ public class CallServiceTest extends TestAncestor {
                                 new GeneFilter(g1.getSpecies().getId(), 
                                         Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId()))),
                         null, null, callObservedData,
-                    null, null), 
+                    null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -1101,7 +1101,7 @@ public class CallServiceTest extends TestAncestor {
                         Collections.singleton(
                                 DataType.EST), 
                         callObservedData,
-                    null, null), 
+                    null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -1594,7 +1594,7 @@ public class CallServiceTest extends TestAncestor {
                         null, 
                         null, 
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 null)
                 .collect(Collectors.toSet());
@@ -1622,7 +1622,7 @@ public class CallServiceTest extends TestAncestor {
                         null, 
                         null, 
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -1649,7 +1649,7 @@ public class CallServiceTest extends TestAncestor {
                         null, 
                         null, 
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -1676,7 +1676,7 @@ public class CallServiceTest extends TestAncestor {
                                 null, null, null, null)), 
                         null, 
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toList());
@@ -1701,7 +1701,7 @@ public class CallServiceTest extends TestAncestor {
                         null,
                         null,
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 null)
                 .collect(Collectors.toSet());
@@ -1729,7 +1729,7 @@ public class CallServiceTest extends TestAncestor {
                                 null, null, null)),
                         null,
                         callObservedData,
-                        null, null),
+                        null, null, null, null, null),
                 attrs,
                 null)
                 .collect(Collectors.toSet());
@@ -1762,7 +1762,7 @@ public class CallServiceTest extends TestAncestor {
                         null,
                         null,
                         callObservedData,
-                        null, null),
+                        null, null, null, null, null),
                 attrs,
                 serviceOrdering)
                 .collect(Collectors.toSet());
@@ -1793,7 +1793,7 @@ public class CallServiceTest extends TestAncestor {
                         null,
                         null,
                         callObservedData,
-                        null, null), 
+                        null, null, null, null, null), 
                 attrs,
                 null)
                 .collect(Collectors.toSet());
@@ -1831,7 +1831,7 @@ public class CallServiceTest extends TestAncestor {
                 geneFilters,                       //requested genes
                 null,                              //any condition
                 null,                              //any data type
-                null, null, null                   //both observed and propagated calls
+                null, null, null, null, null, null //both observed and propagated calls
                 );
 
         Condition cond1 = new Condition(new AnatEntity("1"), null, null, null, null, spe1);

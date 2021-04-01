@@ -641,7 +641,7 @@ public class TopAnatParams {
                     //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
                     //without running topGo 
                     (this.decorrelationType != DecorrelationType.NONE) ? true : null,
-                    null
+                    null, null, null, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

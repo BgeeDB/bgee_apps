@@ -511,7 +511,7 @@ public class CallService extends CommonService {
                 .loadExpressionCalls(
                         new ExpressionCallFilter(silverExpressedCallFilter,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                null, null, obsDataFilter, null, null, null, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 // We don't need the rank here, because we use the min rank of the conditions
                                 // for each anat. entity, rather than the mean rank for the anat. entity
@@ -540,7 +540,7 @@ public class CallService extends CommonService {
                 .loadExpressionCalls(
                         new ExpressionCallFilter(summaryCallTypeQualityFilter,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                null, null, obsDataFilter, null, null, null, null, null),
                         EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                                 CallService.Attribute.DEV_STAGE_ID,
                                 CallService.Attribute.DATA_QUALITY, CallService.Attribute.MEAN_RANK,
@@ -688,7 +688,7 @@ public class CallService extends CommonService {
                 geneFilters,                       //requested genes
                 null,                              //any condition
                 null,                              //any data type
-                null, null, null                   //both observed and propagated calls
+                null, null, null, null, null, null //both observed and propagated calls
                 );
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
     }
@@ -787,8 +787,8 @@ public class CallService extends CommonService {
                 //only call observed data, since as of Bgee 14 ranks are computed
                 //only for observed data
                 OBSERVED_DATA_FOR_RANKS_FILTER,
-                //then we don't care about anat. entity/dev. stage observed data specifically
-                null, null);
+                //then we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
+                null, null, null, null, null);
         //convert ExpressionCallFilter into CallDAOFilter
         CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
                 condParamCombination);
@@ -841,8 +841,8 @@ public class CallService extends CommonService {
                 //only call observed data, since as of Bgee 14 ranks are computed
                 //only for observed data
                 OBSERVED_DATA_FOR_RANKS_FILTER,
-                //then we don't care about anat. entity/dev. stage observed data specifically
-                null, null);
+              //then we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
+                null, null, null, null, null);
         //convert ExpressionCallFilter into CallDAOFilter
         CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
                 condParamCombination);
@@ -1657,6 +1657,27 @@ public class CallService extends CommonService {
             }
             filter.put(ConditionDAO.Attribute.STAGE_ID, callFilter.getDevStageObservedData());
         }
+        if (callFilter!= null && callFilter.getCellTypeObservedData() != null) {
+            if (!condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Inconsistent condition parameter combination and requested observed data"));
+            }
+            filter.put(ConditionDAO.Attribute.CELL_TYPE_ID, callFilter.getCellTypeObservedData());
+        }
+        if (callFilter!= null && callFilter.getSexObservedData() != null) {
+            if (!condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Inconsistent condition parameter combination and requested observed data"));
+            }
+            filter.put(ConditionDAO.Attribute.SEX_ID, callFilter.getSexObservedData());
+        }
+        if (callFilter!= null && callFilter.getStrainObservedData() != null) {
+            if (!condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Inconsistent condition parameter combination and requested observed data"));
+            }
+            filter.put(ConditionDAO.Attribute.STRAIN_ID, callFilter.getStrainObservedData());
+        }
         return log.traceExit(filter);
     }
 
@@ -1696,7 +1717,13 @@ public class CallService extends CommonService {
                         case ANAT_ENTITY_ID:
                             return ConditionDAO.Attribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 
-                            return ConditionDAO.Attribute.STAGE_ID;                        
+                            return ConditionDAO.Attribute.STAGE_ID;
+                        case CELL_TYPE_ID: 
+                            return ConditionDAO.Attribute.CELL_TYPE_ID; 
+                        case SEX_ID: 
+                            return ConditionDAO.Attribute.SEX_ID; 
+                        case STRAIN_ID: 
+                            return ConditionDAO.Attribute.STRAIN_ID; 
                         default: 
                             throw log.throwing(new UnsupportedOperationException(
                                 "Condition parameter not supported: " + a));
@@ -1752,6 +1779,12 @@ public class CallService extends CommonService {
                             return GlobalExpressionCallDAO.OrderingAttribute.ANAT_ENTITY_ID;
                         case DEV_STAGE_ID: 
                             return GlobalExpressionCallDAO.OrderingAttribute.STAGE_ID;
+                        case CELL_TYPE_ID: 
+                            return GlobalExpressionCallDAO.OrderingAttribute.CELL_TYPE_ID;
+                        case SEX_ID: 
+                            return GlobalExpressionCallDAO.OrderingAttribute.SEX_ID;
+                        case STRAIN_ID: 
+                            return GlobalExpressionCallDAO.OrderingAttribute.STRAIN_ID;
                         case GLOBAL_RANK:
                             return GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK;
                         default: 
@@ -2151,6 +2184,9 @@ public class CallService extends CommonService {
 
         PropagationState anatEntityPropState = null;
         PropagationState stagePropState = null;
+        PropagationState cellTypePropState = null;
+        PropagationState sexPropState = null;
+        PropagationState strainPropState = null;
         for (Entry<ConditionDAO.Attribute, DAOPropagationState> observedDataEntry:
             callDataTO.getDataPropagation().entrySet()) {
             switch(observedDataEntry.getKey()) {
@@ -2162,17 +2198,32 @@ public class CallService extends CommonService {
                 stagePropState = mapDAOPropStateToPropState(
                         observedDataEntry.getValue());
                 break;
+            case CELL_TYPE_ID:
+                cellTypePropState = mapDAOPropStateToPropState(
+                        observedDataEntry.getValue());
+                break;
+            case SEX_ID:
+                sexPropState = mapDAOPropStateToPropState(
+                        observedDataEntry.getValue());
+                break;
+            case STRAIN_ID:
+                strainPropState = mapDAOPropStateToPropState(
+                        observedDataEntry.getValue());
+                break;
             default:
                 throw log.throwing(new IllegalStateException(
                         "ConditionDAO.Attribute not supported for DataPropagation: "
                         + observedDataEntry.getKey()));
             }
         }
-        assert anatEntityPropState != null || stagePropState != null;
+        assert anatEntityPropState != null || stagePropState != null || cellTypePropState != null
+                || sexPropState != null || strainPropState != null;
+        
 
         Boolean observedData = callDataTO.isConditionObservedData();
 
-        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, observedData));
+        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, cellTypePropState,
+                sexPropState, strainPropState, observedData));
     }
     protected static DataPropagation mergeDataPropagations(DataPropagation dataProp1,
             DataPropagation dataProp2) {

@@ -44,6 +44,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * <li>{@code CONDITION_ID}: corresponds to {@link GlobalExpressionCallTO#getConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: order by the anat. entity ID used in the conditions of the calls.
      * <li>{@code STAGE_ID}: order by the dev. stage ID used in the conditions of the calls.
+     * <li>{@code CELL_TYPE_ID}: order by the cell type ID used in the conditions of the calls.
+     * <li>{@code SEX_ID}: order by the sex ID used in the conditions of the calls.
+     * <li>{@code STRAIN_ID}: order by the strain ID used in the conditions of the calls.
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
@@ -55,7 +58,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
+        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, CELL_TYPE_ID,
+        SEX_ID, STRAIN_ID, OMA_GROUP_ID, MEAN_RANK;
+        
     }
 
     /** 

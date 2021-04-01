@@ -126,7 +126,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         qualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
 
         ExpressionCallFilter usedCallFilter = new ExpressionCallFilter(
-                qualityFilter, geneFilters, Collections.singleton(usedCondFilter), null, null, null, null);
+                qualityFilter, geneFilters, Collections.singleton(usedCondFilter), null, null, null, null,
+                null, null, null);
 
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
                 new LinkedHashMap<>();

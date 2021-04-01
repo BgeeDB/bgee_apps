@@ -70,13 +70,14 @@ public class MultiSpeciesCallService extends CommonService {
     private static final Logger log = LogManager.getLogger(MultiSpeciesCallService.class.getName());
 
     public static enum Attribute implements Service.Attribute {
-        GENE, ANAT_ENTITY_ID, DEV_STAGE_ID, CALL_TYPE,
-        DATA_QUALITY, OBSERVED_DATA, MEAN_RANK,
+        GENE, ANAT_ENTITY_ID, DEV_STAGE_ID, CELL_TYPE_ID, SEX_ID, STRAIN_ID, 
+        CALL_TYPE, DATA_QUALITY, OBSERVED_DATA, MEAN_RANK,
         EXPERIMENT_COUNTS, DATA_TYPE_RANK_INFO, OMA_HOG_ID;
     }
 
     public static enum OrderingAttribute implements Service.OrderingAttribute {
-        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, GLOBAL_RANK, OMA_HOG_ID;
+        GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, CELL_TYPE_ID, SEX_ID, STRAIN_ID, 
+        GLOBAL_RANK, OMA_HOG_ID;
     }
     
     private final CallService callService;
@@ -277,7 +278,9 @@ public class MultiSpeciesCallService extends CommonService {
     			orthologousGeneGroups);
     	Stream<ExpressionCall> calls = callService.loadExpressionCalls(callFilter, 
     			EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.DATA_QUALITY),
+                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CELL_TYPE_ID,
+                        CallService.Attribute.SEX_ID, CallService.Attribute.STRAIN_ID, 
+                        CallService.Attribute.DATA_QUALITY),
     			new LinkedHashMap<>());
     	Set<MultiSpeciesCall<ExpressionCall>> multiSpeciesCall = groupCalls(
     			orthologousGeneGroups, anatEntitySims, devStageSims, calls.collect(Collectors.toSet()));
@@ -545,6 +548,12 @@ public class MultiSpeciesCallService extends CommonService {
                 	return Stream.of(CallService.Attribute.ANAT_ENTITY_ID);
                 case DEV_STAGE_ID: 
                     return Stream.of(CallService.Attribute.DEV_STAGE_ID);
+                case CELL_TYPE_ID: 
+                    return Stream.of(CallService.Attribute.CELL_TYPE_ID);
+                case SEX_ID: 
+                    return Stream.of(CallService.Attribute.SEX_ID);
+                case STRAIN_ID: 
+                    return Stream.of(CallService.Attribute.STRAIN_ID);
                 case CALL_TYPE: 
                 	return Stream.of(CallService.Attribute.CALL_TYPE);
                 case DATA_QUALITY:
@@ -588,6 +597,12 @@ public class MultiSpeciesCallService extends CommonService {
                         return CallService.OrderingAttribute.ANAT_ENTITY_ID;
                     case DEV_STAGE_ID: 
                         return CallService.OrderingAttribute.DEV_STAGE_ID;
+                    case CELL_TYPE_ID: 
+                        return CallService.OrderingAttribute.CELL_TYPE_ID;
+                    case SEX_ID: 
+                        return CallService.OrderingAttribute.SEX_ID;
+                    case STRAIN_ID: 
+                        return CallService.OrderingAttribute.STRAIN_ID;
                     case GLOBAL_RANK:
                         return CallService.OrderingAttribute.GLOBAL_RANK;
                     default: 
@@ -744,7 +759,7 @@ public class MultiSpeciesCallService extends CommonService {
     	return new ExpressionCallFilter(filter.getSummaryCallTypeQualityFilter(), geneFilters, 
     			Collections.singleton(new ConditionFilter(expressionCallAEntities, expressionCallDevStage,
     			        expressionCallAEntities, null, null)), 
-    			filter.getDataTypeFilters(), callObservedData, true, true);
+    			filter.getDataTypeFilters(), callObservedData, true, true, true, true, true);
     }
 
     //TODO: once the method accepting ExpressionCallFilter will be ready, change this method
@@ -816,7 +831,7 @@ public class MultiSpeciesCallService extends CommonService {
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
                 summaryCallTypeQualityFilter, clnGeneFilters,
-                Collections.singletonList(newConditionFilter), null, null, null, null);
+                Collections.singletonList(newConditionFilter), null, null, null, null, null, null, null);
 
         // Define an order to be able to use an ElementGroupFromListSpliterator
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
@@ -827,8 +842,9 @@ public class MultiSpeciesCallService extends CommonService {
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
                 expressionCallFilter,
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CALL_TYPE, CallService.Attribute.OBSERVED_DATA,
-                        CallService.Attribute.EXPRESSION_SCORE),
+                        CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.SEX_ID,
+                        CallService.Attribute.STRAIN_ID, CallService.Attribute.CALL_TYPE, 
+                        CallService.Attribute.OBSERVED_DATA, CallService.Attribute.EXPRESSION_SCORE),
                 serviceOrdering);
 
         Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
@@ -913,7 +929,9 @@ public class MultiSpeciesCallService extends CommonService {
                 callFilter.getGeneFilters(),
                 Collections.singletonList(newConditionFilter),
                 callFilter.getDataTypeFilters(), callFilter.getCallObservedData(),
-                callFilter.getAnatEntityObservedData(), callFilter.getDevStageObservedData());
+                callFilter.getAnatEntityObservedData(), callFilter.getDevStageObservedData(),
+                callFilter.getCellTypeObservedData(), callFilter.getSexObservedData(),
+                callFilter.getStrainObservedData());
 
         // XXX from here it's a duplicate of the previous method.
         // Define an order to be able to use an ElementGroupFromListSpliterator

@@ -50,12 +50,12 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
+import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO;
@@ -69,7 +69,6 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawData
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.BaseCondition;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
@@ -77,13 +76,13 @@ import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
 import org.bgee.model.species.Species;
-import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
-import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.pipeline.BgeeDBUtils;
 import org.bgee.pipeline.CommandRunner;
 
@@ -1357,7 +1356,34 @@ public class InsertPropagatedCalls extends CallService {
                     //create a subclass of GlobalExpressionCallTO to be returned by getGlobalExpressionCalls
                     null,
                     //GlobalExpressionCallDataTOs
-                    convertPipelineCallToExpressionCallDataTOs(pipelineCall)));
+                    convertPipelineCallToExpressionCallDataTOs(pipelineCall),
+                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getPValues()), 
+                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getBestDescendantPValues())));
+        }
+        
+        private static Set<DAOFDRPValue> convertFDRPValuesToDAOFDRPValues(
+                Set<FDRPValue> pValues) {
+            log.traceEntry("{}", pValues);
+            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getFdrPValue(), 
+                    p.getDataTypes().stream().map( dt -> { 
+                        switch (dt) {
+                        case AFFYMETRIX:
+                            return DAODataType.AFFYMETRIX;
+                        case EST:
+                            return DAODataType.EST;
+                        case RNA_SEQ:
+                            return DAODataType.RNA_SEQ;
+                        case IN_SITU:
+                            return DAODataType.IN_SITU;
+                        case FULL_LENGTH:
+                            return DAODataType.FULL_LENGTH;
+                        default:
+                            throw log.throwing(new IllegalStateException(
+                                    "Unsupported condition parameter: " + dt));
+                        }
+                    }).collect(Collectors.toSet()))) 
+                    .collect(Collectors.toSet()));
+
         }
         
         private static Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(

@@ -28,10 +28,14 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -485,7 +489,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         return log.traceExit(serviceFactory.getCallService()
                 .loadExpressionCalls(new ExpressionCallFilter(silverCallFilter,
                         Collections.singleton(new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())), null, null,
-                        obsDataFilter, null, null), attributes, orderingAttributes)
+                        obsDataFilter, null, null, null, null, null), attributes, orderingAttributes)
                 
 
                 .map(call -> {
@@ -494,6 +498,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
                     Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
                             call.getCondition().getDevStageId() == null ? null : new DevStage(call.getCondition().getDevStageId()),
+                                    call.getCondition().getCellTypeId() == null ? null : new AnatEntity(call.getCondition().getCellTypeId()),
+                                    call.getCondition().getSexId() == null ? null : new Sex(call.getCondition().getSexId()),
+                                    call.getCondition().getStrainId() == null ? null : new Strain(call.getCondition().getStrainId()),
                                     new Species(call.getCondition().getSpeciesId()));
                     String conditionId = condToConditionId.get(updatedCond);
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
@@ -760,12 +767,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
         log.entry(conditionTOs);
         return log
-                .exit(conditionTOs.stream()
+                .traceExit(conditionTOs.stream()
                         .collect(
                                 Collectors.toMap(
                                         
                                         p -> new Condition(new AnatEntity(p.getAnatEntityId()),
                                                 p.getStageId() == null ? null : new DevStage(p.getStageId()),
+                                                p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
+                                                p.getSex() == null ? null : new Sex(p.getSex().getStringRepresentation()),
+                                                p.getStrainId() == null ? null : new Strain(p.getStrainId()),
                                                         new Species(p.getSpeciesId())),
                                         p -> String.valueOf(p.getId()))));
     }

@@ -34,6 +34,8 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -582,8 +584,14 @@ public class GenerateRankFile {
         Ontology<AnatEntity, String> anatEntityOnt = serviceFactory.getOntologyService()
                 .getAnatEntityOntology(speciesId, null);
         Ontology<DevStage, String> devStageOnt = null;
+        Ontology<Sex, String> sexOnt = null;
+        Ontology<Strain, String> strainOnt = null;
         if (!anatEntityOnly) {
             devStageOnt = serviceFactory.getOntologyService().getDevStageOntology(speciesId, null);
+            //TODO: change how to manage sex ontology. here ontology with all potential sexes is retrieved
+            // even if the sex is not present in the species (e.g hermaphrodite)
+            sexOnt = serviceFactory.getOntologyService().getSexOntology();
+            strainOnt = serviceFactory.getOntologyService().getStrainOntology(speciesId);
         }
         
         //Query expression data for the species. 
@@ -625,7 +633,7 @@ public class GenerateRankFile {
                     //launch the computations and writing into file for the previous gene. 
                     //Note that the List will be reordered
                     this.processAndWriteToFile(singleGeneExprCalls, genes.get(previousGeneId), 
-                            anatEntityOnt, devStageOnt, 
+                            anatEntityOnt, devStageOnt, sexOnt, strainOnt,
                             beanWriter, colToAttribute, processors);
                     //start a new accumulation of calls for the new gene
                     singleGeneExprCalls = new ArrayList<>();
@@ -637,7 +645,7 @@ public class GenerateRankFile {
             if (!singleGeneExprCalls.isEmpty()) {
                 assert geneId != null && geneId.equals(previousGeneId);
                 this.processAndWriteToFile(singleGeneExprCalls, genes.get(geneId), 
-                        anatEntityOnt, devStageOnt, 
+                        anatEntityOnt, devStageOnt, sexOnt, strainOnt,
                         beanWriter, colToAttribute, processors);
             }
         }
@@ -716,7 +724,7 @@ public class GenerateRankFile {
             Stream<ExpressionCall> organCalls = service.loadExpressionCalls(
                     new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                             Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters, obsDataFilter,
-                            true, null),
+                            true, null, null, null, null),
                     //service ordering is null because we need to retrieve highest rank for bronze organ-stage calls
                     //before sorting by rank
                     attrs, null);
@@ -732,7 +740,7 @@ public class GenerateRankFile {
                     service.loadExpressionCalls(
                                 new ExpressionCallFilter(summaryCondCallTypeQualityFilter,
                                         Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
-                                        obsDataFilter, true, true),
+                                        obsDataFilter, true, true, true, true, true),
                                 attrs, serviceOrdering)
                             .collect(Collectors.groupingBy(
                                     c -> c.getGene().getEnsemblGeneId(),
@@ -776,7 +784,7 @@ public class GenerateRankFile {
         return log.traceExit(service.loadExpressionCalls(
                 new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                         Collections.singleton(new GeneFilter(speciesId)),
-                        null, dataTypeFilters, obsDataFilter, true, true),
+                        null, dataTypeFilters, obsDataFilter, true, true, true, true, true),
                 attrs,
                 serviceOrdering));
 
@@ -806,12 +814,13 @@ public class GenerateRankFile {
      */
     private void processAndWriteToFile(List<ExpressionCall> singleGeneExprCalls, 
             Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt, 
+            Ontology<Sex, String> sexOnt, Ontology<Strain, String> strainOnt, 
             ICsvBeanWriter beanWriter, String[] colToAttribute, CellProcessor[] processors) 
                     throws RuntimeException {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}", singleGeneExprCalls, gene, anatEntityOnt, devStageOnt, 
                 beanWriter, colToAttribute, processors);
         
-        this.mapCallsToBeans(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt)
+        this.mapCallsToBeans(singleGeneExprCalls, gene, anatEntityOnt, devStageOnt, sexOnt, strainOnt)
         .forEachOrdered(bean -> {
             try {
                 beanWriter.write(bean, colToAttribute, processors);
@@ -838,14 +847,15 @@ public class GenerateRankFile {
      *                              than the input list of {@code ExpressionCall}s.
      */
     private Stream<ExpressionCallBean> mapCallsToBeans(List<ExpressionCall> singleGeneExprCalls, 
-            Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt) {
+            Gene gene, Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt,
+            Ontology<Sex, String> sexOnt, Ontology<Strain, String> strainOnt) {
         log.traceEntry("{}, {}, {}, {}", singleGeneExprCalls, gene, anatEntityOnt, devStageOnt);
 
         //Instantiate a ConditionGraph for computations and for display purpose
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         ConditionGraph conditionGraph = serviceFactory.getConditionGraphService().loadConditionGraph( 
                 singleGeneExprCalls.stream().map(ExpressionCall::getCondition).collect(Collectors.toSet()), 
-                anatEntityOnt, devStageOnt);
+                anatEntityOnt, devStageOnt, anatEntityOnt, sexOnt, strainOnt);
 
         //XXX: deactivate because too slow
 //      //first, we rank the calls with the ExpressionCall.RankComparator, it is mandatory 

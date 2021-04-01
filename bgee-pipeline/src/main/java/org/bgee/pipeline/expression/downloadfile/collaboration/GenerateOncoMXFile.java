@@ -193,7 +193,7 @@ public class GenerateOncoMXFile {
                         obsDataFilter, //only observed data
                         //no filter on observed data in anat. entity and stage,
                         //it will anyway be both from the previous filter
-                        null, null
+                        null, null, null, null, null
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {

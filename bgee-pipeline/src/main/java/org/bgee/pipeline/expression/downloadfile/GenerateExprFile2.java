@@ -387,7 +387,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null);
+                Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null, null, null, null);
 
         // We retrieve calls with all attributes that are not condition parameters,
         //and we then add the requested condition parameters this.params.

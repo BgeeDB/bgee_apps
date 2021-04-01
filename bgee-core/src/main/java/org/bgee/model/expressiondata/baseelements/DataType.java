@@ -4,7 +4,10 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 
@@ -36,6 +39,11 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 public enum DataType implements BgeeEnumField {
     AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq"),
     FULL_LENGTH("full length single cell RNA-Seq");
+
+    private final static Logger log = LogManager.getLogger(DataType.class.getName());
+
+    private final static Set<EnumSet<DataType>> ALL_DATA_TYPE_COMBINATIONS = 
+            getAllPossibleDataTypeCombinations(EnumSet.allOf(DataType.class));
     
     private final String representation;
     
@@ -67,8 +75,21 @@ public enum DataType implements BgeeEnumField {
     }
 
     public static final Set<EnumSet<DataType>> getAllPossibleDataTypeCombinations() {
+        log.traceEntry();
+        //defensive copying
+        return log.traceExit(ALL_DATA_TYPE_COMBINATIONS.stream()
+                .map(s -> EnumSet.copyOf(s))
+                .collect(Collectors.toSet()));
+    }
+    public static final Set<EnumSet<DataType>> getAllPossibleDataTypeCombinations(
+            Collection<DataType> dataTypes) {
+        log.traceEntry("{}", dataTypes);
+        if (dataTypes == null || dataTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some data types must be provided."));
+        }
+        EnumSet<DataType> filteredDataTypes = EnumSet.copyOf(dataTypes);
         Set<EnumSet<DataType>> combinations = new HashSet<>();
-        DataType[] dataTypeArr = DataType.values();
+        DataType[] dataTypeArr = filteredDataTypes.toArray(new DataType[filteredDataTypes.size()]);
         final int n = dataTypeArr.length;
         
         for (int i = 0; i < Math.pow(2, n); i++) {
@@ -89,5 +110,34 @@ public enum DataType implements BgeeEnumField {
             }
         }
         return combinations;
+    }
+    public static EnumSet<DataType> findCombinationWithGreatestOverlap(
+            Collection<EnumSet<DataType>> dataTypeCombinations, Collection<DataType> dataTypeCombination) {
+        log.traceEntry("{}, {}", dataTypeCombinations, dataTypeCombination);
+
+        Set<EnumSet<DataType>> clonedDataTypeCombinations = new HashSet<>(dataTypeCombinations);
+        EnumSet<DataType> clonedDataTypeCombination = EnumSet.copyOf(dataTypeCombination);
+
+        int bestDataTypeMatchCount = 0;
+        EnumSet<DataType>  mostMatchedCombination = null;
+        for (EnumSet<DataType> comb: clonedDataTypeCombinations) {
+            if (clonedDataTypeCombination.equals(comb)) {
+                return log.traceExit(EnumSet.copyOf(comb));
+            }
+            if (!clonedDataTypeCombination.containsAll(comb)) {
+                continue;
+            }
+            EnumSet<DataType> clonedComb = EnumSet.copyOf(comb);
+            clonedComb.retainAll(clonedDataTypeCombination);
+            int dataTypeMatchCount = clonedComb.size();
+            if (dataTypeMatchCount > bestDataTypeMatchCount) {
+                bestDataTypeMatchCount = dataTypeMatchCount;
+                mostMatchedCombination = comb;
+            }
+        }
+        if (mostMatchedCombination == null) {
+            return log.traceExit((EnumSet<DataType>) null);
+        }
+        return log.traceExit(EnumSet.copyOf(mostMatchedCombination));
     }
 }

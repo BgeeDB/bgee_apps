@@ -1,5 +1,10 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.TransferObject;
@@ -37,7 +42,7 @@ public enum DAODataType implements EnumDAOField {
      *                                  to any {@code DataType}.
      */
     public static final DAODataType convertToDataType(String representation) {
-        log.entry(representation);
+        log.traceEntry("{}", representation);
         return log.traceExit(TransferObject.convert(DAODataType.class, representation));
     }
 
@@ -73,5 +78,32 @@ public enum DAODataType implements EnumDAOField {
      */
     public String getFieldNamePrefix() {
         return this.fieldNamePrefix;
+    }
+    
+    public static final Set<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {
+        log.traceEntry();
+        Collection<DAODataType> allDataTypes = EnumSet.allOf(DAODataType.class);
+        Set<EnumSet<DAODataType>> combinations = new HashSet<>();
+        DAODataType[] dataTypeArr = allDataTypes.toArray(new DAODataType[allDataTypes.size()]);
+        final int n = dataTypeArr.length;
+        
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<DAODataType> combination = EnumSet.noneOf(DAODataType.class);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(dataTypeArr[j]);
+                }
+            }
+            //We don't want the combination where no data type is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return combinations;
     }
 }

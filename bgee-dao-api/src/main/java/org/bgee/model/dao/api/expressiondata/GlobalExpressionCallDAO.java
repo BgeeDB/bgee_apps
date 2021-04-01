@@ -225,8 +225,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
+        private final Set<DAOFDRPValue> pValues;
+        
+        private final Set<DAOFDRPValue> bestDescendantPValues;
+        
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs) {
+                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
+                Set<DAOFDRPValue> pValues, Set<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);
             
             this.meanRank = meanRank;
@@ -234,6 +239,16 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                 this.callDataTOs = Collections.unmodifiableSet(new HashSet<>(callDataTOs));
             } else {
                 this.callDataTOs = null;
+            }
+            if (pValues != null) {
+                this.pValues = Collections.unmodifiableSet(new HashSet<>(pValues));
+            } else {
+                this.pValues = null;
+            }
+            if (bestDescendantPValues != null) {
+                this.bestDescendantPValues = Collections.unmodifiableSet(new HashSet<>(bestDescendantPValues));
+            } else {
+                this.bestDescendantPValues = null;
             }
             //there should be at most one GlobalExpressionCallDataTO per data type.
             //we simply use Collectors.toMap that throws an exception in case of key collision
@@ -260,6 +275,20 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public Set<GlobalExpressionCallDataTO> getCallDataTOs() {
             return callDataTOs;
         }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s
+         *          storing the pvalues for all possible combination of datatypes
+         */
+        Set<DAOFDRPValue> getPValues() {
+            return pValues;
+        }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s storing the 
+         *          pvalues of best descendant calls for all possible combination of datatypes
+         */
+        Set<DAOFDRPValue> getBestDescendantPValues() {
+            return bestDescendantPValues;
+        }
 
         @Override
         public String toString() {
@@ -269,6 +298,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", conditionId=").append(getConditionId())
                    .append(", meanRank=").append(meanRank)
                    .append(", callDataTOs=").append(callDataTOs)
+                   .append(", pValues=").append(pValues)
+                   .append(", bestDescendantPValues=").append(bestDescendantPValues)
                    .append("]");
             return builder.toString();
         }

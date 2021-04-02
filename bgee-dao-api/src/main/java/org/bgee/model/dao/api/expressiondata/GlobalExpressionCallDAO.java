@@ -280,14 +280,14 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
          * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s
          *          storing the pvalues for all possible combination of datatypes
          */
-        Set<DAOFDRPValue> getPValues() {
+        public Set<DAOFDRPValue> getPValues() {
             return pValues;
         }
         /**
          * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s storing the 
          *          pvalues of best descendant calls for all possible combination of datatypes
          */
-        Set<DAOFDRPValue> getBestDescendantPValues() {
+        public Set<DAOFDRPValue> getBestDescendantPValues() {
             return bestDescendantPValues;
         }
 

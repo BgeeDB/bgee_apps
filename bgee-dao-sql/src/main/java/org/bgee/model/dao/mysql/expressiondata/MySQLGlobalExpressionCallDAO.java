@@ -73,7 +73,8 @@ implements GlobalExpressionCallDAO {
             Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
             Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName,
             String geneTableName, boolean observedConditionFiltering) {
-        log.entry(attrs, orderingAttrs, dataTypes, globalExprTableName, globalCondTableName, geneTableName, observedConditionFiltering);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", attrs, orderingAttrs, dataTypes, globalExprTableName,
+                globalCondTableName, geneTableName, observedConditionFiltering);
         
         Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
@@ -283,7 +284,7 @@ implements GlobalExpressionCallDAO {
 
     private static String generateMeanRankClause(Set<DAODataType> dataTypes, String globalExprTableName,
             String globalCondTableName) {
-        log.entry(dataTypes, globalExprTableName, globalCondTableName);
+        log.traceEntry("{}, {}, {}", dataTypes, globalExprTableName, globalCondTableName);
 
         Map<DAODataType, String> dataTypeToNormRankSql = new HashMap<>();
         dataTypeToNormRankSql.put(DAODataType.EST, 
@@ -350,8 +351,9 @@ implements GlobalExpressionCallDAO {
     private static String generateTableReferences(final String globalExprTableName,
             final String globalCondTableName, final String condTableName, final String geneTableName,
             boolean observedConditionFiltering, final boolean isOrderByOMANodeId, final boolean isOrderByPublicGeneId) {
-        log.entry(globalExprTableName, globalCondTableName, condTableName, geneTableName,
-                observedConditionFiltering, isOrderByOMANodeId, isOrderByPublicGeneId);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
+                condTableName, geneTableName, observedConditionFiltering, isOrderByOMANodeId,
+                isOrderByPublicGeneId);
 
         StringBuilder sb = new StringBuilder();
 
@@ -424,8 +426,8 @@ implements GlobalExpressionCallDAO {
     private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
             final String globalExprTableName, final String globalCondTableName,
             final String condTableName, Set<ConditionDAO.Attribute> conditionParameters) {
-        log.entry(callFilters, globalExprTableName, globalCondTableName, condTableName,
-                conditionParameters);
+        log.traceEntry("{}, {}, {}, {}, {}", callFilters, globalExprTableName, globalCondTableName,
+                condTableName, conditionParameters);
         
         StringBuilder sb = new StringBuilder();
         sb.append(" WHERE ");
@@ -513,7 +515,7 @@ implements GlobalExpressionCallDAO {
 
     private static String generatePropStateQuery(String globalExprTableName,
             DAODataType dataType, ConditionDAO.Attribute condParam, boolean isObservedRequested) {
-        log.entry(globalExprTableName, dataType, condParam, isObservedRequested);
+        log.traceEntry("{}, {}, {}, {}", globalExprTableName, dataType, condParam, isObservedRequested);
         
         String columnName = getCallCondParamObservedDataFieldName(dataType, condParam);
         return log.traceExit(globalExprTableName + "." + columnName + " IN (" +
@@ -522,7 +524,7 @@ implements GlobalExpressionCallDAO {
                 ) + ")");
     }
     private static String getCallCondParamObservedDataFieldName(DAODataType dataType, ConditionDAO.Attribute condParam) {
-        log.entry(dataType, condParam);
+        log.traceEntry("{}, {}", dataType, condParam);
 
         StringBuilder sb = new StringBuilder();
         sb.append(dataType.getFieldNamePrefix());
@@ -546,7 +548,7 @@ implements GlobalExpressionCallDAO {
 
     private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
             final String globalExprTableName) {
-        log.entry(dataFilters, globalExprTableName);
+        log.traceEntry("{}, {}", dataFilters, globalExprTableName);
 
         return dataFilters.stream()
             .map(dataFilter -> {
@@ -631,7 +633,7 @@ implements GlobalExpressionCallDAO {
            .collect(Collectors.joining(" OR ", "(", ")"));
     }
     private static List<List<DAOExperimentCountFilter>> getDAOExperimentCountFilters(CallDataDAOFilter dataFilter) {
-        log.entry(dataFilter);
+        log.traceEntry("{}", dataFilter);
         List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = dataFilter.getExperimentCountFilters();
         if (dataFilter.getExperimentCountFilters().isEmpty() &&
                 !dataFilter.getDataTypes().isEmpty() &&
@@ -647,7 +649,7 @@ implements GlobalExpressionCallDAO {
 
     private static String getExpCountFilterFieldName(DAODataType dataType,
             DAOExperimentCountFilter expCountFilter) {
-        log.entry(dataType, expCountFilter);
+        log.traceEntry("{}, {}", dataType, expCountFilter);
 
         StringBuilder sb = new StringBuilder();
 
@@ -715,7 +717,7 @@ implements GlobalExpressionCallDAO {
     }
 
     private static Set<DAODataType> getDAODataTypesFromCallDAOFilters(Collection<CallDAOFilter> callFilters) {
-        log.entry(callFilters);
+        log.traceEntry("{}", callFilters);
         return log.traceExit(callFilters.stream()
                 .flatMap(callFilter -> callFilter.getDataFilters().isEmpty()?
                         EnumSet.allOf(DAODataType.class).stream():
@@ -726,7 +728,7 @@ implements GlobalExpressionCallDAO {
 
     private static void performSanityChecks(LinkedHashSet<CallDAOFilter> callFilters,
             Set<ConditionDAO.Attribute> condParams) throws IllegalArgumentException {
-        log.entry(callFilters, condParams);
+        log.traceEntry("{}, {}", callFilters, condParams);
         if (callFilters.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some CallDAOFilters must be provided"));
         }
@@ -742,7 +744,7 @@ implements GlobalExpressionCallDAO {
     }
     private static void configureCallStatement(BgeePreparedStatement stmt, LinkedHashSet<CallDAOFilter> callFilters)
             throws SQLException {
-        log.entry(stmt, callFilters);
+        log.traceEntry("{}, {}", stmt, callFilters);
 
         int offsetParamIndex = 1;
         for (CallDAOFilter callFilter: callFilters) {
@@ -804,7 +806,8 @@ implements GlobalExpressionCallDAO {
     private String generateOrderByClause(
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs,
             String globalExprTableName, String globalCondTableName, String geneTableName) {
-        log.entry(orderingAttrs, globalExprTableName, globalCondTableName, geneTableName);
+        log.traceEntry("{}, {}, {}, {}", orderingAttrs, globalExprTableName, globalCondTableName,
+                geneTableName);
 
         if (orderingAttrs.isEmpty()) {
             return log.traceExit("");
@@ -867,7 +870,7 @@ implements GlobalExpressionCallDAO {
             Collection<GlobalExpressionCallDAO.Attribute> attributes,
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, conditionParameters, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}, {}", callFilters, conditionParameters, attributes, orderingAttributes);
 
         //******************************************
         // CLONE ARGUMENTS AND SANITY CHECKS
@@ -929,13 +932,13 @@ implements GlobalExpressionCallDAO {
     @Override
     public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
             Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, conditionParameters);
+        log.traceEntry("{}, {}", callFilters, conditionParameters);
         return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, true, Integer.class));
     }
     @Override
     public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
             Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, conditionParameters);
+        log.traceEntry("{}, {}", callFilters, conditionParameters);
         return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, false, String.class));
     }
     /**
@@ -960,7 +963,7 @@ implements GlobalExpressionCallDAO {
     private <T extends Comparable<T>> EntityMinMaxRanksTOResultSet<T> getMinMaxRanksPerEntity(
             Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
             boolean geneEntity, Class<T> entityIdType) throws DAOException, IllegalArgumentException {
-        log.entry(callFilters, conditionParameters, geneEntity, entityIdType);
+        log.traceEntry("{}, {}, {}, {}", callFilters, conditionParameters, geneEntity, entityIdType);
 
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<CallDAOFilter> clonedCallFilters = callFilters == null?
@@ -1039,7 +1042,7 @@ implements GlobalExpressionCallDAO {
     @Override
     public int insertGlobalCalls(Collection<GlobalExpressionCallTO> callTOs)
             throws DAOException, IllegalArgumentException {
-        log.entry(callTOs);
+        log.traceEntry("{}", callTOs);
         
         if (callTOs == null || callTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No calls provided"));
@@ -1129,7 +1132,7 @@ implements GlobalExpressionCallDAO {
     
     private static int setStatementCallDataParameters(BgeePreparedStatement stmt, int paramIndex,
             GlobalExpressionCallDataTO callDataTO, DAODataType dataType) throws SQLException {
-        log.entry(stmt, paramIndex, callDataTO, dataType);
+        log.traceEntry("{}, {}, {}, {}", stmt, paramIndex, callDataTO, dataType);
         
         int newParamIndex = paramIndex;
         if (callDataTO == null) {
@@ -1350,7 +1353,7 @@ implements GlobalExpressionCallDAO {
 
         private static GlobalExpressionCallDataTO loadGlobalExpressionCallDataTO(
                 MySQLGlobalExpressionCallTOResultSet rs, DAODataType dataType) throws SQLException {
-            log.entry(rs, dataType);
+            log.traceEntry("{}, {}", rs, dataType);
 
             final ResultSet currentResultSet = rs.getCurrentResultSet();
             Boolean conditionObservedData = null;
@@ -1480,7 +1483,7 @@ implements GlobalExpressionCallDAO {
         
         private static DAOExperimentCount loadExperimentCount(ResultSet rs,
                 final String columnName, DAODataType dataType) throws SQLException {
-            log.entry(rs, columnName, dataType);
+            log.traceEntry("{}, {}, {}", rs, columnName, dataType);
             
             if ("estLibPresentHighSelfCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
             "affymetrixExpPresentHighSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||

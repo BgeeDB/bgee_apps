@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter.Qualifier;
+import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
@@ -58,6 +60,10 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
+    private final static String GLOBAL_P_VALUE_FIELD_START = "pValue";
+    private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValueBestDescendant";
+    private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START =
+            "globalConditionIdPValueBestDescendant";
     private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
             .stream().filter(s -> s.getObservedState())
             .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
@@ -803,6 +809,48 @@ implements GlobalExpressionCallDAO {
         log.traceExit();
     }
 
+    private static EnumSet<DAODataType> getDataTypesFromFieldName(String fieldName) {
+        log.traceEntry("{}", fieldName);
+        EnumSet<DAODataType> dataTypes = EnumSet.noneOf(DAODataType.class);
+        //It's complicated to automate more than that since some DataType fieldNamePart can be
+        //substring of other DataType fieldNameParts.
+        if (fieldName.contains(DAODataType.AFFYMETRIX.getFieldNamePart())) {
+            dataTypes.add(DAODataType.AFFYMETRIX);
+        }
+        if (fieldName.contains(DAODataType.EST.getFieldNamePart())) {
+            dataTypes.add(DAODataType.EST);
+        }
+        if (fieldName.contains(DAODataType.IN_SITU.getFieldNamePart())) {
+            dataTypes.add(DAODataType.IN_SITU);
+        }
+        //Since RnaSeq is a substring of ScRnaSeqFullLength, we need do to that
+        String fieldNameWithoutFullLength = fieldName
+                .replace(DAODataType.FULL_LENGTH.getFieldNamePart(), "");
+        if (fieldNameWithoutFullLength.contains(DAODataType.RNA_SEQ.getFieldNamePart())) {
+            dataTypes.add(DAODataType.RNA_SEQ);
+        }
+        if (fieldName.contains(DAODataType.FULL_LENGTH.getFieldNamePart())) {
+            dataTypes.add(DAODataType.FULL_LENGTH);
+        }
+        //Check that we have covered all DataTypes
+        assert EnumSet.of(DAODataType.AFFYMETRIX, DAODataType.EST, DAODataType.IN_SITU,
+                DAODataType.RNA_SEQ, DAODataType.FULL_LENGTH).equals(EnumSet.allOf(DAODataType.class));
+
+        if (dataTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Field name with no data type info: "
+                    + fieldName));
+        }
+        return log.traceExit(dataTypes);
+    }
+
+    private static String getFieldNamePartFromDataTypes(EnumSet<DAODataType> dataTypes) {
+        log.traceEntry("{}", dataTypes);
+        //We iterate an EnumSet to have a predictable order of iteration to generate fieldNamePart
+        return log.traceExit(dataTypes.stream()
+                .map(dt -> dt.getFieldNamePart())
+                .collect(Collectors.joining()));
+    }
+
     private String generateOrderByClause(
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs,
             String globalExprTableName, String globalCondTableName, String geneTableName) {
@@ -1051,46 +1099,53 @@ implements GlobalExpressionCallDAO {
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO ").append(GLOBAL_EXPR_TABLE_NAME).append(" (")
 
-           .append("globalExpressionId, bgeeGeneId, globalConditionId, ")
+           .append("globalExpressionId, bgeeGeneId, globalConditionId, ");
 
-           .append("estAnatEntityPropagationState, estStagePropagationState, ")
-           .append("estConditionObservedData, estLibPresentHighSelfCount, estLibPresentLowSelfCount, ")
-           .append("estLibPresentHighDescendantCount, estLibPresentLowDescendantCount, ")
-           .append("estLibPresentHighTotalCount, estLibPresentLowTotalCount, estLibPropagatedCount, ")
+        sql.append(DAODataType.ALL_COMBINATIONS.stream()
+                .map(c -> GLOBAL_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
+                .collect(Collectors.joining(", ", "", ", ")));
+
+        sql.append(DAODataType.ALL_COMBINATIONS.stream()
+                .map(c -> GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
+                .collect(Collectors.joining(", ", "", ", ")));
+
+        sql.append(DAODataType.ALL_COMBINATIONS.stream()
+                .map(c -> GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
+                .collect(Collectors.joining(", ")));
+
+        sql.append("estAnatEntityPropagationState, estStagePropagationState, ")
+           .append("estSexPropagationState, estStrainPropagationState, ")
+           .append("estConditionObservedData, ")
+           .append("estSelfObservationCount, estDescendantObservationCount, ")
 
            .append("affymetrixAnatEntityPropagationState, affymetrixStagePropagationState, ")
-           .append("affymetrixConditionObservedData, affymetrixExpPresentHighSelfCount, ")
-           .append("affymetrixExpPresentLowSelfCount, affymetrixExpAbsentHighSelfCount, ")
-           .append("affymetrixExpAbsentLowSelfCount, affymetrixExpPresentHighDescendantCount, ")
-           .append("affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount, ")
-           .append("affymetrixExpAbsentLowParentCount, affymetrixExpPresentHighTotalCount, ")
-           .append("affymetrixExpPresentLowTotalCount, affymetrixExpAbsentHighTotalCount, ")
-           .append("affymetrixExpAbsentLowTotalCount, affymetrixExpPropagatedCount, ")
+           .append("affymetrixSexPropagationState, affymetrixStrainPropagationState, ")
+           .append("affymetrixConditionObservedData, ")
+           .append("affymetrixSelfObservationCount, affymetrixDescendantObservationCount, ")
 
            .append("inSituAnatEntityPropagationState, inSituStagePropagationState, ")
-           .append("inSituConditionObservedData, inSituExpPresentHighSelfCount, ")
-           .append("inSituExpPresentLowSelfCount, inSituExpAbsentHighSelfCount, ")
-           .append("inSituExpAbsentLowSelfCount, inSituExpPresentHighDescendantCount, ")
-           .append("inSituExpPresentLowDescendantCount, inSituExpAbsentHighParentCount, ")
-           .append("inSituExpAbsentLowParentCount, inSituExpPresentHighTotalCount, ")
-           .append("inSituExpPresentLowTotalCount, inSituExpAbsentHighTotalCount, ")
-           .append("inSituExpAbsentLowTotalCount, inSituExpPropagatedCount, ")
+           .append("inSituSexPropagationState, inSituStrainPropagationState, ")
+           .append("inSituConditionObservedData, ")
+           .append("inSituSelfObservationCount, inSituDescendantObservationCount, ")
 
            .append("rnaSeqAnatEntityPropagationState, rnaSeqStagePropagationState, ")
-           .append("rnaSeqConditionObservedData, rnaSeqExpPresentHighSelfCount, ")
-           .append("rnaSeqExpPresentLowSelfCount, rnaSeqExpAbsentHighSelfCount, ")
-           .append("rnaSeqExpAbsentLowSelfCount, rnaSeqExpPresentHighDescendantCount, ")
-           .append("rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount, ")
-           .append("rnaSeqExpAbsentLowParentCount, rnaSeqExpPresentHighTotalCount, ")
-           .append("rnaSeqExpPresentLowTotalCount, rnaSeqExpAbsentHighTotalCount, ")
-           .append("rnaSeqExpAbsentLowTotalCount, rnaSeqExpPropagatedCount")
+           .append("rnaSeqSexPropagationState, rnaSeqStrainPropagationState, ")
+           .append("rnaSeqConditionObservedData, ")
+           .append("rnaSeqSelfObservationCount, rnaSeqDescendantObservationCount, ")
+
+           .append("scRnaSeqFullLengthAnatEntityPropagationState, scRnaSeqFullLengthStagePropagationState, ")
+           .append("scRnaSeqFullLengthSexPropagationState, scRnaSeqFullLengthStrainPropagationState, ")
+           .append("scRnaSeqFullLengthCellTypePropagationState, scRnaSeqFullLengthConditionObservedData, ")
+           .append("scRnaSeqFullLengthSelfObservationCount, scRnaSeqFullLengthDescendantObservationCount, ")
            
            .append(") VALUES ");
+
         for (int i = 0; i < callTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(61))
+            sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(
+                    39 + (DAODataType.ALL_COMBINATIONS.size() * 3)))
                .append(") ");
         }
         try (BgeePreparedStatement stmt = 
@@ -1103,6 +1158,44 @@ implements GlobalExpressionCallDAO {
                 paramIndex++;
                 stmt.setInt(paramIndex, callTO.getConditionId());
                 paramIndex++;
+
+                Map<EnumSet<DAODataType>, DAOFDRPValue> pValMap = callTO.getPValues().stream()
+                        .map(p -> new AbstractMap.SimpleEntry<>(p.getDataTypes(), p))
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                for (EnumSet<DAODataType> comb: DAODataType.ALL_COMBINATIONS) {
+                    DAOFDRPValue pVal = pValMap.get(comb);
+                    if (pVal == null) {
+                        stmt.setNull(paramIndex, Types.DECIMAL);
+                    } else {
+                        stmt.setBigDecimal(paramIndex, pVal.getFdrPValue());
+                    }
+                    paramIndex++;
+                }
+
+                Map<EnumSet<DAODataType>, DAOFDRPValue> descPValMap = callTO.getBestDescendantPValues()
+                        .stream()
+                        .map(p -> new AbstractMap.SimpleEntry<>(p.getDataTypes(), p))
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                for (EnumSet<DAODataType> comb: DAODataType.ALL_COMBINATIONS) {
+                    DAOFDRPValue pVal = descPValMap.get(comb);
+                    if (pVal == null) {
+                        stmt.setNull(paramIndex, Types.DECIMAL);
+                    } else {
+                        stmt.setBigDecimal(paramIndex, pVal.getFdrPValue());
+                    }
+                    paramIndex++;
+                }
+
+                for (EnumSet<DAODataType> comb: DAODataType.ALL_COMBINATIONS) {
+                    DAOFDRPValue pVal = descPValMap.get(comb);
+                    if (pVal == null) {
+                        stmt.setNull(paramIndex, Types.INTEGER);
+                    } else {
+                        assert pVal.getConditionId() != null;
+                        stmt.setInt(paramIndex, pVal.getConditionId());
+                    }
+                    paramIndex++;
+                }
                 
                 //create a Map<DAODataType, GlobalExpressionCallDataTO>,
                 //to be able to select the appropriate data in the appropriate INSERT order.
@@ -1111,7 +1204,7 @@ implements GlobalExpressionCallDAO {
                         .collect(Collectors.toMap(c -> c.getDataType(), c -> c));
 
                 //Just to make sure we cover all data type cases
-                assert DAODataType.values().length == 4;
+                assert DAODataType.values().length == 5;
                 //the order in which we set the data types is important, see creation of the query.
                 //And we need to set all parameters even if there is no data for a data type.
                 paramIndex = setStatementCallDataParameters(stmt, paramIndex,
@@ -1122,6 +1215,8 @@ implements GlobalExpressionCallDAO {
                         dataTypeToCallDataTO.get(DAODataType.IN_SITU), DAODataType.IN_SITU);
                 paramIndex = setStatementCallDataParameters(stmt, paramIndex,
                         dataTypeToCallDataTO.get(DAODataType.RNA_SEQ), DAODataType.RNA_SEQ);
+                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
+                        dataTypeToCallDataTO.get(DAODataType.FULL_LENGTH), DAODataType.FULL_LENGTH);
             }
             
             return log.traceExit(stmt.executeUpdate());
@@ -1136,26 +1231,27 @@ implements GlobalExpressionCallDAO {
         
         int newParamIndex = paramIndex;
         if (callDataTO == null) {
-            //Propagation states, same for all data types
-            for (int i = 0; i < 3; i++) {
-                stmt.setNull(newParamIndex, Types.VARCHAR);
-                newParamIndex++;
-            }
-            //Expression counts, different between EST and other data types
-            int expExprAttrCount = 0;
+            //Propagation states, different between FULL_LENGTH and other data types
+            int stateAttrCount = 0;
             switch (dataType) {
             case EST:
-                expExprAttrCount = 7;
-                break;
             case AFFYMETRIX:
             case IN_SITU:
             case RNA_SEQ:
-                expExprAttrCount = 13;
+                stateAttrCount = 5;
+                break;
+            case FULL_LENGTH:
+                stateAttrCount = 6;
                 break;
             default:
                 throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dataType));
             }
-            for (int i = 0; i < expExprAttrCount; i++) {
+            for (int i = 0; i < stateAttrCount; i++) {
+                stmt.setNull(newParamIndex, Types.VARCHAR);
+                newParamIndex++;
+            }
+            //ObservationCounts, same for all data types
+            for (int i = 0; i < 2; i++) {
                 stmt.setInt(newParamIndex, 0);
                 newParamIndex++;
             }
@@ -1166,7 +1262,7 @@ implements GlobalExpressionCallDAO {
         //make sure we covert all condition parameters
         assert ((int) EnumSet.allOf(ConditionDAO.Attribute.class).stream()
                 .filter(a -> a.isConditionParameter())
-                .count()) == 2;
+                .count()) == 5;
 
         DAOPropagationState anatPropState = callDataTO.getDataPropagation()
                 .get(ConditionDAO.Attribute.ANAT_ENTITY_ID);
@@ -1184,119 +1280,145 @@ implements GlobalExpressionCallDAO {
             stmt.setString(newParamIndex, stagePropState.getStringRepresentation());
         }
         newParamIndex++;
+        DAOPropagationState sexPropState = callDataTO.getDataPropagation()
+                .get(ConditionDAO.Attribute.SEX_ID);
+        if (sexPropState == null) {
+            stmt.setNull(newParamIndex, Types.VARCHAR);
+        } else {
+            stmt.setString(newParamIndex, sexPropState.getStringRepresentation());
+        }
+        newParamIndex++;
+        DAOPropagationState strainPropState = callDataTO.getDataPropagation()
+                .get(ConditionDAO.Attribute.STRAIN_ID);
+        if (strainPropState == null) {
+            stmt.setNull(newParamIndex, Types.VARCHAR);
+        } else {
+            stmt.setString(newParamIndex, strainPropState.getStringRepresentation());
+        }
+        newParamIndex++;
+        if (dataType.equals(DAODataType.FULL_LENGTH)) {
+            DAOPropagationState cellTypePropState = callDataTO.getDataPropagation()
+                    .get(ConditionDAO.Attribute.CELL_TYPE_ID);
+            if (cellTypePropState == null) {
+                stmt.setNull(newParamIndex, Types.VARCHAR);
+            } else {
+                stmt.setString(newParamIndex, cellTypePropState.getStringRepresentation());
+            }
+            newParamIndex++;
+        }
         stmt.setBoolean(newParamIndex, callDataTO.isConditionObservedData());
         newParamIndex++;
 
-        //** Experiment expression counts **
-        //present high self
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                             DAOPropagationState.SELF.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        //present low self
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                             DAOPropagationState.SELF.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        if (!DAODataType.EST.equals(dataType)) {
-            //absent high self
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-            //absent low self
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-        }
-        //present high descendant
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        //present low descendant
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        if (!DAODataType.EST.equals(dataType)) {
-            //absent high parent
-            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-            if (callDataTO.getExperimentCounts().stream()
-                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
-                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
-            }
-            stmt.setInt(newParamIndex, 0);
+//        //** Experiment expression counts **
+//        //present high self
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.SELF.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        //present low self
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.SELF.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        if (!DAODataType.EST.equals(dataType)) {
+//            //absent high self
 //            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
 //                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
 //                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
 //                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-            //absent low parent
-            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-            if (callDataTO.getExperimentCounts().stream()
-                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
-                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
-            }
-            stmt.setInt(newParamIndex, 0);
+//            newParamIndex++;
+//            //absent low self
 //            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
 //                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
 //                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+//                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
 //                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-        }
-        //present high total
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                             DAOPropagationState.ALL.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        //present low total
-        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                             DAOPropagationState.ALL.equals(c.getPropagationState()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-        newParamIndex++;
-        if (!DAODataType.EST.equals(dataType)) {
-            //absent high total
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-            //absent low total
-            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
-                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-            newParamIndex++;
-        }
-        //propagated count
-        stmt.setInt(newParamIndex, callDataTO.getPropagatedCount());
-        newParamIndex++;
+//            newParamIndex++;
+//        }
+//        //present high descendant
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        //present low descendant
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        if (!DAODataType.EST.equals(dataType)) {
+//            //absent high parent
+//            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+//            if (callDataTO.getExperimentCounts().stream()
+//                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+//                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+//            }
+//            stmt.setInt(newParamIndex, 0);
+////            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+////                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+////                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+////                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+////                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//            newParamIndex++;
+//            //absent low parent
+//            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
+//            if (callDataTO.getExperimentCounts().stream()
+//                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
+//                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
+//            }
+//            stmt.setInt(newParamIndex, 0);
+////            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+////                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+////                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+////                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
+////                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//            newParamIndex++;
+//        }
+//        //present high total
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.ALL.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        //present low total
+//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
+//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                             DAOPropagationState.ALL.equals(c.getPropagationState()))
+//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//        newParamIndex++;
+//        if (!DAODataType.EST.equals(dataType)) {
+//            //absent high total
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//            newParamIndex++;
+//            //absent low total
+//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
+//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
+//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
+//                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
+//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
+//            newParamIndex++;
+//        }
+//        //propagated count
+//        stmt.setInt(newParamIndex, callDataTO.getPropagatedCount());
+//        newParamIndex++;
 
         return log.traceExit(newParamIndex);
     }
@@ -1322,20 +1444,44 @@ implements GlobalExpressionCallDAO {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, bgeeGeneId = null, conditionId = null;
                 Set<GlobalExpressionCallDataTO> callDataTOs = new HashSet<>();
+                Set<DAOFDRPValue> pValues = new HashSet<>();
+                Set<DAOFDRPValue> bestDescendantPValues = new HashSet<>();
                 BigDecimal globalMeanRank = null;
 
-                Set<String> colNames = new HashSet<>(this.getColumnLabels().values());
-                if (colNames.contains(GLOBAL_EXPR_ID_FIELD)) {
-                    id = currentResultSet.getInt(GLOBAL_EXPR_ID_FIELD);
-                }
-                if (colNames.contains(MySQLGeneDAO.BGEE_GENE_ID)) {
-                    bgeeGeneId = currentResultSet.getInt(MySQLGeneDAO.BGEE_GENE_ID);
-                }
-                if (colNames.contains(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)) {
-                    conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
-                }
-                if (colNames.contains(GLOBAL_MEAN_RANK_FIELD)) {
-                    globalMeanRank = currentResultSet.getBigDecimal(GLOBAL_MEAN_RANK_FIELD);
+                for (String colName: this.getColumnLabels().values()) {
+                    if (colName.equals(GLOBAL_EXPR_ID_FIELD)) {
+                        id = currentResultSet.getInt(GLOBAL_EXPR_ID_FIELD);
+                    } else if (colName.equals(MySQLGeneDAO.BGEE_GENE_ID)) {
+                        bgeeGeneId = currentResultSet.getInt(MySQLGeneDAO.BGEE_GENE_ID);
+                    } else if (colName.equals(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)) {
+                        conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+                    } else if (colName.equals(GLOBAL_MEAN_RANK_FIELD)) {
+                        globalMeanRank = currentResultSet.getBigDecimal(GLOBAL_MEAN_RANK_FIELD);
+
+                    //important to test GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
+                    //before GLOBAL_P_VALUE_FIELD_PART, since GLOBAL_P_VALUE_FIELD_PART is a substring
+                    //of GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
+                    } else if (colName.startsWith(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)) {
+                        Integer descendantConditionId = null;
+                        EnumSet<DAODataType> dataTypesUsedInField = getDataTypesFromFieldName(colName);
+                        String condFieldName = GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START +
+                                getFieldNamePartFromDataTypes(dataTypesUsedInField);
+                        if (this.getColumnLabels().values().contains(condFieldName)) {
+                            int readDescendantConditionId = currentResultSet.getInt(condFieldName);
+                            // As getInt() returns 0 if the value is SQL NULL, 
+                            // we need to check if the column read had a value of SQL NULL
+                            if (!currentResultSet.wasNull()) {
+                                descendantConditionId = readDescendantConditionId;
+                            }
+                        }
+                        bestDescendantPValues.add(new DAOFDRPValue(
+                                currentResultSet.getBigDecimal(colName), descendantConditionId,
+                                dataTypesUsedInField));
+                    } else if (colName.startsWith(GLOBAL_P_VALUE_FIELD_START)) {
+                        pValues.add(new DAOFDRPValue(
+                                currentResultSet.getBigDecimal(colName), null,
+                                getDataTypesFromFieldName(colName)));
+                    }
                 }
                 for (DAODataType dataType: EnumSet.allOf(DAODataType.class)) {
                     GlobalExpressionCallDataTO dataTypeDataTO = loadGlobalExpressionCallDataTO(
@@ -1345,7 +1491,7 @@ implements GlobalExpressionCallDAO {
                     }
                 }
                 return log.traceExit(new GlobalExpressionCallTO(id, bgeeGeneId, conditionId,
-                        globalMeanRank, callDataTOs));
+                        globalMeanRank, callDataTOs, pValues, bestDescendantPValues));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -1359,46 +1505,49 @@ implements GlobalExpressionCallDAO {
             Boolean conditionObservedData = null;
             Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
             Set<DAOExperimentCount> experimentCounts = new HashSet<>();
-            Integer propagatedCount = null;
+            Integer selfObservationCount = null, descendantObservationCount = null, propagatedCount = null;
             BigDecimal rank = null, rankNorm = null, weightForMeanRank = null;
 
             boolean infoFound = false;
             for (Map.Entry<Integer, String> col : rs.getColumnLabels().entrySet()) {
                 final String columnName = col.getValue();
-                if ("estAnatEntityPropagationState".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixAnatEntityPropagationState".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituAnatEntityPropagationState".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqAnatEntityPropagationState".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                if (columnName.contains("AnatEntityPropagationState") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
 
                     dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID,
                             DAOPropagationState.convertToPropagationState(
                                     currentResultSet.getString(columnName)));
                     infoFound = true;
-                } else if ("estStagePropagationState".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixStagePropagationState".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituStagePropagationState".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqStagePropagationState".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                } else if (columnName.contains("StagePropagationState") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
 
                     dataPropagation.put(ConditionDAO.Attribute.STAGE_ID,
                             DAOPropagationState.convertToPropagationState(
                                     currentResultSet.getString(columnName)));
                     infoFound = true;
-                } else if ("estConditionObservedData".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixConditionObservedData".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituConditionObservedData".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqConditionObservedData".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                } else if (columnName.contains("CellTypePropagationState") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
+
+                    dataPropagation.put(ConditionDAO.Attribute.CELL_TYPE_ID,
+                            DAOPropagationState.convertToPropagationState(
+                                    currentResultSet.getString(columnName)));
+                    infoFound = true;
+                } else if (columnName.contains("SexPropagationState") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
+
+                    dataPropagation.put(ConditionDAO.Attribute.SEX_ID,
+                            DAOPropagationState.convertToPropagationState(
+                                    currentResultSet.getString(columnName)));
+                    infoFound = true;
+                } else if (columnName.contains("StrainPropagationState") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
+
+                    dataPropagation.put(ConditionDAO.Attribute.STRAIN_ID,
+                            DAOPropagationState.convertToPropagationState(
+                                    currentResultSet.getString(columnName)));
+                    infoFound = true;
+                } else if (columnName.contains("ConditionObservedData") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
 
                     // As getBoolean() returns false if the value is SQL NULL, 
                     // we need to check if the column read had a value of SQL NULL
@@ -1407,21 +1556,35 @@ implements GlobalExpressionCallDAO {
                         conditionObservedData = isConditionObservedData;
                     }
                     infoFound = true;
-                } else if ("estLibPropagatedCount".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixExpPropagatedCount".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituExpPropagatedCount".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqExpPropagatedCount".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
+                } else if (columnName.contains("SelfObservationCount") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
 
                     // getInt() returns 0 if the value is SQL NULL,
-                    // but in db, propagated counts are not null so we do not need to check
+                    // but in db, counts are not null so we do not need to check
                     // if the column read had a value of SQL NULL
-                    propagatedCount = currentResultSet.getInt(columnName);
+                    selfObservationCount = currentResultSet.getInt(columnName);
                     infoFound = true;
-                } else if ("estRank".equals(columnName) &&
+                } else if (columnName.contains("DescendantObservationCount") &&
+                        columnName.startsWith(dataType.getFieldNamePrefix())) {
+
+                    // getInt() returns 0 if the value is SQL NULL,
+                    // but in db, counts are not null so we do not need to check
+                    // if the column read had a value of SQL NULL
+                    descendantObservationCount = currentResultSet.getInt(columnName);
+                    infoFound = true;
+                }
+//                else if ("estLibPropagatedCount".equals(columnName) &&
+//                        DAODataType.EST.equals(dataType) ||
+//                        columnName.contains("ExpPropagatedCount") &&
+//                        columnName.startsWith(dataType.getFieldNamePrefix())) {
+//
+//                    // getInt() returns 0 if the value is SQL NULL,
+//                    // but in db, propagated counts are not null so we do not need to check
+//                    // if the column read had a value of SQL NULL
+//                    propagatedCount = currentResultSet.getInt(columnName);
+//                    infoFound = true;
+//                }
+                else if ("estRank".equals(columnName) &&
                         DAODataType.EST.equals(dataType) ||
                     "affymetrixMeanRank".equals(columnName) &&
                         DAODataType.AFFYMETRIX.equals(dataType) ||
@@ -1454,14 +1617,15 @@ implements GlobalExpressionCallDAO {
 
                     weightForMeanRank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;
-                } else {
-                    DAOExperimentCount count = loadExperimentCount(currentResultSet,
-                            columnName, dataType);
-                    if (count != null) {
-                        experimentCounts.add(count);
-                        infoFound = true;
-                    }
                 }
+//                else {
+//                    DAOExperimentCount count = loadExperimentCount(currentResultSet,
+//                            columnName, dataType);
+//                    if (count != null) {
+//                        experimentCounts.add(count);
+//                        infoFound = true;
+//                    }
+//                }
             }
             if (!infoFound || (conditionObservedData == null
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
@@ -1477,7 +1641,8 @@ implements GlobalExpressionCallDAO {
                 return log.traceExit((GlobalExpressionCallDataTO) null);
             }
             return log.traceExit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
-                    dataPropagation, experimentCounts, propagatedCount,
+                    dataPropagation, selfObservationCount, descendantObservationCount,
+                    experimentCounts, propagatedCount,
                     rank, rankNorm, weightForMeanRank));
         }
         

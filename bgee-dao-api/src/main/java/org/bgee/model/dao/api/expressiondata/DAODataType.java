@@ -1,9 +1,9 @@
 package org.bgee.model.dao.api.expressiondata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,9 +26,15 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  * @since Bgee 14 Mar. 2017
  */
 public enum DAODataType implements EnumDAOField {
-    AFFYMETRIX("affymetrix", "affymetrix"), EST("est", "est"), IN_SITU("in situ", "inSitu"), 
-    RNA_SEQ("rna-seq", "rnaSeq"), FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength");
+    //The order of these Enum elements is important and is used to generate field names
+    AFFYMETRIX("affymetrix", "affymetrix", "Affymetrix"), EST("est", "est", "Est"),
+    IN_SITU("in situ", "inSitu", "InSitu"), RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq"),
+    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength", "ScRnaSeqFullLength");
+
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
+
+    public static final List<EnumSet<DAODataType>> ALL_COMBINATIONS =
+            getAllPossibleDAODataTypeCombinations();
 
     /**
      * Convert the {@code String} representation of a data type into a {@code DataType}.
@@ -46,44 +52,10 @@ public enum DAODataType implements EnumDAOField {
         return log.traceExit(TransferObject.convert(DAODataType.class, representation));
     }
 
-    /**
-     * See {@link #getStringRepresentation()}
-     */
-    private final String stringRepresentation;
-    /**
-     * See {@link #getFieldNamePrefix()}
-     */
-    private final String fieldNamePrefix;
-
-    /**
-     * Constructor providing the {@code String} representation of this {@code DataType}.
-     * 
-     * @param stringRepresentation  A {@code String} corresponding to this {@code DataType}.
-     * @param fieldNamePrefix       A {@code String} that is the prefix of fields related to this {@code DataType}.
-     */
-    private DAODataType(String stringRepresentation, String fieldNamePrefix) {
-        this.stringRepresentation = stringRepresentation;
-        this.fieldNamePrefix = fieldNamePrefix;
-    }
-    @Override
-    public String getStringRepresentation() {
-        return this.stringRepresentation;
-    }
-    @Override
-    public String toString() {
-        return this.getStringRepresentation();
-    }
-    /**
-     * @return  A {@code String} that is the prefix of fields related to this {@code DataType}.
-     */
-    public String getFieldNamePrefix() {
-        return this.fieldNamePrefix;
-    }
-    
-    public static final Set<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {
+    private static final List<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {
         log.traceEntry();
         Collection<DAODataType> allDataTypes = EnumSet.allOf(DAODataType.class);
-        Set<EnumSet<DAODataType>> combinations = new HashSet<>();
+        List<EnumSet<DAODataType>> combinations = new ArrayList<>();
         DAODataType[] dataTypeArr = allDataTypes.toArray(new DAODataType[allDataTypes.size()]);
         final int n = dataTypeArr.length;
         
@@ -105,5 +77,53 @@ public enum DAODataType implements EnumDAOField {
             }
         }
         return combinations;
+    }
+
+    /**
+     * See {@link #getStringRepresentation()}
+     */
+    private final String stringRepresentation;
+    /**
+     * See {@link #getFieldNamePrefix()}
+     */
+    private final String fieldNamePrefix;
+    /**
+     * See {@link #getFieldNamePart()}
+     */
+    private final String fieldNamePart;
+
+    /**
+     * Constructor providing the {@code String} representation of this {@code DataType}.
+     * 
+     * @param stringRepresentation  A {@code String} corresponding to this {@code DataType}.
+     * @param fieldNamePrefix       A {@code String} that is the prefix of fields related to this {@code DataType}.
+     * @param fieldNamePart         A {@code String} that is the substring used in field names
+     *                              related to this {@code DataType} when not starting the field name.
+     */
+    private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart) {
+        this.stringRepresentation = stringRepresentation;
+        this.fieldNamePrefix = fieldNamePrefix;
+        this.fieldNamePart = fieldNamePart;
+    }
+    @Override
+    public String getStringRepresentation() {
+        return this.stringRepresentation;
+    }
+    @Override
+    public String toString() {
+        return this.getStringRepresentation();
+    }
+    /**
+     * @return  A {@code String} that is the prefix of fields related to this {@code DataType}.
+     */
+    public String getFieldNamePrefix() {
+        return this.fieldNamePrefix;
+    }
+    /**
+     * @return  A {@code String} that is the substring used in field names
+     *          related to this {@code DataType} when not starting the field name.
+     */
+    public String getFieldNamePart() {
+        return this.fieldNamePart;
     }
 }

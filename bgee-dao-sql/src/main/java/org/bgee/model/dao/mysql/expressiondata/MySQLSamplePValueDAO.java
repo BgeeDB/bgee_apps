@@ -64,7 +64,10 @@ implements SamplePValueDAO  {
     private static String getWhere(String sampleTableName, Collection<Integer> geneIds) {
         log.traceEntry("{}, {}", sampleTableName, geneIds);
         StringBuilder sb = new StringBuilder();
-        sb.append(" WHERE ").append(sampleTableName)
+        sb.append(" WHERE ")
+          .append(sampleTableName).append(".").append(getSelectExprFromAttribute(
+                  SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap))
+          .append(" IS NOT NULL AND ")
           .append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
           .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())).append(") ");
         return log.traceExit(sb.toString());
@@ -73,7 +76,7 @@ implements SamplePValueDAO  {
     private static String getOrderBy(String sampleTableName) {
         log.traceEntry();
         StringBuilder sb = new StringBuilder();
-        sb.append("ORDER BY ")
+        sb.append(" ORDER BY ")
           .append(sampleTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
           .append(", ").append(sampleTableName).append(".")
           .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap));
@@ -110,10 +113,13 @@ implements SamplePValueDAO  {
                 .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.SAMPLE_ID, colToAttrMap))
                 //expressionId
                 .append(", ").append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap))
-                //pvalue
-                .append(", ").append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
+                //Bonferroni corrected pvalue
+                .append(", MIN(").append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
+                    .append(") * COUNT(affymetrixProbesetId) AS ")
+                    .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
                 .append(" FROM ").append(sampleTableName)
                 .append(getWhere(sampleTableName, geneIds))
+                .append(" GROUP BY ").append(MySQLGeneDAO.BGEE_GENE_ID).append(", bgeeAffymetrixChipId ")
                 .append(getOrderBy(sampleTableName));
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
@@ -134,7 +140,7 @@ implements SamplePValueDAO  {
         
         String sampleTableName = "expressedSequenceTag";
         
-        StringBuilder sb = new StringBuilder("SELECT ")
+        StringBuilder sb = new StringBuilder("SELECT DISTINCT ")
                 //geneId
                 .append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
                 //sampleId

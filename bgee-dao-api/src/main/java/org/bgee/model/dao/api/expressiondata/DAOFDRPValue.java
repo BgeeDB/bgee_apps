@@ -12,10 +12,11 @@ public class DAOFDRPValue {
     
     //Only the dataTypes are considered for the hashCode/equals methods
     private final BigDecimal fdrPValue;
+    private final Integer conditionId;
     //Only the dataTypes are considered for the hashCode/equals methods
     private final EnumSet<DAODataType> dataTypes;
     
-    public DAOFDRPValue(BigDecimal fdrPValue, Collection<DAODataType> dataTypes) {
+    public DAOFDRPValue(BigDecimal fdrPValue, Integer conditionId, Collection<DAODataType> dataTypes) {
         if (fdrPValue == null || fdrPValue.compareTo(new BigDecimal(0)) == -1 ||
                 fdrPValue.compareTo(new BigDecimal(1)) == 1) {
             throw log.throwing(new IllegalArgumentException(
@@ -26,6 +27,7 @@ public class DAOFDRPValue {
                     "Some data types must be provided"));
         }
         this.fdrPValue = fdrPValue;
+        this.conditionId = conditionId;
         this.dataTypes = EnumSet.copyOf(dataTypes);
     }
     
@@ -34,6 +36,9 @@ public class DAOFDRPValue {
      */
     public BigDecimal getFdrPValue() {
         return fdrPValue;
+    }
+    public Integer getConditionId() {
+        return conditionId;
     }
     public EnumSet<DAODataType> getDataTypes() {
         //Defensive copying, there is no unmodifiableEnumSet
@@ -73,7 +78,9 @@ public class DAOFDRPValue {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("DAOFDRPValue [fdrPValue=").append(fdrPValue)
-        .append(", dataTypes=").append(dataTypes).append("]");
+        .append(", conditionId=").append(conditionId)
+        .append(", dataTypes=").append(dataTypes)
+        .append("]");
         return builder.toString();
     }
 }

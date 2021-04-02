@@ -208,7 +208,11 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private final DataPropagation dataPropagation;
 
         private final List<BigDecimal> selfPValues;
+        //useful if we don't want to retrieve all self p-values but just to retrieve the count
+        private final Integer selfObservationCount;
         private final List<BigDecimal> descendantPValues;
+        //useful if we don't want to retrieve all descendant p-values but just to retrieve the count
+        private final Integer descendantObservationCount;
         private final List<BigDecimal> allPValues;
         
         private final Set<ExperimentExpressionCount> experimentCounts;
@@ -225,17 +229,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, selfPValues, descendantPValues, null, null,
+            this(dataType, selfPValues, null, descendantPValues, null, null, null,
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         public ExpressionCallData(DataType dataType, Set<ExperimentExpressionCount> experimentCounts,
                 Integer propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, null, null, experimentCounts, propagatedExperimentCount,
+            this(dataType, null, null, null, null, experimentCounts, propagatedExperimentCount,
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         public ExpressionCallData(DataType dataType,
-                Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
+                Collection<BigDecimal> selfPValues, Integer selfObservationCount,
+                Collection<BigDecimal> descendantPValues, Integer descendantObservationCount,
                 Set<ExperimentExpressionCount> experimentCounts, Integer propagatedExperimentCount,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
@@ -246,10 +251,24 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 new ArrayList<>(selfPValues);
             Collections.sort(sortedSelfPValues);
             this.selfPValues = Collections.unmodifiableList(sortedSelfPValues);
+            if (selfObservationCount == null && selfPValues != null && !selfPValues.isEmpty()) {
+                this.selfObservationCount = selfPValues.size();
+            } else if (selfObservationCount != null) {
+                this.selfObservationCount = selfObservationCount;
+            } else {
+                this.selfObservationCount = null;
+            }
             List<BigDecimal> sortedDescendantPValues = descendantPValues == null? new ArrayList<>():
                 new ArrayList<>(descendantPValues);
             Collections.sort(sortedDescendantPValues);
             this.descendantPValues = Collections.unmodifiableList(sortedDescendantPValues);
+            if (descendantObservationCount == null && descendantPValues != null && !descendantPValues.isEmpty()) {
+                this.descendantObservationCount = descendantPValues.size();
+            } else if (descendantObservationCount != null) {
+                this.descendantObservationCount = descendantObservationCount;
+            } else {
+                this.descendantObservationCount = null;
+            }
             List<BigDecimal> allPValues = new ArrayList<>(sortedSelfPValues);
             allPValues.addAll(sortedDescendantPValues);
             Collections.sort(allPValues);
@@ -363,6 +382,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return selfPValues;
         }
         /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the condition itself.
+         * @see #getSelfPValues()
+         */
+        public Integer getSelfObservationCount() {
+            return selfObservationCount;
+        }
+        /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
          *          computed from tests to detect active signal of expression of a gene
          *          using {@link #getDataType()}, in the descendant conditions
@@ -370,6 +397,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          */
         public List<BigDecimal> getDescendantPValues() {
             return descendantPValues;
+        }
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the descendant conditions of the requested condition.
+         * @see #getDescendantPValues()
+         */
+        public Integer getDescendantObservationCount() {
+            return descendantObservationCount;
         }
         /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
@@ -380,6 +415,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public List<BigDecimal> getAllPValues() {
             return allPValues;
         }
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in a condition itself and its descendant conditions.
+         * @see #getAllPValues()
+         */
+        public Integer getAllObservationCount() {
+            if (this.selfObservationCount == null || this.descendantObservationCount == null) {
+                return null;
+            }
+            return this.selfObservationCount + this.descendantObservationCount;
+        }
+
         public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
             log.traceEntry("{}", propState);
             if (propState == null) {

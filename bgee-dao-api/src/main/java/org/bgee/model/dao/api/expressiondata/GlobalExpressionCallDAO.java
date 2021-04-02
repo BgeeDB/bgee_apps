@@ -231,7 +231,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
                 BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
-                Set<DAOFDRPValue> pValues, Set<DAOFDRPValue> bestDescendantPValues) {
+                Collection<DAOFDRPValue> pValues, Collection<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);
             
             this.meanRank = meanRank;
@@ -241,6 +241,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                 this.callDataTOs = null;
             }
             if (pValues != null) {
+                assert pValues.stream().noneMatch(p -> p.getConditionId() != null);
                 this.pValues = Collections.unmodifiableSet(new HashSet<>(pValues));
             } else {
                 this.pValues = null;
@@ -324,6 +325,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
 
+        private final Integer selfObservationCount;
+        private final Integer descendantObservationCount;
+        
         private final Set<DAOExperimentCount> experimentCounts;
 
         private final Integer propagatedCount;
@@ -334,6 +338,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
                 Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
+                Integer selfObservationCount, Integer descendantObservationCount,
                 Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
@@ -344,6 +349,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             this.dataType = dataType;
             this.conditionObservedData = conditionObservedData;
             this.dataPropagation = dataPropagation == null? null: Collections.unmodifiableMap(new HashMap<>(dataPropagation));
+
+            this.selfObservationCount = selfObservationCount;
+            this.descendantObservationCount = descendantObservationCount;
 
             this.experimentCounts = experimentCounts == null? null: Collections.unmodifiableSet(new HashSet<>(experimentCounts));
             this.propagatedCount = propagatedCount;
@@ -377,6 +385,20 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             return dataPropagation;
         }
 
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the condition itself.
+         */
+        public Integer getSelfObservationCount() {
+            return selfObservationCount;
+        }
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the descendant conditions of the requested condition.
+         */
+        public Integer getDescendantObservationCount() {
+            return descendantObservationCount;
+        }
         public Set<DAOExperimentCount> getExperimentCounts() {
             return experimentCounts;
         }
@@ -399,6 +421,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallDataTO [dataType=").append(dataType)
                    .append(", dataPropagation=").append(dataPropagation)
+                   .append(", selfObservationCount=").append(selfObservationCount)
+                   .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", experimentCounts=").append(experimentCounts)
                    .append(", propagatedCount=").append(propagatedCount)
                    .append(", rank=").append(rank)

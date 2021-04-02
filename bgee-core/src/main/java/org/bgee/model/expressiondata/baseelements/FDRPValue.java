@@ -41,7 +41,7 @@ public class FDRPValue {
     /**
      * @return  The FDR-corrected p-value. Not taken into account in hashCode/equals methods.
      */
-    public BigDecimal getFdrPValue() {
+    public BigDecimal getFDRPValue() {
         return fdrPValue;
     }
     public EnumSet<DataType> getDataTypes() {

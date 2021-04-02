@@ -109,7 +109,7 @@ public enum DataType implements BgeeEnumField {
                 combinations.add(combination);
             }
         }
-        return combinations;
+        return log.traceExit(combinations);
     }
     public static EnumSet<DataType> findCombinationWithGreatestOverlap(
             Collection<EnumSet<DataType>> dataTypeCombinations, Collection<DataType> dataTypeCombination) {

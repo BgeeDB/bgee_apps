@@ -31,6 +31,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.FDRPValue;
+import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -866,7 +867,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
         private final DataPropagation dataPropagation;
         private final Set<FDRPValue> pValues;
-        private final Set<FDRPValue> bestDescendantPValues;
+        private final Set<FDRPValueCondition> bestDescendantPValues;
         /**
          * See {@link #getExpressionLevelInfo()}
          */
@@ -890,7 +891,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     expressionLevelInfo, sourceCalls);
         }
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
-                Collection<FDRPValue> pValues, Collection<FDRPValue> bestDescendantPValues,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo,
@@ -960,23 +961,25 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         }
 
         /**
-         * @return  A {@code Set} of {@code FDRPValue}s storing the best FDR-corrected p-value
+         * @return  A {@code Set} of {@code FDRPValueCondition}s storing the best FDR-corrected p-value
          *          over all descendant conditions of the condition considered
          *          in this {@code ExpressionCall}, for different combination of {@code DataType}s.
          *          It means that depending on the combination of {@code DataType}s,
          *          maybe the best FDR-corrected p-values could come from different descendant conditions.
+         *          The {@code Condition} where the p-value comes from can be retrieved from
+         *          the returned {@code FDRPValueCondition}s.
          *          These FDR-corrected p-values are produced by correcting all p-values
          *          resulting from tests to detect active signal of expression of a gene
          *          in a condition and its descendant conditions, using the {@code DataType}s
-         *          stored in the {@code FDRPValue} instance.
+         *          stored in the {@code FDRPValueCondition} instance.
          *          Most likely, only one combination of {@code DataType}s will have been requested,
          *          so that this {@code Set} will contain only one value.
          */
-        public Set<FDRPValue> getBestDescendantPValues() {
+        public Set<FDRPValueCondition> getBestDescendantPValues() {
             return bestDescendantPValues;
         }
         /**
-         * @return  Return one {@code FDRPValue} from the {@code Set} returned by
+         * @return  Return one {@code FDRPValueCondition} from the {@code Set} returned by
          *          {@link #getBestDescendantPValues()}. Useful when we know that
          *          only one combination of {@code DataType}s was requested
          *          to retrieve FDR-corrected p-values associated to calls.
@@ -984,43 +987,43 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          *          is empty.
          * @see #getBestDescendantPValues()
          */
-        public FDRPValue getFirstBestDescendantPValue() {
+        public FDRPValueCondition getFirstBestDescendantPValue() {
             return bestDescendantPValues.stream().findFirst().orElse(null);
         }
         /**
          * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
-         *                  the {@code FDRPValue} produced by using exactly this combination
-         *                  of {@code DataType}s among the {@code FDRPValue}s returned by
+         *                  the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
          *                  {@link #getBestDescendantPValues()}. Cannot be {@code null} or empty.
-         * @return          the {@code FDRPValue} produced by using exactly this combination
-         *                  of {@code DataType}s among the {@code FDRPValue}s returned by
+         * @return          the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
          *                  {@link #getBestDescendantPValues()}. {@code null}
          *                  if no FDR-corrected p-value was produced using
          *                  this exact combination of {@code DataType}s.
          * @see #getBestDescendantPValues()
          */
-        public FDRPValue getBestDescendantPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+        public FDRPValueCondition getBestDescendantPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
             return getPValueWithEqualDataTypes(bestDescendantPValues, dataTypes);
         }
         /**
          * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
-         *                  the {@code FDRPValue}s produced by using a combination
+         *                  the {@code FDRPValueCondition}s produced by using a combination
          *                  of {@code DataType}s that includes all this requested {@code DataType}s,
-         *                  among the {@code FDRPValue}s returned by {@link #getBestDescendantPValues()}.
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
          *                  Cannot be {@code null} or empty.
-         * @return          A {@code Set} of {@code FDRPValue}s produced by using combinations
+         * @return          A {@code Set} of {@code FDRPValueCondition}s produced by using combinations
          *                  of {@code DataType}s that include all this requested {@code DataType}s,
-         *                  among the {@code FDRPValue}s returned by {@link #getBestDescendantPValues()}.
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
          *                  Return an empty {@code Set} if no FDR-corrected p-value
          *                  was produced using a combination that contains all these {@code DataType}s.
          * @see #getBestDescendantPValues()
          */
-        public Set<FDRPValue> getBestDescendantPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+        public Set<FDRPValueCondition> getBestDescendantPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
             return getPValuesContainingAllDataTypes(bestDescendantPValues, dataTypes);
         }
 
-        private static FDRPValue getPValueWithEqualDataTypes(
-                Set<FDRPValue> pValues, Collection<DataType> dataTypes) {
+        private static <F extends FDRPValue> F getPValueWithEqualDataTypes(
+                Set<F> pValues, Collection<DataType> dataTypes) {
             log.traceEntry("{}, {}", pValues, dataTypes);
             if (dataTypes == null || dataTypes.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException("Data types must be provided"));
@@ -1029,8 +1032,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     .filter(p -> p.getDataTypes().equals(EnumSet.copyOf(dataTypes)))
                     .findFirst().orElse(null));
         }
-        private static Set<FDRPValue> getPValuesContainingAllDataTypes(
-                Collection<FDRPValue> pValues, Collection<DataType> dataTypes) {
+        private static <F extends FDRPValue> Set<F> getPValuesContainingAllDataTypes(
+                Collection<F> pValues, Collection<DataType> dataTypes) {
             log.traceEntry("{}, {}", pValues, dataTypes);
             if (dataTypes == null || dataTypes.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException("Data types must be provided"));
@@ -1134,6 +1137,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                    .append(", condition=").append(getCondition())
                    .append(", summaryCallType=").append(getSummaryCallType())
                    .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", pValues=").append(getPValues())
+                   .append(", bestDescendantPValues=").append(getBestDescendantPValues())
                    .append(", expressionLevelInfo=").append(expressionLevelInfo)
                    .append(", dataPropagation=").append(getDataPropagation())
                    .append(", callData=").append(getCallData())

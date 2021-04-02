@@ -141,14 +141,21 @@ public class CallServiceTest extends TestAncestor {
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
         dataPropagation.put(ConditionDAO.Attribute.STAGE_ID, DAOPropagationState.SELF);
+        int condId = 1;
         
-        DAOFDRPValue pValueAffy = new DAOFDRPValue(new BigDecimal(0.003), Collections.singleton(DAODataType.AFFYMETRIX));
-        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), Collections.singleton(DAODataType.EST));
-        DAOFDRPValue pValueInSitu = new DAOFDRPValue(new BigDecimal(0.02), Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueAffy = new DAOFDRPValue(new BigDecimal(0.003), null,
+                Collections.singleton(DAODataType.AFFYMETRIX));
+        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), null,
+                 Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueInSitu = new DAOFDRPValue(new BigDecimal(0.02), null,
+                 Collections.singleton(DAODataType.EST));
 
-        DAOFDRPValue pValueAffyDesc = new DAOFDRPValue(new BigDecimal(0.001), Collections.singleton(DAODataType.AFFYMETRIX));
-        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), Collections.singleton(DAODataType.EST));
-        DAOFDRPValue pValueInSituDesc = new DAOFDRPValue(new BigDecimal(0.2), Collections.singleton(DAODataType.IN_SITU));
+        DAOFDRPValue pValueAffyDesc = new DAOFDRPValue(new BigDecimal(0.001), condId,
+                 Collections.singleton(DAODataType.AFFYMETRIX));
+        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), condId,
+                Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueInSituDesc = new DAOFDRPValue(new BigDecimal(0.2), condId,
+                Collections.singleton(DAODataType.IN_SITU));
         
         Set<DAOFDRPValue> pValuesAffyEST = new HashSet<>();
         pValuesAffyEST.add(pValueAffy);
@@ -176,7 +183,8 @@ public class CallServiceTest extends TestAncestor {
                     new GlobalExpressionCallTO(1, bgeeGeneId1, cond1Id, 
                         new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
-                                        dataPropagation , new HashSet<>(Arrays.asList(
+                                        dataPropagation, 1, 1,
+                                        new HashSet<>(Arrays.asList(
                                                new DAOExperimentCount(
                                                        DAOExperimentCount.CallType.PRESENT, 
                                                        DAOExperimentCount.DataQuality.LOW, 
@@ -187,7 +195,8 @@ public class CallServiceTest extends TestAncestor {
                                                        DAOPropagationState.ALL, 1))), 
                                         0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.EST, true, 
-                                        dataPropagation , new HashSet<>(Arrays.asList(
+                                        dataPropagation, 1, 1,
+                                        new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.HIGH, 
@@ -210,7 +219,8 @@ public class CallServiceTest extends TestAncestor {
                     new GlobalExpressionCallTO(2, bgeeGeneId1, cond2Id, 
                         new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
-                                        dataPropagation, new HashSet<>(Arrays.asList(
+                                        dataPropagation, 1, 1,
+                                        new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.HIGH, 
@@ -221,7 +231,8 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOPropagationState.ALL, 1))), 
                                         0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.EST, true, 
-                                        dataPropagation, new HashSet<>(Arrays.asList(
+                                        dataPropagation, 1, 1,
+                                        new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW,
@@ -232,7 +243,8 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOPropagationState.ALL, 1))), 
                                         0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                 new GlobalExpressionCallDataTO(DAODataType.IN_SITU, true, 
-                                        dataPropagation, new HashSet<>(Arrays.asList(
+                                        dataPropagation, 1, 1,
+                                        new HashSet<>(Arrays.asList(
                                                 new DAOExperimentCount(
                                                         DAOExperimentCount.CallType.PRESENT, 
                                                         DAOExperimentCount.DataQuality.LOW, 
@@ -246,21 +258,24 @@ public class CallServiceTest extends TestAncestor {
                     new GlobalExpressionCallTO(3, bgeeGeneId1, cond3Id, 
                             new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                     new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
-                                            dataPropagation, new HashSet<>(Arrays.asList(
+                                            dataPropagation, 1, 1,
+                                            new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
                                                             DAOPropagationState.ALL, 1))), 
                                             0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                     new GlobalExpressionCallDataTO(DAODataType.EST, true,
-                                            dataPropagation, new HashSet<>(Arrays.asList(
+                                            dataPropagation, 1, 1,
+                                            new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
                                                             DAOPropagationState.ALL, 1))), 
                                             0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")),
                                     new GlobalExpressionCallDataTO(DAODataType.IN_SITU, true, 
-                                            dataPropagation, new HashSet<>(Arrays.asList(
+                                            dataPropagation, 1, 1,
+                                            new HashSet<>(Arrays.asList(
                                                     new DAOExperimentCount(
                                                             DAOExperimentCount.CallType.PRESENT, 
                                                             DAOExperimentCount.DataQuality.LOW, 
@@ -766,15 +781,29 @@ public class CallServiceTest extends TestAncestor {
         Condition cond2 = new Condition(anatEntity1, devStage2, null, null, null, spe1);
         Condition cond3 = new Condition(anatEntity2, devStage1, null, null, null, spe1);
         
-        DAOFDRPValue pValueAffy = new DAOFDRPValue(new BigDecimal(0.003), Collections.singleton(DAODataType.AFFYMETRIX));
-        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueAffy = new DAOFDRPValue(new BigDecimal(0.003), 1,
+                Collections.singleton(DAODataType.AFFYMETRIX));
+        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), 1,
+                Collections.singleton(DAODataType.EST));
 
-        DAOFDRPValue pValueAffyDesc = new DAOFDRPValue(new BigDecimal(0.001), Collections.singleton(DAODataType.AFFYMETRIX));
-        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueAffyDesc = new DAOFDRPValue(new BigDecimal(0.001), 1,
+                Collections.singleton(DAODataType.AFFYMETRIX));
+        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), 1,
+                Collections.singleton(DAODataType.EST));
+
+        Set<DAOFDRPValue> pValuesAffy = new HashSet<>();
+        pValuesAffy.add(pValueAffy);
+        Set<DAOFDRPValue> pValuesEST = new HashSet<>();
+        pValuesEST.add(pValueEST);
         
         Set<DAOFDRPValue> pValuesAffyEST = new HashSet<>();
         pValuesAffyEST.add(pValueAffy);
         pValuesAffyEST.add(pValueEST);
+
+        Set<DAOFDRPValue> pValuesAffyDesc = new HashSet<>();
+        pValuesAffyDesc.add(pValueAffyDesc);
+        Set<DAOFDRPValue> pValuesESTDesc = new HashSet<>();
+        pValuesESTDesc.add(pValueESTDesc);
         
         Set<DAOFDRPValue> pValuesAffyESTDesc = new HashSet<>();
         pValuesAffyESTDesc.add(pValueAffyDesc);
@@ -807,33 +836,35 @@ public class CallServiceTest extends TestAncestor {
                         new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(), 
                                 new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
-                                                dataPropagation , new HashSet<>(Arrays.asList(
+                                                dataPropagation, 1, 1,
+                                                new HashSet<>(Arrays.asList(
                                                        new DAOExperimentCount(
                                                                DAOExperimentCount.CallType.PRESENT, 
                                                                DAOExperimentCount.DataQuality.LOW, 
                                                                DAOPropagationState.ALL, 1))), 
                                                 0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
-                                pValuesAffyEST, pValuesAffyESTDesc),
+                                pValuesAffy, pValuesAffyDesc),
                         new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(), 
                                 new BigDecimal("41025"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
-                                                dataPropagation , new HashSet<>(Arrays.asList(
+                                                dataPropagation, 1, 1,
+                                                new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.LOW, 
                                                                 DAOPropagationState.ALL, 2))), 
                                                 0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
-                                pValuesAffyEST, pValuesAffyESTDesc),
+                                pValuesEST, pValuesESTDesc),
                         new GlobalExpressionCallTO(3, gTO2.getId(), condTO3.getId(), 
                                 new BigDecimal("20000.52"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
-                                                dataPropagation , new HashSet<>(Arrays.asList(
+                                                dataPropagation, 1, 1, new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.LOW, 
                                                                 DAOPropagationState.ALL, 1))), 
                                                 0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
-                                pValuesAffyEST, pValuesAffyESTDesc)));
+                                pValuesEST, pValuesESTDesc)));
 
         //we'll do the verify afterwards, it's easier to catch a problem in the parameters
         when(this.globalExprCallDAO.getGlobalExpressionCalls(
@@ -1039,8 +1070,10 @@ public class CallServiceTest extends TestAncestor {
         ConditionTO condTO1 = new ConditionTO(1, anatEntity1.getId(), devStage1.getId(), null, null, null, spe1.getId(), null);
         Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
         
-        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), Collections.singleton(DAODataType.EST));
-        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueEST = new DAOFDRPValue(new BigDecimal(0.01), 1,
+                Collections.singleton(DAODataType.EST));
+        DAOFDRPValue pValueESTDesc = new DAOFDRPValue(new BigDecimal(0.2), 1,
+                Collections.singleton(DAODataType.EST));
         
         Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
         dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID, DAOPropagationState.SELF);
@@ -1051,7 +1084,8 @@ public class CallServiceTest extends TestAncestor {
                         new GlobalExpressionCallTO(3, gTO1.getId(), condTO1.getId(), 
                                 new BigDecimal("125.42"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
-                                                dataPropagation , new HashSet<>(Arrays.asList(
+                                                dataPropagation, 1, 1,
+                                                new HashSet<>(Arrays.asList(
                                                         new DAOExperimentCount(
                                                                 DAOExperimentCount.CallType.PRESENT, 
                                                                 DAOExperimentCount.DataQuality.HIGH, 
@@ -1239,8 +1273,10 @@ public class CallServiceTest extends TestAncestor {
         Condition cond1 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
         Condition cond2 = new Condition(anatEntity2, devStage1, null, null, null, spe1);
         
-        DAOFDRPValue pValueRnaSeq = new DAOFDRPValue(new BigDecimal(0.3), Collections.singleton(DAODataType.RNA_SEQ));
-        DAOFDRPValue pValueRnaSeqDesc = new DAOFDRPValue(new BigDecimal(0.01), Collections.singleton(DAODataType.RNA_SEQ));
+        DAOFDRPValue pValueRnaSeq = new DAOFDRPValue(new BigDecimal(0.3), 1,
+                Collections.singleton(DAODataType.RNA_SEQ));
+        DAOFDRPValue pValueRnaSeqDesc = new DAOFDRPValue(new BigDecimal(0.01), 1,
+                Collections.singleton(DAODataType.RNA_SEQ));
 
         //Mock services and objects
         when(this.ontService.getAnatEntityOntology(eq(spe1.getId()), anyCollectionOf(String.class),
@@ -1322,12 +1358,12 @@ public class CallServiceTest extends TestAncestor {
                                 });
 
         GlobalExpressionCallDataTO presentCallDataTO = new GlobalExpressionCallDataTO(DAODataType.RNA_SEQ,
-                true, null,
+                true, null, 1, 1,
                 Collections.singleton(new DAOExperimentCount(DAOExperimentCount.CallType.PRESENT,
                         DAOExperimentCount.DataQuality.HIGH, DAOPropagationState.ALL, 1)),
                 0, null, null, null);
         GlobalExpressionCallDataTO absentCallDataTO = new GlobalExpressionCallDataTO(DAODataType.RNA_SEQ,
-                true, null,
+                true, null, 1, 1,
                 Collections.singleton(new DAOExperimentCount(DAOExperimentCount.CallType.ABSENT,
                         DAOExperimentCount.DataQuality.HIGH, DAOPropagationState.ALL, 1)),
                 0, null, null, null);

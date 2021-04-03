@@ -24,6 +24,7 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -132,7 +133,44 @@ public class OntologyService extends CommonService {
     public OntologyService(ServiceFactory serviceFactory) {
         super(serviceFactory);
     }
-        
+
+    public Ontology<AnatEntity, String> getCellTypeOntology(Integer speciesId,
+            Collection<String> cellTypeIds) {
+        log.traceEntry("{}, {}", speciesId, cellTypeIds);
+        return log.traceExit(this.getAnatEntityOntologyFromSubGraph(Arrays.asList(speciesId),
+                cellTypeIds,
+                EnumSet.of(RelationType.ISA_PARTOF), false, false,
+                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)))
+                .getAsSingleSpeciesOntology(speciesId);
+    }
+    public Ontology<AnatEntity, String> getCellTypeOntology(Integer speciesId,
+            Collection<String> cellTypeIds, Collection<RelationType> relationTypes,
+            boolean getAncestors, boolean getDescendants) {
+        log.traceEntry("{}, {}, {}, {}, {}", speciesId, cellTypeIds, getAncestors,
+                getDescendants, relationTypes);
+        return log.traceExit(this.getAnatEntityOntologyFromSubGraph(Arrays.asList(speciesId),
+                cellTypeIds,
+                relationTypes, getAncestors, getDescendants,
+                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)))
+                .getAsSingleSpeciesOntology(speciesId);
+    }
+    public MultiSpeciesOntology<AnatEntity, String> getCellTypeOntology(Collection<Integer> speciesIds, 
+            Collection<String> cellTypeIds) {
+        log.traceEntry("{}, {}", speciesIds, cellTypeIds);
+        return log.traceExit(this.getAnatEntityOntologyFromSubGraph(speciesIds, cellTypeIds,
+                EnumSet.of(RelationType.ISA_PARTOF), false, false,
+                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)));
+    }
+    public MultiSpeciesOntology<AnatEntity, String> getCellTypeOntology(Collection<Integer> speciesIds, 
+            Collection<String> cellTypeIds, Collection<RelationType> relationTypes, 
+            boolean getAncestors, boolean getDescendants) {
+        log.traceEntry("{}, {}, {}, {}, {}", speciesIds, cellTypeIds, getAncestors,
+                getDescendants, relationTypes);
+        return log.traceExit(this.getAnatEntityOntologyFromSubGraph(speciesIds, cellTypeIds,
+                relationTypes, getAncestors, getDescendants,
+                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)));
+    }
+
     /**
      * Retrieve the {@code Ontology} of {@code AnatEntity}s for the requested species. 
      * <p>
@@ -238,13 +276,81 @@ public class OntologyService extends CommonService {
             boolean getAncestors, boolean getDescendants) {
         log.traceEntry("{}, {}, {}, {}, {}", speciesIds, anatEntityIds, getAncestors,
                 getDescendants, relationTypes);
+        return log.traceExit(this.getAnatEntityOntologyFromSubGraph(speciesIds, anatEntityIds,
+                relationTypes, getAncestors, getDescendants, null));
+    }
+
+    private MultiSpeciesOntology<AnatEntity, String> getAnatEntityOntologyFromSubGraph(
+            Collection<Integer> speciesIds, Collection<String> anatEntityIds,
+            Collection<RelationType> relationTypes, boolean getAncestors, boolean getDescendants,
+            Collection<String> subGraphRootIds) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, anatEntityIds, getAncestors,
+                getDescendants, relationTypes, subGraphRootIds);
 
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of AnatEntityOntology");
 
+        Set<String> notRequestedSubGraphRootIds = new HashSet<>();
+        //If we request anatEntities to be part of some subgraphs and we do not request
+        //to retrieve all anatEntities
+        if (subGraphRootIds != null && !subGraphRootIds.isEmpty() &&
+                anatEntityIds != null && !anatEntityIds.isEmpty()) {
+            notRequestedSubGraphRootIds = subGraphRootIds.stream()
+                    .filter(id -> !anatEntityIds.contains(id))
+                    .collect(Collectors.toSet());
+        }
+
         Set<RelationTO<String>> rels = this.getAnatEntityRelationTOs(speciesIds, anatEntityIds,
                 relationTypes, getAncestors, getDescendants);
-        Set<Integer> relIds = rels.stream().map(rel -> rel.getId()).collect(Collectors.toSet());
+
+        //We use a Map notably in order to filter the taxon constraints for only the retrieved anat, entities
+        Map<String, AnatEntity> tempRequestedAnatEntities = this.getServiceFactory().getAnatEntityService()
+                .loadAnatEntities(speciesIds, true,
+                        this.getRequestedEntityIds(anatEntityIds, rels), true)
+                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
+
+        //If we requested relations for all requested subgraph roots, no need to retrieve
+        //further relations. Same if we requested to retrieve ancestors, we will get
+        //the necessary information to identify subgraph members, no need to retrieve
+        //further relations
+        Set<RelationTO<String>> notRequestedRels = new HashSet<>();
+        if (!notRequestedSubGraphRootIds.isEmpty() && !getAncestors) {
+            //We retrieve only the relations between the requested anat entities
+            //and the missing subgraph roots (no need to request all ancestors or sources)
+            notRequestedRels = this.getDaoManager().getRelationDAO().getAnatEntityRelations(
+                    speciesIds, true, tempRequestedAnatEntities.keySet(), notRequestedSubGraphRootIds,
+                    false, 
+                    relationTypes.stream()
+                        .map(OntologyBase::convertRelationType)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class))), 
+                    EnumSet.complementOf(EnumSet.of(RelationStatus.REFLEXIVE)),
+                    EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID))
+                    .stream().collect(Collectors.toSet());
+        }
+        if (subGraphRootIds != null && !subGraphRootIds.isEmpty()) {
+            Set<RelationTO<String>> allRels = new HashSet<>(rels);
+            allRels.addAll(notRequestedRels);
+            Set<String> validSourceIds = allRels.stream()
+                    .filter(rel -> subGraphRootIds.contains(rel.getTargetId()))
+                    .map(rel -> rel.getSourceId())
+                    .collect(Collectors.toSet());
+            //this filtering is not species-specific, if the term belongs to the subgraph
+            //in any requested species, it is validated
+            tempRequestedAnatEntities = tempRequestedAnatEntities.entrySet().stream()
+                    .filter(e -> subGraphRootIds.contains(e.getKey()) ||
+                            validSourceIds.contains(e.getKey()))
+                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            Set<String> validEntities = tempRequestedAnatEntities.keySet();
+            rels = rels.stream()
+                    .filter(rel -> validEntities.contains(rel.getSourceId()) &&
+                            validEntities.contains(rel.getTargetId()))
+                    .collect(Collectors.toSet());
+        }
+        Map<String, AnatEntity> requestedAnatEntities = tempRequestedAnatEntities;
+        log.debug("Requested anat. entity IDs: {}", requestedAnatEntities.keySet());
+
+        Set<Integer> relIds = rels.stream()
+                .map(rel -> rel.getId()).collect(Collectors.toSet());
         //Here, we don't want to expose the internal relation IDs as part of the Bgee API, so rather than
         //using the TaxonConstraintService, we directly use the TaxonConstraintDAO
         //(we provide the relation IDs to retrieve only a subset of the constraints, for improved performances)
@@ -252,18 +358,8 @@ public class OntologyService extends CommonService {
                 .getAnatEntityRelationTaxonConstraints(speciesIds, relIds, null).stream()
                 .map(CommonService::mapTaxonConstraintTOToTaxonConstraint)
                 .collect(Collectors.toSet());
-        //Previous (slow) version of the code:
-        //---
-//        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getServiceFactory().getTaxonConstraintService()
-//                    .loadAnatEntityRelationTaxonConstraintBySpeciesIds(speciesIds)
-//                    .collect(Collectors.toSet());
-        //---
-        //We use a Map notably in order to filter the taxon constraints for only the retrieved anat, entities
-        Map<String, AnatEntity> requestedAnatEntities = this.getServiceFactory().getAnatEntityService()
-                .loadAnatEntities(speciesIds, true,
-                        this.getRequestedEntityIds(anatEntityIds, rels), true)
-                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
-        log.debug("Requested anat. entity IDs: {}", requestedAnatEntities.keySet());
+
+
         MultiSpeciesOntology<AnatEntity, String> ont = new MultiSpeciesOntology<AnatEntity, String>(speciesIds,
                 requestedAnatEntities.values(), rels,
                 this.getServiceFactory().getTaxonConstraintService()
@@ -435,7 +531,7 @@ public class OntologyService extends CommonService {
      * @return                  The {@code Ontology} of {@code Sex}s for the requested sexes
      *                          and relation status.
      */
-    //XXX: actually, we have a table speciesToSex, so maybe we'll need indeed a query to the database
+    //FIXME: actually, we have a table speciesToSex, so maybe we'll need indeed a query to the database
     //to retrieve the sexes valid in a species?
     public Ontology<Sex, String> getSexOntology(Integer speciesId, Collection<String> sexIds, 
             boolean getAncestors, boolean getDescendants) {

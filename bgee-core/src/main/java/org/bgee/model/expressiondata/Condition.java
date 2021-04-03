@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
@@ -267,6 +265,11 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      * used in {@code Condition}s in Bgee.
      */
     public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
+    /**
+     * A {@code String} that represents the ID the root of all cell types
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String CELL_TYPE_ROOT_ID = "GO:0005575";
     /**
      * A {@code String} that represents the root of all sexes
      * used in {@code Condition}s in Bgee.

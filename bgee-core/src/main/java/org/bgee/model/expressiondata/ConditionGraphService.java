@@ -94,7 +94,8 @@ public class ConditionGraphService extends CommonService {
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", conditions, anatEntityOnt, devStageOnt, cellTypeOnt, 
                 sexOnt, strainOnt);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, anatEntityOnt, devStageOnt,
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false,
+                anatEntityOnt, devStageOnt,
                 cellTypeOnt, sexOnt, strainOnt));
     }
     
@@ -130,7 +131,8 @@ public class ConditionGraphService extends CommonService {
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
                 anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds, inferDescendantConds,
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions,
+                inferAncestralConds, inferDescendantConds,
                 anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt));
     }
 
@@ -251,7 +253,7 @@ public class ConditionGraphService extends CommonService {
         }
         final Ontology<AnatEntity, String> cellTypeOntToUse = entities.getCellTypeIds().isEmpty()? null:
             cellTypeOnt != null? cellTypeOnt: 
-                this.getServiceFactory().getOntologyService().getAnatEntityOntology(
+                this.getServiceFactory().getOntologyService().getCellTypeOntology(
                     speciesId, entities.getCellTypeIds(), EnumSet.of(RelationType.ISA_PARTOF), 
                     inferAncestralConds, inferDescendantConds);
         if (anatEntityOntToUse != null && cellTypeOntToUse != null 

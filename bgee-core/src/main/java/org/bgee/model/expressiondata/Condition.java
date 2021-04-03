@@ -109,6 +109,10 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
                         strains.add(cond.getStrain());
                         strainIds.add(cond.getStrain().getId());
                     }
+                    if (cond.getSpecies() != null) {
+                        species.add(cond.getSpecies());
+                        speciesIds.add(cond.getSpecies().getId());
+                    }
                 }
             }
             this.anatEntities = Collections.unmodifiableSet(anatEntities);

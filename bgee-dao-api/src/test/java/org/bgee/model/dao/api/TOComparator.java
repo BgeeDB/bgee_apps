@@ -873,7 +873,7 @@ public class TOComparator {
     private static boolean areTOsEqual(RawExpressionCallTO to1, RawExpressionCallTO to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
-        if (areEntityTOsEqual(to1, to2, compareId) && 
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
                 Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
                 Objects.equals(to1.getConditionId(), to2.getConditionId())) {
             return log.traceExit(true);

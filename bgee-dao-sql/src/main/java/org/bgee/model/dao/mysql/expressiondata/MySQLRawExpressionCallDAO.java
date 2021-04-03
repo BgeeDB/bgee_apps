@@ -105,14 +105,15 @@ public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Att
             try {
                 log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer id = null, bgeeGeneId = null, conditionId = null;
+                Long id = null;
+                Integer bgeeGeneId = null, conditionId = null;
 
                 for (Map.Entry<Integer, String> col : this.getColumnLabels().entrySet()) {
                     String columnName = col.getValue();
                     RawExpressionCallDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
                     switch (attr) {
                         case ID:
-                            id = currentResultSet.getInt(columnName);
+                            id = currentResultSet.getLong(columnName);
                             break;
                         case BGEE_GENE_ID:
                             bgeeGeneId = currentResultSet.getInt(columnName);

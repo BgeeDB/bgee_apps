@@ -760,30 +760,30 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreAffymetrixProbesetTOEqual() {
         AffymetrixProbesetTO to1 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         AffymetrixProbesetTO to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new AffymetrixProbesetTO("A2", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.01"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.01"), new BigDecimal("5.5"), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
         to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.LOWQUALITY,
-                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.NOT_EXCLUDED, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new AffymetrixProbesetTO("A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.PRE_FILTERING, new BigDecimal("11.1"), new BigDecimal("5.5"), 110);
+                ExclusionReason.PRE_FILTERING, new BigDecimal("11.1"), new BigDecimal("5.5"), 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -836,17 +836,17 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreRNASeqResultTOEqual() {
         RNASeqResultTO to1 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
         RNASeqResultTO to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("5.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+                DetectionFlag.ABSENT, DataState.LOWQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new RNASeqResultTO("L1", 11, new BigDecimal("11.1"), new BigDecimal("6.5"), new BigDecimal("100.2"),
-                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254);
+                DetectionFlag.ABSENT, DataState.HIGHQUALITY, ExclusionReason.NOT_EXCLUDED, new BigDecimal("1.5"), 1254L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
     }
     /**
@@ -923,24 +923,24 @@ public class TOComparatorTest extends TestAncestor {
      */
     @Test
     public void testAreESTTOEqual() {
-        ESTTO to1 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
-        ESTTO to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        ESTTO to1 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
+        ESTTO to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID2", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        to2 = new ESTTO("ID2", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
-        to2 = new ESTTO("ID1", "ID3", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        to2 = new ESTTO("ID1", "ID3", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
-        to2 = new ESTTO("ID1", "ID2", "LibId2", "clusterId1", 1, DataState.HIGHQUALITY, 110);
+        to2 = new ESTTO("ID1", "ID2", "LibId2", "clusterId1", 1, DataState.HIGHQUALITY, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId2", 1, DataState.HIGHQUALITY, 110);
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId2", 1, DataState.HIGHQUALITY, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
-        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 1);
+        to2 = new ESTTO("ID1", "ID2", "LibId1", "clusterId1", 1, DataState.HIGHQUALITY, 1L);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -992,30 +992,30 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreInSituSpotTOEqual() {
         InSituSpotTO to1 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         InSituSpotTO to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         assertTrue(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new InSituSpotTO("ID2", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new InSituSpotTO("ID1", "pattern2", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
         
         to2 = new InSituSpotTO("ID1", "pattern1", "A1", 2, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.PRESENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 110);
+                ExclusionReason.NOT_EXCLUDED, 110L);
         assertFalse(TOComparator.areTOsEqual(to1, to2));
 
         to2 = new InSituSpotTO("ID1", "pattern1", "A1", 1, 11, DetectionFlag.ABSENT, DataState.HIGHQUALITY,
-                ExclusionReason.NOT_EXCLUDED, 120);
+                ExclusionReason.NOT_EXCLUDED, 120L);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

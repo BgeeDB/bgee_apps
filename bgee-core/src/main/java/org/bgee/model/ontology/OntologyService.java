@@ -355,6 +355,9 @@ public class OntologyService extends CommonService {
         //Here, we don't want to expose the internal relation IDs as part of the Bgee API, so rather than
         //using the TaxonConstraintService, we directly use the TaxonConstraintDAO
         //(we provide the relation IDs to retrieve only a subset of the constraints, for improved performances)
+        //FIXME: actually, maybe the taxon constraints are not ncwssary where the is only 1 species,
+        //I think the relation query already filter using taxon constraints.
+        //To check, same things with anat entity ?
         Set<TaxonConstraint<Integer>> relationTaxonConstraints = getDaoManager().getTaxonConstraintDAO()
                 .getAnatEntityRelationTaxonConstraints(speciesIds, relIds, null).stream()
                 .map(CommonService::mapTaxonConstraintTOToTaxonConstraint)

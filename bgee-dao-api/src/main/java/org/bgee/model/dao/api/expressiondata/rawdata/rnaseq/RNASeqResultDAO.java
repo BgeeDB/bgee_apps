@@ -73,7 +73,7 @@ public interface RNASeqResultDAO extends DAO<RNASeqResultDAO.Attribute> {
          */
         public RNASeqResultTO(String rnaSeqLibraryId, Integer bgeeGeneId, BigDecimal tpm, BigDecimal rpkm,
                 BigDecimal readCount, DetectionFlag detectionFlag, DataState expressionConfidence,
-                ExclusionReason exclusionReason, BigDecimal rank, Integer expressionId) {
+                ExclusionReason exclusionReason, BigDecimal rank, Long expressionId) {
             super();
             this.rnaSeqLibraryId = rnaSeqLibraryId;
             this.tpm = tpm;

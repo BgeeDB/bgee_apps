@@ -110,7 +110,7 @@ public class RawDataCallSourceDAO {
          * @return  the {@code Integer} representing the ID of the expression associated to the
          *          call source raw data.
          */
-        public default Integer getExpressionId() {
+        public default Long getExpressionId() {
             return this.getCallSourceDataTO().getExpressionId();
         }
     }
@@ -294,7 +294,7 @@ public class RawDataCallSourceDAO {
          * A {@code String} representing the ID of the expression associated to this 
          * call source raw data.
          */
-        private final Integer expressionId;
+        private final Long expressionId;
 
         /**
          * All of these parameters are optional, so they can be {@code null} when not used.
@@ -307,11 +307,11 @@ public class RawDataCallSourceDAO {
          *                              of this call source raw data.
          * @param exclusionReason       An {@code ExclusionReason} that is the reason of exclusion 
          *                              of this call source raw data.
-         * @param expressionId          An {@code Integer} that is the ID of the expression associated
+         * @param expressionId          A {@code Long} that is the ID of the expression associated
          *                              to this call source raw data.
          */
         public CallSourceDataTO(Integer bgeeGeneId, DetectionFlag detectionFlag,
-                DataState expressionConfidence, ExclusionReason exclusionReason, Integer expressionId) {
+                DataState expressionConfidence, ExclusionReason exclusionReason, Long expressionId) {
             super();
             this.bgeeGeneId = bgeeGeneId;
             this.detectionFlag = detectionFlag;
@@ -356,10 +356,10 @@ public class RawDataCallSourceDAO {
         }
 
         /**
-         * @return  the {@code Integer} representing the ID of the expression associated to this
+         * @return  the {@code Long} representing the ID of the expression associated to this
          *          call source raw data.
          */
-        public Integer getExpressionId() {
+        public Long getExpressionId() {
             return this.expressionId;
         }
 

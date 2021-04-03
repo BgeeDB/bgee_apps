@@ -125,7 +125,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          */
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, Integer bgeeAffymetrixChipId, Integer bgeeGeneId,
 	            DetectionFlag detectionFlag, DataState expressionConfidence, ExclusionReason exclusionReason,
-	            BigDecimal normalizedSignalIntensity, BigDecimal rank, Integer expressionId) {
+	            BigDecimal normalizedSignalIntensity, BigDecimal rank, Long expressionId) {
             super(affymetrixProbesetId);
 	        this.bgeeAffymetrixChipId = bgeeAffymetrixChipId;
 	        this.normalizedSignalIntensity = normalizedSignalIntensity;

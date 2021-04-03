@@ -44,9 +44,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param strains               A {@code Collection} of {@code String}s that are the Names 
-     *                              of the strains that this {@code ConditionFilter} will 
-     *                              specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 

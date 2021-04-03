@@ -173,7 +173,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              If there is no call, return 0.
      * @throws DAOException             If an error occurred when accessing the data source.
      */
-    public int getMaxGlobalExprId() throws DAOException;
+    public long getMaxGlobalExprId() throws DAOException;
 
     /**
      * Insert into the datasource the provided {@code GlobalExpressionCallTO}s.
@@ -229,7 +229,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         
         private final Set<DAOFDRPValue> bestDescendantPValues;
         
-        public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
+        public GlobalExpressionCallTO(Long id, Integer bgeeGeneId, Integer conditionId,
                 BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
                 Collection<DAOFDRPValue> pValues, Collection<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);

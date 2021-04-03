@@ -115,7 +115,10 @@ implements SamplePValueDAO  {
                 .append(", ").append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap))
                 //Bonferroni corrected pvalue
                 .append(", MIN(").append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
-                    .append(") * COUNT(affymetrixProbesetId) AS ")
+                      //Deactivate bonferroni correction for now, since the p-value for MAS5 are 0.01, 0.05, 0.1
+                      //=> no p-values are going to be significant
+//                    .append(") * COUNT(affymetrixProbesetId) AS ")
+                    .append(") AS ")
                     .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.P_VALUE, colToAttrMap))
                 .append(" FROM ").append(sampleTableName)
                 .append(getWhere(sampleTableName, geneIds))
@@ -314,7 +317,7 @@ implements SamplePValueDAO  {
             try {
                 log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer exprId = null;
+                Long exprId = null;
                 BigDecimal pValue = null;
                 U sampleId = null;
                 T experimentId = null;
@@ -327,7 +330,7 @@ implements SamplePValueDAO  {
                     SamplePValueDAO.Attribute attr = getAttributeFromColName(columnName, colToAttrMap);
                     switch (attr) {
                         case EXPRESSION_ID:
-                            exprId = currentResultSet.getInt(columnName);
+                            exprId = currentResultSet.getLong(columnName);
                             break;
                         case EXPERIMENT_ID:
                                 experimentId = experimentIdCls.cast(currentResultSet.getObject(columnName));

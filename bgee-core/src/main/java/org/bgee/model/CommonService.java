@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
@@ -38,6 +39,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -619,5 +621,25 @@ public class CommonService extends Service {
                                 "Condition parameter not supported: " + a));
                     }
                 }).collect(Collectors.toSet()));
+    }
+
+    protected static Strain mapRawDataStrainToStrain(String strain) {
+        log.traceEntry("{}", strain);
+        if (StringUtils.isBlank(strain)) {
+            log.traceExit(); return null;
+        }
+        Function<String, String> replacement = s -> s
+                .toLowerCase()
+                .trim()
+                .replace("-", " ")
+                .replace("_", " ")
+                .replace("(", "");
+        String simplifiedStrain = replacement.apply(strain);
+
+        if (RawDataCondition.NO_INFO_STRAINS.stream().map(replacement)
+                .anyMatch(s -> s.equals(simplifiedStrain))) {
+            return log.traceExit(new Strain(Condition.STRAIN_ROOT_ID));
+        }
+        return log.traceExit(new Strain(strain));
     }
 }

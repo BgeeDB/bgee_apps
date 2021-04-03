@@ -149,13 +149,13 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
     public class SamplePValueTO<T, U> extends TransferObject {
         private static final long serialVersionUID = -84474173001782925L;
 
-        private final Integer expressionId;
+        private final Long expressionId;
         private final T experimentId;
         private final U sampleId;
         private final BigDecimal pValue;
 
         /**
-         * @param expressionId  An {@code Integer} that is the expression ID associated to this pvalue.
+         * @param expressionId  A {@code Long} that is the expression ID associated to this pvalue.
          * @param experimentId  A {@code T} that is the experiment ID of the sample used to determine
          *                      active signal of expression of genes.
          * @param sampleId      A {@code U} that is the ID of the sample used to determine active signal
@@ -164,7 +164,7 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
          *                      active signal of expression in the sample, for a gene in a condition
          *                      (represented by {@code expressionId}).
          */
-        public SamplePValueTO(Integer expressionId, T experimentId, U sampleId, BigDecimal pValue) {
+        public SamplePValueTO(Long expressionId, T experimentId, U sampleId, BigDecimal pValue) {
             super();
             this.expressionId = expressionId;
             this.experimentId = experimentId;
@@ -173,11 +173,11 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
         }
 
         /**
-         * @return  An {@code Integer} that is the expression ID associated to this pvalue.
+         * @return  A {@code Long} that is the expression ID associated to this pvalue.
          *          In Bgee, expression IDs associate a gene with a condition,
          *          for which expression tests were performed.
          */
-        public Integer getExpressionId() {
+        public Long getExpressionId() {
             return expressionId;
         }
         /**
@@ -202,5 +202,17 @@ public interface SamplePValueDAO extends DAO<SamplePValueDAO.Attribute> {
         public BigDecimal getpValue() {
             return pValue;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("SamplePValueTO [expressionId=").append(expressionId)
+                   .append(", experimentId=").append(experimentId)
+                   .append(", sampleId=").append(sampleId)
+                   .append(", pValue=").append(pValue)
+                   .append("]");
+            return builder.toString();
+        }
+
     }
 }

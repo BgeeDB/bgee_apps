@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,10 +61,9 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_EXPR_ID_FIELD = "globalExpressionId";
     private final static String GLOBAL_EXPR_TABLE_NAME = "globalExpression";
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
-    private final static String GLOBAL_P_VALUE_FIELD_START = "pValue";
-    private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValueBestDescendant";
-    private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START =
-            "globalConditionIdPValueBestDescendant";
+    private final static String GLOBAL_P_VALUE_FIELD_START = "pVal";
+    private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValBestDescendant";
+    private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START = "gCIdPValBD";
     private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
             .stream().filter(s -> s.getObservedState())
             .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
@@ -1069,7 +1069,7 @@ implements GlobalExpressionCallDAO {
     }
 
     @Override
-    public int getMaxGlobalExprId() throws DAOException {
+    public long getMaxGlobalExprId() throws DAOException {
         log.traceEntry();
 
         String sql = "SELECT MAX(" + GLOBAL_EXPR_ID_FIELD + ") AS " + GLOBAL_EXPR_ID_FIELD 
@@ -1111,7 +1111,7 @@ implements GlobalExpressionCallDAO {
 
         sql.append(DAODataType.ALL_COMBINATIONS.stream()
                 .map(c -> GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
-                .collect(Collectors.joining(", ")));
+                .collect(Collectors.joining(", ", "", ", ")));
 
         sql.append("estAnatEntityPropagationState, estStagePropagationState, ")
            .append("estSexPropagationState, estStrainPropagationState, ")
@@ -1136,7 +1136,7 @@ implements GlobalExpressionCallDAO {
            .append("scRnaSeqFullLengthAnatEntityPropagationState, scRnaSeqFullLengthStagePropagationState, ")
            .append("scRnaSeqFullLengthSexPropagationState, scRnaSeqFullLengthStrainPropagationState, ")
            .append("scRnaSeqFullLengthCellTypePropagationState, scRnaSeqFullLengthConditionObservedData, ")
-           .append("scRnaSeqFullLengthSelfObservationCount, scRnaSeqFullLengthDescendantObservationCount, ")
+           .append("scRnaSeqFullLengthSelfObservationCount, scRnaSeqFullLengthDescendantObservationCount")
            
            .append(") VALUES ");
 
@@ -1152,7 +1152,7 @@ implements GlobalExpressionCallDAO {
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (GlobalExpressionCallTO callTO: callTOs) {
-                stmt.setInt(paramIndex, callTO.getId());
+                stmt.setLong(paramIndex, callTO.getId());
                 paramIndex++;
                 stmt.setInt(paramIndex, callTO.getBgeeGeneId());
                 paramIndex++;
@@ -1309,6 +1309,14 @@ implements GlobalExpressionCallDAO {
         stmt.setBoolean(newParamIndex, callDataTO.isConditionObservedData());
         newParamIndex++;
 
+        //** Observation counts **
+        stmt.setInt(newParamIndex, Optional.ofNullable(callDataTO.getSelfObservationCount())
+                .orElse(0));
+        newParamIndex++;
+        stmt.setInt(newParamIndex, Optional.ofNullable(callDataTO.getDescendantObservationCount())
+                .orElse(0));
+        newParamIndex++;
+
 //        //** Experiment expression counts **
 //        //present high self
 //        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
@@ -1442,7 +1450,8 @@ implements GlobalExpressionCallDAO {
             try {
                 log.traceEntry();
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Integer id = null, bgeeGeneId = null, conditionId = null;
+                Long id = null;
+                Integer bgeeGeneId = null, conditionId = null;
                 Set<GlobalExpressionCallDataTO> callDataTOs = new HashSet<>();
                 Set<DAOFDRPValue> pValues = new HashSet<>();
                 Set<DAOFDRPValue> bestDescendantPValues = new HashSet<>();
@@ -1450,7 +1459,7 @@ implements GlobalExpressionCallDAO {
 
                 for (String colName: this.getColumnLabels().values()) {
                     if (colName.equals(GLOBAL_EXPR_ID_FIELD)) {
-                        id = currentResultSet.getInt(GLOBAL_EXPR_ID_FIELD);
+                        id = currentResultSet.getLong(GLOBAL_EXPR_ID_FIELD);
                     } else if (colName.equals(MySQLGeneDAO.BGEE_GENE_ID)) {
                         bgeeGeneId = currentResultSet.getInt(MySQLGeneDAO.BGEE_GENE_ID);
                     } else if (colName.equals(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)) {

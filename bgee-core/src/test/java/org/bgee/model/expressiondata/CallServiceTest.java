@@ -180,7 +180,7 @@ public class CallServiceTest extends TestAncestor {
                 Arrays.asList(
                         // To not overload tests, we put null for not used attributes 
                         // but, real query return all attributes
-                    new GlobalExpressionCallTO(1, bgeeGeneId1, cond1Id, 
+                    new GlobalExpressionCallTO(1L, bgeeGeneId1, cond1Id, 
                         new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                         dataPropagation, 1, 1,
@@ -216,7 +216,7 @@ public class CallServiceTest extends TestAncestor {
                                         0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
                         pValuesAffyEST, pValuesAffyESTDesc),
                    
-                    new GlobalExpressionCallTO(2, bgeeGeneId1, cond2Id, 
+                    new GlobalExpressionCallTO(2L, bgeeGeneId1, cond2Id, 
                         new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                 new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                         dataPropagation, 1, 1,
@@ -255,7 +255,7 @@ public class CallServiceTest extends TestAncestor {
                                                         DAOPropagationState.ALL, 1))), 
                                         0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
                         pValuesAffyESTInSitu, pValuesAffyESTInSituDesc),
-                    new GlobalExpressionCallTO(3, bgeeGeneId1, cond3Id, 
+                    new GlobalExpressionCallTO(3L, bgeeGeneId1, cond3Id, 
                             new BigDecimal("125.00"), new HashSet<>(Arrays.asList(
                                     new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                             dataPropagation, 1, 1,
@@ -833,7 +833,7 @@ public class CallServiceTest extends TestAncestor {
         
         GlobalExpressionCallTOResultSet resultSetMock = getMockResultSet(GlobalExpressionCallTOResultSet.class, 
                 Arrays.asList(
-                        new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(), 
+                        new GlobalExpressionCallTO(1L, gTO1.getId(), condTO1.getId(), 
                                 new BigDecimal("1257.34"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.AFFYMETRIX, true, 
                                                 dataPropagation, 1, 1,
@@ -844,7 +844,7 @@ public class CallServiceTest extends TestAncestor {
                                                                DAOPropagationState.ALL, 1))), 
                                                 0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
                                 pValuesAffy, pValuesAffyDesc),
-                        new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(), 
+                        new GlobalExpressionCallTO(2L, gTO1.getId(), condTO2.getId(), 
                                 new BigDecimal("41025"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation, 1, 1,
@@ -855,7 +855,7 @@ public class CallServiceTest extends TestAncestor {
                                                                 DAOPropagationState.ALL, 2))), 
                                                 0, new BigDecimal("99"), new BigDecimal("88"), new BigDecimal("77")))),
                                 pValuesEST, pValuesESTDesc),
-                        new GlobalExpressionCallTO(3, gTO2.getId(), condTO3.getId(), 
+                        new GlobalExpressionCallTO(3L, gTO2.getId(), condTO3.getId(), 
                                 new BigDecimal("20000.52"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation, 1, 1, new HashSet<>(Arrays.asList(
@@ -1081,7 +1081,7 @@ public class CallServiceTest extends TestAncestor {
         
         GlobalExpressionCallTOResultSet resultSetMock = getMockResultSet(GlobalExpressionCallTOResultSet.class, 
                 Arrays.asList(
-                        new GlobalExpressionCallTO(3, gTO1.getId(), condTO1.getId(), 
+                        new GlobalExpressionCallTO(3L, gTO1.getId(), condTO1.getId(), 
                                 new BigDecimal("125.42"), new HashSet<>(Arrays.asList(
                                         new GlobalExpressionCallDataTO(DAODataType.EST, true, 
                                                 dataPropagation, 1, 1,
@@ -1378,25 +1378,25 @@ public class CallServiceTest extends TestAncestor {
                 //gene1 - cond2: gene LOW, anat LOW
                 //gene2 - cond1: gene HIGH, anat LOW
                 //gene2 - cond2: gene LOW, anat HIGH
-                new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(), 
+                new GlobalExpressionCallTO(1L, gTO1.getId(), condTO1.getId(), 
                         new BigDecimal("10"), Collections.singleton(presentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc)),
-                new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(), 
+                new GlobalExpressionCallTO(2L, gTO1.getId(), condTO2.getId(), 
                         new BigDecimal("30000"), Collections.singleton(presentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc)),
-                new GlobalExpressionCallTO(3, gTO2.getId(), condTO1.getId(), 
+                new GlobalExpressionCallTO(3L, gTO2.getId(), condTO1.getId(), 
                         new BigDecimal("10000"), Collections.singleton(presentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc)),
-                new GlobalExpressionCallTO(4, gTO2.getId(), condTO2.getId(), 
+                new GlobalExpressionCallTO(4L, gTO2.getId(), condTO2.getId(), 
                         new BigDecimal("20000"), Collections.singleton(presentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc))
                 );
         //2 calls, one with absent call
         List<GlobalExpressionCallTO> callTOsWithAbsentCall = Arrays.asList(
-                new GlobalExpressionCallTO(1, gTO1.getId(), condTO1.getId(),
+                new GlobalExpressionCallTO(1L, gTO1.getId(), condTO1.getId(),
                         new BigDecimal("10"), Collections.singleton(presentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc)),
-                new GlobalExpressionCallTO(2, gTO1.getId(), condTO2.getId(),
+                new GlobalExpressionCallTO(2L, gTO1.getId(), condTO2.getId(),
                         new BigDecimal("500000"), Collections.singleton(absentCallDataTO),
                         Collections.singleton(pValueRnaSeq), Collections.singleton(pValueRnaSeqDesc)));
 

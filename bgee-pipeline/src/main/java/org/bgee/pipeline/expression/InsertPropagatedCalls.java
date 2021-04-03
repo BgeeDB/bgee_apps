@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -44,7 +45,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
-import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -127,7 +127,8 @@ public class InsertPropagatedCalls extends CallService {
 
     private final static Set<PropagationState> ALLOWED_PROP_STATES_BEFORE_MERGE = EnumSet.of(
             //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-            PropagationState.SELF, /*PropagationState.ANCESTOR, */PropagationState.DESCENDANT);
+            PropagationState.SELF, /*PropagationState.ANCESTOR, */PropagationState.DESCENDANT,
+            PropagationState.UNKNOWN);
 
     //As of Bgee 15, we only need one combination of condition parameters,
     //because anyway all calls will be propagated to the root of each parameter.
@@ -140,7 +141,7 @@ public class InsertPropagatedCalls extends CallService {
             .collect(Collectors.toSet()));
 
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
-    private final static AtomicInteger EXPR_ID_COUNTER = new AtomicInteger(0);
+    private final static AtomicLong EXPR_ID_COUNTER = new AtomicLong(0);
     
     private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
         log.traceEntry("{}", condParams);
@@ -453,7 +454,7 @@ public class InsertPropagatedCalls extends CallService {
          * @return              A {@code Map} where keys are {@code DataType}s, the associated values
          *                      are {@code Set}s of {@code ExperimentExpressionTO}s.
          */
-        private Map<DataType, Set<ExperimentExpressionTO>> getExpExprs(Integer expressionId) {
+        private Map<DataType, Set<ExperimentExpressionTO>> getExpExprs(Long expressionId) {
             log.traceEntry("{}", expressionId);
             
             Map<DataType, Set<ExperimentExpressionTO>> expExprTosByDataType = new HashMap<>();
@@ -514,7 +515,7 @@ public class InsertPropagatedCalls extends CallService {
          * @return              A {@code Map} where keys are {@code DataType}s, the associated values
          *                      are {@code Set}s of {@code SamplePValueTO}s.
          */
-        private Map<DataType, Set<SamplePValueTO<?, ?>>> getPValues(Integer expressionId) {
+        private Map<DataType, Set<SamplePValueTO<?, ?>>> getPValues(Long expressionId) {
             log.traceEntry("{}", expressionId);
             
             Map<DataType, Set<SamplePValueTO<?, ?>>> samplePValueTOsByDataType = new HashMap<>();
@@ -699,6 +700,10 @@ public class InsertPropagatedCalls extends CallService {
                    .append(", parentSourceCallTOs=").append(parentSourceCallTOs)
                    .append(", selfSourceCallTOs=").append(selfSourceCallTOs)
                    .append(", descendantSourceCallTOs=").append(descendantSourceCallTOs)
+                   .append(", pValues=").append(getPValues())
+                   .append(", bestDescendantPValues=").append(getBestDescendantPValues())
+                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", callData=").append(getCallData())
                    .append("]");
             return builder.toString();
         }
@@ -747,12 +752,12 @@ public class InsertPropagatedCalls extends CallService {
                 Collections.unmodifiableSet(new HashSet<>(selfExperimentExpr));
             this.descendantExperimentExpr = descendantExperimentExpr == null? null: 
                 Collections.unmodifiableSet(new HashSet<>(descendantExperimentExpr));
-            this.parentPValues = parentPValues == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(parentPValues));
-            this.selfPValues = selfPValues == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(selfPValues));
-            this.descendantPValues = descendantPValues == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(descendantPValues));
+            this.parentPValues = Collections.unmodifiableSet(parentPValues == null?
+                    new HashSet<>(): new HashSet<>(parentPValues));
+            this.selfPValues = Collections.unmodifiableSet(selfPValues == null?
+                    new HashSet<>(): new HashSet<>(selfPValues));
+            this.descendantPValues = Collections.unmodifiableSet(descendantPValues == null?
+                    new HashSet<>(): new HashSet<>(descendantPValues));
         }
     
         public DataType getDataType() {
@@ -1355,7 +1360,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(int exprId, 
+        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(long exprId, 
                 Map<Condition, Integer> condMap, PipelineCall pipelineCall) {
             log.traceEntry("{}, {}, {}", exprId, condMap, pipelineCall);
             
@@ -1749,7 +1754,22 @@ public class InsertPropagatedCalls extends CallService {
             ConditionGraph conditionGraph = condGraphService.loadConditionGraph(rawCondMap.values()
                     .stream().map(rawCond -> mapRawDataConditionToCondition(rawCond))
                     .collect(Collectors.toSet()),
-                    true, true);
+                          //We do not propagate to descendant conditions anymore
+                    true, false);
+            //Compute a Map parent -> descendants
+            //We can dot it here since we don't infer all descendant conditions,
+            //otherwise it would be too costly and we should do it only after omputing calls,
+            //only for the conditions with calls.
+            Map<Condition, Set<Condition>> parentToDescendantConds = conditionGraph.getConditions()
+                    .stream()
+                    .flatMap(cond -> this.condToAncestors.computeIfAbsent(
+                        cond, 
+                        k -> conditionGraph.getAncestorConditions(k)).stream()
+                            .map(parent -> new AbstractMap.SimpleEntry<>(parent,
+                                    new HashSet<>(Arrays.asList(cond)))))
+                    .collect(Collectors.toMap(e -> e.getKey(),
+                            e -> e.getValue(),
+                            (v1, v2) -> {v1.addAll(v2); return v1;}));
             log.info("Done condition inference.");
             
             //we retrieve the IDs of genes with expression data. This is because making the computation
@@ -1805,6 +1825,7 @@ public class InsertPropagatedCalls extends CallService {
                     final Stream<Set<PipelineCall>> propagatedCalls =
                             this.generatePropagatedCalls(
                                     new HashSet<>(subsetGeneIds), rawCondMap, conditionGraph,
+                                    parentToDescendantConds,
                                     rawCallDAO, expExprDAO, samplePValueDAO);
                     
                     //Provide the calls to insert to the Thread managing the insertions
@@ -1920,7 +1941,15 @@ public class InsertPropagatedCalls extends CallService {
                 .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> stageIds = new HashSet<>();
+        Set<String> cellTypeIds = new HashSet<>();
+        Set<String> sexIds = new HashSet<>();
+        Set<String> strainIds = new HashSet<>();
         Set<RawDataConditionTO> conditionTOs = new HashSet<>();
+        //check that we have covered all condition parameters
+        if (EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+                .filter(c -> c.isConditionParameter()).count() != 5) {
+            throw log.throwing(new IllegalStateException("Some condition parameters not covered"));
+        }
 
         RawDataConditionTOResultSet rs = this.getDaoManager().getRawDataConditionDAO()
                 .getRawDataConditionsBySpeciesIds(speMap.keySet(), null);
@@ -1932,23 +1961,49 @@ public class InsertPropagatedCalls extends CallService {
                         "The retrieved ConditionTOs do not match the provided Species."));
             }
             conditionTOs.add(condTO);
+            //As of Bgee 15.0, only the cellTypeId could be null
+            assert condTO.getAnatEntityId() != null;
+            assert condTO.getStageId() != null;
+            assert condTO.getSex() != null;
+            assert condTO.getStrainId() != null;
             if (condTO.getAnatEntityId() != null) {
                 anatEntityIds.add(condTO.getAnatEntityId());
+            } else {
+                anatEntityIds.add(Condition.ANAT_ENTITY_ROOT_ID);
             }
             if (condTO.getStageId() != null) {
                 stageIds.add(condTO.getStageId());
+            } else {
+                stageIds.add(Condition.DEV_STAGE_ROOT_ID);
+            }
+            if (condTO.getCellTypeId() != null) {
+                cellTypeIds.add(condTO.getCellTypeId());
+            } else {
+                cellTypeIds.add(Condition.CELL_TYPE_ROOT_ID);
+            }
+            if (condTO.getSex() != null) {
+                sexIds.add(condTO.getSex().getStringRepresentation());
+            } else {
+                sexIds.add(DAORawDataSex.NA.getStringRepresentation());
+            }
+            if (condTO.getStrainId() != null) {
+                strainIds.add(condTO.getStrainId());
+            } else {
+                strainIds.add(Condition.STRAIN_ROOT_ID);
             }
         }
 
-        final Map<String, AnatEntity> anatMap = anatEntityIds.isEmpty()? new HashMap<>():
+        Set<String> allAnatEntityIds = new HashSet<>(anatEntityIds);
+        allAnatEntityIds.addAll(cellTypeIds);
+        final Map<String, AnatEntity> anatMap = allAnatEntityIds.isEmpty()? new HashMap<>():
             this.getServiceFactory().getAnatEntityService().loadAnatEntities(
-                    speMap.keySet(), true, anatEntityIds, false)
+                    speMap.keySet(), true, allAnatEntityIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
-        if (!anatEntityIds.isEmpty() && anatMap.size() != anatEntityIds.size()) {
-            anatEntityIds.removeAll(anatMap.keySet());
+        if (!allAnatEntityIds.isEmpty() && anatMap.size() != allAnatEntityIds.size()) {
+            allAnatEntityIds.removeAll(anatMap.keySet());
             throw log.throwing(new IllegalStateException("Some anat. entities used in a condition "
                     + "are not supposed to exist in the related species. Species: " + speMap.keySet()
-                    + " - anat. entities: " + anatEntityIds));
+                    + " - anat. entities: " + allAnatEntityIds));
         }
         final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
             this.getServiceFactory().getDevStageService().loadDevStages(
@@ -1965,23 +2020,25 @@ public class InsertPropagatedCalls extends CallService {
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
                         //For now we just create Conditions instead of RawDataConditions for simplicity
                         cTO -> new RawDataCondition(
-                                cTO.getAnatEntityId() == null? null:
-                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId())).orElseThrow(
-                                        () -> new IllegalStateException("Anat. entity not found: "
+                                    Optional.ofNullable(anatMap.get(cTO.getAnatEntityId() == null ?
+                                            Condition.ANAT_ENTITY_ROOT_ID : cTO.getAnatEntityId()))
+                                    .orElseThrow(() -> new IllegalStateException("Anat. entity not found: "
                                                 + cTO.getAnatEntityId())),
-                                cTO.getStageId() == null? null:
-                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
-                                        () -> new IllegalStateException("Stage not found: "
+                                    Optional.ofNullable(stageMap.get(cTO.getStageId() == null ?
+                                            Condition.DEV_STAGE_ROOT_ID : cTO.getStageId()))
+                                    .orElseThrow(() -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId())),
-                                cTO.getCellTypeId() == null? null:
-                                    Optional.ofNullable(anatMap.get(cTO.getCellTypeId())).orElseThrow(
-                                        () -> new IllegalStateException("Cell type not found: "
+                                    Optional.ofNullable(anatMap.get(cTO.getCellTypeId() == null ?
+                                            Condition.CELL_TYPE_ROOT_ID : cTO.getCellTypeId()))
+                                    .orElseThrow(() -> new IllegalStateException("Cell type not found: "
                                                 + cTO.getCellTypeId())),
-                                mapDAORawDataSexToRawDataSex(cTO.getSex()),
-                                mapDAORawDataStrainToRawDataStrain(cTO.getStrainId()),
-                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
-                                        () -> new IllegalStateException("Species not found: "
-                                                + cTO.getSpeciesId())))
+                                    mapDAORawDataSexToRawDataSex(cTO.getSex() == null ?
+                                            DAORawDataSex.NA : cTO.getSex()),
+                                    mapDAORawDataStrainToRawDataStrain(cTO.getStrainId() == null ?
+                                            Condition.STRAIN_ROOT_ID : cTO.getStrainId()),
+                                    Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
+                                            () -> new IllegalStateException("Species not found: "
+                                                    + cTO.getSpeciesId())))
                         ))
                 );
     }
@@ -2009,10 +2066,12 @@ public class InsertPropagatedCalls extends CallService {
      *                              expression calls for one gene according to the associated combination.
      */
     private Stream<Set<PipelineCall>> generatePropagatedCalls(
-            Set<Integer> geneIds, Map<Integer, RawDataCondition> condMap, ConditionGraph conditionGraph, 
+            Set<Integer> geneIds, Map<Integer, RawDataCondition> condMap, ConditionGraph conditionGraph,
+            Map<Condition, Set<Condition>> parentToDescendantConds,
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO,
             SamplePValueDAO samplePValueDAO) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph, rawCallDAO,
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph,
+                parentToDescendantConds, rawCallDAO,
                 expExprDAO, samplePValueDAO);
         
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
@@ -2052,21 +2111,15 @@ public class InsertPropagatedCalls extends CallService {
 
             //Now, we group all PipelineCalls and PipelineCallDatas mapped to a same Condition
             //g: Map<PipelineCall, Set<PipelineCallData>>
-            //NOTE: this step was necessary prior to Bgee 15.0, when we were computing calls
-            //with different combinations of condition parameters. Now we always use
-            //all condition parameters, so this step should not be necessary anymore,
-            //since a same Condition can be associated to 1 and only 1 conditionId.
+            //NOTE: there can still be key collision after Bgee 15.0 bcecause of merge of, e.g.,
+            //raw data sexes 'not annotated' and 'mixed' into the data sex 'ANY'.
             .map(g -> g.entrySet().stream().collect(Collectors
                 //we group the entries Entry<PipelineCall, Set<PipelineCallData>> by condition
                 //and merge them.
                 .toMap(
                     e -> e.getKey().getCondition(),
-                    e -> e
-                    //NOTE: so there should never be key collisions anymore starting from Bge 15.0,
-                    //and we can let the method toMap throw an Exception if this is the case
-                    //just to be sure
-                    /*
-                    , (e1, e2) -> {
+                    e -> e,
+                    (e1, e2) -> {
                         PipelineCall call1 = e1.getKey();
                         PipelineCall call2 = e2.getKey();
                         assert call1.getParentSourceCallTOs() == null ||
@@ -2094,12 +2147,11 @@ public class InsertPropagatedCalls extends CallService {
                                 call1.getBgeeGeneId(), call1.getCondition(),
                                 call1.getDataPropagation(), combinedTOs);
 
-                        Set<PipelineCallData> combinedData = new HashSet<>(e1.getValue());
+                        Set<PipelineCallData<?, ?>> combinedData = new HashSet<>(e1.getValue());
                         combinedData.addAll(e2.getValue());
 
                         return new AbstractMap.SimpleEntry<>(combinedCall, combinedData);
                     }
-                    */
                     )
                 )
                 //Now retrieve the Entries that were reduced, and collect them into a Map.
@@ -2153,33 +2205,25 @@ public class InsertPropagatedCalls extends CallService {
             //the best corrected p-value among the descendant conditions
             //s: Set<PipelineCall>
             .map(s -> {
+                log.trace(COMPUTE_MARKER, "Finding best descendant p-values for {} PipelineCalls.", s.size());
                 //First we create a Map to more easily retrieve calls from a condition
                 Map<Condition, PipelineCall> callPerCondition = s.stream()
                         .map(c -> new AbstractMap.SimpleEntry<>(c.getCondition(), c))
                         //At this point there should be only one call per condition,
                         //and thus no key collision
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-                //Now we create a Map where for each Condition we can retrieve
-                //the descendant conditions
-                Map<Condition, Set<Condition>> parentToDescendantConds = new HashMap<>();
-                for (Condition cond: callPerCondition.keySet()) {
-                    Set<Condition> ancestorConditions = this.condToAncestors.computeIfAbsent(
-                            cond, 
-                            k -> conditionGraph.getAncestorConditions(k));
-                    for (Condition parent: ancestorConditions) {
-                        parentToDescendantConds.computeIfAbsent(parent, k -> new HashSet<>())
-                        .add(cond);
-                    }
-                }
                 //Now, for each call, and for each combinations of data types,
                 //we are going to retrieve the best corrected p-value among the calls
                 //in descendant conditions
                 Set<EnumSet<DataType>> allDataTypeCombs = DataType.getAllPossibleDataTypeCombinations();
                 return s.stream().map(c -> {
                     Map<EnumSet<DataType>, FDRPValueCondition> bestPValuePerDataTypeComb = new HashMap<>();
-                    Set<PipelineCall> descendantCalls = parentToDescendantConds.get(c.getCondition())
+                    Set<PipelineCall> descendantCalls = parentToDescendantConds
+                            //Some conditions have no descendant conditions obviously
+                            .getOrDefault(c.getCondition(), new HashSet<>())
                             .stream()
                             .map(cond -> callPerCondition.get(cond))
+                            .filter(descCond -> descCond != null)
                             .collect(Collectors.toSet());
                     for (PipelineCall descendantCall: descendantCalls) {
                         Map<EnumSet<DataType>, FDRPValue> pValuePerDataTypeComb =
@@ -2200,6 +2244,7 @@ public class InsertPropagatedCalls extends CallService {
                             }
                         }
                     }
+                    log.trace("Done searching best descendant p-values for call: {}", c);
                     return new PipelineCall(c.getBgeeGeneId(), c.getCondition(),
                             c.getDataPropagation(), c.getCallData(),
                             c.getPValues(), bestPValuePerDataTypeComb.values(),
@@ -2716,14 +2761,16 @@ public class InsertPropagatedCalls extends CallService {
                    if (mostMatchedDataTypesCombination == null) {
                        return null;
                    }
-                   return pValuePerDataTypeComb.get(mostMatchedDataTypesCombination);
+                   return new FDRPValue(pValuePerDataTypeComb.get(mostMatchedDataTypesCombination)
+                           .getFDRPValue(), otherDTComb);
                })
                //If we couldn't find any overlap with a computed combination, the previous mapping
                //returned null, we filter that out.
                .filter(p -> p != null)
                .collect(Collectors.toSet());
 
-       assert Collections.disjoint(correctedPValues, otherCorrectedPValues);
+       assert Collections.disjoint(correctedPValues, otherCorrectedPValues):
+           "Corrected pvalues: " + correctedPValues + " - others: " + otherCorrectedPValues;
        Set<FDRPValue> allCorrectedPValues = new HashSet<>(correctedPValues);
        allCorrectedPValues.addAll(otherCorrectedPValues);
        
@@ -2822,8 +2869,11 @@ public class InsertPropagatedCalls extends CallService {
 
         //and only the following propagation and observed data states
         assert pipelineCallData.stream().allMatch(pcd -> ALLOWED_PROP_STATES_BEFORE_MERGE.containsAll(
-                pcd.getDataPropagation().getAllPropagationStates()) &&
+                pcd.getDataPropagation().getAllPropagationStates().stream()
+                .filter(p -> p != null).collect(Collectors.toSet())) &&
                 !pcd.getDataPropagation().getAllPropagationStates().isEmpty() &&
+                !pcd.getDataPropagation().getAllPropagationStates().stream()
+                .allMatch(p -> p == null || p.equals(PropagationState.UNKNOWN)) &&
                 pcd.getDataPropagation().isIncludingObservedData() != null): pipelineCallData;
 
 
@@ -2946,8 +2996,11 @@ public class InsertPropagatedCalls extends CallService {
 //                })
                 .map(pcd -> pcd.getDataPropagation())
                 .reduce(DATA_PROPAGATION_IDENTITY, (dp1, dp2) -> mergeDataPropagations(dp1, dp2));
-        assert ALLOWED_PROP_STATES.containsAll(dataProp.getAllPropagationStates()) &&
-                !dataProp.getAllPropagationStates().isEmpty();
+        assert ALLOWED_PROP_STATES.containsAll(dataProp.getAllPropagationStates().stream()
+                .filter(p -> p != null && !p.equals(PropagationState.UNKNOWN)).collect(Collectors.toSet())) &&
+                !dataProp.getAllPropagationStates().isEmpty() &&
+                !dataProp.getAllPropagationStates().stream()
+                .allMatch(p -> p == null || p.equals(PropagationState.UNKNOWN)): dataProp;
 
 
         //Rank info: computed by the Perl pipeline after insertion of these global calls
@@ -3120,6 +3173,14 @@ public class InsertPropagatedCalls extends CallService {
         if (rawCond == null) {
             return log.traceExit((Condition) null);
         }
+        //All the elements must be non-null, otherwise the propagation will end up
+        //with not comparable conditions between elements mapped to the root
+        //and element mapped to null.
+        assert rawCond.getAnatEntity() != null;
+        assert rawCond.getDevStage() != null;
+        assert rawCond.getCellType() != null;
+        assert rawCond.getSex() != null;
+        assert rawCond.getStrain() != null;
         return log.traceExit(new Condition(rawCond.getAnatEntity(), rawCond.getDevStage(),
                 rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
                 mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
@@ -3342,25 +3403,5 @@ public class InsertPropagatedCalls extends CallService {
         default:
             throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
         }
-    }
-    private static Strain mapRawDataStrainToStrain(String strain) {
-        log.traceEntry("{}", strain);
-        if (StringUtils.isBlank(strain)) {
-            log.traceExit(); return null;
-        }
-        Function<String, String> replacement = s -> s
-                .toLowerCase()
-                .trim()
-                .replace("-", " ")
-                .replace("_", " ")
-                .replace("(", "");
-        String simplifiedStrain = replacement.apply(strain);
-
-        //FIXME: to move to RawDataCondition rather than RawDataConditionTO
-        if (RawDataConditionTO.NO_INFO_STRAINS.stream().map(replacement)
-                .anyMatch(s -> s.equals(simplifiedStrain))) {
-            return log.traceExit(new Strain(Condition.STRAIN_ROOT_ID));
-        }
-        return log.traceExit(new Strain(strain));
     }
 }

@@ -872,6 +872,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         if(dataPropagation == null) {
             return log.traceExit("");
         }
+        //FIXME: the propagation state can be null or equals to UNKNOWN
         EnumSet<PropagationState> allPropagationState = dataPropagation.getAllPropagationStates();
         if (dataPropagation.isIncludingObservedData()) {
             if (allPropagationState.contains(PropagationState.ALL) || 

@@ -238,6 +238,11 @@ public class ConditionGraphService extends CommonService {
         Integer speciesId = entities.getSpeciesIds().iterator().next();
 
         // generate ontologies to use
+        //FIXME: to improve, here the anat entity ontology is requested twice,
+        //which is costly (once for the anat entites, once for the cell types).
+        //And it will have been also requested once before to load the first conditions passed
+        //as argument... at the very least we could avoid requesting again the objects present
+        //in the conditions (AnatEntity, etc).
         final Ontology<AnatEntity, String> anatEntityOntToUse = entities.getAnatEntityIds().isEmpty()? null:
             anatEntityOnt != null? anatEntityOnt: 
                 this.getServiceFactory().getOntologyService().getAnatEntityOntology(

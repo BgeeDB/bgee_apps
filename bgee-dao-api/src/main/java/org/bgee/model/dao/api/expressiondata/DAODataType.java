@@ -27,9 +27,9 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  */
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
-    AFFYMETRIX("affymetrix", "affymetrix", "Affymetrix"), EST("est", "est", "Est"),
+    AFFYMETRIX("affymetrix", "affymetrix", "Affy"), EST("est", "est", "Est"),
     IN_SITU("in situ", "inSitu", "InSitu"), RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq"),
-    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength", "ScRnaSeqFullLength");
+    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength", "ScRnaSeqFL");
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 

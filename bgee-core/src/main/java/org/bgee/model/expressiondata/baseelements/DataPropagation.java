@@ -209,6 +209,7 @@ public class DataPropagation {
     public EnumSet<PropagationState> getAllPropagationStates() {
         return Stream.of(anatEntityPropagationState, devStagePropagationState,
                 cellTypePropagationState, sexPropagationState, strainPropagationState)
+                //XXX: maybe we should return null instead?
                 .map(s -> s == null? PropagationState.UNKNOWN: s)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(PropagationState.class)));
     }

@@ -321,7 +321,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 }
             }
 
-            if (dataPropagation != null) {
+            if (dataPropagation != null && this.getCallType() != null) {
                 dataPropagation.getAllPropagationStates().stream()
                 .forEach(state -> this.getCallType().checkPropagationState(state));
             }

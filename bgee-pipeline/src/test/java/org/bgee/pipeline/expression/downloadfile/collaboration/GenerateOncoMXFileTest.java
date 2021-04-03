@@ -149,13 +149,13 @@ public class GenerateOncoMXFileTest extends TestAncestor {
         when(devStageOnt.getDescendants(devStage3)).thenReturn(new HashSet<>());
 
 
-        Condition cond1_1 = new Condition(anatEntity1, devStage1, human);
-        Condition cond1_2 = new Condition(anatEntity1, devStage2, human);
-        Condition cond1_3 = new Condition(anatEntity1, devStage3, human);
-        Condition cond2_1 = new Condition(anatEntity2, devStage1, human);
-        Condition cond3_1 = new Condition(anatEntity3, devStage1, human);
-        Condition cond3_2 = new Condition(anatEntity3, devStage2, human);
-        Condition cond3_3 = new Condition(anatEntity3, devStage3, human);
+        Condition cond1_1 = new Condition(anatEntity1, devStage1, null, null, null, human);
+        Condition cond1_2 = new Condition(anatEntity1, devStage2, null, null, null, human);
+        Condition cond1_3 = new Condition(anatEntity1, devStage3, null, null, null, human);
+        Condition cond2_1 = new Condition(anatEntity2, devStage1, null, null, null, human);
+        Condition cond3_1 = new Condition(anatEntity3, devStage1, null, null, null, human);
+        Condition cond3_2 = new Condition(anatEntity3, devStage2, null, null, null, human);
+        Condition cond3_3 = new Condition(anatEntity3, devStage3, null, null, null, human);
         Gene gene1 = new Gene("gene1", "geneName1", "g1", null, null, human, new GeneBioType("biotype1"), 1);
         Gene gene2 = new Gene("gene2", "geneName2", "g2", null, null, human, new GeneBioType("biotype1"), 1);
         Gene gene3 = new Gene("gene3", "geneName3", "g3", null, null, human, new GeneBioType("biotype1"), 1);

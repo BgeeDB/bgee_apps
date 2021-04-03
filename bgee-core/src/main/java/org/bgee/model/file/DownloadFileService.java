@@ -110,6 +110,12 @@ public class DownloadFileService extends Service {
                 return log.traceExit(CallService.Attribute.ANAT_ENTITY_ID);
             case STAGE_ID:
                 return log.traceExit(CallService.Attribute.DEV_STAGE_ID);
+            case CELL_TYPE_ID:
+                return log.traceExit(CallService.Attribute.CELL_TYPE_ID);
+            case SEX_ID:
+                return log.traceExit(CallService.Attribute.SEX_ID);
+            case STRAIN_ID:
+                return log.traceExit(CallService.Attribute.STRAIN_ID);
             default:
                 throw log.throwing(new IllegalArgumentException("Condition parameter not supported: " + daoEnum));
         }

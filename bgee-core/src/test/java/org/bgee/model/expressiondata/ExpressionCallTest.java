@@ -45,10 +45,10 @@ public class ExpressionCallTest extends TestAncestor {
     public void shouldFilterAndOrderCallsByRank() {
         Species species = new Species(1);
         GeneBioType bioType = new GeneBioType("biotype");
-        Condition ae1devA = new Condition(new AnatEntity("1"), null, species);
-        Condition ae1devB = new Condition(new AnatEntity("2"), null, species);
-        Condition ae2devA = new Condition(new AnatEntity("3"), null, species);
-        Condition ae2devB = new Condition(new AnatEntity("4"), null, species);
+        Condition ae1devA = new Condition(new AnatEntity("1"), null, null, null, null, species);
+        Condition ae1devB = new Condition(new AnatEntity("2"), null, null, null, null, species);
+        Condition ae2devA = new Condition(new AnatEntity("3"), null, null, null, null, species);
+        Condition ae2devB = new Condition(new AnatEntity("4"), null, null, null, null, species);
         Gene gene = new Gene("1", species, bioType);
         ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
@@ -91,14 +91,14 @@ public class ExpressionCallTest extends TestAncestor {
     public void shouldFilterAndOrderCallsByRankWhenGraphOfCond() {
         Species species = new Species(1);
         GeneBioType bioType = new GeneBioType("biotype");
-        Condition ae1devA = new Condition(new AnatEntity("AE1"), new DevStage("DevA"), species);
-        Condition ae1devB = new Condition(new AnatEntity("AE1"), new DevStage("DevB"), species);
-        Condition ae2devA = new Condition(new AnatEntity("AE2"), new DevStage("DevA"), species);
-        Condition ae2devB = new Condition(new AnatEntity("AE2"), new DevStage("DevB"), species);
-        Condition ae2devD = new Condition(new AnatEntity("AE2"), new DevStage("DevD"), species);
-        Condition ae3devA = new Condition(new AnatEntity("AE3"), new DevStage("DevA"), species);
-        Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), species);
-        Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), species);
+        Condition ae1devA = new Condition(new AnatEntity("AE1"), new DevStage("DevA"), null, null, null, species);
+        Condition ae1devB = new Condition(new AnatEntity("AE1"), new DevStage("DevB"), null, null, null, species);
+        Condition ae2devA = new Condition(new AnatEntity("AE2"), new DevStage("DevA"), null, null, null, species);
+        Condition ae2devB = new Condition(new AnatEntity("AE2"), new DevStage("DevB"), null, null, null, species);
+        Condition ae2devD = new Condition(new AnatEntity("AE2"), new DevStage("DevD"), null, null, null, species);
+        Condition ae3devA = new Condition(new AnatEntity("AE3"), new DevStage("DevA"), null, null, null, species);
+        Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), null, null, null, species);
+        Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), null, null, null, species);
         Gene gene = new Gene("1", species, bioType);
         ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
@@ -231,14 +231,14 @@ public class ExpressionCallTest extends TestAncestor {
         DevStage stage1 = new DevStage("stage1");
         DevStage stage2 = new DevStage("stage2");
         DevStage stage3 = new DevStage("stage3");
-        Condition cond1 = new Condition(anat1, stage1, spe1);
-        Condition cond2 = new Condition(anat1, stage2, spe1);
-        Condition cond3 = new Condition(anat1, stage3, spe1);
-        Condition cond4 = new Condition(anat2, stage1, spe1);
-        Condition cond5 = new Condition(anat2, stage2, spe1);
-        Condition cond6 = new Condition(anat2, stage3, spe1);
-        Condition cond7 = new Condition(anat3, stage1, spe1);
-        Condition cond8 = new Condition(anat3, stage2, spe1);
+        Condition cond1 = new Condition(anat1, stage1, null, null, null, spe1);
+        Condition cond2 = new Condition(anat1, stage2, null, null, null, spe1);
+        Condition cond3 = new Condition(anat1, stage3, null, null, null, spe1);
+        Condition cond4 = new Condition(anat2, stage1, null, null, null, spe1);
+        Condition cond5 = new Condition(anat2, stage2, null, null, null, spe1);
+        Condition cond6 = new Condition(anat2, stage3, null, null, null, spe1);
+        Condition cond7 = new Condition(anat3, stage1, null, null, null, spe1);
+        Condition cond8 = new Condition(anat3, stage2, null, null, null, spe1);
 
 
         //we don't bother to retrieve exact score thresholds etc, we just create calls 
@@ -293,9 +293,9 @@ public class ExpressionCallTest extends TestAncestor {
       //These calls and conditions allow a regression test for management of equal ranks
         //cond2 and cond3 will be considered more precise than cond1, and unrelated to each other
         Species spe1 = new Species(1);
-        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), spe1);
-        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), spe1);
-        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), spe1);
+        Condition cond1 = new Condition(new AnatEntity("Anat1"), new DevStage("stage1"), null, null, null, spe1);
+        Condition cond2 = new Condition(new AnatEntity("Anat2"), new DevStage("stage1"), null, null, null, spe1);
+        Condition cond3 = new Condition(new AnatEntity("Anat3"), new DevStage("stage1"), null, null, null, spe1);
         //we mock the ConditionGraph used to compare Conditions
         ConditionGraph condGraph = mock(ConditionGraph.class);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3));

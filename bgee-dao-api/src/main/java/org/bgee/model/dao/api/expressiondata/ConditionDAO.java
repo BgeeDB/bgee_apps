@@ -16,13 +16,13 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
- * DAO defining queries using or retrieving {@link ConditionTO}s, used for expression calls
+ * DAO defining queries using or retrieving {@link ConditionTO}s, used for global expression calls
  * (see {@link org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO RawDataConditionDAO}
  * for conditions used in raw data). 
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Jun. 2019
+ * @version Bgee 15, Mar. 2021
  * @since   Bgee 14, Feb. 2017
  * @see ConditionTO
  */
@@ -35,8 +35,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * <li>{@code ID}: corresponds to {@link ConditionTO#getId()}.
      * <li>{@code ANAT_ENTITY_ID}: corresponds to {@link ConditionTO#getAnatEntityId()}.
      * <li>{@code STAGE_ID}: corresponds to {@link ConditionTO#getStageId()}.
-     * <li>{@code SEX}: corresponds to {@link ConditionTO#getSex()}.
-     * <li>{@code STRAIN}: corresponds to {@link ConditionTO#getStrain()}.
+     * <li>{@code CELL_TYPE_ID}: corresponds to {@link ConditionTO#getCellTypeId()}.
+     * <li>{@code SEX_ID}: corresponds to {@link ConditionTO#getSex()}.
+     * <li>{@code STRAIN_ID}: corresponds to {@link ConditionTO#getStrain()}.
      * <li>{@code SPECIES_ID}: corresponds to {@link ConditionTO#getSpeciesId()}.
      * </ul>
      */
@@ -45,7 +46,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("id", false), 
         SPECIES_ID("speciesId", false), 
-        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true);
+        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true),
+        CELL_TYPE_ID("cellTypeId", true), SEX_ID("sex", true), STRAIN_ID("strain", true);
 
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
@@ -67,8 +69,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         }
         /**
          * @return  A {@code boolean} defining whether this attribute corresponds 
-         *          to a condition parameter (anat entity, stage, sex, strain), allowing to determine 
-         *          which condition and expression tables to target for queries.
+         *          to a condition parameter (anat entity, stage, cell type, sex, strain), 
+         *          allowing to determine which condition and expression tables to target 
+         *          for queries.
          */
         public boolean isConditionParameter() {
             return this.conditionParameter;
@@ -200,20 +203,73 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * 
      * @author  Valentine Rech de Laval
      * @author Frederic Bastian
-     * @version Bgee 14, Jun. 2019
+     * @version Bgee 15, Mar. 2021
      * @since   Bgee 14, Feb. 2017
      */
     public class ConditionTO extends BaseConditionTO {
+        private final static Logger log = LogManager.getLogger(ConditionTO.class.getName());
+        /**
+         * {@code EnumDAOField} representing the different sex info that can be used
+         * in {@link ConditionTO}s in Bgee.
+         *
+         * @author Frederic Bastian
+         * @version Bgee 15, Mar. 2021
+         * @since Bgee 14, Sep. 2018
+         */
+        public enum DAOSex implements EnumDAOField {
+            ANY("any"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male");
+
+            /**
+             * See {@link #getStringRepresentation()}
+             */
+            private final String stringRepresentation;
+            /**
+             * Constructor providing the {@code String} representation of this {@code DAOSex}.
+             *
+             * @param stringRepresentation  A {@code String} corresponding to this {@code DAOSex}.
+             */
+            private DAOSex(String stringRepresentation) {
+                this.stringRepresentation = stringRepresentation;
+            }
+
+            /**
+             * Convert the {@code String} representation of a sex (for instance,
+             * retrieved from a database) into a {@code DAOSex}. This method compares
+             * {@code representation} to the value returned by {@link #getStringRepresentation()},
+             * as well as to the value returned by {@link Enum#name()}, for each {@code DAOSex}.
+             *
+             * @param representation    A {@code String} representing a sex.
+             * @return                  A {@code DAOSex} corresponding to {@code representation}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code DAOSex}.
+             */
+            public static final DAOSex convertToDAOSex(String representation) {
+                log.traceEntry("{}", representation);
+                return log.traceExit(TransferObject.convert(DAOSex.class, representation));
+            }
+
+            @Override
+            public String getStringRepresentation() {
+                return this.stringRepresentation;
+            }
+            @Override
+            public String toString() {
+                return this.getStringRepresentation();
+            }
+        }
+
         private static final long serialVersionUID = -1057540315343857464L;
 
+        private final DAOSex sex;
         /**
          * @see #getRankInfoTOs()
          */
         private final Set<ConditionRankInfoTO> rankInfoTOs;
         
-        public ConditionTO(Integer id, String anatEntityId, String stageId, Integer speciesId,
+        public ConditionTO(Integer id, String anatEntityId, String stageId, String cellTypeId,
+                DAOSex sex, String strainId, Integer speciesId,
                 Collection<ConditionRankInfoTO> rankInfoTOs) {
-            super(id, anatEntityId, stageId, null, null, speciesId);
+            super(id, anatEntityId, stageId, cellTypeId, strainId, speciesId);
+            this.sex = sex;
             if (rankInfoTOs != null) {
                 this.rankInfoTOs = Collections.unmodifiableSet(new HashSet<>(rankInfoTOs));
             } else {
@@ -226,6 +282,12 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             }
         }
 
+        /**
+         * @return  A {@code DAOSex} representing the sex annotated in this {@code ConditionTO}.
+         */
+        public DAOSex getSex() {
+            return sex;
+        }
         /**
          * @return  A {@code Set} of {@code ConditionRankInfoTO}s providing information
          *          about max expression rank in this {@code ConditionTO},
@@ -241,6 +303,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             builder.append("ConditionTO [id=").append(getId())
                    .append(", anatEntityId=").append(getAnatEntityId())
                    .append(", stageId=").append(getStageId())
+                   .append(", cellTypeId=").append(getCellTypeId())
+                   .append(", sex=").append(getSex())
+                   .append(", strainId=").append(getStrainId())
                    .append(", speciesId=").append(getSpeciesId()).append("]");
             return builder.toString();
         }
@@ -371,7 +436,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static ConditionRelationOrigin convertToCondRelOrigin(String stringRepresentation){
-                log.entry(stringRepresentation);
+                log.traceEntry("{}", stringRepresentation);
                 return log.traceExit(GlobalConditionToRawConditionTO.convert(ConditionRelationOrigin.class, 
                         stringRepresentation));
             }

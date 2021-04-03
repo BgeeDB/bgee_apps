@@ -93,7 +93,7 @@ public class GenerateOncoMXFile {
      * @throws IOException              If an error occurred while reading/writing a file.
      */
     public static void main(String[] args) throws FileNotFoundException, IOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
 
         int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
@@ -123,7 +123,7 @@ public class GenerateOncoMXFile {
      */
     private static final Set<String> retrieveRequestedUberonIds(String oncomxUberonTermFile)
             throws FileNotFoundException, IOException {
-        log.entry(oncomxUberonTermFile);
+        log.traceEntry("{}", oncomxUberonTermFile);
 
         Set<String> uberonIds = new HashSet<>();
 
@@ -157,7 +157,7 @@ public class GenerateOncoMXFile {
 
     private final static <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>>
     Set<U> getAllEntityIds(Ontology<T, U> ont, Set<U> seedEntityIds) {
-        log.entry(ont, seedEntityIds);
+        log.traceEntry("{}, {}", ont, seedEntityIds);
         Set<T> entities = seedEntityIds.stream()
                 .map(id -> {
                     T entity = ont.getElement(id);
@@ -178,7 +178,7 @@ public class GenerateOncoMXFile {
 
     protected static ExpressionCallFilter getGeneCallFilter(int speciesId, Collection<String> anatEntityIds,
             Collection<String> devStageIds) {
-        log.entry(speciesId, anatEntityIds, devStageIds);
+        log.traceEntry("{}, {}, {}", speciesId, anatEntityIds, devStageIds);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
@@ -187,12 +187,13 @@ public class GenerateOncoMXFile {
                         //all genes for the requested species
                         Collections.singleton(new GeneFilter(speciesId)),
                         //calls for the requested anat. entities and dev. stages
-                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds)),
+                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds,
+                                null, null, null)),
                         DATA_TYPES, //data requested by OncoMX only
                         obsDataFilter, //only observed data
                         //no filter on observed data in anat. entity and stage,
                         //it will anyway be both from the previous filter
-                        null, null
+                        null, null, null, null, null
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {
@@ -245,7 +246,7 @@ public class GenerateOncoMXFile {
 
     public void generateFile(int speciesId, Collection<String> devStageIds,
             String oncomxUberonTermFile, String outputDirectory) throws FileNotFoundException, IOException {
-        log.entry(speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
+        log.traceEntry("{}, {}, {}, {}", speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
 
         log.info("Generating OncoMX file for species {}", speciesId);
         if (devStageIds == null || devStageIds.isEmpty()) {

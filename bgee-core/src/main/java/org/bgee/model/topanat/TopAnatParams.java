@@ -606,8 +606,10 @@ public class TopAnatParams {
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);
         
+        //XXX: filter only on dev. stage. Could potentially add filtering on sex/strain
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
-            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), null));
+            Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), 
+                    null, null, null, null));
 
         //TODO: verify this logic
         //(former note: we need to decide whether we want calls with data propagated only,
@@ -639,7 +641,7 @@ public class TopAnatParams {
                     //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
                     //without running topGo 
                     (this.decorrelationType != DecorrelationType.NONE) ? true : null,
-                    null
+                    null, null, null, null
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

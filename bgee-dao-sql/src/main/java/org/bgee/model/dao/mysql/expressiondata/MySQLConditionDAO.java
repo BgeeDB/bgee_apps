@@ -32,7 +32,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 15, Mar. 2021
  * @see org.bgee.model.dao.api.anatdev.ConditionDAO.ConditionTO
  * @since   Bgee 14, Feb. 2017
  */
@@ -64,7 +64,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      */
     private static String getCondParamCombinationWhereClause(final String tableName,
             Collection<ConditionDAO.Attribute> condParamCombination) throws IllegalArgumentException {
-        log.entry(tableName, condParamCombination);
+        log.traceEntry("{}, {}", tableName, condParamCombination);
         if (condParamCombination == null || condParamCombination.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "A condition parameter combination must be provided."));
@@ -99,12 +99,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         //allowing to map conditions used in annotations to conditions used in expression tables.
         colToAttributesMap.put("anatEntityId", ConditionDAO.Attribute.ANAT_ENTITY_ID);
         colToAttributesMap.put("stageId", ConditionDAO.Attribute.STAGE_ID);
+        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX_ID);
+        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN_ID);
+        colToAttributesMap.put("cellTypeId", ConditionDAO.Attribute.CELL_TYPE_ID);
         colToAttributesMap.put(SPECIES_ID, ConditionDAO.Attribute.SPECIES_ID);
-//        colToAttributesMap.put("sex", ConditionDAO.Attribute.SEX);
 //        if (!global) {
 //            colToAttributesMap.put("sexInferred", ConditionDAO.Attribute.SEX_INFERRED);
 //        }
-//        colToAttributesMap.put("strain", ConditionDAO.Attribute.STRAIN);
         
         return log.traceExit(colToAttributesMap);
     }
@@ -125,7 +126,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
-        log.entry(speciesIds, conditionParameters, attributes);
+        log.traceEntry("{}, {}, {}", speciesIds, conditionParameters, attributes);
         return log.traceExit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
     }
 
@@ -133,7 +134,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     private ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 
             Collection<ConditionDAO.Attribute> attributes) throws DAOException, IllegalArgumentException {
-        log.entry(speciesIds, conditionParameters, attributes);
+        log.traceEntry("{}, {}, {}", speciesIds, conditionParameters, attributes);
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         final Set<ConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
@@ -151,7 +152,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 //since we are always going to define the NULL/NOT NULL status for
                 //all condition parameters. For raw conditions the table is small,
                 //so we don't bother and always add the DISTINCT clause.
-                false, 
+                true, 
                 attrs)).append(" FROM ").append(tableName);
         sb.append(" WHERE ")
           .append(getCondParamCombinationWhereClause(tableName, conditionParameters));
@@ -195,7 +196,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     @Override
     public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
             Collection<DAODataType> dataTypes, Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException {
-        log.entry(speciesIds, dataTypes, conditionParameters);
+        log.traceEntry("{}, {}, {}", speciesIds, dataTypes, conditionParameters);
 
         Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
@@ -228,6 +229,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             case RNA_SEQ:
                 rankField = "rnaSeqMaxRank";
                 globalRankField = "rnaSeqGlobalMaxRank";
+                break;
+            case FULL_LENGTH:
+                rankField = "scRnaSeqFullLengthMaxRank";
+                globalRankField = "scRnaSeqFullLengthGlobalMaxRank";
                 break;
             default:
                 throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
@@ -291,7 +296,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
     @Override
     public int insertGlobalConditions(Collection<ConditionTO> conditionTOs) throws DAOException {
-        log.entry(conditionTOs);
+        log.traceEntry("{}", conditionTOs);
         
         if (conditionTOs == null || conditionTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No condition provided"));
@@ -335,6 +340,18 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         stmt.setString(paramIndex, conditionTO.getStageId());
                         paramIndex++;
                         break;
+                    case SEX_ID:
+                        stmt.setString(paramIndex, conditionTO.getSex().getStringRepresentation());
+                        paramIndex++;
+                        break;
+                    case STRAIN_ID:
+                        stmt.setString(paramIndex, conditionTO.getStrainId());
+                        paramIndex++;
+                        break;
+                    case CELL_TYPE_ID:
+                        stmt.setString(paramIndex, conditionTO.getCellTypeId());
+                        paramIndex++;
+                        break;
                     default:
                         log.throwing(new IllegalStateException("Unsupported attribute: " + attr));
                     }
@@ -351,7 +368,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     public int insertGlobalConditionToRawCondition(
             Collection<GlobalConditionToRawConditionTO> globalCondToRawCondTOs)
                     throws DAOException, IllegalArgumentException {
-        log.entry(globalCondToRawCondTOs);
+        log.traceEntry("{}", globalCondToRawCondTOs);
 
         if (globalCondToRawCondTOs == null || globalCondToRawCondTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No condition relation provided"));
@@ -404,8 +421,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
      * Implementation of the {@code ConditionTOResultSet}. 
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
+     * @version Bgee 15, Mar. 2021
+     * @since Bgee 14, Feb. 2017
      */
     class MySQLConditionTOResultSet extends MySQLDAOResultSet<ConditionDAO.ConditionTO>
             implements ConditionTOResultSet {
@@ -425,7 +442,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, speciesId = null;
-                String anatEntityId = null, stageId = null;
+                String anatEntityId = null, stageId = null, cellTypeId = null, strainId = null;
+                ConditionDAO.ConditionTO.DAOSex sex = null;
                 Map<String, ConditionDAO.Attribute> colToAttrMap = getColToAttributesMap();
 
                 COL: for (String columnName : this.getColumnLabels().values()) {
@@ -448,13 +466,24 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         case STAGE_ID:
                             stageId = currentResultSet.getString(columnName);
                             break;
+                        case CELL_TYPE_ID:
+                            cellTypeId = currentResultSet.getString(columnName);
+                            break;
+                        case SEX_ID:
+                            sex = ConditionDAO.ConditionTO.DAOSex.convertToDAOSex(
+                                    currentResultSet.getString(columnName));
+                            break;
+                        case STRAIN_ID:
+                            strainId = currentResultSet.getString(columnName);
+                            break;
                         default:
                             log.throwing(new UnrecognizedColumnException(columnName));
                     }
                 }
                 //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
                 //to be added when needed.
-                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, speciesId, null));
+                return log.traceExit(new ConditionTO(id, anatEntityId, stageId, cellTypeId, sex, 
+                        strainId, speciesId, null));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

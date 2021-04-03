@@ -44,6 +44,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * <li>{@code CONDITION_ID}: corresponds to {@link GlobalExpressionCallTO#getConditionId()}.
      * <li>{@code ANAT_ENTITY_ID}: order by the anat. entity ID used in the conditions of the calls.
      * <li>{@code STAGE_ID}: order by the dev. stage ID used in the conditions of the calls.
+     * <li>{@code CELL_TYPE_ID}: order by the cell type ID used in the conditions of the calls.
+     * <li>{@code SEX_ID}: order by the sex ID used in the conditions of the calls.
+     * <li>{@code STRAIN_ID}: order by the strain ID used in the conditions of the calls.
      * <li>{@code OMA_GROUP_ID}: order results by the OMA group genes belong to. 
      * If this {@code OrderingAttribute} is used in a query not specifying any targeted taxon 
      * for gene orthology, then the {@code OMAParentNodeId} of the gene is used (see 
@@ -55,7 +58,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * </ul>
      */
     enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, OMA_GROUP_ID, MEAN_RANK;
+        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, CELL_TYPE_ID,
+        SEX_ID, STRAIN_ID, OMA_GROUP_ID, MEAN_RANK;
+        
     }
 
     /** 
@@ -220,8 +225,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
+        private final Set<DAOFDRPValue> pValues;
+        
+        private final Set<DAOFDRPValue> bestDescendantPValues;
+        
         public GlobalExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs) {
+                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
+                Collection<DAOFDRPValue> pValues, Collection<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);
             
             this.meanRank = meanRank;
@@ -229,6 +239,17 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                 this.callDataTOs = Collections.unmodifiableSet(new HashSet<>(callDataTOs));
             } else {
                 this.callDataTOs = null;
+            }
+            if (pValues != null) {
+                assert pValues.stream().noneMatch(p -> p.getConditionId() != null);
+                this.pValues = Collections.unmodifiableSet(new HashSet<>(pValues));
+            } else {
+                this.pValues = null;
+            }
+            if (bestDescendantPValues != null) {
+                this.bestDescendantPValues = Collections.unmodifiableSet(new HashSet<>(bestDescendantPValues));
+            } else {
+                this.bestDescendantPValues = null;
             }
             //there should be at most one GlobalExpressionCallDataTO per data type.
             //we simply use Collectors.toMap that throws an exception in case of key collision
@@ -255,6 +276,20 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public Set<GlobalExpressionCallDataTO> getCallDataTOs() {
             return callDataTOs;
         }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s
+         *          storing the pvalues for all possible combination of datatypes
+         */
+        public Set<DAOFDRPValue> getPValues() {
+            return pValues;
+        }
+        /**
+         * @return  An unmodifiable {@code Set} of {@code DAOFDRPValue}s storing the 
+         *          pvalues of best descendant calls for all possible combination of datatypes
+         */
+        public Set<DAOFDRPValue> getBestDescendantPValues() {
+            return bestDescendantPValues;
+        }
 
         @Override
         public String toString() {
@@ -264,6 +299,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", conditionId=").append(getConditionId())
                    .append(", meanRank=").append(meanRank)
                    .append(", callDataTOs=").append(callDataTOs)
+                   .append(", pValues=").append(pValues)
+                   .append(", bestDescendantPValues=").append(bestDescendantPValues)
                    .append("]");
             return builder.toString();
         }
@@ -288,6 +325,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
 
+        private final Integer selfObservationCount;
+        private final Integer descendantObservationCount;
+        
         private final Set<DAOExperimentCount> experimentCounts;
 
         private final Integer propagatedCount;
@@ -298,6 +338,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
                 Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
+                Integer selfObservationCount, Integer descendantObservationCount,
                 Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
@@ -308,6 +349,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             this.dataType = dataType;
             this.conditionObservedData = conditionObservedData;
             this.dataPropagation = dataPropagation == null? null: Collections.unmodifiableMap(new HashMap<>(dataPropagation));
+
+            this.selfObservationCount = selfObservationCount;
+            this.descendantObservationCount = descendantObservationCount;
 
             this.experimentCounts = experimentCounts == null? null: Collections.unmodifiableSet(new HashSet<>(experimentCounts));
             this.propagatedCount = propagatedCount;
@@ -341,6 +385,20 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             return dataPropagation;
         }
 
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the condition itself.
+         */
+        public Integer getSelfObservationCount() {
+            return selfObservationCount;
+        }
+        /**
+         * @return  An {@code Integer} that is the number of observations producing a p-value
+         *          in the descendant conditions of the requested condition.
+         */
+        public Integer getDescendantObservationCount() {
+            return descendantObservationCount;
+        }
         public Set<DAOExperimentCount> getExperimentCounts() {
             return experimentCounts;
         }
@@ -363,6 +421,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallDataTO [dataType=").append(dataType)
                    .append(", dataPropagation=").append(dataPropagation)
+                   .append(", selfObservationCount=").append(selfObservationCount)
+                   .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", experimentCounts=").append(experimentCounts)
                    .append(", propagatedCount=").append(propagatedCount)
                    .append(", rank=").append(rank)

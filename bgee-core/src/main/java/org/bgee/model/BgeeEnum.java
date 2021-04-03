@@ -60,7 +60,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> T convert(
             Class<T> enumClass, String representation) {
-        log.entry(enumClass, representation);
+        log.traceEntry("{}, {}", enumClass, representation);
         
         if (representation == null) {
             return log.traceExit((T) null);
@@ -92,7 +92,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
         convertStringSetToEnumSet(Class<T> enumClass, Collection<String> representations) {
-        log.entry(representations);
+        log.traceEntry("{}", representations);
 
         if (representations == null || representations.isEmpty()) {
             return log.traceExit((Set<T>) null);
@@ -122,7 +122,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
-        log.entry(enums);
+        log.traceEntry("{}", enums);
         
         if (enums == null || enums.isEmpty()) {
             return log.traceExit((Set<String>) null);
@@ -148,7 +148,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean isInEnum(
             Class<T> enumClass, String representation) {
-        log.entry(enumClass, representation);
+        log.traceEntry("{}, {}", enumClass, representation);
         String lowCaseRepresentation = representation.toLowerCase(Locale.ENGLISH);
         for (T bgeeEnum: EnumSet.allOf(enumClass)) {
             if (bgeeEnum.getStringRepresentation().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation) || 
@@ -173,7 +173,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean areAllInEnum(
             Class<T> enumClass, Collection<String> representations) {
-        log.entry(enumClass, representations);
+        log.traceEntry("{}, {}", enumClass, representations);
         if (representations == null) {
             return log.traceExit(true);
         }

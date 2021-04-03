@@ -58,7 +58,7 @@ public class SpeciesService extends CommonService {
      */
     public Set<Species> loadSpeciesInDataGroups(boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
-        log.entry(withSpeciesInfo);
+        log.traceEntry("{}", withSpeciesInfo);
         return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesFromDataGroups(null), null, withSpeciesInfo));
     }
@@ -78,7 +78,7 @@ public class SpeciesService extends CommonService {
      */
     public Set<Species> loadSpeciesByIds(Collection<Integer> speciesIds, boolean withSpeciesInfo)
             throws DAOException, QueryInterruptedException {
-        log.entry(speciesIds, withSpeciesInfo);
+        log.traceEntry("{}, {}", speciesIds, withSpeciesInfo);
         return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesByIds(ids, null), speciesIds, withSpeciesInfo));
     }
@@ -96,7 +96,7 @@ public class SpeciesService extends CommonService {
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      */
     public Set<Species> loadSpeciesByTaxonIds(Collection<Integer> taxonIds, boolean withSpeciesInfo) {
-        log.entry(taxonIds, withSpeciesInfo);
+        log.traceEntry("{}, {}", taxonIds, withSpeciesInfo);
         return log.traceExit(this.loadSpecies(ids -> this.getDaoManager().getSpeciesDAO()
                 .getSpeciesByTaxonIds(ids, null), taxonIds, withSpeciesInfo));
     }
@@ -114,7 +114,7 @@ public class SpeciesService extends CommonService {
      */
     private Set<Species> loadSpecies(Function<Set<Integer>, SpeciesTOResultSet> daoCall,
             Collection<Integer> speOrTaxIds, boolean withSpeciesInfo) throws DAOException, QueryInterruptedException {
-        log.entry(daoCall, speOrTaxIds, withSpeciesInfo);
+        log.traceEntry("{}, {}, {}", daoCall, speOrTaxIds, withSpeciesInfo);
 
         Set<Integer> filteredIds = speOrTaxIds == null? new HashSet<>(): new HashSet<>(speOrTaxIds);
         Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
@@ -129,7 +129,7 @@ public class SpeciesService extends CommonService {
     }
     
     public Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesInfo) {
-        log.entry(speciesIds, withSpeciesInfo);
+        log.traceEntry("{}, {}", speciesIds, withSpeciesInfo);
         return log.traceExit(this.loadSpeciesByIds(speciesIds, withSpeciesInfo)
                 .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
     }
@@ -141,7 +141,7 @@ public class SpeciesService extends CommonService {
      * @return  A {@code Set} of {@code Species} that are the species with data source information.
      */
     private Set<Species> loadDataSourceInfo(Set<Species> allSpecies, Map<Integer, Source> sourceMap) {
-        log.entry(allSpecies);
+        log.traceEntry("{}", allSpecies);
         
         final List<SourceToSpeciesTO> sourceToSpeciesTOs = getDaoManager().getSourceToSpeciesDAO()
                 .getSourceToSpecies(null, 
@@ -180,7 +180,7 @@ public class SpeciesService extends CommonService {
     private Map<Source, Set<DataType>> getDataTypesByDataSource(
             final List<SourceToSpeciesTO> sourceToSpeciesTOs, Map<Integer, Source> sourceMap, 
             Integer speciesId, InfoType infoType) {
-        log.entry(sourceToSpeciesTOs, sourceMap, speciesId, infoType);
+        log.traceEntry("{}, {}, {}, {}", sourceToSpeciesTOs, sourceMap, speciesId, infoType);
 
         Map<Source, Set<DataType>> map = sourceToSpeciesTOs.stream()
                 .filter(to -> to.getInfoType().equals(infoType))
@@ -202,7 +202,7 @@ public class SpeciesService extends CommonService {
      * @return the mapped {@code Species}
      */
     private static Species mapFromTO(SpeciesDAO.SpeciesTO speciesTO, Source genomeSource) {
-        log.entry(speciesTO, genomeSource);
+        log.traceEntry("{}, {}", speciesTO, genomeSource);
         return log.traceExit(new Species(Integer.valueOf(speciesTO.getId()), speciesTO.getName(), 
                 speciesTO.getDescription(), speciesTO.getGenus(), speciesTO.getSpeciesName(), 
                 speciesTO.getGenomeVersion(), genomeSource, speciesTO.getGenomeSpeciesId(),

@@ -13,6 +13,8 @@ import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
@@ -45,8 +47,9 @@ public class ConditionGraphService extends CommonService {
      *                                  does not exist in the requested species.
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions) {
-        log.entry(conditions);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
+        log.traceEntry("{}", conditions);
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null,
+                null, null, null));
     }
     
     /**
@@ -61,9 +64,9 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds);
+        log.traceEntry("{}, {}, {}", conditions, inferAncestralConds, inferDescendantConds);
         return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds,
-                inferDescendantConds, null, null));
+                inferDescendantConds, null, null, null, null, null));
     }
     
     /**
@@ -73,13 +76,27 @@ public class ConditionGraphService extends CommonService {
      *                              the ontology of anatomical entities of a single species.
      * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
+     * @param cellTypeOnt           An {@code Ontology} of {@code AnatEntity}s that is 
+     *                              the ontology of cell types of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
+     * @param sexOnt                An {@code Ontology} of {@code Sex}s that is 
+     *                              the ontology of sexes of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
+     * @param strainOnt            An {@code Ontology} of {@code Strain}s that is 
+     *                              the ontology of strains of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, Ontology<AnatEntity, String> anatEntityOnt,
-            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, anatEntityOnt, devStageOnt);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, anatEntityOnt, devStageOnt));
+            Ontology<DevStage, String> devStageOnt, Ontology<AnatEntity, String> cellTypeOnt, 
+            Ontology<Sex, String> sexOnt, Ontology<Strain, String> strainOnt) 
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", conditions, anatEntityOnt, devStageOnt, cellTypeOnt, 
+                sexOnt, strainOnt);
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false,
+                anatEntityOnt, devStageOnt,
+                cellTypeOnt, sexOnt, strainOnt));
     }
     
     /**
@@ -95,15 +112,28 @@ public class ConditionGraphService extends CommonService {
      * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
      *                              If {@code null}, the constructor retrieves the ontology.  
+     * @param cellTypeOnt           An {@code Ontology} of {@code AnatEntity}s that is 
+     *                              the ontology of cell types of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
+     * @param sexOnt                An {@code Ontology} of {@code Sex}s that is 
+     *                              the ontology of sexes of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
+     * @param strainOnt            An {@code Ontology} of {@code Strain}s that is 
+     *                              the ontology of strains of a single species.
+     *                              If {@code null}, the constructor retrieves the ontology.  
      * @throws IllegalArgumentException If any of the arguments is {@code null} or empty, 
      *                                  or if {@code Condition}s does not exist in the same species.
      */
     public ConditionGraph loadConditionGraph(Collection<Condition> conditions, boolean inferAncestralConds,
             boolean inferDescendantConds, Ontology<AnatEntity, String> anatEntityOnt,
-            Ontology<DevStage, String> devStageOnt) throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, inferAncestralConds, inferDescendantConds,
-                anatEntityOnt, devStageOnt));
+            Ontology<DevStage, String> devStageOnt, Ontology<AnatEntity, String> cellTypeOnt,
+            Ontology<Sex, String> sexOnt, Ontology<Strain, String> strainOnt) 
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
+                anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions,
+                inferAncestralConds, inferDescendantConds,
+                anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt));
     }
 
     /**
@@ -123,7 +153,7 @@ public class ConditionGraphService extends CommonService {
      */
     public ConditionGraph loadConditionGraph(int speciesId, Collection<CallService.Attribute> condParameters)
             throws IllegalArgumentException {
-        log.entry(speciesId, condParameters);
+        log.traceEntry("{}, {}", speciesId, condParameters);
         if (speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("A speciesId must be provided."));
         }
@@ -146,10 +176,13 @@ public class ConditionGraphService extends CommonService {
                     null,
                     this.getDaoManager().getConditionDAO(),
                     this.getServiceFactory().getAnatEntityService(),
-                    this.getServiceFactory().getDevStageService()
+                    this.getServiceFactory().getDevStageService(),
+                    this.getServiceFactory().getSexService(),
+                    this.getServiceFactory().getStrainService()
                 ).values());
 
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null));
+        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null, 
+                null, null, null));
     }
 
     /**
@@ -167,6 +200,13 @@ public class ConditionGraphService extends CommonService {
      * @param devStageOnt           An {@code Ontology} of {@code DevStage}s that is 
      *                              the ontology of developmental stages of a single species.
      *                              If {@code null}, this method retrieves the ontology.  
+     * @param cellTypeOnt           An {@code Ontology} of {@code AnatEntity}s that is 
+     *                              the ontology of cell types of a single species.
+     *                              If {@code null}, this method retrieves the ontology. 
+     * @param sexOnt                An {@code Ontology} of {@code Sex}s that is 
+     *                              the ontology of sexes. If {@code null}, this method retrieves the ontology.  
+     * @param strainOnt             An {@code Ontology} of {@code Strain}s that is 
+     *                              the ontology of strains. If {@code null}, this method retrieves the ontology.  
      * @throws IllegalArgumentException If {@code conditions} is {@code null} or empty, 
      *                                  or if the {@code Condition}s does not exist in the same species.
      */
@@ -176,9 +216,12 @@ public class ConditionGraphService extends CommonService {
     //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     private ConditionGraph loadConditionGraphFromMultipleArgs(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
-            Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt)
+            Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt,
+            Ontology<AnatEntity, String> cellTypeOnt, Ontology<Sex, String> sexOnt, 
+            Ontology<Strain, String> strainOnt)
                     throws IllegalArgumentException {
-        log.entry(conditions, inferAncestralConds, inferDescendantConds, anatEntityOnt, devStageOnt);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", conditions, inferAncestralConds, inferDescendantConds, 
+                anatEntityOnt, devStageOnt, cellTypeOnt, sexOnt, strainOnt);
     
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of ConditionGraph");
@@ -194,6 +237,7 @@ public class ConditionGraphService extends CommonService {
         }
         Integer speciesId = entities.getSpeciesIds().iterator().next();
 
+        // generate ontologies to use
         final Ontology<AnatEntity, String> anatEntityOntToUse = entities.getAnatEntityIds().isEmpty()? null:
             anatEntityOnt != null? anatEntityOnt: 
                 this.getServiceFactory().getOntologyService().getAnatEntityOntology(
@@ -207,7 +251,32 @@ public class ConditionGraphService extends CommonService {
                 && anatEntityOntToUse.getSpeciesId() != devStageOntToUse.getSpeciesId()) {
             throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
         }
-    
+        final Ontology<AnatEntity, String> cellTypeOntToUse = entities.getCellTypeIds().isEmpty()? null:
+            cellTypeOnt != null? cellTypeOnt: 
+                this.getServiceFactory().getOntologyService().getCellTypeOntology(
+                    speciesId, entities.getCellTypeIds(), EnumSet.of(RelationType.ISA_PARTOF), 
+                    inferAncestralConds, inferDescendantConds);
+        if (anatEntityOntToUse != null && cellTypeOntToUse != null 
+                && anatEntityOntToUse.getSpeciesId() != cellTypeOntToUse.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
+        }
+        final Ontology<Sex, String> sexOntToUse = entities.getSexIds().isEmpty()? null:
+            sexOnt != null? sexOnt: 
+                this.getServiceFactory().getOntologyService().getSexOntology(speciesId, 
+                        entities.getSexIds(), inferAncestralConds, inferDescendantConds);
+        if (anatEntityOntToUse != null && sexOntToUse != null 
+                && anatEntityOntToUse.getSpeciesId() != sexOntToUse.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
+        }
+        final Ontology<Strain, String> strainOntToUse = entities.getStrainIds().isEmpty()? null:
+            strainOnt != null? strainOnt: 
+                this.getServiceFactory().getOntologyService().getStrainOntology(speciesId, 
+                        entities.getStrainIds(), inferAncestralConds, inferDescendantConds);
+        if (anatEntityOntToUse != null && strainOntToUse != null 
+                && anatEntityOntToUse.getSpeciesId() != strainOntToUse.getSpeciesId()) {
+            throw log.throwing(new IllegalArgumentException("Ontologies should be in the same species."));
+        }
+        
         //TODO: test inference of descendant conditions
         if (inferAncestralConds || inferDescendantConds) {
             Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
@@ -233,9 +302,45 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
+                Set<AnatEntity> propCellTypes = new HashSet<>();
+                propCellTypes.add(cond.getCellType());
+                if (cellTypeOntToUse != null && cond.getCellTypeId() != null) {
+                    if (inferAncestralConds) {
+                        propCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
+                    }
+                    if (inferDescendantConds) {
+                        propCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
+                    }
+                }
+                
+                Set<Sex> propSexes = new HashSet<>();
+                propSexes.add(cond.getSex());
+                if (sexOntToUse != null && cond.getSexId() != null) {
+                    if (inferAncestralConds) {
+                        propSexes.addAll(sexOntToUse.getAncestors(cond.getSex()));
+                    }
+                    if (inferDescendantConds) {
+                        propSexes.addAll(sexOntToUse.getDescendants(cond.getSex()));
+                    }
+                }
+                
+                Set<Strain> propStrains = new HashSet<>();
+                propStrains.add(cond.getStrain());
+                if (strainOntToUse != null && cond.getStrainId() != null) {
+                    if (inferAncestralConds) {
+                        propStrains.addAll(strainOntToUse.getAncestors(cond.getStrain()));
+                    }
+                    if (inferDescendantConds) {
+                        propStrains.addAll(strainOntToUse.getDescendants(cond.getStrain()));
+                    }
+                }
+                
                 return propAnatEntitys.stream()
-                        .flatMap(propAnatEntity -> propStages.stream().map(propStage -> 
-                            new Condition(propAnatEntity, propStage, cond.getSpecies())))
+                        .flatMap(propAnatEntity -> propStages.stream()
+                                .flatMap(propStage -> propCellTypes.stream()
+                                        .flatMap( propCellType -> propSexes.stream()
+                                                .flatMap( propSexe -> propStrains.stream().map( propStrain ->
+                            new Condition(propAnatEntity, propStage, propCellType, propSexe, propStrain, cond.getSpecies()))))))
                         .filter(propCond -> !cond.equals(propCond));
     
             }).collect(Collectors.toSet());
@@ -244,7 +349,7 @@ public class ConditionGraphService extends CommonService {
         }
     
         ConditionGraph condGraph = new ConditionGraph(tempConditions, inferAncestralConds, inferDescendantConds,
-                anatEntityOntToUse, devStageOntToUse);
+                anatEntityOntToUse, devStageOntToUse, cellTypeOnt, sexOntToUse, strainOntToUse);
         log.debug("ConditionGraph created in {} ms", System.currentTimeMillis() - startTimeInMs);
         return log.traceExit(condGraph);
     }

@@ -77,12 +77,16 @@ extends DataFilter<ConditionFilter> {
 
         private final Boolean anatEntityObservedData;
         private final Boolean devStageObservedData;
+        private final Boolean cellTypeObservedData;
+        private final Boolean sexObservedData;
+        private final Boolean strainObservedData;
 
         public ExpressionCallFilter(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
                 Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, Collection<DataType> dataTypeFilter,
                 Map<CallType.Expression, Boolean> callObservedData,
-                Boolean anatEntityObservedData, Boolean devStageObservedData)
+                Boolean anatEntityObservedData, Boolean devStageObservedData, Boolean cellTypeObservedData,
+                Boolean sexObservedData, Boolean strainObservedData)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.ExpressionSummary.class);
@@ -91,6 +95,9 @@ extends DataFilter<ConditionFilter> {
                     callObservedData == null? new HashMap<>(): new HashMap<>(callObservedData));
             this.anatEntityObservedData = anatEntityObservedData;
             this.devStageObservedData = devStageObservedData;
+            this.cellTypeObservedData = cellTypeObservedData;
+            this.sexObservedData = sexObservedData;
+            this.strainObservedData = strainObservedData;
             try {
                 this.checkEmptyFilters();
             } catch (IllegalStateException e) {
@@ -168,6 +175,33 @@ extends DataFilter<ConditionFilter> {
         public Boolean getDevStageObservedData() {
             return devStageObservedData;
         }
+        /**
+        *
+        * @return
+        * @see #getCallObservedData()
+        * @see #getAnatEntityObservedData()
+        */
+       public Boolean getCellTypeObservedData() {
+           return cellTypeObservedData;
+       }
+       /**
+       *
+       * @return
+       * @see #getCallObservedData()
+       * @see #getAnatEntityObservedData()
+       */
+      public Boolean getSexObservedData() {
+          return sexObservedData;
+      }
+      /**
+      *
+      * @return
+      * @see #getCallObservedData()
+      * @see #getAnatEntityObservedData()
+      */
+     public Boolean getStrainObservedData() {
+         return strainObservedData;
+     }
 
         @Override
         public boolean test(ExpressionCall call) {
@@ -235,6 +269,9 @@ extends DataFilter<ConditionFilter> {
             result = prime * result
                     + ((anatEntityObservedData == null) ? 0 : anatEntityObservedData.hashCode());
             result = prime * result + ((devStageObservedData == null) ? 0 : devStageObservedData.hashCode());
+            result = prime * result + ((cellTypeObservedData == null) ? 0 : cellTypeObservedData.hashCode());
+            result = prime * result + ((sexObservedData == null) ? 0 : sexObservedData.hashCode());
+            result = prime * result + ((strainObservedData == null) ? 0 : strainObservedData.hashCode());
             return result;
         }
         @Override
@@ -270,6 +307,27 @@ extends DataFilter<ConditionFilter> {
             } else if (!devStageObservedData.equals(other.devStageObservedData)) {
                 return false;
             }
+            if (cellTypeObservedData == null) {
+                if (other.cellTypeObservedData != null) {
+                    return false;
+                }
+            } else if (!cellTypeObservedData.equals(other.cellTypeObservedData)) {
+                return false;
+            }
+            if (sexObservedData == null) {
+                if (other.sexObservedData != null) {
+                    return false;
+                }
+            } else if (!sexObservedData.equals(other.sexObservedData)) {
+                return false;
+            }
+            if (strainObservedData == null) {
+                if (other.strainObservedData != null) {
+                    return false;
+                }
+            } else if (!strainObservedData.equals(other.strainObservedData)) {
+                return false;
+            }
             return true;
         }
 
@@ -279,6 +337,9 @@ extends DataFilter<ConditionFilter> {
             builder.append("ExpressionCallFilter [callObservedData=").append(callObservedData)
                    .append(", anatEntityObservedData=").append(anatEntityObservedData)
                    .append(", devStageObservedData=").append(devStageObservedData)
+                   .append(", cellTypeObservedData=").append(cellTypeObservedData)
+                   .append(", sexObservedData=").append(sexObservedData)
+                   .append(", strainObservedData=").append(strainObservedData)
                    .append(", geneFilters=").append(getGeneFilters())
                    .append(", conditionFilters=").append(getConditionFilters())
                    .append(", dataTypeFilters=").append(getDataTypeFilters())

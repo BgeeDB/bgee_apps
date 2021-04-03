@@ -30,6 +30,7 @@ import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
@@ -1082,6 +1083,20 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.traceExit(this.getNewExperimentExpressionDAO());
     }
+    
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code SamplePValueDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO
+     */
+    public SamplePValueDAO getSamplePValueDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewSamplePValueDAO());
+    }
 
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO 
@@ -1525,6 +1540,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code ExperimentExpressionDAO}
      */
     protected abstract ExperimentExpressionDAO getNewExperimentExpressionDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code SamplePValueDAO}
+     */
+    protected abstract SamplePValueDAO getNewSamplePValueDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO DiffExpressionCallDAO} 

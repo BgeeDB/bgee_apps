@@ -372,6 +372,46 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     
     /**
      * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the single cell RNA-Seq full length 
+     * processed expression value download files root directory. 
+     * 
+     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the single cell RNA-Seq full length processed 
+     * expression value download files root directory. 
+     * 
+     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "processed_expr_values/single_cell_rna_seq_full_length/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
+     * initialization of {@code BgeeProperties} to set the single cell RNA-Seq target based 
+     * processed expression value download files root directory. 
+     * 
+     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY = 
+            "org.bgee.webapp.downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory";
+    /**
+     * A {@code String} that is the default value of the single cell RNA-Seq target based processed 
+     * expression value download files root directory. 
+     * 
+     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #getDownloadRNASeqProcExprValueFilesRootDirectory()
+     */
+    public final static String DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT = 
+            "processed_expr_values/single_cell_rna_seq_target_based/";
+    
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the 
      * initialization of {@code BgeeProperties} to set the javascript file root directory. 
      * 
      * @see #JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT
@@ -672,7 +712,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      *          thread and always return this instance when called. ("per-thread singleton")
      */
     public static BgeeProperties getBgeeProperties(Properties prop) {
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         BgeeProperties bgeeProp;
         long threadId = Thread.currentThread().getId();
         if (! hasBgeeProperties()) {
@@ -783,6 +823,16 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * directory where  are located processed expression value files available for download.
      */
     private final String downloadRNASeqProcExprValueFilesRootDirectory;
+    /**
+     * A {@code String} that defines the RNA-Seq processed expression value download file
+     * directory where  are located processed expression value files available for download.
+     */
+    private final String downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory;
+    /**
+     * A {@code String} that defines the RNA-Seq processed expression value download file
+     * directory where  are located processed expression value files available for download.
+     */
+    private final String downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory;
     
     /**
      * A {@code String} that defines the multi-species differential expression download file 
@@ -922,7 +972,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     public BgeeProperties(Properties prop) {
         // First called the parent constructor, which loads the properties defined in bgee-core
         super(prop);
-        log.entry(prop);
+        log.traceEntry("{}", prop);
         log.debug("Bgee-webapp properties initialization...");
         // load the properties from properties file, System and default values
         // Initialize all properties using the injected prop first, alternatively the System
@@ -970,6 +1020,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
         downloadRNASeqProcExprValueFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
                 DOWNLOAD_RNA_SEQ_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory = getStringOption(prop, 
+                SYS_PROPS, FILE_PROPS, DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
+        downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory = getStringOption(prop, 
+                SYS_PROPS, FILE_PROPS, DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY, 
+                DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptFilesRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 JAVASCRIPT_FILES_ROOT_DIRECTORY_KEY, JAVASCRIPT_FILES_ROOT_DIRECTORY_DEFAULT);
         javascriptVersionExtension = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
@@ -1163,6 +1219,26 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getDownloadRNASeqProcExprValueFilesRootDirectory() {
         return downloadRNASeqProcExprValueFilesRootDirectory;
+    }
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          single cell RNA-Seq full length processed expression value files available 
+     *          for download, to generate URL to download files.
+     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_SC_RNA_SEQ_FL_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory() {
+        return downloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory;
+    }
+    /**
+     * @return  A {@code String} that defines the absolute root directory where are located 
+     *          single cell RNA-Seq target based processed expression value files available 
+     *          for download, to generate URL to download files.
+     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_KEY
+     * @see #DOWNLOAD_SC_RNA_SEQ_TB_PROC_EXPR_VALUE_FILES_ROOT_DIRECTORY_DEFAULT
+     */
+    public String getDownloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory() {
+        return downloadSingleCellRNASeqTargetBasedProcExprValueFilesRootDirectory;
     }
     
     /**

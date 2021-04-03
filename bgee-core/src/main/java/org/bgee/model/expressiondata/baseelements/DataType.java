@@ -1,8 +1,13 @@
 package org.bgee.model.expressiondata.baseelements;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 
@@ -22,6 +27,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * at the developmental stage studied in the <em>in situ</em>, with no report of 
  * expression by any data type, in the organ itself, or any substructure. 
  * <li>{@code RNA_SEQ}: RNA-Seq data.
+ * <li>{@code FULL_LENGTH}: Full length single cell RNA-Seq data.
  * </ul>
  * 
  * @author Frederic Bastian
@@ -31,7 +37,13 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq");
+    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq"),
+    FULL_LENGTH("full length single cell RNA-Seq");
+
+    private final static Logger log = LogManager.getLogger(DataType.class.getName());
+
+    private final static Set<EnumSet<DataType>> ALL_DATA_TYPE_COMBINATIONS = 
+            getAllPossibleDataTypeCombinations(EnumSet.allOf(DataType.class));
     
     private final String representation;
     
@@ -60,5 +72,72 @@ public enum DataType implements BgeeEnumField {
      */
     public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
+    }
+
+    public static final Set<EnumSet<DataType>> getAllPossibleDataTypeCombinations() {
+        log.traceEntry();
+        //defensive copying
+        return log.traceExit(ALL_DATA_TYPE_COMBINATIONS.stream()
+                .map(s -> EnumSet.copyOf(s))
+                .collect(Collectors.toSet()));
+    }
+    public static final Set<EnumSet<DataType>> getAllPossibleDataTypeCombinations(
+            Collection<DataType> dataTypes) {
+        log.traceEntry("{}", dataTypes);
+        if (dataTypes == null || dataTypes.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some data types must be provided."));
+        }
+        EnumSet<DataType> filteredDataTypes = EnumSet.copyOf(dataTypes);
+        Set<EnumSet<DataType>> combinations = new HashSet<>();
+        DataType[] dataTypeArr = filteredDataTypes.toArray(new DataType[filteredDataTypes.size()]);
+        final int n = dataTypeArr.length;
+        
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<DataType> combination = EnumSet.noneOf(DataType.class);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(dataTypeArr[j]);
+                }
+            }
+            //We don't want the combination where no data type is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return log.traceExit(combinations);
+    }
+    public static EnumSet<DataType> findCombinationWithGreatestOverlap(
+            Collection<EnumSet<DataType>> dataTypeCombinations, Collection<DataType> dataTypeCombination) {
+        log.traceEntry("{}, {}", dataTypeCombinations, dataTypeCombination);
+
+        Set<EnumSet<DataType>> clonedDataTypeCombinations = new HashSet<>(dataTypeCombinations);
+        EnumSet<DataType> clonedDataTypeCombination = EnumSet.copyOf(dataTypeCombination);
+
+        int bestDataTypeMatchCount = 0;
+        EnumSet<DataType>  mostMatchedCombination = null;
+        for (EnumSet<DataType> comb: clonedDataTypeCombinations) {
+            if (clonedDataTypeCombination.equals(comb)) {
+                return log.traceExit(EnumSet.copyOf(comb));
+            }
+            if (!clonedDataTypeCombination.containsAll(comb)) {
+                continue;
+            }
+            EnumSet<DataType> clonedComb = EnumSet.copyOf(comb);
+            clonedComb.retainAll(clonedDataTypeCombination);
+            int dataTypeMatchCount = clonedComb.size();
+            if (dataTypeMatchCount > bestDataTypeMatchCount) {
+                bestDataTypeMatchCount = dataTypeMatchCount;
+                mostMatchedCombination = comb;
+            }
+        }
+        if (mostMatchedCombination == null) {
+            return log.traceExit((EnumSet<DataType>) null);
+        }
+        return log.traceExit(EnumSet.copyOf(mostMatchedCombination));
     }
 }

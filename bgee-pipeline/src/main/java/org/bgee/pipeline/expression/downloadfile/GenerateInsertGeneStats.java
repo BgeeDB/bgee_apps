@@ -1208,7 +1208,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 .loadExpressionCalls(
                         new ExpressionCallFilter(null,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                null, null, obsDataFilter, null, null, null, null, null),
                         attrs,
                         null)
                 .collect(Collectors.toSet());
@@ -1224,7 +1224,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
                 .loadExpressionCalls(
                         new ExpressionCallFilter(null,
                                 Collections.singleton(geneFilter),
-                                null, null, obsDataFilter, null, null),
+                                null, null, obsDataFilter, null, null, null, null, null),
                         attrs,
                         serviceOrdering)
                 .collect(Collectors.toList());

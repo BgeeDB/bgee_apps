@@ -43,7 +43,7 @@ public interface CallType {
      * @since Bgee 13
      */
     public static enum Expression implements CallType, BgeeEnumField {
-        EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))), 
+        EXPRESSED(Collections.unmodifiableSet(EnumSet.allOf(DataType.class))),
         NOT_EXPRESSED(Collections.unmodifiableSet(
                 EnumSet.of(DataType.AFFYMETRIX, DataType.IN_SITU, DataType.RNA_SEQ)));
         private final static Logger log = LogManager.getLogger(Expression.class.getName());
@@ -62,7 +62,7 @@ public interface CallType {
         }
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
 
             boolean incorrectPropagation = false;
 
@@ -165,7 +165,7 @@ public interface CallType {
         }
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
             //no propagation allowed for any diff. expression call type.
             //log in TRACE level, since this method can simply be used to check validity
             //of a propagation state

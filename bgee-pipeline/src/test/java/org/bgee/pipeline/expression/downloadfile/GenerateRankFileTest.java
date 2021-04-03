@@ -33,6 +33,8 @@ import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
@@ -107,11 +109,11 @@ public class GenerateRankFileTest extends TestAncestor {
                 "whateverGenome", new Source(1), 0, 3, null, null, 1);
         Species spe2 = new Species(2, "my species2", null, "my", "species2",
                 "whateverGenome2", new Source(1), 0, 3, null, null, 2);
-        Condition cond1 = new Condition(anatEntity1, null, spe1);
-        Condition cond2 = new Condition(anatEntity1, devStage1, spe1);
-        Condition cond3 = new Condition(anatEntity2, devStage2, spe1);
-        Condition cond4 = new Condition(anatEntity2, null, spe2);
-        Condition cond5 = new Condition(anatEntity2, devStage1, spe2);
+        Condition cond1 = new Condition(anatEntity1, null, null, null, null, spe1);
+        Condition cond2 = new Condition(anatEntity1, devStage1, null, null, null, spe1);
+        Condition cond3 = new Condition(anatEntity2, devStage2, null, null, null, spe1);
+        Condition cond4 = new Condition(anatEntity2, null, null, null, null, spe2);
+        Condition cond5 = new Condition(anatEntity2, devStage1, null, null, null, spe2);
         Set<Condition> allConds = new HashSet<>(Arrays.asList(cond1, cond2, cond3, cond4, cond5));
 
         Gene gene1 = new Gene("gene1", spe1, new GeneBioType("type1"));
@@ -228,6 +230,11 @@ public class GenerateRankFileTest extends TestAncestor {
         when(condGraph.getDevStageOntology().getElement(cond3.getDevStageId())).thenReturn(devStage2);
         when(condGraph.getDevStageOntology().getElement(cond4.getDevStageId())).thenReturn(null);
         when(condGraph.getDevStageOntology().getElement(cond5.getDevStageId())).thenReturn(devStage1);
+        
+        Ontology<Sex, String> sexOntology = mock(Ontology.class);
+        when(condGraph.getSexOntology()).thenReturn(sexOntology);
+        Ontology<Strain, String> strainOntology = mock(Ontology.class);
+        when(condGraph.getStrainOntology()).thenReturn(strainOntology);
 
 
         OWLGraphWrapper wrapper = mock(OWLGraphWrapper.class);
@@ -311,68 +318,68 @@ public class GenerateRankFileTest extends TestAncestor {
         //spe1, only anatEntity, all datatypes
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null, null, obsDataFilter,
-                true, null)), eq(attrsNoDev), eq(null)))
+                true, null, null, null, null)), eq(attrsNoDev), eq(null)))
         .thenReturn(exprCallSupplier1.get());
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summaryBronzeCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null, null, obsDataFilter,
-                true, true)), eq(attrsWithDev), eq(condServiceOrdering)))
+                true, null, null, null, true)), eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier24.get());
         //spe1, only anatEntity, affymetrix
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null,
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null)), eq(attrsNoDev), eq(null)))
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null, null, null, null)), eq(attrsNoDev), eq(null)))
         .thenReturn(exprCallSupplier1.get());
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summaryBronzeCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null,
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true)), 
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null, null, null, true)), 
                 eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier4.get());
         //spe2, only anatEntity, all datatypes
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null, null, obsDataFilter,
-                true, null)), eq(attrsNoDev), eq(null)))
+                true, null, null, null, null)), eq(attrsNoDev), eq(null)))
         .thenReturn(exprCallSupplier6.get());
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summaryBronzeCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null, null, obsDataFilter,
-                true, true)), eq(attrsWithDev), eq(condServiceOrdering)))
+                true, true, null, null, null)), eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier7.get());
         //spe2, only anatEntity, affymetrix
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null,
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null)), eq(attrsNoDev), eq(null)))
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null, null, null, null)), eq(attrsNoDev), eq(null)))
         .thenReturn(exprCallSupplier6.get());
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summaryBronzeCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null, 
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true)), 
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, null, null, null, true)), 
                 eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier7.get());
         
         //spe1, anatEntity & stage, all datatypes
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null, null, obsDataFilter,
-                true, true)), eq(attrsWithDev), eq(condServiceOrdering)))
+                true, true, null, null, null)), eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier235.get());
         //spe1, anatEntity & stage, affymetrix
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe1.getId())), null,
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true)), 
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true, null, null, null)), 
                 eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier35.get());
         //spe2, anatEntity & stage, all datatypes
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null, null, obsDataFilter,
-                true, true)), eq(attrsWithDev), eq(condServiceOrdering)))
+                true, true, null, null, null)), eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier7.get());
         //spe2, anatEntity & stage, affymetrix
         when(callService.loadExpressionCalls(eq(new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(spe2.getId())), null,
-                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true)), 
+                Collections.singleton(DataType.AFFYMETRIX), obsDataFilter, true, true, null, null, null)), 
                 eq(attrsWithDev), eq(condServiceOrdering)))
         .thenReturn(exprCallSupplier7.get());
 
         ConditionGraphService condGraphService = mock(ConditionGraphService.class);
         when(serviceFactory.getConditionGraphService()).thenReturn(condGraphService);
-        when(condGraphService.loadConditionGraph(eq(allConds), eq(anatEntityOntology), eq(stageOntology))).thenReturn(condGraph);
+        when(condGraphService.loadConditionGraph(eq(allConds), eq(anatEntityOntology), eq(stageOntology), eq(anatEntityOntology), eq(sexOntology), eq(strainOntology))).thenReturn(condGraph);
        
         //*** Launch test ***
         GenerateRankFile generate = new GenerateRankFile(() -> serviceFactory, uberon);

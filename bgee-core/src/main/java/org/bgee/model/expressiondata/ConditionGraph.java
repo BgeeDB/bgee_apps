@@ -162,7 +162,18 @@ public class ConditionGraph {
         this.checkEntityExistence(entities.getAnatEntityIds(), anatEntityOnt);
         this.checkEntityExistence(entities.getCellTypeIds(), cellTypeOnt);
         this.checkEntityExistence(entities.getSexIds(), sexOnt);
-        this.checkEntityExistence(entities.getStrainIds(), strainOnt);
+        //For strain IDs, there can be some upper/lowercase discrepancies,
+        //the checkEntityExistence method won't work.
+        Set<String> recognizedStrainIdsLowerCase = strainOnt.getElements().stream()
+                .map(e -> e.getId().toLowerCase()).collect(Collectors.toSet());
+        Set<String> strainIdsLowerCase = entities.getStrainIds().stream()
+                .map(s -> s.toLowerCase()).collect(Collectors.toSet());
+        if (!recognizedStrainIdsLowerCase.containsAll(strainIdsLowerCase)) {
+            Set<String> unrecognizedIds = new HashSet<>(strainIdsLowerCase);
+            unrecognizedIds.removeAll(recognizedStrainIdsLowerCase);
+            throw log.throwing(new IllegalArgumentException("Some entities do not exist "
+                    + "in the provided onology: " + unrecognizedIds));
+        }
 
         this.anatEntityOnt = anatEntityOnt;
         this.devStageOnt = devStageOnt;

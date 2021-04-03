@@ -23,7 +23,6 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -672,7 +671,7 @@ public class OntologyService extends CommonService {
         Set<Strain> requestedStrains = requestedStrainIds.stream().map(s -> new Strain(s))
                 .collect(Collectors.toSet());
         log.debug("Requested strains : {}", requestedStrains);
-        Ontology<Strain, String> ont = new Ontology<Strain, String>(speciesId,
+        Ontology<Strain, String> ont = new StrainOntology(speciesId,
                 requestedStrains, rels,
                 EnumSet.of(RelationType.ISA_PARTOF),
                 this.getServiceFactory(), Strain.class);

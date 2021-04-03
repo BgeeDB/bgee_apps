@@ -42,7 +42,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     /**
      * A {@code Map} associating IDs of elements as key to the corresponding element as value.
      */
-    private final Map<U, T> elements;
+    protected final Map<U, T> elements;
 
     /**
      * A {@code Set} of {@code RelationTO}s that are the relations between elements of the ontology.

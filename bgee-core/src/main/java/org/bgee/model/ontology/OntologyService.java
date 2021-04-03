@@ -24,6 +24,7 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -632,12 +633,12 @@ public class OntologyService extends CommonService {
         Set<String> speciesStrainIds = new HashSet<>();
         if (strainIds == null || strainIds.isEmpty() ||
                 getDescendants && strainIds.contains(Condition.STRAIN_ROOT_ID)) {
-            speciesStrainIds = this.getServiceFactory().getDAOManager().getConditionDAO()
-                    .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), 
-                            EnumSet.of(ConditionDAO.Attribute.STRAIN_ID), 
-                            EnumSet.of(ConditionDAO.Attribute.STRAIN_ID))
-                            .stream().map(cond -> cond.getStrainId())
-                                .collect(Collectors.toSet());
+            speciesStrainIds = this.getServiceFactory().getDAOManager().getRawDataConditionDAO()
+                    .getRawDataConditionsBySpeciesIds(Collections.singleton(speciesId),
+                            EnumSet.of(RawDataConditionDAO.Attribute.STRAIN))
+                            .stream()
+                            .map(rawCondTO -> mapRawDataStrainToStrain(rawCondTO.getStrainId()).getId())
+                            .collect(Collectors.toSet());
         }
         // retrieve all requested strainIds
         Set<String> requestedStrainIds = new HashSet<>(strainIds == null || strainIds.isEmpty()?

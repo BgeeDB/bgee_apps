@@ -68,7 +68,7 @@ implements SamplePValueDAO  {
           .append(sampleTableName).append(".").append(getSelectExprFromAttribute(
                   SamplePValueDAO.Attribute.EXPRESSION_ID, colToAttrMap))
           .append(" IS NOT NULL AND ")
-          .append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
+          .append(sampleTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID).append(" IN (")
           .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size())).append(") ");
         return log.traceExit(sb.toString());
     }
@@ -142,7 +142,7 @@ implements SamplePValueDAO  {
         
         StringBuilder sb = new StringBuilder("SELECT DISTINCT ")
                 //geneId
-                .append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                .append(MySQLGeneDAO.BGEE_GENE_ID)
                 //sampleId
                 .append(", ").append("estLibraryId").append(" AS ")
                 .append(getSelectExprFromAttribute(SamplePValueDAO.Attribute.SAMPLE_ID, colToAttrMap))

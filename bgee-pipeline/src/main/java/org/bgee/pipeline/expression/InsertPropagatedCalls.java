@@ -79,6 +79,7 @@ import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.FDRPValue;
+import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
@@ -634,7 +635,7 @@ public class InsertPropagatedCalls extends CallService {
         }
         private PipelineCall(int bgeeGeneId, Condition condition, DataPropagation dataPropagation,
                 Collection<ExpressionCallData> callData,
-                Collection<FDRPValue> pValues, Collection<FDRPValue> bestDescendantPValues,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 Set<RawExpressionCallTO> parentSourceCallTOs, Set<RawExpressionCallTO> selfSourceCallTOs,
                 Set<RawExpressionCallTO> descendantSourceCallTOs) {
             super(null, condition, dataPropagation, pValues, bestDescendantPValues, null, null,
@@ -1197,7 +1198,14 @@ public class InsertPropagatedCalls extends CallService {
             
             //First, we retrieve the conditions not already present in the database
             Set<Condition> conds = propagatedCalls.stream()
-                    .map(c -> c.getCondition()).collect(Collectors.toSet());
+                    .flatMap(c -> {
+                        Set<Condition> callConds = c.getBestDescendantPValues().stream()
+                                .map(p -> p.getCondition())
+                                .collect(Collectors.toSet());
+                        callConds.add(c.getCondition());
+                        return callConds.stream();
+                    })
+                    .collect(Collectors.toSet());
             conds.removeAll(insertedGlobalConditions);
 
             //now we create the Map associating each Condition to insert to a generated ID for insertion
@@ -1293,7 +1301,7 @@ public class InsertPropagatedCalls extends CallService {
                     .collect(Collectors.toMap(
                             c -> convertPipelineCallToGlobalExprCallTO(
                                     EXPR_ID_COUNTER.incrementAndGet(), 
-                                    condMap.get(c.getCondition()), c), 
+                                    condMap, c), 
                             c -> c
                     ));
             log.trace("Inserting {} GlobalExpressionCallTOs", callMap.keySet().size());
@@ -1347,24 +1355,27 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(int exprId, int condId, 
-                PipelineCall pipelineCall) {
-            log.traceEntry("{}, {}, {}", exprId, condId, pipelineCall);
+        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(int exprId, 
+                Map<Condition, Integer> condMap, PipelineCall pipelineCall) {
+            log.traceEntry("{}, {}, {}", exprId, condMap, pipelineCall);
             
-            return log.traceExit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(), condId,
+            return log.traceExit(new GlobalExpressionCallTO(exprId, pipelineCall.getBgeeGeneId(),
+                    condMap.get(pipelineCall.getCondition()),
                     //GlobalMeanRank: not a real attribute of the table. Maybe we should
                     //create a subclass of GlobalExpressionCallTO to be returned by getGlobalExpressionCalls
                     null,
                     //GlobalExpressionCallDataTOs
                     convertPipelineCallToExpressionCallDataTOs(pipelineCall),
-                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getPValues()), 
-                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getBestDescendantPValues())));
+                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getPValues(), condMap), 
+                    convertFDRPValuesToDAOFDRPValues(pipelineCall.getBestDescendantPValues(), condMap)));
         }
         
-        private static Set<DAOFDRPValue> convertFDRPValuesToDAOFDRPValues(
-                Set<FDRPValue> pValues) {
+        private static <F extends FDRPValue> Set<DAOFDRPValue> convertFDRPValuesToDAOFDRPValues(
+                Set<F> pValues, Map<Condition, Integer> condMap) {
             log.traceEntry("{}", pValues);
-            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getFdrPValue(), 
+            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getFDRPValue(),
+                    (p instanceof FDRPValueCondition)?
+                            condMap.get(((FDRPValueCondition) p).getCondition()): null,
                     p.getDataTypes().stream().map( dt -> { 
                         switch (dt) {
                         case AFFYMETRIX:
@@ -1381,7 +1392,7 @@ public class InsertPropagatedCalls extends CallService {
                             throw log.throwing(new IllegalStateException(
                                     "Unsupported condition parameter: " + dt));
                         }
-                    }).collect(Collectors.toSet()))) 
+                    }).collect(Collectors.toSet())))
                     .collect(Collectors.toSet()));
 
         }
@@ -1392,17 +1403,17 @@ public class InsertPropagatedCalls extends CallService {
 
             return log.traceExit(pipelineCall.getCallData().stream()
                     .map(cd -> {
-                        //Experiment expression counts
-                        if (cd.getExperimentCounts() == null) {
-                            throw log.throwing(new IllegalArgumentException("No count found in: "
-                                    + pipelineCall));
-                        }
-                        Set<DAOExperimentCount> daoCounts = cd.getExperimentCounts().stream()
-                                .map(c -> convertExperimentExpressionCountToDAOExperimentCount(c))
-                                .collect(Collectors.toSet());
-
-                        //Propagated experiment count
-                        Integer expPropagatedCount = cd.getPropagatedExperimentCount();
+//                        //Experiment expression counts
+//                        if (cd.getExperimentCounts() == null) {
+//                            throw log.throwing(new IllegalArgumentException("No count found in: "
+//                                    + pipelineCall));
+//                        }
+//                        Set<DAOExperimentCount> daoCounts = cd.getExperimentCounts().stream()
+//                                .map(c -> convertExperimentExpressionCountToDAOExperimentCount(c))
+//                                .collect(Collectors.toSet());
+//
+//                        //Propagated experiment count
+//                        Integer expPropagatedCount = cd.getPropagatedExperimentCount();
 
                         //Rank info: computed by the Perl pipeline after generation
                         //of these global calls
@@ -1422,10 +1433,14 @@ public class InsertPropagatedCalls extends CallService {
                                 cd.getDataPropagation().isIncludingObservedData(),
                                 //DataPropagation Map
                                 daoPropStates,
+                                //self p-value observation counts
+                                cd.getSelfObservationCount(),
+                                //descendant p-value observation counts
+                                cd.getDescendantObservationCount(),
                                 //experimentCounts
-                                daoCounts,
+                                null,
                                 //propagated count
-                                expPropagatedCount,
+                                null,
                                 //rank info: computed by the Perl pipeline after generation
                                 //of these global calls
 //                                meanRank, meanRankNorm, weightForMeanRank
@@ -2161,7 +2176,7 @@ public class InsertPropagatedCalls extends CallService {
                 //in descendant conditions
                 Set<EnumSet<DataType>> allDataTypeCombs = DataType.getAllPossibleDataTypeCombinations();
                 return s.stream().map(c -> {
-                    Map<EnumSet<DataType>, FDRPValue> bestPValuePerDataTypeComb = new HashMap<>();
+                    Map<EnumSet<DataType>, FDRPValueCondition> bestPValuePerDataTypeComb = new HashMap<>();
                     Set<PipelineCall> descendantCalls = parentToDescendantConds.get(c.getCondition())
                             .stream()
                             .map(cond -> callPerCondition.get(cond))
@@ -2177,9 +2192,10 @@ public class InsertPropagatedCalls extends CallService {
                                             pValuePerDataTypeComb.keySet(), comb);
                             if (bestMatchComb != null) {
                                 FDRPValue existingPVal = pValuePerDataTypeComb.get(bestMatchComb);
-                                FDRPValue newPVal = new FDRPValue(existingPVal.getFdrPValue(), comb);
+                                FDRPValueCondition newPVal = new FDRPValueCondition(
+                                        existingPVal.getFDRPValue(), comb, descendantCall.getCondition());
                                 bestPValuePerDataTypeComb.merge(comb, newPVal,
-                                        (p1, p2) -> p1.getFdrPValue().compareTo(p2.getFdrPValue()) == -1?
+                                        (p1, p2) -> p1.getFDRPValue().compareTo(p2.getFDRPValue()) == -1?
                                             p1: p2);
                             }
                         }

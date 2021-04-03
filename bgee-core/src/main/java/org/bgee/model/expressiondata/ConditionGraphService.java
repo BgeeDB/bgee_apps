@@ -349,7 +349,7 @@ public class ConditionGraphService extends CommonService {
         }
     
         ConditionGraph condGraph = new ConditionGraph(tempConditions, inferAncestralConds, inferDescendantConds,
-                anatEntityOntToUse, devStageOntToUse, cellTypeOnt, sexOntToUse, strainOntToUse);
+                anatEntityOntToUse, devStageOntToUse, cellTypeOntToUse, sexOntToUse, strainOntToUse);
         log.debug("ConditionGraph created in {} ms", System.currentTimeMillis() - startTimeInMs);
         return log.traceExit(condGraph);
     }

@@ -171,7 +171,7 @@ public class CommandRunner {
      *                                  the class performing the action.
      */
     public static void main(String[] args) throws IllegalArgumentException, Exception {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
         
         loadLogConfig();
         
@@ -329,7 +329,7 @@ public class CommandRunner {
      * @return      A {@code String} that is a filtered value corresponding to {@code arg}.
      */
     public static String parseArgument(String arg) {
-        log.entry(arg);
+        log.traceEntry("{}", arg);
         if (arg == null || arg.trim().equals(EMPTY_ARG)) {
             return log.traceExit((String) null);
         }
@@ -345,7 +345,7 @@ public class CommandRunner {
      * @return      A {@code boolean} value corresponding to {@code arg}.
      */
     public static boolean parseArgumentAsBoolean(String arg) {
-        log.entry(arg);
+        log.traceEntry("{}", arg);
         if (arg != null && (arg.trim().equalsIgnoreCase("1") ||
                 arg.trim().equalsIgnoreCase("true"))) {
             return log.traceExit(true);
@@ -361,7 +361,7 @@ public class CommandRunner {
      * @return           See returned value in {@link #parseListArgument(String, Class)}.
      */
     public static List<String> parseListArgument(String listArg) {
-        log.entry(listArg);
+        log.traceEntry("{}", listArg);
 
         return log.traceExit(CommandRunner.parseListArgument(listArg, String.class));
     }
@@ -373,7 +373,7 @@ public class CommandRunner {
      * @return           See returned value in {@link #parseListArgument(String, Class)}.
      */
     public static List<Integer> parseListArgumentAsInt(String listArg) {
-        log.entry(listArg);
+        log.traceEntry("{}", listArg);
 
         return log.traceExit(CommandRunner.parseListArgument(listArg, Integer.class));
     }
@@ -390,7 +390,7 @@ public class CommandRunner {
      *                  of {@code listArg}, according to {@code LIST_SEPARATOR}.
      */
     private static <T> List<T> parseListArgument(String listArg, Class<T> type) {
-        log.entry(listArg, type);
+        log.traceEntry("{}, {}", listArg, type);
 
         List<T> resultingList = new ArrayList<T>();
         listArg = listArg.trim();
@@ -423,7 +423,7 @@ public class CommandRunner {
      * @see #VALUE_SEPARATOR
      */
     public static LinkedHashMap<String, List<String>> parseMapArgument(String mapArg) {
-        log.entry(mapArg);
+        log.traceEntry("{}", mapArg);
         return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, String.class));
     }
     /**
@@ -437,7 +437,7 @@ public class CommandRunner {
      * @see #VALUE_SEPARATOR
      */
     public static LinkedHashMap<String, List<Integer>> parseMapArgumentAsInteger(String mapArg) {
-        log.entry(mapArg);
+        log.traceEntry("{}", mapArg);
         return log.traceExit(CommandRunner.parseMapArgument(mapArg, String.class, Integer.class));
     }
     /**
@@ -451,7 +451,7 @@ public class CommandRunner {
      * @see #VALUE_SEPARATOR
      */
     public static LinkedHashMap<Integer, List<Integer>> parseMapArgumentAsAllInteger(String mapArg) {
-        log.entry(mapArg);
+        log.traceEntry("{}", mapArg);
         return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, Integer.class));
     }
     /**
@@ -465,7 +465,7 @@ public class CommandRunner {
      * @see #VALUE_SEPARATOR
      */
     public static LinkedHashMap<Integer, List<String>> parseMapArgumentAsIntKeysStringValues(String mapArg) {
-        log.entry(mapArg);
+        log.traceEntry("{}", mapArg);
         return log.traceExit(CommandRunner.parseMapArgument(mapArg, Integer.class, String.class));
     }
 
@@ -490,7 +490,7 @@ public class CommandRunner {
      */
     private static <T, U> LinkedHashMap<T, List<U>> parseMapArgument(String mapArg, Class<T> keyType, 
             Class<U> valueType) {
-        log.entry(mapArg, keyType, valueType);
+        log.traceEntry("{}, {}, {}", mapArg, keyType, valueType);
 
         LinkedHashMap<T, List<U>> resultingMap = new LinkedHashMap<T, List<U>>();
         mapArg = mapArg.trim();

@@ -116,6 +116,31 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
         Collection<Attribute> conditionParameters, Collection<Attribute> attributes) 
             throws DAOException, IllegalArgumentException;
+
+    /**
+     * Retrieve the correspondence between raw condition and global conditions, represented as
+     * {@code GlobalConditionToRawConditionTO}s.
+     * <p>
+     * The results are retrieved and returned as a {@code GlobalConditionToRawConditionTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet}
+     * once results are retrieved.
+     *
+     * @param speciesIds                    A {@code Collection} of {@code Integer}s that are the IDs
+     *                                      of species allowing to filter the results to retrieve.
+     *                                      If {@code null} or empty, results for all species are retrieved.
+     * @param conditionParameters           A {@code Collection} of {@code ConditionDAO.Attribute}s
+     *                                      defining the condition parameters of the global conditions
+     *                                      to retrieve mappings for.
+     *                                      (see {@link Attribute#isConditionParameter()}).
+     * @return                              A {@code GlobalConditionToRawConditionTOResultSet}
+     *                                      allowing to retrieve the requested
+     *                                      {@code GlobalConditionToRawConditionTO}s.
+     * @throws DAOException
+     * @throws IllegalArgumentException
+     */
+    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
+        Collection<Integer> speciesIds, Collection<Attribute> conditionParameters)
+            throws DAOException, IllegalArgumentException;
     
     /**
      * Retrieve the maximum of global condition IDs, used in the global expression data,

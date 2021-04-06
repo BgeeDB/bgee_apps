@@ -130,6 +130,40 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         return log.traceExit(this.getConditionsBySpeciesIds(speciesIds, conditionParameters, attributes));
     }
 
+    @Override
+    public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
+            Collection<Integer> speciesIds, Collection<ConditionDAO.Attribute> conditionParameters)
+                throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}, {}", speciesIds, conditionParameters);
+
+        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
+            new HashSet<>(speciesIds));
+        String tableName = "globalCondToCond";
+        String globalCondTableName = "globalCond";
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ").append(tableName).append(".* FROM ").append(tableName)
+          .append(" INNER JOIN ").append(globalCondTableName)
+          .append(" ON ").append(globalCondTableName).append(".globalConditionId = ")
+          .append(tableName).append(".globalConditionId")
+          .append(" WHERE ")
+          .append(getCondParamCombinationWhereClause(globalCondTableName, conditionParameters));
+        if (!speIds.isEmpty()) {
+            sb.append(" AND ")
+              .append(globalCondTableName).append(".").append(SPECIES_ID).append(" IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
+              .append(")");
+        }
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            if (!speIds.isEmpty()) {
+                stmt.setIntegers(1, speIds, true);
+            }
+            return log.traceExit(new MySQLGlobalConditionToRawConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
 
     private ConditionTOResultSet getConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<ConditionDAO.Attribute> conditionParameters, 

@@ -198,6 +198,9 @@ public class InsertPropagatedCalls extends CallService {
      * and 1000 genes will be retrieved for the second species. Can be {@code null}
      * (see {@link CommandRunner#EMPTY_ARG}). A value of 0 is equivalent of a {@code null} value
      * (no effect, all genes for each species are retrieved).
+     * <li>A {@code boolean} defining whether global conditions should be computed and inserted
+     * along with the propagation of calls (if {@code true}), or if there were already computed
+     * and inserted, and should be retrieved from the database to propagate the calls (if {@code false}).
      * </ol>
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
@@ -206,7 +209,7 @@ public class InsertPropagatedCalls extends CallService {
     public static void main(String[] args) throws DAOException {
         log.traceEntry("{}", (Object[]) args);
 
-        int expectedArgLength = 4;
+        int expectedArgLength = 5;
 
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
@@ -220,6 +223,7 @@ public class InsertPropagatedCalls extends CallService {
                 0 : Integer.parseInt(CommandRunner.parseArgument(args[2]));
         int geneRowCount = CommandRunner.parseArgument(args[3]) == null ?
                 0 : Integer.parseInt(CommandRunner.parseArgument(args[3]));
+        boolean computeInsertGlobalCond = CommandRunner.parseArgumentAsBoolean(args[4]);
         //we keep the order of combinations requested by the user
         Set<ConditionDAO.Attribute> condParams = condParamArg.stream()
                 .distinct()
@@ -234,7 +238,8 @@ public class InsertPropagatedCalls extends CallService {
                     + condParams));
         }
 
-        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, condParams);
+        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, computeInsertGlobalCond,
+                condParams);
 
         log.traceExit();
     }
@@ -826,6 +831,9 @@ public class InsertPropagatedCalls extends CallService {
     private static class PipelineGlobalCondToRawCondTO extends GlobalConditionToRawConditionTO {
         private static final long serialVersionUID = -4710796651567000694L;
 
+        public PipelineGlobalCondToRawCondTO(GlobalConditionToRawConditionTO to) {
+            this(to.getRawConditionId(), to.getGlobalConditionId(), to.getConditionRelationOrigin());
+        }
         public PipelineGlobalCondToRawCondTO(Integer rawConditionId, Integer globalConditionId,
                 ConditionRelationOrigin conditionRelationOrigin) {
             super(rawConditionId, globalConditionId, conditionRelationOrigin);
@@ -986,10 +994,34 @@ public class InsertPropagatedCalls extends CallService {
          * used by this object.
          */
         private final InsertPropagatedCalls callPropagator;
+        /**
+         * A {@code Map} where keys are {@code Condition}s already inserted into the database
+         * for the requested species before doing the call propagation, the associating value
+         * being an {@code Integer} that is the related global condition ID.
+         */
+        private final Map<Condition, Integer> globalCondsAlreadyInsertedMap;
+        /**
+         * A {@code Set} of {@code GlobalCondToRawCondTO}s already inserted into the database
+         * for the requested species before doing the call propagation.
+         */
+        private final Set<PipelineGlobalCondToRawCondTO> globalCondToRawConds;
 
-        private InsertJob(InsertPropagatedCalls callPropagator) {
-            log.traceEntry("{}", callPropagator);
+        private InsertJob(InsertPropagatedCalls callPropagator,
+                Map<Condition, Integer> globalCondsAlreadyInsertedMap,
+                Set<PipelineGlobalCondToRawCondTO> globalCondToRawConds) {
+            log.traceEntry("{}, {}, {}", callPropagator, globalCondsAlreadyInsertedMap, globalCondToRawConds);
+            if (!callPropagator.computeAndInsertGlobalCond &&
+                    (globalCondsAlreadyInsertedMap == null || globalCondsAlreadyInsertedMap.isEmpty() ||
+                            globalCondToRawConds == null || globalCondToRawConds.isEmpty())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Some global conditions should have already been computed and inserted."));
+            }
             this.callPropagator = callPropagator;
+            this.globalCondsAlreadyInsertedMap = Collections.unmodifiableMap(
+                    globalCondsAlreadyInsertedMap == null ? new HashMap<>() :
+                    new HashMap<>(globalCondsAlreadyInsertedMap));
+            this.globalCondToRawConds = Collections.unmodifiableSet(globalCondToRawConds == null ?
+                    new HashSet<>() : new HashSet<>(globalCondToRawConds));
         }
 
         @Override
@@ -1003,21 +1035,24 @@ public class InsertPropagatedCalls extends CallService {
             final ConditionDAO condDAO = daoManager.getConditionDAO();
             final GlobalExpressionCallDAO exprDAO = daoManager.getGlobalExpressionCallDAO();
             //in order to insert globalConditions
-            final Map<Condition, Integer> insertedCondMap = new HashMap<>();
+            final Map<Condition, Integer> insertedCondMap = new HashMap<>(
+                    this.globalCondsAlreadyInsertedMap);
             //relations between globalConditions and raw conditions
-            final Set<PipelineGlobalCondToRawCondTO> globalCondToRawConds = new HashSet<>();
+            final Set<PipelineGlobalCondToRawCondTO> globalCondToRawConds = new HashSet<>(
+                    this.globalCondToRawConds);
             
             boolean errorInThisThread = false;
             int groupsInserted = 0;
             try {
-                //First, make sure there is no already propagated conditions existing for this species
-                //for all requested combinations of condition parameters
-                if (condDAO.getGlobalConditionsBySpeciesIds(
+                //If all the global conds should have been inserted already
+                if (!this.callPropagator.computeAndInsertGlobalCond &&
+                        condDAO.getGlobalConditionsBySpeciesIds(
                                 Collections.singleton(this.callPropagator.speciesId),
                                 this.callPropagator.condParams, null)
-                        .stream().anyMatch(e -> true)) {
+                        .stream().noneMatch(e -> true)) {
                     throw log.throwing(new IllegalStateException(
-                            "Global conditions already exist for species " + this.callPropagator.speciesId));
+                            "Global conditions should have been inserted for species " +
+                            this.callPropagator.speciesId));
                 }
                 
                 boolean firstInsert = true;
@@ -1082,6 +1117,10 @@ public class InsertPropagatedCalls extends CallService {
                     // Here, we insert new conditions, and add them to the known conditions
                     Map<Condition, Integer> newCondMap = this.insertNewGlobalConditions(
                             toInsert, insertedCondMap.keySet(), condDAO);
+                    if (!this.callPropagator.computeAndInsertGlobalCond && !newCondMap.isEmpty()) {
+                        throw log.throwing(new IllegalStateException(
+                                "All globalConditions should have been inserted already"));
+                    }
                     if (!Collections.disjoint(insertedCondMap.keySet(), newCondMap.keySet())) {
                         throw log.throwing(new IllegalStateException("Error, new conditions already seen. "
                                 + "new conditions: " + newCondMap.keySet() + " - existing conditions: "
@@ -1101,6 +1140,11 @@ public class InsertPropagatedCalls extends CallService {
                     Set<PipelineGlobalCondToRawCondTO> newGlobalCondToRawConds =
                             this.insertGlobalCondToRawConds(toInsert, globalCondToRawConds,
                                     insertedCondMap, condDAO);
+                    if (!this.callPropagator.computeAndInsertGlobalCond &&
+                            !newGlobalCondToRawConds.isEmpty()) {
+                        throw log.throwing(new IllegalStateException(
+                                "All globalConditions should have been inserted already"));
+                    }
                     if (!Collections.disjoint(globalCondToRawConds, newGlobalCondToRawConds)) {
                         throw log.throwing(new IllegalStateException("Error, new condition relations already seen. "
                                 + "new relations: " + newGlobalCondToRawConds + " - existing relations: "
@@ -1572,28 +1616,36 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * 
      * @param speciesIds
-     * @param geneOffset    An {@code int} that is the offset parameter to retrieve genes
-     *                      to insert data for, for each of the requested species independently.
-     *                      For instance, if two species and an offset of 1000 were requested,
-     *                      the first gene retrieved for the first species will have offset 1000
-     *                      among the genes of that species, the first gene retrieved
-     *                      for the second species will have offset 1000 among the genes
-     *                      of that other species.
-     * @param geneRowCount  An {@code int} that is the row_count parameter to retrieve genes
-     *                      to insert data for, for each of the requested species independently.
-     *                      For instance, if two species and a row count of 1000 were requested,
-     *                      1000 genes will be retrieved for the first species, and 1000 genes
-     *                      for the second species. If 0, all genes for the requested species
-     *                      are retrieved.
-     * @param condParams    A {@code Set} of {@code ConditionDAO.Attribute}s that are requested
-     *                      for queries, allowing to determine which condition
-     *                      and expression information to target.
+     * @param geneOffset                An {@code int} that is the offset parameter to retrieve genes
+     *                                  to insert data for, for each of the requested species
+     *                                  independently. For instance, if two species and an offset
+     *                                  of 1000 were requested, the first gene retrieved
+     *                                  for the first species will have offset 1000
+     *                                  among the genes of that species, the first gene retrieved
+     *                                  for the second species will have offset 1000 among the genes
+     *                                  of that other species.
+     * @param geneRowCount              An {@code int} that is the row_count parameter to retrieve genes
+     *                                  to insert data for, for each of the requested species
+     *                                  independently. For instance, if two species and a row count
+     *                                  of 1000 were requested, 1000 genes will be retrieved
+     *                                  for the first species, and 1000 genes for the second species.
+     *                                  If 0, all genes for the requested species are retrieved.
+     * @param computeInsertGlobalCond   A {@code boolean} defining whether global conditions
+     *                                  should be computed and inserted at the same time as
+     *                                  the propagated calls (if {@code true}), or whether they were
+     *                                  already computed and should be retrieved from the database
+     *                                  (if {@code false}).
+     * @param condParams                A {@code Set} of {@code ConditionDAO.Attribute}s,
+     *                                  defining the condition parameters that 
+     *                                  are requested for queries, allowing to determine 
+     *                                  which condition and expression information to target.
      */
     public static void insert(List<Integer> speciesIds, int geneOffset, int geneRowCount,
-            Set<ConditionDAO.Attribute> condParams) {
-        log.traceEntry("{}, {}, {}, {}", speciesIds, geneOffset, geneRowCount, condParams);
-        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, condParams,
-                DAOManager::getDAOManager, ServiceFactory::new);  
+            boolean computeInsertGlobalCond, Set<ConditionDAO.Attribute> condParams) {
+        log.traceEntry("{}, {}, {}, {}, {}", speciesIds, geneOffset, geneRowCount,
+                computeInsertGlobalCond, condParams);
+        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, computeInsertGlobalCond,
+                condParams, DAOManager::getDAOManager, ServiceFactory::new);  
         log.traceExit();
     }
     /**
@@ -1617,6 +1669,11 @@ public class InsertPropagatedCalls extends CallService {
      *                                  of 1000 were requested, 1000 genes will be retrieved
      *                                  for the first species, and 1000 genes for the second species.
      *                                  If 0, all genes for the requested species are retrieved.
+     * @param computeInsertGlobalCond   A {@code boolean} defining whether global conditions
+     *                                  should be computed and inserted at the same time as
+     *                                  the propagated calls (if {@code true}), or whether they were
+     *                                  already computed and should be retrieved from the database
+     *                                  (if {@code false}).
      * @param condParams                A {@code Set} of {@code ConditionDAO.Attribute}s,
      *                                  defining the condition parameters that 
      *                                  are requested for queries, allowing to determine 
@@ -1626,11 +1683,11 @@ public class InsertPropagatedCalls extends CallService {
      *                                  and returning a new {@code ServiceFactory}.
      */
     public static void insert(List<Integer> speciesIds, int geneOffset, int geneRowCount,
-            Set<ConditionDAO.Attribute> condParams, 
+            boolean computeInsertGlobalCond, Set<ConditionDAO.Attribute> condParams, 
             final Supplier<DAOManager> daoManagerSupplier, 
             final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, geneOffset, geneRowCount,
-                condParams, daoManagerSupplier, serviceFactoryProvider);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", speciesIds, geneOffset, geneRowCount,
+                computeInsertGlobalCond, condParams, daoManagerSupplier, serviceFactoryProvider);
 
         // Sanity checks on attributes
         if (condParams == null || condParams.isEmpty()) {
@@ -1673,7 +1730,7 @@ public class InsertPropagatedCalls extends CallService {
                 //can provide a new connection to each parallel thread.
                 InsertPropagatedCalls insert = new InsertPropagatedCalls(
                         () -> serviceFactoryProvider.apply(daoManagerSupplier.get()), 
-                        clonedCondParams, speciesId, geneOffset, geneRowCount);
+                        clonedCondParams, speciesId, geneOffset, geneRowCount, computeInsertGlobalCond);
                 insert.insertOneSpecies();
             });
         }
@@ -1691,6 +1748,12 @@ public class InsertPropagatedCalls extends CallService {
      * @see #geneOffset;
      */
     private final int geneRowCount;
+    /**
+     * A {@code boolean} defining whether global conditions should be computed and inserted
+     * at the same time as the propagated calls (if {@code true}), or whether they were
+     * already computed and should be retrieved from the database (if {@code false}).
+     */
+    private final boolean computeAndInsertGlobalCond;
     /**
      * A {@code volatile} {@code Throwable} allowing to notify all threads when an error occurs,
      * and to store the actual error that occurred.
@@ -1760,7 +1823,8 @@ public class InsertPropagatedCalls extends CallService {
 
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
-            Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount) {
+            Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
+            boolean computeAndInsertGlobalCond) {
         super(serviceFactorySupplier.get());
         if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
@@ -1778,6 +1842,7 @@ public class InsertPropagatedCalls extends CallService {
         this.speciesId = speciesId;
         this.geneOffset = geneOffset;
         this.geneRowCount = geneRowCount;
+        this.computeAndInsertGlobalCond = computeAndInsertGlobalCond;
         //use a LinkedBlockingDeque because we are going to do lots of insert/remove,
         //and because we don't care about element order. We are going to block
         //if there are too many results waiting to be inserted, to not overload the memory
@@ -1797,10 +1862,7 @@ public class InsertPropagatedCalls extends CallService {
         log.info("Start inserting of propagated calls for the species {} with combinations of condition parameters {}...",
             this.speciesId, this.condParams);
 
-        //PARALLEL EXECUTION: here we create the independent thread responsible for
-        //inserting the data into the data source
-        Thread insertThread = new Thread(new InsertJob(this));
-
+        Thread insertThread = null;
         // close connection to database between each species, to avoid idle
         // connection reset or for parallel execution
         try (DAOManager mainManager = this.getDaoManager()) {
@@ -1808,33 +1870,37 @@ public class InsertPropagatedCalls extends CallService {
             Species species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
                     Collections.singleton(this.speciesId), false).iterator().next();
             
-            //First, we retrieve the conditions already present in database.
+            //First, we retrieve the raw conditions already present in database.
             final Map<Integer, RawDataCondition> rawCondMap = Collections.unmodifiableMap(
                     this.loadRawConditionMap(Collections.singleton(species)));
             log.info("{} Conditions for species {}", rawCondMap.size(), speciesId);
+            //Retrieve the global conditions and mappings to raw conditions already inserted
+            final Map<Condition, Integer> globalCondAlreadyInserted = loadGlobalConditionMap(
+                    Collections.singleton(species), this.condParams,
+                    null, mainManager.getConditionDAO(),
+                    this.getServiceFactory().getAnatEntityService(),
+                    this.getServiceFactory().getDevStageService(),
+                    this.getServiceFactory().getSexService(),
+                    this.getServiceFactory().getStrainService())
+                    .entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey()));
+            final Set<PipelineGlobalCondToRawCondTO> globalCondToCondAlreadyInserted =
+                    mainManager.getConditionDAO().getGlobalCondToRawCondBySpeciesIds(
+                            Collections.singleton(this.speciesId), this.condParams)
+                    .stream().map(gctc -> new PipelineGlobalCondToRawCondTO(gctc))
+                    .collect(Collectors.toSet());
 
             // We use all existing conditions in the species, and infer all propagated conditions
             log.info("Starting condition inference...");
             ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
-            ConditionGraph conditionGraph = condGraphService.loadConditionGraph(rawCondMap.values()
+            final ConditionGraph conditionGraph = this.computeAndInsertGlobalCond ?
+                    condGraphService.loadConditionGraph(rawCondMap.values()
                     .stream().map(rawCond -> mapRawDataConditionToCondition(rawCond))
                     .collect(Collectors.toSet()),
                           //We do not propagate to descendant conditions anymore
-                    true, false);
-            //Compute a Map parent -> descendants
-            //We can dot it here since we don't infer all descendant conditions,
-            //otherwise it would be too costly and we should do it only after omputing calls,
-            //only for the conditions with calls.
-            Map<Condition, Set<Condition>> parentToDescendantConds = conditionGraph.getConditions()
-                    .stream()
-                    .flatMap(cond -> this.condToAncestors.computeIfAbsent(
-                        cond, 
-                        k -> conditionGraph.getAncestorConditions(k)).stream()
-                            .map(parent -> new AbstractMap.SimpleEntry<>(parent,
-                                    new HashSet<>(Arrays.asList(cond)))))
-                    .collect(Collectors.toMap(e -> e.getKey(),
-                            e -> e.getValue(),
-                            (v1, v2) -> {v1.addAll(v2); return v1;}));
+                    true, false) :
+                    condGraphService.loadConditionGraph(globalCondAlreadyInserted.keySet(),
+                            false, false);
             log.info("Done condition inference.");
             
             //we retrieve the IDs of genes with expression data. This is because making the computation
@@ -1853,6 +1919,12 @@ public class InsertPropagatedCalls extends CallService {
             //but do not close the manager because of the try-with-resource clause.
             mainManager.releaseResources();
 
+            //PARALLEL EXECUTION: here we create the independent thread responsible for
+            //inserting the data into the data source
+            insertThread = new Thread(new InsertJob(this, globalCondAlreadyInserted,
+                    globalCondToCondAlreadyInserted));
+            //just to be accessible from the Stream to notify of exceptions
+            final Thread localInsertThread = insertThread;
             //PARALLEL EXECUTION: start the insertion Thread
             insertThread.start();
 
@@ -1891,7 +1963,6 @@ public class InsertPropagatedCalls extends CallService {
                     final Stream<Set<PipelineCall>> propagatedCalls =
                             this.generatePropagatedCalls(
                                     new HashSet<>(subsetGeneIds), rawCondMap, conditionGraph,
-                                    parentToDescendantConds,
                                     rawCallDAO, expExprDAO, samplePValueDAO);
                     
                     //Provide the calls to insert to the Thread managing the insertions
@@ -1906,13 +1977,13 @@ public class InsertPropagatedCalls extends CallService {
                                     set.size());
                             this.callsToInsert.put(set);
                         } catch (InterruptedException e) {
-                            this.exceptionOccurs(e, insertThread);
+                            this.exceptionOccurs(e, localInsertThread);
                         }
                     });
                     
                     log.debug("Done processing {} genes.", subsetGeneIds.size());
                 } catch (Exception e) {
-                    this.exceptionOccurs(e, insertThread);
+                    this.exceptionOccurs(e, localInsertThread);
                 }
             });
             
@@ -2133,12 +2204,10 @@ public class InsertPropagatedCalls extends CallService {
      */
     private Stream<Set<PipelineCall>> generatePropagatedCalls(
             Set<Integer> geneIds, Map<Integer, RawDataCondition> condMap, ConditionGraph conditionGraph,
-            Map<Condition, Set<Condition>> parentToDescendantConds,
             RawExpressionCallDAO rawCallDAO, ExperimentExpressionDAO expExprDAO,
             SamplePValueDAO samplePValueDAO) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph,
-                parentToDescendantConds, rawCallDAO,
-                expExprDAO, samplePValueDAO);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneIds, condMap, conditionGraph,
+                rawCallDAO, expExprDAO, samplePValueDAO);
         
         log.trace(COMPUTE_MARKER, "Creating Splitereator with DAO queries...");
         this.checkErrorOccurred();
@@ -2280,7 +2349,19 @@ public class InsertPropagatedCalls extends CallService {
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
                 //Now, for each call, and for each combinations of data types,
                 //we are going to retrieve the best corrected p-value among the calls
-                //in descendant conditions
+                //in descendant conditions.
+                //Compute a Map parent -> descendants
+                Map<Condition, Set<Condition>> parentToDescendantConds = callPerCondition.keySet()
+                        .stream()
+                        .flatMap(cond -> this.condToAncestors.computeIfAbsent(
+                            cond, 
+                            k -> conditionGraph.getAncestorConditions(k)).stream()
+                                .filter(parent -> callPerCondition.containsKey(parent))
+                                .map(parent -> new AbstractMap.SimpleEntry<>(parent,
+                                        new HashSet<>(Arrays.asList(cond)))))
+                        .collect(Collectors.toMap(e -> e.getKey(),
+                                e -> e.getValue(),
+                                (v1, v2) -> {v1.addAll(v2); return v1;}));
                 Set<EnumSet<DataType>> allDataTypeCombs = DataType.getAllPossibleDataTypeCombinations();
                 return s.stream().map(c -> {
                     Map<EnumSet<DataType>, FDRPValueCondition> bestPValuePerDataTypeComb = new HashMap<>();

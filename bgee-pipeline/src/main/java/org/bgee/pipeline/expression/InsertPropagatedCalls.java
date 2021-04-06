@@ -1,6 +1,7 @@
 package org.bgee.pipeline.expression;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -209,23 +210,48 @@ public class InsertPropagatedCalls extends CallService {
     public static void main(String[] args) throws DAOException {
         log.traceEntry("{}", (Object[]) args);
 
-        int expectedArgLength = 5;
+        if (args[0].equals("insertCalls")) {
+            int expectedArgLength = 6;
 
-        if (args.length != expectedArgLength) {
-            throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
-                "provided, expected " + expectedArgLength + " arguments, " + args.length + 
-                " provided."));
+            if (args.length != expectedArgLength) {
+                throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                        "provided, expected " + expectedArgLength + " arguments, " + args.length +
+                        " provided."));
+            }
+
+            List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[1]);
+            List<String> condParamArg = CommandRunner.parseListArgument(args[2]);
+            int geneOffset = CommandRunner.parseArgument(args[3]) == null ?
+                    0 : Integer.parseInt(CommandRunner.parseArgument(args[3]));
+            int geneRowCount = CommandRunner.parseArgument(args[4]) == null ?
+                    0 : Integer.parseInt(CommandRunner.parseArgument(args[4]));
+            boolean computeInsertGlobalCond = CommandRunner.parseArgumentAsBoolean(args[5]);
+            //we keep the order of combinations requested by the user
+            Set<ConditionDAO.Attribute> condParams = getCondParamsFromArg(condParamArg);
+
+            InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, computeInsertGlobalCond,
+                    condParams);
+        } else if (args[0].equals("insertGlobalConditions")) {
+            int expectedArgLength = 3;
+            if (args.length != expectedArgLength) {
+                throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
+                        "provided, expected " + expectedArgLength + " arguments, " + args.length +
+                        " provided."));
+            }
+
+            List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[1]);
+            List<String> condParamArg = CommandRunner.parseListArgument(args[2]);
+            InsertPropagatedCalls.insertGlobalConditions(speciesIds, getCondParamsFromArg(condParamArg),
+                    DAOManager::getDAOManager, ServiceFactory::new);
+        } else {
+            throw log.throwing(new IllegalArgumentException("Unrecognized action: " + args[0]));
         }
 
-        List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
-        List<String> condParamArg = CommandRunner.parseListArgument(args[1]);
-        int geneOffset = CommandRunner.parseArgument(args[2]) == null ?
-                0 : Integer.parseInt(CommandRunner.parseArgument(args[2]));
-        int geneRowCount = CommandRunner.parseArgument(args[3]) == null ?
-                0 : Integer.parseInt(CommandRunner.parseArgument(args[3]));
-        boolean computeInsertGlobalCond = CommandRunner.parseArgumentAsBoolean(args[4]);
-        //we keep the order of combinations requested by the user
-        Set<ConditionDAO.Attribute> condParams = condParamArg.stream()
+        log.traceExit();
+    }
+    private static Set<ConditionDAO.Attribute> getCondParamsFromArg(List<String> arg) {
+        log.traceEntry("{}", arg);
+        Set<ConditionDAO.Attribute> condParams = arg.stream()
                 .distinct()
                 .map(p -> ConditionDAO.Attribute.valueOf(p))
                 .collect(Collectors.toSet());
@@ -237,11 +263,7 @@ public class InsertPropagatedCalls extends CallService {
             throw log.throwing(new IllegalArgumentException("Unrecognized condition parameters: "
                     + condParams));
         }
-
-        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, computeInsertGlobalCond,
-                condParams);
-
-        log.traceExit();
+        return log.traceExit(condParams);
     }
 
     /**
@@ -1091,7 +1113,13 @@ public class InsertPropagatedCalls extends CallService {
                         int i = 0;
                         TRANSACTION: while (true) {
                             try {
-                                ((MySQLDAOManager) daoManager).getConnection().startTransaction();
+                                //TODO: reimplement properly in MySQLDAOManager.
+                                //I do it here because I want to turn autocommit to true before setting the transaction level,
+                                //to be sure it's properly set for the next transaction
+                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(true);
+                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection()
+                                .setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(false);
                                 break TRANSACTION;
                             } catch (Exception e) {
                                 if (i < maxAttempt - 1) {
@@ -1115,8 +1143,17 @@ public class InsertPropagatedCalls extends CallService {
                     }
 
                     // Here, we insert new conditions, and add them to the known conditions
-                    Map<Condition, Integer> newCondMap = this.insertNewGlobalConditions(
-                            toInsert, insertedCondMap.keySet(), condDAO);
+                    Map<Condition, Integer> newCondMap = InsertPropagatedCalls
+                            .insertNewGlobalConditions(toInsert.stream()
+                                    .flatMap(c -> {
+                                        Set<Condition> callConds = c.getBestDescendantPValues().stream()
+                                                .map(p -> p.getCondition())
+                                                .collect(Collectors.toSet());
+                                        callConds.add(c.getCondition());
+                                        return callConds.stream();
+                                    })
+                                    .collect(Collectors.toSet()),
+                                    insertedCondMap.keySet(), condDAO);
                     if (!this.callPropagator.computeAndInsertGlobalCond && !newCondMap.isEmpty()) {
                         throw log.throwing(new IllegalStateException(
                                 "All globalConditions should have been inserted already"));
@@ -1138,8 +1175,8 @@ public class InsertPropagatedCalls extends CallService {
                     //without needing the table globalExpressionToExpression, that was very much too large
                     //(more than 10 billions rows for 29 species).
                     Set<PipelineGlobalCondToRawCondTO> newGlobalCondToRawConds =
-                            this.insertGlobalCondToRawConds(toInsert, globalCondToRawConds,
-                                    insertedCondMap, condDAO);
+                            InsertPropagatedCalls.insertGlobalCondToRawCondsFromCalls(toInsert,
+                                    globalCondToRawConds, insertedCondMap, condDAO);
                     if (!this.callPropagator.computeAndInsertGlobalCond &&
                             !newGlobalCondToRawConds.isEmpty()) {
                         throw log.throwing(new IllegalStateException(
@@ -1167,7 +1204,7 @@ public class InsertPropagatedCalls extends CallService {
                     
                     
                     // And we finish by inserting the computed calls
-                    this.insertPropagatedCalls(toInsert, insertedCondMap, exprDAO);
+                    insertPropagatedCalls(toInsert, insertedCondMap, exprDAO);
                     log.debug("{} calls inserted for one gene", toInsert.size());
                     
                     log.trace(INSERTION_MARKER, "Calls inserted.");
@@ -1199,10 +1236,12 @@ public class InsertPropagatedCalls extends CallService {
                         //for unknown reason
                         if (this.callPropagator.jobCompleted && this.callPropagator.errorOccured == null) {
                             log.info("{} genes inserted, committing transaction", groupsInserted);
-                            ((MySQLDAOManager) daoManager).getConnection().commit();
+                            ((MySQLDAOManager) daoManager).getConnection().getRealConnection().commit();
+                            ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(true);
                         } else {
                             log.info("Rollbacking transaction");
-                            ((MySQLDAOManager) daoManager).getConnection().rollback();
+                            ((MySQLDAOManager) daoManager).getConnection().getRealConnection().rollback();
+                            ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(true);
                         }
                     } catch (SQLException e) {
                         if (errorInThisThread) {
@@ -1247,117 +1286,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        /**
-         * 
-         * @param propagatedCalls           A {@code Set} of {@code PipelineCall}s that are 
-         *                                  all the calls for one gene.
-         * @param insertedGlobalConditions  A {@code Set} of {@code Condition}s already inserted
-         *                                  into the database.
-         * @param condDAO                   A {@code ConditionDAO} to perform the insertions.
-         * @return  A {@code Map} containing only newly inserted {@code Condition}s as keys, 
-         *          associated to their corresponding {@code Integer} ID.
-         */
-        private Map<Condition, Integer> insertNewGlobalConditions(Set<PipelineCall> propagatedCalls,
-                Set<Condition> insertedGlobalConditions, ConditionDAO condDAO) {
-            log.traceEntry("{}, {}, {}", propagatedCalls, insertedGlobalConditions, condDAO);
-            
-            //First, we retrieve the conditions not already present in the database
-            Set<Condition> conds = propagatedCalls.stream()
-                    .flatMap(c -> {
-                        Set<Condition> callConds = c.getBestDescendantPValues().stream()
-                                .map(p -> p.getCondition())
-                                .collect(Collectors.toSet());
-                        callConds.add(c.getCondition());
-                        return callConds.stream();
-                    })
-                    .collect(Collectors.toSet());
-            conds.removeAll(insertedGlobalConditions);
-
-            //now we create the Map associating each Condition to insert to a generated ID for insertion
-            Map<Condition, Integer> newConds = conds.stream()
-                    .collect(Collectors.toMap(c -> c, c -> COND_ID_COUNTER.incrementAndGet()));
-            
-            //now we insert the conditions
-            Set<ConditionTO> condTOs = newConds.entrySet().stream()
-                    .map(e -> mapConditionToConditionTO(e.getValue(), e.getKey()))
-                    .collect(Collectors.toSet());
-            if (!condTOs.isEmpty()) {
-                condDAO.insertGlobalConditions(condTOs);
-            }
-            
-            //return new conditions with IDs
-            return log.traceExit(newConds);
-        }
-
-        private Set<PipelineGlobalCondToRawCondTO> insertGlobalCondToRawConds(
-                Set<PipelineCall> propagatedCalls, Set<PipelineGlobalCondToRawCondTO> insertedRels,
-                Map<Condition, Integer> condMap, ConditionDAO condDAO) {
-            log.traceEntry("{}, {}, {}, {}", propagatedCalls, insertedRels, condMap, condDAO);
-
-            //We map PipelineCalls to GlobalConditionToRawConditionTOs and remove those already inserted
-            Set<PipelineGlobalCondToRawCondTO> newRels = propagatedCalls.stream()
-                    .flatMap(c -> {
-                        Integer globalCondId = condMap.get(c.getCondition());
-                        if (globalCondId == null) {
-                            throw log.throwing(new IllegalArgumentException("Missing inserted condition: "
-                                    + c.getCondition()));
-                        }
-
-                        Set<PipelineGlobalCondToRawCondTO> relTOs = new HashSet<>();
-                        if (c.getParentSourceCallTOs() != null) {
-                            relTOs.addAll(c.getParentSourceCallTOs().stream()
-                                    .map(source -> new PipelineGlobalCondToRawCondTO(
-                                            source.getConditionId(),
-                                            globalCondId,
-                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.PARENT))
-                                    .collect(Collectors.toSet()));
-                        }
-                        if (c.getSelfSourceCallTOs() != null) {
-                            relTOs.addAll(c.getSelfSourceCallTOs().stream()
-                                    .map(source -> new PipelineGlobalCondToRawCondTO(
-                                            source.getConditionId(),
-                                            globalCondId,
-                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.SELF))
-                                    .collect(Collectors.toSet()));
-                        }
-                        if (c.getDescendantSourceCallTOs() != null) {
-                            relTOs.addAll(c.getDescendantSourceCallTOs().stream()
-                                    .map(source -> new PipelineGlobalCondToRawCondTO(
-                                            source.getConditionId(),
-                                            globalCondId,
-                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.DESCENDANT))
-                                    .collect(Collectors.toSet()));
-                        }
-                        return relTOs.stream();
-                    }).collect(Collectors.toSet());
-            newRels.removeAll(insertedRels);
-
-            //Deactivate this assert, it is very slow and, anyway, there is
-            //a primary key(globalConditionId, conditionId) which makes
-            //this situation impossible.
-//            //We're not supposed to generate a same relation between a global condition
-//            //and a raw condition having different conditionRelationOrigins.
-//            //Since conditionRelationOrigin is taken into account in equals/hashCode,
-//            //make an assert here based solely on global condition ID and raw condition ID.
-//            assert newRels.stream()
-//            .noneMatch(r1 -> newRels.stream()
-//                    .filter(r2 -> r2 != r1)
-//                    .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
-//                            r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
-//            "Incorrect new relations: " + newRels;
-
-            //now we insert the relations
-            if (!newRels.isEmpty()) {
-                condDAO.insertGlobalConditionToRawCondition(newRels.stream()
-                        .map(c -> (GlobalConditionToRawConditionTO) c)
-                        .collect(Collectors.toSet()));
-            }
-
-            //return new rels
-            return log.traceExit(newRels);
-        }
-
-        private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
+        private static void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
             Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
             log.traceEntry("{}, {}, {}", propagatedCalls, condMap, dao);
         
@@ -1612,7 +1541,37 @@ public class InsertPropagatedCalls extends CallService {
             }
         }
     }
-    
+
+    public static void insertGlobalConditions(List<Integer> speciesIds,
+            Set<ConditionDAO.Attribute> condParams, final Supplier<DAOManager> daoManagerSupplier,
+            final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
+        log.traceEntry("{}, {}, {}, {}", speciesIds, condParams, daoManagerSupplier, serviceFactoryProvider);
+
+        final Set<ConditionDAO.Attribute> clonedCondParams = Collections.unmodifiableSet(
+                condParams.stream().distinct().collect(Collectors.toSet()));
+        try(DAOManager commonManager = daoManagerSupplier.get()) {
+            final List<Integer> speciesIdsToUse = BgeeDBUtils.checkAndGetSpeciesIds(speciesIds,
+                    commonManager.getSpeciesDAO());
+            COND_ID_COUNTER.set(commonManager.getConditionDAO().getMaxGlobalConditionId());
+
+            //close connection immediately, but do not close the manager because of
+            //the try-with-resource clause.
+            commonManager.releaseResources();
+
+            speciesIdsToUse.parallelStream().forEach(speciesId -> {
+                //Give as argument a Supplier of ServiceFactory so that this object
+                //can provide a new connection to each parallel thread.
+                InsertPropagatedCalls insert = new InsertPropagatedCalls(
+                        () -> serviceFactoryProvider.apply(daoManagerSupplier.get()),
+                        clonedCondParams, speciesId, 0, 0, false);
+                try {
+                    insert.insertGlobalConditionsForOneSpecies();
+                } catch (Exception e) {
+                    throw log.throwing(new IllegalStateException(e));
+                }
+            });
+        }
+    }
     /**
      * 
      * @param speciesIds
@@ -1737,6 +1696,110 @@ public class InsertPropagatedCalls extends CallService {
         log.traceExit();
     }
 
+
+    private static Map<Condition, Integer> insertNewGlobalConditions(Set<Condition> condsToInsert,
+            Set<Condition> insertedGlobalConditions, ConditionDAO condDAO) {
+        log.traceEntry("{}, {}, {}", condsToInsert, insertedGlobalConditions, condDAO);
+
+        //First, we retrieve the conditions not already present in the database
+        Set<Condition> conds = new HashSet<>(condsToInsert);
+        conds.removeAll(insertedGlobalConditions);
+
+        //now we create the Map associating each Condition to insert to a generated ID for insertion
+        Map<Condition, Integer> newConds = conds.stream()
+                .collect(Collectors.toMap(c -> c, c -> COND_ID_COUNTER.incrementAndGet()));
+
+        //now we insert the conditions
+        Set<ConditionTO> condTOs = newConds.entrySet().stream()
+                .map(e -> mapConditionToConditionTO(e.getValue(), e.getKey()))
+                .collect(Collectors.toSet());
+        if (!condTOs.isEmpty()) {
+            condDAO.insertGlobalConditions(condTOs);
+        }
+
+        //return new conditions with IDs
+        return log.traceExit(newConds);
+    }
+
+    private static Set<PipelineGlobalCondToRawCondTO> insertGlobalCondToRawCondsFromCalls(
+            Set<PipelineCall> propagatedCalls, Set<PipelineGlobalCondToRawCondTO> insertedRels,
+            Map<Condition, Integer> condMap, ConditionDAO condDAO) {
+        log.traceEntry("{}, {}, {}, {}", propagatedCalls, insertedRels, condMap, condDAO);
+
+        //We map PipelineCalls to GlobalConditionToRawConditionTOs
+        Set<PipelineGlobalCondToRawCondTO> toInsert = propagatedCalls.stream()
+                .flatMap(c -> {
+                    Integer globalCondId = condMap.get(c.getCondition());
+                    if (globalCondId == null) {
+                        throw log.throwing(new IllegalArgumentException("Missing inserted condition: "
+                                + c.getCondition()));
+                    }
+
+                    Set<PipelineGlobalCondToRawCondTO> relTOs = new HashSet<>();
+                    if (c.getParentSourceCallTOs() != null) {
+                        relTOs.addAll(c.getParentSourceCallTOs().stream()
+                                .map(source -> new PipelineGlobalCondToRawCondTO(
+                                        source.getConditionId(),
+                                        globalCondId,
+                                        GlobalConditionToRawConditionTO.ConditionRelationOrigin.PARENT))
+                                .collect(Collectors.toSet()));
+                    }
+                    if (c.getSelfSourceCallTOs() != null) {
+                        relTOs.addAll(c.getSelfSourceCallTOs().stream()
+                                .map(source -> new PipelineGlobalCondToRawCondTO(
+                                        source.getConditionId(),
+                                        globalCondId,
+                                        GlobalConditionToRawConditionTO.ConditionRelationOrigin.SELF))
+                                .collect(Collectors.toSet()));
+                    }
+                    if (c.getDescendantSourceCallTOs() != null) {
+                        relTOs.addAll(c.getDescendantSourceCallTOs().stream()
+                                .map(source -> new PipelineGlobalCondToRawCondTO(
+                                        source.getConditionId(),
+                                        globalCondId,
+                                        GlobalConditionToRawConditionTO.ConditionRelationOrigin.DESCENDANT))
+                                .collect(Collectors.toSet()));
+                    }
+                    return relTOs.stream();
+                }).collect(Collectors.toSet());
+
+        return log.traceExit(insertGlobalCondToRawConds(toInsert, insertedRels, condDAO));
+    }
+
+    private static Set<PipelineGlobalCondToRawCondTO> insertGlobalCondToRawConds(
+            Set<PipelineGlobalCondToRawCondTO> toInsert, Set<PipelineGlobalCondToRawCondTO> insertedRels,
+            ConditionDAO condDAO) {
+        log.traceEntry("{}, {}, {}, {}", toInsert, insertedRels, condDAO);
+
+        //We remove those already inserted
+        Set<PipelineGlobalCondToRawCondTO> newRels = new HashSet<>(toInsert);
+        newRels.removeAll(insertedRels);
+
+        //Deactivate this assert, it is very slow and, anyway, there is
+        //a primary key(globalConditionId, conditionId) which makes
+        //this situation impossible.
+//        //We're not supposed to generate a same relation between a global condition
+//        //and a raw condition having different conditionRelationOrigins.
+//        //Since conditionRelationOrigin is taken into account in equals/hashCode,
+//        //make an assert here based solely on global condition ID and raw condition ID.
+//        assert newRels.stream()
+//        .noneMatch(r1 -> newRels.stream()
+//                .filter(r2 -> r2 != r1)
+//                .anyMatch(r2 -> r1.getRawConditionId().equals(r2.getRawConditionId()) &&
+//                        r1.getGlobalConditionId().equals(r2.getGlobalConditionId()))):
+//        "Incorrect new relations: " + newRels;
+
+        //now we insert the relations
+        if (!newRels.isEmpty()) {
+            condDAO.insertGlobalConditionToRawCondition(newRels.stream()
+                    .map(c -> (GlobalConditionToRawConditionTO) c)
+                    .collect(Collectors.toSet()));
+        }
+
+        //return new rels
+        return log.traceExit(newRels);
+    }
+
     /**
      * An {@code int} that is the offset parameter to retrieve genes to insert data for.
      * @see #geneRowCount;
@@ -1854,6 +1917,95 @@ public class InsertPropagatedCalls extends CallService {
         
         this.condToAncestors = new ConcurrentHashMap<>();
         this.condToDescendants = new ConcurrentHashMap<>();
+    }
+
+    private void insertGlobalConditionsForOneSpecies() throws IllegalStateException, SQLException {
+        log.traceEntry();
+        log.info("Start inserting global conditions for the species {} with combinations of condition parameters {}...",
+            this.speciesId, this.condParams);
+
+        try (DAOManager mainManager = this.getDaoManager()) {
+            ConditionDAO condDAO = mainManager.getConditionDAO();
+
+            Species species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
+                    Collections.singleton(this.speciesId), false).iterator().next();
+
+            //First, we retrieve the raw conditions already present in database.
+            final Map<Integer, RawDataCondition> rawCondMap = Collections.unmodifiableMap(
+                    this.loadRawConditionMap(Collections.singleton(species)));
+            log.info("{} raw data conditions for species {}", rawCondMap.size(), speciesId);
+
+            // We use all existing conditions in the species, and infer all propagated conditions
+            log.info("Starting condition inference...");
+            Map<Condition, Set<Integer>> globalCondToSelfRawCondIds = rawCondMap.entrySet()
+                    .stream()
+                    .map(e -> new AbstractMap.SimpleEntry<>(
+                            mapRawDataConditionToCondition(e.getValue()),
+                            new HashSet<>(Arrays.asList(e.getKey()))))
+                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                            (v1, v2) -> {v1.addAll(v2); return v1;}));
+            assert globalCondToSelfRawCondIds.values().stream().flatMap(s -> s.stream())
+                    .collect(Collectors.toSet()).equals(rawCondMap.keySet());
+
+            ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
+            final ConditionGraph conditionGraph = condGraphService.loadConditionGraph(
+                    globalCondToSelfRawCondIds.keySet(),
+                          //We do not propagate to descendant conditions anymore
+                    true, false);
+            log.info("Done condition inference.");
+
+            //TODO: reimplement properly in MySQLDAOManager.
+            //I do it here because I want to turn autocommit to true before setting the transaction level,
+            //to be sure it's properly set for the next transaction
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection()
+            .setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(false);
+
+            Map<Condition, Integer> globalCondsInserted = InsertPropagatedCalls
+                    .insertNewGlobalConditions(conditionGraph.getConditions(),
+                            new HashSet<>(), condDAO);
+            log.info("{} conditions inserted", globalCondsInserted.size());
+
+            Set<PipelineGlobalCondToRawCondTO> toInsert = new HashSet<>();
+            //SELF ConditionRelationOrigin
+            toInsert.addAll(globalCondsInserted.entrySet().stream()
+                    .flatMap(e -> globalCondToSelfRawCondIds.getOrDefault(e.getKey(), new HashSet<>())
+                            .stream()
+                            .map(rawCondId -> new PipelineGlobalCondToRawCondTO(rawCondId, e.getValue(),
+                                    GlobalConditionToRawConditionTO.ConditionRelationOrigin.SELF)))
+                    .collect(Collectors.toSet()));
+            //DESCENDANT ConditionRelationOrigin
+            toInsert.addAll(globalCondsInserted.entrySet().stream()
+                    //get the ancestors of the iterated condition
+                    .flatMap(e -> conditionGraph.getAncestorConditions(e.getKey())
+                            .stream()
+                            //retrieve the raw condition IDs associated to the iterated condition
+                            .flatMap(ancestor -> globalCondToSelfRawCondIds
+                                    .getOrDefault(e.getKey(), new HashSet<>())
+                                    .stream()
+                                    //Create an association from the ancestor condition ID
+                                    //to the raw condition IDs of the iterated condition
+                                    //with ConditionOrigin DESCENDANT
+                                    .map(rawCondId -> new PipelineGlobalCondToRawCondTO(rawCondId,
+                                            globalCondsInserted.get(ancestor),
+                                            GlobalConditionToRawConditionTO.ConditionRelationOrigin.DESCENDANT))))
+                    .collect(Collectors.toSet()));
+            Set<PipelineGlobalCondToRawCondTO> inserted = InsertPropagatedCalls
+                    .insertGlobalCondToRawConds(toInsert, new HashSet<>(), condDAO);
+
+            assert toInsert.stream().map(to -> to.getGlobalConditionId()).collect(Collectors.toSet())
+                    .equals(new HashSet<>(globalCondsInserted.values()));
+            assert toInsert.stream().map(to -> to.getRawConditionId()).collect(Collectors.toSet())
+                    .equals(new HashSet<>(globalCondToSelfRawCondIds.values()));
+            assert inserted.equals(toInsert);
+
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().commit();
+            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
+
+            log.info("{} GlobalCondToRawCondTOs inserted", toInsert.size());
+        }
+        log.traceExit();
     }
 
     private void insertOneSpecies() {

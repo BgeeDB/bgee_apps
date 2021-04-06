@@ -87,18 +87,24 @@ public interface GeneDAO extends DAO<GeneDAO.Attribute> {
     public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException;
     /**
      * Retrieves genes with expression data for the requested species IDs. If no species IDs
-     * provided, retrieve data for all species.
+     * provided, retrieve data for all species. Genes returned are ordered by the internal Bgee gene IDs.
      * <p>
      * The genes are retrieved and returned as a {@code GeneTOResultSet}. It is the
      * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      to retrieve genes for. Can be {@code null} or empty.
+     * @param offset        An {@code int} that specifies the offset of the first gene
+     *                      for the requested species to return. The offset of the first gene
+     *                      that could be returned is 0. Used only if {@code geneCount}
+     *                      is greater than 0.
+     * @param geneCount     An {@code int} that specifies the maximum number of genes to return.
+     *                      If equals to 0, all genes for the requested species are returned.
      * @return              An {@code GeneTOResultSet} containing all genes from data source.
      * @throws DAOException If an error occurred when accessing the data source. 
      */
-    public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds)
-            throws DAOException;
+    public GeneTOResultSet getGenesWithDataBySpeciesIdsOrdered(Collection<Integer> speciesIds,
+            int offset, int geneCount) throws DAOException;
 
     /**
      * Retrieves genes from data source according to a {@code Collection} of {@code Integer}s

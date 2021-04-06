@@ -78,19 +78,21 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     @Override
     public GeneTOResultSet getAllGenes() throws DAOException {
         log.traceEntry();
-        return log.traceExit(getGenes(null, null, null));
+        return log.traceExit(getGenes(null, null, null, false, 0, 0));
     }
 
     @Override
     public GeneTOResultSet getGenesBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
         log.traceEntry("{}", speciesIds);
-        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, null));
+        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, null, false, 0, 0));
     }
 
     @Override
-    public GeneTOResultSet getGenesWithDataBySpeciesIds(Collection<Integer> speciesIds) throws DAOException {
-        log.traceEntry("{}", speciesIds);
-        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, true));
+    public GeneTOResultSet getGenesWithDataBySpeciesIdsOrdered(Collection<Integer> speciesIds,
+            int offset, int geneCount) throws DAOException {
+        log.traceEntry("{}, {}, {}", speciesIds, offset, geneCount);
+        return log.traceExit(this.getGenes(convertSpeciesIdsTOMap(speciesIds), null, true,
+                true, offset, geneCount));
     }
 
     @Override
@@ -99,36 +101,46 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
         Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
         //sanity checks on geneIds will be performed by the getGenes method
         speToGeneMap.put(null, ensemblGeneIds == null? null: new HashSet<>(ensemblGeneIds));
-        return log.traceExit(getGenes(speToGeneMap, null, null));
+        return log.traceExit(getGenes(speToGeneMap, null, null, false, 0, 0));
     }
     
     @Override
     public GeneTOResultSet getGenesByIds(Collection<Integer> geneIds) throws DAOException {
         log.traceEntry("{}", geneIds);
-        return log.traceExit(getGenes(null, geneIds, null));
+        return log.traceExit(getGenes(null, geneIds, null, false, 0, 0));
     }
 
     @Override
     public GeneTOResultSet getGenesBySpeciesAndGeneIds(Map<Integer, Set<String>> speciesIdToGeneIds)
             throws DAOException {
         log.traceEntry("{}", speciesIdToGeneIds);
-        return log.traceExit(this.getGenes(speciesIdToGeneIds, null, null));
+        return log.traceExit(this.getGenes(speciesIdToGeneIds, null, null, false, 0, 0));
     }
 
     @Override
     public GeneTOResultSet getGenesByBgeeIds(Collection<Integer> bgeeGeneIds) throws DAOException {
         log.traceEntry("{}", bgeeGeneIds);
-        return log.traceExit(this.getGenes(null, bgeeGeneIds, null));
+        return log.traceExit(this.getGenes(null, bgeeGeneIds, null, false, 0, 0));
     }
 
     private GeneTOResultSet getGenes(Map<Integer, Set<String>> speciesIdToGeneIds,
-            Collection<Integer> bgeeGeneIds, Boolean withExprData) throws DAOException {
-        log.traceEntry("{}, {}, {}", speciesIdToGeneIds, bgeeGeneIds, withExprData);
+            Collection<Integer> bgeeGeneIds, Boolean withExprData, boolean orderedByBgeeGeneId,
+            int offset, int geneCount) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIdToGeneIds, bgeeGeneIds, withExprData,
+                orderedByBgeeGeneId, offset, geneCount);
 
         if (speciesIdToGeneIds != null &&
                 speciesIdToGeneIds.containsKey(null) && speciesIdToGeneIds.size() != 1) {
             throw log.throwing(new IllegalArgumentException(
                     "If a null species ID is provided, it should be the only Entry in the Map."));
+        }
+        if (offset < 0 || geneCount < 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "offset and geneCount cannot be negative"));
+        }
+        if (offset > 0 && geneCount == 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "geneCount must be provided if offset is provided"));
         }
 
         //need a LinkedHashMap for consistent setting of the query parameters.
@@ -212,6 +224,16 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
             }
             sql += "EXISTS (SELECT 1 FROM expression WHERE expression.bgeeGeneId = "
                    + GENE_TABLE_NAME + ".bgeeGeneId)";
+        }
+        if (orderedByBgeeGeneId) {
+            sql += " ORDER BY " + GENE_TABLE_NAME + ".bgeeGeneId";
+        }
+        if (geneCount > 0) {
+            sql += " LIMIT ";
+            if (offset > 0) {
+                sql += offset + ", ";
+            }
+            sql += geneCount;
         }
 
         // we don't use a try-with-resource, because we return a pointer to the results,

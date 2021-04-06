@@ -94,7 +94,7 @@ import com.google.common.base.Objects;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 15, Mar. 2021
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14, Jan. 2017
  */
 public class InsertPropagatedCalls extends CallService {
@@ -111,7 +111,7 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * An {@code int} that is the number of genes to load at a same time to propagate calls for,
      * and to run computations in parallel between groups of genes of this size.
-     * The lower this number the higher the nuber of query to the database, but then they should be fast,
+     * The lower this number the higher the number of query to the database, but then they should be fast,
      * and the number of threads working in parallel until the end will be higher (for not waiting,
      * e.g., that remaining threads handle 2000 genes.)
      */
@@ -186,6 +186,18 @@ public class InsertPropagatedCalls extends CallService {
      * <li> a {@code Map} where keys are whatever, and each value is a set of strings, 
      * corresponding to {@code ConditionDAO.Attribute}s, allowing to target a specific
      * condition parameter combination. Example: 1//ANAT_ENTITY_ID,2//ANAT_ENTITY_ID--STAGE_ID
+     * <li>an {@code int} defining the offset of the first gene to retrieve,
+     * for each of the requested species independently. For instance, if two species
+     * and an offset of 1000 were requested, the first gene retrieved for the first species
+     * will have offset 1000 among the genes of that species, the first gene retrieved
+     * for the second species will have offset 1000 among the genes of that other species.
+     * Can be {@code null} (see {@link CommandRunner#EMPTY_ARG}).
+     * <li>an {@code int} defining the count of genes to retrieve,
+     * for each of the requested species independently. For instance, if two species
+     * and an gene count of 1000 were requested, 1000 genes will be retrieved for the first species,
+     * and 1000 genes will be retrieved for the second species. Can be {@code null}
+     * (see {@link CommandRunner#EMPTY_ARG}). A value of 0 is equivalent of a {@code null} value
+     * (no effect, all genes for each species are retrieved).
      * </ol>
      * 
      * @param args           An {@code Array} of {@code String}s containing the requested parameters.
@@ -194,7 +206,7 @@ public class InsertPropagatedCalls extends CallService {
     public static void main(String[] args) throws DAOException {
         log.traceEntry("{}", (Object[]) args);
 
-        int expectedArgLength = 2;
+        int expectedArgLength = 4;
 
         if (args.length != expectedArgLength) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments " +
@@ -204,6 +216,10 @@ public class InsertPropagatedCalls extends CallService {
 
         List<Integer> speciesIds = CommandRunner.parseListArgumentAsInt(args[0]);
         List<String> condParamArg = CommandRunner.parseListArgument(args[1]);
+        int geneOffset = CommandRunner.parseArgument(args[2]) == null ?
+                0 : Integer.parseInt(CommandRunner.parseArgument(args[2]));
+        int geneRowCount = CommandRunner.parseArgument(args[3]) == null ?
+                0 : Integer.parseInt(CommandRunner.parseArgument(args[3]));
         //we keep the order of combinations requested by the user
         Set<ConditionDAO.Attribute> condParams = condParamArg.stream()
                 .distinct()
@@ -218,7 +234,7 @@ public class InsertPropagatedCalls extends CallService {
                     + condParams));
         }
 
-        InsertPropagatedCalls.insert(speciesIds, condParams);
+        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, condParams);
 
         log.traceExit();
     }
@@ -1556,14 +1572,27 @@ public class InsertPropagatedCalls extends CallService {
     /**
      * 
      * @param speciesIds
+     * @param geneOffset    An {@code int} that is the offset parameter to retrieve genes
+     *                      to insert data for, for each of the requested species independently.
+     *                      For instance, if two species and an offset of 1000 were requested,
+     *                      the first gene retrieved for the first species will have offset 1000
+     *                      among the genes of that species, the first gene retrieved
+     *                      for the second species will have offset 1000 among the genes
+     *                      of that other species.
+     * @param geneRowCount  An {@code int} that is the row_count parameter to retrieve genes
+     *                      to insert data for, for each of the requested species independently.
+     *                      For instance, if two species and a row count of 1000 were requested,
+     *                      1000 genes will be retrieved for the first species, and 1000 genes
+     *                      for the second species. If 0, all genes for the requested species
+     *                      are retrieved.
      * @param condParams    A {@code Set} of {@code ConditionDAO.Attribute}s that are requested
      *                      for queries, allowing to determine which condition
      *                      and expression information to target.
      */
-    public static void insert(List<Integer> speciesIds, 
+    public static void insert(List<Integer> speciesIds, int geneOffset, int geneRowCount,
             Set<ConditionDAO.Attribute> condParams) {
-        log.traceEntry("{}, {}", speciesIds, condParams);
-        InsertPropagatedCalls.insert(speciesIds, condParams,
+        log.traceEntry("{}, {}, {}, {}", speciesIds, geneOffset, geneRowCount, condParams);
+        InsertPropagatedCalls.insert(speciesIds, geneOffset, geneRowCount, condParams,
                 DAOManager::getDAOManager, ServiceFactory::new);  
         log.traceExit();
     }
@@ -1574,6 +1603,20 @@ public class InsertPropagatedCalls extends CallService {
      * to provide new ones to each thread, in case we make a parallel implementation of this code.
      * 
      * @param speciesIds
+     * @param geneOffset                An {@code int} that is the offset parameter to retrieve genes
+     *                                  to insert data for, for each of the requested species
+     *                                  independently. For instance, if two species and an offset
+     *                                  of 1000 were requested, the first gene retrieved
+     *                                  for the first species will have offset 1000
+     *                                  among the genes of that species, the first gene retrieved
+     *                                  for the second species will have offset 1000 among the genes
+     *                                  of that other species.
+     * @param geneRowCount              An {@code int} that is the row_count parameter to retrieve genes
+     *                                  to insert data for, for each of the requested species
+     *                                  independently. For instance, if two species and a row count
+     *                                  of 1000 were requested, 1000 genes will be retrieved
+     *                                  for the first species, and 1000 genes for the second species.
+     *                                  If 0, all genes for the requested species are retrieved.
      * @param condParams                A {@code Set} of {@code ConditionDAO.Attribute}s,
      *                                  defining the condition parameters that 
      *                                  are requested for queries, allowing to determine 
@@ -1582,11 +1625,12 @@ public class InsertPropagatedCalls extends CallService {
      * @param serviceFactoryProvider    The {@code Function} accepting a {@code DAOManager} as argument
      *                                  and returning a new {@code ServiceFactory}.
      */
-    public static void insert(List<Integer> speciesIds, 
+    public static void insert(List<Integer> speciesIds, int geneOffset, int geneRowCount,
             Set<ConditionDAO.Attribute> condParams, 
             final Supplier<DAOManager> daoManagerSupplier, 
             final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
-        log.traceEntry("{}, {}, {}, {}", speciesIds, condParams, daoManagerSupplier, serviceFactoryProvider);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, geneOffset, geneRowCount,
+                condParams, daoManagerSupplier, serviceFactoryProvider);
 
         // Sanity checks on attributes
         if (condParams == null || condParams.isEmpty()) {
@@ -1629,13 +1673,24 @@ public class InsertPropagatedCalls extends CallService {
                 //can provide a new connection to each parallel thread.
                 InsertPropagatedCalls insert = new InsertPropagatedCalls(
                         () -> serviceFactoryProvider.apply(daoManagerSupplier.get()), 
-                        clonedCondParams, speciesId);
+                        clonedCondParams, speciesId, geneOffset, geneRowCount);
                 insert.insertOneSpecies();
             });
         }
         log.traceExit();
     }
-    
+
+    /**
+     * An {@code int} that is the offset parameter to retrieve genes to insert data for.
+     * @see #geneRowCount;
+     */
+    private final int geneOffset;
+    /**
+     * An {@code int} that is the row_count parameter to retrieve genes to insert data for.
+     * If 0, all genes are retrieved.
+     * @see #geneOffset;
+     */
+    private final int geneRowCount;
     /**
      * A {@code volatile} {@code Throwable} allowing to notify all threads when an error occurs,
      * and to store the actual error that occurred.
@@ -1705,14 +1760,24 @@ public class InsertPropagatedCalls extends CallService {
 
 
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
-            Set<ConditionDAO.Attribute> condParams, int speciesId) {
+            Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount) {
         super(serviceFactorySupplier.get());
         if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }
+        if (geneOffset < 0 || geneRowCount < 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "geneOffset and geneRowCount cannot be negative"));
+        }
+        if (geneOffset > 0 && geneRowCount == 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "geneRowCount must be provided if geneOffset is provided"));
+        }
         this.serviceFactorySupplier = serviceFactorySupplier;
         this.condParams = Collections.unmodifiableSet(new HashSet<>(condParams));
         this.speciesId = speciesId;
+        this.geneOffset = geneOffset;
+        this.geneRowCount = geneRowCount;
         //use a LinkedBlockingDeque because we are going to do lots of insert/remove,
         //and because we don't care about element order. We are going to block
         //if there are too many results waiting to be inserted, to not overload the memory
@@ -1777,7 +1842,8 @@ public class InsertPropagatedCalls extends CallService {
             //Also, the computations for those species are slow so we want to go parallel. 
             final List<Integer> bgeeGeneIds = Collections.unmodifiableList(
                     mainManager.getGeneDAO()
-                        .getGenesWithDataBySpeciesIds(Collections.singleton(speciesId))
+                        .getGenesWithDataBySpeciesIdsOrdered(Collections.singleton(speciesId),
+                                this.geneOffset, this.geneRowCount)
                         .stream().map(g -> g.getId())
                         .collect(Collectors.toList()));
             log.info("{} genes with data retrieved for species {}", bgeeGeneIds.size(), speciesId);

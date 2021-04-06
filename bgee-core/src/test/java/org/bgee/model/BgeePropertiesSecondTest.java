@@ -42,6 +42,8 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerURL());
         assertEquals("Wrong property value retrieved", "searchport",
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved", "searchprefix",
+                bgeeProp.getSearchIndexPrefix());
         assertEquals("Wrong property value retrieved","/filerexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/filecallerwd",

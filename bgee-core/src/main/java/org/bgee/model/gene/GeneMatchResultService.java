@@ -48,20 +48,25 @@ public class GeneMatchResultService extends CommonService {
      * @see #getSphinxClient()
      */
     private final SphinxClient sphinxClient;
+    /**
+     * @see #getSphinxPrefix()
+     */
+    private final String sphinxPrefix;
 
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code BgeeProperties}. 
      */
     public GeneMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
-                serviceFactory);
+                serviceFactory, props.getSearchIndexPrefix());
     }
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code SphinxClient}. 
      */
-    public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory) {
+    public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxPrefix) {
         super(serviceFactory);
         this.sphinxClient = sphinxClient;
+        this.sphinxPrefix = sphinxPrefix;
     }
 
     /**
@@ -69,6 +74,12 @@ public class GeneMatchResultService extends CommonService {
      */
     public SphinxClient getSphinxClient() {
         return sphinxClient;
+    }
+    /**
+     * @return  The {@code String} used as prefix for all sphinx indexes
+     */
+    public String getSphinxPrefix() {
+        return sphinxPrefix;
     }
 
     /**
@@ -93,7 +104,7 @@ public class GeneMatchResultService extends CommonService {
         // in the method getSphinxResult(), to set correctly GeneMatches.
         String formattedTerm = this.getFormattedTerm(searchTerm);
 
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, "bgee_genes", null);
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxPrefix() + "genes", null);
 
         if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
             throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
@@ -146,7 +157,7 @@ public class GeneMatchResultService extends CommonService {
 
         // The index of the first element is not necessary, as it's for the autocomplete we start at 0.
         // We use the ranker SPH_RANK_SPH04 to get field equals the exact query first.
-        SphinxResult result = this.getSphinxResult(searchTerm, 0, resultPerPage, "bgee_autocomplete",
+        SphinxResult result = this.getSphinxResult(searchTerm, 0, resultPerPage, this.getSphinxPrefix() + "autocomplete",
                 SphinxClient.SPH_RANK_SPH04);
 
         if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {

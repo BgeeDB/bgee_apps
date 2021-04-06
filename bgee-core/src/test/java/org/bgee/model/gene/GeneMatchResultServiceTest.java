@@ -60,9 +60,9 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxResult.matches = new SphinxMatch[] {sphinxMatch1, sphinxMatch2, sphinxMatch3};
 
         String term = "ENSG";
-        when(sphinxClient.Query("\"" + term + "\"", "bgee_autocomplete")).thenReturn(sphinxResult);
+        when(sphinxClient.Query("\"" + term + "\"", "prefix_autocomplete")).thenReturn(sphinxResult);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "prefix_");
         List<String> autocompleteResult = service.autocomplete(term, 100);
 
         assertNotNull(autocompleteResult);
@@ -101,9 +101,9 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         sphinxResult.matches = new SphinxMatch[] {sphinxMatch1};
 
         String term = "Syn2";
-        when(sphinxClient.Query("\"" + term + "\"", "bgee_genes")).thenReturn(sphinxResult);
+        when(sphinxClient.Query("\"" + term + "\"", "prefix_genes")).thenReturn(sphinxResult);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "prefix_");
         GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(1, geneMatchResult.getTotalMatchCount());
@@ -141,9 +141,9 @@ public class GeneMatchResultServiceTest extends TestAncestor {
 
         String term = "XXX";
 
-        when(sphinxClient.Query(term, "bgee_genes")).thenReturn(null);
+        when(sphinxClient.Query(term, "prefix_genes")).thenReturn(null);
 
-        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "prefix_");
         GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(0, geneMatchResult.getTotalMatchCount());

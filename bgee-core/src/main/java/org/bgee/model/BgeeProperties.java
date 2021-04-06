@@ -123,6 +123,20 @@ public class BgeeProperties {
      * @see #BGEE_SEARCH_SERVER_PORT_KEY
      */
     public final static String BGEE_SEARCH_SERVER_PORT_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the prefix used to generate sphinx indexes.
+     * 
+     * @see #BGEE_SEARCH_INDEX_PREFIX_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_PREFIX_KEY = "org.bgee.search.prefix";
+
+    /**
+     * A {@code String} that is the default value of the prefix used to generate sphinx indexes.
+     *
+     * @see #BGEE_SEARCH_INDEX_PREFIX_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_PREFIX_DEFAULT = null;
 
     //TopAnat
     /**
@@ -703,6 +717,9 @@ public class BgeeProperties {
         searchUrlPort = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_SERVER_PORT_KEY,
                 BGEE_SEARCH_SERVER_PORT_DEFAULT);
+        searchIndexPrefix = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_PREFIX_KEY,
+                BGEE_SEARCH_INDEX_PREFIX_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -746,6 +763,11 @@ public class BgeeProperties {
      * A {@code String} that is the server port which is used to query a search.
      */
     private final String searchUrlPort;
+    
+    /**
+     * A {@code String} that is the prefix of the index which is used to query a search.
+     */
+    private final String searchIndexPrefix;
 
     /**
      * A {@code String} that is the Bioconductor Release number used to download
@@ -861,6 +883,12 @@ public class BgeeProperties {
      */
     public String getSearchServerPort() {
         return searchUrlPort;
+    }
+    /**
+     * @return A {@code String} that is the prefix of the index which is used to query a search.
+     */
+    public String getSearchIndexPrefix() {
+        return searchIndexPrefix;
     }
 
     //TopAnat

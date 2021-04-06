@@ -42,6 +42,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.MINOR_VERSION_KEY, "0");
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "/injectedsphinxurl");
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "/injectedsphinxport");
+        prop.put(BgeeProperties.BGEE_SEARCH_INDEX_PREFIX_KEY, "/injectedsphinxPrefix");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
@@ -58,6 +59,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerURL());
         assertEquals("Wrong property value retrieved","/injectedsphinxport",
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved","/injectedsphinxPrefix",
+                bgeeProp.getSearchIndexPrefix());
         assertEquals("Wrong property value retrieved","/injectedrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/injectedrwd",

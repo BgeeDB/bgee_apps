@@ -33,6 +33,7 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY);
         System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_INDEX_PREFIX_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY);
@@ -58,6 +59,9 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.BGEE_SEARCH_SERVER_PORT_DEFAULT,
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.BGEE_SEARCH_INDEX_PREFIX_DEFAULT,
+                bgeeProp.getSearchIndexPrefix());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT,
                 bgeeProp.getTopAnatRScriptExecutable());

@@ -247,13 +247,34 @@ public class ConditionGraph {
         if (firstCond.equals(secondCond)) {
             return log.traceExit(false);
         }
-        
+
+        if (firstCond.getSex() != null && secondCond.getSex() == null ||
+                secondCond.getSex() != null && firstCond.getSex() == null) {
+            return log.traceExit(false);
+        }
+        if (firstCond.getStrain() != null && secondCond.getStrain() == null ||
+                secondCond.getStrain() != null && firstCond.getStrain() == null) {
+            return log.traceExit(false);
+        }
+        if (firstCond.getDevStage() != null && secondCond.getDevStage() == null ||
+                secondCond.getDevStage() != null && firstCond.getDevStage() == null) {
+            return log.traceExit(false);
+        }
+        if (firstCond.getCellType() != null && secondCond.getCellType() == null ||
+                secondCond.getCellType() != null && firstCond.getCellType() == null) {
+            return log.traceExit(false);
+        }
+        if (firstCond.getAnatEntity() != null && secondCond.getAnatEntity() == null ||
+                secondCond.getAnatEntity() != null && firstCond.getAnatEntity() == null) {
+            return log.traceExit(false);
+        }
+
         //Of note, computations are faster when the less complex ontologies are used first. 
         //TODO: refactor
 
         if (this.sexOnt != null &&
-                firstCond.getSexId() != null && secondCond.getSexId() != null &&
-                !firstCond.getSexId().equals(secondCond.getSexId()) &&
+                firstCond.getSex() != null && secondCond.getSex() != null &&
+                !firstCond.getSex().equals(secondCond.getSex()) &&
                 !this.sexOnt.getAncestors(
                         this.sexOnt.getElement(secondCond.getSexId()))
                 .contains(this.sexOnt.getElement(firstCond.getSexId()))) {
@@ -261,8 +282,8 @@ public class ConditionGraph {
         }
 
         if (this.strainOnt != null &&
-                firstCond.getStrainId() != null && secondCond.getStrainId() != null &&
-                !firstCond.getStrainId().equals(secondCond.getStrainId()) &&
+                firstCond.getStrain() != null && secondCond.getStrain() != null &&
+                !firstCond.getStrain().equals(secondCond.getStrain()) &&
                 !this.strainOnt.getAncestors(
                         this.strainOnt.getElement(secondCond.getStrainId()))
                 .contains(this.strainOnt.getElement(firstCond.getStrainId()))) {
@@ -270,8 +291,8 @@ public class ConditionGraph {
         }
 
         if (this.devStageOnt != null && 
-                firstCond.getDevStageId() != null && secondCond.getDevStageId() != null && 
-                !firstCond.getDevStageId().equals(secondCond.getDevStageId()) && 
+                firstCond.getDevStage() != null && secondCond.getDevStage() != null && 
+                !firstCond.getDevStage().equals(secondCond.getDevStage()) && 
                 !this.devStageOnt.getAncestors(
                         this.devStageOnt.getElement(secondCond.getDevStageId()))
                 .contains(this.devStageOnt.getElement(firstCond.getDevStageId()))) {
@@ -279,8 +300,8 @@ public class ConditionGraph {
         }
 
         if (this.cellTypeOnt != null &&
-                firstCond.getCellTypeId() != null && secondCond.getCellTypeId() != null &&
-                !firstCond.getCellTypeId().equals(secondCond.getCellTypeId()) &&
+                firstCond.getCellType() != null && secondCond.getCellType() != null &&
+                !firstCond.getCellType().equals(secondCond.getCellType()) &&
                 !this.cellTypeOnt.getAncestors(
                         this.cellTypeOnt.getElement(secondCond.getCellTypeId()))
                 .contains(this.cellTypeOnt.getElement(firstCond.getCellTypeId()))) {
@@ -288,32 +309,11 @@ public class ConditionGraph {
         }
         
         if (this.anatEntityOnt != null && 
-                firstCond.getAnatEntityId() != null && secondCond.getAnatEntityId() != null && 
-                !firstCond.getAnatEntityId().equals(secondCond.getAnatEntityId()) && 
+                firstCond.getAnatEntity() != null && secondCond.getAnatEntity() != null && 
+                !firstCond.getAnatEntity().equals(secondCond.getAnatEntity()) && 
                 !this.anatEntityOnt.getAncestors(
                         this.anatEntityOnt.getElement(secondCond.getAnatEntityId()))
                 .contains(this.anatEntityOnt.getElement(firstCond.getAnatEntityId()))) {
-            return log.traceExit(false);
-        }
-
-        if (firstCond.getSexId() != null && secondCond.getSexId() == null ||
-                secondCond.getSexId() != null && firstCond.getSexId() == null) {
-            return log.traceExit(false);
-        }
-        if (firstCond.getStrainId() != null && secondCond.getStrainId() == null ||
-                secondCond.getStrainId() != null && firstCond.getStrainId() == null) {
-            return log.traceExit(false);
-        }
-        if (firstCond.getDevStageId() != null && secondCond.getDevStageId() == null || 
-                secondCond.getDevStageId() != null && firstCond.getDevStageId() == null) {
-            return log.traceExit(false);
-        }
-        if (firstCond.getCellTypeId() != null && secondCond.getCellTypeId() == null ||
-                secondCond.getCellTypeId() != null && firstCond.getCellTypeId() == null) {
-            return log.traceExit(false);
-        }
-        if (firstCond.getAnatEntityId() != null && secondCond.getAnatEntityId() == null || 
-                secondCond.getAnatEntityId() != null && firstCond.getAnatEntityId() == null) {
             return log.traceExit(false);
         }
         
@@ -355,69 +355,64 @@ public class ConditionGraph {
         }
 
         //TODO: these blocks of code should be refactored
-        Set<String> devStageIds = new HashSet<>();
-        devStageIds.add(cond.getDevStageId());
-        if (this.devStageOnt != null && cond.getDevStageId() != null) {
+        Set<DevStage> devStages = new HashSet<>();
+        devStages.add(cond.getDevStage());
+        if (this.devStageOnt != null && cond.getDevStage() != null) {
             log.trace("Retrieving dev. stage IDs from ontology for stageId {} - relOnly {}}.", 
                     cond.getDevStageId(), directRelOnly);
-            devStageIds.addAll(this.devStageOnt.getAncestors(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            devStages.addAll(this.devStageOnt.getAncestors(
+                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly));
         }
         
-        Set<String> anatEntityIds = new HashSet<>();
-        anatEntityIds.add(cond.getAnatEntityId());
-        if (this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
-            log.trace("Retrieving anat. entity IDs from ontology for stageId {} - relOnly {}.", 
+        Set<AnatEntity> anatEntities = new HashSet<>();
+        anatEntities.add(cond.getAnatEntity());
+        if (this.anatEntityOnt != null && cond.getAnatEntity() != null) {
+            log.trace("Retrieving anat. entity IDs from ontology for anatEntityId {} - relOnly {}.", 
                     cond.getAnatEntityId(), directRelOnly);
-            anatEntityIds.addAll(this.anatEntityOnt.getAncestors(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            anatEntities.addAll(this.anatEntityOnt.getAncestors(
+                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly));
         }
 
-        Set<String> cellTypeIds = new HashSet<>();
-        cellTypeIds.add(cond.getCellTypeId());
-        if (this.cellTypeOnt != null && cond.getCellTypeId() != null) {
+        Set<AnatEntity> cellTypes = new HashSet<>();
+        cellTypes.add(cond.getCellType());
+        if (this.cellTypeOnt != null && cond.getCellType() != null) {
             log.trace("Retrieving cell type IDs from ontology for cellTypeId {} - relOnly {}}.", 
                     cond.getCellTypeId(), directRelOnly);
-            cellTypeIds.addAll(this.cellTypeOnt.getAncestors(
-                    this.cellTypeOnt.getElement(cond.getCellTypeId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            cellTypes.addAll(this.cellTypeOnt.getAncestors(
+                    this.cellTypeOnt.getElement(cond.getCellTypeId()), directRelOnly));
         }
 
-        Set<String> sexIds = new HashSet<>();
-        sexIds.add(cond.getSexId());
-        if (this.sexOnt != null && cond.getSexId() != null) {
+        Set<Sex> sexes = new HashSet<>();
+        sexes.add(cond.getSex());
+        if (this.sexOnt != null && cond.getSex() != null) {
             log.trace("Retrieving sex IDs from ontology for sexId {} - relOnly {}}.", 
                     cond.getSexId(), directRelOnly);
-            sexIds.addAll(this.sexOnt.getAncestors(
-                    this.sexOnt.getElement(cond.getSexId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            sexes.addAll(this.sexOnt.getAncestors(
+                    this.sexOnt.getElement(cond.getSexId()), directRelOnly));
         }
 
-        Set<String> strainIds = new HashSet<>();
-        strainIds.add(cond.getStrainId());
-        if (this.strainOnt != null && cond.getStrainId() != null) {
+        Set<Strain> strains = new HashSet<>();
+        strains.add(cond.getStrain());
+        if (this.strainOnt != null && cond.getStrain() != null) {
             log.trace("Retrieving strain IDs from ontology for strainId {} - relOnly {}}.", 
                     cond.getStrainId(), directRelOnly);
-            strainIds.addAll(this.strainOnt.getAncestors(
-                    this.strainOnt.getElement(cond.getStrainId()), directRelOnly)
-                    .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            strains.addAll(this.strainOnt.getAncestors(
+                    this.strainOnt.getElement(cond.getStrainId()), directRelOnly));
         }
 
-        log.trace("Stage IDs retrieved: {}", devStageIds);
-        log.trace("Anat. entity IDs retrieved: {}", anatEntityIds);
-        log.trace("Cell type IDs retrieved: {}", cellTypeIds);
-        log.trace("Sex IDs retrieved: {}", sexIds);
-        log.trace("Strain IDs retrieved: {}", strainIds);
+        log.trace("Stages retrieved: {}", devStages);
+        log.trace("Anat. entities retrieved: {}", anatEntities);
+        log.trace("Cell types retrieved: {}", cellTypes);
+        log.trace("Sexes retrieved: {}", sexes);
+        log.trace("Strains retrieved: {}", strains);
         
         Set<Condition> conds = this.conditions.stream()
                 .filter(e -> !e.equals(cond) &&
-                        devStageIds.contains(e.getDevStageId()) &&
-                        anatEntityIds.contains(e.getAnatEntityId()) &&
-                        cellTypeIds.contains(e.getCellTypeId()) &&
-                        sexIds.contains(e.getSexId()) &&
-                        strainIds.contains(e.getStrainId()))
+                        devStages.contains(e.getDevStage()) &&
+                        anatEntities.contains(e.getAnatEntity()) &&
+                        cellTypes.contains(e.getCellType()) &&
+                        sexes.contains(e.getSex()) &&
+                        strains.contains(e.getStrain()))
            .collect(Collectors.toSet());
         log.trace("Done retrieving ancestral conditions for {}: {}", cond, conds.size());
         return log.traceExit(conds);
@@ -499,11 +494,11 @@ public class ConditionGraph {
         }
 
         //TODO: refactor
-        Set<String> devStageIds = new HashSet<>();
-        devStageIds.add(cond.getDevStageId());
+        Set<DevStage> devStages = new HashSet<>();
+        devStages.add(cond.getDevStage());
         CallService.Attribute condParam = CallService.Attribute.DEV_STAGE_ID;
         if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.devStageOnt != null && cond.getDevStageId() != null) {
+                this.devStageOnt != null && cond.getDevStage() != null) {
             Set<DevStage> descendants;
             Integer maxLevel = level.get(condParam);
             if (maxLevel == null || maxLevel < 1) {
@@ -513,14 +508,14 @@ public class ConditionGraph {
                 descendants = this.devStageOnt.getDescendantsUntilSubLevel(
                         this.devStageOnt.getElement(cond.getDevStageId()), maxLevel);
             }
-            devStageIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            devStages.addAll(descendants);
         }
 
-        Set<String> anatEntityIds = new HashSet<>();
-        anatEntityIds.add(cond.getAnatEntityId());
+        Set<AnatEntity> anatEntities = new HashSet<>();
+        anatEntities.add(cond.getAnatEntity());
         condParam = CallService.Attribute.ANAT_ENTITY_ID;
         if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.anatEntityOnt != null && cond.getAnatEntityId() != null) {
+                this.anatEntityOnt != null && cond.getAnatEntity() != null) {
             Set<AnatEntity> descendants;
             Integer maxLevel = level.get(condParam);
             if (maxLevel == null || maxLevel < 1) {
@@ -530,14 +525,14 @@ public class ConditionGraph {
                 descendants = this.anatEntityOnt.getDescendantsUntilSubLevel(
                         this.anatEntityOnt.getElement(cond.getAnatEntityId()), maxLevel);
             }
-            anatEntityIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            anatEntities.addAll(descendants);
         }
 
-        Set<String> cellTypeIds = new HashSet<>();
-        cellTypeIds.add(cond.getCellTypeId());
+        Set<AnatEntity> cellTypes = new HashSet<>();
+        cellTypes.add(cond.getCellType());
         condParam = CallService.Attribute.CELL_TYPE_ID;
         if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.cellTypeOnt != null && cond.getCellTypeId() != null) {
+                this.cellTypeOnt != null && cond.getCellType() != null) {
             Set<AnatEntity> descendants;
             Integer maxLevel = level.get(condParam);
             if (maxLevel == null || maxLevel < 1) {
@@ -547,14 +542,14 @@ public class ConditionGraph {
                 descendants = this.cellTypeOnt.getDescendantsUntilSubLevel(
                         this.cellTypeOnt.getElement(cond.getCellTypeId()), maxLevel);
             }
-            cellTypeIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            cellTypes.addAll(descendants);
         }
 
-        Set<String> sexIds = new HashSet<>();
-        sexIds.add(cond.getSexId());
+        Set<Sex> sexes = new HashSet<>();
+        sexes.add(cond.getSex());
         condParam = CallService.Attribute.SEX_ID;
         if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.sexOnt != null && cond.getSexId() != null) {
+                this.sexOnt != null && cond.getSex() != null) {
             Set<Sex> descendants;
             Integer maxLevel = level.get(condParam);
             if (maxLevel == null || maxLevel < 1) {
@@ -564,14 +559,14 @@ public class ConditionGraph {
                 descendants = this.sexOnt.getDescendantsUntilSubLevel(
                         this.sexOnt.getElement(cond.getSexId()), maxLevel);
             }
-            sexIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            sexes.addAll(descendants);
         }
 
-        Set<String> strainIds = new HashSet<>();
-        strainIds.add(cond.getStrainId());
+        Set<Strain> strains = new HashSet<>();
+        strains.add(cond.getStrain());
         condParam = CallService.Attribute.STRAIN_ID;
         if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.strainOnt != null && cond.getStrainId() != null) {
+                this.strainOnt != null && cond.getStrain() != null) {
             Set<Strain> descendants;
             Integer maxLevel = level.get(condParam);
             if (maxLevel == null || maxLevel < 1) {
@@ -581,22 +576,22 @@ public class ConditionGraph {
                 descendants = this.strainOnt.getDescendantsUntilSubLevel(
                         this.strainOnt.getElement(cond.getStrainId()), maxLevel);
             }
-            strainIds.addAll(descendants.stream().map(e -> e.getId()).collect(Collectors.toSet()));
+            strains.addAll(descendants);
         }
 
-        log.trace("Stage IDs retrieved: {}", devStageIds);
-        log.trace("Anat. entity IDs retrieved: {}", anatEntityIds);
-        log.trace("Cell type IDs retrieved: {}", cellTypeIds);
-        log.trace("Sex IDs retrieved: {}", sexIds);
-        log.trace("Strain IDs retrieved: {}", strainIds);
+        log.trace("Stages retrieved: {}", devStages);
+        log.trace("Anat. entities retrieved: {}", anatEntities);
+        log.trace("Cell types retrieved: {}", cellTypes);
+        log.trace("Sexes retrieved: {}", sexes);
+        log.trace("Strains retrieved: {}", strains);
         
         return log.traceExit(this.conditions.stream()
                 .filter(e -> !e.equals(cond) &&
-                             devStageIds.contains(e.getDevStageId()) &&
-                             anatEntityIds.contains(e.getAnatEntityId()) &&
-                             cellTypeIds.contains(e.getCellTypeId()) &&
-                             sexIds.contains(e.getSexId()) &&
-                             strainIds.contains(e.getStrainId()))
+                             devStages.contains(e.getDevStage()) &&
+                             anatEntities.contains(e.getAnatEntity()) &&
+                             cellTypes.contains(e.getCellType()) &&
+                             sexes.contains(e.getSex()) &&
+                             strains.contains(e.getStrain()))
                 .collect(Collectors.toSet()));
     }
     

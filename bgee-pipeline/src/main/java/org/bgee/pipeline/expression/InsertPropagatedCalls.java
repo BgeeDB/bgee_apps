@@ -46,6 +46,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -1106,39 +1107,7 @@ public class InsertPropagatedCalls extends CallService {
                     //wait for receiving data for starting the transaction,
                     //otherwise there might be some lock issues
                     if (firstInsert) {
-                        //we assume the insertion is done using MySQL, and we start a transaction
-                        log.debug(INSERTION_MARKER, "Trying to start transaction...");
-                        //try several attempts in case the first SELECT queries lock relevant tables
-                        int maxAttempt = 10;
-                        int i = 0;
-                        TRANSACTION: while (true) {
-                            try {
-                                //TODO: reimplement properly in MySQLDAOManager.
-                                //I do it here because I want to turn autocommit to true before setting the transaction level,
-                                //to be sure it's properly set for the next transaction
-                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(true);
-                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection()
-                                .setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-                                ((MySQLDAOManager) daoManager).getConnection().getRealConnection().setAutoCommit(false);
-                                break TRANSACTION;
-                            } catch (Exception e) {
-                                if (i < maxAttempt - 1) {
-                                    log.catching(Level.DEBUG, e);
-                                    log.debug(INSERTION_MARKER, 
-                                            "Trying to start transaction failed, {} try over {}", 
-                                            i + 1, maxAttempt);
-                                } else {
-                                    log.debug(INSERTION_MARKER, 
-                                            "Starting transaction failed, {} try over {}", 
-                                            i + 1, maxAttempt);
-                                    //that was the last try, throw exception
-                                    throw e;
-                                }
-                            }
-                            i++;
-                        }
-
-                        log.info(INSERTION_MARKER, "Starting transaction");
+                        startTransaction((MySQLDAOManager) daoManager);
                         firstInsert = false;
                     }
 
@@ -1180,7 +1149,7 @@ public class InsertPropagatedCalls extends CallService {
                     if (!this.callPropagator.computeAndInsertGlobalCond &&
                             !newGlobalCondToRawConds.isEmpty()) {
                         throw log.throwing(new IllegalStateException(
-                                "All globalConditions should have been inserted already"));
+                                "All globalCondToConds should have been inserted already"));
                     }
                     if (!Collections.disjoint(globalCondToRawConds, newGlobalCondToRawConds)) {
                         throw log.throwing(new IllegalStateException("Error, new condition relations already seen. "
@@ -1205,7 +1174,10 @@ public class InsertPropagatedCalls extends CallService {
                     
                     // And we finish by inserting the computed calls
                     insertPropagatedCalls(toInsert, insertedCondMap, exprDAO);
-                    log.debug("{} calls inserted for one gene", toInsert.size());
+                    if (log.isDebugEnabled()) {
+                        log.debug("{} calls inserted for gene {}", toInsert.size(),
+                                toInsert.iterator().next().getBgeeGeneId());
+                    }
                     
                     log.trace(INSERTION_MARKER, "Calls inserted.");
                     groupsInserted++;
@@ -1673,7 +1645,7 @@ public class InsertPropagatedCalls extends CallService {
             ConditionDAO condDAO = commonManager.getConditionDAO();
             GlobalExpressionCallDAO exprDAO = commonManager.getGlobalExpressionCallDAO();
             COND_ID_COUNTER.set(condDAO.getMaxGlobalConditionId());
-            EXPR_ID_COUNTER.set(exprDAO.getMaxGlobalExprId());
+//            EXPR_ID_COUNTER.set(exprDAO.getMaxGlobalExprId());
             condDAO = null;
             exprDAO = null;
             
@@ -1696,6 +1668,89 @@ public class InsertPropagatedCalls extends CallService {
         log.traceExit();
     }
 
+    private static void startTransaction(MySQLDAOManager daoManager) throws Exception {
+        log.traceEntry("{}", daoManager);
+      //we assume the insertion is done using MySQL, and we start a transaction
+        log.debug(INSERTION_MARKER, "Trying to start transaction...");
+        //try several attempts in case the first SELECT queries lock relevant tables
+        int maxAttempt = 10;
+        int i = 0;
+        TRANSACTION: while (true) {
+            try {
+                //TODO: reimplement properly in MySQLDAOManager.
+                //I do it here because I want to turn autocommit to true before setting the transaction level,
+                //to be sure it's properly set for the next transaction
+                daoManager.getConnection().getRealConnection().setAutoCommit(true);
+                daoManager.getConnection().getRealConnection()
+                .setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                daoManager.getConnection().getRealConnection().setAutoCommit(false);
+                break TRANSACTION;
+            } catch (Exception e) {
+                if (i < maxAttempt) {
+                    log.catching(Level.DEBUG, e);
+                    log.debug(INSERTION_MARKER, 
+                            "Trying to start transaction failed, {} try over {}", 
+                            i + 1, maxAttempt);
+                    try {
+                        Thread.sleep(2000);
+                    } catch(InterruptedException ex) {
+                        log.catching(ex);
+                        Thread.currentThread().interrupt();
+                        throw log.throwing(ex);
+                    }
+                } else {
+                    log.debug(INSERTION_MARKER, 
+                            "Starting transaction failed, {} try over {}", 
+                            i + 1, maxAttempt);
+                    //that was the last try, throw exception
+                    throw e;
+                }
+            }
+            i++;
+        }
+
+        log.info(INSERTION_MARKER, "Starting transaction");
+        log.traceExit();
+    }
+
+    private static ConditionGraph loadConditionGraph(ConditionGraphService condGraphService,
+            Set<Condition> conds, boolean inferConditions) {
+        log.traceEntry("{}, {}, {}", condGraphService, conds, inferConditions);
+
+        if (!inferConditions) {
+            //If we don't infer conditions they were already pre-computed
+            //and we have nothing more to do
+            return log.traceExit(condGraphService.loadConditionGraph(conds,
+                    false, false));
+        }
+        //Infer conditions
+        ConditionGraph conditionGraph = condGraphService.loadConditionGraph(
+                conds,
+                true, //propagate to ancestor conditions
+                false //We do not propagate to descendant conditions anymore
+        );
+        //If it was requested to infer conditions, to limit their number,
+        //we keep only annotated conditions (the ones provided as argument),
+        //and conditions with organ propagation + cell type propagation + sex propagation
+        //+ stage propagation only to embryo and post-embryo (and stage root of course),
+        //and no strain propagation.
+        //hardcoded here for now.
+        Strain wildTypeStrain = new Strain(Condition.STRAIN_ROOT_ID);
+        Set<String> validStageIds = new HashSet<>(Arrays.asList(
+                Condition.DEV_STAGE_ROOT_ID,
+                "UBERON:0000068", //embryo
+                "UBERON:0000092"  //post-embryo
+                ));
+        Set<Condition> validConds = conditionGraph.getConditions().stream()
+                .filter(cond -> conds.contains(cond) ||
+                        (cond.getStrain().equals(wildTypeStrain) &&
+                                validStageIds.contains(cond.getDevStageId())))
+                .collect(Collectors.toSet());
+        return log.traceExit(new ConditionGraph(validConds, true, false,
+                conditionGraph.getAnatEntityOntology(), conditionGraph.getDevStageOntology(),
+                conditionGraph.getCellTypeOntology(), conditionGraph.getSexOntology(),
+                conditionGraph.getStrainOntology()));
+    }
 
     private static Map<Condition, Integer> insertNewGlobalConditions(Set<Condition> condsToInsert,
             Set<Condition> insertedGlobalConditions, ConditionDAO condDAO) {
@@ -1919,7 +1974,7 @@ public class InsertPropagatedCalls extends CallService {
         this.condToDescendants = new ConcurrentHashMap<>();
     }
 
-    private void insertGlobalConditionsForOneSpecies() throws IllegalStateException, SQLException {
+    private void insertGlobalConditionsForOneSpecies() throws Exception {
         log.traceEntry();
         log.info("Start inserting global conditions for the species {} with combinations of condition parameters {}...",
             this.speciesId, this.condParams);
@@ -1936,7 +1991,7 @@ public class InsertPropagatedCalls extends CallService {
             log.info("{} raw data conditions for species {}", rawCondMap.size(), speciesId);
 
             // We use all existing conditions in the species, and infer all propagated conditions
-            log.info("Starting condition inference...");
+            log.info("Starting condition inference for species {}...", this.speciesId);
             Map<Condition, Set<Integer>> globalCondToSelfRawCondIds = rawCondMap.entrySet()
                     .stream()
                     .map(e -> new AbstractMap.SimpleEntry<>(
@@ -1947,25 +2002,19 @@ public class InsertPropagatedCalls extends CallService {
             assert globalCondToSelfRawCondIds.values().stream().flatMap(s -> s.stream())
                     .collect(Collectors.toSet()).equals(rawCondMap.keySet());
 
-            ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
-            final ConditionGraph conditionGraph = condGraphService.loadConditionGraph(
+            final ConditionGraph conditionGraph = loadConditionGraph(
+                    this.getServiceFactory().getConditionGraphService(),
                     globalCondToSelfRawCondIds.keySet(),
-                          //We do not propagate to descendant conditions anymore
-                    true, false);
-            log.info("Done condition inference.");
+                    true);
+            log.info("Done condition inference for species {}.", this.speciesId);
 
-            //TODO: reimplement properly in MySQLDAOManager.
-            //I do it here because I want to turn autocommit to true before setting the transaction level,
-            //to be sure it's properly set for the next transaction
-            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
-            ((MySQLDAOManager) mainManager).getConnection().getRealConnection()
-            .setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-            ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(false);
+            startTransaction((MySQLDAOManager) mainManager);
 
             Map<Condition, Integer> globalCondsInserted = InsertPropagatedCalls
                     .insertNewGlobalConditions(conditionGraph.getConditions(),
                             new HashSet<>(), condDAO);
-            log.info("{} conditions inserted", globalCondsInserted.size());
+            log.info("{} conditions inserted for species {}", globalCondsInserted.size(), this.speciesId);
+            assert conditionGraph.getConditions().equals(globalCondsInserted.keySet());
 
             Set<PipelineGlobalCondToRawCondTO> toInsert = new HashSet<>();
             //SELF ConditionRelationOrigin
@@ -2003,7 +2052,7 @@ public class InsertPropagatedCalls extends CallService {
             ((MySQLDAOManager) mainManager).getConnection().getRealConnection().commit();
             ((MySQLDAOManager) mainManager).getConnection().getRealConnection().setAutoCommit(true);
 
-            log.info("{} GlobalCondToRawCondTOs inserted", toInsert.size());
+            log.info("{} GlobalCondToRawCondTOs inserted for species {}", toInsert.size(), this.speciesId);
         }
         log.traceExit();
     }
@@ -2046,13 +2095,14 @@ public class InsertPropagatedCalls extends CallService {
             log.info("Starting condition inference...");
             ConditionGraphService condGraphService = this.getServiceFactory().getConditionGraphService();
             final ConditionGraph conditionGraph = this.computeAndInsertGlobalCond ?
-                    condGraphService.loadConditionGraph(rawCondMap.values()
-                    .stream().map(rawCond -> mapRawDataConditionToCondition(rawCond))
-                    .collect(Collectors.toSet()),
-                          //We do not propagate to descendant conditions anymore
-                    true, false) :
-                    condGraphService.loadConditionGraph(globalCondAlreadyInserted.keySet(),
-                            false, false);
+                    loadConditionGraph(condGraphService,
+                            rawCondMap.values()
+                            .stream().map(rawCond -> mapRawDataConditionToCondition(rawCond))
+                            .collect(Collectors.toSet()),
+                            true) :
+                    //In case the global conditions were pre-computed
+                    loadConditionGraph(condGraphService, globalCondAlreadyInserted.keySet(),
+                            false);
             log.info("Done condition inference.");
             
             //we retrieve the IDs of genes with expression data. This is because making the computation
@@ -2307,7 +2357,6 @@ public class InsertPropagatedCalls extends CallService {
 
         return log.traceExit(conditionTOs.stream()
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
-                        //For now we just create Conditions instead of RawDataConditions for simplicity
                         cTO -> new RawDataCondition(
                                     Optional.ofNullable(anatMap.get(cTO.getAnatEntityId() == null ?
                                             Condition.ANAT_ENTITY_ROOT_ID : cTO.getAnatEntityId()))

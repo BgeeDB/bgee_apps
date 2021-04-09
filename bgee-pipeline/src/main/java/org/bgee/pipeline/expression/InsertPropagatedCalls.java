@@ -2046,7 +2046,8 @@ public class InsertPropagatedCalls extends CallService {
             assert toInsert.stream().map(to -> to.getGlobalConditionId()).collect(Collectors.toSet())
                     .equals(new HashSet<>(globalCondsInserted.values()));
             assert toInsert.stream().map(to -> to.getRawConditionId()).collect(Collectors.toSet())
-                    .equals(new HashSet<>(globalCondToSelfRawCondIds.values()));
+                    .equals(globalCondToSelfRawCondIds.values().stream()
+                            .flatMap(s -> s.stream()).collect(Collectors.toSet()));
             assert inserted.equals(toInsert);
 
             ((MySQLDAOManager) mainManager).getConnection().getRealConnection().commit();

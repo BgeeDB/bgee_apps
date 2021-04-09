@@ -1099,7 +1099,8 @@ implements GlobalExpressionCallDAO {
         StringBuilder sql = new StringBuilder(); 
         sql.append("INSERT INTO ").append(GLOBAL_EXPR_TABLE_NAME).append(" (")
 
-           .append("globalExpressionId, bgeeGeneId, globalConditionId, ");
+//           .append("globalExpressionId, ")
+           .append("bgeeGeneId, globalConditionId, ");
 
         sql.append(DAODataType.ALL_COMBINATIONS.stream()
                 .map(c -> GLOBAL_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
@@ -1145,15 +1146,15 @@ implements GlobalExpressionCallDAO {
                 sql.append(", ");
             }
             sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(
-                    39 + (DAODataType.ALL_COMBINATIONS.size() * 3)))
+                    38 + (DAODataType.ALL_COMBINATIONS.size() * 3)))
                .append(") ");
         }
         try (BgeePreparedStatement stmt = 
                 this.getManager().getConnection().prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (GlobalExpressionCallTO callTO: callTOs) {
-                stmt.setLong(paramIndex, callTO.getId());
-                paramIndex++;
+//                stmt.setLong(paramIndex, callTO.getId());
+//                paramIndex++;
                 stmt.setInt(paramIndex, callTO.getBgeeGeneId());
                 paramIndex++;
                 stmt.setInt(paramIndex, callTO.getConditionId());

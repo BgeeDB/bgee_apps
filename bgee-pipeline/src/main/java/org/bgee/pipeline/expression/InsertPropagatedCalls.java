@@ -144,6 +144,8 @@ public class InsertPropagatedCalls extends CallService {
 
     private final static AtomicInteger COND_ID_COUNTER = new AtomicInteger(0);
     private final static AtomicLong EXPR_ID_COUNTER = new AtomicLong(0);
+    private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
+    private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
     
     private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
         log.traceEntry("{}", condParams);
@@ -3144,6 +3146,7 @@ public class InsertPropagatedCalls extends CallService {
         int m = pValues.size();
         Double[] pValuesDouble = 
                 pValues.stream()
+                .map(p -> p.compareTo(ZERO_BIGDECIMAL) == 0 ? ABOVE_ZERO_BIGDECIMAL : p)
                 .map(p -> p.doubleValue())
                 .toArray(length -> new Double[length]);
         double[] adjustedPValues = new double[m];

@@ -325,6 +325,7 @@ public class RawDataService extends CommonService {
             return log.traceExit((DAORawDataConditionFilter) null);
         }
         return log.traceExit(new DAORawDataConditionFilter(condFilter.getAnatEntityIds(), condFilter.getDevStageIds(),
+                condFilter.getCellTypeIds(), condFilter.getSexes(), condFilter.getStrains(),
                 condFilter.getIncludeSubConditions(), condFilter.getIncludeParentConditions()));
     }
 

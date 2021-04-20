@@ -27,6 +27,15 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
      * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the developmental stages that this {@code DAOConditionFilter} 
      *                              will specify to use.
+     * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the cell types that this {@code DAOConditionFilter} 
+     *                              will specify to use.
+     * @param sexIds                A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the sexes that this {@code DAOConditionFilter} 
+     *                              will specify to use.
+     * @param strainIds             A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the strains that this {@code DAOConditionFilter} 
+     *                              will specify to use.
      * @param observedConditions    A {@code Boolean} defining whether the conditions considered
      *                              should have been observed in expression data in any species.
      *                              See {@link #getObservedConditions()} for more details.
@@ -34,13 +43,18 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
      *                                  are provided. 
      */
     public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds,
+            Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds,
             Boolean observedConditions) throws IllegalArgumentException {
-        super(anatEntitieIds, devStageIds);
+        super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds);
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty()) &&
+                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
+                (sexIds == null || sexIds.isEmpty()) &&
+                (strainIds == null || strainIds.isEmpty()) &&
                 observedConditions == null) {
-            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs "
-                    + "or developmental stage IDs or observed data status must be provided."));
+            throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
+                    + "developmental stage IDs, cell type IDs, sex IDs, strain IDs or observed "
+                    + "data status must be provided."));
         }
         this.observedConditions = observedConditions;
     }
@@ -92,6 +106,9 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
         StringBuilder builder = new StringBuilder();
         builder.append("DAOConditionFilter [anatEntityIds=").append(getAnatEntityIds())
                .append(", devStageIds=").append(getDevStageIds())
+               .append(", cellTypeIds=").append(getCellTypeIds())
+               .append(", sexIds=").append(getSexIds())
+               .append(", strainIds=").append(getStrainIds())
                .append(", observedConditions=").append(observedConditions).append("]");
         return builder.toString();
     }

@@ -1203,7 +1203,7 @@ public class CallServiceTest extends TestAncestor {
               new CallDAOFilter(new HashSet<>(Arrays.asList(1)), new HashSet<>(), 
                       new HashSet<>(Arrays.asList(
                               new DAOConditionFilter(Collections.singleton(anatEntity1.getId()), 
-                                      Collections.singleton(devStage1.getId()), null))), 
+                                      Collections.singleton(devStage1.getId()), null, null, null, null))), 
                       new HashSet<>(Arrays.asList(
                               new CallDataDAOFilter(
                                      new HashSet<>(Arrays.asList(
@@ -1467,7 +1467,7 @@ public class CallServiceTest extends TestAncestor {
                 null, Arrays.asList(observedPresentDataDAOFilter));
         CallDAOFilter oneGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
                 Arrays.asList(gTO1.getId()), Arrays.asList(),
-                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null)),
+                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null, null, null, null)),
                 Arrays.asList(presentObservedDataDAOFilter));
         CallDAOFilter oneGeneAllOrganObservedPresentCallDAOFilter = new CallDAOFilter(
                 Arrays.asList(gTO1.getId()), Arrays.asList(),
@@ -1479,7 +1479,7 @@ public class CallServiceTest extends TestAncestor {
                 Arrays.asList(highPresentObservedDataDAOFilter, highAbsentObservedDataDAOFilter));
         CallDAOFilter allGeneOneOrganObservedPresentCallDAOFilter = new CallDAOFilter(
                 null, Arrays.asList(spe1.getId()),
-                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null)),
+                Arrays.asList(new DAOConditionFilter(Arrays.asList(anatEntity1.getId()), null, null, null, null, null)),
                 Arrays.asList(presentObservedDataDAOFilter));
 
         Set<ConditionDAO.Attribute> allCondParams = EnumSet.of(

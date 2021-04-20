@@ -1293,6 +1293,9 @@ public class CallService extends CommonService {
                         .map(condFilter -> new DAOConditionFilter(
                             condFilter.getAnatEntityIds(),
                             condFilter.getDevStageIds(),
+                            condFilter.getCellTypeIds(),
+                            condFilter.getSexIds(),
+                            condFilter.getStrainIds(),
                             condFilter.getObservedConditions()))
                         .collect(Collectors.toSet()),
                     //CallDataDAOFilters

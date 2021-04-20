@@ -1,14 +1,11 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,16 +15,12 @@ import org.apache.logging.log4j.Logger;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Jun. 2018
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14, Mar. 2017
  */
-public class CallDataDAOFilter {
-    private final static Logger log = LogManager.getLogger(CallDataDAOFilter.class.getName());
+public class CallObservedDataDAOFilter {
+    private final static Logger log = LogManager.getLogger(CallObservedDataDAOFilter.class.getName());
 
-    /**
-     * @see #getExperimentCountFilters()
-     */
-    private final List<List<DAOExperimentCountFilter>> daoExperimentCountFilters;
     /**
      * @see #getDataTypes()
      */
@@ -42,16 +35,9 @@ public class CallDataDAOFilter {
     private final LinkedHashMap<ConditionDAO.Attribute, Boolean> observedDataFilter;
 
     /**
-     * 
-     * @param daoExperimentCountFilters A {@code Collection} of {@code Set}s of
-     *                                  {@code DAOExperimentCountFilter}s.
-     *                                  The filters in an inner {@code Set} are seen as "OR" conditions.
-     *                                  The {@code Set}s in the outer {@code Collection} are seen as
-     *                                  "AND" conditions. None of the {@code Collection}s (inner or outer)
-     *                                  can be {@code null}, empty, or to contain {@code null} elements.
      * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
      *                                  which attributes will be sum up to match the provided
-     *                                  {@code DAOExperimentCountFilter}s. If {@code null} or empty,
+     *                                  {@code DAOFDRPValueFilter}s. If {@code null} or empty,
      *                                  then all data types are used.
      * @param callObservedData          See {@link #getCallObservedData()}.
      * @param observedDataFilter        See {@link #getObservedDataFilter()}. If a key or a value is {@code null},
@@ -59,15 +45,9 @@ public class CallDataDAOFilter {
      * @throws IllegalArgumentException If any of the {@code Set}s used in {@code dAOExperimentCountFilters}
      *                                  is {@code null}, empty, or contains {@code null} elements.
      */
-    public CallDataDAOFilter(Collection<Set<DAOExperimentCountFilter>> daoExperimentCountFilters,
-            Collection<DAODataType> dataTypes, Boolean callObservedData,
+    public CallObservedDataDAOFilter(Collection<DAODataType> dataTypes, Boolean callObservedData,
             Map<ConditionDAO.Attribute, Boolean> observedDataFilter) throws IllegalArgumentException {
-        log.entry(daoExperimentCountFilters, dataTypes, callObservedData, observedDataFilter);
-        if (daoExperimentCountFilters != null && daoExperimentCountFilters.stream()
-                .anyMatch(e -> e == null || e.isEmpty() || e.contains(null))) {
-            throw log.throwing(new IllegalArgumentException(
-                    "No ExperimentCountFilter can be null or empty or containing null elements."));
-        }
+        log.traceEntry("{}, {}, {}", dataTypes, callObservedData, observedDataFilter);
         if (observedDataFilter != null && observedDataFilter.entrySet().stream()
                 .anyMatch(e -> e.getKey() == null || e.getValue() == null)) {
             throw log.throwing(new IllegalArgumentException("No ObservedData Entry can have null key or value"));
@@ -75,32 +55,14 @@ public class CallDataDAOFilter {
         this.dataTypes = Collections.unmodifiableSet(
                 dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes));
-        this.daoExperimentCountFilters = Collections.unmodifiableList(
-                daoExperimentCountFilters == null || daoExperimentCountFilters.isEmpty()?
-                new ArrayList<>():
-                daoExperimentCountFilters.stream().map(e -> Collections.unmodifiableList(new ArrayList<>(e)))
-                .collect(Collectors.toList()));
         this.callObservedData = callObservedData;
         this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
             new LinkedHashMap<>(observedDataFilter);
     }
 
     /**
-     * @return      A {@code List} of {@code List}s of {@code DAOExperimentCountFilter}s to parameterize
-     *              global expression queries. The filters in an inner {@code List} are seen as
-     *              "OR" conditions. The {@code List}s in the outer {@code List} are seen as
-     *              "AND" conditions. We use this complicated mechanism because it is necessary to use
-     *              "AND" and "OR" conditions to retrieve noExpression calls.
-     *              Provided as {@code List}s for convenience, to consistently set parameters
-     *              in queries.
-     * @see #getDataTypes()
-     */
-    public List<List<DAOExperimentCountFilter>> getExperimentCountFilters() {
-        return daoExperimentCountFilters;
-    }
-    /**
      * @return      A {@code Set} of {@code DAODataType}s that are the data types which attributes
-     *              will be sum up to match the provided {@code DAOExperimentCountFilter}s.
+     *              will be sum up to match the provided {@code DAOFDRPValueFilter}s.
      * @see #getExperimentCountFilters()
      */
     public Set<DAODataType> getDataTypes() {
@@ -113,11 +75,10 @@ public class CallDataDAOFilter {
      *          and propagated along the dev. stage ontology. For instance, you might want to retrieve expression calls
      *          at a given dev. stage (using any propagation states), only if observed in the anatomical structure itself.
      *          The "callObservedData" filter does not permit solely to perform such a query.
-     *          Note that this is simply a helper method and field as compared to using {@code DAOExperimentCountFilter}s
-     *          in {@code CallDataDAOFilter}s (see {@link #getDataFilters()}).
-     *          The filtering used only the data types defined in this {@code CallDataDAOFilter}.
+     *          Note that this is simply a helper method and field as compared to using propagation states
+     *          and "self" p-values.
      */
-    //XXX: maybe to remove and always set appropriate experimentCountFilters instead
+    //XXX: maybe to remove and always set appropriate observation state/"self" p-values
     public Boolean getCallObservedData() {
         return callObservedData;
     }
@@ -129,7 +90,7 @@ public class CallDataDAOFilter {
      *          The {@code Boolean} values are never {@code null}.
      *          Provided as a {@code LinkedHashMap} for convenience, to consistently set parameters
      *          in queries.
-     *          The filtering used only the data types defined in this {@code CallDataDAOFilter}.
+     *          The filtering used only the data types defined in this {@code CallObservedDataDAOFilter}.
      */
     public LinkedHashMap<ConditionDAO.Attribute, Boolean> getObservedDataFilter() {
         //defensive copying, no unmodifiable LinkedHashMap
@@ -141,7 +102,6 @@ public class CallDataDAOFilter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((dataTypes == null) ? 0 : dataTypes.hashCode());
-        result = prime * result + ((daoExperimentCountFilters == null) ? 0 : daoExperimentCountFilters.hashCode());
         result = prime * result + ((callObservedData == null) ? 0 : callObservedData.hashCode());
         result = prime * result + ((observedDataFilter == null) ? 0 : observedDataFilter.hashCode());
         return result;
@@ -157,19 +117,12 @@ public class CallDataDAOFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        CallDataDAOFilter other = (CallDataDAOFilter) obj;
+        CallObservedDataDAOFilter other = (CallObservedDataDAOFilter) obj;
         if (dataTypes == null) {
             if (other.dataTypes != null) {
                 return false;
             }
         } else if (!dataTypes.equals(other.dataTypes)) {
-            return false;
-        }
-        if (daoExperimentCountFilters == null) {
-            if (other.daoExperimentCountFilters != null) {
-                return false;
-            }
-        } else if (!daoExperimentCountFilters.equals(other.daoExperimentCountFilters)) {
             return false;
         }
         if (callObservedData == null) {
@@ -192,8 +145,7 @@ public class CallDataDAOFilter {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("CallDataDAOFilter [daoExperimentCountFilters=").append(daoExperimentCountFilters)
-                .append(", dataTypes=").append(dataTypes)
+        builder.append("CallObservedDataDAOFilter [dataTypes=").append(dataTypes)
                 .append(", callObservedData=").append(callObservedData)
                 .append(", observedDataFilter=").append(observedDataFilter).append("]");
         return builder.toString();

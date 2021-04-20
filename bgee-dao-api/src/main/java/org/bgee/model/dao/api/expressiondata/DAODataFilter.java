@@ -26,7 +26,7 @@ public abstract class DAODataFilter<T extends DAOBaseConditionFilter> {
     private final LinkedHashSet<T> conditionFilters;
 
     protected DAODataFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, Collection<T> conditionFilters) {
-        log.entry(geneIds, speciesIds, conditionFilters);
+        log.traceEntry("{}, {}, {}", geneIds, speciesIds, conditionFilters);
 
         if (geneIds != null && geneIds.stream().anyMatch(id -> id == null)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be null"));

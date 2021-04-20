@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,10 +19,8 @@ import org.apache.logging.log4j.Logger;
 public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
     private final static Logger log = LogManager.getLogger(CallDAOFilter.class.getName());
 
-    /**
-     * @see #getDataFilters()
-     */
-    private final LinkedHashSet<CallDataDAOFilter> dataFilters;
+    private final LinkedHashSet<CallObservedDataDAOFilter> callObservedDataFilters;
+    private final LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter>> pValueFilters;
     
     /**
      * Constructor accepting all requested parameters.
@@ -29,34 +29,50 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
      * If you are targeting some specific genes in a given species, by providing some gene IDs,
      * you must NOT also provide its corresponding species ID.
      * 
-     * @param geneIds               A {@code Collection} of {@code Integer}s that are IDs of genes 
-     *                              to filter expression queries. Can be {@code null} or empty.
-     * @param speciesIds            A {@code Collection} of {@code Integer}s that are IDs of species 
-     *                              to filter expression queries. Can be {@code null} or empty.
-     *                              Only provide species IDs if you want to retrieve calls for all genes
-     *                              in that species. Do not provide species IDs corresponding to gene IDs
-     *                              provided in {@code geneIds}.
-     * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure 
-     *                              the filtering of conditions with expression data. If several 
-     *                              {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
-     *                              Can be {@code null} or empty.
-     * @param dataFilters           A {@code Collection} of {@code CallDataDAOFilter}s allowing to filter
-     *                              expression calls based on data produced from each data type.
-     *                              If several {@code CallDataDAOFilter}s are provided, they are seen as
-     *                              "OR" conditions.
+     * @param geneIds                   A {@code Collection} of {@code Integer}s that are IDs of genes 
+     *                                  to filter expression queries. Can be {@code null} or empty.
+     * @param speciesIds                A {@code Collection} of {@code Integer}s that are IDs of species 
+     *                                  to filter expression queries. Can be {@code null} or empty.
+     *                                  Only provide species IDs if you want to retrieve calls for all genes
+     *                                  in that species. Do not provide species IDs corresponding to gene IDs
+     *                                  provided in {@code geneIds}.
+     * @param conditionFilters          A {@code Collection} of {@code ConditionFilter}s to configure 
+     *                                  the filtering of conditions with expression data. If several 
+     *                                  {@code ConditionFilter}s are provided, they are seen as "OR" conditions.
+     *                                  Can be {@code null} or empty.
+     * @param callObservedDataFilters   A {@code Collection} of {@code CallObservedDataDAOFilter}s
+     *                                  allowing to filter expression calls based on data produced
+     *                                  from each data type. If several {@code CallObservedDataDAOFilter}s
+     *                                  are provided, they are seen as "OR" conditions.
+     * @param pValueFilters             A {@code Collection} of {@code Set}s of {@code DAOFDRPValueFilter}s.
+     *                                  The filters in an inner {@code Set} are seen as "OR" conditions.
+     *                                  The {@code Set}s in the outer {@code Collection} are seen as
+     *                                  "AND" conditions. If the outer {@code Collection} is non-null,
+     *                                  none of the inner {@code Set}s can be {@code null}, empty,
+     *                                  or to contain {@code null} elements.
      */
     public CallDAOFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds, 
-            Collection<DAOConditionFilter> conditionFilters, Collection<CallDataDAOFilter> dataFilters)
+            Collection<DAOConditionFilter> conditionFilters,
+            Collection<CallObservedDataDAOFilter> callObservedDataFilters,
+            Collection<Set<DAOFDRPValueFilter>> pValueFilters)
                     throws IllegalArgumentException {
         super(geneIds, speciesIds, conditionFilters);
-        log.entry(geneIds, speciesIds, conditionFilters, dataFilters);
+        log.traceEntry("{}, {}, {}, {}, {}", geneIds, speciesIds, conditionFilters,
+                callObservedDataFilters, pValueFilters);
 
-        if (dataFilters != null && dataFilters.stream().anyMatch(df -> df == null)) {
-            throw log.throwing(new IllegalArgumentException("No CallDataDAOFilter can be null"));
+        if (callObservedDataFilters != null && callObservedDataFilters.contains(null)) {
+            throw log.throwing(new IllegalArgumentException("No callObservedDataFilter can be null"));
+        }
+        if (pValueFilters != null && pValueFilters.stream()
+                .anyMatch(s -> s == null || s.isEmpty() || s.contains(null))) {
+            throw log.throwing(new IllegalArgumentException("No DAOFDRPValueFilter can be null"));
         }
 
-        this.dataFilters = dataFilters == null? new LinkedHashSet<>(): 
-            new LinkedHashSet<>(dataFilters);
+        this.callObservedDataFilters = callObservedDataFilters == null? new LinkedHashSet<>():
+            new LinkedHashSet<>(callObservedDataFilters);
+        this.pValueFilters = pValueFilters == null? new LinkedHashSet<>():
+            pValueFilters.stream().map(s -> new LinkedHashSet<>(s))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
         
         if (this.getGeneIds().isEmpty() && this.getSpeciesIds().isEmpty() &&
                 this.getConditionFilters().isEmpty()) {
@@ -67,16 +83,21 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
     }
 
     /**
-     * @return  A {@code LinkedHashSet} of {@code CallDataDAOFilter}s to configure the filtering
-     *          of conditions with expression data. If several {@code CallDataDAOFilter}s are provided,
+     * @return  A {@code LinkedHashSet} of {@code CallObservedDataDAOFilter}s to configure the filtering
+     *          of conditions with expression data. If several {@code CallObservedDataDAOFilter}s are provided,
      *          they are seen as "OR" conditions. Can be {@code null} or empty. We allow to provide
-     *          several {@code CallDataDAOFilter}s to be able to filter in different ways for different data types.
+     *          several {@code CallObservedDataDAOFilter}s to be able to filter in different ways for different data types.
      *          Provided as a {@code LinkedHashSet} for convenience, to consistently set parameters 
      *          in queries.
      */
-    public LinkedHashSet<CallDataDAOFilter> getDataFilters() {
+    public LinkedHashSet<CallObservedDataDAOFilter> getCallObservedDataFilters() {
         //defensive copying, no unmodifiable LinkedHashSet
-        return new LinkedHashSet<>(dataFilters);
+        return new LinkedHashSet<>(callObservedDataFilters);
+    }
+    public LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter>> getFDRPValueFilters() {
+        //defensive copying, no unmodifiable LinkedHashSet
+        return pValueFilters.stream().map(s -> new LinkedHashSet<>(s))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
 
@@ -84,7 +105,8 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((dataFilters == null) ? 0 : dataFilters.hashCode());
+        result = prime * result + ((callObservedDataFilters == null) ? 0 : callObservedDataFilters.hashCode());
+        result = prime * result + ((pValueFilters == null) ? 0 : pValueFilters.hashCode());
         return result;
     }
     @Override
@@ -99,11 +121,18 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
             return false;
         }
         CallDAOFilter other = (CallDAOFilter) obj;
-        if (dataFilters == null) {
-            if (other.dataFilters != null) {
+        if (callObservedDataFilters == null) {
+            if (other.callObservedDataFilters != null) {
                 return false;
             }
-        } else if (!dataFilters.equals(other.dataFilters)) {
+        } else if (!callObservedDataFilters.equals(other.callObservedDataFilters)) {
+            return false;
+        }
+        if (pValueFilters == null) {
+            if (other.pValueFilters != null) {
+                return false;
+            }
+        } else if (!pValueFilters.equals(other.pValueFilters)) {
             return false;
         }
         return true;
@@ -115,7 +144,8 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
         builder.append("CallDAOFilter [geneIds=").append(getGeneIds())
                .append(", speciesIds=").append(getSpeciesIds())
                .append(", conditionFilters=").append(getConditionFilters())
-               .append(", dataFilters=").append(dataFilters)
+               .append(", callObservedDataFilters=").append(callObservedDataFilters)
+               .append(", pValueFilters=").append(pValueFilters)
                .append("]");
         return builder.toString();
     }

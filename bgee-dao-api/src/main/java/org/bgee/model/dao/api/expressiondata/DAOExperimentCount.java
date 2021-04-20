@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
  * @author Frederic Bastian
  * @version Bgee 14 Mar. 2017
  * @see GlobalExpressionCallDAO.GlobalExpressionCallDataTO
- * @see DAOExperimentCountFilter
  * @see GlobalExpressionCallDAO
  * @since Bgee 14 Mar. 2017
  */

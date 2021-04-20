@@ -13,9 +13,12 @@ public class DAOFDRPValue {
     //Only the dataTypes are considered for the hashCode/equals methods
     private final BigDecimal fdrPValue;
     private final Integer conditionId;
-    //Only the dataTypes are considered for the hashCode/equals methods
     private final EnumSet<DAODataType> dataTypes;
-    
+
+
+    public DAOFDRPValue(BigDecimal fdrPValue, Collection<DAODataType> dataTypes) {
+        this(fdrPValue, null, dataTypes);
+    }
     public DAOFDRPValue(BigDecimal fdrPValue, Integer conditionId, Collection<DAODataType> dataTypes) {
         if (fdrPValue == null || fdrPValue.compareTo(new BigDecimal(0)) == -1 ||
                 fdrPValue.compareTo(new BigDecimal(1)) == 1) {
@@ -32,11 +35,17 @@ public class DAOFDRPValue {
     }
     
     /**
-     * @return  The FDR-corrected p-value. Not taken into account in hashCode/equals methods.
+     * @return  A {@code BigDecimal} that is the FDR-corrected p-value.
+     *          Not taken into account in hashCode/equals methods.
      */
     public BigDecimal getFdrPValue() {
         return fdrPValue;
     }
+    /**
+     * @return  An {@code Integer} that is the globalConditionId where this p-value has been observed.
+     *          Useful when inserting/retriving the best p-value among descendant conditions.
+     *          Not taken into account in hashCode/equals methods.
+     */
     public Integer getConditionId() {
         return conditionId;
     }

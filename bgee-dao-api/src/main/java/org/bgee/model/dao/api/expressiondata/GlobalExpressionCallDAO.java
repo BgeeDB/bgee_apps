@@ -214,14 +214,14 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * as compared to {@code RawExpressionCallTO}s).
      * 
      * @author  Frederic Bastian
-     * @version Bgee 14, Jun. 2019
+     * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 14, Feb. 2017
      */
     public static class GlobalExpressionCallTO extends RawExpressionCallTO {
 
         private static final long serialVersionUID = -1057540315343857464L;
         
-        private final BigDecimal meanRank;
+        private final Set<DAOMeanRank> meanRanks;
         
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
@@ -230,11 +230,12 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final Set<DAOFDRPValue> bestDescendantPValues;
         
         public GlobalExpressionCallTO(Long id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
+                Collection<DAOMeanRank> meanRanks, Collection<GlobalExpressionCallDataTO> callDataTOs,
                 Collection<DAOFDRPValue> pValues, Collection<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);
             
-            this.meanRank = meanRank;
+            this.meanRanks = meanRanks == null? null:
+                Collections.unmodifiableSet(new HashSet<>(meanRanks));
             if (callDataTOs != null) {
                 this.callDataTOs = Collections.unmodifiableSet(new HashSet<>(callDataTOs));
             } else {
@@ -259,14 +260,12 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         }
 
         /**
-         * @return  A {@code BigDecimal} that is the weighted mean rank of the gene in the condition, 
-         *          based on the normalized mean rank of each data type requested in the query. 
-         *          So for instance, if you configured an {@code ExpressionCallDAOFilter} 
-         *          to only retrieved Affymetrix data, then this rank will be equal to the rank 
-         *          returned by {@link #getAffymetrixMeanRank()}.
+         * @return  A {@code Set} of {@code DAOMeanRank}s storing the weighted mean rank
+         *          of a gene in a condition, associated to the {@code DAODataType}s used
+         *          to compute it.
          */
-        public BigDecimal getMeanRank() {
-            return meanRank;
+        public Set<DAOMeanRank> getMeanRanks() {
+            return meanRanks;
         }
         /**
          * @return  An unmodifiable {@code Set} of {@code GlobalExpressionCallDataTO}s
@@ -297,7 +296,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             builder.append("GlobalExpressionCallTO [id=").append(getId())
                    .append(", bgeeGeneId=").append(getBgeeGeneId())
                    .append(", conditionId=").append(getConditionId())
-                   .append(", meanRank=").append(meanRank)
+                   .append(", meanRanks=").append(meanRanks)
                    .append(", callDataTOs=").append(callDataTOs)
                    .append(", pValues=").append(pValues)
                    .append(", bestDescendantPValues=").append(bestDescendantPValues)

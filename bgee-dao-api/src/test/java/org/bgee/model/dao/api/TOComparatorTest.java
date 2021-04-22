@@ -81,6 +81,7 @@ import org.junit.Test;
  * @version Bgee 14, Apr. 2019
  * @since   Bgee 13, Sep. 2014
  */
+//TODO: add test for GlobalExpressionCallTO
 public class TOComparatorTest extends TestAncestor {
     /**
      * {@code Logger} of the class. 

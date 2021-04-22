@@ -70,28 +70,50 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
     //to be added when needed.
     public enum Attribute implements DAO.Attribute {
-        ID("id", false), 
-        SPECIES_ID("speciesId", false), 
-        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true),
-        CELL_TYPE_ID("cellTypeId", true), SEX_ID("sex", true), STRAIN_ID("strain", true);
+        ID("id", null, null, false),
+        SPECIES_ID("speciesId", null, null, false),
+        ANAT_ENTITY_ID("anatEntityId", "AnatEntityPropagationState", ANAT_ENTITY_ROOT_ID, true),
+        STAGE_ID("stageId", "StagePropagationState", DEV_STAGE_ROOT_ID, true),
+        CELL_TYPE_ID("cellTypeId", "CellTypePropagationState", CELL_TYPE_ROOT_ID, true),
+        SEX_ID("sex", "SexPropagationState", SEX_ROOT_ID, true),
+        STRAIN_ID("strain", "StrainPropagationState", STRAIN_ROOT_ID, true);
 
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
          * @see {@link Attribute#getTOFieldName()}
          */
         private final String fieldName;
+        private final String propagationStateNameSuffix;
+        private final String rootId;
         /**
          * @see #isConditionParameter()
          */
         private final boolean conditionParameter;
         
-        private Attribute(String fieldName, boolean conditionParameter) {
+        private Attribute(String fieldName, String propagationStateNameSuffix, String rootId,
+                boolean conditionParameter) {
             this.fieldName = fieldName;
+            this.propagationStateNameSuffix = propagationStateNameSuffix;
+            this.rootId = rootId;
             this.conditionParameter = conditionParameter;
         }
         @Override
         public String getTOFieldName() {
             return this.fieldName;
+        }
+        /**
+         * @return  A {@code String} that might be used to suffix the fields related to propagation state
+         *          for this {@code Attribute}.
+         */
+        public String getPropagationStateNameSuffix() {
+            return this.propagationStateNameSuffix;
+        }
+        /**
+         * @return  A {@code String} that is the ID of the root of the ontology for the related
+         *          condition parameter, if {@link #isConditionParameter()} returns {@code true}.
+         */
+        public String getRootId() {
+            return this.rootId;
         }
         /**
          * @return  A {@code boolean} defining whether this attribute corresponds 

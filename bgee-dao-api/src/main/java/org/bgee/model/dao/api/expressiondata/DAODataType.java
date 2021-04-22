@@ -27,9 +27,20 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  */
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
-    AFFYMETRIX("affymetrix", "affymetrix", "Affy"), EST("est", "est", "Est"),
-    IN_SITU("in situ", "inSitu", "InSitu"), RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq"),
-    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength", "ScRnaSeqFL");
+    AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
+            "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
+            "affymetrixGlobalDistinctRankSum", false),
+    EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
+            "estMaxRank", "estGlobalMaxRank", true),
+    IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
+            "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank", true),
+    RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
+            "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
+            "rnaSeqGlobalDistinctRankSum", false),
+    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
+            "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
+            "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
+            "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum", false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
@@ -91,6 +102,13 @@ public enum DAODataType implements EnumDAOField {
      * See {@link #getFieldNamePart()}
      */
     private final String fieldNamePart;
+    private final String rankFieldName;
+    private final String globalRankFieldName;
+    private final String rankNormFieldName;
+    private final String globalRankNormFieldName;
+    private final String rankWeightFieldName;
+    private final String globalRankWeightFieldName;
+    private final boolean rankWeightRelatedToCondition;
 
     /**
      * Constructor providing the {@code String} representation of this {@code DataType}.
@@ -100,10 +118,20 @@ public enum DAODataType implements EnumDAOField {
      * @param fieldNamePart         A {@code String} that is the substring used in field names
      *                              related to this {@code DataType} when not starting the field name.
      */
-    private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart) {
+    private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart,
+            String rankFieldName, String globalRankFieldName, String rankNormFieldName,
+            String globalRankNormFieldName, String rankWeightFieldName,
+            String globalRankWeightFieldName, boolean rankWeightRelatedToCondition) {
         this.stringRepresentation = stringRepresentation;
         this.fieldNamePrefix = fieldNamePrefix;
         this.fieldNamePart = fieldNamePart;
+        this.rankFieldName = rankFieldName;
+        this.globalRankFieldName = globalRankFieldName;
+        this.rankNormFieldName = rankNormFieldName;
+        this.globalRankNormFieldName = globalRankNormFieldName;
+        this.rankWeightFieldName = rankWeightFieldName;
+        this.globalRankWeightFieldName = globalRankWeightFieldName;
+        this.rankWeightRelatedToCondition = rankWeightRelatedToCondition;
     }
     @Override
     public String getStringRepresentation() {
@@ -125,5 +153,30 @@ public enum DAODataType implements EnumDAOField {
      */
     public String getFieldNamePart() {
         return this.fieldNamePart;
+    }
+
+    public String getRankFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankFieldName;
+        }
+        return globalRankFieldName;
+    }
+
+    public String getRankNormFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankNormFieldName;
+        }
+        return globalRankNormFieldName;
+    }
+
+    public String getRankWeightFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankWeightFieldName;
+        }
+        return globalRankWeightFieldName;
+    }
+
+    public boolean isRankWeightRelatedToCondition() {
+        return rankWeightRelatedToCondition;
     }
 }

@@ -33,13 +33,13 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -636,7 +636,7 @@ public class CommonService extends Service {
                 .replace("(", "");
         String simplifiedStrain = replacement.apply(strain);
 
-        if (RawDataCondition.NO_INFO_STRAINS.stream().map(replacement)
+        if (RawDataConditionDAO.NO_INFO_STRAINS.stream().map(replacement)
                 .anyMatch(s -> s.equals(simplifiedStrain))) {
             return log.traceExit(new Strain(ConditionDAO.STRAIN_ROOT_ID));
         }

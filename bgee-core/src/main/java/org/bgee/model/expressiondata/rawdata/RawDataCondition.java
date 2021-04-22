@@ -1,9 +1,6 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,11 +19,6 @@ import org.bgee.model.species.Species;
  */
 public class RawDataCondition extends BaseCondition<RawDataCondition> implements Comparable<RawDataCondition> {
     private final static Logger log = LogManager.getLogger(RawDataCondition.class.getName());
-
-    public final static Set<String> NO_INFO_STRAINS = new HashSet<>(Arrays.asList(
-            "wild-type", "NA", "not annotated", "confidential_restricted_data",
-            // The following were not standardized as of Bgee 15.0, maybe we can remove them later.
-            "(Missing)", "mix of breed", "mixed-breed", "multiple breeds"));
 
     /**
      * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.

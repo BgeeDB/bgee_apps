@@ -310,7 +310,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * from a specific {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}.
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Mar. 2017
+     * @version Bgee 15.0, Apr. 2021
      * @see GlobalExpressionCallTO
      * @since Bgee 14 Mar. 2017
      */
@@ -326,10 +326,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private final Integer selfObservationCount;
         private final Integer descendantObservationCount;
-        
-        private final Set<DAOExperimentCount> experimentCounts;
-
-        private final Integer propagatedCount;
 
         private final BigDecimal rank;
         private final BigDecimal rankNorm;
@@ -338,7 +334,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
                 Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
                 Integer selfObservationCount, Integer descendantObservationCount,
-                Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
             if (dataPropagation != null && dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
@@ -351,9 +346,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
             this.selfObservationCount = selfObservationCount;
             this.descendantObservationCount = descendantObservationCount;
-
-            this.experimentCounts = experimentCounts == null? null: Collections.unmodifiableSet(new HashSet<>(experimentCounts));
-            this.propagatedCount = propagatedCount;
 
             this.rank = rank;
             this.rankNorm = rankNorm;
@@ -398,12 +390,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public Integer getDescendantObservationCount() {
             return descendantObservationCount;
         }
-        public Set<DAOExperimentCount> getExperimentCounts() {
-            return experimentCounts;
-        }
-        public Integer getPropagatedCount() {
-            return propagatedCount;
-        }
 
         public BigDecimal getRank() {
             return rank;
@@ -422,8 +408,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", dataPropagation=").append(dataPropagation)
                    .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantObservationCount=").append(descendantObservationCount)
-                   .append(", experimentCounts=").append(experimentCounts)
-                   .append(", propagatedCount=").append(propagatedCount)
                    .append(", rank=").append(rank)
                    .append(", rankNorm=").append(rankNorm)
                    .append(", weightForMeanRank=").append(weightForMeanRank)

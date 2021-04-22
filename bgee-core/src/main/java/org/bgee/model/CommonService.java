@@ -638,7 +638,7 @@ public class CommonService extends Service {
 
         if (RawDataCondition.NO_INFO_STRAINS.stream().map(replacement)
                 .anyMatch(s -> s.equals(simplifiedStrain))) {
-            return log.traceExit(new Strain(Condition.STRAIN_ROOT_ID));
+            return log.traceExit(new Strain(ConditionDAO.STRAIN_ROOT_ID));
         }
         return log.traceExit(new Strain(strain));
     }

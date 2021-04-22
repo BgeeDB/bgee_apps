@@ -2311,17 +2311,17 @@ public class InsertPropagatedCalls extends CallService {
             if (condTO.getAnatEntityId() != null) {
                 anatEntityIds.add(condTO.getAnatEntityId());
             } else {
-                anatEntityIds.add(Condition.ANAT_ENTITY_ROOT_ID);
+                anatEntityIds.add(ConditionDAO.ANAT_ENTITY_ROOT_ID);
             }
             if (condTO.getStageId() != null) {
                 stageIds.add(condTO.getStageId());
             } else {
-                stageIds.add(Condition.DEV_STAGE_ROOT_ID);
+                stageIds.add(ConditionDAO.DEV_STAGE_ROOT_ID);
             }
             if (condTO.getCellTypeId() != null) {
                 cellTypeIds.add(condTO.getCellTypeId());
             } else {
-                cellTypeIds.add(Condition.CELL_TYPE_ROOT_ID);
+                cellTypeIds.add(ConditionDAO.CELL_TYPE_ROOT_ID);
             }
             if (condTO.getSex() != null) {
                 sexIds.add(condTO.getSex().getStringRepresentation());
@@ -2331,7 +2331,7 @@ public class InsertPropagatedCalls extends CallService {
             if (condTO.getStrainId() != null) {
                 strainIds.add(condTO.getStrainId());
             } else {
-                strainIds.add(Condition.STRAIN_ROOT_ID);
+                strainIds.add(ConditionDAO.STRAIN_ROOT_ID);
             }
         }
 
@@ -2362,21 +2362,21 @@ public class InsertPropagatedCalls extends CallService {
                 .collect(Collectors.toMap(cTO -> cTO.getId(), 
                         cTO -> new RawDataCondition(
                                     Optional.ofNullable(anatMap.get(cTO.getAnatEntityId() == null ?
-                                            Condition.ANAT_ENTITY_ROOT_ID : cTO.getAnatEntityId()))
+                                            ConditionDAO.ANAT_ENTITY_ROOT_ID : cTO.getAnatEntityId()))
                                     .orElseThrow(() -> new IllegalStateException("Anat. entity not found: "
                                                 + cTO.getAnatEntityId())),
                                     Optional.ofNullable(stageMap.get(cTO.getStageId() == null ?
-                                            Condition.DEV_STAGE_ROOT_ID : cTO.getStageId()))
+                                            ConditionDAO.DEV_STAGE_ROOT_ID : cTO.getStageId()))
                                     .orElseThrow(() -> new IllegalStateException("Stage not found: "
                                                 + cTO.getStageId())),
                                     Optional.ofNullable(anatMap.get(cTO.getCellTypeId() == null ?
-                                            Condition.CELL_TYPE_ROOT_ID : cTO.getCellTypeId()))
+                                            ConditionDAO.CELL_TYPE_ROOT_ID : cTO.getCellTypeId()))
                                     .orElseThrow(() -> new IllegalStateException("Cell type not found: "
                                                 + cTO.getCellTypeId())),
                                     mapDAORawDataSexToRawDataSex(cTO.getSex() == null ?
                                             DAORawDataSex.NA : cTO.getSex()),
                                     mapDAORawDataStrainToRawDataStrain(cTO.getStrainId() == null ?
-                                            Condition.STRAIN_ROOT_ID : cTO.getStrainId()),
+                                            ConditionDAO.STRAIN_ROOT_ID : cTO.getStrainId()),
                                     Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                             () -> new IllegalStateException("Species not found: "
                                                     + cTO.getSpeciesId())))

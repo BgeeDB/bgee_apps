@@ -29,6 +29,32 @@ import org.bgee.model.dao.api.exception.DAOException;
 public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
 
     /**
+     * A {@code String} that represents the ID the root of all anat. entities
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String ANAT_ENTITY_ROOT_ID = "BGEE:0000000";
+    /**
+     * A {@code String} that represents the ID the root of all dev. stages
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
+    /**
+     * A {@code String} that represents the ID the root of all cell types
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String CELL_TYPE_ROOT_ID = "GO:0005575";
+    /**
+     * A {@code String} that represents the root of all sexes
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String SEX_ROOT_ID = "any";
+    /**
+     * A {@code String} that represents the standardized name of the root of all strains
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String STRAIN_ROOT_ID = "wild-type";
+
+    /**
      * {@code Enum} used to define the attributes to populate in the {@code ConditionTO}s 
      * obtained from this {@code ConditionDAO}.
      * <ul>

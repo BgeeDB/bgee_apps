@@ -15,7 +15,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
-import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.species.Species;
 
@@ -258,32 +257,6 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             return true;
         }
     }
-
-    /**
-     * A {@code String} that represents the ID the root of all anat. entities
-     * used in {@code Condition}s in Bgee.
-     */
-    public final static String ANAT_ENTITY_ROOT_ID = "BGEE:0000000";
-    /**
-     * A {@code String} that represents the ID the root of all dev. stages
-     * used in {@code Condition}s in Bgee.
-     */
-    public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
-    /**
-     * A {@code String} that represents the ID the root of all cell types
-     * used in {@code Condition}s in Bgee.
-     */
-    public final static String CELL_TYPE_ROOT_ID = "GO:0005575";
-    /**
-     * A {@code String} that represents the root of all sexes
-     * used in {@code Condition}s in Bgee.
-     */
-    public final static String SEX_ROOT_ID = SexEnum.ANY.getStringRepresentation();
-    /**
-     * A {@code String} that represents the standardized name of the root of all strains
-     * used in {@code Condition}s in Bgee.
-     */
-    public final static String STRAIN_ROOT_ID = "wild-type";
 
     //*********************************
     //  ATTRIBUTES AND CONSTRUCTORS

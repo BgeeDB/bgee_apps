@@ -136,9 +136,10 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
          * @version Bgee 15 Mar. 2021
          */
         public enum DAORawDataSex implements EnumDAOField {
-            NOT_ANNOTATED("not annotated"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male"),
-            MIXED("mixed"), NA("NA");
+            NOT_ANNOTATED("not annotated", false), HERMAPHRODITE("hermaphrodite", true),
+            FEMALE("female", true), MALE("male", true), MIXED("mixed", false), NA("NA", false);
 
+            private final boolean informative;
             /**
              * See {@link #getStringRepresentation()}
              */
@@ -147,9 +148,12 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
              * Constructor providing the {@code String} representation of this {@code DAORawDataSex}.
              *
              * @param stringRepresentation  A {@code String} corresponding to this {@code DAORawDataSex}.
+             * @param informative           A {@code boolean} defining whether this {@code DAORawDataSex}
+             *                              is informative.
              */
-            private DAORawDataSex(String stringRepresentation) {
+            private DAORawDataSex(String stringRepresentation, boolean informative) {
                 this.stringRepresentation = stringRepresentation;
+                this.informative = informative;
             }
 
             /**
@@ -170,6 +174,9 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
+            }
+            public boolean isInformative() {
+                return this.informative;
             }
             @Override
             public String toString() {

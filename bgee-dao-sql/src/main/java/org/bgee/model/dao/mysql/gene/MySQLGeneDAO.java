@@ -43,6 +43,10 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
      * A {@code String} that is the field name for Bgee internal gene IDs.
      */
     public static final String BGEE_GENE_ID = "bgeeGeneId";
+    /**
+     * A {@code String} that is the field name for species IDs.
+     */
+    public static final String SPECIES_ID = "speciesId";
 
     /**
      * A {@code Map} of column name to their corresponding {@code Attribute}.

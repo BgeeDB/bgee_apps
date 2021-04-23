@@ -53,7 +53,6 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.GlobalConditionToRawConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
 import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
@@ -75,11 +74,8 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.ConditionGraphService;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
 import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
@@ -1405,10 +1401,6 @@ public class InsertPropagatedCalls extends CallService {
                                 cd.getSelfObservationCount(),
                                 //descendant p-value observation counts
                                 cd.getDescendantObservationCount(),
-                                //experimentCounts
-                                null,
-                                //propagated count
-                                null,
                                 //rank info: computed by the Perl pipeline after generation
                                 //of these global calls
 //                                meanRank, meanRankNorm, weightForMeanRank
@@ -1452,42 +1444,7 @@ public class InsertPropagatedCalls extends CallService {
             assert !map.values().stream().allMatch(s -> s == null);
             return log.traceExit(map);
         }
-        
-        private static DAOExperimentCount convertExperimentExpressionCountToDAOExperimentCount(
-                ExperimentExpressionCount count) {
-            log.traceEntry("{}", count);
-            return log.traceExit(new DAOExperimentCount(
-                    convertCallTypeToDAOCallType(count.getCallType()),
-                    convertDataQualityToDAODataQuality(count.getDataQuality()),
-                    convertPropStateToDAOPropState(count.getPropagationState()),
-                    count.getCount()
-                    ));
-        }
-        private static DAOExperimentCount.CallType convertCallTypeToDAOCallType(
-                CallType.Expression callType) {
-            log.traceEntry("{}", callType);
 
-            switch(callType) {
-            case EXPRESSED:
-                return log.traceExit(DAOExperimentCount.CallType.PRESENT);
-            case NOT_EXPRESSED:
-                return log.traceExit(DAOExperimentCount.CallType.ABSENT);
-            default:
-                throw log.throwing(new IllegalArgumentException("Unsupported CallType: " + callType));
-            }
-        }
-        private static DAOExperimentCount.DataQuality convertDataQualityToDAODataQuality(DataQuality qual) {
-            log.traceEntry("{}", qual);
-
-            switch(qual) {
-            case LOW:
-                return log.traceExit(DAOExperimentCount.DataQuality.LOW);
-            case HIGH:
-                return log.traceExit(DAOExperimentCount.DataQuality.HIGH);
-            default:
-                throw log.throwing(new IllegalArgumentException("Unsupported DataQuality: " + qual));
-            }
-        }
         private static DAOPropagationState convertPropStateToDAOPropState(PropagationState propState) {
             log.traceEntry("{}", propState);
 

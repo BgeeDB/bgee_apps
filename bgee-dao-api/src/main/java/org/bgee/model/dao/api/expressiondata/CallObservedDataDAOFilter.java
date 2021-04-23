@@ -1,11 +1,9 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +22,7 @@ public class CallObservedDataDAOFilter {
     /**
      * @see #getDataTypes()
      */
-    private final Set<DAODataType> dataTypes;
+    private final EnumSet<DAODataType> dataTypes;
     /**
      * @see #getCallObservedData()
      */
@@ -52,21 +50,28 @@ public class CallObservedDataDAOFilter {
                 .anyMatch(e -> e.getKey() == null || e.getValue() == null)) {
             throw log.throwing(new IllegalArgumentException("No ObservedData Entry can have null key or value"));
         }
-        this.dataTypes = Collections.unmodifiableSet(
-                dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
-                    EnumSet.copyOf(dataTypes));
+        if (observedDataFilter != null && observedDataFilter.keySet().stream()
+                .anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException("Not a condition parameter in observedDataFilter."));
+        }
+        if (callObservedData == null && (observedDataFilter == null || observedDataFilter.isEmpty())) {
+            throw log.throwing(new IllegalArgumentException("No filter provided in CallObservedDataDAOFilter"));
+        }
+        this.dataTypes = dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
+                    EnumSet.copyOf(dataTypes);
         this.callObservedData = callObservedData;
         this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
             new LinkedHashMap<>(observedDataFilter);
     }
 
     /**
-     * @return      A {@code Set} of {@code DAODataType}s that are the data types which attributes
+     * @return      An {@code EnumSet} of {@code DAODataType}s that are the data types which attributes
      *              will be sum up to match the provided {@code DAOFDRPValueFilter}s.
      * @see #getExperimentCountFilters()
      */
-    public Set<DAODataType> getDataTypes() {
-        return dataTypes;
+    public EnumSet<DAODataType> getDataTypes() {
+        //Defensive copying, no Collections.unmodifiableEnumSet
+        return EnumSet.copyOf(dataTypes);
     }
     /**
      * @return  A {@code Boolean} defining a filtering on whether the call was observed in the condition,

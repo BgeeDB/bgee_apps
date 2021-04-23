@@ -45,9 +45,9 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
      *                                  from each data type. If several {@code CallObservedDataDAOFilter}s
      *                                  are provided, they are seen as "OR" conditions.
      * @param pValueFilters             A {@code Collection} of {@code Set}s of {@code DAOFDRPValueFilter}s.
-     *                                  The filters in an inner {@code Set} are seen as "OR" conditions.
+     *                                  The filters in an inner {@code Set} are seen as "AND" conditions.
      *                                  The {@code Set}s in the outer {@code Collection} are seen as
-     *                                  "AND" conditions. If the outer {@code Collection} is non-null,
+     *                                  "OR" conditions. If the outer {@code Collection} is non-null,
      *                                  none of the inner {@code Set}s can be {@code null}, empty,
      *                                  or to contain {@code null} elements.
      */

@@ -542,9 +542,11 @@ implements GlobalExpressionCallDAO {
                     if (!firstCond) {
                         sb.append(" AND ");
                     }
+                    sb.append("(");
                     firstCond = false;
                     sb.append(generateObservedDataFilters(callFilter.getCallObservedDataFilters(),
                             globalExprTableName));
+                    sb.append(")");
                 }
 
                 if (callFilter.getFDRPValueFilters() != null &&
@@ -552,9 +554,11 @@ implements GlobalExpressionCallDAO {
                     if (!firstCond) {
                         sb.append(" AND ");
                     }
+                    sb.append("(");
                     firstCond = false;
                     sb.append(generatePValueFilters(callFilter.getFDRPValueFilters(),
                             globalExprTableName));
+                    sb.append(")");
                 }
 
                 sb.append(")");
@@ -669,9 +673,9 @@ implements GlobalExpressionCallDAO {
 
                         return sb.toString();
                     })
-                    .collect(Collectors.joining(" OR ", "(", ")"))
+                    .collect(Collectors.joining(" AND "))
             )
-            .collect(Collectors.joining(" AND ")));
+            .collect(Collectors.joining(" OR ")));
     }
 
     private static void performSanityChecks(LinkedHashSet<CallDAOFilter> callFilters)

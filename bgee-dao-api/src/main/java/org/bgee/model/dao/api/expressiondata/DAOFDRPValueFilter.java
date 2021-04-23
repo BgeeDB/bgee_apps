@@ -20,7 +20,17 @@ public class DAOFDRPValueFilter {
     private final static Logger log = LogManager.getLogger(DAOFDRPValueFilter.class.getName());
 
     public static enum Qualifier {
-        EQUALS_TO, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUALS_TO, LESS_THAN_OR_EQUALS_TO;
+        EQUALS_TO("="), GREATER_THAN(">"), LESS_THAN("<"),
+        GREATER_THAN_OR_EQUALS_TO(">="), LESS_THAN_OR_EQUALS_TO("<=");
+
+        private final String symbol;
+
+        private Qualifier(String symbol) {
+            this.symbol = symbol;
+        }
+        public String getSymbol() {
+            return symbol;
+        }
     }
 
     /**

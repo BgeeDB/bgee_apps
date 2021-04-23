@@ -1,8 +1,10 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -78,6 +80,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         SEX_ID("sex", "SexPropagationState", SEX_ROOT_ID, true),
         STRAIN_ID("strain", "StrainPropagationState", STRAIN_ROOT_ID, true);
 
+        public static EnumSet<Attribute> getCondParams() {
+            return Arrays.stream(Attribute.values()).filter(a -> a.isConditionParameter())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(Attribute.class)));
+        }
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
          * @see {@link Attribute#getTOFieldName()}

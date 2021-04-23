@@ -604,23 +604,27 @@ public class CommonService extends Service {
         log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
-                .map(a -> {
-                    switch (a) {
-                        case ANAT_ENTITY_ID:
-                            return ConditionDAO.Attribute.ANAT_ENTITY_ID;
-                        case DEV_STAGE_ID: 
-                            return ConditionDAO.Attribute.STAGE_ID;
-                        case CELL_TYPE_ID:
-                            return ConditionDAO.Attribute.CELL_TYPE_ID;
-                        case SEX_ID:
-                            return ConditionDAO.Attribute.SEX_ID;
-                        case STRAIN_ID: 
-                            return ConditionDAO.Attribute.STRAIN_ID; 
-                        default: 
-                            throw log.throwing(new UnsupportedOperationException(
-                                "Condition parameter not supported: " + a));
-                    }
-                }).collect(Collectors.toSet()));
+                .map(a -> convertCondParamAttrToCondDAOAttr(a))
+                .collect(Collectors.toSet()));
+    }
+    protected static ConditionDAO.Attribute convertCondParamAttrToCondDAOAttr(
+            CallService.Attribute attr) {
+        log.traceEntry("{}", attr);
+        switch (attr) {
+            case ANAT_ENTITY_ID:
+                return log.traceExit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+            case DEV_STAGE_ID:
+                return log.traceExit(ConditionDAO.Attribute.STAGE_ID);
+            case CELL_TYPE_ID:
+                return log.traceExit(ConditionDAO.Attribute.CELL_TYPE_ID);
+            case SEX_ID:
+                return log.traceExit(ConditionDAO.Attribute.SEX_ID);
+            case STRAIN_ID:
+                return log.traceExit(ConditionDAO.Attribute.STRAIN_ID);
+            default:
+                throw log.throwing(new UnsupportedOperationException(
+                    "Condition parameter not supported: " + attr));
+        }
     }
 
     protected static Strain mapRawDataStrainToStrain(String strain) {

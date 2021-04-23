@@ -3,6 +3,7 @@ package org.bgee.model.dao.api.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -25,16 +26,42 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14 Feb. 2017
  */
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
-    
-    public enum Attribute implements DAO.Attribute {
-        ID, BGEE_GENE_ID, GLOBAL_CONDITION_ID, MEAN_RANK,
-        DATA_TYPE_OBSERVED_DATA,
-        DATA_TYPE_EXPERIMENT_TOTAL_COUNTS, DATA_TYPE_EXPERIMENT_SELF_COUNTS,
-        DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS, DATA_TYPE_RANK_INFO;
+
+    public interface CanBeDataTypeDependent {
+        public boolean isDataTypeDependant();
+    }
+    public enum Attribute implements DAO.Attribute, CanBeDataTypeDependent {
+//        //As of Bgee 15.0, there is no longer a globalExpressionId field.
+//        ID(false),
+        BGEE_GENE_ID(false, false), GLOBAL_CONDITION_ID(false, false), MEAN_RANK(true, true),
+        DATA_TYPE_RANK_INFO(true, true), DATA_TYPE_OBSERVED_DATA(false, true),
+        FDR_P_VALUE_COND_INFO(false, true), FDR_P_VALUE_DESCENDANT_COND_INFO(false, true);
+
+        private final boolean requireExtraGlobalCondInfo;
+        private final boolean dataTypeDependant;
+
+        private Attribute(boolean requireExtraGlobalCondInfo, boolean dataTypeDependant) {
+            this.requireExtraGlobalCondInfo = requireExtraGlobalCondInfo;
+            this.dataTypeDependant = dataTypeDependant;
+        }
+        public boolean isRequireExtraGlobalCondInfo() {
+            return requireExtraGlobalCondInfo;
+        }
+        /**
+         * @return  {@code true} if this {@code Attribute} corresponds to different results
+         *          depending on a data type selection, {@code false} otherwise.
+         *          For instance, computation of the mean expression rank, or of the FDR
+         *          from aggregated p-values, is data type dependent.
+         * @see AttributeInfo
+         */
+        @Override
+        public boolean isDataTypeDependant() {
+            return dataTypeDependant;
+        }
     }
     /**
      * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
@@ -57,10 +84,227 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * Only the mean ranks computed from the data types requested in the query are considered. 
      * </ul>
      */
-    enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, CELL_TYPE_ID,
-        SEX_ID, STRAIN_ID, OMA_GROUP_ID, MEAN_RANK;
-        
+    enum OrderingAttribute implements DAO.OrderingAttribute, CanBeDataTypeDependent {
+        BGEE_GENE_ID("bgeeGeneId", false, false, false), PUBLIC_GENE_ID("geneId", false, true, false),
+        OMA_GROUP_ID("OMAParentNodeId", false, true, false),
+        GLOBAL_CONDITION_ID("globalConditionId", false, false, false),
+        ANAT_ENTITY_ID("anatEntityId", true, false, false), STAGE_ID("stageId", true, false, false),
+        CELL_TYPE_ID("cellTypeId", true, false, false), SEX_ID("sex", true, false, false),
+        STRAIN_ID("strain", true, false, false), MEAN_RANK("meanRank", true, false, true);
+
+        private final String fieldName;
+        private final boolean requireExtraGlobalCondInfo;
+        private final boolean requireExtraGeneInfo;
+        private final boolean dataTypeDependant;
+
+        private OrderingAttribute(String fieldName, boolean requireExtraGlobalCondInfo,
+                boolean requireExtraGeneInfo, boolean dataTypeDependant) {
+            this.fieldName = fieldName;
+            this.requireExtraGlobalCondInfo = requireExtraGlobalCondInfo;
+            this.requireExtraGeneInfo = requireExtraGeneInfo;
+            this.dataTypeDependant = dataTypeDependant;
+        }
+        public String getFieldName() {
+            return fieldName;
+        }
+        public boolean isRequireExtraGlobalCondInfo() {
+            return requireExtraGlobalCondInfo;
+        }
+        public boolean isRequireExtraGeneInfo() {
+            return requireExtraGeneInfo;
+        }
+        /**
+         * @return  {@code true} if this {@code OrderingAttribute} corresponds to different results
+         *          depending on a data type selection, {@code false} otherwise.
+         *          For instance, ordering based of the mean expression rank, or of the FDR
+         *          from aggregated p-values, is data type dependent.
+         * @see OrderingAttributeInfo
+         */
+        @Override
+        public boolean isDataTypeDependant() {
+            return dataTypeDependant;
+        }
+    }
+
+    /**
+     * A class allowing to associate an {@code Attribute}, specifying the information to retrieve
+     * in an expression query, to the {@code DAODataType}s this {@code Attribute} is requested for.
+     * Specifying {@code DAODataType}s is only needed if the {@code Attribute} is dependent on
+     * a data type selection (see {@link Attribute#isDataTypeDependent()}).
+     *
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class AttributeInfo extends GenericAttributeInfo<Attribute> {
+        /**
+         * To instantiate an {@code AttributeInfo} independent from a data type selection.
+         *
+         * @param attribute An {@code Attribute} for which {@link Attribute#isDataTypeDependent()}
+         *                  returns {@code false}.
+         * @throws IllegalArgumentException If calling {@link Attribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see Attribute#isDataTypeDependent()
+         */
+        public AttributeInfo(Attribute attribute) {
+            super(attribute);
+        }
+        /**
+         * To instantiate an {@code AttributeInfo} dependent on a data type selection.
+         *
+         * @param attribute         An {@code Attribute} for which {@link Attribute#isDataTypeDependent()}
+         *                          returns {@code true}.
+         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
+         *                          the data types for which {@code attribute} is requested.
+         *                          If {@code null} or empty, all {@code DAODataType}s
+         *                          are considered.
+         * @throws IllegalArgumentException If calling {@link Attribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code false}.
+         * @see Attribute#isDataTypeDependent()
+         */
+        public AttributeInfo(Attribute attribute, Collection<DAODataType> targetedDataTypes) {
+            super(attribute, targetedDataTypes);
+        }
+    }
+    /**
+     * A class allowing to associate an {@code OrderingAttribute}, specifying how to sort
+     * the results from an expression query, to the {@code DAODataType}s this {@code OrderingAttribute}
+     * is requested for. Specifying {@code DAODataType}s is only needed if the {@code OrderingAttribute}
+     * is dependent on a data type selection (see {@link OrderingAttribute#isDataTypeDependent()}).
+     *
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class OrderingAttributeInfo extends GenericAttributeInfo<OrderingAttribute> {
+        /**
+         * To instantiate an {@code OrderingAttributeInfo} independent from a data type selection.
+         *
+         * @param attribute An {@code OrderingAttribute} for which
+         *                  {@link OrderingAttribute#isDataTypeDependent()} returns {@code false}.
+         * @throws IllegalArgumentException If calling {@link OrderingAttribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see OrderingAttribute#isDataTypeDependent()
+         */
+        public OrderingAttributeInfo(OrderingAttribute attribute) {
+            super(attribute);
+        }
+        /**
+         * To instantiate an {@code OrderingAttributeInfo} dependent on a data type selection.
+         *
+         * @param attribute         An {@code OrderingAttribute} for which
+         *                          {@link OrderingAttribute#isDataTypeDependent()} returns {@code true}.
+         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
+         *                          the data types for which {@code attribute} is requested.
+         *                          If {@code null} or empty, all {@code DAODataType}s
+         *                          are considered.
+         * @throws IllegalArgumentException If calling {@link OrderingAttribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code false}.
+         * @see OrderingAttribute#isDataTypeDependent()
+         */
+        public OrderingAttributeInfo(OrderingAttribute attribute,
+                Collection<DAODataType> targetedDataTypes) {
+            super(attribute, targetedDataTypes);
+        }
+    }
+    /**
+     * A class allowing to associate a {@code CanBeDataTypeDependent}, specifying the information
+     * to retrieve in an expression query, to the {@code DAODataType}s this {@code CanBeDataTypeDependent}
+     * is requested for. Specifying {@code DAODataType}s is only needed if
+     * the {@code CanBeDataTypeDependent} is dependent on a data type selection
+     * (see {@link CanBeDataTypeDependent#isDataTypeDependent()}).
+     *
+     * @param <T>   A class that is of types {@code Enum<T>} and {@code CanBeDataTypeDependent}
+     *              ({@code Attribute} or {@code OrderingAttribute}).
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class GenericAttributeInfo<T extends Enum<T> & CanBeDataTypeDependent> {
+        private final T attribute;
+        private final EnumSet<DAODataType> targetedDataTypes;
+
+        /**
+         * To instantiate a {@code GenericAttributeInfo} independent from a data type selection.
+         *
+         * @param attribute A {@code CanBeDataTypeDependent} for which
+         *                  {@link CanBeDataTypeDependent#isDataTypeDependent()} returns {@code false}.
+         * @throws IllegalArgumentException If calling {@link CanBeDataTypeDependent#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see CanBeDataTypeDependent#isDataTypeDependent()
+         */
+        public GenericAttributeInfo(T attribute) {
+            this(attribute, false, null);
+        }
+        /**
+         * To instantiate an {@code GenericAttributeInfo} dependent on a data type selection.
+         *
+         * @param attribute         An {@code CanBeDataTypeDependent} for which
+         *                          {@link CanBeDataTypeDependent#isDataTypeDependent()}
+         *                          returns {@code true}.
+         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
+         *                          the data types for which {@code attribute} is requested.
+         *                          If {@code null} or empty, all {@code DAODataType}s
+         *                          are considered.
+         * @throws IllegalArgumentException If calling {@link CanBeDataTypeDependent#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code false}.
+         * @see CanBeDataTypeDependent#isDataTypeDependent()
+         */
+        public GenericAttributeInfo(T attribute, Collection<DAODataType> targetedDataTypes) {
+            this(attribute, true, targetedDataTypes);
+        }
+        private GenericAttributeInfo(T attribute, boolean shouldBeDataTypeDependent,
+                Collection<DAODataType> targetedDataTypes) {
+            if (attribute == null) {
+                throw new IllegalArgumentException("Attribute cannot be null.");
+            }
+            if (shouldBeDataTypeDependent != attribute.isDataTypeDependant()) {
+                throw new IllegalArgumentException(
+                        "Incorrect definition of data type selection for Attribute: " + attribute);
+            }
+            this.attribute = attribute;
+            this.targetedDataTypes = targetedDataTypes == null || targetedDataTypes.isEmpty()?
+                    EnumSet.allOf(DAODataType.class): EnumSet.copyOf(targetedDataTypes);
+        }
+        public T getAttribute() {
+            return attribute;
+        }
+        public EnumSet<DAODataType> getTargetedDataTypes() {
+            //Defensive copying, no Collections.unmodifiableEnumSet
+            return EnumSet.copyOf(targetedDataTypes);
+        }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((attribute == null) ? 0 : attribute.hashCode());
+            result = prime * result + ((targetedDataTypes == null) ? 0 : targetedDataTypes.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            GenericAttributeInfo<?> other = (GenericAttributeInfo<?>) obj;
+            if (attribute != other.attribute) {
+                return false;
+            }
+            if (targetedDataTypes == null) {
+                if (other.targetedDataTypes != null) {
+                    return false;
+                }
+            } else if (!targetedDataTypes.equals(other.targetedDataTypes)) {
+                return false;
+            }
+            return true;
+        }
     }
 
     /** 
@@ -75,20 +319,18 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              allowing to configure this query. If several 
      *                              {@code CallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
-     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.Attribute}s 
+     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.AttributeInfo}s
      *                              defining the attributes to populate in the returned 
-     *                              {@code GlobalExpressionCallTO}s. If {@code null} or empty, 
-     *                              all attributes are populated.
+     *                              {@code GlobalExpressionCallTO}s, associated to the requested
+     *                              {@code DAODataType}s if necessary. If {@code null} or empty,
+     *                              all attributes are populated, with all {@code DAODataType}s
+     *                              when applicable.
      * @param orderingAttributes    A {@code LinkedHashMap} where keys are
-     *                              {@code GlobalExpressionCallDAO.OrderingAttribute}s defining
+     *                              {@code GlobalExpressionCallDAO.OrderingAttributeInfo}s defining
      *                              the attributes used to order the returned {@code GlobalExpressionCallTO}s,
      *                              the associated value being a {@code DAO.Direction}
      *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed.
+     *                              If {@code null} or empty, no ordering is performed.
      * @return                      A {@code GlobalExpressionCallTOResultSet} containing global
      *                              calls from data source according to {@code attributes} and
      *                              {@code conditionParameters}.
@@ -99,9 +341,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
-            Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<Attribute> attributes,
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes)
+            Collection<CallDAOFilter> callFilters, Collection<AttributeInfo> attributes,
+            LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException;
 
     /**
@@ -118,14 +359,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * different Bgee gene IDs).
      * </ul>
      *
+     * @param dataTypes             A {@code Collection} of {@code DAODataType}s that are
+     *                              the data types to consider to compute ranks. If {@code null}
+     *                              or empty, all data types are considered.
      * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
      *                              allowing to configure this query. If several
      *                              {@code CallDAOFilter}s are provided, they are seen
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries,
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
      *                              the requested {@code EntityMinMaxRanksTO}s.
      * @throws DAOException             If an error occurred when accessing the data source.
@@ -134,8 +374,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  is not a condition parameter attributes (see
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
-    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters)
+                    throws DAOException, IllegalArgumentException;
     /**
      * Obtains the min. and max ranks of anatomical entities. For now, to retrieve ranks it should be queried only
      * EXPRESSED calls with min quality BRONZE, in all dev. stages and for all genes,
@@ -148,14 +389,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * <li>the species ID is provided ({@link EntityMinMaxRanksTO#getSpeciesId()} returns a non-{@code null} value),
      * since a same anatomical entity ID can be used in several species.
      *
+     * @param dataTypes             A {@code Collection} of {@code DAODataType}s that are
+     *                              the data types to consider to compute ranks. If {@code null}
+     *                              or empty, all data types are considered.
      * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
      *                              allowing to configure this query. If several
      *                              {@code CallDAOFilter}s are provided, they are seen
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries,
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
      *                              the requested {@code EntityMinMaxRanksTO}s.
      * @throws DAOException             If an error occurred when accessing the data source.
@@ -164,8 +404,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  is not a condition parameter attributes (see
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
-    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters)
+                    throws DAOException, IllegalArgumentException;
     /**
      * Retrieve the maximum of global expression IDs.
      *

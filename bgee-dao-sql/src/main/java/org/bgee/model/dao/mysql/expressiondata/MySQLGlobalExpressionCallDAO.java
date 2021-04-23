@@ -5,17 +5,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,18 +24,17 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.CallDataDAOFilter;
+import org.bgee.model.dao.api.expressiondata.CallObservedDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCountFilter.Qualifier;
 import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
+import org.bgee.model.dao.api.expressiondata.DAOFDRPValueFilter;
+import org.bgee.model.dao.api.expressiondata.DAOMeanRank;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.CallType;
-import org.bgee.model.dao.api.expressiondata.DAOExperimentCount.DataQuality;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -50,7 +47,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2019
+ * @version Bgee 15.0, Apr. 2021
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
@@ -64,6 +61,9 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_P_VALUE_FIELD_START = "pVal";
     private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValBestDescendant";
     private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START = "gCIdPValBD";
+    private final static String COND_OBSERVED_DATA_SUFFIX = "ConditionObservedData";
+    private final static String P_VALUE_SELF_OBS_COUNT_SUFFIX = "SelfObservationCount";
+    private final static String P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX = "DescendantObservationCount";
     private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
             .stream().filter(s -> s.getObservedState())
             .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
@@ -75,184 +75,130 @@ implements GlobalExpressionCallDAO {
     private static final String MIN_MAX_RANK_MIN_RANK_FIELD = "minRank";
     private static final String MIN_MAX_RANK_MAX_RANK_FIELD = "maxRank";
 
-    private static String generateSelectClause(Collection<GlobalExpressionCallDAO.Attribute> attrs,
-            Collection<GlobalExpressionCallDAO.OrderingAttribute> orderingAttrs,
-            Collection<DAODataType> dataTypes, final String globalExprTableName, final String globalCondTableName,
-            String geneTableName, boolean observedConditionFiltering) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", attrs, orderingAttrs, dataTypes, globalExprTableName,
-                globalCondTableName, geneTableName, observedConditionFiltering);
+
+    private static String generateSelectClause(Set<GlobalExpressionCallDAO.AttributeInfo> attrs,
+            Collection<GlobalExpressionCallDAO.OrderingAttributeInfo> orderingAttrs,
+            final String globalExprTableName, final String globalCondTableName,
+            String geneTableName, boolean observedConditionFiltering, boolean globalRank) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", attrs, orderingAttrs, globalExprTableName,
+                globalCondTableName, geneTableName, observedConditionFiltering, globalRank);
         
-        Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attrs == null || attrs.isEmpty()?
-                EnumSet.allOf(GlobalExpressionCallDAO.Attribute.class):
-                    EnumSet.copyOf(attrs);
+        Set<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = new HashSet<>(attrs);
         //fix for #173, see also the end of this method for columns having no corresponding attributes
-        for (GlobalExpressionCallDAO.OrderingAttribute a: orderingAttrs) {
-            switch (a) {
+        for (GlobalExpressionCallDAO.OrderingAttributeInfo a: orderingAttrs) {
+            switch (a.getAttribute()) {
             case BGEE_GENE_ID:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID);
+                clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                        GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
                 break;
             case GLOBAL_CONDITION_ID:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID);
+                clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID));
                 break;
             case MEAN_RANK:
-                clonedAttrs.add(GlobalExpressionCallDAO.Attribute.MEAN_RANK);
+                if (clonedAttrs.stream().noneMatch(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.MEAN_RANK) &&
+                        ai.getTargetedDataTypes().equals(a.getTargetedDataTypes()))) {
+                    clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                            GlobalExpressionCallDAO.Attribute.MEAN_RANK, a.getTargetedDataTypes()));
+                }
                 break;
             default:
                 //other ordering attributes do not have a corresponding select attribute
                 break;
             }
         }
-        Set<DAODataType> clonedDataTypes = Collections.unmodifiableSet(
-                dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
-                    EnumSet.copyOf(dataTypes));
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
 
         if (observedConditionFiltering ||
-                (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
-                (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID) ||
-                        !clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID)))) {
+//              //As of Bgee 15.0, there is no longer a globalExpressionId field.
+//              (!clonedAttrs.contains(GlobalExpressionCallDAO.Attribute.ID) &&
+                (clonedAttrs.stream().noneMatch(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID)) ||
+                clonedAttrs.stream().noneMatch(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID)))
+                ) {
             sb.append("DISTINCT ");
         }
-        //XXX: check whether with the last mysql version the optimizer does a better job at choosing the join order
+        //XXX: check whether with the last mysql version the optimizer does a better job
+        //at choosing the join order
         sb.append("STRAIGHT_JOIN ");
 
-        sb.append(clonedAttrs.stream().map(a -> {
-            switch (a) {
-            case ID:
-                return globalExprTableName + "." + GLOBAL_EXPR_ID_FIELD;
+        sb.append(clonedAttrs.stream().map(ai -> {
+            switch (ai.getAttribute()) {
+//            case ID:
+//                return globalExprTableName + "." + GLOBAL_EXPR_ID_FIELD;
             case BGEE_GENE_ID:
                 return globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
             case GLOBAL_CONDITION_ID:
                 return globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
             case MEAN_RANK:
-                return generateMeanRankClause(clonedDataTypes, globalExprTableName, globalCondTableName)
-                        + " AS " + GLOBAL_MEAN_RANK_FIELD;
+                return generateMeanRankClause(ai.getTargetedDataTypes(), globalExprTableName,
+                        globalCondTableName, globalRank) + " AS " + GLOBAL_MEAN_RANK_FIELD
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
             case DATA_TYPE_OBSERVED_DATA:
-                return clonedDataTypes.stream()
-                        .map(dataType -> {
-                            switch (dataType) {
-                            case EST:
-                                return "estAnatEntityPropagationState, estStagePropagationState, "
-                                        + "estConditionObservedData";
-                            case AFFYMETRIX:
-                                return "affymetrixAnatEntityPropagationState, affymetrixStagePropagationState, "
-                                + "affymetrixConditionObservedData";
-                            case IN_SITU:
-                                return "inSituAnatEntityPropagationState, inSituStagePropagationState, "
-                                + "inSituConditionObservedData";
-                            case RNA_SEQ:
-                                return "rnaSeqAnatEntityPropagationState, rnaSeqStagePropagationState, "
-                                + "rnaSeqConditionObservedData";
-                            default:
-                                throw log.throwing(new IllegalStateException(
-                                        "Unsupported data type: " + dataType));
-                            }
-                        })
-                        .collect(Collectors.joining(", "));
-                
-            case DATA_TYPE_EXPERIMENT_TOTAL_COUNTS:
-                return clonedDataTypes.stream()
-                        .map(dataType -> {
-                            switch (dataType) {
-                            case EST:
-                                return "estLibPresentHighTotalCount, estLibPresentLowTotalCount";
-                            case AFFYMETRIX:
-                                return "affymetrixExpPresentHighTotalCount, affymetrixExpPresentLowTotalCount, "
-                                + "affymetrixExpAbsentHighTotalCount, affymetrixExpAbsentLowTotalCount";
-                            case IN_SITU:
-                                return "inSituExpPresentHighTotalCount, inSituExpPresentLowTotalCount, "
-                                + "inSituExpAbsentHighTotalCount, inSituExpAbsentLowTotalCount";
-                            case RNA_SEQ:
-                                return "rnaSeqExpPresentHighTotalCount, rnaSeqExpPresentLowTotalCount, "
-                                + "rnaSeqExpAbsentHighTotalCount, rnaSeqExpAbsentLowTotalCount";
-                            default:
-                                throw log.throwing(new IllegalStateException(
-                                        "Unsupported data type: " + dataType));
-                            }
-                        })
-                        .collect(Collectors.joining(", "));
-
-            case DATA_TYPE_EXPERIMENT_SELF_COUNTS:
-                return clonedDataTypes.stream()
-                        .map(dataType -> {
-                            switch (dataType) {
-                            case EST:
-                                return "estLibPresentHighSelfCount, estLibPresentLowSelfCount";
-                            case AFFYMETRIX:
-                                return "affymetrixExpPresentHighSelfCount, affymetrixExpPresentLowSelfCount, "
-                                + "affymetrixExpAbsentHighSelfCount, affymetrixExpAbsentLowSelfCount";
-                            case IN_SITU:
-                                return "inSituExpPresentHighSelfCount, inSituExpPresentLowSelfCount, "
-                                + "inSituExpAbsentHighSelfCount, inSituExpAbsentLowSelfCount";
-                            case RNA_SEQ:
-                                return "rnaSeqExpPresentHighSelfCount, rnaSeqExpPresentLowSelfCount, "
-                                + "rnaSeqExpAbsentHighSelfCount, rnaSeqExpAbsentLowSelfCount";
-                            default:
-                                throw log.throwing(new IllegalStateException(
-                                        "Unsupported data type: " + dataType));
-                            }
-                        })
-                        .collect(Collectors.joining(", "));
-
-            case DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS:
-                return clonedDataTypes.stream()
-                        .map(dataType -> {
-                            switch (dataType) {
-                            case EST:
-                                return "estLibPropagatedCount, estLibPresentHighDescendantCount, "
-                                        + "estLibPresentLowDescendantCount";
-                            case AFFYMETRIX:
-                                return "affymetrixExpPropagatedCount, affymetrixExpPresentHighDescendantCount, "
-                                        + "affymetrixExpPresentLowDescendantCount, affymetrixExpAbsentHighParentCount, "
-                                        + "affymetrixExpAbsentLowParentCount";
-                            case IN_SITU:
-                                return "inSituExpPropagatedCount, inSituExpPresentHighDescendantCount, "
-                                        + "inSituExpPresentLowDescendantCount, inSituExpAbsentHighParentCount, "
-                                        + "inSituExpAbsentLowParentCount";
-                            case RNA_SEQ:
-                                return "rnaSeqExpPropagatedCount, rnaSeqExpPresentHighDescendantCount, "
-                                        + "rnaSeqExpPresentLowDescendantCount, rnaSeqExpAbsentHighParentCount, "
-                                        + "rnaSeqExpAbsentLowParentCount";
-                            default:
-                                throw log.throwing(new IllegalStateException(
-                                        "Unsupported data type: " + dataType));
-                            }
-                        })
+                return ai.getTargetedDataTypes().stream()
+                        .map(dataType -> Arrays.stream(ConditionDAO.Attribute.values())
+                            .filter(a -> a.isConditionParameter())
+                            //For now we store the cell type propagation state only for
+                            //scRNA-Seq data
+                            .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
+                                    !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
+                            .map(a -> dataType.getFieldNamePrefix() + a.getPropagationStateNameSuffix())
+                            .collect(Collectors.joining(", "))
+                            + ", " + dataType.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX)
                         .collect(Collectors.joining(", "));
 
             case DATA_TYPE_RANK_INFO:
-                return clonedDataTypes.stream()
-                        .map(dataType -> {
-                            switch (dataType) {
-                            case EST:
-                                return "estRank, estRankNorm, " + globalCondTableName + ".estMaxRank";
-                            case AFFYMETRIX:
-                                return "affymetrixMeanRank, affymetrixMeanRankNorm, "
-                                        + "affymetrixDistinctRankSum";
-                            case IN_SITU:
-                                return "inSituRank, inSituRankNorm, " + globalCondTableName + ".inSituMaxRank";
-                            case RNA_SEQ:
-                                return "rnaSeqMeanRank, rnaSeqMeanRankNorm, "
-                                        + "rnaSeqDistinctRankSum";
-                            default:
-                                throw log.throwing(new IllegalStateException(
-                                        "Unsupported data type: " + dataType));
-                            }
-                        })
+                return ai.getTargetedDataTypes().stream()
+                        .map(dataType -> dataType.getRankFieldName(globalRank)
+                                + ", " + dataType.getRankNormFieldName(globalRank)
+                                + ", " + (dataType.isRankWeightRelatedToCondition()?
+                                        globalCondTableName + ".": "")
+                                + dataType.getRankWeightFieldName(globalRank))
                         .collect(Collectors.joining(", "));
 
+            case FDR_P_VALUE_COND_INFO:
+                //The observation counts per data type will be queried outside of this loop
+                //(in case FDR_P_VALUE_COND_INFO is requested several times with different
+                //data type combinations)
+                return GLOBAL_P_VALUE_FIELD_START
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
+
+            case FDR_P_VALUE_DESCENDANT_COND_INFO:
+                return GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes())
+                        + ", "
+                        + GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
+
             default:
-                throw log.throwing(new IllegalStateException("Unsupported attribute: " + a));
+                throw log.throwing(new IllegalStateException("Unsupported attribute: " + ai.getAttribute()));
             }
         }).collect(Collectors.joining(", ")));
+
+        //To avoid requesting the p-value observation counts per data type several times
+        //(in case FDR_P_VALUE_COND_INFO is requested several times with different data type combinations),
+        //we retrieve this information out of the previous loop.
+        String selectObsCounts = clonedAttrs.stream()
+                .filter(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO))
+                .flatMap(ai -> ai.getTargetedDataTypes().stream())
+                .distinct()
+                .map(dataType -> dataType.getFieldNamePrefix() + P_VALUE_SELF_OBS_COUNT_SUFFIX
+                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)
+                .collect(Collectors.joining(", "));
+        if (StringUtils.isNotBlank(selectObsCounts)) {
+            sb.append(", ").append(selectObsCounts);
+        }
 
 
         //fix for #173, see also beginning of this method
         String selectOrderBy = orderingAttrs.stream()
         .filter(a -> {
-            switch(a) {
+            switch(a.getAttribute()) {
                 case BGEE_GENE_ID:
                 case GLOBAL_CONDITION_ID:
                 case MEAN_RANK:
@@ -264,20 +210,23 @@ implements GlobalExpressionCallDAO {
             }
         })
         .map(a -> {
-            switch(a) {
-                case ANAT_ENTITY_ID:
-                    return globalCondTableName + ".anatEntityId";
-                case STAGE_ID:
-                    return globalCondTableName + ".stageId";
-                case OMA_GROUP_ID:
-                    return geneTableName + ".OMAParentNodeId";
-                case PUBLIC_GENE_ID:
-                    //FIXME: need to have a species ID ordering attribute
-                    //We need that for our ElementSpliterator
-                    return geneTableName + ".speciesId, " + geneTableName + ".geneId";
-                default:
-                    throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: " + a));
+            StringBuilder sb2 = new StringBuilder();
+            //FIXME: need to have a species ID ordering attribute
+            //We need that for our ElementSpliterator.
+            //In that case, we wouldn't need that species condition for PUBLIC_GENE_ID
+            if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)) {
+                sb2.append(geneTableName).append(".speciesId, ").append(geneTableName).append(".geneId");
+                return sb2.toString();
             }
+            if (a.getAttribute().isRequireExtraGlobalCondInfo()) {
+                sb2.append(globalCondTableName);
+            } else if (a.getAttribute().isRequireExtraGeneInfo()) {
+                sb2.append(geneTableName);
+            } else {
+                sb2.append(globalExprTableName);
+            }
+            sb2.append(".").append(a.getAttribute().getFieldName());
+            return sb2.toString();
         })
         .collect(Collectors.joining(", "));
         if (StringUtils.isNotBlank(selectOrderBy)) {
@@ -289,52 +238,28 @@ implements GlobalExpressionCallDAO {
     }
 
     private static String generateMeanRankClause(Set<DAODataType> dataTypes, String globalExprTableName,
-            String globalCondTableName) {
-        log.traceEntry("{}, {}, {}", dataTypes, globalExprTableName, globalCondTableName);
-
-        Map<DAODataType, String> dataTypeToNormRankSql = new HashMap<>();
-        dataTypeToNormRankSql.put(DAODataType.EST, 
-                globalExprTableName + ".estRankNorm ");
-        dataTypeToNormRankSql.put(DAODataType.AFFYMETRIX, 
-                globalExprTableName + ".affymetrixMeanRankNorm ");
-        dataTypeToNormRankSql.put(DAODataType.IN_SITU, 
-                globalExprTableName + ".inSituRankNorm ");
-        dataTypeToNormRankSql.put(DAODataType.RNA_SEQ, 
-                globalExprTableName + ".rnaSeqMeanRankNorm ");
-        
-        //for weighted mean computation: sum of numbers of distinct ranks for data using 
-        //fractional ranking (Affy and RNA-Seq), max ranks for data using dense ranking 
-        //and pooling of all samples in a condition (EST and in situ)
-        Map<DAODataType, String> dataTypeToWeightSql = new HashMap<>();
-        dataTypeToWeightSql.put(DAODataType.EST, 
-                globalCondTableName + ".estMaxRank ");
-        dataTypeToWeightSql.put(DAODataType.AFFYMETRIX, 
-                globalExprTableName + ".affymetrixDistinctRankSum ");
-        dataTypeToWeightSql.put(DAODataType.IN_SITU, 
-                globalCondTableName + ".inSituMaxRank ");
-        dataTypeToWeightSql.put(DAODataType.RNA_SEQ, 
-                globalExprTableName + ".rnaSeqDistinctRankSum ");
+            String globalCondTableName, boolean globalRank) {
+        log.traceEntry("{}, {}, {}, {}", dataTypes, globalExprTableName, globalCondTableName, globalRank);
 
         return log.traceExit(dataTypes.stream()
                 //to avoid division by 0
                 //generate, e.g.:
                 //IF (globalExpression.estRankNorm IS NULL AND globalExpression.affymetrixMeanRankNorm IS NULL, NULL, 
-                .map(dt -> dataTypeToNormRankSql.get(dt) + " IS NULL")
+                .map(dt -> globalExprTableName + "." + dt.getRankNormFieldName(globalRank) + " IS NULL")
                 .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
                 //generate, e.g.:
-                //((
-                //IF (globalExpression.estRankNorm IS NULL, 0, globalExpression.estRankNorm * globalExpression.estMaxRank)
+                //(CAST((
+                //IF (globalExpression.estRankNorm IS NULL, 0, globalExpression.estRankNorm * globalCond.estMaxRank)
                 // + IF (globalExpression.affymetrixMeanRankNorm IS NULL, 0, 
                 //globalExpression.affymetrixMeanRankNorm * globalExpression.affymetrixDistinctRankSum)
                 //)
                 + dataTypes.stream()
                 .map(dataType -> {
-                    String rankSql = dataTypeToNormRankSql.get(dataType);
-                    String weightSql = dataTypeToWeightSql.get(dataType);
-                    if (rankSql == null || weightSql == null) {
-                        throw log.throwing(new IllegalStateException(
-                                "No rank clause associated to data type: " + dataType));
-                    }
+                    String rankSql = globalExprTableName + "."
+                            + dataType.getRankNormFieldName(globalRank);
+                    String weightSql = (dataType.isRankWeightRelatedToCondition()?
+                            globalCondTableName: globalExprTableName) + "."
+                            + dataType.getRankWeightFieldName(globalRank);
                     return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
                 })
                 //add CAST of meanRank as a decimal to avoid floating point calculation by MySQL 
@@ -344,86 +269,143 @@ implements GlobalExpressionCallDAO {
                 .collect(Collectors.joining(" + ", "(CAST((", ")"))
                 //generate, e.g.:
                 // / (
-                //IF(globalExpression.estMaxRank IS NULL, 0, globalExpression.estMaxRank)
+                //IF(globalExpression.estMaxRank IS NULL, 0, globalCond.estMaxRank)
                 // + IF(globalExpression.affymetrixDistinctRankSum IS NULL, 0, globalExpression.affymetrixDistinctRankSum)
-                // ))) AS meanRank
+                // ) AS DECIMAL(9,2))))
                 + dataTypes.stream()
                 .map(dataType -> {
-                    String weightSql = dataTypeToWeightSql.get(dataType);
+                    String weightSql = (dataType.isRankWeightRelatedToCondition()?
+                            globalCondTableName: globalExprTableName) + "."
+                            + dataType.getRankWeightFieldName(globalRank);
                     return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
-                .collect(Collectors.joining(" + ", "/ (", ")as decimal(9,2))))")));
+                .collect(Collectors.joining(" + ", "/ (", ") AS DECIMAL(9,2))))")));
     }
 
     private static String generateTableReferences(final String globalExprTableName,
-            final String globalCondTableName, final String condTableName, final String geneTableName,
-            boolean observedConditionFiltering, final boolean isOrderByOMANodeId, final boolean isOrderByPublicGeneId) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
-                condTableName, geneTableName, observedConditionFiltering, isOrderByOMANodeId,
-                isOrderByPublicGeneId);
+            final String globalCondTableName, final String condTableName,
+            final String geneTableName, final String speciesIdFilterTableName,
+            final boolean globalCondFiltering, boolean observedConditionFiltering,
+            final boolean geneSort) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
+                condTableName, geneTableName, speciesIdFilterTableName, globalCondFiltering,
+                observedConditionFiltering, geneSort);
 
+        //****************************************
+        // Create the necessary joins
+        //****************************************
+        String geneTableToGlobalExprTableJoinClause = geneTableName + "."
+                + MySQLGeneDAO.BGEE_GENE_ID + " = " + globalExprTableName + "."
+                + MySQLGeneDAO.BGEE_GENE_ID;
+        String globalCondTableToGlobalExprTableJoinClause = globalCondTableName + "."
+                + MySQLConditionDAO.GLOBAL_COND_ID_FIELD + " = " + globalExprTableName
+                + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
+        //XXX: we can have multiple lines in cond table matching a globalCondition
+        //(and also, multiple lines in globalCondToCond matching a globalConditionId with 'self' origin),
+        //this is why we add DISTINCT to the SELECT clause when observedConditionFiltering is true.
+        //Maybe we could use this table differently (a subquery in the join,
+        //an EXISTS clause in the where?).
+        //
+        //We want to filter for observed conditions *without considering the species*,
+        //so we can't simply use the globalCondToCond table. Prior to Bgee 15,
+        //we simply used anatEntityId and stageId to join to the cond table.
+        //But it's more complicated now that we have also sex/strain,
+        //and that we have some standardization for insertion into the globalCond table
+        //(e.g., we don't use null parameters anymore but mapped to the roots
+        //of the respective ontologies for each parameter instead).
+        String condTableToGlobalCondTableJoinClause = " LEFT OUTER JOIN cond AS " + condTableName
+                + " ON " + Arrays.stream(ConditionDAO.Attribute.values())
+                .filter(a -> a.isConditionParameter())
+                .map(a -> {
+                    StringBuilder sb2 = new StringBuilder();
+
+                    //This part is general to all condition parameters
+                    sb2.append("(").append(globalCondTableName).append(".").append(a.getTOFieldName())
+                       .append(" = ").append(condTableName).append(".").append(a.getTOFieldName())
+                       .append(" OR ")
+                       .append(globalCondTableName).append(".").append(a.getTOFieldName())
+                       .append(" = ").append(a.getRootId()).append(" AND (")
+                       .append(condTableName).append(".").append(a.getTOFieldName())
+                       .append(" IS NULL");
+                    //Here we treat special cases
+                    if (a.equals(ConditionDAO.Attribute.SEX_ID)) {
+                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
+                           .append(" IN (")
+                           .append(Arrays.stream(RawDataConditionTO.DAORawDataSex.values())
+                                   .filter(s -> !s.isInformative())
+                                   .map(s -> s.getStringRepresentation())
+                                   .collect(Collectors.joining(", ")))
+                           .append(")");
+                    } else if (a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
+                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
+                        .append(" IN (")
+                        .append(RawDataConditionDAO.NO_INFO_STRAINS.stream()
+                                .collect(Collectors.joining(", ")))
+                        .append(")");
+                    }
+                    sb2.append("))");
+
+                    return sb2.toString();
+                }).collect(Collectors.joining(" AND "));
+
+
+        //****************************************
+        // Start generating the table references
+        //****************************************
         StringBuilder sb = new StringBuilder();
-
         //the order of the tables is important in case we use a STRAIGHT_JOIN clause
         sb.append(" FROM ");
 
-        //Note: we ALWAYS need to join to the gobalCond table, to be able to filter on the condition parameters
-        //(e.g., 'WHERE anatEntityId IS NOT NULL AND devStageId IS NULL...').
-        //As a consequence, we use the condition table to filter by species rather than the gene table,
-        //since we always need it, and it avoids to make yet another join to the gene table.
-        //But note that there is a clustered index for the globalExpression table that is
+        //Note that there is a clustered index for the globalExpression table that is
         //PRIMAR KEY(bgeeGeneId, globalConditionId). So we try as much as possible to have bgeeGeneIds
         //as filters, in order to use this clustered index.
         // We filter genes based on the bgeeGeneId rather than the Ensembl geneId,
         // to avoid joins to gene table when it is not needed because in reality,
         // at the time of writing, queries take much more time. For instance,
-        // to retrieve calls of the zebrafish, using gene table it took 22 minutes 
+        // to retrieve calls in zebrafish, using gene table it took 22 minutes
         // while without gene table it took 3 minutes.
-        sb.append("globalCond AS ").append(globalCondTableName);
-
-        sb.append(" INNER JOIN ");
-        sb.append("globalExpression AS ").append(globalExprTableName);
-        sb.append(" ON ").append(globalCondTableName).append(".")
-                  .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD).append(" = ")
-                  .append(globalExprTableName).append(".").append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
-
-        if (isOrderByOMANodeId || isOrderByPublicGeneId)  {
-            sb.append(" INNER JOIN ");
+        //But if we have filtering based on species IDs in the query, we optimize the joins:
+        //start with the gene table if the globalCond table is not needed, or if both are needed
+        //(again, we have a clustered index (bgeeGeneId, globalConditionId), and we might use
+        //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
+        boolean geneTableFirst = geneTableName.equals(speciesIdFilterTableName);
+        boolean globalCondTableNeeded = globalCondFiltering || observedConditionFiltering;
+        if (geneTableFirst) {
             sb.append("gene AS ").append(geneTableName);
-            sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
-                .append(" = ").append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID);
+        }
+        if (globalCondTableNeeded) {
+            if (geneTableFirst) {
+                sb.append(" INNER JOIN ");
+            }
+            sb.append("globalCond AS ").append(globalCondTableName);
+            if (geneTableFirst) {
+                sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.SPECIES_ID)
+                .append(" = ").append(globalCondTableName).append(MySQLGeneDAO.SPECIES_ID);
+            }
+        }
+        if (observedConditionFiltering) {
+            sb.append(condTableToGlobalCondTableJoinClause);
         }
 
-        if (observedConditionFiltering) {
-            //we want to filter for observed organs/stages without considering the species,
-            //so we don't use the globalCondToCond table
-            sb.append(" LEFT OUTER JOIN cond AS ").append(condTableName)
-              .append(" ON ");
-            sb.append(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
-                    .filter(condAttr -> condAttr.isConditionParameter())
-                    //actually it should be the same mechanism as in generateWhereClause
-                    .map(condAttr -> {
-                        switch (condAttr) {
-                        case ANAT_ENTITY_ID:
-                            return globalCondTableName + ".anatEntityId IS NULL OR "
-                                    + globalCondTableName + ".anatEntityId = " 
-                                    + condTableName + ".anatEntityId";
-                        case STAGE_ID:
-                            return globalCondTableName + ".stageId IS NULL OR "
-                                    + globalCondTableName + ".stageId = " 
-                                    + condTableName + ".stageId";
-//                        case SEX:
-//                            return globalCondTableName + ".sex IS NULL OR "
-//                                    + globalCondTableName + ".sex = " 
-//                                    + condTableName + ".sex";
-//                        case STRAIN:
-//                            return globalCondTableName + ".strain IS NULL OR "
-//                                    + globalCondTableName + ".strain = " 
-//                                    + condTableName + ".strain";
-                        default:
-                            throw log.throwing(new IllegalStateException(
-                                    "Unsupported condition parameter: " + condAttr));
-                        }
-                    }));
+        if (geneTableFirst || globalCondTableNeeded) {
+            sb.append(" INNER JOIN ");
+        }
+        sb.append("globalExpression AS ").append(globalExprTableName);
+        if (geneTableFirst || globalCondTableNeeded) {
+            sb.append(" ON ");
+            if (geneTableFirst) {
+                sb.append(geneTableToGlobalExprTableJoinClause);
+                if (globalCondTableNeeded) {
+                    sb.append(" AND ");
+                }
+            }
+            if (globalCondTableNeeded) {
+                sb.append(globalCondTableToGlobalExprTableJoinClause);
+            }
+        }
+
+        if (geneSort && !geneTableFirst)  {
+            sb.append(" INNER JOIN ").append("gene AS ").append(geneTableName).append(" ON ")
+              .append(geneTableToGlobalExprTableJoinClause);
         }
 
         sb.append(" ");
@@ -431,24 +413,31 @@ implements GlobalExpressionCallDAO {
     }
     private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
             final String globalExprTableName, final String globalCondTableName,
-            final String condTableName, Set<ConditionDAO.Attribute> conditionParameters) {
+            final String condTableName, final String speciesIdFilterTableName) {
         log.traceEntry("{}, {}, {}, {}, {}", callFilters, globalExprTableName, globalCondTableName,
-                condTableName, conditionParameters);
+                condTableName, speciesIdFilterTableName);
         
         StringBuilder sb = new StringBuilder();
-        sb.append(" WHERE ");
-
-        sb.append(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
-                .filter(param -> param.isConditionParameter())
-                .map(param -> globalCondTableName + "." + param.getTOFieldName()
-                    + (conditionParameters.contains(param)? " IS NOT NULL": " IS NULL"))
-                .collect(Collectors.joining(" AND ")));
 
         if (!callFilters.isEmpty()) {
+            sb.append(" WHERE ");
+            boolean firstCallFilter = true;
+
             for (CallDAOFilter callFilter: callFilters) {
+                if (!firstCallFilter) {
+                    sb.append(" OR ");
+                }
+                firstCallFilter = false;
+                sb.append("(");
+                boolean firstCond = true;
+
                 if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty() ||
                         callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
-                    sb.append(" AND (");
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    firstCond = false;
+                    sb.append(" (");
                     if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
                         sb.append(globalExprTableName).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
                         .append(" IN (")
@@ -459,10 +448,7 @@ implements GlobalExpressionCallDAO {
                         if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
                             sb.append(" OR ");
                         }
-                        //We filter species through the globalCond table rather than the gene table
-                        //because we always need to join to the globalCond table anyway, so we avoid
-                        //yet another join to the gene table.
-                        sb.append(globalCondTableName).append(".speciesId IN (")
+                        sb.append(speciesIdFilterTableName).append(".speciesId IN (")
                         .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
                         .append(") ");
                     }
@@ -470,32 +456,74 @@ implements GlobalExpressionCallDAO {
                 }
 
                 if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {
-                    sb.append(" AND ");
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    firstCond = false;
                     sb.append(
                             callFilter.getConditionFilters().stream().map(f -> {
                                 StringBuilder sb2 = new StringBuilder();
-                                sb2.append("(");
+                                boolean firstCondParam = true;
 
+                                //XXX: need to find a way not to have to list all getters
+                                //of ConditionFilter. Maybe a Map where the key is the condition parameter?
                                 if (!f.getAnatEntityIds().isEmpty()) {
+                                    if (!firstCondParam) {
+                                        sb2.append(" AND ");
+                                    }
+                                    firstCondParam = false;
                                     sb2.append(globalCondTableName).append(".anatEntityId IN (")
                                     .append(BgeePreparedStatement.generateParameterizedQueryString(
                                             f.getAnatEntityIds().size()))
                                     .append(")");
                                 }
                                 if (!f.getDevStageIds().isEmpty()) {
-                                    if (!f.getAnatEntityIds().isEmpty()) {
+                                    if (!firstCondParam) {
                                         sb2.append(" AND ");
                                     }
+                                    firstCondParam = false;
                                     sb2.append(globalCondTableName).append(".stageId IN (")
                                     .append(BgeePreparedStatement.generateParameterizedQueryString(
                                             f.getDevStageIds().size()))
                                     .append(")");
                                 }
-                                if (f.getObservedConditions() != null) {
-                                    if (!f.getAnatEntityIds().isEmpty() || !f.getDevStageIds().isEmpty()) {
+                                if (!f.getCellTypeIds().isEmpty()) {
+                                    if (!firstCondParam) {
                                         sb2.append(" AND ");
                                     }
-                                    sb2.append(condTableName).append(".").append(MySQLConditionDAO.RAW_COND_ID_FIELD);
+                                    firstCondParam = false;
+                                    sb2.append(globalCondTableName).append(".cellTypeId IN (")
+                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                            f.getCellTypeIds().size()))
+                                    .append(")");
+                                }
+                                if (!f.getSexIds().isEmpty()) {
+                                    if (!firstCondParam) {
+                                        sb2.append(" AND ");
+                                    }
+                                    firstCondParam = false;
+                                    sb2.append(globalCondTableName).append(".sex IN (")
+                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                            f.getSexIds().size()))
+                                    .append(")");
+                                }
+                                if (!f.getStrainIds().isEmpty()) {
+                                    if (!firstCondParam) {
+                                        sb2.append(" AND ");
+                                    }
+                                    firstCondParam = false;
+                                    sb2.append(globalCondTableName).append(".strain IN (")
+                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                            f.getStrainIds().size()))
+                                    .append(")");
+                                }
+                                if (f.getObservedConditions() != null) {
+                                    if (!firstCondParam) {
+                                        sb2.append(" AND ");
+                                    }
+                                    firstCondParam = false;
+                                    sb2.append(condTableName).append(".")
+                                       .append(MySQLConditionDAO.RAW_COND_ID_FIELD);
                                     if (f.getObservedConditions()) {
                                         sb2.append(" IS NOT NULL ");
                                     } else {
@@ -503,17 +531,33 @@ implements GlobalExpressionCallDAO {
                                     }
                                 }
 
-                                sb2.append(")");
                                 return sb2.toString();
 
                             }).collect(Collectors.joining(" OR ", "(", ")"))
                             );
                 }
 
-                if (callFilter.getDataFilters() != null && !callFilter.getDataFilters().isEmpty()) {
-                    sb.append(" AND ");
-                    sb.append(generateDataFilters(callFilter.getDataFilters(), globalExprTableName));
+                if (callFilter.getCallObservedDataFilters() != null &&
+                        !callFilter.getCallObservedDataFilters().isEmpty()) {
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    firstCond = false;
+                    sb.append(generateObservedDataFilters(callFilter.getCallObservedDataFilters(),
+                            globalExprTableName));
                 }
+
+                if (callFilter.getFDRPValueFilters() != null &&
+                        !callFilter.getFDRPValueFilters().isEmpty()) {
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    firstCond = false;
+                    sb.append(generatePValueFilters(callFilter.getFDRPValueFilters(),
+                            globalExprTableName));
+                }
+
+                sb.append(")");
             }
         }
         return log.traceExit(sb.toString());
@@ -529,30 +573,20 @@ implements GlobalExpressionCallDAO {
                         isObservedRequested? OBSERVED_STATES.size(): NON_OBSERVED_STATES.size()
                 ) + ")");
     }
-    private static String getCallCondParamObservedDataFieldName(DAODataType dataType, ConditionDAO.Attribute condParam) {
+    private static String getCallCondParamObservedDataFieldName(DAODataType dataType,
+            ConditionDAO.Attribute condParam) {
         log.traceEntry("{}, {}", dataType, condParam);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(dataType.getFieldNamePrefix());
-
-        switch (condParam) {
-        case ANAT_ENTITY_ID:
-            sb.append("AnatEntity");
-            break;
-        case STAGE_ID:
-            sb.append("Stage");
-            break;
-        default:
-            throw log.throwing(new UnsupportedOperationException(
-                    "ConditionDAO.Attribute not supported: " + condParam));
+        if (condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) &&
+                !dataType.equals(DAODataType.FULL_LENGTH)) {
+            throw log.throwing(new IllegalArgumentException("For now, the cell type "
+                    + "propagation state is defined only for scRNA-Seq full-length data"));
         }
-
-        sb.append("PropagationState");
-
-        return log.traceExit(sb.toString());
+        return log.traceExit(dataType.getFieldNamePrefix() + condParam.getPropagationStateNameSuffix());
     }
 
-    private static String generateDataFilters(final LinkedHashSet<CallDataDAOFilter> dataFilters,
+    private static String generateObservedDataFilters(
+            final LinkedHashSet<CallObservedDataDAOFilter> dataFilters,
             final String globalExprTableName) {
         log.traceEntry("{}, {}", dataFilters, globalExprTableName);
 
@@ -562,9 +596,12 @@ implements GlobalExpressionCallDAO {
                 boolean previousClause = false;
 
                 if (dataFilter.getCallObservedData() != null) {
+                    if (previousClause) {
+                        sb.append(" AND ");
+                    }
                     previousClause = true;
                     sb.append(dataFilter.getDataTypes().stream()
-                                .map(d -> d.getFieldNamePrefix() + "ConditionObservedData" + " = ?")
+                                .map(d -> d.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX + " = ?")
                                 .collect(Collectors.joining(
                                         //If we request observed data, it can be observed by any data type
                                         //=> OR delimiter
@@ -579,172 +616,69 @@ implements GlobalExpressionCallDAO {
                     }
                     previousClause = true;
                     sb.append(dataFilter.getObservedDataFilter().entrySet().stream()
-                            .map(e -> {
-                                ConditionDAO.Attribute condParam = e.getKey();
-                                return dataFilter.getDataTypes().stream()
-                                        .map(d -> generatePropStateQuery(globalExprTableName, d, condParam, e.getValue()))
-                                        .collect(Collectors.joining(
-                                                //If we request observed data, it can be observed by any data type
-                                                //=> OR delimiter
-                                                //If we request non-observed data, it must by non-observed by each data type
-                                                //=> AND delimiter
-                                                e.getValue()? " OR ": " AND ", "(", ")"));
-                            }).collect(Collectors.joining(" AND ", "(", ")")));
-                }
-
-                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
-                if (!daoExperimentCountFilters.isEmpty()) {
-                    if (previousClause) {
-                        sb.append(" AND ");
-                    }
-                    previousClause = true;
-                    sb.append(daoExperimentCountFilters.stream()
-                        .map(countOrFilterCollection ->
-                            countOrFilterCollection.stream()
-                                .map(countFilter -> {
-                                    String suffix;
-                                    switch (countFilter.getQualifier()) {
-                                    case GREATER_THAN:
-                                        suffix = " > ";
-                                        break;
-                                    case LESS_THAN:
-                                        suffix = " < ";
-                                        break;
-                                    case EQUALS_TO:
-                                        suffix = " = ";
-                                        break;
-                                    default:
-                                        throw new IllegalArgumentException(
-                                                "Unsupported qualifier: " + countFilter.getQualifier());
-                                    }
-                                    suffix += "?";
-    
-                                    return dataFilter.getDataTypes().stream()
-                                            //discard request of no-expression calls from EST data, there is no such field
-                                            .filter(dataType ->
-                                            !CallType.ABSENT.equals(countFilter.getCallType())
-                                                || !DAODataType.EST.equals(dataType))
-    
-                                            .map(dataType -> getExpCountFilterFieldName(dataType, countFilter))
-                                            .collect(Collectors.joining(" + ", "(", suffix + ")"));
-                                })
-                                .collect(Collectors.joining(" OR ", "(", ")"))
-                        )
-                        .collect(Collectors.joining(" AND ", "(", ")"))
-                    );
+                        .map(e -> {
+                            ConditionDAO.Attribute condParam = e.getKey();
+                            return dataFilter.getDataTypes().stream()
+                                //For now, the cell type propagation state is defined
+                                //only for scRNA-Seq full-length data
+                                .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                                             d.equals(DAODataType.FULL_LENGTH))
+                                .map(d -> generatePropStateQuery(globalExprTableName, d, condParam, e.getValue()))
+                                .collect(Collectors.joining(
+                                    //If we request observed data, it can be observed by any data type
+                                    //=> OR delimiter
+                                    //If we request non-observed data, it must by non-observed by each data type
+                                    //=> AND delimiter
+                                    e.getValue()? " OR ": " AND ", "(", ")"));
+                        }).collect(Collectors.joining(" AND ", "(", ")")));
                 }
                 
                 return sb.toString();
             })
            .collect(Collectors.joining(" OR ", "(", ")"));
     }
-    private static List<List<DAOExperimentCountFilter>> getDAOExperimentCountFilters(CallDataDAOFilter dataFilter) {
-        log.traceEntry("{}", dataFilter);
-        List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = dataFilter.getExperimentCountFilters();
-        if (dataFilter.getExperimentCountFilters().isEmpty() &&
-                !dataFilter.getDataTypes().isEmpty() &&
-                !dataFilter.getDataTypes().containsAll(Arrays.asList(DAODataType.values()))) {
-            daoExperimentCountFilters = new ArrayList<>();
-            daoExperimentCountFilters.add(Arrays.stream(CallType.values())
-            .flatMap(ct -> Arrays.stream(DataQuality.values())
-                    .map(dq -> new DAOExperimentCountFilter(ct, dq, DAOPropagationState.ALL, Qualifier.GREATER_THAN, 0)))
-            .collect(Collectors.toList()));
-        }
-        return log.traceExit(daoExperimentCountFilters);
+
+    private static String generatePValueFilters(
+            final LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter>> pValFilters,
+            final String globalExprTableName) {
+        log.traceEntry("{}, {}", pValFilters, globalExprTableName);
+
+        return log.traceExit(pValFilters.stream()
+            .map(pValOrFilterCollection -> pValOrFilterCollection.stream()
+                    .map(pValFilter -> {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(globalExprTableName).append(".");
+
+                        if (pValFilter.getPropagationState().equals(
+                                DAOPropagationState.SELF_AND_DESCENDANT)) {
+                            sb.append(GLOBAL_P_VALUE_FIELD_START);
+                        } else if (pValFilter.getPropagationState().equals(
+                                DAOPropagationState.DESCENDANT)) {
+                            sb.append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START);
+                        } else {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "Unsupported propagation state in PValueFilter: "
+                                    + pValFilter.getPropagationState()));
+                        }
+                        sb.append(getFieldNamePartFromDataTypes(
+                                pValFilter.getFDRPValue().getDataTypes().isEmpty()?
+                                        EnumSet.allOf(DAODataType.class):
+                                        pValFilter.getFDRPValue().getDataTypes()))
+                          .append(" ").append(pValFilter.getQualifier().getSymbol())
+                          .append(" ?");
+
+                        return sb.toString();
+                    })
+                    .collect(Collectors.joining(" OR ", "(", ")"))
+            )
+            .collect(Collectors.joining(" AND ")));
     }
 
-    private static String getExpCountFilterFieldName(DAODataType dataType,
-            DAOExperimentCountFilter expCountFilter) {
-        log.traceEntry("{}, {}", dataType, expCountFilter);
-
-        StringBuilder sb = new StringBuilder();
-
-        switch(dataType) {
-        case EST:
-            sb.append(dataType.getFieldNamePrefix()).append("Lib");
-            break;
-        case AFFYMETRIX:
-        case IN_SITU:
-        case RNA_SEQ:
-            sb.append(dataType.getFieldNamePrefix()).append("Exp");
-            break;
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
-        }
-
-        switch (expCountFilter.getCallType()) {
-        case PRESENT:
-            sb.append("Present");
-            break;
-        case ABSENT:
-            if (DAODataType.EST.equals(dataType)) {
-                throw log.throwing(new IllegalArgumentException("Impossible call type for EST data"));
-            }
-            sb.append("Absent");
-            break;
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported callType " + expCountFilter.getCallType()));
-        }
-
-        switch (expCountFilter.getDataQuality()) {
-        case LOW:
-            sb.append("Low");
-            break;
-        case HIGH:
-            sb.append("High");
-            break;
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported data quality " + expCountFilter.getDataQuality()));
-        }
-
-        switch (expCountFilter.getPropagationState()) {
-        case SELF:
-            sb.append("Self");
-            break;
-        case ANCESTOR:
-            if (DAODataType.EST.equals(dataType)) {
-                throw log.throwing(new IllegalArgumentException("Impossible propagation state for EST data"));
-            }
-            sb.append("Parent");
-            break;
-        case DESCENDANT:
-            sb.append("Descendant");
-            break;
-        case ALL:
-            sb.append("Total");
-            break;
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported propagation state "
-                               + expCountFilter.getPropagationState()));
-        }
-
-        sb.append("Count");
-        return log.traceExit(sb.toString());
-    }
-
-    private static Set<DAODataType> getDAODataTypesFromCallDAOFilters(Collection<CallDAOFilter> callFilters) {
+    private static void performSanityChecks(LinkedHashSet<CallDAOFilter> callFilters)
+            throws IllegalArgumentException {
         log.traceEntry("{}", callFilters);
-        return log.traceExit(callFilters.stream()
-                .flatMap(callFilter -> callFilter.getDataFilters().isEmpty()?
-                        EnumSet.allOf(DAODataType.class).stream():
-                            callFilter.getDataFilters().stream()
-                            .flatMap(dataFilter -> dataFilter.getDataTypes().stream()))
-                .collect(Collectors.toSet()));
-    }
-
-    private static void performSanityChecks(LinkedHashSet<CallDAOFilter> callFilters,
-            Set<ConditionDAO.Attribute> condParams) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", callFilters, condParams);
         if (callFilters.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some CallDAOFilters must be provided"));
-        }
-        if (condParams.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException(
-                    "A combination of condition parameters must be provided"));
-        }
-        if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException("The condition parameter combination "
-                    + "contains some Attributes that are not condition parameters: " + condParams));
         }
         log.traceExit();
     }
@@ -776,10 +710,22 @@ implements GlobalExpressionCallDAO {
                         stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
                         offsetParamIndex += condFilter.getDevStageIds().size();
                     }
+                    if (!condFilter.getCellTypeIds().isEmpty()) {
+                        stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
+                        offsetParamIndex += condFilter.getCellTypeIds().size();
+                    }
+                    if (!condFilter.getSexIds().isEmpty()) {
+                        stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
+                        offsetParamIndex += condFilter.getSexIds().size();
+                    }
+                    if (!condFilter.getStrainIds().isEmpty()) {
+                        stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
+                        offsetParamIndex += condFilter.getStrainIds().size();
+                    }
                 }
             }
 
-            for (CallDataDAOFilter dataFilter: callFilter.getDataFilters()) {
+            for (CallObservedDataDAOFilter dataFilter: callFilter.getCallObservedDataFilters()) {
 
                 if (dataFilter.getCallObservedData() != null) {
                     for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
@@ -788,20 +734,26 @@ implements GlobalExpressionCallDAO {
                     }
                 }
 
-                for (Boolean isObservedData: dataFilter.getObservedDataFilter().values()) {
-                    Set<DAOPropagationState> toUse = isObservedData? OBSERVED_STATES: NON_OBSERVED_STATES;
-                    for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
-                        stmt.setEnumDAOFields(offsetParamIndex, toUse, true);
-                        offsetParamIndex += toUse.size();
+                for (Entry<ConditionDAO.Attribute, Boolean> isObservedData:
+                    dataFilter.getObservedDataFilter().entrySet()) {
+                    Set<DAOPropagationState> toUse = isObservedData.getValue()?
+                            OBSERVED_STATES: NON_OBSERVED_STATES;
+                    for (DAODataType dataType: dataFilter.getDataTypes()) {
+                        //For now, the cell type propagation state is defined
+                        //only for scRNA-Seq full-length data
+                        if (!isObservedData.getKey().equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                                dataType.equals(DAODataType.FULL_LENGTH)) {
+                            stmt.setEnumDAOFields(offsetParamIndex, toUse, true);
+                            offsetParamIndex += toUse.size();
+                        }
                     }
                 }
+            }
 
-                List<List<DAOExperimentCountFilter>> daoExperimentCountFilters = getDAOExperimentCountFilters(dataFilter);
-                for (List<DAOExperimentCountFilter> countOrFilters: daoExperimentCountFilters) {
-                    for (DAOExperimentCountFilter countFilter : countOrFilters) {
-                        stmt.setInt(offsetParamIndex, countFilter.getCount());
-                        offsetParamIndex++;
-                    }
+            for (LinkedHashSet<DAOFDRPValueFilter> pValOrFilter: callFilter.getFDRPValueFilters()) {
+                for (DAOFDRPValueFilter pValFilter : pValOrFilter) {
+                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getFDRPValue().getFdrPValue());
+                    offsetParamIndex++;
                 }
             }
         }
@@ -811,30 +763,23 @@ implements GlobalExpressionCallDAO {
 
     private static EnumSet<DAODataType> getDataTypesFromFieldName(String fieldName) {
         log.traceEntry("{}", fieldName);
-        EnumSet<DAODataType> dataTypes = EnumSet.noneOf(DAODataType.class);
-        //It's complicated to automate more than that since some DataType fieldNamePart can be
-        //substring of other DataType fieldNameParts.
-        if (fieldName.contains(DAODataType.AFFYMETRIX.getFieldNamePart())) {
-            dataTypes.add(DAODataType.AFFYMETRIX);
-        }
-        if (fieldName.contains(DAODataType.EST.getFieldNamePart())) {
-            dataTypes.add(DAODataType.EST);
-        }
-        if (fieldName.contains(DAODataType.IN_SITU.getFieldNamePart())) {
-            dataTypes.add(DAODataType.IN_SITU);
-        }
-        //Since RnaSeq is a substring of ScRnaSeqFullLength, we need do to that
-        String fieldNameWithoutFullLength = fieldName
-                .replace(DAODataType.FULL_LENGTH.getFieldNamePart(), "");
-        if (fieldNameWithoutFullLength.contains(DAODataType.RNA_SEQ.getFieldNamePart())) {
-            dataTypes.add(DAODataType.RNA_SEQ);
-        }
-        if (fieldName.contains(DAODataType.FULL_LENGTH.getFieldNamePart())) {
-            dataTypes.add(DAODataType.FULL_LENGTH);
-        }
-        //Check that we have covered all DataTypes
-        assert EnumSet.of(DAODataType.AFFYMETRIX, DAODataType.EST, DAODataType.IN_SITU,
-                DAODataType.RNA_SEQ, DAODataType.FULL_LENGTH).equals(EnumSet.allOf(DAODataType.class));
+
+        //Note: some DataType fieldNamePart can be substring of other DataType fieldNameParts.
+        EnumSet<DAODataType> dataTypes = EnumSet.allOf(DAODataType.class).stream()
+                .filter(dt -> {
+                    if (dt.equals(DAODataType.RNA_SEQ)) {
+                        //Since RnaSeq is a substring of ScRnaSeqFullLength, we need do to that
+                        String fieldNameWithoutFullLength = fieldName
+                            .replace(DAODataType.FULL_LENGTH.getFieldNamePart(), "");
+                        if (fieldNameWithoutFullLength.contains(dt.getFieldNamePart())) {
+                            return true;
+                        }
+                    } else if (fieldName.contains(dt.getFieldNamePart())) {
+                        return true;
+                    }
+                    return false;
+                })
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class)));
 
         if (dataTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Field name with no data type info: "
@@ -851,8 +796,47 @@ implements GlobalExpressionCallDAO {
                 .collect(Collectors.joining()));
     }
 
-    private String generateOrderByClause(
-            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttrs,
+    /**
+     * Determines on which table to perform the species ID filtering, if any.
+     *
+     * @param speciesIdFilter           A {@code boolean} defining whether filtering on species IDs
+     *                                  is required. If {@code false}, this method always returns
+     *                                  {@code null}.
+     * @param globalCondFilter          A {@code boolean} defining whether filtering on info
+     *                                  in globalCond table is necessary for the query.
+     * @param observedConditionFilter   A {@code boolean} defining whether filtering on info
+     *                                  in cond table is necessary for the query.
+     * @param geneSort                  A {@code boolean} defining whether sorting based on info
+     *                                  in gene table is necessary for the query.
+     * @param globalCondTableName       A {@code String} that is the name of the globalCond table
+     *                                  in the query.
+     * @param geneTableName             A {@code String} that is the name of the gene table
+     *                                  in the query.
+     * @return                          A {@code String} that is the name of the table to use
+     *                                  to filter based on species IDs. Equals to {@code null}
+     *                                  if {@code speciesIdFilter} is false, or either to
+     *                                  {@code globalCondTableName} or {@code geneTableName}.
+     */
+    private static String getSpeciesIdFilterTableName(boolean speciesIdFilter, boolean globalCondFilter,
+            boolean observedConditionFilter, boolean geneSort, String globalCondTableName,
+            String geneTableName) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIdFilter, globalCondFilter,
+                observedConditionFilter, geneSort, globalCondTableName, geneTableName);
+        if (!speciesIdFilter) {
+            return log.traceExit((String) null);
+        }
+        //If we need a join to the globalCond table but not the gene table
+        if ((globalCondFilter || observedConditionFilter) && !geneSort) {
+            return log.traceExit(globalCondTableName);
+        }
+        //If we need a join to the gene table but not to the globalCond table.
+        //Or if we need a join to both, priority is given to gene table considering
+        //the clustered index (bgeeGeneId, globalConditionId)
+        return log.traceExit(geneTableName);
+    }
+
+    private static String generateOrderByClause(
+            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderingAttrs,
             String globalExprTableName, String globalCondTableName, String geneTableName) {
         log.traceEntry("{}, {}, {}, {}", orderingAttrs, globalExprTableName, globalCondTableName,
                 geneTableName);
@@ -863,47 +847,38 @@ implements GlobalExpressionCallDAO {
 
         return log.traceExit(orderingAttrs.entrySet().stream()
                 .map(entry -> {
-                    String orderBy = "";
-                    switch(entry.getKey()) {
-                        case BGEE_GENE_ID:
-                            orderBy = globalExprTableName + "." + MySQLGeneDAO.BGEE_GENE_ID;
-                            break;
-                        case PUBLIC_GENE_ID:
-                            //FIXME: need to have a species ID ordering attribute
-                            //We need that for our ElementSpliterator
-                            orderBy = geneTableName + ".speciesId, " + geneTableName + ".geneId";
-                            break;
-                        case GLOBAL_CONDITION_ID:
-                            orderBy = globalExprTableName + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
-                            break;
-                        case ANAT_ENTITY_ID:
-                            orderBy = globalCondTableName + ".anatEntityId";
-                            break;
-                        case STAGE_ID:
-                            orderBy = globalCondTableName + ".stageId";
-                            break;
-                        case OMA_GROUP_ID:
-                            orderBy = geneTableName + ".OMAParentNodeId";
-                            break;
-                        case MEAN_RANK:
-                            orderBy = GLOBAL_MEAN_RANK_FIELD;
-                            break;
-                        default:
-                            throw log.throwing(new IllegalStateException("Unsupported OrderingAttribute: "
-                                    + entry.getKey()));
+                    GlobalExpressionCallDAO.OrderingAttributeInfo a = entry.getKey();
+                    StringBuilder sb = new StringBuilder();
+                    //FIXME: need to have a species ID ordering attribute
+                    //We need that for our ElementSpliterator.
+                    //In that case, we wouldn't need that species condition for PUBLIC_GENE_ID
+                    if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)) {
+                        sb.append(geneTableName).append(".speciesId, ").append(geneTableName).append(".geneId");
+                    //We need that special case for MEAN_RANK since the name varies depending on
+                    //the data type selection.
+                    } else if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+                        sb.append(GLOBAL_MEAN_RANK_FIELD)
+                          .append(getFieldNamePartFromDataTypes(a.getTargetedDataTypes()));
+                    //Otherwise, no special case needed.
+                    } else {
+                        if (a.getAttribute().isRequireExtraGlobalCondInfo()) {
+                            sb.append(globalCondTableName);
+                        } else if (a.getAttribute().isRequireExtraGeneInfo()) {
+                            sb.append(geneTableName);
+                        } else {
+                            sb.append(globalExprTableName);
+                        }
+                        sb.append(".").append(a.getAttribute().getFieldName());
                     }
                     switch(entry.getValue()) {
                         case DESC:
-                            orderBy += " desc";
+                            sb.append(" desc");
                             break;
                         case ASC:
-                            orderBy += " asc";
+                            sb.append(" asc");
                             break;
-                        default:
-                            throw log.throwing(new IllegalStateException("Unsupported Direction: "
-                                    + entry.getValue()));
                     }
-                    return orderBy;
+                    return sb.toString();
                 })
                 .collect(Collectors.joining(", ", " ORDER BY ", "")));
     }
@@ -914,30 +889,35 @@ implements GlobalExpressionCallDAO {
 
     @Override
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
-            Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<GlobalExpressionCallDAO.Attribute> attributes,
-            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> orderingAttributes)
+            Collection<CallDAOFilter> callFilters,
+            Collection<GlobalExpressionCallDAO.AttributeInfo> attributes,
+            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", callFilters, conditionParameters, attributes, orderingAttributes);
+        log.traceEntry("{}, {}, {}", callFilters, attributes, orderingAttributes);
 
+        //As of Bgee 15.0, we always use globalRanks. We could add the possibility
+        //to parameterize that in the configuration file, or the possibility to choose between
+        //self and global ranks
+        boolean globalRank = true;
         //******************************************
         // CLONE ARGUMENTS AND SANITY CHECKS
         //******************************************
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<CallDAOFilter> clonedCallFilters = callFilters == null?
                 new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
-        //condition parameter combination
-        Set<ConditionDAO.Attribute> clonedCondParams = conditionParameters == null?
-                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionParameters);
         //attributes
-        Set<GlobalExpressionCallDAO.Attribute> clonedAttrs = attributes == null?
-                EnumSet.noneOf(GlobalExpressionCallDAO.Attribute.class): EnumSet.copyOf(attributes);
+        Set<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = attributes != null && !attributes.isEmpty()?
+                new HashSet<>(attributes): Arrays.stream(GlobalExpressionCallDAO.Attribute.values())
+                .map(a -> a.isDataTypeDependant()? new GlobalExpressionCallDAO.AttributeInfo(
+                        a, EnumSet.allOf(DAODataType.class)):
+                        new GlobalExpressionCallDAO.AttributeInfo(a))
+                .collect(Collectors.toSet());
         //ordering attributes
-        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttribute, DAO.Direction> clonedOrderingAttrs = 
+        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> clonedOrderingAttrs =
                 orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
 
         //sanity checks
-        performSanityChecks(clonedCallFilters, clonedCondParams);
+        performSanityChecks(clonedCallFilters);
 
 
         //******************************************
@@ -947,22 +927,37 @@ implements GlobalExpressionCallDAO {
         String globalCondTableName = "globalCond";
         String condTableName = "cond";
         String geneTableName = "gene";
-        //do we need a join to the raw condition table
+        //Do we need a filter to the globalCond table
+        boolean globalCondFilter = clonedCallFilters.stream()
+                .anyMatch(callFilter -> !callFilter.getConditionFilters().isEmpty()) ||
+                clonedOrderingAttrs.keySet().stream().anyMatch(a -> a.getAttribute().isRequireExtraGlobalCondInfo()) ||
+                clonedAttrs.stream().anyMatch(ai -> ai.getAttribute().isRequireExtraGlobalCondInfo());
+        //do we need a join to the cond table
         boolean observedConditionFilter = clonedCallFilters.stream()
                 .anyMatch(callFilter -> callFilter.getConditionFilters()
                         .stream().anyMatch(condFilter -> condFilter.getObservedConditions() != null));
-        //retrieve the data types to retrieve data for
-        Set<DAODataType> dataTypes = getDAODataTypesFromCallDAOFilters(clonedCallFilters);
+        //do we need a join to the gene table
+        boolean geneSort = clonedOrderingAttrs.keySet().stream()
+                .anyMatch(a -> a.getAttribute().isRequireExtraGeneInfo());
+        boolean speciesIdFilter = clonedCallFilters.stream()
+                .anyMatch(callFilter ->
+                !callFilter.getSpeciesIds().isEmpty());
+        //We filter on speciesIds either on the globalCond table or on the gene table
+        //depending on the other necessary joins. Preferentially filtered on the gene table,
+        //since the clustered index is (bgeeGeneId, globalConditionId).
+        String speciesIdFilterTableName = getSpeciesIdFilterTableName(speciesIdFilter, globalCondFilter,
+                observedConditionFilter, geneSort, globalCondTableName, geneTableName);
+
 
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(), dataTypes,
-                globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter));
+        sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(),
+                globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter,
+                globalRank));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
-                geneTableName, observedConditionFilter,
-                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.OMA_GROUP_ID),
-                clonedOrderingAttrs.containsKey(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)));
+                geneTableName, speciesIdFilterTableName, globalCondFilter, observedConditionFilter,
+                geneSort));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
-                condTableName, clonedCondParams));
+                condTableName, speciesIdFilterTableName));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
 
         //we don't use a try-with-resource, because we return a pointer to the results,
@@ -978,16 +973,17 @@ implements GlobalExpressionCallDAO {
     }
 
     @Override
-    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}, {}", callFilters, conditionParameters);
-        return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, true, Integer.class));
+    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<DAODataType> dataTypes,
+            Collection<CallDAOFilter> callFilters) throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}, {}", dataTypes, callFilters);
+        return log.traceExit(this.getMinMaxRanksPerEntity(dataTypes, callFilters, true, Integer.class));
     }
     @Override
-    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}, {}", callFilters, conditionParameters);
-        return log.traceExit(this.getMinMaxRanksPerEntity(callFilters, conditionParameters, false, String.class));
+    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters)
+                    throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}, {}", dataTypes, callFilters);
+        return log.traceExit(this.getMinMaxRanksPerEntity(dataTypes, callFilters, false, String.class));
     }
     /**
      * Retrieve min and max ranks in a type of entities. For now, the only entity types that are supported
@@ -1009,27 +1005,27 @@ implements GlobalExpressionCallDAO {
      * @throws IllegalArgumentException
      */
     private <T extends Comparable<T>> EntityMinMaxRanksTOResultSet<T> getMinMaxRanksPerEntity(
-            Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters,
             boolean geneEntity, Class<T> entityIdType) throws DAOException, IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", callFilters, conditionParameters, geneEntity, entityIdType);
+        log.traceEntry("{}, {}, {}, {}", dataTypes, callFilters, geneEntity, entityIdType);
 
         //needs a LinkedHashSet for consistent settings of the parameters. 
         LinkedHashSet<CallDAOFilter> clonedCallFilters = callFilters == null?
                 new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
-        //condition parameter combination
-        Set<ConditionDAO.Attribute> clonedCondParams = conditionParameters == null?
-                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(conditionParameters);
+        EnumSet<DAODataType> clonedDataTypes = dataTypes == null || dataTypes.isEmpty()?
+                EnumSet.allOf(DAODataType.class): EnumSet.copyOf(dataTypes);
+        //As of Bgee 15.0, we always use globalRanks. We could add the possibility
+        //to parameterize that, or the possibility to choose between self and global ranks
+        boolean globalRank = true;
 
         //sanity checks
-        performSanityChecks(clonedCallFilters, clonedCondParams);
+        performSanityChecks(clonedCallFilters);
 
         //*************************************
         // GENERATE QUERY
         //*************************************
         String globalExprTableName = "globalExpression";
         String globalCondTableName = "globalCond";
-        //retrieve the data types to retrieve data for
-        Set<DAODataType> dataTypes = getDAODataTypesFromCallDAOFilters(clonedCallFilters);
 
         StringBuilder sb = new StringBuilder();
         String speciesIdClause = globalCondTableName + "." + MySQLConditionDAO.SPECIES_ID;
@@ -1037,19 +1033,21 @@ implements GlobalExpressionCallDAO {
         if (!geneEntity) {
             entityIdClause = globalCondTableName + "." + MySQLConditionDAO.ANAT_ENTITY_ID_FIELD;
         }
+        
 
         sb.append("SELECT ").append(entityIdClause).append(" AS ").append(MIN_MAX_RANK_ENTITY_ID_FIELD);
         if (!geneEntity) {
             sb.append(", ").append(speciesIdClause);
         }
-        String rankClause = generateMeanRankClause(dataTypes, globalExprTableName, globalCondTableName);
+        String rankClause = generateMeanRankClause(clonedDataTypes, globalExprTableName,
+                globalCondTableName, globalRank);
         sb.append(", MIN(").append(rankClause).append(") AS ").append(MIN_MAX_RANK_MIN_RANK_FIELD)
           .append(", MAX(").append(rankClause).append(") AS ").append(MIN_MAX_RANK_MAX_RANK_FIELD);
 
-        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null,
-                false, false, false));
+        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null, null,
+                true, false, false));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
-                null, clonedCondParams));
+                null, globalCondTableName));
 
         sb.append(" GROUP BY ").append(entityIdClause);
         if (!geneEntity) {
@@ -1114,39 +1112,52 @@ implements GlobalExpressionCallDAO {
                 .map(c -> GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
                 .collect(Collectors.joining(", ", "", ", ")));
 
-        sql.append("estAnatEntityPropagationState, estStagePropagationState, ")
-           .append("estSexPropagationState, estStrainPropagationState, ")
-           .append("estConditionObservedData, ")
-           .append("estSelfObservationCount, estDescendantObservationCount, ")
-
-           .append("affymetrixAnatEntityPropagationState, affymetrixStagePropagationState, ")
-           .append("affymetrixSexPropagationState, affymetrixStrainPropagationState, ")
-           .append("affymetrixConditionObservedData, ")
-           .append("affymetrixSelfObservationCount, affymetrixDescendantObservationCount, ")
-
-           .append("inSituAnatEntityPropagationState, inSituStagePropagationState, ")
-           .append("inSituSexPropagationState, inSituStrainPropagationState, ")
-           .append("inSituConditionObservedData, ")
-           .append("inSituSelfObservationCount, inSituDescendantObservationCount, ")
-
-           .append("rnaSeqAnatEntityPropagationState, rnaSeqStagePropagationState, ")
-           .append("rnaSeqSexPropagationState, rnaSeqStrainPropagationState, ")
-           .append("rnaSeqConditionObservedData, ")
-           .append("rnaSeqSelfObservationCount, rnaSeqDescendantObservationCount, ")
-
-           .append("scRnaSeqFullLengthAnatEntityPropagationState, scRnaSeqFullLengthStagePropagationState, ")
-           .append("scRnaSeqFullLengthSexPropagationState, scRnaSeqFullLengthStrainPropagationState, ")
-           .append("scRnaSeqFullLengthCellTypePropagationState, scRnaSeqFullLengthConditionObservedData, ")
-           .append("scRnaSeqFullLengthSelfObservationCount, scRnaSeqFullLengthDescendantObservationCount")
-           
-           .append(") VALUES ");
+        //the order in which we set the parameters is important, so we use EnumSets.
+        //Prepare propagation states, observed data state, self and descendant observation counts
+        sql.append(
+                EnumSet.allOf(DAODataType.class).stream()
+                .map(dataType ->
+                        //propagation states
+                        ConditionDAO.Attribute.getCondParams().stream()
+                        //for now we only store cell type propagation state for
+                        //scRNA-Seq full-length data
+                        .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
+                                !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
+                        .map(a -> dataType.getFieldNamePrefix() + a.getPropagationStateNameSuffix())
+                        .collect(Collectors.joining(", "))
+                        //observed data state
+                        + ", " + dataType.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX
+                        //self and descendant observation counts
+                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_SELF_OBS_COUNT_SUFFIX
+                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)
+                .collect(Collectors.joining(", "))
+        )
+        .append(") VALUES ");
 
         for (int i = 0; i < callTOs.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
             sql.append("(").append(BgeePreparedStatement.generateParameterizedQueryString(
-                    38 + (DAODataType.ALL_COMBINATIONS.size() * 3)))
+                    //Count number of parameters:
+                    //bgeeGeneId, globalConditionId
+                    2
+                    //Then, for each data type:
+                    + EnumSet.allOf(DAODataType.class).stream()
+                    .mapToInt(dataType ->
+                        //first count the number of propagation states per data type
+                        Math.toIntExact(
+                                ConditionDAO.Attribute.getCondParams().stream()
+                                //for now we only store cell type propagation state for
+                                //scRNA-Seq full-length data
+                                .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
+                                        !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
+                                .count())
+                        //then add observed data state, self and descendant observation count, per data type
+                        + 3)
+                    .sum()
+                    //Then the 3 p-value info for all combinations of data types
+                    + (DAODataType.ALL_COMBINATIONS.size() * 3)))
                .append(") ");
         }
         try (BgeePreparedStatement stmt = 
@@ -1204,20 +1215,13 @@ implements GlobalExpressionCallDAO {
                         callTO.getCallDataTOs().stream()
                         .collect(Collectors.toMap(c -> c.getDataType(), c -> c));
 
-                //Just to make sure we cover all data type cases
-                assert DAODataType.values().length == 5;
-                //the order in which we set the data types is important, see creation of the query.
+                //the order in which we set the data types is important, see creation of the query,
+                //so we need an EnumSet.
                 //And we need to set all parameters even if there is no data for a data type.
-                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
-                        dataTypeToCallDataTO.get(DAODataType.EST), DAODataType.EST);
-                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
-                        dataTypeToCallDataTO.get(DAODataType.AFFYMETRIX), DAODataType.AFFYMETRIX);
-                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
-                        dataTypeToCallDataTO.get(DAODataType.IN_SITU), DAODataType.IN_SITU);
-                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
-                        dataTypeToCallDataTO.get(DAODataType.RNA_SEQ), DAODataType.RNA_SEQ);
-                paramIndex = setStatementCallDataParameters(stmt, paramIndex,
-                        dataTypeToCallDataTO.get(DAODataType.FULL_LENGTH), DAODataType.FULL_LENGTH);
+                for (DAODataType dataType: EnumSet.allOf(DAODataType.class)) {
+                    paramIndex = setStatementCallDataParameters(stmt, paramIndex,
+                            dataTypeToCallDataTO.get(dataType), dataType);
+                }
             }
             
             return log.traceExit(stmt.executeUpdate());
@@ -1232,26 +1236,22 @@ implements GlobalExpressionCallDAO {
         
         int newParamIndex = paramIndex;
         if (callDataTO == null) {
-            //Propagation states, different between FULL_LENGTH and other data types
-            int stateAttrCount = 0;
-            switch (dataType) {
-            case EST:
-            case AFFYMETRIX:
-            case IN_SITU:
-            case RNA_SEQ:
-                stateAttrCount = 5;
-                break;
-            case FULL_LENGTH:
-                stateAttrCount = 6;
-                break;
-            default:
-                throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dataType));
-            }
+            int stateAttrCount =
+                    //count of Propagation states, different between FULL_LENGTH and other data types
+                    //TODO: code repeated several times, to put in a function
+                    Math.toIntExact(ConditionDAO.Attribute.getCondParams().stream()
+                    //for now we only store cell type propagation state for scRNA-Seq full-length data
+                    .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
+                            !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID)).count());
             for (int i = 0; i < stateAttrCount; i++) {
                 stmt.setNull(newParamIndex, Types.VARCHAR);
                 newParamIndex++;
             }
-            //ObservationCounts, same for all data types
+            //observed data state, type TINYINT
+            stmt.setNull(newParamIndex, Types.TINYINT);
+            newParamIndex++;
+            //ObservationCounts
+            //The default value here is 0, not "null".
             for (int i = 0; i < 2; i++) {
                 stmt.setInt(newParamIndex, 0);
                 newParamIndex++;
@@ -1259,54 +1259,22 @@ implements GlobalExpressionCallDAO {
             return log.traceExit(newParamIndex);
         }
 
-        //** Observed data/ propagation states **
-        //make sure we covert all condition parameters
-        assert ((int) EnumSet.allOf(ConditionDAO.Attribute.class).stream()
-                .filter(a -> a.isConditionParameter())
-                .count()) == 5;
-
-        DAOPropagationState anatPropState = callDataTO.getDataPropagation()
-                .get(ConditionDAO.Attribute.ANAT_ENTITY_ID);
-        if (anatPropState == null) {
-            stmt.setNull(newParamIndex, Types.VARCHAR);
-        } else {
-            stmt.setString(newParamIndex, anatPropState.getStringRepresentation());
-        }
-        newParamIndex++;
-        DAOPropagationState stagePropState = callDataTO.getDataPropagation()
-                .get(ConditionDAO.Attribute.STAGE_ID);
-        if (stagePropState == null) {
-            stmt.setNull(newParamIndex, Types.VARCHAR);
-        } else {
-            stmt.setString(newParamIndex, stagePropState.getStringRepresentation());
-        }
-        newParamIndex++;
-        DAOPropagationState sexPropState = callDataTO.getDataPropagation()
-                .get(ConditionDAO.Attribute.SEX_ID);
-        if (sexPropState == null) {
-            stmt.setNull(newParamIndex, Types.VARCHAR);
-        } else {
-            stmt.setString(newParamIndex, sexPropState.getStringRepresentation());
-        }
-        newParamIndex++;
-        DAOPropagationState strainPropState = callDataTO.getDataPropagation()
-                .get(ConditionDAO.Attribute.STRAIN_ID);
-        if (strainPropState == null) {
-            stmt.setNull(newParamIndex, Types.VARCHAR);
-        } else {
-            stmt.setString(newParamIndex, strainPropState.getStringRepresentation());
-        }
-        newParamIndex++;
-        if (dataType.equals(DAODataType.FULL_LENGTH)) {
-            DAOPropagationState cellTypePropState = callDataTO.getDataPropagation()
-                    .get(ConditionDAO.Attribute.CELL_TYPE_ID);
-            if (cellTypePropState == null) {
+        //** propagation states **
+        for (ConditionDAO.Attribute attr: ConditionDAO.Attribute.getCondParams().stream()
+                //for now we only store cell type propagation state for scRNA-Seq full-length data
+                .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
+                        !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
+                //The order is important this is why we need an EnumSet
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)))) {
+            DAOPropagationState propState = callDataTO.getDataPropagation().get(attr);
+            if (propState == null) {
                 stmt.setNull(newParamIndex, Types.VARCHAR);
             } else {
-                stmt.setString(newParamIndex, cellTypePropState.getStringRepresentation());
+                stmt.setString(newParamIndex, propState.getStringRepresentation());
             }
             newParamIndex++;
         }
+        //** observed data state **
         stmt.setBoolean(newParamIndex, callDataTO.isConditionObservedData());
         newParamIndex++;
 
@@ -1318,117 +1286,6 @@ implements GlobalExpressionCallDAO {
                 .orElse(0));
         newParamIndex++;
 
-//        //** Experiment expression counts **
-//        //present high self
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.SELF.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        //present low self
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.SELF.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        if (!DAODataType.EST.equals(dataType)) {
-//            //absent high self
-//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
-//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//            //absent low self
-//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.SELF.equals(c.getPropagationState()))
-//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//        }
-//        //present high descendant
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        //present low descendant
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.DESCENDANT.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        if (!DAODataType.EST.equals(dataType)) {
-//            //absent high parent
-//            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-//            if (callDataTO.getExperimentCounts().stream()
-//                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
-//                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
-//            }
-//            stmt.setInt(newParamIndex, 0);
-////            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-////                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-////                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-////                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-////                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//            //absent low parent
-//            //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-//            if (callDataTO.getExperimentCounts().stream()
-//                    .anyMatch(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))) {
-//                throw log.throwing(new IllegalArgumentException("No absent call propagation allowed"));
-//            }
-//            stmt.setInt(newParamIndex, 0);
-////            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-////                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-////                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-////                                 DAOPropagationState.ANCESTOR.equals(c.getPropagationState()))
-////                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//        }
-//        //present high total
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.ALL.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        //present low total
-//        stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                .filter(c -> DAOExperimentCount.CallType.PRESENT.equals(c.getCallType()) &&
-//                             DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                             DAOPropagationState.ALL.equals(c.getPropagationState()))
-//                .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//        newParamIndex++;
-//        if (!DAODataType.EST.equals(dataType)) {
-//            //absent high total
-//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.HIGH.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
-//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//            //absent low total
-//            stmt.setInt(newParamIndex, callDataTO.getExperimentCounts().stream()
-//                    .filter(c -> DAOExperimentCount.CallType.ABSENT.equals(c.getCallType()) &&
-//                                 DAOExperimentCount.DataQuality.LOW.equals(c.getDataQuality()) &&
-//                                 DAOPropagationState.ALL.equals(c.getPropagationState()))
-//                    .findFirst().orElseThrow(() -> new IllegalArgumentException()).getCount());
-//            newParamIndex++;
-//        }
-//        //propagated count
-//        stmt.setInt(newParamIndex, callDataTO.getPropagatedCount());
-//        newParamIndex++;
-
         return log.traceExit(newParamIndex);
     }
     
@@ -1436,7 +1293,7 @@ implements GlobalExpressionCallDAO {
      * Implementation of the {@code GlobalExpressionCallTOResultSet}. 
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
+     * @version Bgee 15.0, Apr. 2021
      * @since Bgee 14 Feb. 2017
      */
     static class MySQLGlobalExpressionCallTOResultSet extends MySQLDAOResultSet<GlobalExpressionCallDAO.GlobalExpressionCallTO>
@@ -1454,24 +1311,30 @@ implements GlobalExpressionCallDAO {
                 Long id = null;
                 Integer bgeeGeneId = null, conditionId = null;
                 Set<GlobalExpressionCallDataTO> callDataTOs = new HashSet<>();
+                Set<DAOMeanRank> meanRanks = new HashSet<>();
                 Set<DAOFDRPValue> pValues = new HashSet<>();
                 Set<DAOFDRPValue> bestDescendantPValues = new HashSet<>();
-                BigDecimal globalMeanRank = null;
 
                 for (String colName: this.getColumnLabels().values()) {
-                    if (colName.equals(GLOBAL_EXPR_ID_FIELD)) {
-                        id = currentResultSet.getLong(GLOBAL_EXPR_ID_FIELD);
-                    } else if (colName.equals(MySQLGeneDAO.BGEE_GENE_ID)) {
+//                    if (colName.equals(GLOBAL_EXPR_ID_FIELD)) {
+//
+//                        id = currentResultSet.getLong(GLOBAL_EXPR_ID_FIELD);
+//                    } else 
+                    if (colName.equals(MySQLGeneDAO.BGEE_GENE_ID)) {
+
                         bgeeGeneId = currentResultSet.getInt(MySQLGeneDAO.BGEE_GENE_ID);
                     } else if (colName.equals(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)) {
-                        conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
-                    } else if (colName.equals(GLOBAL_MEAN_RANK_FIELD)) {
-                        globalMeanRank = currentResultSet.getBigDecimal(GLOBAL_MEAN_RANK_FIELD);
 
+                        conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+                    } else if (colName.startsWith(GLOBAL_MEAN_RANK_FIELD)) {
+
+                        meanRanks.add(new DAOMeanRank(currentResultSet.getBigDecimal(colName),
+                                getDataTypesFromFieldName(colName)));
                     //important to test GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
                     //before GLOBAL_P_VALUE_FIELD_PART, since GLOBAL_P_VALUE_FIELD_PART is a substring
                     //of GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
                     } else if (colName.startsWith(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)) {
+
                         Integer descendantConditionId = null;
                         EnumSet<DAODataType> dataTypesUsedInField = getDataTypesFromFieldName(colName);
                         String condFieldName = GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START +
@@ -1488,8 +1351,9 @@ implements GlobalExpressionCallDAO {
                                 currentResultSet.getBigDecimal(colName), descendantConditionId,
                                 dataTypesUsedInField));
                     } else if (colName.startsWith(GLOBAL_P_VALUE_FIELD_START)) {
+
                         pValues.add(new DAOFDRPValue(
-                                currentResultSet.getBigDecimal(colName), null,
+                                currentResultSet.getBigDecimal(colName),
                                 getDataTypesFromFieldName(colName)));
                     }
                 }
@@ -1501,7 +1365,7 @@ implements GlobalExpressionCallDAO {
                     }
                 }
                 return log.traceExit(new GlobalExpressionCallTO(id, bgeeGeneId, conditionId,
-                        globalMeanRank, callDataTOs, pValues, bestDescendantPValues));
+                        meanRanks, callDataTOs, pValues, bestDescendantPValues));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }
@@ -1514,133 +1378,67 @@ implements GlobalExpressionCallDAO {
             final ResultSet currentResultSet = rs.getCurrentResultSet();
             Boolean conditionObservedData = null;
             Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
-            Set<DAOExperimentCount> experimentCounts = new HashSet<>();
-            Integer selfObservationCount = null, descendantObservationCount = null, propagatedCount = null;
+            Integer selfObservationCount = null, descendantObservationCount = null;
             BigDecimal rank = null, rankNorm = null, weightForMeanRank = null;
 
             boolean infoFound = false;
             for (Map.Entry<Integer, String> col : rs.getColumnLabels().entrySet()) {
                 final String columnName = col.getValue();
-                if (columnName.contains("AnatEntityPropagationState") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
 
-                    dataPropagation.put(ConditionDAO.Attribute.ANAT_ENTITY_ID,
-                            DAOPropagationState.convertToPropagationState(
-                                    currentResultSet.getString(columnName)));
-                    infoFound = true;
-                } else if (columnName.contains("StagePropagationState") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    dataPropagation.put(ConditionDAO.Attribute.STAGE_ID,
-                            DAOPropagationState.convertToPropagationState(
-                                    currentResultSet.getString(columnName)));
-                    infoFound = true;
-                } else if (columnName.contains("CellTypePropagationState") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    dataPropagation.put(ConditionDAO.Attribute.CELL_TYPE_ID,
-                            DAOPropagationState.convertToPropagationState(
-                                    currentResultSet.getString(columnName)));
-                    infoFound = true;
-                } else if (columnName.contains("SexPropagationState") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    dataPropagation.put(ConditionDAO.Attribute.SEX_ID,
-                            DAOPropagationState.convertToPropagationState(
-                                    currentResultSet.getString(columnName)));
-                    infoFound = true;
-                } else if (columnName.contains("StrainPropagationState") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    dataPropagation.put(ConditionDAO.Attribute.STRAIN_ID,
-                            DAOPropagationState.convertToPropagationState(
-                                    currentResultSet.getString(columnName)));
-                    infoFound = true;
-                } else if (columnName.contains("ConditionObservedData") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    // As getBoolean() returns false if the value is SQL NULL, 
-                    // we need to check if the column read had a value of SQL NULL
-                    boolean isConditionObservedData = currentResultSet.getBoolean(columnName);
-                    if (!currentResultSet.wasNull()) {
-                        conditionObservedData = isConditionObservedData;
-                    }
-                    infoFound = true;
-                } else if (columnName.contains("SelfObservationCount") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    // getInt() returns 0 if the value is SQL NULL,
-                    // but in db, counts are not null so we do not need to check
-                    // if the column read had a value of SQL NULL
-                    selfObservationCount = currentResultSet.getInt(columnName);
-                    infoFound = true;
-                } else if (columnName.contains("DescendantObservationCount") &&
-                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-
-                    // getInt() returns 0 if the value is SQL NULL,
-                    // but in db, counts are not null so we do not need to check
-                    // if the column read had a value of SQL NULL
-                    descendantObservationCount = currentResultSet.getInt(columnName);
-                    infoFound = true;
-                }
-//                else if ("estLibPropagatedCount".equals(columnName) &&
-//                        DAODataType.EST.equals(dataType) ||
-//                        columnName.contains("ExpPropagatedCount") &&
-//                        columnName.startsWith(dataType.getFieldNamePrefix())) {
-//
-//                    // getInt() returns 0 if the value is SQL NULL,
-//                    // but in db, propagated counts are not null so we do not need to check
-//                    // if the column read had a value of SQL NULL
-//                    propagatedCount = currentResultSet.getInt(columnName);
-//                    infoFound = true;
-//                }
-                else if ("estRank".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixMeanRank".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituRank".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqMeanRank".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
-
+                if (dataType.getRankFieldName(false).equals(columnName) ||
+                        dataType.getRankFieldName(true).equals(columnName)) {
                     rank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;
-                } else if ("estRankNorm".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "affymetrixMeanRankNorm".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "inSituRankNorm".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType) ||
-                    "rnaSeqMeanRankNorm".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType)) {
 
+                } else if (dataType.getRankNormFieldName(false).equals(columnName) ||
+                        dataType.getRankNormFieldName(true).equals(columnName)) {
                     rankNorm = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;
-                } else if ("affymetrixDistinctRankSum".equals(columnName) &&
-                        DAODataType.AFFYMETRIX.equals(dataType) ||
-                    "rnaSeqDistinctRankSum".equals(columnName) &&
-                        DAODataType.RNA_SEQ.equals(dataType) ||
-                    "estMaxRank".equals(columnName) &&
-                        DAODataType.EST.equals(dataType) ||
-                    "inSituMaxRank".equals(columnName) &&
-                        DAODataType.IN_SITU.equals(dataType)) {
 
+                } else if (dataType.getRankWeightFieldName(false).equals(columnName) ||
+                        dataType.getRankWeightFieldName(true).equals(columnName)) {
                     weightForMeanRank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;
+
                 }
-//                else {
-//                    DAOExperimentCount count = loadExperimentCount(currentResultSet,
-//                            columnName, dataType);
-//                    if (count != null) {
-//                        experimentCounts.add(count);
-//                        infoFound = true;
-//                    }
-//                }
+                //Important to test this last, since the field name prefix would also match
+                //the rank field name, rank norm field name, rank weight field name
+                else if (columnName.startsWith(dataType.getFieldNamePrefix())) {
+                    if (columnName.endsWith(COND_OBSERVED_DATA_SUFFIX)) {
+                        // As getBoolean() returns false if the value is SQL NULL,
+                        // we need to check if the column read had a value of SQL NULL
+                        boolean isConditionObservedData = currentResultSet.getBoolean(columnName);
+                        if (!currentResultSet.wasNull()) {
+                            conditionObservedData = isConditionObservedData;
+                        }
+                        infoFound = true;
+                    } else if (columnName.endsWith(P_VALUE_SELF_OBS_COUNT_SUFFIX)) {
+                        // getInt() returns 0 if the value is SQL NULL,
+                        // but in db, counts are not null so we do not need to check
+                        // if the column read had a value of SQL NULL
+                        selfObservationCount = currentResultSet.getInt(columnName);
+                        infoFound = true;
+                    } else if (columnName.endsWith(P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)) {
+                        // getInt() returns 0 if the value is SQL NULL,
+                        // but in db, counts are not null so we do not need to check
+                        // if the column read had a value of SQL NULL
+                        descendantObservationCount = currentResultSet.getInt(columnName);
+                        infoFound = true;
+                    } else {
+                        ConditionDAO.Attribute condParam = Arrays.stream(ConditionDAO.Attribute.values())
+                            .filter(a -> columnName.endsWith(a.getPropagationStateNameSuffix()))
+                            .findAny().orElse(null);
+                        if (condParam != null) {
+                            dataPropagation.put(condParam, DAOPropagationState.convertToPropagationState(
+                                currentResultSet.getString(columnName)));
+                            infoFound = true;
+                        }
+                    }
+                }
             }
             if (!infoFound || (conditionObservedData == null
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
-                    && (experimentCounts.isEmpty() || experimentCounts.stream().allMatch(c -> c.getCount() == 0))
-                    && (propagatedCount == null || propagatedCount == 0)
+                    && selfObservationCount == null && descendantObservationCount == null
                     && rank == null && rankNorm == null
                     //Bug fix: for EST and in situ data, weightForMeanRank is retrieved from globalCond table,
                     //not globalExpression table. It means we can have a non-null value for weightForMeanRank
@@ -1652,130 +1450,7 @@ implements GlobalExpressionCallDAO {
             }
             return log.traceExit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
                     dataPropagation, selfObservationCount, descendantObservationCount,
-                    experimentCounts, propagatedCount,
                     rank, rankNorm, weightForMeanRank));
-        }
-        
-        private static DAOExperimentCount loadExperimentCount(ResultSet rs,
-                final String columnName, DAODataType dataType) throws SQLException {
-            log.traceEntry("{}, {}, {}", rs, columnName, dataType);
-            
-            if ("estLibPresentHighSelfCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentHighSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentHighSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentHighSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.SELF,
-                        rs.getInt(columnName)));
-            }
-            if ("estLibPresentLowSelfCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentLowSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentLowSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentLowSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.SELF,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentHighSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentHighSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentHighSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.SELF,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentLowSelfCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentLowSelfCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentLowSelfCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.SELF,
-                        rs.getInt(columnName)));
-            }
-            if ("estLibPresentHighDescendantCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentHighDescendantCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentHighDescendantCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentHighDescendantCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.DESCENDANT,
-                        rs.getInt(columnName)));
-            }
-            if ("estLibPresentLowDescendantCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentLowDescendantCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentLowDescendantCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentLowDescendantCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.DESCENDANT,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentHighParentCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentHighParentCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentHighParentCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.ANCESTOR,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentLowParentCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentLowParentCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentLowParentCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.ANCESTOR,
-                        rs.getInt(columnName)));
-            }
-            if ("estLibPresentHighTotalCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentHighTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentHighTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentHighTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.ALL,
-                        rs.getInt(columnName)));
-            }
-            if ("estLibPresentLowTotalCount".equals(columnName) && DAODataType.EST.equals(dataType) ||
-            "affymetrixExpPresentLowTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpPresentLowTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpPresentLowTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.PRESENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.ALL,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentHighTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentHighTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentHighTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.HIGH,
-                        DAOPropagationState.ALL,
-                        rs.getInt(columnName)));
-            }
-            if ("affymetrixExpAbsentLowTotalCount".equals(columnName) && DAODataType.AFFYMETRIX.equals(dataType) ||
-            "inSituExpAbsentLowTotalCount".equals(columnName) && DAODataType.IN_SITU.equals(dataType) ||
-            "rnaSeqExpAbsentLowTotalCount".equals(columnName) && DAODataType.RNA_SEQ.equals(dataType)) {
-                return log.traceExit(new DAOExperimentCount(
-                        DAOExperimentCount.CallType.ABSENT,
-                        DAOExperimentCount.DataQuality.LOW,
-                        DAOPropagationState.ALL,
-                        rs.getInt(columnName)));
-            }
-            
-            return log.traceExit((DAOExperimentCount) null);
         }
     }
 

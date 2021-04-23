@@ -15,6 +15,9 @@ import org.apache.logging.log4j.Logger;
  * @version Bgee 14, Sept 2018
  * @since Bgee 14, Sept 2018
  */
+//XXX: Maybe we need to revisit this class so that we don't have to check each attributes
+//individually (filter for anatEntityIds, then stageIds, etc).
+//Maybe a Map associating a ConditionParameter to the ID filter?
 public abstract class DAOBaseConditionFilter {
     private final static Logger log = LogManager.getLogger(DAOBaseConditionFilter.class.getName());
 

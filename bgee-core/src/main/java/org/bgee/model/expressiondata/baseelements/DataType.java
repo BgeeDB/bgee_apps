@@ -37,8 +37,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq"),
-    FULL_LENGTH("full length single cell RNA-Seq");
+    AFFYMETRIX("Affymetrix", true), EST("EST", false), IN_SITU("in situ hybridization", true),
+    RNA_SEQ("RNA-Seq", true), FULL_LENGTH("full length single cell RNA-Seq", false);
 
     private final static Logger log = LogManager.getLogger(DataType.class.getName());
 
@@ -46,14 +46,23 @@ public enum DataType implements BgeeEnumField {
             getAllPossibleDataTypeCombinations(EnumSet.allOf(DataType.class));
     
     private final String representation;
+    private final boolean trustedForAbsentCalls;
     
-    private DataType(String representation) {
+    private DataType(String representation, boolean trustedForAbsentCalls) {
         this.representation = representation;
+        this.trustedForAbsentCalls = trustedForAbsentCalls;
     }
 
     @Override
     public String getStringRepresentation() {
         return this.representation;
+    }
+    /**
+     * @return  A {@code boolean} that is {@code true} if this {@code DataType} can be used
+     *          for generating ABSENT expression calls, {@code false} otherwise.
+     */
+    public boolean isTrustedForAbsentCalls() {
+        return this.trustedForAbsentCalls;
     }
     
     /**

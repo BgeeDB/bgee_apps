@@ -23,9 +23,6 @@ public class FDRPValueCondition extends FDRPValue {
     public FDRPValueCondition(BigDecimal fdrPValue, Collection<DataType> dataTypes,
             Condition condition) {
         super(fdrPValue, dataTypes);
-        if (condition == null) {
-            throw new IllegalArgumentException("The descendant condition must be provided");
-        }
         this.condition = condition;
     }
 

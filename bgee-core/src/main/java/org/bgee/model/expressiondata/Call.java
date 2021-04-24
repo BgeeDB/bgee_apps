@@ -874,12 +874,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
         private final ExpressionLevelInfo expressionLevelInfo;
 
-        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo) {
-            this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
-                    expressionLevelInfo, null);
+            this(gene, condition, dataPropagation, pValues, bestDescendantPValues,
+                    summaryCallType, summaryQual, callData, expressionLevelInfo, null);
         }
 
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 

@@ -1332,8 +1332,10 @@ implements GlobalExpressionCallDAO {
                         conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
                     } else if (colName.startsWith(GLOBAL_MEAN_RANK_FIELD)) {
 
-                        meanRanks.add(new DAOMeanRank(currentResultSet.getBigDecimal(colName),
-                                getDataTypesFromFieldName(colName)));
+                        BigDecimal rank = currentResultSet.getBigDecimal(colName);
+                        //the rank should never be null
+                        assert rank != null;
+                        meanRanks.add(new DAOMeanRank(rank, getDataTypesFromFieldName(colName)));
                     //important to test GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
                     //before GLOBAL_P_VALUE_FIELD_PART, since GLOBAL_P_VALUE_FIELD_PART is a substring
                     //of GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
@@ -1351,14 +1353,17 @@ implements GlobalExpressionCallDAO {
                                 descendantConditionId = readDescendantConditionId;
                             }
                         }
-                        bestDescendantPValues.add(new DAOFDRPValue(
-                                currentResultSet.getBigDecimal(colName), descendantConditionId,
+                        BigDecimal pVal = currentResultSet.getBigDecimal(colName);
+                        if (pVal != null) {
+                            bestDescendantPValues.add(new DAOFDRPValue(pVal, descendantConditionId,
                                 dataTypesUsedInField));
+                        }
                     } else if (colName.startsWith(GLOBAL_P_VALUE_FIELD_START)) {
 
-                        pValues.add(new DAOFDRPValue(
-                                currentResultSet.getBigDecimal(colName),
-                                getDataTypesFromFieldName(colName)));
+                        BigDecimal pVal = currentResultSet.getBigDecimal(colName);
+                        if (pVal != null) {
+                            pValues.add(new DAOFDRPValue(pVal, getDataTypesFromFieldName(colName)));
+                        }
                     }
                 }
                 for (DAODataType dataType: EnumSet.allOf(DAODataType.class)) {
@@ -1383,7 +1388,8 @@ implements GlobalExpressionCallDAO {
             Boolean conditionObservedData = null;
             Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
             Integer selfObservationCount = null, descendantObservationCount = null;
-            BigDecimal rank = null, rankNorm = null, weightForMeanRank = null;
+            BigDecimal fdrPValue = null, bestDescendantFDRPValue = null,
+                       rank = null, rankNorm = null, weightForMeanRank = null;
 
             boolean infoFound = false;
             for (Map.Entry<Integer, String> col : rs.getColumnLabels().entrySet()) {
@@ -1404,6 +1410,26 @@ implements GlobalExpressionCallDAO {
                     weightForMeanRank = currentResultSet.getBigDecimal(columnName);
                     infoFound = true;
 
+                }
+                //In case the FDR corrected p-value was also requested for this data type alone,
+                //we also store it in the related GlobalExpressionCallDataTO
+                //(it will be stored in the GlobalExpressionCallTO as well).
+                //
+                //important to test GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
+                //before GLOBAL_P_VALUE_FIELD_PART, since GLOBAL_P_VALUE_FIELD_PART is a substring
+                //of GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_PART
+                else if (columnName.startsWith(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START)) {
+
+                    if (getDataTypesFromFieldName(columnName).equals(EnumSet.of(dataType))) {
+                        bestDescendantFDRPValue = currentResultSet.getBigDecimal(columnName);
+                        infoFound = true;
+                    }
+                } else if (columnName.startsWith(GLOBAL_P_VALUE_FIELD_START)) {
+
+                    if (getDataTypesFromFieldName(columnName).equals(EnumSet.of(dataType))) {
+                        fdrPValue = currentResultSet.getBigDecimal(columnName);
+                        infoFound = true;
+                    }
                 }
                 //Important to test this last, since the field name prefix would also match
                 //the rank field name, rank norm field name, rank weight field name
@@ -1443,6 +1469,7 @@ implements GlobalExpressionCallDAO {
             if (!infoFound || (conditionObservedData == null
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
                     && selfObservationCount == null && descendantObservationCount == null
+                    && fdrPValue == null && bestDescendantFDRPValue == null
                     && rank == null && rankNorm == null
                     //Bug fix: for EST and in situ data, weightForMeanRank is retrieved from globalCond table,
                     //not globalExpression table. It means we can have a non-null value for weightForMeanRank
@@ -1454,6 +1481,7 @@ implements GlobalExpressionCallDAO {
             }
             return log.traceExit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
                     dataPropagation, selfObservationCount, descendantObservationCount,
+                    fdrPValue, bestDescendantFDRPValue,
                     rank, rankNorm, weightForMeanRank));
         }
     }

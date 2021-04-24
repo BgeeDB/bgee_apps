@@ -562,11 +562,12 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final DAODataType dataType;
 
         private final Boolean conditionObservedData;
-
         private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
 
         private final Integer selfObservationCount;
         private final Integer descendantObservationCount;
+        private final BigDecimal fdrPValue;
+        private final BigDecimal bestDescendantFDRPValue;
 
         private final BigDecimal rank;
         private final BigDecimal rankNorm;
@@ -575,6 +576,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
                 Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
                 Integer selfObservationCount, Integer descendantObservationCount,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
             if (dataPropagation != null && dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
@@ -587,6 +589,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
             this.selfObservationCount = selfObservationCount;
             this.descendantObservationCount = descendantObservationCount;
+            this.fdrPValue = fdrPValue;
+            this.bestDescendantFDRPValue = bestDescendantFDRPValue;
 
             this.rank = rank;
             this.rankNorm = rankNorm;
@@ -619,7 +623,10 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         /**
          * @return  An {@code Integer} that is the number of observations producing a p-value
-         *          in the condition itself.
+         *          in the condition itself. ({@link #getSelfObservationCount()} +
+         *          {@link #getDescendantObservationCount()}) allows to retrieve the total number
+         *          of p-values used to compute the FDR-corrected p-value returned by
+         *          {@link #getFDRPValue()}.
          */
         public Integer getSelfObservationCount() {
             return selfObservationCount;
@@ -627,9 +634,27 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         /**
          * @return  An {@code Integer} that is the number of observations producing a p-value
          *          in the descendant conditions of the requested condition.
+         *          ({@link #getSelfObservationCount()} + {@link #getDescendantObservationCount()})
+         *          allows to retrieve the total number of p-values used to compute
+         *          the FDR-corrected p-value returned by {@link #getFDRPValue()}.
          */
         public Integer getDescendantObservationCount() {
             return descendantObservationCount;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the FDR corrected p-value computed from
+         *          all the p-values obtained by this data type in a condition
+         *          and all its sub-conditions for a gene.
+         */
+        public BigDecimal getFDRPValue() {
+            return fdrPValue;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the best FDR corrected p-value obtained by
+         *          this data type among the sub-conditions of the condition of a call for a gene.
+         */
+        public BigDecimal getBestDescendantFDRPValue() {
+            return bestDescendantFDRPValue;
         }
 
         public BigDecimal getRank() {
@@ -649,6 +674,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                    .append(", dataPropagation=").append(dataPropagation)
                    .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantObservationCount=").append(descendantObservationCount)
+                   .append(", fdrPValue=").append(fdrPValue)
+                   .append(", bestDescendantFDRPValue=").append(descendantObservationCount)
                    .append(", rank=").append(rank)
                    .append(", rankNorm=").append(rankNorm)
                    .append(", weightForMeanRank=").append(weightForMeanRank)

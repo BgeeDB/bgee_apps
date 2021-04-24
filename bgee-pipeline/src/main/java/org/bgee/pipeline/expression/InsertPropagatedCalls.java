@@ -1401,6 +1401,9 @@ public class InsertPropagatedCalls extends CallService {
                                 cd.getSelfObservationCount(),
                                 //descendant p-value observation counts
                                 cd.getDescendantObservationCount(),
+                                //FDR-corrected p-values for individual data type:
+                                //they are not produced and stored in database in this way
+                                null, null,
                                 //rank info: computed by the Perl pipeline after generation
                                 //of these global calls
 //                                meanRank, meanRankNorm, weightForMeanRank

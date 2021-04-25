@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.CallFilter;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.CallType;
@@ -614,6 +615,13 @@ public class TopAnatParams {
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
+
+            Map<CallService.Attribute, Boolean> observedDataFilter = new HashMap<>();
+            //retrieve also propagated anat. entities when no decorrelation is requested in order to run
+            //a Fisher test without running topGo (faster)
+            if (this.decorrelationType != DecorrelationType.NONE) {
+                observedDataFilter.put(CallService.Attribute.ANAT_ENTITY_ID, true);
+            }
             return log.traceExit(new ExpressionCallFilter(
                     //call type and quality filter
                     callQualFilter,
@@ -623,16 +631,11 @@ public class TopAnatParams {
                     condFilters,
                     //data type filter
                     this.dataTypes,
-                    //observed data filter
-                    //XXX: this should be adapted if we want TopAnat to work on a graph of conditions
-                    //TODO: investigate whether results are the same if we use all data,
-                    //including redundant calls with observed data
-                    //(if we just give values null, null, null)
+                    //observed data filter. This can be used in this context only when
+                    //all condition parameters are requested
                     null,
-                    //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
-                    //without running topGo 
-                    (this.decorrelationType != DecorrelationType.NONE) ? true : null,
-                    null, null, null, null
+                    //observedDataFilter
+                    observedDataFilter
             ));
         }
         if (this.callType == DiffExpressionSummary.OVER_EXPRESSED) {

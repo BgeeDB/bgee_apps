@@ -610,15 +610,6 @@ public class TopAnatParams {
         Collection<ConditionFilter> condFilters = StringUtils.isBlank(this.devStageId)? null: 
             Collections.singleton(new ConditionFilter(null, Collections.singleton(this.devStageId), 
                     null, null, null, null));
-
-        //TODO: verify this logic
-        //(former note: we need to decide whether we want calls with data propagated only,
-        //because they can have a higher quality thanks to data propagation.)
-        Map<CallType.Expression, Boolean> obsDataFilter = null;
-        if(StringUtils.isBlank(this.devStageId)) {
-            obsDataFilter = new HashMap<>();
-            obsDataFilter.put(null, true);
-        }
         
         if (this.callType == ExpressionSummary.EXPRESSED) {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
@@ -637,7 +628,7 @@ public class TopAnatParams {
                     //TODO: investigate whether results are the same if we use all data,
                     //including redundant calls with observed data
                     //(if we just give values null, null, null)
-                    obsDataFilter, 
+                    null,
                     //retrieve propagated anat. entities when no decorrelation in order to run a fischer test
                     //without running topGo 
                     (this.decorrelationType != DecorrelationType.NONE) ? true : null,

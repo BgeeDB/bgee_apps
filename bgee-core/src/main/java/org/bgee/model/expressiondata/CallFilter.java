@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -443,7 +442,7 @@ extends DataFilter<ConditionFilter> {
     /**
      * @see #getDataTypeFilter()
      */
-    private final Set<DataType> dataTypeFilters;
+    private final EnumSet<DataType> dataTypeFilters;
 
     /**
      * @see #getSummaryCallTypeQualityFilter()
@@ -490,8 +489,20 @@ extends DataFilter<ConditionFilter> {
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
 
-        this.dataTypeFilters = Collections.unmodifiableSet(
-                dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
+        if (dataTypeFilter != null && dataTypeFilter.contains(null)) {
+            throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
+        }
+        if (summaryCallTypeQualityFilter != null &&
+                summaryCallTypeQualityFilter.keySet().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
+        }
+        if (summaryCallTypeQualityFilter != null &&
+                summaryCallTypeQualityFilter.values().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
+        }
+
+        this.dataTypeFilters = dataTypeFilter == null || dataTypeFilter.isEmpty()?
+                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypeFilter);
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
                 summaryCallTypeQualityFilter == null || summaryCallTypeQualityFilter.isEmpty()?
 
@@ -533,12 +544,13 @@ extends DataFilter<ConditionFilter> {
     }
 
     /**
-     * @return  An unmodifiable {@code Set} of {@code DataType}s, allowing to configure 
+     * @return  An {@code EnumSet} of {@code DataType}s, allowing to configure
      *          the filtering of data types with expression data.
-     *          If several {@code DataType}s are configured, they are seen as "OR" conditions.
+     *          This {@code EnumSet} is a copy, modifying it will not be reflected in this class.
      */
-    public Set<DataType> getDataTypeFilters() {
-        return dataTypeFilters;
+    public EnumSet<DataType> getDataTypeFilters() {
+        //defensive copying, no unmodifiableEnumSet
+        return EnumSet.copyOf(dataTypeFilters);
     }
     /**
      * @return  The {@code SummaryCallType} allowing to configure summary call type filtering.

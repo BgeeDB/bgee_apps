@@ -1585,8 +1585,6 @@ public class CallService extends CommonService {
         Set<Attribute> attributes, ExpressionCallFilter callFilter) {
         log.traceEntry("{}, {}", attributes, callFilter);
 
-        //convertDataTypeToDAODataType returns all DAODataTypes when
-        //the provided argument of DataType is empty or null.
         EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
         EnumSet<DAODataType> daoDataTypesTrustedForAbsentCalls =
                 convertTrustedAbsentDataTypesToDAODataTypes(callFilter.getDataTypeFilters());
@@ -1668,9 +1666,8 @@ public class CallService extends CommonService {
             ExpressionCallFilter callFilter) {
         log.traceEntry("{}, {}", orderingAttributes, callFilter);
 
-        EnumSet<DAODataType> daoDataTypes = callFilter.getDataTypeFilters().isEmpty()?
-                EnumSet.allOf(DAODataType.class):
-                convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
+        EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(
+                callFilter.getDataTypeFilters());
 
         return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
                 e -> {
@@ -1890,9 +1887,8 @@ public class CallService extends CommonService {
                 throw log.throwing(new IllegalStateException("No max rank could be retrieved for call " + globalCallTO));
             }
         }
-        EnumSet<DAODataType> requestedDAODataTypes = callFilter.getDataTypeFilters().isEmpty()?
-                EnumSet.allOf(DAODataType.class):
-                convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
+        EnumSet<DAODataType> requestedDAODataTypes = convertDataTypeToDAODataType(
+                callFilter.getDataTypeFilters());
 
         //Retrieve mean rank for the requested data types if needed
         BigDecimal meanRank = null;

@@ -1,26 +1,24 @@
 package org.bgee.model.expressiondata;
 
 import java.math.BigDecimal;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.baseelements.ExperimentExpressionCount;
+import org.bgee.model.expressiondata.baseelements.FDRPValue;
+import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.PropagationState;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
@@ -39,7 +37,7 @@ import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 13, Sept. 2015
  */
 //TODO: javadoc of all attributes and methods
@@ -135,71 +133,51 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         //********************************************
         // STATIC ATTRIBUTES AND METHODS
         //********************************************
-        /**
-         * A {@code Map} where keys are {@code DataType}s, the associated value being
-         * a {@code Set} of {@code ExperimentExpressionCount}s that are all the types
-         * of {@code ExperimentExpressionCount}s that must be associated to this {@code DataType}.
-         * {@link ExperimentExpressionCount#getCount()} ExperimentExpressionCount.getCount()}
-         * returns 0 for all {@code ExperimentExpressionCount}s in these {@code Set}s.
-         */
-        private static final Map<DataType, Set<ExperimentExpressionCount>> VALID_EXP_COUNTS = 
-            //we go through all combinations of DataType, CallType.Expression,
-            //PropagationState, and DataQuality, to identify and store the valid ones.
-            Collections.unmodifiableMap(EnumSet.allOf(DataType.class).stream()
-            .flatMap(dataType -> EnumSet.allOf(CallType.Expression.class).stream()
-                .filter(callType -> callType.isValidDataType(dataType))
-                .flatMap(callType -> ExperimentExpressionCount.ALLOWED_PROP_STATES.stream()
-                    .filter(propState -> callType.isValidPropagationState(propState))
-                    .flatMap(propState -> EnumSet.allOf(DataQuality.class).stream()
-                        .map(
-                            dataQuality -> new AbstractMap.SimpleEntry<>(dataType, 
-                                new ExperimentExpressionCount(callType, dataQuality, propState, 0))
-                        )
-                    )
-                )
-            ).collect(Collectors.groupingBy(e -> e.getKey(), 
-                    Collectors.mapping(e -> e.getValue(), Collectors.toSet()))));
 
         /**
-         * Computes the {@code CallType.Expression} that the {@code ExperimentExpressionCount}s
+         * Computes the {@code CallType.Expression} that the FDR-corrected p-values
          * of this {@code CallData} allow to produce.
-         * 
-         * @param expCounts A {@code Set} of {@code ExperimentExpressionCount}s producing
-         *                  the {@code CallType.Expression}.
-         * @return          The {@code CallType.Expression} inferred.
-         * @throws IllegalArgumentException If {@code expCounts} do not allow to produce
+         *
+         * @param dataType                  The {@code DataType} to compute the
+         *                                  {@code CallType.Expression} for. Cannot be {@code null}.
+         * @param fdrPValue                 A {@code BigDecimal} that is the FDR-corrected p-value
+         *                                  computed from all the p-values obtained by {@code dataType}
+         *                                  in a condition and all its sub-conditions for a gene.
+         * @param bestDescendantFDRPValue   A {@code BigDecimal} that is the best FDR-corrected
+         *                                  p-value obtained by {@code dataType} among the sub-conditions
+         *                                  of the condition of a call for a gene.
+         * @return                          The {@code CallType.Expression} inferred.
+         *                                  {@code null} if the p-values provided are null.
+         * @throws IllegalStateException    If the p-values provided do not allow to produce
          *                                  a {@code CallType.Expression}.
          */
-        private static Expression inferCallType(Set<ExperimentExpressionCount> expCounts) {
-            log.traceEntry("{}", expCounts);
+        private static Expression inferCallType(DataType dataType,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue) {
+            log.traceEntry("{}, {}, {}", dataType, fdrPValue, bestDescendantFDRPValue);
             
-            if (expCounts == null || expCounts.isEmpty()) {
+            if (fdrPValue == null || bestDescendantFDRPValue == null) {
                 return log.traceExit((Expression) null);
             }
-        
-            Set<ExperimentExpressionCount> propAllPositiveCounts = expCounts.stream()
-                    //we don't do sanity checks on null here, so we filter them out
-                    //to not have a null pointer exception
-                    .filter(c -> c != null && PropagationState.ALL.equals(c.getPropagationState()) && 
-                            c.getCount() > 0)
-                    .collect(Collectors.toSet());
-            if (propAllPositiveCounts.isEmpty()) {
-                throw log.throwing(new IllegalArgumentException("Inference of expression is not possible"
-                    + " because all total experimentCounts are missing or equal to 0"));
+            Entry<ExpressionSummary, SummaryQuality> exprQualSummary =
+                    CallService.inferSummaryCallTypeAndQuality(
+                            Collections.singleton(new FDRPValue(fdrPValue, EnumSet.of(dataType))),
+                            Collections.singleton(new FDRPValueCondition(fdrPValue,
+                                    EnumSet.of(dataType), null)),
+                            EnumSet.of(dataType));
+            if (exprQualSummary == null) {
+                return log.traceExit((Expression) null);
             }
-            
-            if (propAllPositiveCounts.stream()
-                    .anyMatch(c -> Expression.EXPRESSED.equals(c.getCallType()))) {
+            switch(exprQualSummary.getKey()) {
+            case EXPRESSED:
                 return log.traceExit(Expression.EXPRESSED);
-            }
-            if (propAllPositiveCounts.stream()
-                    .anyMatch(c -> Expression.NOT_EXPRESSED.equals(c.getCallType()))) {
+            case NOT_EXPRESSED:
                 return log.traceExit(Expression.NOT_EXPRESSED);
             }
+
             //this point should be reached only if a new CallType.Expression is not supported here,
             //so it's an IllegalStateException, not an IllegalArgumentException
             throw log.throwing(new IllegalStateException(
-                    "Could not infer CallType from ExperimentExpressionCount"));
+                    "Could not infer CallType from FDR-corrected p-values"));
         }
 
         //********************************************
@@ -214,10 +192,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         //useful if we don't want to retrieve all descendant p-values but just to retrieve the count
         private final Integer descendantObservationCount;
         private final List<BigDecimal> allPValues;
-        
-        private final Set<ExperimentExpressionCount> experimentCounts;
-        
-        private final Integer propagatedExperimentCount;
+        private final BigDecimal fdrPValue;
+        private final BigDecimal bestDescendantFDRPValue;
 
         private final BigDecimal rank;
         
@@ -229,22 +205,25 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, selfPValues, null, descendantPValues, null, null, null,
+            this(dataType, selfPValues, null, descendantPValues, null, null, null, 
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
-        public ExpressionCallData(DataType dataType, Set<ExperimentExpressionCount> experimentCounts,
-                Integer propagatedExperimentCount, BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+        public ExpressionCallData(DataType dataType,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
+                Integer selfObservationCount, Integer descendantObservationCount,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, null, null, null, null, experimentCounts, propagatedExperimentCount,
+            this(dataType, null, selfObservationCount, null, descendantObservationCount,
+                    fdrPValue, bestDescendantFDRPValue,
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         public ExpressionCallData(DataType dataType,
                 Collection<BigDecimal> selfPValues, Integer selfObservationCount,
                 Collection<BigDecimal> descendantPValues, Integer descendantObservationCount,
-                Set<ExperimentExpressionCount> experimentCounts, Integer propagatedExperimentCount,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            super(dataType, inferCallType(experimentCounts));
+            super(dataType, inferCallType(dataType, fdrPValue, bestDescendantFDRPValue));
 
             //Sort the p-values
             List<BigDecimal> sortedSelfPValues = selfPValues == null? new ArrayList<>():
@@ -273,53 +252,9 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             allPValues.addAll(sortedDescendantPValues);
             Collections.sort(allPValues);
             this.allPValues = Collections.unmodifiableList(allPValues);
-            
-            // sanity checks
-            Set<ExperimentExpressionCount> validCounts = new HashSet<>();
-            if (experimentCounts != null && !experimentCounts.isEmpty()) {
-                if (experimentCounts.stream().anyMatch(c -> c == null)) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "All ExpressionExperimentCounts must be not null."));
-                }
-                final Set<ExperimentExpressionCount> expectedExpCounts = VALID_EXP_COUNTS.get(dataType);
-                //We store only valid experimentCounts
-                //map experimentCounts to ExperimentExpressionCounts with count of 0 to compare
-                //to the expected ExperimentExpressionCounts.
-                Set<ExperimentExpressionCount> invalidCounts = new HashSet<>();
-                for (ExperimentExpressionCount count: experimentCounts) {
-                    if (!expectedExpCounts.contains(new ExperimentExpressionCount(
-                            count.getCallType(), count.getDataQuality(), count.getPropagationState(), 0))) {
-                        invalidCounts.add(count);
-                    } else {
-                        validCounts.add(count);
-                    }
-                }
-                //Check only ExperimentExpressionCounts with a count greater than 0,
-                //because invalid call types can be provided this way
-                //(e.g., providing EST absent counts set to 0)
-                if (invalidCounts.stream().anyMatch(c -> c.getCount() > 0)) {
-                    throw log.throwing(new IllegalArgumentException("Unexpected combinations of "
-                        + "CallType/DataQuality/PropagationState in ExperimentExpressionCount "
-                        + "for data type " + dataType + ". Unexpected counts: "
-                        + invalidCounts.stream().filter(c -> c.getCount() > 0).collect(Collectors.toSet())));
-                }
-            }
-            //TODO: if we remove "count" from hashCode/equals of ExperimentExpressionCount,
-            //no need for this code anymore (see comment in ExperimentExpressionCount)
-            List<ExperimentExpressionCount> checkCounts = new ArrayList<>(validCounts);
-            for (int i = 0; i < checkCounts.size(); i++) {
-                ExperimentExpressionCount count1 = checkCounts.get(i);
-                for (int j = i + 1; j < checkCounts.size(); j++) {
-                    ExperimentExpressionCount count2 = checkCounts.get(j);
-                    if (count1.getCallType().equals(count2.getCallType()) &&
-                            count1.getDataQuality().equals(count2.getDataQuality()) &&
-                            count1.getPropagationState().equals(count2.getPropagationState())) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "Two ExperimentExpressionCounts in a same ExpressionCallData cannot have same call type, "
-                                + "data quality and propagation state"));
-                    }
-                }
-            }
+
+            this.fdrPValue = fdrPValue;
+            this.bestDescendantFDRPValue = bestDescendantFDRPValue;
 
             if (dataPropagation != null && this.getCallType() != null) {
                 dataPropagation.getAllPropagationStates().stream()
@@ -327,41 +262,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             }
 
             this.dataPropagation = dataPropagation;
-            this.experimentCounts = Collections.unmodifiableSet(new HashSet<>(validCounts));
-            this.propagatedExperimentCount = propagatedExperimentCount;
             //BigDecimal are immutable so we're good
             this.rank = rank;
             this.normalizedRank = normalizedRank;
             this.weightForMeanRank = weightForMeanRank;
-        }
-
-
-        //********************************************
-        // INSTANCE METHODS
-        //********************************************
-
-        public ExperimentExpressionCount getExperimentCount(CallType.Expression callType,
-                DataQuality dataQuality, PropagationState propState) {
-            log.traceEntry("{}, {}, {}", callType, dataQuality, propState);
-            if (callType == null || dataQuality == null || propState == null) {
-                throw log.throwing(new IllegalArgumentException("No argument can be null."));
-            }
-            if (!ExperimentExpressionCount.ALLOWED_PROP_STATES.contains(propState)) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The provided PropagationState is invalid for ExperimentExpressionCounts: "
-                        + propState));
-            }
-            Set<ExperimentExpressionCount> matchingExpCounts = experimentCounts.stream()
-                    .filter(c -> callType.equals(c.getCallType()) &&
-                            dataQuality.equals(c.getDataQuality()) &&
-                            propState.equals(c.getPropagationState()))
-                    .collect(Collectors.toSet());
-            if (matchingExpCounts.size() != 1) {
-                throw log.throwing(new IllegalStateException(
-                        "Could not find matching ExperimentExpressionCount for parameters: "
-                        + callType + " - " + dataQuality + " - " + propState));
-            }
-            return log.traceExit(matchingExpCounts.iterator().next());
         }
 
         //********************************************
@@ -416,6 +320,21 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return allPValues;
         }
         /**
+         * @return  A {@code BigDecimal} that is the FDR corrected p-value computed from
+         *          all the p-values obtained by this data type in a condition
+         *          and all its sub-conditions for a gene.
+         */
+        public BigDecimal getFDRPValue() {
+            return fdrPValue;
+        }
+        /**
+         * @return  A {@code BigDecimal} that is the best FDR corrected p-value obtained by
+         *          this data type among the sub-conditions of the condition of a call for a gene.
+         */
+        public BigDecimal getBestDescendantFDRPValue() {
+            return bestDescendantFDRPValue;
+        }
+        /**
          * @return  An {@code Integer} that is the number of observations producing a p-value
          *          in a condition itself and its descendant conditions.
          * @see #getAllPValues()
@@ -425,28 +344,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 return null;
             }
             return this.selfObservationCount + this.descendantObservationCount;
-        }
-
-        public Set<ExperimentExpressionCount> getExperimentCounts(PropagationState propState) {
-            log.traceEntry("{}", propState);
-            if (propState == null) {
-                throw log.throwing(new IllegalArgumentException("PropagationState cannot be null."));
-            }
-            if (!ExperimentExpressionCount.ALLOWED_PROP_STATES.contains(propState)) {
-                throw log.throwing(new IllegalArgumentException(
-                        "The provided PropagationState is invalid for ExperimentExpressionCounts: "
-                        + propState));
-            }
-            return log.traceExit(experimentCounts.stream()
-                    .filter(c -> propState.equals(c.getPropagationState()))
-                    .collect(Collectors.toSet()));
-        }
-
-        public Set<ExperimentExpressionCount> getExperimentCounts() {
-            return experimentCounts;
-        }
-        public Integer getPropagatedExperimentCount() {
-            return propagatedExperimentCount;
         }
         public BigDecimal getRank() {
             return rank;
@@ -471,8 +368,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             result = prime * result + ((selfPValues == null) ? 0 : selfPValues.hashCode());
             result = prime * result + ((descendantPValues == null) ? 0 : descendantPValues.hashCode());
             result = prime * result + ((allPValues == null) ? 0 : allPValues.hashCode());
-            result = prime * result + ((experimentCounts == null) ? 0 : experimentCounts.hashCode());
-            result = prime * result + ((propagatedExperimentCount == null) ? 0 : propagatedExperimentCount.hashCode());
+            result = prime * result + ((fdrPValue == null) ? 0 : fdrPValue.hashCode());
+            result = prime * result + ((bestDescendantFDRPValue == null) ? 0 : bestDescendantFDRPValue.hashCode());
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
             result = prime * result + ((normalizedRank == null) ? 0 : normalizedRank.hashCode());
             result = prime * result + ((weightForMeanRank == null) ? 0 : weightForMeanRank.hashCode());
@@ -499,27 +396,29 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!dataPropagation.equals(other.dataPropagation)) {
                 return false;
             }
+            //comparison based on equals of BigDecimal while it would be better to use compareTo.
+            //But what about hashCode?
             if (!Objects.equals(selfPValues, other.selfPValues)) {
                 return false;
             }
+            //comparison based on equals of BigDecimal while it would be better to use compareTo
+            //But what about hashCode?
             if (!Objects.equals(descendantPValues, other.descendantPValues)) {
                 return false;
             }
+            //comparison based on equals of BigDecimal while it would be better to use compareTo
+            //But what about hashCode?
             if (!Objects.equals(allPValues, other.allPValues)) {
                 return false;
             }
-            if (experimentCounts == null) {
-                if (other.experimentCounts != null) {
-                    return false;
-                }
-            } else if (!experimentCounts.equals(other.experimentCounts)) {
+            //comparison based on equals of BigDecimal while it would be better to use compareTo
+            //But what about hashCode?
+            if (!Objects.equals(fdrPValue, other.fdrPValue)) {
                 return false;
             }
-            if (propagatedExperimentCount == null) {
-                if (other.propagatedExperimentCount != null) {
-                    return false;
-                }
-            } else if (!propagatedExperimentCount.equals(other.propagatedExperimentCount)) {
+            //comparison based on equals of BigDecimal while it would be better to use compareTo
+            //But what about hashCode?
+            if (!Objects.equals(bestDescendantFDRPValue, other.bestDescendantFDRPValue)) {
                 return false;
             }
             if (rank == null) {
@@ -555,8 +454,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                    .append(", selfPValues=").append(selfPValues)
                    .append(", descendantPValues=").append(descendantPValues)
                    .append(", allPValues=").append(allPValues)
-                   .append(", experimentCounts=").append(experimentCounts)
-                   .append(", propagatedExperimentCount=").append(propagatedExperimentCount)
                    .append(", rank=").append(rank)
                    .append(", normalizedRank=").append(normalizedRank)
                    .append(", weightForMeanRank=").append(weightForMeanRank).append("]");

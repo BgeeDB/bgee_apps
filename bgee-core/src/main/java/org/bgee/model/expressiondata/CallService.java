@@ -705,7 +705,11 @@ public class CallService extends CommonService {
                 .filter(c -> !redundantCalls.containsAll(condCallsPerAnatEntity.get(
                         c.getCondition().getAnatEntity())))
                 //reconstruct the LinkedHashMap
-                .collect(Collectors.toMap(
+                //Type inference hint needed, this code was compiling fine in Eclipse,
+//              //not with maven... See for instance
+//              //https://stackoverflow.com/questions/48135796/java-8-inferred-type-does-not-conform-to-upper-bounds-on-netbean-ide
+                .collect(Collectors.<ExpressionCall, ExpressionCall,
+                      List<ExpressionCall>, LinkedHashMap<ExpressionCall, List<ExpressionCall>>>toMap(
                         c -> c,
                         c -> condCallsPerAnatEntity.get(c.getCondition().getAnatEntity()),
                         (l1, l2) -> {

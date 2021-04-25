@@ -490,16 +490,6 @@ extends DataFilter<ConditionFilter> {
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
 
-        if (this.dataTypeFilters.contains(null)) {
-            throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
-        }
-        if (this.summaryCallTypeQualityFilter.keySet().contains(null)) {
-            throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
-        }
-        if (this.summaryCallTypeQualityFilter.values().contains(null)) {
-            throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
-        }
-
         this.dataTypeFilters = Collections.unmodifiableSet(
                 dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
@@ -510,6 +500,16 @@ extends DataFilter<ConditionFilter> {
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())):
 
                         new HashMap<>(summaryCallTypeQualityFilter));
+        
+        if (this.dataTypeFilters.contains(null)) {
+            throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
+        }
+        if (this.summaryCallTypeQualityFilter.keySet().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
+        }
+        if (this.summaryCallTypeQualityFilter.values().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
+        }
 
     }
     

@@ -126,8 +126,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         qualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE);
 
         ExpressionCallFilter usedCallFilter = new ExpressionCallFilter(
-                qualityFilter, geneFilters, Collections.singleton(usedCondFilter), null, null, null, null,
-                null, null, null);
+                qualityFilter, geneFilters, Collections.singleton(usedCondFilter), null, null, null);
 
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
                 new LinkedHashMap<>();
@@ -154,23 +153,23 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
             if (simCall.getGene().equals(gene1)) {
                 if (simCall.getMultiSpeciesCondition().getAnatSimilarity().getAllAnatEntities().contains(anatEntity1a)) {
                     assertEquals(new SimilarityExpressionCall(
-                                    gene1, new MultiSpeciesCondition(aeSim1, null),
+                                    gene1, new MultiSpeciesCondition(aeSim1, null, null, null),
                                     Arrays.asList(call1, call2), ExpressionSummary.EXPRESSED),
                             simCall);
                 } else {
                     assertEquals(new SimilarityExpressionCall(
-                                    gene1, new MultiSpeciesCondition(aeSim2, null),
+                                    gene1, new MultiSpeciesCondition(aeSim2, null, null, null),
                                     Arrays.asList(call3), ExpressionSummary.EXPRESSED),
                             simCall);
                 }
             } else if (simCall.getGene().equals(gene2a)) {
                 assertEquals(new SimilarityExpressionCall(
-                                gene2a, new MultiSpeciesCondition(aeSim1, null),
+                                gene2a, new MultiSpeciesCondition(aeSim1, null, null, null),
                                 Arrays.asList(call4), ExpressionSummary.EXPRESSED),
                         simCall);
             } else {
                 assertEquals(new SimilarityExpressionCall(
-                                gene2b, new MultiSpeciesCondition(aeSim2, null),
+                                gene2b, new MultiSpeciesCondition(aeSim2, null, null, null),
                                 Arrays.asList(call5), ExpressionSummary.NOT_EXPRESSED),
                         simCall);
             }
@@ -397,19 +396,19 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         MultiSpeciesCondition cond1 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("1")), null, lca,
                         Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
-                null);
+                null, null, null);
         MultiSpeciesCondition cond2 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("2")), null, lca,
                         Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
-                null);
+                null, null, null);
         MultiSpeciesCondition cond3 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("3")), null, lca,
                         Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
-                null);
+                null, null, null);
         MultiSpeciesCondition cond4 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("4")), null, lca,
                         Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
-                null);
+                null, null, null);
         MultiSpeciesCallService spyCallService = spy(new MultiSpeciesCallService(this.serviceFactory));
         Collection<ExpressionCall> sourceCalls1 = Arrays.asList(
                 new ExpressionCall(g1, new Condition(new AnatEntity("1"), null, null, null, null, spe1),

@@ -31,7 +31,6 @@ import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTOResult
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
-import org.bgee.model.expressiondata.CallServiceTest;
 import org.bgee.model.source.Source;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
 import org.bgee.model.species.Species;
@@ -47,7 +46,7 @@ import org.junit.Test;
  * @since   Bgee 13, Dec. 2015
  */
 public class OntologyServiceTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(CallServiceTest.class.getName());
+    private final static Logger log = LogManager.getLogger(OntologyServiceTest.class.getName());
     @Override
     protected Logger getLogger() {
         return log;

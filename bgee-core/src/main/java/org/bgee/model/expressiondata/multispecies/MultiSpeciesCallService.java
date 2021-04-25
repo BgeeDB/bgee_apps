@@ -727,8 +727,9 @@ public class MultiSpeciesCallService extends CommonService {
     	for(String anatEntityId : filter.getMultiSpeciesCondFilter().getAnatEntityIds()){
     		expressionCallAEntities.addAll(
     				anatEntSims.stream()
+                    .filter(aes -> aes.getAllAnatEntities().stream().map(ae -> ae.getId())
+                            .anyMatch(id -> id.equals(anatEntityId)))
     				.flatMap(aes -> aes.getSourceAnatEntities().stream().map(a -> a.getId()))
-    				.filter(aes -> aes.contains(anatEntityId))
     				.collect(Collectors.toSet()));
     	}
     	//creates filter on dev. stages by taking into account dev. stage similarities of dev. stages
@@ -737,8 +738,8 @@ public class MultiSpeciesCallService extends CommonService {
     	for(String devStageId : filter.getMultiSpeciesCondFilter().getDevStageIds()){
     		expressionCallDevStage.addAll(
     				devStageSims.stream()
+                    .filter(aes -> aes.getDevStageIds().contains(devStageId))
     				.flatMap(aes -> aes.getDevStageIds().stream())
-    				.filter(aes -> aes.contains(devStageId))
     				.collect(Collectors.toSet()));
     	}
     	//creates geneFilter

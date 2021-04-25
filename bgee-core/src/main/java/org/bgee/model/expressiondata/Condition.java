@@ -368,7 +368,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
     //  GETTERS
     //*********************************
     /**
-     * @return  The {@code Sex} used in this {@code Condition}.
+     * @return  The {@code Sex} used in this {@code Condition}. Can be {@code null}.
      */
     public Sex getSex() {
         return sex;
@@ -382,7 +382,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
         return sex == null? null : sex.getId();
     }
     /**
-     * @return  The {@code Strain} used in this {@code Condition}.
+     * @return  The {@code Strain} used in this {@code Condition}. Can be {@code null}.
      */
     public Strain getStrain() {
         return strain;

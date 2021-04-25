@@ -56,10 +56,10 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
+     * @param sexes                 A {@code Collection} of {@code String}s that are the names
      *                              of the sexes that this {@code ConditionFilter} will specify 
      *                              to use.
-     * @param strains               A {@code Collection} of {@code String}s that are the Names 
+     * @param strains               A {@code Collection} of {@code String}s that are the names
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs
@@ -80,10 +80,10 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexeIds                 A {@code Collection} of {@code String}s that are the Names 
+     * @param sexIds                A {@code Collection} of {@code String}s that are the names
      *                              of the sexes that this {@code ConditionFilter} will specify 
      *                              to use.
-     * @param strainIds               A {@code Collection} of {@code String}s that are the Names 
+     * @param strainIds             A {@code Collection} of {@code String}s that are the names
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
      * @param observedConditions    A {@code Boolean} defining whether the conditions considered

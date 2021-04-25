@@ -69,7 +69,8 @@ public class AnatEntitySimilarity {
     public AnatEntitySimilarity(Collection<AnatEntity> sourceAnatEntities,
             Collection<AnatEntity> transformationOfAnatEntities, Taxon requestedTaxon,
             Collection<AnatEntitySimilarityTaxonSummary> annotTaxonSummaries) {
-        log.entry(sourceAnatEntities, transformationOfAnatEntities, requestedTaxon, annotTaxonSummaries);
+        log.traceEntry("{}, {}, {}, {}", sourceAnatEntities, transformationOfAnatEntities,
+                requestedTaxon, annotTaxonSummaries);
         if (sourceAnatEntities == null || sourceAnatEntities.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "Summary of supporting information for this annotation must be provided"));

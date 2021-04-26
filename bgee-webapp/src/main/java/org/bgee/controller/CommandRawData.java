@@ -107,7 +107,7 @@ public class CommandRawData extends CommandParent {
                 source);
 
         RawDataCondition condition = new RawDataCondition(new AnatEntity("UBERON:0000178", "blood", "blood desc"),
-                new DevStage("UBERON:0034920", "infant stage", "infant stage desc"), sp);
+                new DevStage("UBERON:0034920", "infant stage", "infant stage desc"), null, null, null, sp);
 
         RawDataAnnotation annot = new RawDataAnnotation(condition, "Curator name",
                 new Source(1, "WormBase", "WormBase - Nematode Information Resource",

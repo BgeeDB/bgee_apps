@@ -203,10 +203,13 @@ public class CommandRPackage extends CommandParent {
         }
         
         Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
-                null: Collections.singleton(new ConditionFilter(null, stageIds));
+                null: Collections.singleton(new ConditionFilter(null, stageIds, null, null, null));
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
+        // retrieve calls for 
+        Map<CallService.Attribute, Boolean> observedDataFilter = new HashMap<>();
+        observedDataFilter.put(CallService.Attribute.ANAT_ENTITY_ID, true);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
@@ -214,7 +217,7 @@ public class CommandRPackage extends CommandParent {
                 //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
                 //then the calls do not have to be observed in the condition. Provide a null value
                 //for callObservedData instead?
-                obsDataFilter, true, null);
+                false, observedDataFilter);
 
 
         //****************************************

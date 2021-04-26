@@ -32,6 +32,7 @@ import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -402,7 +403,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div class='table-container'>");
 
         this.writeln(getExpressionHTMLByAnat(
-                geneResponse.getCallsByAnatEntity(), 
+                geneResponse.getCallsByOrganCall(), 
                 geneResponse.getClusteringBestEachAnatEntity(), 
                 geneResponse.getClusteringWithinAnatEntity()));
         
@@ -416,7 +417,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 "<tr><th>A</th><td>Affymetrix</td></tr>" +
                 "<tr><th>E</th><td>EST</td></tr>" +
                 "<tr><th>I</th><td>In Situ</td></tr>" +
-                "<tr><th>R</th><td>RNA-Seq</td></tr></table>");
+                "<tr><th>R</th><td>RNA-Seq</td></tr>" +
+                "<tr><th>FL</th><td>scRNA-Seq Full Length</td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-3 col-md-offset-0 col-md-12'>"
                 //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
                 //for now we only report presence/absence of data per data type.
@@ -427,7 +429,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + "<tr><td><span class='quality presence'>data</span></td></tr>" +
                   "<tr><td><span class='quality absence'>no data</span></td></tr></table>");
         this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-4 col-md-offset-0 col-md-12'>"
-                + "<caption>Rank scores</caption>"
+                + "<caption>Expression scores</caption>"
                 + "<tr><th><span class='low-qual-score'>3.25e4</span></th>"
                     + "<td>lightgrey: low confidence scores</td></tr>" +
                 "<tr><th><hr class='dotted-line' /></th>"
@@ -439,18 +441,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //other info
         this.writeln("<div class='row'>");
 
-        this.writeln("<div id='rank_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
-                + "<p><strong>Rank scores </strong> of expression calls are normalized across genes, conditions and species. "
-                + "Low score means that the gene is highly expressed in the condition. "
-                + "Max rank score in all species: 4.10e4. Min rank score varies across species.</p></div>");
-        
         this.writeln("<div id='expr_score_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
-                + "<p><strong>Expression scores </strong> of expression calls use the  minimum and maximum Rank of the species to normalize the "
-                + "expression to a value between 0 and 100. Low score means that the gene is lowly expressed in the "
-                + "condition.</p></div>");
+                + "<p><strong>Expression scores </strong> of expression calls correspond to expression Rank of a gene in a condition"
+                + " normalized at species level using the minimum and maximum Rank of the species. Values of Expression scores are between "
+                + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes.</p></div>");
         
       //Source info
-        Set<DataType> allowedDataTypes = geneResponse.getCallsByAnatEntity().values().stream()
+        Set<DataType> allowedDataTypes = geneResponse.getCallsByOrganCall().values().stream()
                 .flatMap(List::stream)
                 .flatMap(call -> call.getCallData().stream())
                 .map(d -> d.getDataType())
@@ -597,8 +594,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /**
      * Generates the HTML code displaying information about expression calls.
      * 
-     * @param byAnatEntityId               A {@code Map} where keys are {@code String}s representing 
-     *                                     anatomical entity IDs, the associated value being a {@code List} 
+     * @param byOrganCall                  A {@code Map} where keys are {@code ExpressionCall}s at
+     *                                     anatomical entity level, the associated value being a {@code List} 
      *                                     of {@code ExpressionCall}s for this anatomical entity, 
      *                                     ordered by their global mean rank. 
      * @param clusteringBestEachAnatEntity A {@code Map} where keys are {@code ExpressionCall}s, 
@@ -615,26 +612,26 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     might not be part of a same cluster).
      * @return                             A {@code String} that is the generated HTML.
      */
-    private String getExpressionHTMLByAnat(Map<AnatEntity, List<ExpressionCall>> byAnatEntityId, 
+    private String getExpressionHTMLByAnat(Map<ExpressionCall, List<ExpressionCall>> byOrganCall, 
             Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
             Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-        log.entry(byAnatEntityId, clusteringBestEachAnatEntity, clusteringWithinAnatEntity);
+        log.entry(byOrganCall, clusteringBestEachAnatEntity, clusteringWithinAnatEntity);
 
 
         StringBuilder rowSb = new StringBuilder();
         Integer previousGroupIndex = null;
-        for (Entry<AnatEntity, List<ExpressionCall>> anatRow: byAnatEntityId.entrySet()) {
-            final AnatEntity a = anatRow.getKey();
-            final List<ExpressionCall> calls = anatRow.getValue();
+        for (Entry<ExpressionCall, List<ExpressionCall>> anatRow: byOrganCall.entrySet()) {
+            final ExpressionCall anatEntityCall = anatRow.getKey();
+            final List<ExpressionCall> conditionCalls = anatRow.getValue();
             
             boolean scoreShift = false;
-            Integer currentGroupIndex = clusteringBestEachAnatEntity.get(calls.get(0));
-            assert currentGroupIndex != null: "Every best call should be part of a group.";
+            Integer currentGroupIndex = clusteringBestEachAnatEntity.get(anatRow.getKey());
+            assert currentGroupIndex != null: "Every anat. entity call should be part of a group.";
             if (previousGroupIndex != null && previousGroupIndex != currentGroupIndex) {
                 scoreShift = true;
             }
             
-            rowSb.append(getExpressionRowsForAnatEntity(a, calls, scoreShift, 
+            rowSb.append(getExpressionRowsForAnatEntity(anatEntityCall, conditionCalls, scoreShift, 
                     clusteringWithinAnatEntity))
                  .append("\n");
             previousGroupIndex = currentGroupIndex;
@@ -645,8 +642,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append("<thead><tr><th class='anat-entity-id'>Anat. entity ID</th>")
                 .append("<th class='anat-entity'>Anatomical entity</th>")
                 .append("<th class='dev-stages min-table_sm'>Developmental stage(s)</th>")
-                .append("<th class='score'>Rank score</th>")
+                .append("<th class='sexes min-table_sm'>Sex(es)</th>")
+                .append("<th class='strains min-table_sm'>Strain(s)</th>")                
                 .append("<th class='score'>Expression score</th>")
+                .append("<th class='score'>FDR</th>")
                 //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
                 //for now we only report presence/absence of data per data type.
 //                .append("<th class='quality min-table_md'>Quality</th></tr></thead>\n");
@@ -662,9 +661,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * Generates the HTML code to display information about expression calls occurring  
      * in one specific anatomical entity. 
      * 
-     * @param anatEntity                   The {@code AnatEntity} for which the expression calls 
-     *                                     will be displayed.
-     * @param calls                        A {@code List} of {@code ExpressionCall}s related to 
+     * @param anatEntityCall               The {@code ExpressionCall} at anat. entity level.
+     * @param conditionCalls               A {@code List} of {@code ExpressionCall}s related to 
      *                                     {@code anatEntity}, ordered by their global mean rank. 
      * @param scoreShift                   A {@code boolean} defining whether the global mean rank 
      *                                     for this anatomical entity is in the same cluster as 
@@ -679,11 +677,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *                                     might not be part of a same cluster).
      * @return                             A {@code String} that is the generated HTML.
      */
-    private String getExpressionRowsForAnatEntity(AnatEntity anatEntity, 
-            List<ExpressionCall> calls, boolean scoreShift, 
+    private String getExpressionRowsForAnatEntity(ExpressionCall anatEntityCall,
+            List<ExpressionCall> conditionCalls, boolean scoreShift, 
             Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-        log.entry(anatEntity, calls, scoreShift, clusteringWithinAnatEntity);
+        log.entry(anatEntityCall, conditionCalls, scoreShift, clusteringWithinAnatEntity);
         
+        AnatEntity anatEntity = anatEntityCall.getCondition().getAnatEntity();
+        AnatEntity cellType = anatEntityCall.getCondition().getAnatEntity();
         StringBuilder sb = new StringBuilder();
         String scoreShiftClassName = "gene-score-shift";
         sb.append("<tr");
@@ -698,17 +698,25 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         
         // Anat entity ID and Anat entity cells 
-        sb.append("<td class='details small'>")
-            .append(getAnatEntityUrl(anatEntity, anatEntity.getId()))
-            .append("</td><td").append(toAddToTd).append(">")
-            .append(htmlEntities(anatEntity.getName())).append("</td>");
+        sb.append("<td class='details small'>");
+        // post-composition if not the root of cell type
+        if(cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+            sb.append(getAnatEntityUrl(cellType, cellType.getId()))
+                .append(" <i>in</i> ");
+        }
+        sb.append(getAnatEntityUrl(anatEntity, anatEntity.getId()))
+        .append("</td><td").append(toAddToTd).append(">");
+        // post-composition if not the root of cell type
+        if(cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+            sb.append(htmlEntities(cellType.getName()))
+                .append(" <i>in</i> ");
+        }
+        sb.append(htmlEntities(anatEntity.getName())).append("</td>");
         
-        // Dev stage cell
-        sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(calls.size())
-            .append(" stage").append(calls.size() > 1? "s": "").append("</span>")
-            .append("<ul class='masked dev-stage-list'>");
+        // Dev stage
+        sb.append("<td><ul class='masked dev-stage-list'>");
         Integer previousGroupInd = null;
-        for (ExpressionCall call: calls) {
+        for (ExpressionCall call: conditionCalls) {
             final DevStage stage = call.getCondition().getDevStage();
             int currentGroupInd = clusteringWithinAnatEntity.get(call);
             sb.append("<li class='dev-stage ");
@@ -723,28 +731,47 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         }
         sb.append("</ul></td>");
         
-        //Global mean rank
-        sb.append("<td>").append(getRankScoreHTML(calls.get(0)))
-            .append("<ul class='masked score-list'>");
+        // Sexes        
+        sb.append("<td><span class='expandable' title='click to expand'>[+] ").append(conditionCalls.size())
+            .append(" condition").append(conditionCalls.size() > 1? "s": "").append("</span>")
+            .append("<ul class='masked sex-list'>");
         previousGroupInd = null;
-        for (ExpressionCall call: calls) {
+        for (ExpressionCall call: conditionCalls) {
+            final String sexId = call.getCondition().getSexId();
             int currentGroupInd = clusteringWithinAnatEntity.get(call);
-            sb.append("<li class='score ");
+            sb.append("<li class='dev-stage ");
             if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
                 sb.append(scoreShiftClassName);
             }
-            sb.append("'>").append(getRankScoreHTML(call))
-              .append("</li>");
+            sb.append("'>")
+                .append(htmlEntities(sexId)).append("</li>");
+            sb.append("\n");
+            previousGroupInd = currentGroupInd;
+        }
+        sb.append("</ul></td>");
+        
+        // Strains        
+        sb.append("<td><ul class='masked strain-list'>");
+        previousGroupInd = null;
+        for (ExpressionCall call: conditionCalls) {
+            final String strainId = call.getCondition().getStrainId();
+            int currentGroupInd = clusteringWithinAnatEntity.get(call);
+            sb.append("<li class='dev-stage ");
+            if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
+                sb.append(scoreShiftClassName);
+            }
+            sb.append("'>")
+                .append(htmlEntities(strainId)).append("</li>");
             sb.append("\n");
             previousGroupInd = currentGroupInd;
         }
         sb.append("</ul></td>");
         
       //Expression score
-        sb.append("<td>").append(getExpressionScoreHTML(calls.get(0)))
+        sb.append("<td>").append(getExpressionScoreHTML(anatEntityCall))
             .append("<ul class='masked score-list'>");
         previousGroupInd = null;
-        for (ExpressionCall call: calls) {
+        for (ExpressionCall call: conditionCalls) {
             int currentGroupInd = clusteringWithinAnatEntity.get(call);
             sb.append("<li class='score ");
             if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
@@ -756,13 +783,30 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             previousGroupInd = currentGroupInd;
         }
         sb.append("</ul></td>");
+        
+      // FDR
+        sb.append("<td>").append(getFdrHTML(anatEntityCall))
+            .append("<ul class='masked score-list'>");
+        previousGroupInd = null;
+        for (ExpressionCall call: conditionCalls) {
+            int currentGroupInd = clusteringWithinAnatEntity.get(call);
+            sb.append("<li class='score ");
+            if (previousGroupInd != null && previousGroupInd != currentGroupInd) {
+                sb.append(scoreShiftClassName);
+            }
+            sb.append("'>").append(getFdrHTML(call))
+              .append("</li>");
+            sb.append("\n");
+            previousGroupInd = currentGroupInd;
+        }
+        sb.append("</ul></td>");
 
-        // Quality cell
+        // Data types
         sb.append("<td>")
-                .append(getDataTypeSpans(calls.stream().flatMap(e -> e.getCallData().stream())
+                .append(getDataTypeSpans(conditionCalls.stream().flatMap(e -> e.getCallData().stream())
                         .collect(Collectors.toList())))
                 .append("<ul class='masked quality-list'>")
-                .append(calls.stream().map(call -> {
+                .append(conditionCalls.stream().map(call -> {
                         StringBuilder sb2 = new StringBuilder();
                         sb2.append("<li class='qualities'>")
                         .append(getDataTypeSpans(call.getCallData())).append("</li>");
@@ -1103,7 +1147,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
 
         return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
-            return getDataSpan(type, callsByDataTypes.containsKey(type));
+            boolean containsDatatype = callsByDataTypes.get(type).stream()
+            .filter(c -> c.getAllObservationCount() != null && c.getAllObservationCount() > 0)
+            .collect(Collectors.toList()).size() > 0;
+            return getDataSpan(type, containsDatatype);
         }).collect(Collectors.joining()));
     }
 
@@ -1141,35 +1188,38 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             case EST:
                 sb.append("E");
                 break;
+            case FULL_LENGTH:
+                sb.append("FL");
+                break;
         }
         sb.append("</span>");
         return log.traceExit(sb.toString());
     }
     
     /**
-     * @param call An {@code ExpressionCall} for which we want to display global mean rank.
-     * @return     A {@code String} containing the HTML to display the global mean rank, 
-     *             notably displaying information about confidence in the rank.
+     * @param call An {@code ExpressionCall} for which we want to display the FDR.
+     * @return     A {@code String} containing the HTML to display the FDR, 
+     *             notably displaying information about confidence in the FDR.
      */
-    private static String getRankScoreHTML(ExpressionCall call) {
+    private static String getFdrHTML(ExpressionCall call) {
         log.entry(call);
 
         //If the rank is above a threshold and is only supported by ESTs and/or in situ data, 
-        //they we consider it of low confidence
+        //then we consider it of low confidence
         //TODO: there should be a better mechanism to handle that, and definitely not in the view, 
         //it is not its role to determine what is of low confidence...
         //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
         Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String rankScore = htmlEntities(call.getFormattedMeanRank());
+        String fdr = htmlEntities(call.getFirstPValue().getFDRPValue().toString());
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
                 call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-            return log.traceExit(rankScore);
+            return log.traceExit(fdr);
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("<span class='low-qual-score'>").append(rankScore).append("</span>");
+        sb.append("<span class='low-qual-score'>").append(fdr).append("</span>");
         return log.traceExit(sb.toString());
     }
     

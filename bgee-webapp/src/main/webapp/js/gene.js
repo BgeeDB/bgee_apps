@@ -90,10 +90,12 @@ $( document ).ready( function(){
                 	var data = 
                 		'<tr><td>' + columns[0].title + '</td><td>' + columns[0].data + '</td></tr>' +
                 		'<tr><td>' + columns[1].title + '</td><td>' + columns[1].data + '</td></tr>' +
-                		'<tr><td>' + columns[2].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[2].data.replace('[+]',''))) + '</td></tr>' +
-                		'<tr><td>' + columns[3].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[3].data)) + '</td></tr>' +
+                		'<tr><td>' + columns[2].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[2].data)) + '</td></tr>' +
+                		'<tr><td>' + columns[3].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[3].data.replace('[+]',''))) + '</td></tr>' +
                 		'<tr><td>' + columns[4].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[4].data)) + '</td></tr>' +
-            			'<tr><td>' + columns[5].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[5].data)) + '</td></tr>';
+                		'<tr><td>' + columns[5].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[5].data)) + '</td></tr>' +
+                		'<tr><td>' + columns[6].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[6].data)) + '</td></tr>' +
+            			'<tr><td>' + columns[7].title + '</td><td>' + changeUlToOl(removeMaskedClass(columns[7].data)) + '</td></tr>';
                     return $('<table class="table"/>').append( data );
                 }
             }, 
@@ -122,16 +124,20 @@ $( document ).ready( function(){
            { responsivePriority: 2, targets: 0 }, // Anat. entity ID
            { responsivePriority: 1, targets: 1 }, // Anatomical entity
            { responsivePriority: 6, targets: 2 }, // Developmental stage(s)
-           { responsivePriority: 4, targets: 3 }, // Rank
-           { responsivePriority: 3, targets: 4 }, // Expression score
-           { responsivePriority: 5, targets: 5 }  // Quality
+           { responsivePriority: 6, targets: 3 }, // Sex(es)
+           { responsivePriority: 6, targets: 4 }, // Strain(s)
+           { responsivePriority: 3, targets: 5 }, // Expression score
+           { responsivePriority: 4, targets: 6 }, // FDR
+           { responsivePriority: 5, targets: 7 }  // Datatypes
         ],
         columns: [ // sorting definition
            { "orderable": false }, // Anatomical entity - null = default sorting
            { "orderable": false }, // Anat. entity ID - null = default sorting
            { "orderable": false }, // Developmental stage(s) - ordering disabled
-           { "orderable": false }, //rank - ordering disabled
+           { "orderable": false }, // Sex(es) - ordering disabled
+           { "orderable": false }, // Strain(s) - ordering disabled
            { "orderable": false }, //expression score - ordering disabled
+           { "orderable": false }, //FDR - ordering disabled
            //score ordering disabled, otherwise, use: 
            //{ "orderDataType": "dom-text", "type": "score" }, // Score - custom function
            { "orderable": false } // Quality - ordering disabled
@@ -151,7 +157,6 @@ $( document ).ready( function(){
         }
     } );
     
-    // table homologs
     $('table.orthologs').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
@@ -210,7 +215,6 @@ $( document ).ready( function(){
         ]
     });
     
- // table homologs
     $('table.paralogs').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],

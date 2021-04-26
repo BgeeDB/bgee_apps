@@ -77,10 +77,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     
         final Map<String, ConditionDAO.Attribute> colToAttr = getColToAttributesMap();
         return log.traceExit(EnumSet.allOf(ConditionDAO.Attribute.class).stream()
-                .filter(a -> a.isConditionParameter())
-                .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " IS "
-                        + (condParams.contains(a)? "NOT NULL": "NULL"))
-                .collect(Collectors.joining(" AND ", "(", ")")));
+                .filter(a -> a.isConditionParameter() && !condParams.contains(a))
+                .map(a -> tableName + "." + getSelectExprFromAttribute(a, colToAttr) + " = '"
+                        + a.getRootId() + "'")
+                .collect(Collectors.joining(" AND ")));
     }
 
     /**

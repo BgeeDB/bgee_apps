@@ -24,6 +24,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.gene.Gene;
@@ -98,36 +99,58 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         AnatEntity ae5 = new AnatEntity("anat5", "anat5Name", "anat5Desc");
         
         ExpressionCall call1 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
         ExpressionCall call2 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("4.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("4.0")), null);
         ExpressionCall call3 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("6.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("6.0")), null);
 
+        ExpressionCall aeCall1 = new ExpressionCall(null, 
+                new Condition(ae1, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall2 = new ExpressionCall(null, 
+                new Condition(ae2, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall3 = new ExpressionCall(null, 
+                new Condition(ae3, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall4 = new ExpressionCall(null, 
+                new Condition(ae4, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall5 = new ExpressionCall(null, 
+                new Condition(ae5, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        
         List<ExpressionCall> calls1 = Arrays.asList(call1, call2, call3);
         List<ExpressionCall> calls2 = Arrays.asList(call3, call1);
         List<ExpressionCall> calls3 = Arrays.asList(call3, call2);
         List<ExpressionCall> calls4 = Arrays.asList(call2, call1);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene1 = new LinkedHashMap<>();
-        callsGene1.put(ae1, calls1);
-        callsGene1.put(ae2, calls3);
-        callsGene1.put(ae3, calls3);
-        callsGene1.put(ae4, calls3);
-        callsGene1.put(ae5, calls3);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene1 = new LinkedHashMap<>();
+        callsGene1.put(aeCall1, calls1);
+        callsGene1.put(aeCall2, calls3);
+        callsGene1.put(aeCall3, calls3);
+        callsGene1.put(aeCall4, calls3);
+        callsGene1.put(aeCall5, calls3);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene2 = new LinkedHashMap<>();
-        callsGene2.put(ae5, calls2);
-        callsGene2.put(ae2, calls4);
-        callsGene2.put(ae3, calls4);
-        callsGene2.put(ae4, calls4);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene2 = new LinkedHashMap<>();
+        callsGene2.put(aeCall5, calls2);
+        callsGene2.put(aeCall2, calls4);
+        callsGene2.put(aeCall3, calls4);
+        callsGene2.put(aeCall4, calls4);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene3 = new LinkedHashMap<>();
-        callsGene3.put(ae3, calls4);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene3 = new LinkedHashMap<>();
+        callsGene3.put(aeCall3, calls4);
+        callsGene3.put(aeCall1, calls1);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene4 = null;
-        
-               
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene4 = new LinkedHashMap<>();
+        callsGene4.put(aeCall3, calls1);
+                      
         // Mock services
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         SpeciesService speciesService = mock(SpeciesService.class);
@@ -165,10 +188,11 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         assertTrue("File not created: " + outputFile, new File(outputFile).exists());
         
         List <String> fileLinesExpected = Arrays.asList(
-                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in 1 organ, highest expression level in anat3Name",
-                "I3L367   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
-                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
-                "Q15615   DR   Bgee; ENSG00000141219; Expressed in 4 organs, highest expression level in anat5Name");
+                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in anat3Name and 1 other tissue.",
+                "G1K846   DR   Bgee; ENSACAG00000000006; Expressed in anat3Name.",
+                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
+                "I3L367   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
+                "Q15615   DR   Bgee; ENSG00000141219; Expressed in anat5Name and 3 other tissues.");
         
         List <String> fileLines = Files.lines(Paths.get(outputFile)).collect(Collectors.toList());
         assertTrue("The file does not contains expected lines, expected:" + System.lineSeparator()

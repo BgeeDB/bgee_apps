@@ -185,7 +185,7 @@ public class GenerateUniprotXRefWithExprInfo {
             // Retrieve expression calls
             ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
             CallService callService = threadSpeServiceFactory.getCallService();
-            LinkedHashMap<AnatEntity, List<ExpressionCall>> callsByAnatEntity = callService
+            LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByAnatEntity = callService
                     .loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                             new GeneFilter(xref.getSpeciesId(), xref.getEnsemblId()),
                             condGraphBySpeId.get(xref.getSpeciesId()));
@@ -199,12 +199,15 @@ public class GenerateUniprotXRefWithExprInfo {
             
             // Create String representation of the XRef with expression information
             StringBuilder sb = new StringBuilder(" Expressed in ")
-                    .append(callsByAnatEntity.keySet().iterator().next().getName())
-                    .append(" and ")
-                    .append(callsByAnatEntity.size())
-                    .append(" other tissue").append(callsByAnatEntity.size() > 1? "s.": ".");
-                    
-                return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, sb.toString());
+                    .append(callsByAnatEntity.keySet().iterator().next().getCondition()
+                            .getAnatEntity().getName());
+            if (callsByAnatEntity.size() > 1) {
+                sb.append(" and ")
+                .append(callsByAnatEntity.size()-1)
+                .append(" other tissue").append(callsByAnatEntity.size() > 2? "s": "");
+            }
+            sb.append(".");
+            return new AbstractMap.SimpleEntry<XrefUniprotBean, String>(xref, sb.toString());
 
         }).filter(e -> e.getValue() != null)
         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
@@ -253,8 +256,7 @@ public class GenerateUniprotXRefWithExprInfo {
     /**
      * Write an XRef file according to Uniprot format. Each line contains: -
      * Uniprot ID - Ensembl ID used in Bgee - summary of the expression Ex:
-     * H9G366 DR BGEE; ENSACAG00000000002; Expressed in 4 organs, higher
-     * expression level in brain.
+     * H9G366 DR BGEE; ENSACAG00000000002; Expressed in brain and 3 other tissues.
      * 
      * @param file              A {@code String} that is the path of the output file.
      * @param outputXrefLines   A {@code Collection} of {@code String} corresponding to all

@@ -1,6 +1,7 @@
 package org.bgee.controller;
 
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -17,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.gene.Gene;
@@ -34,7 +34,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -301,11 +301,7 @@ public class CommandGene extends CommandParent {
         //Store a clustering of ExpressionCalls, by considering only one best ExpressionCall 
         //from each anatomical entity.
         Map<ExpressionCall, Integer> clusteringBestEachAnatEntity = clusteringFunction.apply(
-                callsByOrganCall.values().stream()
-                         //store the best call from each anat. entity 
-                        .map(callList -> callList.get(0))
-                        //in the order of the sorted List of ExpressionCalls
-                        .collect(Collectors.toList()));
+                new ArrayList<>(callsByOrganCall.keySet()));
         
         //store a clustering, independent for each anatomical entity, of the ExpressionCalls 
         //of an anatomical entity

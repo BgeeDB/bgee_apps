@@ -49,7 +49,7 @@ import org.bgee.view.ViewFactory;
  * direct {@code DAO} calls (handled in {@link CommandDAO}).
  * 
  * @author  Frederic Bastian
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 15.0, Apr. 2021
  * @see https://www.bioconductor.org/packages/BgeeDB/
  * @since   Bgee 14 Mar. 2017
  */
@@ -193,15 +193,7 @@ public class CommandRPackage extends CommandParent {
         //****************************************
         //CallDAOFilter: for now, we only allow to define one CallDAOFilter object.
 
-        //TODO: verify this logic
-        //(former note: we need to decide whether we want calls with data propagated only,
-        //because they can have a higher quality thanks to data propagation.)
-        Map<CallType.Expression, Boolean> obsDataFilter = null;
-        if(stageIds == null || stageIds.isEmpty()) {
-            obsDataFilter = new HashMap<>();
-            obsDataFilter.put(null, true);
-        }
-        
+        //TODO: we need to make sure the logic is identical in TopAnatParams
         Collection<ConditionFilter> conditionFilter = stageIds == null || stageIds.isEmpty()? 
                 null: Collections.singleton(new ConditionFilter(null, stageIds, null, null, null));
         GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getBackgroundList());
@@ -214,10 +206,7 @@ public class CommandRPackage extends CommandParent {
                 Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
                 //for now, we always include substages when stages requested, and never include substructures
-                //FIXME: actually, if we retrieve calls for a specific stage and all its substages,
-                //then the calls do not have to be observed in the condition. Provide a null value
-                //for callObservedData instead?
-                false, observedDataFilter);
+                null, observedDataFilter);
 
 
         //****************************************

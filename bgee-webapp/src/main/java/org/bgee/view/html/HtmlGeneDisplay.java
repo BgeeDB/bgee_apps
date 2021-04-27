@@ -52,7 +52,8 @@ import org.bgee.view.JsonHelper;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, July 2019
+ * @author  Julien Wollbrett
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 13, Oct. 2015
  */
 public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
@@ -442,9 +443,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div class='row'>");
 
         this.writeln("<div id='expr_score_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
-                + "<p><strong>Expression scores </strong> of expression calls correspond to expression Rank of a gene in a condition"
-                + " normalized at species level using the minimum and maximum Rank of the species. Values of Expression scores are between "
-                + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes.</p></div>");
+                + "<p><strong>Expression scores </strong> of expression calls is based on the rank of a gene in a condition "
+                + "according to its expression levels (non-parametric statistics), normalized "
+                + "using the minimum and maximum Rank of the species. Values of Expression scores are between "
+                + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes. "
+                + "Scores are normalized and comparable across genes, conditions and species.</p></div>");
         
       //Source info
         Set<DataType> allowedDataTypes = geneResponse.getCallsByOrganCall().values().stream()

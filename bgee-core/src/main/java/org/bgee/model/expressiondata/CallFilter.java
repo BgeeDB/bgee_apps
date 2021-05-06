@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -91,7 +92,11 @@ extends DataFilter<ConditionFilter> {
          * to request calls observed in the anatomical entity.
          */
         public static final Map<CallService.Attribute, Boolean> ANAT_ENTITY_OBSERVED_DATA_ARGUMENT =
-                Collections.singletonMap(CallService.Attribute.ANAT_ENTITY_ID, true);
+                //XXX: to replace with Java 9 Map.of
+                Arrays.stream(CallService.Attribute.values())
+                .filter(a -> a.equals(CallService.Attribute.ANAT_ENTITY_ID) ||
+                        a.equals(CallService.Attribute.CELL_TYPE_ID))
+                .collect(Collectors.toMap(a -> a, a -> true));
 
         private final Boolean callObservedData;
         private final Map<CallService.Attribute, Boolean> observedDataFilter;

@@ -686,7 +686,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.entry(anatEntityCall, conditionCalls, scoreShift, clusteringWithinAnatEntity);
         
         AnatEntity anatEntity = anatEntityCall.getCondition().getAnatEntity();
-        AnatEntity cellType = anatEntityCall.getCondition().getAnatEntity();
+        AnatEntity cellType = anatEntityCall.getCondition().getCellType();
         StringBuilder sb = new StringBuilder();
         String scoreShiftClassName = "gene-score-shift";
         sb.append("<tr");

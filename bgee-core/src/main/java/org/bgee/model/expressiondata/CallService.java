@@ -12,6 +12,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -421,7 +422,7 @@ public class CallService extends CommonService {
 
         // Retrieve min./max ranks per anat. entity if info requested
         // and if the main expression call query will not allow to obtain this information
-        Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks =
+        Map<Condition, EntityMinMaxRanks<Condition>> anatEntityMinMaxRanks =
                 loadMinMaxRanksPerAnatEntity(clonedAttrs, clonedOrderingAttrs, condParamCombination,
                         geneMap, condMap, callFilter);
         // Retrieve min./max ranks per gene if info requested
@@ -513,6 +514,7 @@ public class CallService extends CommonService {
 
         EnumSet<CallService.Attribute> baseAttributes = EnumSet.of(
                 CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.CELL_TYPE_ID,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
                 CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
                 //We need the p-value info per data type to know which data types
@@ -574,19 +576,21 @@ public class CallService extends CommonService {
      * in the {@code ConditionGraph} should have the same condition parameters as the {@code Condition}s
      * in the {@code ExpressionCall}s in {@code conditionCalls}.
      *
-     * @param anatEntityCalls   A {@code Collection} of {@code ExpressionCall}s with {@code Condition}s
-     *                          considering only the anat. entities. They must contain information
-     *                          of expression state, quality, and rank, otherwise an
-     *                          {@code IllegalArgumentException} is thrown.
-     * @param conditionCalls    A {@code List} of {@code ExpressionCall}s with {@code Condition}s
-     *                          considering all parameters, ordered by ranks. They must contain information
-     *                          of expression state, quality, and rank, otherwise an
-     *                          {@code IllegalArgumentException} is thrown.
+     * @param orderedAnatEntityCalls    A {@code List} of {@code ExpressionCall}s with {@code Condition}s
+     *                                  considering only the anat. entity parameters,
+     *                                  ordered by ranks. They must contain information
+     *                                  of expression state, quality, and rank, otherwise an
+     *                                  {@code IllegalArgumentException} is thrown.
+     * @param orderedConditionCalls     A {@code List} of {@code ExpressionCall}s with {@code Condition}s
+     *                                  considering all parameters, ordered by ranks.
+     *                                  They must contain information of expression state,
+     *                                  quality, and rank, otherwise an
+     *                                  {@code IllegalArgumentException} is thrown.
      * @param callsFiltered     A {@code Boolean} that should be {@code true} if the calls
      *                          were already filtered for the appropriate expression status
      *                          and qualities, {@code false} if the calls need to be filtered.
      * @param condGraph         A {@code ConditionGraph} for the species the requested gene belongs to,
-     *                          that will be used to order calls and filter redundant calls.
+     *                          that will be used to order condition calls and filter redundant calls.
      *                          Can be {@code null} if the {@code ConditionGraph} needs to be computed
      *                          by this method.
      * @return                  A {@code LinkedHashMap} where keys correspond to the valid
@@ -597,17 +601,18 @@ public class CallService extends CommonService {
      *                                  needed when filtering them ({@code callsFiltered} set to {@code false})
      */
     public LinkedHashMap<ExpressionCall, List<ExpressionCall>>
-    loadCondCallsBySilverAnatEntityCalls(Collection<ExpressionCall> anatEntityCalls,
-            List<ExpressionCall> conditionCalls, boolean callsFiltered, ConditionGraph condGraph)
+    loadCondCallsBySilverAnatEntityCalls(List<ExpressionCall> orderedAnatEntityCalls,
+            List<ExpressionCall> orderedConditionCalls, boolean callsFiltered, ConditionGraph condGraph)
                     throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", anatEntityCalls, conditionCalls, callsFiltered, condGraph);
+        log.traceEntry("{}, {}, {}, {}", orderedAnatEntityCalls, orderedConditionCalls,
+                callsFiltered, condGraph);
 
         //*****************************************************************
         // Filtering of calls based on CallType and Quality, if requested
         //*****************************************************************
-        Collection<ExpressionCall> filteredAnatEntityCalls = anatEntityCalls;
+        LinkedHashSet<ExpressionCall> filteredOrderedAnatEntityCalls = new LinkedHashSet<>(orderedAnatEntityCalls);
         if (!callsFiltered) {
-            filteredAnatEntityCalls = anatEntityCalls.stream()
+            filteredOrderedAnatEntityCalls = orderedAnatEntityCalls.stream()
                 .filter(c -> {
                     if (c.getSummaryCallType() == null) {
                         throw log.throwing(new IllegalArgumentException(
@@ -624,11 +629,11 @@ public class CallService extends CommonService {
                     return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED) &&
                             !c.getSummaryQuality().equals(SummaryQuality.BRONZE);
                 })
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         }
-        List<ExpressionCall> filteredConditionCalls = conditionCalls;
+        List<ExpressionCall> filteredOrderedCondCalls = orderedConditionCalls;
         if (!callsFiltered) {
-            filteredConditionCalls = conditionCalls.stream()
+            filteredOrderedCondCalls = orderedConditionCalls.stream()
                     .filter(c -> {
                         if (c.getSummaryCallType() == null) {
                             throw log.throwing(new IllegalArgumentException(
@@ -644,15 +649,20 @@ public class CallService extends CommonService {
         }
 
         //*****************************************************************
-        // Filtering and ordering of calls
+        // Ordering calls and identifying redundant calls
         //*****************************************************************
-        final Set<String> anatEntityIds = filteredAnatEntityCalls.stream()
-                .map(c -> c.getCondition().getAnatEntityId())
+        final Set<Condition> anatEntityConds = filteredOrderedAnatEntityCalls.stream()
+                .map(c -> c.getCondition())
                 .collect(Collectors.toSet());
+        assert anatEntityConds.stream()
+        .noneMatch(c -> c.getDevStage() != null || c.getSex() != null || c.getStrain() != null);
+
         // XXX: maybe refactor the code differently to have the organIds to perform the SQL query
         // retrieving the condition calls
-        List<ExpressionCall> filteredOrderedCondCalls = filteredConditionCalls.stream()
-                .filter(c -> anatEntityIds.contains(c.getCondition().getAnatEntityId()))
+        filteredOrderedCondCalls = filteredOrderedCondCalls.stream()
+                //We keep only condition calls with a corresponding condition in anatEntity calls
+                .filter(c -> anatEntityConds.contains(new Condition(c.getCondition().getAnatEntity(),
+                        null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies())))
                 .collect(Collectors.toList());
         if (filteredOrderedCondCalls.isEmpty()) {
             log.debug("No condition calls for gene");
@@ -665,24 +675,19 @@ public class CallService extends CommonService {
         //relations between Conditions for filtering them, which would be difficult to achieve
         //only by a query to the data source. So, we order them anyway.
         
-        //Anat entity params
+        //Cond calls
         ConditionGraph conditionGraph = condGraph;
         if (condGraph == null) {
             conditionGraph = this.getServiceFactory().getConditionGraphService().loadConditionGraph(
-                    filteredAnatEntityCalls.stream()
-                    .map(ExpressionCall::getCondition)
+                    filteredOrderedCondCalls.stream()
+                    .map(c -> c.getCondition())
                     .collect(Collectors.toSet()));
         }
-        List<ExpressionCall> filteredOrderedAnatEntityCalls = ExpressionCall.filterAndOrderCallsByRank(
-                filteredAnatEntityCalls, conditionGraph);
-
-        //Note: as of Bgee 15.0, we disable the filtering of redundant calls.
-        //Because, what should be considered redundant? Now, an anatEntity call can have a rank
-        //different from the minimum of the related condition calls.
-//        //REDUNDANT ORGAN CALLS
-//        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
-//                orderedAnatEntityCalls, conditionGraph);
-        Set<ExpressionCall> redundantCalls = new HashSet<>();
+        filteredOrderedCondCalls = ExpressionCall.filterAndOrderCallsByRank(filteredOrderedCondCalls,
+                conditionGraph);
+        //REDUNDANT COND CALLS
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                filteredOrderedCondCalls, conditionGraph);
         
         //*********************
         // Grouping
@@ -693,17 +698,20 @@ public class CallService extends CommonService {
         //that have only redundant calls, but if an anat. entity has some non-redundant calls 
         //and is not discarded, we preserve all its calls, even the redundant ones.
 
-        //First, build a map AnatEntity -> conditionCalls
-        Map<AnatEntity, List<ExpressionCall>> condCallsPerAnatEntity =
+        //First, build a map partial Condition -> conditionCalls
+        Map<Condition, List<ExpressionCall>> condCallsPerAnatEntity =
                 filteredOrderedCondCalls.stream()
-                .collect(Collectors.toMap(c -> c.getCondition().getAnatEntity(),
-                        c -> new ArrayList<ExpressionCall>(Arrays.asList(c)),
+                .map(c -> new AbstractMap.SimpleEntry<>(new Condition(c.getCondition().getAnatEntity(),
+                            null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies()),
+                        c))
+                .collect(Collectors.toMap(e -> e.getKey(),
+                        e -> new ArrayList<ExpressionCall>(Arrays.asList(e.getValue())),
                         (v1, v2) -> {v1.addAll(v2); return v1;}));
         //Now, group
         return log.traceExit(filteredOrderedAnatEntityCalls.stream()
                 //discard if all calls of an anat. entity are redundant
                 .filter(c -> !redundantCalls.containsAll(condCallsPerAnatEntity.get(
-                        c.getCondition().getAnatEntity())))
+                        c.getCondition())))
                 //reconstruct the LinkedHashMap
                 //Type inference hint needed, this code was compiling fine in Eclipse,
 //              //not with maven... See for instance
@@ -711,21 +719,11 @@ public class CallService extends CommonService {
                 .collect(Collectors.<ExpressionCall, ExpressionCall,
                       List<ExpressionCall>, LinkedHashMap<ExpressionCall, List<ExpressionCall>>>toMap(
                         c -> c,
-                        c -> condCallsPerAnatEntity.get(c.getCondition().getAnatEntity()),
+                        c -> condCallsPerAnatEntity.get(c.getCondition()),
                         (l1, l2) -> {
                             throw log.throwing(new AssertionError("Not possible to have key collision"));
                         }, 
                         LinkedHashMap::new))
-//                        //Type inference hint needed, this code was compiling fine in Eclipse,
-//                        //not with maven... See for instance
-//                        //https://stackoverflow.com/questions/48135796/java-8-inferred-type-does-not-conform-to-upper-bounds-on-netbean-ide
-//                        Collectors.<Entry<AnatEntity, List<ExpressionCall>>, AnatEntity,
-//                        List<ExpressionCall>, LinkedHashMap<AnatEntity, List<ExpressionCall>>>
-//                        toMap(e -> e.getKey(), e -> e.getValue(),
-//                        (l1, l2) -> {
-//                            throw log.throwing(new AssertionError("Not possible to have key collision"));
-//                        }, 
-//                        LinkedHashMap::new))
                 );
     }
 
@@ -814,7 +812,7 @@ public class CallService extends CommonService {
     // METHODS PERFORMING THE QUERIES TO THE DAOs
     //*************************************************************************
 
-    private Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> loadMinMaxRanksPerAnatEntity(
+    private Map<Condition, EntityMinMaxRanks<Condition>> loadMinMaxRanksPerAnatEntity(
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
             Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
             Map<Integer, Condition> condMap, ExpressionCallFilter callFilter) {
@@ -840,7 +838,7 @@ public class CallService extends CommonService {
                 //non-observed conditions.
                 //We-re happy to keep a filtering based on anat. entity IDs though
                 callFilter.getConditionFilters().stream()
-                .map(cf -> new ConditionFilter(cf.getAnatEntityIds()))
+                .map(cf -> new ConditionFilter(cf.getAnatEntityIds(), null, cf.getCellTypeIds(), null, null))
                 .collect(Collectors.toSet()),
                 //we keep the same data types as requested
                 callFilter.getDataTypeFilters(),
@@ -862,16 +860,20 @@ public class CallService extends CommonService {
         log.trace("Map ID to AnatEntity produced: {}", idToAnatEntity);
 
         //Perform query and map TOs to EntityMinMaxRanks
-        return log.traceExit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(
-                convertDataTypeToDAODataType(newFilter.getDataTypeFilters()),
-                Arrays.asList(daoFilter))
-                .stream()
-                .map(minMaxRanksTO -> new EntityMinMaxRanks<AnatEntity>(
-                        minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
-                        Optional.ofNullable(idToAnatEntity.get(minMaxRanksTO.getId()))
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Missing AnatEntity for ID " + minMaxRanksTO.getId()))))
-                .collect(Collectors.toMap(emmr -> emmr.getEntityConsidered(), emmr -> emmr)));
+        throw log.throwing(new UnsupportedOperationException("Need to be reimplemented"));
+        //Disable this for now, we need the method globalExprCallDAO.getMinMaxRanksPerAnatEntity
+        //to be adapted to consider any condition parameter combination and use a different sort of IDs
+        //to indentify the entities targeted
+//        return log.traceExit(this.globalExprCallDAO.getMinMaxRanksPerAnatEntity(
+//                convertDataTypeToDAODataType(newFilter.getDataTypeFilters()),
+//                Arrays.asList(daoFilter))
+//                .stream()
+//                .map(minMaxRanksTO -> new EntityMinMaxRanks<Condition>(
+//                        minMaxRanksTO.getMinRank(), minMaxRanksTO.getMaxRank(),
+//                        Optional.ofNullable(idToAnatEntity.get(minMaxRanksTO.getId()))
+//                        .orElseThrow(() -> new IllegalStateException(
+//                                "Missing AnatEntity for ID " + minMaxRanksTO.getId()))))
+//                .collect(Collectors.toMap(emmr -> emmr.getEntityConsidered(), emmr -> emmr)));
     }
 
     private Map<Gene, EntityMinMaxRanks<Gene>> loadMinMaxRanksPerGene(
@@ -974,7 +976,7 @@ public class CallService extends CommonService {
             Set<ConditionDAO.Attribute> condParamCombination,
             final Map<Integer, Gene> geneMap, final Map<Integer, Condition> condMap,
             Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
-            Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
+            Map<Condition, EntityMinMaxRanks<Condition>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", callFilter, attrs, orderingAttrs, 
                 condParamCombination, geneMap, condMap, maxRankPerSpecies, anatEntityMinMaxRanks, 
@@ -1036,9 +1038,9 @@ public class CallService extends CommonService {
                         return intermediateCalls.stream();
                     }
                     //Compute the anatEntityMinMaxRank from this List of ExpressionCalls if possible
-                    EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank = computeAnatEntityMinMax?
+                    EntityMinMaxRanks<Condition> anatEntityMinMaxRank = computeAnatEntityMinMax?
                             getMinMaxRanksFromCallGroup(intermediateCalls,
-                                    call -> call.getCondition().getAnatEntity()):
+                                    call -> call.getCondition()):
                             null;
                     //Compute the geneMinMaxRank from this List of ExpressionCalls if possible
                     EntityMinMaxRanks<Gene> geneMinMaxRank = computeGeneMinMax?
@@ -1064,7 +1066,7 @@ public class CallService extends CommonService {
                                     c.getExpressionLevelInfo() == null? null:
                                         c.getExpressionLevelInfo().getMaxRankForExpressionScore(),
                                     anatEntityMinMaxRank != null? anatEntityMinMaxRank:
-                                        anatEntityMinMaxRanks.get(c.getCondition().getAnatEntity()),
+                                        anatEntityMinMaxRanks.get(c.getCondition()),
                                     geneMinMaxRank != null? geneMinMaxRank:
                                         geneMinMaxRanks.get(c.getGene()))
                             );});
@@ -1247,7 +1249,7 @@ public class CallService extends CommonService {
 
     private static ExpressionLevelInfo loadExpressionLevelInfo(ExpressionSummary exprSummary,
             BigDecimal rank, BigDecimal expressionScore, BigDecimal maxRankForExpressionScore,
-            EntityMinMaxRanks<AnatEntity> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
+            EntityMinMaxRanks<Condition> anatEntityMinMaxRank, EntityMinMaxRanks<Gene> geneMinMaxRank) {
         log.traceEntry("{}, {}, {}, {}, {}", exprSummary, rank, expressionScore, anatEntityMinMaxRank, geneMinMaxRank);
         return log.traceExit(new ExpressionLevelInfo(rank, expressionScore, maxRankForExpressionScore,
                 loadQualExprLevel(exprSummary, rank, geneMinMaxRank),
@@ -1299,26 +1301,48 @@ public class CallService extends CommonService {
         //ontologies when creating the DAOConditionFilter (as of Bgee 15.0, no condition parameters
         //are stored as null values).
         Set<DAOConditionFilter> daoCondFilters = callFilter == null ||
-                callFilter.getConditionFilters() == null? null:
-            callFilter.getConditionFilters().stream()
-            .map(condFilter -> new DAOConditionFilter(
-                !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
-                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
-                        condFilter.getAnatEntityIds(),
-                !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
-                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
-                        condFilter.getDevStageIds(),
-                !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
-                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
-                        condFilter.getCellTypeIds(),
-                !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
-                        Collections.singleton(ConditionDAO.SEX_ROOT_ID):
-                        condFilter.getSexIds(),
-                !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
-                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
-                        condFilter.getStrainIds(),
-                condFilter.getObservedConditions()))
-            .collect(Collectors.toSet());
+                callFilter.getConditionFilters() == null || callFilter.getConditionFilters().isEmpty()?
+                null: 
+                callFilter.getConditionFilters().stream()
+               .map(condFilter -> new DAOConditionFilter(
+                   !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
+                           Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
+                           condFilter.getAnatEntityIds(),
+                   !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
+                           Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
+                           condFilter.getDevStageIds(),
+                   !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
+                           Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
+                           condFilter.getCellTypeIds(),
+                   !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
+                           Collections.singleton(ConditionDAO.SEX_ROOT_ID):
+                           condFilter.getSexIds(),
+                   !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
+                           Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
+                           condFilter.getStrainIds(),
+                   condFilter.getObservedConditions()))
+               .collect(Collectors.toSet());
+        if (daoCondFilters == null &&
+                !condParamCombination.containsAll(ConditionDAO.Attribute.getCondParams())) {
+            daoCondFilters = new HashSet<>();
+            daoCondFilters.add(new DAOConditionFilter(
+                    !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
+                            Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
+                            null,
+                    !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
+                            Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
+                            null,
+                    !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
+                            Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
+                            null,
+                    !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
+                            Collections.singleton(ConditionDAO.SEX_ROOT_ID):
+                            null,
+                    !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
+                            Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
+                            null,
+                    null));
+        }
 
         // *********************************
         // Call observed data filter
@@ -1399,27 +1423,27 @@ public class CallService extends CommonService {
                         switch (daoAttr) {
                         case ANAT_ENTITY_ID:
                             if (!condFilter.getAnatEntityIds().isEmpty()) {
-                                daoAttrs.add(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+                                daoAttrs.add(daoAttr);
                             }
                             break;
                         case STAGE_ID:
                             if (!condFilter.getDevStageIds().isEmpty()) {
-                                daoAttrs.add(ConditionDAO.Attribute.STAGE_ID);
+                                daoAttrs.add(daoAttr);
                             }
                             break;
                         case CELL_TYPE_ID:
                             if (!condFilter.getCellTypeIds().isEmpty()) {
-                                daoAttrs.add(ConditionDAO.Attribute.CELL_TYPE_ID);
+                                daoAttrs.add(daoAttr);
                             }
                             break;
                         case SEX_ID:
                             if (!condFilter.getSexIds().isEmpty()) {
-                                daoAttrs.add(ConditionDAO.Attribute.SEX_ID);
+                                daoAttrs.add(daoAttr);
                             }
                             break;
                         case STRAIN_ID:
                             if (!condFilter.getStrainIds().isEmpty()) {
-                                daoAttrs.add(ConditionDAO.Attribute.STRAIN_ID);
+                                daoAttrs.add(daoAttr);
                             }
                             break;
                         default:
@@ -1849,7 +1873,7 @@ public class CallService extends CommonService {
     private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
             ExpressionCallFilter callFilter, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
-            Map<AnatEntity, EntityMinMaxRanks<AnatEntity>> anatEntityMinMaxRanks,
+            Map<Condition, EntityMinMaxRanks<Condition>> anatEntityMinMaxRanks,
             Map<Gene, EntityMinMaxRanks<Gene>> geneMinMaxRanks,
             Set<CallService.Attribute> attrs) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", globalCallTO, geneMap, condMap, callFilter, 
@@ -1977,9 +2001,10 @@ public class CallService extends CommonService {
             attrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
             attrs.contains(Attribute.GENE_QUAL_EXPR_LEVEL)?
                     loadExpressionLevelInfo(exprSummary, meanRank, expressionScore,
-                            maxRankInfo == null? null: maxRankInfo.getMaxRank(),
+                            maxRankInfo == null? null:
+                                GLOBAL_RANK? maxRankInfo.getGlobalMaxRank(): maxRankInfo.getMaxRank(),
                             anatEntityMinMaxRanks == null? null:
-                                anatEntityMinMaxRanks.get(cond.getAnatEntity()),
+                                anatEntityMinMaxRanks.get(cond),
                             geneMinMaxRanks == null? null: geneMinMaxRanks.get(gene)): null));
     }
 
@@ -2391,14 +2416,18 @@ public class CallService extends CommonService {
                 dataTypesTrustedForAbsentBestDescendantPVal = pVal.getFDRPValue();
             }
         }
+        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
+                dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
+                dataTypesTrustedForAbsentBestDescendantPVal);
+        String exceptionMsg = "It should have been possible to infer "
+                + "ExpressionSummary and SummaryQuality. dataTypesPVal: " + dataTypesPVal
+                + ", dataTypesTrustedForAbsentPVal: " + dataTypesTrustedForAbsentPVal
+                + ", dataTypesBestDescendantPVal: " + dataTypesBestDescendantPVal
+                + ", dataTypesTrustedForAbsentBestDescendantPVal: "
+                + dataTypesTrustedForAbsentBestDescendantPVal;
         if (dataTypesPVal == null ||
-                !requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
-                    dataTypesTrustedForAbsentPVal == null ||
-                dataTypesBestDescendantPVal == null ||
-                !requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
-                    dataTypesTrustedForAbsentBestDescendantPVal == null) {
-            //XXX: returns null, or throw an exception?
-            return log.traceExit((Entry<ExpressionSummary, SummaryQuality>) null);
+                !bestDescendantFdrPValues.isEmpty() && dataTypesBestDescendantPVal == null) {
+            throw log.throwing(new IllegalStateException(exceptionMsg));
         }
 
         //The order of the comparison is important
@@ -2410,7 +2439,8 @@ public class CallService extends CommonService {
             return log.traceExit(new AbstractMap.SimpleEntry<>(
                     ExpressionSummary.EXPRESSED, SummaryQuality.SILVER));
         }
-        if (dataTypesBestDescendantPVal.compareTo(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
+        if (dataTypesBestDescendantPVal != null &&
+                dataTypesBestDescendantPVal.compareTo(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0) {
             return log.traceExit(new AbstractMap.SimpleEntry<>(
                     ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE));
         }
@@ -2421,8 +2451,12 @@ public class CallService extends CommonService {
         //all requested data types is already addressed in the previous condition).
         //Also if there is no data type trusted for absent calls, it can't be better than bronze
         boolean absCallCannotBeBetterThanBronze = requestedDataTypesTrustedForAbsentCalls.isEmpty() ||
-                dataTypesTrustedForAbsentBestDescendantPVal
-                .compareTo(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0;
+                //In case there was no data from any trusted data type
+                dataTypesTrustedForAbsentPVal == null ||
+                //Or in case there is a present call in a sub-condition when using trusted data types
+                dataTypesTrustedForAbsentBestDescendantPVal != null &&
+                        dataTypesTrustedForAbsentBestDescendantPVal
+                        .compareTo(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO) <= 0;
         if (dataTypesTrustedForAbsentPVal != null &&
                 dataTypesPVal.compareTo(ABSENT_HIGH_GREATER_THAN) > 0 &&
                 dataTypesTrustedForAbsentPVal.compareTo(ABSENT_HIGH_GREATER_THAN) > 0) {
@@ -2440,11 +2474,6 @@ public class CallService extends CommonService {
             return log.traceExit(new AbstractMap.SimpleEntry<>(
                     ExpressionSummary.NOT_EXPRESSED, SummaryQuality.BRONZE));
         }
-        throw log.throwing(new IllegalStateException("It should have been possible to infer "
-                + "ExpressionSummary and SummaryQuality. dataTypesPVal: " + dataTypesPVal
-                + ", dataTypesTrustedForAbsentPVal: " + dataTypesTrustedForAbsentPVal
-                + ", dataTypesBestDescendantPVal: " + dataTypesBestDescendantPVal
-                + ", dataTypesTrustedForAbsentBestDescendantPVal: "
-                + dataTypesTrustedForAbsentBestDescendantPVal));
+        throw log.throwing(new IllegalStateException(exceptionMsg));
     }
 }

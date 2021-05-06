@@ -144,12 +144,16 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         sb.append("SELECT ").append(tableName).append(".* FROM ").append(tableName)
           .append(" INNER JOIN ").append(globalCondTableName)
           .append(" ON ").append(globalCondTableName).append(".globalConditionId = ")
-          .append(tableName).append(".globalConditionId")
-          .append(" WHERE ")
-          .append(getCondParamCombinationWhereClause(globalCondTableName, conditionParameters));
+          .append(tableName).append(".globalConditionId");
+        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) || !speIds.isEmpty()) {
+            sb.append(" WHERE ");
+        }
+        sb.append(getCondParamCombinationWhereClause(globalCondTableName, conditionParameters));
         if (!speIds.isEmpty()) {
-            sb.append(" AND ")
-              .append(globalCondTableName).append(".").append(SPECIES_ID).append(" IN (")
+            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
+                sb.append(" AND ");
+            }
+            sb.append(globalCondTableName).append(".").append(SPECIES_ID).append(" IN (")
               .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
               .append(")");
         }
@@ -188,11 +192,15 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 //so we don't bother and always add the DISTINCT clause.
                 true, 
                 attrs)).append(" FROM ").append(tableName);
-        sb.append(" WHERE ")
-          .append(getCondParamCombinationWhereClause(tableName, conditionParameters));
+        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) || !speIds.isEmpty()) {
+            sb.append(" WHERE ");
+        }
+        sb.append(getCondParamCombinationWhereClause(tableName, conditionParameters));
         if (!speIds.isEmpty()) {
-            sb.append(" AND ")
-              .append(tableName).append(".").append(SPECIES_ID).append(" IN (")
+            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
+                sb.append(" AND ");
+            }
+            sb.append(tableName).append(".").append(SPECIES_ID).append(" IN (")
               .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
               .append(")");
         }
@@ -297,12 +305,18 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             sb.append(")");
         }
         sb.append(") AS globalMaxRank")
-          .append(" FROM globalCond")
-          .append(" WHERE ");
+          .append(" FROM globalCond");
+        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) ||
+                !clonedSpeIds.isEmpty()) {
+            sb.append(" WHERE ");
+        }
         if (!clonedSpeIds.isEmpty()) {
             sb.append(SPECIES_ID).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()))
-            .append(") AND ");
+            .append(") ");
+            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
+                sb.append(" AND ");
+            }
         }
         sb.append(getCondParamCombinationWhereClause("globalCond", conditionParameters));
         sb.append(" GROUP BY ").append(SPECIES_ID);

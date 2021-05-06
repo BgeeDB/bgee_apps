@@ -8,7 +8,7 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.gene.Gene;
 
 /**
@@ -112,7 +112,7 @@ public class ExpressionLevelInfo {
     private final BigDecimal expressionScore;
     private final BigDecimal maxRankForExpressionScore;
     private final QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene;
-    private final QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity;
+    private final QualitativeExpressionLevel<Condition> qualExprLevelRelativeToAnatEntity;
 
     /**
      * @param rank  See {@link #getRank()}
@@ -130,7 +130,7 @@ public class ExpressionLevelInfo {
     public ExpressionLevelInfo(BigDecimal rank, BigDecimal expressionScore,
             BigDecimal maxRankForExpressionScore,
             QualitativeExpressionLevel<Gene> qualExprLevelRelativeToGene,
-            QualitativeExpressionLevel<AnatEntity> qualExprLevelRelativeToAnatEntity) {
+            QualitativeExpressionLevel<Condition> qualExprLevelRelativeToAnatEntity) {
         if (rank != null && rank.compareTo(new BigDecimal("0")) <= 0 ||
                 maxRankForExpressionScore != null &&
                 maxRankForExpressionScore.compareTo(new BigDecimal("0")) <= 0) {
@@ -222,7 +222,7 @@ public class ExpressionLevelInfo {
      *          in the anatomical entity, considering any gene). See {@link QualitativeExpressionLevel}
      *          for more details.
      */
-    public QualitativeExpressionLevel<AnatEntity> getQualExprLevelRelativeToAnatEntity() {
+    public QualitativeExpressionLevel<Condition> getQualExprLevelRelativeToAnatEntity() {
         return qualExprLevelRelativeToAnatEntity;
     }
 

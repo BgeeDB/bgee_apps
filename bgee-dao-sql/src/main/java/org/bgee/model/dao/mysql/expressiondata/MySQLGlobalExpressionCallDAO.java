@@ -293,10 +293,16 @@ implements GlobalExpressionCallDAO {
         //****************************************
         // Create the necessary joins
         //****************************************
-        String geneTableToGlobalExprTableJoinClause = geneTableName + "."
+        String geneTableToGlobalExprTableJoinClause = "";
+        String globalCondTableToGlobalExprTableJoinClause = "";
+        String condTableToGlobalCondTableJoinClause = "";
+        if (geneTableName != null) {
+            geneTableToGlobalExprTableJoinClause = geneTableName + "."
                 + MySQLGeneDAO.BGEE_GENE_ID + " = " + globalExprTableName + "."
                 + MySQLGeneDAO.BGEE_GENE_ID;
-        String globalCondTableToGlobalExprTableJoinClause = globalCondTableName + "."
+        }
+        if (globalCondTableName != null) {
+            globalCondTableToGlobalExprTableJoinClause = globalCondTableName + "."
                 + MySQLConditionDAO.GLOBAL_COND_ID_FIELD + " = " + globalExprTableName
                 + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
         //XXX: we can have multiple lines in cond table matching a globalCondition
@@ -312,7 +318,8 @@ implements GlobalExpressionCallDAO {
         //and that we have some standardization for insertion into the globalCond table
         //(e.g., we don't use null parameters anymore but mapped to the roots
         //of the respective ontologies for each parameter instead).
-        String condTableToGlobalCondTableJoinClause = " LEFT OUTER JOIN cond AS " + condTableName
+            if (condTableName != null) {
+                condTableToGlobalCondTableJoinClause = " LEFT OUTER JOIN cond AS " + condTableName
                 + " ON " + Arrays.stream(ConditionDAO.Attribute.values())
                 .filter(a -> a.isConditionParameter())
                 .map(a -> {
@@ -346,6 +353,8 @@ implements GlobalExpressionCallDAO {
 
                     return sb2.toString();
                 }).collect(Collectors.joining(" AND "));
+            }
+        }
 
 
         //****************************************
@@ -367,7 +376,7 @@ implements GlobalExpressionCallDAO {
         //start with the gene table if the globalCond table is not needed, or if both are needed
         //(again, we have a clustered index (bgeeGeneId, globalConditionId), and we might use
         //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
-        boolean geneTableFirst = geneTableName.equals(speciesIdFilterTableName);
+        boolean geneTableFirst = geneTableName != null && geneTableName.equals(speciesIdFilterTableName);
         boolean globalCondTableNeeded = globalCondFiltering || observedConditionFiltering;
         if (geneTableFirst) {
             sb.append("gene AS ").append(geneTableName);
@@ -567,16 +576,6 @@ implements GlobalExpressionCallDAO {
         return log.traceExit(sb.toString());
     }
 
-    private static String generatePropStateQuery(String globalExprTableName,
-            DAODataType dataType, ConditionDAO.Attribute condParam, boolean isObservedRequested) {
-        log.traceEntry("{}, {}, {}, {}", globalExprTableName, dataType, condParam, isObservedRequested);
-        
-        String columnName = getCallCondParamObservedDataFieldName(dataType, condParam);
-        return log.traceExit(globalExprTableName + "." + columnName + " IN (" +
-                BgeePreparedStatement.generateParameterizedQueryString(
-                        isObservedRequested? OBSERVED_STATES.size(): NON_OBSERVED_STATES.size()
-                ) + ")");
-    }
     private static String getCallCondParamObservedDataFieldName(DAODataType dataType,
             ConditionDAO.Attribute condParam) {
         log.traceEntry("{}, {}", dataType, condParam);
@@ -605,13 +604,50 @@ implements GlobalExpressionCallDAO {
                     }
                     previousClause = true;
                     sb.append(dataFilter.getDataTypes().stream()
-                                .map(d -> d.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX + " = ?")
+                                .map(d -> {
+                                    StringBuilder sbObsData = new StringBuilder();
+                                    if (!dataFilter.getCallObservedData() &&
+                                            dataFilter.getDataTypes().size() > 1) {
+                                        sbObsData.append("(");
+                                    }
+                                    sbObsData.append(d.getFieldNamePrefix())
+                                             .append(COND_OBSERVED_DATA_SUFFIX);
+                                    String columnName = sbObsData.toString();
+                                    sbObsData.append(" = ?");
+                                    //If we request non-observed data, it must be non-observed
+                                    //by each data type => AND delimiter between data types.
+                                    //But we need to account for the fact that not all data types might
+                                    //support the call (the field value will be NULL then)
+                                    if (!dataFilter.getCallObservedData() &&
+                                            dataFilter.getDataTypes().size() > 1) {
+                                        sbObsData.append(" OR ").append(columnName)
+                                                 .append(" IS NULL)");
+                                    }
+                                    return sbObsData.toString();
+                                })
                                 .collect(Collectors.joining(
-                                        //If we request observed data, it can be observed by any data type
-                                        //=> OR delimiter
-                                        //If we request non-observed data, it must by non-observed by each data type
-                                        //=> AND delimiter
+                                        //If we request observed data, it can be observed
+                                        //by any data type => OR delimiter
+                                        //If we request non-observed data, it must be non-observed
+                                        //by each data type => AND delimiter
                                         dataFilter.getCallObservedData()? " OR ": " AND ", "(", ")")));
+
+                    //If we request non-observed data, it must be non-observed
+                    //by each data type => AND delimiter between data types.
+                    //But we need to account for the fact that not all data types might
+                    //support the call (the field value will be NULL then).
+                    //AND WE NEED TO MAKE SURE AT LEAST ONE OF THE REQUESTED DATA TYPES
+                    //IS NOT NULL, otherwise, if not all data types are requested,
+                    //we might retrieve calls with observed data and/or from other data types
+                    if (!dataFilter.getCallObservedData() &&
+                            dataFilter.getDataTypes().size() > 1) {
+                        sb.append(
+                                dataFilter.getDataTypes().stream()
+                                .map(d -> d.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX
+                                        + " IS NOT NULL")
+                                .collect(Collectors.joining(" OR ", " AND (", ")"))
+                        );
+                    }
                 }
 
                 if (!dataFilter.getObservedDataFilter().isEmpty()) {
@@ -622,18 +658,69 @@ implements GlobalExpressionCallDAO {
                     sb.append(dataFilter.getObservedDataFilter().entrySet().stream()
                         .map(e -> {
                             ConditionDAO.Attribute condParam = e.getKey();
-                            return dataFilter.getDataTypes().stream()
+                            StringBuilder sbObsDataFilter =  new StringBuilder(
+                                    dataFilter.getDataTypes().stream()
                                 //For now, the cell type propagation state is defined
                                 //only for scRNA-Seq full-length data
                                 .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
                                              d.equals(DAODataType.FULL_LENGTH))
-                                .map(d -> generatePropStateQuery(globalExprTableName, d, condParam, e.getValue()))
+                                .map(d -> {
+                                    String columnName = getCallCondParamObservedDataFieldName(
+                                            d, condParam);
+                                    StringBuilder sbPropStateParam = new StringBuilder();
+                                    if (!e.getValue() && dataFilter.getDataTypes().size() > 1 ||
+                                            condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID)) {
+                                        sbPropStateParam.append("(");
+                                    }
+                                    sbPropStateParam
+                                    .append(globalExprTableName).append(".").append(columnName)
+                                    .append(" IN (")
+                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
+                                            e.getValue()? OBSERVED_STATES.size():
+                                                NON_OBSERVED_STATES.size()))
+                                    .append(")");
+                                    //If we request non-observed data, it must be non-observed
+                                    //by each data type => AND delimiter between cond. parameters.
+                                    //But we need to account for the fact that not all data types might
+                                    //support the call (the field value will be NULL then)
+                                    if (!e.getValue() && dataFilter.getDataTypes().size() > 1 ||
+                                            //XXX: and for cell-type propagation state, as of Bgee 15.0
+                                            //only one data type has this field, so we need
+                                            //to take care of it differently
+                                            condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID)) {
+                                        sbPropStateParam.append(" OR ").append(columnName)
+                                                        .append(" IS NULL)");
+                                    }
+                                    return sbPropStateParam.toString();
+                                })
                                 .collect(Collectors.joining(
                                     //If we request observed data, it can be observed by any data type
                                     //=> OR delimiter
                                     //If we request non-observed data, it must by non-observed by each data type
                                     //=> AND delimiter
-                                    e.getValue()? " OR ": " AND ", "(", ")"));
+                                    e.getValue()? " OR ": " AND ", "(", ")")));
+                            //If we request non-observed data, it must be non-observed
+                            //by each data type => AND delimiter between cond. parameters.
+                            //But we need to account for the fact that not all data types might
+                            //support the call (the field value will be NULL then).
+                            //AND WE NEED TO MAKE SURE AT LEAST ON OF THE REQUESTED DATA TYPES
+                            //IS NOT NULL, otherwise, if not all data types are requested,
+                            //we might retrieve calls with observed data and/or from other data types
+                            if (!e.getValue() && dataFilter.getDataTypes().size() > 1) {
+                                sbObsDataFilter.append(
+                                        dataFilter.getDataTypes().stream()
+                                        //For now, the cell type propagation state is defined
+                                        //only for scRNA-Seq full-length data
+                                        .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                                                     d.equals(DAODataType.FULL_LENGTH))
+                                        .map(d -> globalExprTableName + "."
+                                                + getCallCondParamObservedDataFieldName(d, condParam)
+                                                + " IS NOT NULL")
+                                        .collect(Collectors.joining(" OR ", " AND (", ")"))
+                                );
+                            }
+
+                            return sbObsDataFilter.toString();
                         }).collect(Collectors.joining(" AND ", "(", ")")));
                 }
                 

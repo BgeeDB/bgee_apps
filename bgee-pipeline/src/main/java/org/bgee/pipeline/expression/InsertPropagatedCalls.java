@@ -1697,9 +1697,9 @@ public class InsertPropagatedCalls extends CallService {
         //+ stage propagation only to embryo and post-embryo (and stage root of course),
         //and no strain propagation.
         //hardcoded here for now.
-        Strain wildTypeStrain = new Strain(Condition.STRAIN_ROOT_ID);
+        Strain wildTypeStrain = new Strain(ConditionDAO.STRAIN_ROOT_ID);
         Set<String> validStageIds = new HashSet<>(Arrays.asList(
-                Condition.DEV_STAGE_ROOT_ID,
+                ConditionDAO.DEV_STAGE_ROOT_ID,
                 "UBERON:0000068", //embryo
                 "UBERON:0000092"  //post-embryo
                 ));

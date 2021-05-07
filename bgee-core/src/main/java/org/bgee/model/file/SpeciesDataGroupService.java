@@ -8,6 +8,7 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
@@ -68,11 +69,11 @@ public class SpeciesDataGroupService extends Service {
                 getDaoManager().getSpeciesDataGroupDAO().getAllSpeciesToDataGroup(orderAttrs), 
                 this.getServiceFactory().getSpeciesService().loadSpeciesInDataGroups(false));
         
-        if (groupIdToSpeciesMap.size() != groupIdToDownloadFilesMap.size()) {
-            throw log.throwing(new IllegalStateException("The number of data groups "
-                    + "associated to download files is different from the number of groups "
-                    + "associated to species."));
-        }
+//        if (groupIdToSpeciesMap.size() != groupIdToDownloadFilesMap.size()) {
+//            throw log.throwing(new IllegalStateException("The number of data groups "
+//                    + "associated to download files is different from the number of groups "
+//                    + "associated to species."));
+//        }
         
         LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> orderAttrs2 = new LinkedHashMap<>();
         orderAttrs2.put(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER, DAO.Direction.ASC);
@@ -155,6 +156,8 @@ public class SpeciesDataGroupService extends Service {
     private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
             List<Species> species, Set<DownloadFile> files) {
         log.entry(id, name, description, species, files);
+        files = new HashSet<DownloadFile>();
+        files.add(new DownloadFile("path", "my_name", DownloadFile.CategoryEnum.AFFY_ANNOT, 100L, id));
         return log.traceExit(new SpeciesDataGroup(id, name, description, species, files));
     }
 

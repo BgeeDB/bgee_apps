@@ -718,7 +718,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append(htmlEntities(anatEntity.getName())).append("</td>");
         
         // Dev stage
-        sb.append("<td><ul class='masked dev-stage-list'>");
+        sb.append("<td>")
+        // print empty first line
+            .append("<br>")
+            .append("<ul class='masked dev-stage-list'>");
         Integer previousGroupInd = null;
         for (ExpressionCall call: conditionCalls) {
             final DevStage stage = call.getCondition().getDevStage();
@@ -755,7 +758,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("</ul></td>");
         
         // Strains        
-        sb.append("<td><ul class='masked strain-list'>");
+        sb.append("<td>")
+            // print empty first line
+            .append("<br>")
+            .append("<ul class='masked strain-list'>");
         previousGroupInd = null;
         for (ExpressionCall call: conditionCalls) {
             final String strainId = call.getCondition().getStrainId();

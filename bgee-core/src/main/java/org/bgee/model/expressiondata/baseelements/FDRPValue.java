@@ -1,8 +1,12 @@
 package org.bgee.model.expressiondata.baseelements;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +51,32 @@ public class FDRPValue {
     public EnumSet<DataType> getDataTypes() {
         //Defensive copying, there is no unmodifiableEnumSet
         return EnumSet.copyOf(dataTypes);
+    }
+    
+    /**
+     * format the pvalue depending on its value
+     * 
+     * @param pValue    A {@code BigDecimal} corresponding to the pValue to format
+     * 
+     * @return          The formatted {code String} representation of the pValue 
+     */
+    public static final String formatPValue(BigDecimal pValue) {
+        log.traceEntry("{}", pValue);
+        NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+        formatter.setRoundingMode(RoundingMode.HALF_UP);
+        // do not use scientific notation when FDR pValue is bigger than 0.001 or equal
+        // to 0
+        if(pValue.compareTo(new BigDecimal(0.001)) >= 0 || 
+                pValue.compareTo(new BigDecimal(0)) == 0) {
+            formatter.setMaximumFractionDigits(3);
+            formatter.setMinimumFractionDigits(0);
+        } else if (formatter instanceof DecimalFormat) {
+            ((DecimalFormat) formatter).applyPattern("0.00E0");
+        } else {
+            throw log.throwing(new IllegalStateException("No formatter could be defined "
+                    + "for " + pValue));
+        }
+        return log.traceExit(formatter.format(pValue).toLowerCase(Locale.ENGLISH));
     }
 
     @Override

@@ -36,6 +36,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
@@ -1214,7 +1215,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
         Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String fdr = htmlEntities(call.getFirstPValue().getFDRPValue().toString());
+        String fdr = htmlEntities(FDRPValue.formatPValue(call.getFirstPValue().getFDRPValue()));
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 

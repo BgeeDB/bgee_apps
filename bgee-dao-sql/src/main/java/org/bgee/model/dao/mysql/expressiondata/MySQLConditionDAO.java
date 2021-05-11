@@ -401,8 +401,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     
     @Override
     public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
-            Collection<DAODataType> dataTypes, Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException {
-        log.traceEntry("{}, {}, {}", speciesIds, dataTypes, conditionParameters);
+            Collection<DAODataType> dataTypes) throws DAOException {
+        log.traceEntry("{}, {}", speciesIds, dataTypes);
 
         Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
                 speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
@@ -419,6 +419,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             }
             String rankField = null;
             String globalRankField = null;
+            //TODO: to move to DAODataType attributes
             switch(dataType) {
             case EST:
                 rankField = "estMaxRank";
@@ -470,19 +471,11 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
         sb.append(") AS globalMaxRank")
           .append(" FROM globalCond");
-        if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams()) ||
-                !clonedSpeIds.isEmpty()) {
-            sb.append(" WHERE ");
-        }
         if (!clonedSpeIds.isEmpty()) {
-            sb.append(SPECIES_ID).append(" IN (")
+            sb.append(" WHERE ").append(SPECIES_ID).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()))
             .append(") ");
-            if (!conditionParameters.containsAll(ConditionDAO.Attribute.getCondParams())) {
-                sb.append(" AND ");
-            }
         }
-        sb.append(getCondParamCombinationWhereClause("globalCond", conditionParameters));
         sb.append(" GROUP BY ").append(SPECIES_ID);
 
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())) {

@@ -446,8 +446,7 @@ public class CallService extends CommonService {
                                 //We always request the max rank over all data types,
                                 //independently of the data types requested in the query,
                                 //because ranks are all normalized based on the max rank over all data types
-                                null,
-                                condParamCombination):
+                                null):
                         null;
 
 

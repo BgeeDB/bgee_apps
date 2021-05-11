@@ -54,14 +54,13 @@ public class FDRPValue {
     }
     
     /**
-     * format the pvalue depending on its value
-     * 
-     * @param pValue    A {@code BigDecimal} corresponding to the pValue to format
-     * 
-     * @return          The formatted {code String} representation of the pValue 
+     * Format the p-value returned by {@link #getFDRPValue()}
+     *
+     * @return          The formatted {code String} representation of the p-value 
      */
-    public static final String formatPValue(BigDecimal pValue) {
-        log.traceEntry("{}", pValue);
+    public String getFormatedFDRPValue() {
+        log.traceEntry();
+        BigDecimal pValue = this.getFDRPValue();
         NumberFormat formatter = NumberFormat.getInstance(Locale.US);
         formatter.setRoundingMode(RoundingMode.HALF_UP);
         // do not use scientific notation when FDR pValue is bigger than 0.001 or equal

@@ -36,7 +36,6 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
@@ -629,7 +628,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             final List<ExpressionCall> conditionCalls = anatRow.getValue();
             
             boolean scoreShift = false;
-            Integer currentGroupIndex = clusteringBestEachAnatEntity.get(anatRow.getKey());
+            Integer currentGroupIndex = clusteringBestEachAnatEntity.get(anatEntityCall);
             assert currentGroupIndex != null: "Every anat. entity call should be part of a group.";
             if (previousGroupIndex != null && previousGroupIndex != currentGroupIndex) {
                 scoreShift = true;
@@ -1157,9 +1156,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
 
         return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
-            boolean containsDatatype = callsByDataTypes.get(type).stream()
-            .filter(c -> c.getAllObservationCount() != null && c.getAllObservationCount() > 0)
-            .collect(Collectors.toList()).size() > 0;
+            Set<ExpressionCallData> dtCallData = callsByDataTypes.get(type);
+            boolean containsDatatype = dtCallData != null && dtCallData.stream()
+                .anyMatch(c -> c.getAllObservationCount() != null && c.getAllObservationCount() > 0);
             return getDataSpan(type, containsDatatype);
         }).collect(Collectors.joining()));
     }
@@ -1219,9 +1218,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //TODO: there should be a better mechanism to handle that, and definitely not in the view, 
         //it is not its role to determine what is of low confidence...
         //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
-        Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+        EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String fdr = htmlEntities(FDRPValue.formatPValue(call.getFirstPValue().getFDRPValue()));
+        String fdr = htmlEntities(call.getPValueWithEqualDataTypes(dataTypes).getFormatedFDRPValue());
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                 (dataTypes.contains(DataType.AFFYMETRIX) || 
                 dataTypes.contains(DataType.RNA_SEQ) || 
@@ -1252,8 +1251,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
         String expressionScore = htmlEntities(call.getExpressionLevelInfo().getFormattedExpressionScore());
         if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-                (dataTypes.contains(DataType.AFFYMETRIX) || 
-                dataTypes.contains(DataType.RNA_SEQ) || 
+                (dataTypes.contains(DataType.AFFYMETRIX) ||
+                dataTypes.contains(DataType.RNA_SEQ) ||
+                dataTypes.contains(DataType.FULL_LENGTH) ||
                 call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
             return log.traceExit(expressionScore);
         }

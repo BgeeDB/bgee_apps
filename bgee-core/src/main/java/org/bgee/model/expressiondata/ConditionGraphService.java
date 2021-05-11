@@ -172,7 +172,8 @@ public class ConditionGraphService extends CommonService {
         Set<Condition> conditions = new HashSet<>(
                 loadGlobalConditionMap(
                     species,
-                    convertCondParamAttrsToCondDAOAttrs(condParameters),
+                    Collections.singleton(generateDAOConditionFilter(null,
+                            convertCondParamAttrsToCondDAOAttrs(condParameters))),
                     null,
                     this.getDaoManager().getConditionDAO(),
                     this.getServiceFactory().getAnatEntityService(),

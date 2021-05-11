@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Condition.ConditionEntities;
 
 /**
  * A filter to parameterize queries using expression data {@link Condition}s.
@@ -69,6 +70,11 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains)
             throws IllegalArgumentException {
         this(anatEntityIds, devStageIds, cellTypeIds, sexes, strains, null);
+    }
+    public ConditionFilter(ConditionEntities condEntities, Boolean observedConditions) {
+        this(condEntities.getAnatEntityIds(), condEntities.getDevStageIds(),
+                condEntities.getCellTypeIds(), condEntities.getSexIds(),
+                condEntities.getStrainIds(), observedConditions);
     }
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 

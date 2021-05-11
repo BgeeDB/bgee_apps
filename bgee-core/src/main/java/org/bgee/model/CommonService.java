@@ -32,6 +32,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -39,6 +40,7 @@ import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
@@ -441,10 +443,8 @@ public class CommonService extends Service {
      * @param species               A {@code Collection} of {@code Species}s that are the species 
      *                              allowing to filter the conditions to retrieve. If {@code null}
      *                              or empty, condition for all species are retrieved.
-     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining
-     *                              the combination of condition parameters that were requested
-     *                              for queries, allowing to determine which condition and expression
-     *                              results to target.
+     * @param conditionFilters      A {@code Collection} of {@code DAOConditionFilter}s defining
+     *                              to determine which conditions to target.
      * @param conditionDAOAttrs     A {@code Collection} of {@code ConditionDAO.Attribute}s defining
      *                              the attributes to populate in the retrieved {@code ConditionTO}s,
      *                              and thus, in the returned {@code Condition}s.
@@ -463,17 +463,17 @@ public class CommonService extends Service {
      *                              the corresponding {@code Condition}.
      */
     protected static Map<Integer, Condition> loadGlobalConditionMap(Collection<Species> species,
-            Collection<ConditionDAO.Attribute> condParamCombination,
+            Collection<DAOConditionFilter> conditionFilters,
             Collection<ConditionDAO.Attribute> conditionDAOAttrs, ConditionDAO conditionDAO,
             AnatEntityService anatEntityService, DevStageService devStageService,
             SexService sexService, StrainService strainService) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", species, condParamCombination, conditionDAOAttrs, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", species, conditionFilters, conditionDAOAttrs, 
                 conditionDAO, anatEntityService, devStageService, sexService, strainService);
 
         return log.traceExit(loadConditionMapFromResultSet(
-                (attrs) -> conditionDAO.getGlobalConditionsBySpeciesIds(
+                (attrs) -> conditionDAO.getGlobalConditions(
                         species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-                        condParamCombination, attrs),
+                        conditionFilters, attrs),
                 conditionDAOAttrs, species, anatEntityService, devStageService, sexService,
                 strainService));
     }
@@ -599,13 +599,13 @@ public class CommonService extends Service {
                 );
     }
 
-    protected static Set<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
+    protected static EnumSet<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
             Collection<CallService.Attribute> attrs) {
         log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
                 .map(a -> convertCondParamAttrToCondDAOAttr(a))
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
     }
     protected static ConditionDAO.Attribute convertCondParamAttrToCondDAOAttr(
             CallService.Attribute attr) {
@@ -625,6 +625,51 @@ public class CommonService extends Service {
                 throw log.throwing(new UnsupportedOperationException(
                     "Condition parameter not supported: " + attr));
         }
+    }
+    protected static Set<DAOConditionFilter> generateDAOConditionFilters(
+            Collection<ConditionFilter> condFilters, EnumSet<ConditionDAO.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}", condFilters, condParamCombination);
+        if (condFilters == null || condFilters.isEmpty()) {
+            DAOConditionFilter filter = generateDAOConditionFilter(null, condParamCombination);
+            if (filter == null) {
+                return log.traceExit(new HashSet<>());
+            }
+            return log.traceExit(new HashSet<>(Collections.singleton(filter)));
+        }
+        return log.traceExit(condFilters.stream()
+                .map(condFilter -> generateDAOConditionFilter(condFilter, condParamCombination))
+                .filter(f -> f != null)
+                .collect(Collectors.toSet()));
+    }
+    protected static DAOConditionFilter generateDAOConditionFilter(ConditionFilter condFilter,
+            EnumSet<ConditionDAO.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}", condFilter, condParamCombination);
+
+        if (condFilter == null && condParamCombination.containsAll(
+                ConditionDAO.Attribute.getCondParams())) {
+            return log.traceExit((DAOConditionFilter) null);
+        }
+
+        DAOConditionFilter daoCondFilter = new DAOConditionFilter(
+                !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
+                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
+                            condFilter != null? condFilter.getAnatEntityIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
+                            condFilter != null? condFilter.getDevStageIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
+                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
+                            condFilter != null? condFilter.getCellTypeIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID):
+                            condFilter != null? condFilter.getSexIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
+                            condFilter != null? condFilter.getStrainIds(): null,
+                condFilter != null? condFilter.getObservedConditions(): null);
+        log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
+                condFilter, condParamCombination, daoCondFilter);
+        return log.traceExit(daoCondFilter);
     }
 
     protected static Strain mapRawDataStrainToStrain(String strain) {

@@ -148,14 +148,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              allowing to filter the conditions to retrieve. If {@code null}
      *                              or empty, condition for all species are retrieved.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              condition parameters considered for aggregating the expression data
-     *                              (see {@link Attribute#isConditionParameter()}).
-     *                              It is different from {@code attributes}, because you might want 
-     *                              to retrieve, for instance, only anatomical entity IDs, 
-     *                              while your expression query was using a stage ID parameter for filtering, 
-     *                              and thus the data must have been aggregated by taking stages
-     *                              into account.
+     * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure
+     *                              the filtering of conditions. If several {@code ConditionFilter}s
+     *                              are provided, they are seen as "OR" conditions.
+     *                              Can be {@code null} or empty.
      * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              attributes to populate in the returned {@code ConditionTO}s.
      *                              If {@code null} or empty, all attributes are populated. 
@@ -167,8 +163,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      *                                  is not a condition parameter attributes (see 
      *                                  {@link Attribute#isConditionParameter()}). 
      */
-    public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
-        Collection<Attribute> conditionParameters, Collection<Attribute> attributes) 
+    public ConditionTOResultSet getGlobalConditions(Collection<Integer> speciesIds,
+            Collection<DAOConditionFilter> conditionFilters, Collection<Attribute> attributes) 
             throws DAOException, IllegalArgumentException;
 
     /**

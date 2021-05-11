@@ -32,6 +32,8 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.anatdev.SexService;
+import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallObservedDataDAOFilter;
@@ -50,6 +52,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.DiffExpressionCallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
@@ -293,6 +296,8 @@ public class CallService extends CommonService {
     private final GlobalExpressionCallDAO globalExprCallDAO;
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
+    private final SexService sexService;
+    private final StrainService strainService;
 //    /**
 //     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
 //     *                                  and {@code DAOManager}.
@@ -321,6 +326,8 @@ public class CallService extends CommonService {
         this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
         this.anatEntityService = this.getServiceFactory().getAnatEntityService();
         this.devStageService = this.getServiceFactory().getDevStageService();
+        this.sexService = this.getServiceFactory().getSexService();
+        this.strainService = this.getServiceFactory().getStrainService();
     }
 
     //*************************************************
@@ -401,8 +408,8 @@ public class CallService extends CommonService {
         assert !geneMap.isEmpty();
 
         // Define condition parameter combination allowing to target a specific data aggregation
-        final Set<ConditionDAO.Attribute> condParamCombination = Collections.unmodifiableSet(
-                loadConditionParameterCombination(callFilter, clonedAttrs, clonedOrderingAttrs.keySet()));
+        final EnumSet<ConditionDAO.Attribute> condParamCombination =
+                loadConditionParameterCombination(callFilter, clonedAttrs, clonedOrderingAttrs.keySet());
 
         // Retrieve conditions by condition IDs if condition info requested in Attributes
         // (explicitly, or because clonedAttrs is empty and all attributes are requested),
@@ -415,10 +422,11 @@ public class CallService extends CommonService {
                 !loadCondMap?
                     new HashMap<>():
                     loadGlobalConditionMap(speciesMap.values(),
-                        condParamCombination, convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
+                            generateDAOConditionFilters(callFilter.getConditionFilters(),
+                                    condParamCombination),
+                            convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
                         this.conditionDAO, this.anatEntityService, this.devStageService,
-                        this.getServiceFactory().getSexService(), 
-                        this.getServiceFactory().getStrainService()));
+                        this.sexService, this.strainService));
 
         // Retrieve min./max ranks per anat. entity if info requested
         // and if the main expression call query will not allow to obtain this information
@@ -544,15 +552,16 @@ public class CallService extends CommonService {
         //**************************************************
         EnumSet<CallService.Attribute> allCondParamAttrs = EnumSet.copyOf(baseAttributes);
         allCondParamAttrs.addAll(CallService.Attribute.getAllConditionParameters());
-        //Retrieve qualitative expression levels relative to gene,
-        //this doesn't add any additional queries, since we retrieved all necessary calls
-        //to perform the computation
-        allCondParamAttrs.add(CallService.Attribute.GENE_QUAL_EXPR_LEVEL);
+        ConditionEntities condEntities = new ConditionEntities(organCalls.stream()
+                .map(c -> c.getCondition())
+                .collect(Collectors.toSet()));
 
         final List<ExpressionCall> allCondParamsCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(ExpressionCallFilter.BRONZE_PRESENT_ARGUMENT,
-                                Collections.singleton(geneFilter), true),
+                                Collections.singleton(geneFilter),
+                                Collections.singleton(new ConditionFilter(condEntities, null)),
+                                null, true, null),
                         allCondParamAttrs,
                         orderBy)
                 .collect(Collectors.toList());
@@ -633,6 +642,12 @@ public class CallService extends CommonService {
         }
         List<ExpressionCall> filteredOrderedCondCalls = orderedConditionCalls;
         if (!callsFiltered) {
+            final Set<Condition> anatEntityConds = filteredOrderedAnatEntityCalls.stream()
+                    .map(c -> c.getCondition())
+                    .collect(Collectors.toSet());
+            assert anatEntityConds.stream()
+            .noneMatch(c -> c.getDevStage() != null || c.getSex() != null || c.getStrain() != null);
+
             filteredOrderedCondCalls = orderedConditionCalls.stream()
                     .filter(c -> {
                         if (c.getSummaryCallType() == null) {
@@ -643,7 +658,11 @@ public class CallService extends CommonService {
                             throw log.throwing(new IllegalArgumentException(
                                     "The provided calls do not have rank info"));
                         }
-                        return c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED);
+                        if (!c.getSummaryCallType().equals(ExpressionSummary.EXPRESSED)) {
+                            return false;
+                        }
+                        return anatEntityConds.contains(new Condition(c.getCondition().getAnatEntity(),
+                                null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies()));
                     })
                     .collect(Collectors.toList());
         }
@@ -651,19 +670,6 @@ public class CallService extends CommonService {
         //*****************************************************************
         // Ordering calls and identifying redundant calls
         //*****************************************************************
-        final Set<Condition> anatEntityConds = filteredOrderedAnatEntityCalls.stream()
-                .map(c -> c.getCondition())
-                .collect(Collectors.toSet());
-        assert anatEntityConds.stream()
-        .noneMatch(c -> c.getDevStage() != null || c.getSex() != null || c.getStrain() != null);
-
-        // XXX: maybe refactor the code differently to have the organIds to perform the SQL query
-        // retrieving the condition calls
-        filteredOrderedCondCalls = filteredOrderedCondCalls.stream()
-                //We keep only condition calls with a corresponding condition in anatEntity calls
-                .filter(c -> anatEntityConds.contains(new Condition(c.getCondition().getAnatEntity(),
-                        null, c.getCondition().getCellType(), null, null, c.getCondition().getSpecies())))
-                .collect(Collectors.toList());
         if (filteredOrderedCondCalls.isEmpty()) {
             log.debug("No condition calls for gene");
             return log.traceExit(new LinkedHashMap<>());
@@ -710,8 +716,16 @@ public class CallService extends CommonService {
         //Now, group
         return log.traceExit(filteredOrderedAnatEntityCalls.stream()
                 //discard if all calls of an anat. entity are redundant
-                .filter(c -> !redundantCalls.containsAll(condCallsPerAnatEntity.get(
-                        c.getCondition())))
+                .filter(c -> {
+                    List<ExpressionCall> relatedCondCalls = condCallsPerAnatEntity.get(
+                            c.getCondition());
+                    if (relatedCondCalls == null) {
+                        log.debug("No BRONZE EXPRESSED condition calls in condition: {}",
+                                c.getCondition());
+                        return true;
+                    }
+                    return !redundantCalls.containsAll(relatedCondCalls);
+                })
                 //reconstruct the LinkedHashMap
                 //Type inference hint needed, this code was compiling fine in Eclipse,
 //              //not with maven... See for instance
@@ -719,7 +733,14 @@ public class CallService extends CommonService {
                 .collect(Collectors.<ExpressionCall, ExpressionCall,
                       List<ExpressionCall>, LinkedHashMap<ExpressionCall, List<ExpressionCall>>>toMap(
                         c -> c,
-                        c -> condCallsPerAnatEntity.get(c.getCondition()),
+                        c -> {
+                            List<ExpressionCall> relatedCondCalls = condCallsPerAnatEntity.get(
+                                    c.getCondition());
+                            if (relatedCondCalls == null) {
+                                return new ArrayList<>();
+                            }
+                            return relatedCondCalls;
+                        },
                         (l1, l2) -> {
                             throw log.throwing(new AssertionError("Not possible to have key collision"));
                         }, 
@@ -814,7 +835,7 @@ public class CallService extends CommonService {
 
     private Map<Condition, EntityMinMaxRanks<Condition>> loadMinMaxRanksPerAnatEntity(
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
-            Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
+            EnumSet<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
             Map<Integer, Condition> condMap, ExpressionCallFilter callFilter) {
         log.traceEntry("{}, {} ,{}, {}, {}, {}", attrs, orderingAttrs, condParamCombination, geneMap, condMap, callFilter);
 
@@ -878,7 +899,7 @@ public class CallService extends CommonService {
 
     private Map<Gene, EntityMinMaxRanks<Gene>> loadMinMaxRanksPerGene(
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
-            Set<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
+            EnumSet<ConditionDAO.Attribute> condParamCombination, Map<Integer, Gene> geneMap,
             ExpressionCallFilter callFilter) {
         log.traceEntry("{}, {}, {}, {}, {}", attrs, orderingAttrs, condParamCombination, geneMap, callFilter);
 
@@ -947,7 +968,7 @@ public class CallService extends CommonService {
      *                                  expression propagation states requested.
      */
     private Stream<GlobalExpressionCallTO> performsGlobalExprCallQuery(Map<Integer, Gene> geneMap,
-            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination,
+            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParamCombination,
             Set<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}, {}", geneMap, callFilter, condParamCombination, attributes, orderingAttributes);
@@ -973,7 +994,7 @@ public class CallService extends CommonService {
 
     private Stream<ExpressionCall> loadExpressionCallStream(ExpressionCallFilter callFilter,
             Set<Attribute> attrs, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttrs,
-            Set<ConditionDAO.Attribute> condParamCombination,
+            EnumSet<ConditionDAO.Attribute> condParamCombination,
             final Map<Integer, Gene> geneMap, final Map<Integer, Condition> condMap,
             Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             Map<Condition, EntityMinMaxRanks<Condition>> anatEntityMinMaxRanks,
@@ -1273,7 +1294,7 @@ public class CallService extends CommonService {
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER to DAO LAYER
     //*************************************************************************
     private static CallDAOFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
-            ExpressionCallFilter callFilter, Set<ConditionDAO.Attribute> condParamCombination) {
+            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParamCombination) {
         log.traceEntry("{}, {}, {}", geneMap, callFilter, condParamCombination);
 
         // *********************************
@@ -1300,49 +1321,8 @@ public class CallService extends CommonService {
         //For condition parameters that are not requested, we map to the root of the respective
         //ontologies when creating the DAOConditionFilter (as of Bgee 15.0, no condition parameters
         //are stored as null values).
-        Set<DAOConditionFilter> daoCondFilters = callFilter == null ||
-                callFilter.getConditionFilters() == null || callFilter.getConditionFilters().isEmpty()?
-                null: 
-                callFilter.getConditionFilters().stream()
-               .map(condFilter -> new DAOConditionFilter(
-                   !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
-                           Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
-                           condFilter.getAnatEntityIds(),
-                   !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
-                           Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
-                           condFilter.getDevStageIds(),
-                   !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
-                           Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
-                           condFilter.getCellTypeIds(),
-                   !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
-                           Collections.singleton(ConditionDAO.SEX_ROOT_ID):
-                           condFilter.getSexIds(),
-                   !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
-                           Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
-                           condFilter.getStrainIds(),
-                   condFilter.getObservedConditions()))
-               .collect(Collectors.toSet());
-        if (daoCondFilters == null &&
-                !condParamCombination.containsAll(ConditionDAO.Attribute.getCondParams())) {
-            daoCondFilters = new HashSet<>();
-            daoCondFilters.add(new DAOConditionFilter(
-                    !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
-                            Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
-                            null,
-                    !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
-                            Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
-                            null,
-                    !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
-                            Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
-                            null,
-                    !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
-                            Collections.singleton(ConditionDAO.SEX_ROOT_ID):
-                            null,
-                    !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
-                            Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
-                            null,
-                    null));
-        }
+        Set<DAOConditionFilter> daoCondFilters = generateDAOConditionFilters(
+                callFilter == null? null: callFilter.getConditionFilters(), condParamCombination);
 
         // *********************************
         // Call observed data filter
@@ -1387,34 +1367,34 @@ public class CallService extends CommonService {
      * @param callFilter
      * @param serviceAttrs
      * @param serviceOrderingAttrs
-     * @return                      An unmodifiable {@code Set} of {@code ConditionDAO.Attribute}s
+     * @return                      An {@code EnumSet} of {@code ConditionDAO.Attribute}s
      *                              allowing {@code DAO}s to determine which tables to target
      *                              in the data source.
      */
-    private static Set<ConditionDAO.Attribute> loadConditionParameterCombination(
+    private static EnumSet<ConditionDAO.Attribute> loadConditionParameterCombination(
             ExpressionCallFilter callFilter, Set<Attribute> serviceAttrs,
             Set<OrderingAttribute> serviceOrderingAttrs) {
         log.traceEntry("{}, {}, {}", callFilter, serviceAttrs, serviceOrderingAttrs);
 
-        final Set<ConditionDAO.Attribute> allDAOCondParamAttrs = EnumSet.allOf(ConditionDAO.Attribute.class)
+        final EnumSet<ConditionDAO.Attribute> allDAOCondParamAttrs = EnumSet.allOf(ConditionDAO.Attribute.class)
                 .stream().filter(a -> a.isConditionParameter())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)));
 
         //******************************************************
         // Condition parameters requested in Attributes
         //******************************************************
-        Set<ConditionDAO.Attribute> attrs = convertCondParamAttrsToCondDAOAttrs(serviceAttrs);
+        EnumSet<ConditionDAO.Attribute> attrs = convertCondParamAttrsToCondDAOAttrs(serviceAttrs);
 
         //******************************************************
         // Condition parameters requested in OrderingAttributes
         //******************************************************
-        Set<ConditionDAO.Attribute> orderingAttrs = 
+        EnumSet<ConditionDAO.Attribute> orderingAttrs = 
                 convertCondParamOrderingAttrsToCondDAOAttrs(serviceOrderingAttrs);
 
         //******************************************************
         // Condition parameters requested in Filters
         //******************************************************
-        Set<ConditionDAO.Attribute> filterAttrs = new HashSet<>();
+        EnumSet<ConditionDAO.Attribute> filterAttrs = EnumSet.noneOf(ConditionDAO.Attribute.class);
         if (callFilter != null) {
             filterAttrs = callFilter.getConditionFilters().stream()
                 .flatMap(condFilter -> {
@@ -1452,17 +1432,17 @@ public class CallService extends CommonService {
                         }
                     }
                     return daoAttrs.stream();
-                }).collect(Collectors.toSet());
+                }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)));
 
             filterAttrs.addAll(callFilter.getObservedDataFilter().keySet()
                     .stream().map(a -> convertCondParamAttrToCondDAOAttr(a))
-                    .collect(Collectors.toSet()));
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
         }
 
         //******************************************************
         // Final step, store all necessary condition parameters
         //******************************************************
-        Set<ConditionDAO.Attribute> daoCondParamComb = new HashSet<>();
+        EnumSet<ConditionDAO.Attribute> daoCondParamComb = EnumSet.noneOf(ConditionDAO.Attribute.class);
         daoCondParamComb.addAll(attrs);
         daoCondParamComb.addAll(orderingAttrs);
         daoCondParamComb.addAll(filterAttrs);
@@ -1472,7 +1452,7 @@ public class CallService extends CommonService {
                     "No parameter allowing to determine a condition parameter combination"));
         }
 
-        return log.traceExit(Collections.unmodifiableSet(daoCondParamComb));
+        return log.traceExit(daoCondParamComb);
     }
 
     private static Set<Set<DAOFDRPValueFilter>> generateExprQualDAOPValFilters(
@@ -1581,7 +1561,7 @@ public class CallService extends CommonService {
         }).collect(Collectors.toSet()));
     }
 
-    private static Set<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
+    private static EnumSet<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
             Set<OrderingAttribute> attrs) {
         log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
@@ -1602,7 +1582,7 @@ public class CallService extends CommonService {
                             throw log.throwing(new UnsupportedOperationException(
                                 "Condition parameter not supported: " + a));
                     }
-                }).collect(Collectors.toSet()));
+                }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
     }
 
     private static Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(

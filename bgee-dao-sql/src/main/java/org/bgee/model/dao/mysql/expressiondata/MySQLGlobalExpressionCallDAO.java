@@ -26,15 +26,12 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.CallObservedDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
 import org.bgee.model.dao.api.expressiondata.DAOFDRPValueFilter;
 import org.bgee.model.dao.api.expressiondata.DAOMeanRank;
 import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -319,40 +316,8 @@ implements GlobalExpressionCallDAO {
         //(e.g., we don't use null parameters anymore but mapped to the roots
         //of the respective ontologies for each parameter instead).
             if (condTableName != null) {
-                condTableToGlobalCondTableJoinClause = " LEFT OUTER JOIN cond AS " + condTableName
-                + " ON " + Arrays.stream(ConditionDAO.Attribute.values())
-                .filter(a -> a.isConditionParameter())
-                .map(a -> {
-                    StringBuilder sb2 = new StringBuilder();
-
-                    //This part is general to all condition parameters
-                    sb2.append("(").append(globalCondTableName).append(".").append(a.getTOFieldName())
-                       .append(" = ").append(condTableName).append(".").append(a.getTOFieldName())
-                       .append(" OR ")
-                       .append(globalCondTableName).append(".").append(a.getTOFieldName())
-                       .append(" = ").append(a.getRootId()).append(" AND (")
-                       .append(condTableName).append(".").append(a.getTOFieldName())
-                       .append(" IS NULL");
-                    //Here we treat special cases
-                    if (a.equals(ConditionDAO.Attribute.SEX_ID)) {
-                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
-                           .append(" IN (")
-                           .append(Arrays.stream(RawDataConditionTO.DAORawDataSex.values())
-                                   .filter(s -> !s.isInformative())
-                                   .map(s -> s.getStringRepresentation())
-                                   .collect(Collectors.joining(", ")))
-                           .append(")");
-                    } else if (a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
-                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
-                        .append(" IN (")
-                        .append(RawDataConditionDAO.NO_INFO_STRAINS.stream()
-                                .collect(Collectors.joining(", ")))
-                        .append(")");
-                    }
-                    sb2.append("))");
-
-                    return sb2.toString();
-                }).collect(Collectors.joining(" AND "));
+                condTableToGlobalCondTableJoinClause = MySQLConditionDAO
+                        .getCondTableToGlobalCondTableJoinClause(globalCondTableName, condTableName);
             }
         }
 
@@ -469,81 +434,8 @@ implements GlobalExpressionCallDAO {
                         sb.append(" AND ");
                     }
                     firstCond = false;
-                    sb.append(
-                            callFilter.getConditionFilters().stream().map(f -> {
-                                StringBuilder sb2 = new StringBuilder();
-                                boolean firstCondParam = true;
-
-                                //XXX: need to find a way not to have to list all getters
-                                //of ConditionFilter. Maybe a Map where the key is the condition parameter?
-                                if (!f.getAnatEntityIds().isEmpty()) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(globalCondTableName).append(".anatEntityId IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            f.getAnatEntityIds().size()))
-                                    .append(")");
-                                }
-                                if (!f.getDevStageIds().isEmpty()) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(globalCondTableName).append(".stageId IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            f.getDevStageIds().size()))
-                                    .append(")");
-                                }
-                                if (!f.getCellTypeIds().isEmpty()) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(globalCondTableName).append(".cellTypeId IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            f.getCellTypeIds().size()))
-                                    .append(")");
-                                }
-                                if (!f.getSexIds().isEmpty()) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(globalCondTableName).append(".sex IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            f.getSexIds().size()))
-                                    .append(")");
-                                }
-                                if (!f.getStrainIds().isEmpty()) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(globalCondTableName).append(".strain IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            f.getStrainIds().size()))
-                                    .append(")");
-                                }
-                                if (f.getObservedConditions() != null) {
-                                    if (!firstCondParam) {
-                                        sb2.append(" AND ");
-                                    }
-                                    firstCondParam = false;
-                                    sb2.append(condTableName).append(".")
-                                       .append(MySQLConditionDAO.RAW_COND_ID_FIELD);
-                                    if (f.getObservedConditions()) {
-                                        sb2.append(" IS NOT NULL ");
-                                    } else {
-                                        sb2.append(" IS NULL ");
-                                    }
-                                }
-
-                                return sb2.toString();
-
-                            }).collect(Collectors.joining(" OR ", "(", ")"))
-                            );
+                    sb.append(MySQLConditionDAO.getConditionFilterWhereClause(
+                            callFilter.getConditionFilters(), globalCondTableName, condTableName));
                 }
 
                 if (callFilter.getCallObservedDataFilters() != null &&
@@ -791,29 +683,8 @@ implements GlobalExpressionCallDAO {
             }
 
             if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {
-                for (DAOConditionFilter condFilter: callFilter.getConditionFilters()) {
-
-                    if (!condFilter.getAnatEntityIds().isEmpty()) {
-                        stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
-                        offsetParamIndex += condFilter.getAnatEntityIds().size();
-                    }
-                    if (!condFilter.getDevStageIds().isEmpty()) {
-                        stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
-                        offsetParamIndex += condFilter.getDevStageIds().size();
-                    }
-                    if (!condFilter.getCellTypeIds().isEmpty()) {
-                        stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
-                        offsetParamIndex += condFilter.getCellTypeIds().size();
-                    }
-                    if (!condFilter.getSexIds().isEmpty()) {
-                        stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
-                        offsetParamIndex += condFilter.getSexIds().size();
-                    }
-                    if (!condFilter.getStrainIds().isEmpty()) {
-                        stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
-                        offsetParamIndex += condFilter.getStrainIds().size();
-                    }
-                }
+                offsetParamIndex = MySQLConditionDAO.configureConditionFiltersStmt(stmt,
+                        callFilter.getConditionFilters(), offsetParamIndex);
             }
 
             for (CallObservedDataDAOFilter dataFilter: callFilter.getCallObservedDataFilters()) {

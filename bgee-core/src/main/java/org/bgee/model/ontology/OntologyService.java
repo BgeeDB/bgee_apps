@@ -357,7 +357,8 @@ public class OntologyService extends CommonService {
         //FIXME: actually, maybe the taxon constraints are not ncwssary where the is only 1 species,
         //I think the relation query already filter using taxon constraints.
         //To check, same things with anat entity ?
-        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getDaoManager().getTaxonConstraintDAO()
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = relIds.isEmpty()? new HashSet<>():
+            getDaoManager().getTaxonConstraintDAO()
                 .getAnatEntityRelationTaxonConstraints(speciesIds, relIds, null).stream()
                 .map(CommonService::mapTaxonConstraintTOToTaxonConstraint)
                 .collect(Collectors.toSet());
@@ -365,9 +366,9 @@ public class OntologyService extends CommonService {
 
         MultiSpeciesOntology<AnatEntity, String> ont = new MultiSpeciesOntology<AnatEntity, String>(speciesIds,
                 requestedAnatEntities.values(), rels,
-                this.getServiceFactory().getTaxonConstraintService()
-                        .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
-                        .filter(tc -> requestedAnatEntities.containsKey(tc.getEntityId()))
+                requestedAnatEntities.isEmpty()? new HashSet<>():
+                    this.getServiceFactory().getTaxonConstraintService()
+                        .loadAnatEntityTaxonConstraints(speciesIds, requestedAnatEntities.keySet())
                         .collect(Collectors.toSet()),
                 relationTaxonConstraints, relationTypes,
                 this.getServiceFactory(), AnatEntity.class);

@@ -489,7 +489,13 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 ("A DataType must be defined to instantiate a CallData."));
         }
         if (callType != null) {
-            callType.checkDataType(dataType);
+            //XXX: for now we disable this check. Indeed, scRNA-Seq and/or EST data
+            //can be used to produce a NOT_EXPRESSED call of BRONZE quality, for consistency
+            //between the different combinations of call types and qualities.
+            //An alternative solution would be to set the CallType to NULL for these data types
+            //when the call type is NOT_EXPRESSED. But then it would be inconsistent with their use
+            //in the CallService.
+//            callType.checkDataType(dataType);
         }
 
         this.dataType = dataType;

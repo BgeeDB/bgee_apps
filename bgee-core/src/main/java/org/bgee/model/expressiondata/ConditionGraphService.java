@@ -1,7 +1,6 @@
 package org.bgee.model.expressiondata;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +14,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
@@ -137,44 +137,84 @@ public class ConditionGraphService extends CommonService {
     }
 
     /**
-     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s existing in a species.
-     * 
-     * @param speciesId             An {@code int} that is the ID of a species for which
-     *                              the {@code ConditionGraph} should be loaded.
-     * @param condParameters        A {@code Collection} of {@code CallService.Attribute}s
-     *                              that are condition parameters (
-     *                              {@link CallService.Attribute#isConditionParameter()} returns {@code true}
-     *                              for all of them), specifying the parameters
-     *                              of the {@code Condition}s that should be loaded.
-     * @return                      A {@code ConditionGraph} for the requested species.
-     * @throws IllegalArgumentException If {@code speciesId} is less than or equal to 0, or if
-     *                                  {@code condParameters} is {@code null}, empty, or contains
+     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s for requested species
+     * and {@code ConditionFilter}s, populated with the requested condition parameter attributes.
+     *
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                          for which the {@code ConditionGraph} should be loaded.
+     *                          Can be {@code null} or empty to request for all species in Bgee.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s allowing
+     *                          to parameterize the retrieval of {@code Condition}s
+     * @param condParameters    A {@code Collection} of {@code CallService.Attribute}s
+     *                          that are condition parameters (
+     *                          {@link CallService.Attribute#isConditionParameter()} returns {@code true}
+     *                          for all of them), specifying the parameters
+     *                          of the {@code Condition}s that should be loaded.
+     * @return                  A {@code ConditionGraph} for the requested species.
+     * @throws IllegalArgumentException If some species IDs are not recognized,
+     *                                  or if {@code condParameters} contains
      *                                  {@code CallService.Attribute}s that are not condition parameters.
+     * @see #loadConditionGraph(Collection, Collection, Collection)
      */
-    public ConditionGraph loadConditionGraph(int speciesId, Collection<CallService.Attribute> condParameters)
-            throws IllegalArgumentException {
-        log.traceEntry("{}, {}", speciesId, condParameters);
-        if (speciesId <= 0) {
-            throw log.throwing(new IllegalArgumentException("A speciesId must be provided."));
-        }
-        if (condParameters == null || condParameters.isEmpty() ||
-                condParameters.stream().anyMatch(a -> !a.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException("Condition parameters must be provided."));
-        }
+    public ConditionGraph loadConditionGraphFromSpeciesIds(Collection<Integer> speciesIds,
+            Collection<ConditionFilter> conditionFilters,
+            Collection<CallService.Attribute> condParameters) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", speciesIds, conditionFilters, condParameters);
 
+        Set<Integer> speciesIdSet = speciesIds != null? new HashSet<>(speciesIds): new HashSet<>();
         Set<Species> species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
-                Collections.singleton(speciesId), false);
-        if (species.isEmpty()) {
+                speciesIds, false);
+        if (!speciesIdSet.isEmpty() && speciesIdSet.size() != species.size()) {
+            Set<Integer> foundSpeciesIds = species.stream().map(s -> s.getId()).collect(Collectors.toSet());
+            Set<Integer> unrecognizedSpeciesIds = speciesIdSet.stream()
+                    .filter(id -> !foundSpeciesIds.contains(id))
+                    .collect(Collectors.toSet());
             throw log.throwing(new IllegalArgumentException(
-                    "The provided speciesId does not correspond to any species in the data source: " + speciesId));
+                    "These species IDs does not correspond to any species in the data source: "
+                    + unrecognizedSpeciesIds));
         }
+        return log.traceExit(this.loadConditionGraph(species, conditionFilters, condParameters));
+    }
+    /**
+     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s for requested species
+     * and {@code ConditionFilter}s, populated with the requested condition parameter attributes.
+     *
+     * @param speciesIds        A {@code Collection} of {@code Species} that are the species
+     *                          for which the {@code ConditionGraph} should be loaded.
+     *                          Can be {@code null} or empty to request for all species in Bgee.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s allowing
+     *                          to parameterize the retrieval of {@code Condition}s
+     * @param condParameters    A {@code Collection} of {@code CallService.Attribute}s
+     *                          that are condition parameters (
+     *                          {@link CallService.Attribute#isConditionParameter()} returns {@code true}
+     *                          for all of them), specifying the parameters
+     *                          of the {@code Condition}s that should be loaded.
+     * @return                  A {@code ConditionGraph} for the requested species.
+     * @throws IllegalArgumentException If some species IDs are not recognized,
+     *                                  or if {@code condParameters} contains
+     *                                  {@code CallService.Attribute}s that are not condition parameters.
+     * @see #loadConditionGraph(Collection, Collection, Collection)
+     */
+    public ConditionGraph loadConditionGraph(Collection<Species> species,
+            Collection<ConditionFilter> conditionFilters,
+            Collection<CallService.Attribute> condParameters) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", species, conditionFilters, condParameters);
+
+        if (condParameters != null && condParameters.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException("Only condition parameters must be provided."));
+        }
+        EnumSet<ConditionDAO.Attribute> daoCondParams = convertCondParamAttrsToCondDAOAttrs(
+                condParameters);
+        Set<Species> speciesSet = species == null || species.isEmpty()?
+                this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
+                        null, false):
+                new HashSet<>(species);
 
         Set<Condition> conditions = new HashSet<>(
                 loadGlobalConditionMap(
-                    species,
-                    Collections.singleton(generateDAOConditionFilter(null,
-                            convertCondParamAttrsToCondDAOAttrs(condParameters))),
-                    null,
+                    speciesSet,
+                    generateDAOConditionFilters(conditionFilters, daoCondParams),
+                    daoCondParams,
                     this.getDaoManager().getConditionDAO(),
                     this.getServiceFactory().getAnatEntityService(),
                     this.getServiceFactory().getDevStageService(),
@@ -182,8 +222,7 @@ public class ConditionGraphService extends CommonService {
                     this.getServiceFactory().getStrainService()
                 ).values());
 
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null, 
-                null, null, null));
+        return log.traceExit(this.loadConditionGraph(conditions));
     }
 
     /**

@@ -25,7 +25,7 @@ import org.bgee.model.ontology.Ontology;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 15.0, May 2021
  * @see ConditionGraphService
  * @since   Bgee 13, Dec. 2015
  */
@@ -162,17 +162,19 @@ public class ConditionGraph {
         this.checkEntityExistence(entities.getAnatEntityIds(), anatEntityOnt);
         this.checkEntityExistence(entities.getCellTypeIds(), cellTypeOnt);
         this.checkEntityExistence(entities.getSexIds(), sexOnt);
-        //For strain IDs, there can be some upper/lowercase discrepancies,
-        //the checkEntityExistence method won't work.
-        Set<String> recognizedStrainIdsLowerCase = strainOnt.getElements().stream()
-                .map(e -> e.getId().toLowerCase()).collect(Collectors.toSet());
-        Set<String> strainIdsLowerCase = entities.getStrainIds().stream()
-                .map(s -> s.toLowerCase()).collect(Collectors.toSet());
-        if (!recognizedStrainIdsLowerCase.containsAll(strainIdsLowerCase)) {
-            Set<String> unrecognizedIds = new HashSet<>(strainIdsLowerCase);
-            unrecognizedIds.removeAll(recognizedStrainIdsLowerCase);
-            throw log.throwing(new IllegalArgumentException("Some entities do not exist "
-                    + "in the provided onology: " + unrecognizedIds));
+        if (strainOnt != null) {
+            //For strain IDs, there can be some upper/lowercase discrepancies,
+            //the checkEntityExistence method won't work.
+            Set<String> recognizedStrainIdsLowerCase = strainOnt.getElements().stream()
+                    .map(e -> e.getId().toLowerCase()).collect(Collectors.toSet());
+            Set<String> strainIdsLowerCase = entities.getStrainIds().stream()
+                    .map(s -> s.toLowerCase()).collect(Collectors.toSet());
+            if (!recognizedStrainIdsLowerCase.containsAll(strainIdsLowerCase)) {
+                Set<String> unrecognizedIds = new HashSet<>(strainIdsLowerCase);
+                unrecognizedIds.removeAll(recognizedStrainIdsLowerCase);
+                throw log.throwing(new IllegalArgumentException("Some entities do not exist "
+                        + "in the provided onology: " + unrecognizedIds));
+            }
         }
 
         this.anatEntityOnt = anatEntityOnt;

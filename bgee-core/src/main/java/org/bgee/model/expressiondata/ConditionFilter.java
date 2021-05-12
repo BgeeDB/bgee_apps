@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +15,7 @@ import org.bgee.model.expressiondata.Condition.ConditionEntities;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Mar. 2021
+ * @version Bgee 15.0, May 2021
  * @since   Bgee 13, Oct. 2015
  */
 //TODO: be able to EXCLUDE anat. entities/stages. It would be convenient to discard
@@ -182,6 +183,50 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         } else if (!observedConditions.equals(other.observedConditions))
             return false;
         return true;
+    }
+
+    public String toParamString() {
+        log.traceEntry();
+        StringBuilder sb = new StringBuilder();
+        boolean previousParams = false;
+        if (!getAnatEntityIds().isEmpty()) {
+            sb.append(getAnatEntityIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getDevStageIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getDevStageIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getCellTypeIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getCellTypeIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getSexIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getSexIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getStrainIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getStrainIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        return log.traceExit(sb.toString());
     }
 
     @Override

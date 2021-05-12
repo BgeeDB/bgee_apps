@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +10,7 @@ import org.apache.logging.log4j.Logger;
  * A filter to parameterize queries using expression data conditions. 
  * 
  * @author Frederic Bastian
- * @version Bgee 14 Sept. 2018
+ * @version Bgee 15.0, May 2021
  * @since Bgee 13 Oct. 2015
  */
 public class DAOConditionFilter extends DAOBaseConditionFilter {
@@ -99,6 +100,51 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
             return false;
         }
         return true;
+    }
+
+
+    public String toParamString() {
+        log.traceEntry();
+        StringBuilder sb = new StringBuilder();
+        boolean previousParams = false;
+        if (!getAnatEntityIds().isEmpty()) {
+            sb.append(getAnatEntityIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getDevStageIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getDevStageIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getCellTypeIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getCellTypeIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getSexIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getSexIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getStrainIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getStrainIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        return log.traceExit(sb.toString());
     }
 
     @Override

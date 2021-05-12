@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14 Mar. 2019
+ * @version Bgee 15.0, May 2021
  * @since   Bgee 13
  * @see RelationTO
  */
@@ -56,28 +56,6 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
             return this.fieldName;
         }
     }
-
-    /**
-     * Retrieve anatomical entity relations from data source. The relations 
-     * can be filtered by species IDs, by {@code RelationType}s, and {@code RelationStatus}. 
-     * The relations retrieved are valid in any of the provided species (and not in all of the provided species).
-     * <p>
-     * The relations are retrieved and returned as a {@code RelationTOResultSet}. It is the 
-     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
-     * 
-     * @param speciesIds        A {@code Set} of {@code Integer}s that are the IDs of species 
-     *                          to retrieve relations for.
-     * @param relationTypes     A {@code Set} of {@code RelationType}s that are the relation 
-     *                          types allowing to filter the relations to retrieve.
-     * @param relationStatus    A {@code Set} of {@code RelationStatus} that are the status
-     *                          allowing to filter the relations to retrieve.
-     * @return                  A {@code RelationTOResultSet} allowing to retrieve anatomical 
-     *                          entity relations from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    @Deprecated
-    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds,
-            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) throws DAOException;
 
     /**
      * Retrieve anatomical entity relations from data source. The relations can be filtered  
@@ -328,7 +306,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
              *                                  to any {@code RelationType}.
              */
             public static final RelationType convertToRelationType(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(RelationType.class, representation));
             }
 
@@ -392,7 +370,7 @@ public interface RelationDAO extends DAO<RelationDAO.Attribute> {
              *                                  to any {@code RelationStatus}.
              */
             public static final RelationStatus convertToRelationStatus(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(RelationStatus.class, representation));
             }
 

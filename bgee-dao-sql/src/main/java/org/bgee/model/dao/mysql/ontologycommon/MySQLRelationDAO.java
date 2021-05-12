@@ -28,7 +28,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationType
  * 
  * @author Valentine Rech de Laval
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2019
+ * @version Bgee 15.0, May 2021
  * @since Bgee 13
  * @see org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO
  */
@@ -56,8 +56,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Collection<String> sourceAnatEntityIds, Collection<String> targetAnatEntityIds, Boolean sourceOrTarget, 
             Collection<RelationType> relationTypes, Collection<RelationStatus> relationStatus, 
             Collection<RelationDAO.Attribute> attributes) {
-        log.entry(speciesIds, anySpecies, sourceAnatEntityIds, targetAnatEntityIds, sourceOrTarget, 
-                relationTypes, relationStatus, attributes);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", speciesIds, anySpecies, sourceAnatEntityIds,
+                targetAnatEntityIds, sourceOrTarget, relationTypes, relationStatus, attributes);
         
         String tableName = "anatEntityRelation";
         
@@ -220,20 +220,12 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     }
     
     @Override
-    public RelationTOResultSet<String> getAnatEntityRelationsBySpeciesIds(Set<Integer> speciesIds, 
-            Set<RelationType> relationTypes, Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationTypes, relationStatus);    
-
-        return log.traceExit(this.getAnatEntityRelations(speciesIds, true, null, null, true, 
-                relationTypes, relationStatus, this.getAttributes()));
-    }
-    
-    @Override
     public RelationTOResultSet<Integer> getTaxonRelations(Collection<Integer> sourceTaxIds, 
             Collection<Integer> targetTaxIds, Boolean sourceOrTarget,
             Collection<RelationStatus> relationStatus, boolean lca,
             Collection<RelationDAO.Attribute> attributes) {
-        log.entry(sourceTaxIds, targetTaxIds, sourceOrTarget, relationStatus, lca, attributes);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", sourceTaxIds, targetTaxIds, sourceOrTarget,
+                relationStatus, lca, attributes);
 
         Set<Integer> clonedSourceFilter = sourceTaxIds == null? new HashSet<>():
             new HashSet<>(sourceTaxIds);
@@ -300,7 +292,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public RelationTOResultSet<String> getStageRelationsBySpeciesIds(Set<Integer> speciesIds, 
             Set<RelationStatus> relationStatus) {
-        log.entry(speciesIds, relationStatus);
+        log.traceEntry("{}, {}", speciesIds, relationStatus);
         return log.traceExit(this.getStageRelations(speciesIds, true, null, null, true, relationStatus, 
                 this.getAttributes()));        
     }
@@ -308,10 +300,9 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public RelationTOResultSet<String> getStageRelations(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> sourceDevStageIds, Collection<String> targetDevStageIds, Boolean sourceOrTarget, 
-            Collection<RelationStatus> relationStatus, 
-            Collection<RelationDAO.Attribute> attributes) {
-        log.entry(speciesIds, anySpecies, sourceDevStageIds, targetDevStageIds, sourceOrTarget,
-                relationStatus, attributes);
+            Collection<RelationStatus> relationStatus, Collection<RelationDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", speciesIds, anySpecies, sourceDevStageIds,
+                targetDevStageIds, sourceOrTarget, relationStatus, attributes);
         return log.traceExit(this.getNestedSetModelFakeRelations(speciesIds, anySpecies, 
                 sourceDevStageIds, targetDevStageIds, sourceOrTarget, relationStatus, attributes, 
                 "stage", "stageTaxonConstraint", "stageId", "stageLeftBound", "stageRightBound", "stageLevel", 
@@ -375,7 +366,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Collection<RelationDAO.Attribute> attributes, String tableName, String taxonConstTableName, 
             String idFieldName, String leftBoundFieldName, String rightBoundFieldName, String levelFieldName, 
             Class<T> cls) {
-        log.entry(speciesIds, anySpecies, sourceIds, targetIds, sourceOrTarget, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+                speciesIds, anySpecies, sourceIds, targetIds, sourceOrTarget, 
                 relationStatus, attributes, tableName, taxonConstTableName, idFieldName, 
                 leftBoundFieldName, rightBoundFieldName, levelFieldName, cls);
 
@@ -403,7 +395,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
             Boolean anySpecies, Collection<RelationDAO.Attribute> attributes, String tableName,
             String taxonConstTableName, String idFieldName, String leftBoundFieldName,
             String rightBoundFieldName, String levelFieldName) {
-        log.entry(speciesIds, anySpecies, attributes, tableName, taxonConstTableName, idFieldName, leftBoundFieldName,
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", speciesIds, anySpecies, attributes,
+                tableName, taxonConstTableName, idFieldName, leftBoundFieldName,
                 rightBoundFieldName, levelFieldName);
         //NOTE: for nested set models there is no relation table, as for, e.g., anatomical entities. 
         //So, this method will emulate the existence of such a table, 
@@ -500,7 +493,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     private static <T> String getNestedSetModelFakeRelationsWhereClause(
             Collection<T> sourceIds, Collection<T> targetIds, 
             Boolean sourceOrTarget, Collection<RelationStatus> relationStatus) {
-        log.entry(sourceIds, targetIds, sourceOrTarget, relationStatus);
+        log.traceEntry("{}, {}, {}, {}", sourceIds, targetIds, sourceOrTarget, relationStatus);
         //*******************************
         // FILTER ARGUMENTS
         //*******************************
@@ -565,7 +558,8 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     private static <T> int parameterizeStmtNestedSetModelFakeRelations(BgeePreparedStatement stmt,
             Collection<Integer> speciesIds, Collection<T> sourceIds, Collection<T> targetIds, 
             Collection<RelationStatus> relationStatus, Class<T> cls) throws SQLException {
-        log.entry(stmt, speciesIds, sourceIds, targetIds, relationStatus, cls);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", stmt, speciesIds, sourceIds, targetIds,
+                relationStatus, cls);
 
         //*******************************
         // FILTER ARGUMENTS
@@ -625,7 +619,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      */
     private String attributeAnatEntityRelationToString(RelationDAO.Attribute attribute) 
             throws IllegalArgumentException {
-        log.entry(attribute);
+        log.traceEntry("{}", attribute);
         
         String label = null;
         if (attribute.equals(RelationDAO.Attribute.RELATION_ID)) {
@@ -659,7 +653,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
      */
     private static String attributeNestedSetModelRelationToString(RelationDAO.Attribute attribute) 
             throws IllegalArgumentException {
-        log.entry(attribute);
+        log.traceEntry("{}", attribute);
         
         String label = null;
         if (attribute.equals(RelationDAO.Attribute.RELATION_ID)) {
@@ -683,8 +677,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public int insertAnatEntityRelations(Collection<RelationTO<String>> relations) 
             throws DAOException, IllegalArgumentException {
-
-        log.entry(relations);
+        log.traceEntry("{}", relations);
 
         if (relations == null || relations.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -721,7 +714,7 @@ public class MySQLRelationDAO extends MySQLDAO<RelationDAO.Attribute>
     @Override
     public int insertGeneOntologyRelations(Collection<RelationTO<String>> relations) 
             throws DAOException, IllegalArgumentException {
-        log.entry(relations);
+        log.traceEntry("{}", relations);
         
         if (relations == null || relations.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(

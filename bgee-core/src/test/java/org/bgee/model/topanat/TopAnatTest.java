@@ -131,8 +131,9 @@ public class TopAnatTest extends TestAncestor {
         anatEntitiesRelationships.put("A3", new HashSet<String>(Arrays.asList("A4")));        
         when(mockAnatEntityService.loadAnatEntitiesBySpeciesIds(anyCollectionOf(Integer.class)))
             .thenReturn(anatEntities);
-        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(Integer.class)))
-            .thenReturn(anatEntitiesRelationships);
+        //TODO: mock ConditionGraph method used instead
+//        when(mockAnatEntityService.loadDirectIsAPartOfRelationships(anyCollectionOf(Integer.class)))
+//            .thenReturn(anatEntitiesRelationships);
         when(mockGene1.getEnsemblGeneId()).thenReturn("G1");
         when(mockGene2.getEnsemblGeneId()).thenReturn("G2");
         when(mockGene3.getEnsemblGeneId()).thenReturn("G3");

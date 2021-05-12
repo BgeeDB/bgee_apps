@@ -812,8 +812,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         // Data types
         sb.append("<td>")
-                .append(getDataTypeSpans(conditionCalls.stream().flatMap(e -> e.getCallData().stream())
-                        .collect(Collectors.toList())))
+                .append(getDataTypeSpans(anatEntityCall.getCallData()))
                 .append("<ul class='masked quality-list'>")
                 .append(conditionCalls.stream().map(call -> {
                         StringBuilder sb2 = new StringBuilder();

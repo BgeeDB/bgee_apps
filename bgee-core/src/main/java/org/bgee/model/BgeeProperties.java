@@ -125,18 +125,32 @@ public class BgeeProperties {
     public final static String BGEE_SEARCH_SERVER_PORT_DEFAULT = null;
     /**
      * A {@code String} that is the key to access to the System property that contains the value
-     * of the prefix used to generate sphinx indexes.
+     * of the sphinx genes index used to query a search.
      * 
-     * @see #BGEE_SEARCH_INDEX_PREFIX_DEFAULT
+     * @see #BGEE_SEARCH_INDEX_GENES_DEFAULT
      */
-    public final static String BGEE_SEARCH_INDEX_PREFIX_KEY = "org.bgee.search.prefix";
+    public final static String BGEE_SEARCH_INDEX_GENES_KEY = "org.bgee.search.genes";
 
     /**
-     * A {@code String} that is the default value of the prefix used to generate sphinx indexes.
+     * A {@code String} that is the default value of the genes index used to query a search.
      *
-     * @see #BGEE_SEARCH_INDEX_PREFIX_KEY
+     * @see #BGEE_SEARCH_INDEX_GENES_KEY
      */
-    public final static String BGEE_SEARCH_INDEX_PREFIX_DEFAULT = null;
+    public final static String BGEE_SEARCH_INDEX_GENES_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the sphinx autocomplete index used to query a search.
+     * 
+     * @see #BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY = "org.bgee.search.autocomplete";
+
+    /**
+     * A {@code String} that is the default value of the genes index used to query a search.
+     *
+     * @see #BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT = null;
 
     //TopAnat
     /**
@@ -717,9 +731,12 @@ public class BgeeProperties {
         searchUrlPort = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_SERVER_PORT_KEY,
                 BGEE_SEARCH_SERVER_PORT_DEFAULT);
-        searchIndexPrefix = getStringOption(prop, SYS_PROPS, FILE_PROPS,
-                BGEE_SEARCH_INDEX_PREFIX_KEY,
-                BGEE_SEARCH_INDEX_PREFIX_DEFAULT);
+        searchGenesIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_GENES_KEY,
+                BGEE_SEARCH_INDEX_GENES_DEFAULT);
+        searchAutocompleteIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY,
+                BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -765,9 +782,14 @@ public class BgeeProperties {
     private final String searchUrlPort;
     
     /**
-     * A {@code String} that is the prefix of the index which is used to query a search.
+     * A {@code String} that is the name of the genes index which is used to query a search.
      */
-    private final String searchIndexPrefix;
+    private final String searchGenesIndex;
+    
+    /**
+     * A {@code String} that is the name of the autocomplete index which is used to query a search.
+     */
+    private final String searchAutocompleteIndex;
 
     /**
      * A {@code String} that is the Bioconductor Release number used to download
@@ -885,10 +907,18 @@ public class BgeeProperties {
         return searchUrlPort;
     }
     /**
-     * @return A {@code String} that is the prefix of the index which is used to query a search.
+     * @return A {@code String} that is the name of the genes index which is used to 
+     * query a search.
      */
-    public String getSearchIndexPrefix() {
-        return searchIndexPrefix;
+    public String getSearchGenesIndex() {
+        return searchGenesIndex;
+    }
+    /**
+     * @return A {@code String} that is the name of the autocomplete index which is used 
+     * to query a search.
+     */
+    public String getSearchAutocompleteIndex() {
+        return searchAutocompleteIndex;
     }
 
     //TopAnat

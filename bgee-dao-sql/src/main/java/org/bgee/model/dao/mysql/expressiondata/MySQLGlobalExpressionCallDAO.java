@@ -353,7 +353,7 @@ implements GlobalExpressionCallDAO {
             sb.append("globalCond AS ").append(globalCondTableName);
             if (geneTableFirst) {
                 sb.append(" ON ").append(geneTableName).append(".").append(MySQLGeneDAO.SPECIES_ID)
-                .append(" = ").append(globalCondTableName).append(MySQLGeneDAO.SPECIES_ID);
+                .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.SPECIES_ID);
             }
         }
         if (observedConditionFiltering) {

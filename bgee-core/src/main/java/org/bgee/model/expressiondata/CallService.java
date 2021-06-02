@@ -2003,8 +2003,8 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
         }
         if (rank.compareTo(maxRank) > 0) {
-//            log.debug("Rank cannot be greater than maxRank. Rank: " + rank
-//                    + " - maxRank: " + maxRank);
+            throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
+                    + " - maxRank: " + maxRank));
         }
 
         BigDecimal invertedRank = maxRank.add(new BigDecimal("1")).subtract(rank);
@@ -2400,9 +2400,9 @@ public class CallService extends CommonService {
                 }
             }
         }
-//        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
-//                dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
-//                dataTypesTrustedForAbsentBestDescendantPVal);
+        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
+                dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
+                dataTypesTrustedForAbsentBestDescendantPVal);
         String exceptionMsg = "It should have been possible to infer "
                 + "ExpressionSummary and SummaryQuality. dataTypesPVal: " + dataTypesPVal
                 + ", dataTypesTrustedForAbsentPVal: " + dataTypesTrustedForAbsentPVal

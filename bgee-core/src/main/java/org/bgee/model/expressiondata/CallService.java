@@ -1817,12 +1817,15 @@ public class CallService extends CommonService {
                             EnumSet.of(dataType), null));
 
         if (call.getSummaryCallType() != null || call.getSummaryQuality() != null) {
-            if (callData.getFDRPValue() == null || callData.getBestDescendantFDRPValue() == null) {
+            if (call.getPValues() == null && call.getBestDescendantPValues() == null) {
                 throw log.throwing(new IllegalArgumentException(
                         "Cannot derive call, no getFDRPValue or getBestDescendantFDRPValue stored "
                         + "in the CallData for data type " + dataType + ". You must request "
                         + "the Attribute P_VALUE_INFO_EACH_DATA_TYPE when retrieving calls "
                         + "to have access to them."));
+            }
+            if (callData.getFDRPValue() == null && callData.getBestDescendantFDRPValue() == null) {
+                return log.traceExit((ExpressionCall) null);
             }
             Entry<ExpressionSummary, SummaryQuality> callQual = inferSummaryCallTypeAndQuality(
                     fdrPValues, bestDescendantFdrPValues, EnumSet.of(dataType));
@@ -2000,8 +2003,8 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("Rank and max rank cannot be less than or equal to 0"));
         }
         if (rank.compareTo(maxRank) > 0) {
-            throw log.throwing(new IllegalArgumentException("Rank cannot be greater than maxRank. Rank: " + rank
-                    + " - maxRank: " + maxRank));
+//            log.debug("Rank cannot be greater than maxRank. Rank: " + rank
+//                    + " - maxRank: " + maxRank);
         }
 
         BigDecimal invertedRank = maxRank.add(new BigDecimal("1")).subtract(rank);
@@ -2382,30 +2385,32 @@ public class CallService extends CommonService {
         }
         BigDecimal dataTypesBestDescendantPVal = null;
         BigDecimal dataTypesTrustedForAbsentBestDescendantPVal = null;
-        for (FDRPValue pVal: bestDescendantFdrPValues) {
-            if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
-                assert dataTypesBestDescendantPVal == null:
-                    "There should be only one FDR p-value matching data type selection";
-                dataTypesBestDescendantPVal = pVal.getFDRPValue();
-            }
-            if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
-                    pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
-                assert dataTypesTrustedForAbsentBestDescendantPVal == null:
-                    "There should be only one FDR p-value matching data type selection";
-                dataTypesTrustedForAbsentBestDescendantPVal = pVal.getFDRPValue();
+        if(bestDescendantFdrPValues != null) {
+            for (FDRPValue pVal: bestDescendantFdrPValues) {
+                if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
+                    assert dataTypesBestDescendantPVal == null:
+                        "There should be only one FDR p-value matching data type selection";
+                    dataTypesBestDescendantPVal = pVal.getFDRPValue();
+                }
+                if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
+                        pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
+                    assert dataTypesTrustedForAbsentBestDescendantPVal == null:
+                        "There should be only one FDR p-value matching data type selection";
+                    dataTypesTrustedForAbsentBestDescendantPVal = pVal.getFDRPValue();
+                }
             }
         }
-        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
-                dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
-                dataTypesTrustedForAbsentBestDescendantPVal);
+//        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
+//                dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
+//                dataTypesTrustedForAbsentBestDescendantPVal);
         String exceptionMsg = "It should have been possible to infer "
                 + "ExpressionSummary and SummaryQuality. dataTypesPVal: " + dataTypesPVal
                 + ", dataTypesTrustedForAbsentPVal: " + dataTypesTrustedForAbsentPVal
                 + ", dataTypesBestDescendantPVal: " + dataTypesBestDescendantPVal
                 + ", dataTypesTrustedForAbsentBestDescendantPVal: "
                 + dataTypesTrustedForAbsentBestDescendantPVal;
-        if (dataTypesPVal == null ||
-                !bestDescendantFdrPValues.isEmpty() && dataTypesBestDescendantPVal == null) {
+        if (dataTypesPVal == null &&
+                !(bestDescendantFdrPValues.isEmpty() || dataTypesBestDescendantPVal == null)) {
             throw log.throwing(new IllegalStateException(exceptionMsg));
         }
 

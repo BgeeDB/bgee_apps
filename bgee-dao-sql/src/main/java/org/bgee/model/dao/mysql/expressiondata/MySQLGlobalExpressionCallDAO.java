@@ -1414,7 +1414,12 @@ implements GlobalExpressionCallDAO {
                         infoFound = true;
                     } else {
                         ConditionDAO.Attribute condParam = Arrays.stream(ConditionDAO.Attribute.values())
-                            .filter(a -> columnName.endsWith(a.getPropagationStateNameSuffix()))
+                            .filter(a -> {
+                                if(a.getPropagationStateNameSuffix() == null) {
+                                    return false;
+                                } 
+                                return columnName.endsWith(a.getPropagationStateNameSuffix());
+                            })
                             .findAny().orElse(null);
                         if (condParam != null) {
                             dataPropagation.put(condParam, DAOPropagationState.convertToPropagationState(

@@ -2409,8 +2409,9 @@ public class CallService extends CommonService {
                 + ", dataTypesBestDescendantPVal: " + dataTypesBestDescendantPVal
                 + ", dataTypesTrustedForAbsentBestDescendantPVal: "
                 + dataTypesTrustedForAbsentBestDescendantPVal;
-        if (dataTypesPVal == null &&
-                !(bestDescendantFdrPValues.isEmpty() || dataTypesBestDescendantPVal == null)) {
+        if (dataTypesPVal == null ||
+                !(bestDescendantFdrPValues == null || bestDescendantFdrPValues.isEmpty()) && 
+                dataTypesBestDescendantPVal == null) {
             throw log.throwing(new IllegalStateException(exceptionMsg));
         }
 

@@ -1685,28 +1685,29 @@ public class InsertPropagatedCalls extends CallService {
             return log.traceExit(condGraphService.loadConditionGraph(conds,
                     false, false));
         }
-        //Infer conditions
+        //Infer conditions.
+        //Of note, non-informative anat. entities/cell types are not considered when inferring
+        //propagated conditions (except roots, or terms used in annotations).
         ConditionGraph conditionGraph = condGraphService.loadConditionGraph(
                 conds,
                 true, //propagate to ancestor conditions
                 false //We do not propagate to descendant conditions anymore
         );
-        //If it was requested to infer conditions, to limit their number,
+        //If it was requested to infer conditions, to limit their number for Bgee 15.0,
         //we keep only annotated conditions (the ones provided as argument),
-        //and conditions with organ propagation + cell type propagation + sex propagation
-        //+ stage propagation only to embryo and post-embryo (and stage root of course),
-        //and no strain propagation.
+        //and conditions propagated considering only propagation to embryo and post-embryo
+        //(and stage root of course).
         //hardcoded here for now.
-        Strain wildTypeStrain = new Strain(ConditionDAO.STRAIN_ROOT_ID);
+        //FIXME: to remove for Bgee 15.1
         Set<String> validStageIds = new HashSet<>(Arrays.asList(
                 ConditionDAO.DEV_STAGE_ROOT_ID,
                 "UBERON:0000068", //embryo
                 "UBERON:0000092"  //post-embryo
                 ));
+        //Since we propagate only to ancestor as of Bgee 15.0,
+        //we don't need to filter out descendant propagated strains, stages, sexes
         Set<Condition> validConds = conditionGraph.getConditions().stream()
-                .filter(cond -> conds.contains(cond) ||
-                        (cond.getStrain().equals(wildTypeStrain) &&
-                                validStageIds.contains(cond.getDevStageId())))
+                .filter(cond -> conds.contains(cond) || validStageIds.contains(cond.getDevStageId()))
                 .collect(Collectors.toSet());
         return log.traceExit(new ConditionGraph(validConds, true, false,
                 conditionGraph.getAnatEntityOntology(), conditionGraph.getDevStageOntology(),

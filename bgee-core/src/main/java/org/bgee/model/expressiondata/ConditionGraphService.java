@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -324,6 +325,20 @@ public class ConditionGraphService extends CommonService {
         
         //TODO: test inference of descendant conditions
         if (inferAncestralConds || inferDescendantConds) {
+            //We don't want to propagate to non-informative anat. entities,
+            //except to the root of the anat. entities and the root of the cell types.
+            //Of note, non-informative anat. entities used in annotations are not retrieved
+            //by the method loadNonInformativeAnatEntitiesBySpeciesIds.
+            Set<AnatEntity> nonInformativeAnatEntities = this.getServiceFactory().getAnatEntityService()
+                    .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(speciesId))
+                    .collect(Collectors.toSet());
+            AnatEntity rootAnatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+            Set<AnatEntity> anatNonInformatives = new HashSet<>(nonInformativeAnatEntities);
+            anatNonInformatives.remove(rootAnatEntity);
+            AnatEntity rootCellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+            Set<AnatEntity> cellTypeNonInformatives = new HashSet<>(nonInformativeAnatEntities);
+            cellTypeNonInformatives.remove(rootCellType);
+
             Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
                 Set<DevStage> propStages = new HashSet<>();
                 propStages.add(cond.getDevStage());
@@ -336,27 +351,34 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
-                Set<AnatEntity> propAnatEntitys = new HashSet<>();
-                propAnatEntitys.add(cond.getAnatEntity());
+                Set<AnatEntity> propAnatEntities = new HashSet<>();
                 if (anatEntityOntToUse != null && cond.getAnatEntityId() != null) {
                     if (inferAncestralConds) {
-                        propAnatEntitys.addAll(anatEntityOntToUse.getAncestors(cond.getAnatEntity()));
+                        propAnatEntities.addAll(anatEntityOntToUse.getAncestors(cond.getAnatEntity()));
                     }
                     if (inferDescendantConds) {
-                        propAnatEntitys.addAll(anatEntityOntToUse.getDescendants(cond.getAnatEntity()));
+                        propAnatEntities.addAll(anatEntityOntToUse.getDescendants(cond.getAnatEntity()));
                     }
+                    //Remove terms we don't want to propagate to
+                    propAnatEntities.removeAll(anatNonInformatives);
                 }
+                //to make sure we don't exclude the annotated term, we add it afterwards
+                propAnatEntities.add(cond.getAnatEntity());
                 
-                Set<AnatEntity> propCellTypes = new HashSet<>();
-                propCellTypes.add(cond.getCellType());
+                Set<AnatEntity> tempPropCellTypes = new HashSet<>();
                 if (cellTypeOntToUse != null && cond.getCellTypeId() != null) {
                     if (inferAncestralConds) {
-                        propCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
+                        tempPropCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
                     }
                     if (inferDescendantConds) {
-                        propCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
+                        tempPropCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
                     }
+                    //Remove terms we don't want to propagate to
+                    tempPropCellTypes.removeAll(cellTypeNonInformatives);
                 }
+                //to make sure we don't exclude the annotated term, we add it afterwards
+                tempPropCellTypes.add(cond.getCellType());
+                Set<AnatEntity> propCellTypes = tempPropCellTypes;
                 
                 Set<Sex> propSexes = new HashSet<>();
                 propSexes.add(cond.getSex());
@@ -380,7 +402,7 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
-                return propAnatEntitys.stream()
+                return propAnatEntities.stream()
                         .flatMap(propAnatEntity -> propStages.stream()
                                 .flatMap(propStage -> propCellTypes.stream()
                                         .flatMap( propCellType -> propSexes.stream()

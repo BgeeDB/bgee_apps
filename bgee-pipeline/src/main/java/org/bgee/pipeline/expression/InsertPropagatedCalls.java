@@ -142,6 +142,18 @@ public class InsertPropagatedCalls extends CallService {
     private final static AtomicLong EXPR_ID_COUNTER = new AtomicLong(0);
     private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
     private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
+
+    /**
+     * A {@code Set} of {@code String}s storing the IDs of anatomical terms corresponding to
+     * the concept "unknown". To allow a simple blacklisting of "unknown" terms, we will remap them
+     * to the root of the anat. entity ontology.
+     */
+    private final static Set<String> UNKNOWN_ANAT_ENTITY_IDS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList("XAO:0003003", "ZFA:0001093")));
+    /**
+     * An {@code AnatEntity} that is the root of the anat. entity ontology.
+     */
+    private final static AnatEntity ROOT_ANAT_ENTITY = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
     
     private final static DataPropagation getSelfDataProp(Set<ConditionDAO.Attribute> condParams) {
         log.traceEntry("{}", condParams);
@@ -3494,7 +3506,12 @@ public class InsertPropagatedCalls extends CallService {
         assert rawCond.getCellType() != null;
         assert rawCond.getSex() != null;
         assert rawCond.getStrain() != null;
-        return log.traceExit(new Condition(rawCond.getAnatEntity(), rawCond.getDevStage(),
+        AnatEntity anatEntityToUse = rawCond.getAnatEntity();
+        //Quick and dirty blacklisting of "unknown" terms, we remap them to the root of the anatEntities
+        if (UNKNOWN_ANAT_ENTITY_IDS.contains(anatEntityToUse.getId())) {
+            anatEntityToUse = ROOT_ANAT_ENTITY;
+        }
+        return log.traceExit(new Condition(anatEntityToUse, rawCond.getDevStage(),
                 rawCond.getCellType(), mapRawDataSexToSex(rawCond.getSex()),
                 mapRawDataStrainToStrain(rawCond.getStrain()), rawCond.getSpecies()));
     }

@@ -26,17 +26,14 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.CallService.Attribute;
-import org.bgee.model.expressiondata.baseelements.CallType;
-import org.bgee.model.expressiondata.baseelements.CallType.Expression;
-import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -57,7 +54,8 @@ import org.supercsv.io.dozer.ICsvDozerBeanWriter;
  * the Bgee database.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Sep. 2020
+ * @author  Julien Wollbrett
+ * @version Bgee 15, May. 2021
  * @since   Bgee 13, Sept. 2016
  */
 public class GenerateExprFile2 extends GenerateDownloadFile {
@@ -73,6 +71,17 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      **/
     private final static List<DataType> DATA_TYPE_ORDER = 
             Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ, DataType.FULL_LENGTH);
+    
+    private final static Map<Attribute, String> CONDITION_FILE_NAME;
+    
+    static {
+        CONDITION_FILE_NAME =  new LinkedHashMap<Attribute, String>();
+        CONDITION_FILE_NAME.put(Attribute.ANAT_ENTITY_ID, "anat");
+        CONDITION_FILE_NAME.put(Attribute.DEV_STAGE_ID, "development");
+        CONDITION_FILE_NAME.put(Attribute.SEX_ID, "sex");
+        CONDITION_FILE_NAME.put(Attribute.STRAIN_ID, "strain");
+    }
+           
 
     /**
      * An {@code Enum} used to define the possible expression file types to be generated.
@@ -170,7 +179,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     }
     
     private static Set<Attribute> convertToAttributes(List<String> argumentList) {
-        log.entry(argumentList);
+        log.traceEntry("{}", argumentList);
         Set<Attribute> attrs = EnumSet.noneOf(Attribute.class);
         fileTypeName: for (String argument: argumentList) {
             for (Attribute element: Attribute.values()) {
@@ -356,7 +365,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private void generateExprFilesForOneSpecies(String fileNamePrefix, Integer speciesId)
             throws UncheckedIOException, IOException {
-        log.entry(fileNamePrefix, speciesId);
+        log.traceEntry("{}, {}",fileNamePrefix, speciesId);
 
         log.debug("Start generating expression files for the species {}, file types {}, and parameters {}...", 
                 speciesId, this.fileTypes, this.params);
@@ -384,30 +393,54 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 new HashMap<>();
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(null, true);
-        ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null, obsDataFilter, null, null, null, null, null);
 
-        // We retrieve calls with all attributes that are not condition parameters,
-        //and we then add the requested condition parameters this.params.
+        // We retrieve calls with all attributes that are not condition parameters.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
                 .filter(a -> !a.isConditionParameter())
+                .filter(a -> !a.equals(Attribute.OBSERVED_DATA))
                 //we also don't want the qualitative expression levels
                 .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
                         !a.equals(Attribute.GENE_QUAL_EXPR_LEVEL))
                 .collect(Collectors.toSet());
-        clnAttr.addAll(this.params);
-
+        
+        // generate ordering attributes
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        if (params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+        
+        // generate expression call filter
+        Map<CallService.Attribute, Boolean> observedDataFilter = new HashMap<>();
+        
+        // update attributes, ordering attributes and observed data filter to add condition
+        // parameters depending on this.param
+        if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            clnAttr.add(CallService.Attribute.ANAT_ENTITY_ID);
+            clnAttr.add(CallService.Attribute.CELL_TYPE_ID);
+            observedDataFilter = ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT;
             serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+            serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
         }
-        if (params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+        if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            clnAttr.add(CallService.Attribute.DEV_STAGE_ID);
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+            observedDataFilter.put(CallService.Attribute.DEV_STAGE_ID, true);
         }
+        if (this.params.contains(CallService.Attribute.SEX_ID)) {
+            clnAttr.add(CallService.Attribute.SEX_ID);
+            serviceOrdering.put(CallService.OrderingAttribute.SEX_ID, Service.Direction.ASC);
+            observedDataFilter.put(CallService.Attribute.SEX_ID, true);
+        }
+        if (this.params.contains(CallService.Attribute.STRAIN_ID)) {
+            clnAttr.add(CallService.Attribute.STRAIN_ID);
+            serviceOrdering.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
+            observedDataFilter.put(CallService.Attribute.STRAIN_ID, true);
+        }
+
+        log.debug(clnAttr);
+        log.debug(observedDataFilter);
+        ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                Collections.singleton(new GeneFilter(speciesId)), null, null,  null, 
+                observedDataFilter);
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
                 callFilter, clnAttr, serviceOrdering)
@@ -520,25 +553,38 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @return              The {@code String} to be used to generate file names.
      */
     private String convertAttributeToFileName(Set<Attribute> attributes) {
-        log.entry(attributes);
+        log.traceEntry("{}", attributes);
         
         assert attributes!= null && !attributes.isEmpty();
         
         List<Attribute> attributeList = new ArrayList<>(attributes);
         Collections.sort(attributeList);
 
-        return log.traceExit(attributes.stream()
+        String joinedAttributes = attributeList.stream()
                 //we use a flatMap to be able to return an empty Stream (avoid having double '_' in file name)
                 .flatMap(a -> {
                     switch (a) {
                         case ANAT_ENTITY_ID:
-                            return Stream.empty();
+                            return Stream.of(CONDITION_FILE_NAME.get(Attribute.ANAT_ENTITY_ID));
                         case DEV_STAGE_ID:
-                            return Stream.of("development");
+                            return Stream.of(CONDITION_FILE_NAME.get(Attribute.DEV_STAGE_ID));
+                        case SEX_ID:
+                            return Stream.of(CONDITION_FILE_NAME.get(Attribute.SEX_ID));
+                        case STRAIN_ID:
+                            return Stream.of(CONDITION_FILE_NAME.get(Attribute.STRAIN_ID));
                         default: 
                             throw new IllegalArgumentException("Attribute not supported: " + a);
                     }})
-                .collect(Collectors.joining("_")));
+                .collect(Collectors.joining("_"));
+        if(joinedAttributes.equals(CONDITION_FILE_NAME.get(Attribute.ANAT_ENTITY_ID))) {
+            return null;
+        } else if (joinedAttributes.equals(CONDITION_FILE_NAME.values()
+                .stream().collect(Collectors.joining("_")))) {
+            return "all_conditions";
+        }
+        return joinedAttributes;
+        
+        
     }
 
     /**
@@ -554,7 +600,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private CellProcessor[] generateExprFileCellProcessors(
             SingleSpExprFileType2 fileType, String[] header) throws IllegalArgumentException {
-        log.entry(fileType, header);
+        log.traceEntry("{}, {}", fileType, header);
 
         List<Object> expressionSummaries = new ArrayList<Object>();
         for (ExpressionSummary sum : ExpressionSummary.values()) {
@@ -583,6 +629,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
+                case STRAIN_COLUMN_NAME:
+                case SEX_COLUMN_NAME:
                 	processors[i] = new StrNotNullOrEmpty();
                 	break;
                 case GENE_NAME_COLUMN_NAME:
@@ -596,6 +644,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     break;
                 case EXPRESSION_SCORE_COLUMN_NAME:
                 case EXPRESSION_RANK_COLUMN_NAME:
+                case FDR_COLUMN_NAME:
                     // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
                     // It could be a Long if we didn't want exponential values
                     // and if all rows had a score and a rank => not the case
@@ -617,49 +666,58 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             	    case EST_DATA_COLUMN_NAME:
             	    case IN_SITU_DATA_COLUMN_NAME:
             	    case RNASEQ_DATA_COLUMN_NAME:
+            	    case FULL_LENGTH_DATA_COLUMN_NAME:
                         processors[i] = new IsElementOf(expressionSummaries);
             	        break;
                     case AFFYMETRIX_QUAL_COLUMN_NAME:
                     case EST_QUAL_COLUMN_NAME:
                     case IN_SITU_QUAL_COLUMN_NAME:
                     case RNASEQ_QUAL_COLUMN_NAME:
+                    case FULL_LENGTH_QUAL_COLUMN_NAME:
                         processors[i] = new IsElementOf(qualitySummaries);
                         break;
-            	    case AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME:
-            	    case AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME:
-            	    case AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME:
-            	    case AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME:
-                    case EST_PRESENT_HIGH_COUNT_COLUMN_NAME:
-                    case EST_PRESENT_LOW_COUNT_COLUMN_NAME:
-                    case IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME:
-                    case IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME:
-                    case IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME:
-                    case IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME:
-                    case RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME:
-                    case RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME:
-                    case RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME:
-                    case RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME:
+                    case AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                    case EST_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                    case IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                    case RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                    case FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                    case SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                    case DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
             	        processors[i] = new LMinMax(0, Long.MAX_VALUE);
             	        break;
             	    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
             	    case EST_OBSERVED_DATA_COLUMN_NAME:
             	    case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
             	    case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
+            	    case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
             	    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
             	        processors[i] = new IsElementOf(originValues);
             	        break;
                     case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
                     case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
                     case AFFYMETRIX_WEIGHT_COLUMN_NAME:
+                    case AFFYMETRIX_FDR_COLUMN_NAME:
                     case EST_EXPRESSION_SCORE_COLUMN_NAME:
                     case EST_EXPRESSION_RANK_COLUMN_NAME:
                     case EST_WEIGHT_COLUMN_NAME:
+                    case EST_FDR_COLUMN_NAME:
                     case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
                     case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
                     case IN_SITU_WEIGHT_COLUMN_NAME:
+                    case IN_SITU_FDR_COLUMN_NAME:
                     case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
                     case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
                     case RNASEQ_WEIGHT_COLUMN_NAME:
+                    case RNASEQ_FDR_COLUMN_NAME:
+                    case FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME:
+                    case FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME:
+                    case FULL_LENGTH_WEIGHT_COLUMN_NAME:
+                    case FULL_LENGTH_FDR_COLUMN_NAME:
                         // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
                         // It could be a Long if we didn't want exponential values
                         // and if all columns had a score and a rank => not the case
@@ -684,12 +742,28 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @return          The {@code Array} of {@code String}s used to produce the header.
      */
     private String[] generateExprFileHeader(SingleSpExprFileType2 fileType) {
-        log.entry(fileType);
+        log.traceEntry("{}",fileType);
         
         String[] headers = null; 
-        int nbColumns = 6 + 2 * this.params.size();
+        int nbColumns = 7;
         if (!fileType.isSimpleFileType()) {
-            nbColumns = 45 + 2 * this.params.size();
+            nbColumns = 55;
+        }
+        for (Attribute attr : this.params) {
+            switch (attr) {
+            // *** attributes common to all file types ***
+            case ANAT_ENTITY_ID: 
+            case DEV_STAGE_ID: 
+                nbColumns += 2;
+                break;
+            case SEX_ID:
+            case STRAIN_ID:
+                nbColumns++;
+                break;
+            default:
+                throw log.throwing(new IllegalArgumentException("[" + attr +"] is not a valid "
+                        + "condition parameter"));
+            }
         }
         headers = new String[nbColumns];
 
@@ -706,51 +780,67 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             headers[idx++] = STAGE_ID_COLUMN_NAME;
             headers[idx++] = STAGE_NAME_COLUMN_NAME;
         }
+        if (this.params.contains(CallService.Attribute.SEX_ID)) {
+            headers[idx++] = SEX_COLUMN_NAME;
+        }
+        if (this.params.contains(CallService.Attribute.STRAIN_ID)) {
+            headers[idx++] = STRAIN_COLUMN_NAME;
+        }
         headers[idx++] = EXPRESSION_COLUMN_NAME;
         headers[idx++] = QUALITY_COLUMN_NAME;
+        headers[idx++] = FDR_COLUMN_NAME;
         headers[idx++] = EXPRESSION_SCORE_COLUMN_NAME;
         headers[idx++] = EXPRESSION_RANK_COLUMN_NAME;
         if (!fileType.isSimpleFileType()) {
             // *** Headers specific to complete file ***
             headers[idx++] = INCLUDING_OBSERVED_DATA_COLUMN_NAME;
+            headers[idx++] = SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_DATA_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_QUAL_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_FDR_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_WEIGHT_COLUMN_NAME;
             headers[idx++] = AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = EST_DATA_COLUMN_NAME;
             headers[idx++] = EST_QUAL_COLUMN_NAME;
+            headers[idx++] = EST_FDR_COLUMN_NAME;
             headers[idx++] = EST_EXPRESSION_SCORE_COLUMN_NAME;
             headers[idx++] = EST_EXPRESSION_RANK_COLUMN_NAME;
             headers[idx++] = EST_WEIGHT_COLUMN_NAME;
             headers[idx++] = EST_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = EST_PRESENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = EST_PRESENT_LOW_COUNT_COLUMN_NAME;
+            headers[idx++] = EST_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = IN_SITU_DATA_COLUMN_NAME;
             headers[idx++] = IN_SITU_QUAL_COLUMN_NAME;
+            headers[idx++] = IN_SITU_FDR_COLUMN_NAME;
             headers[idx++] = IN_SITU_EXPRESSION_SCORE_COLUMN_NAME;
             headers[idx++] = IN_SITU_EXPRESSION_RANK_COLUMN_NAME;
             headers[idx++] = IN_SITU_WEIGHT_COLUMN_NAME;
             headers[idx++] = IN_SITU_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME;
+            headers[idx++] = IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
             headers[idx++] = RNASEQ_DATA_COLUMN_NAME;
             headers[idx++] = RNASEQ_QUAL_COLUMN_NAME;
+            headers[idx++] = RNASEQ_FDR_COLUMN_NAME;
             headers[idx++] = RNASEQ_EXPRESSION_SCORE_COLUMN_NAME;
             headers[idx++] = RNASEQ_EXPRESSION_RANK_COLUMN_NAME;
             headers[idx++] = RNASEQ_WEIGHT_COLUMN_NAME;
             headers[idx++] = RNASEQ_OBSERVED_DATA_COLUMN_NAME;
-            headers[idx++] = RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME;
-            headers[idx++] = RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME;
-            headers[idx++] = RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME;
+            headers[idx++] = RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_DATA_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_QUAL_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_FDR_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_WEIGHT_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME;
+            headers[idx++] = FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME;
         }
         return log.traceExit(headers);
     }
@@ -770,7 +860,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private String[] generateFieldMapping(SingleSpExprFileType2 fileType, String[] header)
             throws IllegalArgumentException {
-        log.entry(fileType, header);
+        log.traceEntry("{}, {}", fileType, header);
         
         //to do a sanity check on species columns in simple files
         Set<DataType> dataTypeFound = new HashSet<DataType>();
@@ -797,6 +887,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case STAGE_NAME_COLUMN_NAME: 
                     mapping[i] = "devStageName";
                     break;
+                case SEX_COLUMN_NAME: 
+                    mapping[i] = "sex";
+                    break;
+                case STRAIN_COLUMN_NAME: 
+                    mapping[i] = "strain";
+                    break;
                 case EXPRESSION_COLUMN_NAME: 
                     mapping[i] = "expression";
                     break;
@@ -808,6 +904,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     break;
                 case EXPRESSION_SCORE_COLUMN_NAME: 
                     mapping[i] = "expressionScore";
+                    break;
+                case FDR_COLUMN_NAME: 
+                    mapping[i] = "fdr";
                     break;
             }
             
@@ -823,6 +922,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 if (header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) { 
                     mapping[i] = "includingObservedData";
                 }
+                
+                if (header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME)) { 
+                    mapping[i] = "selfObservationCount";
+                }
+                
+                if (header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) { 
+                    mapping[i] = "descendantObservationCOunt";
+                }
 
                 //if header found, iterate next column name
                 if (mapping[i] != null) {
@@ -832,53 +939,68 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 // We need to find the data type contains in the header to be able to 
                 // assign the good index to DataExprCounts.
                 // For that, we iterate all data types to retrieve the data.
-                for (DataType dataType: DATA_TYPE_ORDER) {
-                    int index = DATA_TYPE_ORDER.indexOf(dataType);
-
-                    if (header[i].toLowerCase().contains(dataType.getStringRepresentation().toLowerCase())) {
-                        dataTypeFound.add(dataType);
-                        if (header[i].startsWith(OBSERVED_DATA_COLUMN_NAME_PREFIX) 
-                                && header[i].endsWith(OBSERVED_DATA_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].observedData";
-
-                        } else if (header[i].endsWith(PRESENT_HIGH_COUNT_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].presentHighCount";
-                            
-                        } else if (header[i].endsWith(PRESENT_LOW_COUNT_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].presentLowCount";
-                            
-                        } else if (header[i].endsWith(ABSENT_HIGH_COUNT_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].absentHighCount";
-                            
-                        } else if (header[i].endsWith(ABSENT_LOW_COUNT_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].absentLowCount";
-                            
-                        } else if (header[i].endsWith(EXPRESSION_RANK_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].expressionRank";
-
-                        } else if (header[i].endsWith(EXPRESSION_SCORE_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].expressionScore";
-
-                        } else if (header[i].endsWith(WEIGHT_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].weight";
-
-                        } else if (header[i].endsWith(CALL_QUALITY_COLUMN_NAME_SUFFIX)) {
-                            mapping[i] = "dataExprCounts[" + index + "].callQuality";
-
-                        } else if (header[i].endsWith(CALL_TYPE_COLUMN_NAME_SUFFIX)) {
-                            // this should be the last tested because it's the least specific
-                            mapping[i] = "dataExprCounts[" + index + "].callType";
-
-                        } else {
-                            throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                                    + header[i] + " for file type: " + 
-                                    fileType.getStringRepresentation()));
-                        }
-                        assert(mapping[i] != null);
-                        break;
-                    }
+                int index = -1;
+                DataType dataType = null;
+                if (header[i].toLowerCase().contains(AFFYMETRIX_DATATYPE_NAME.toLowerCase())) {
+                    index = DATA_TYPE_ORDER.indexOf(DataType.AFFYMETRIX);
+                    dataType = DataType.AFFYMETRIX;
+                } else if (header[i].toLowerCase().contains(EST_DATATYPE_NAME.toLowerCase())) {
+                    index = DATA_TYPE_ORDER.indexOf(DataType.EST);
+                    dataType = DataType.EST;
+                } else if (header[i].toLowerCase().contains(IN_SITU_DATATYPE_NAME.toLowerCase())) {
+                    index = DATA_TYPE_ORDER.indexOf(DataType.IN_SITU);
+                    dataType = DataType.IN_SITU;
+                } else if (header[i].toLowerCase().contains(FULL_LENGTH_DATATYPE_NAME.toLowerCase())) {
+                    index = DATA_TYPE_ORDER.indexOf(DataType.FULL_LENGTH);
+                    dataType = DataType.FULL_LENGTH;
+                // needs to be after single cell otherwise single cell 
+                // will be map to bulk RNA-Seq
+                } else if (header[i].toLowerCase().contains(RNASEQ_DATATYPE_NAME.toLowerCase())) {
+                    index = DATA_TYPE_ORDER.indexOf(DataType.RNA_SEQ);
+                    dataType = DataType.RNA_SEQ;
+                } else {
+                    throw log.throwing(new IllegalArgumentException("Column does not correspond to "
+                            + "any datatype."));
                 }
+                        
+                dataTypeFound.add(dataType);
+                if (header[i].startsWith(OBSERVED_DATA_COLUMN_NAME_PREFIX) 
+                        && header[i].endsWith(OBSERVED_DATA_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].observedData";
+
+                } else if (header[i].endsWith(EXPRESSION_RANK_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].expressionRank";
+
+                } else if (header[i].endsWith(EXPRESSION_SCORE_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].expressionScore";
+
+                } else if (header[i].endsWith(WEIGHT_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].weight";
+
+                } else if (header[i].endsWith(CALL_QUALITY_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].callQuality";
+
+                } else if (header[i].endsWith(CALL_TYPE_COLUMN_NAME_SUFFIX)) {
+                    // this should be the last tested because it's the least specific
+                    mapping[i] = "dataExprCounts[" + index + "].callType";
+
+                } else if (header[i].endsWith(FDR_COLUMN_NAME_SUFFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].fdr";
+
+                } else if (header[i].startsWith(SELF_OBSERVATION_COUNT_PREFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].selfObservationCount";
+
+                } else if (header[i].startsWith(DESCENDANT_OBSERVATION_COUNT_PREFIX)) {
+                    mapping[i] = "dataExprCounts[" + index + "].descendantObservationCount";
+
+                } else {
+                    throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                            + header[i] + " for file type: " + 
+                            fileType.getStringRepresentation()));
+                }
+                assert(mapping[i] != null);
             }
+
             if (mapping[i] == null) {
                 throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
@@ -910,6 +1032,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case GENE_ID_COLUMN_NAME:
                 case ANAT_ENTITY_ID_COLUMN_NAME:
                 case STAGE_ID_COLUMN_NAME:
+                case CELL_TYPE_ID_COLUMN_NAME:
+                case SEX_COLUMN_NAME:
+                case STRAIN_COLUMN_NAME:
                 case EXPRESSION_COLUMN_NAME:
                 case QUALITY_COLUMN_NAME:
                 case EXPRESSION_RANK_COLUMN_NAME:
@@ -917,47 +1042,58 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
                 case AFFYMETRIX_DATA_COLUMN_NAME:
                 case AFFYMETRIX_QUAL_COLUMN_NAME:
+                case AFFYMETRIX_FDR_COLUMN_NAME:
                 case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
                 case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
                 case AFFYMETRIX_WEIGHT_COLUMN_NAME:
                 case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
-                case AFFYMETRIX_PRESENT_HIGH_COUNT_COLUMN_NAME: 
-                case AFFYMETRIX_PRESENT_LOW_COUNT_COLUMN_NAME: 
-                case AFFYMETRIX_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case AFFYMETRIX_ABSENT_LOW_COUNT_COLUMN_NAME:
+                case AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
                 case EST_DATA_COLUMN_NAME:
                 case EST_QUAL_COLUMN_NAME:
+                case EST_FDR_COLUMN_NAME:
                 case EST_EXPRESSION_RANK_COLUMN_NAME:
                 case EST_EXPRESSION_SCORE_COLUMN_NAME:
                 case EST_WEIGHT_COLUMN_NAME:
                 case EST_OBSERVED_DATA_COLUMN_NAME:
-                case EST_PRESENT_HIGH_COUNT_COLUMN_NAME:
-                case EST_PRESENT_LOW_COUNT_COLUMN_NAME:
+                case EST_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
                 case IN_SITU_DATA_COLUMN_NAME:
                 case IN_SITU_QUAL_COLUMN_NAME:
+                case IN_SITU_FDR_COLUMN_NAME:
                 case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
                 case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
                 case IN_SITU_WEIGHT_COLUMN_NAME:
                 case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
-                case IN_SITU_PRESENT_HIGH_COUNT_COLUMN_NAME: 
-                case IN_SITU_PRESENT_LOW_COUNT_COLUMN_NAME: 
-                case IN_SITU_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case IN_SITU_ABSENT_LOW_COUNT_COLUMN_NAME:
+                case IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
                 case RNASEQ_DATA_COLUMN_NAME:
                 case RNASEQ_QUAL_COLUMN_NAME:
+                case RNASEQ_FDR_COLUMN_NAME:
                 case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
                 case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
                 case RNASEQ_WEIGHT_COLUMN_NAME:
                 case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
-                case RNASEQ_PRESENT_HIGH_COUNT_COLUMN_NAME: 
-                case RNASEQ_PRESENT_LOW_COUNT_COLUMN_NAME: 
-                case RNASEQ_ABSENT_HIGH_COUNT_COLUMN_NAME: 
-                case RNASEQ_ABSENT_LOW_COUNT_COLUMN_NAME:
+                case RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                case FULL_LENGTH_DATA_COLUMN_NAME:
+                case FULL_LENGTH_QUAL_COLUMN_NAME:
+                case FULL_LENGTH_FDR_COLUMN_NAME:
+                case FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME:
+                case FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME:
+                case FULL_LENGTH_WEIGHT_COLUMN_NAME:
+                case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
+                case FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                case SELF_OBSERVATION_COUNT_COLUMN_NAME:
+                case DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
+                case FDR_COLUMN_NAME:
                     quoteMode[i] = false; 
                     break;
                 case GENE_NAME_COLUMN_NAME:
                 case ANAT_ENTITY_NAME_COLUMN_NAME:
                 case STAGE_NAME_COLUMN_NAME:
+                case CELL_TYPE_NAME_COLUMN_NAME:
                     quoteMode[i] = true; 
                     break;
                 default:
@@ -999,7 +1135,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             Map<SingleSpExprFileType2, CellProcessor[]> processors, 
             Map<SingleSpExprFileType2, String[]> headers,
             Stream<ExpressionCall> calls) throws UncheckedIOException {
-        log.entry(writersUsed, processors, headers, calls);
+        log.traceEntry("{}, {}, {}, {}", writersUsed, processors, headers, calls);
 
         // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
         // to try to avoid memory problems
@@ -1015,18 +1151,31 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String devStageId = c.getCondition().getDevStageId();
                 String devStageName = c.getCondition().getDevStage() == null ? null:
                         c.getCondition().getDevStage().getName();
+                String cellTypeId = c.getCondition().getCellTypeId();
+                String cellTypeName = c.getCondition().getCellType() == null ? null:
+                        c.getCondition().getCellType().getName();
+                // manage post composition of anat entity and cell type.
+                // use an intersect symbol to separate the 2 values
+                if(!cellTypeId.equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
+                    anatEntityId += " \u2229 " + cellTypeId;
+                    anatEntityName += " in" + cellTypeName;
+                }
+                String sex = c.getCondition().getSexId();
+                String strain = c.getCondition().getStrainId();
                 String summaryCallType = convertExpressionSummaryToString(c.getSummaryCallType()); 
                 String summaryQuality = convertSummaryQualityToString(c.getSummaryQuality());
                 String expressionRank = c.getMeanRank() == null ? NA_VALUE :
                         c.getFormattedMeanRank();
                 String expressionScore = c.getExpressionScore() == null ? NA_VALUE :
                     c.getFormattedExpressionScore();
-                Boolean includingObservedData = c.getDataPropagation().isIncludingObservedData();
+                String fdr = c.getFirstPValue().getFormatedFDRPValue();
+                Boolean includingObservedData = true; //c.getCallData().stream()
+//                        .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum) > 0 ? true : false;
 
                 if (writerFileType.getKey().isSimpleFileType() && Boolean.TRUE.equals(includingObservedData)) {
                     SingleSpeciesSimpleExprFileBean simpleBean = new SingleSpeciesSimpleExprFileBean(
                         geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
-                        summaryCallType, summaryQuality, expressionRank, expressionScore);
+                        sex, strain, summaryCallType, summaryQuality, expressionRank, expressionScore, fdr);
                     try {
                         writerFileType.getValue().write(simpleBean, processors.get(writerFileType.getKey()));
                         rowCount.getAndIncrement();
@@ -1040,13 +1189,17 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     counts.add(getDataExprCountByDataType(c, DataType.IN_SITU));
                     counts.add(getDataExprCountByDataType(c, DataType.RNA_SEQ));
                     counts.add(getDataExprCountByDataType(c, DataType.FULL_LENGTH));
+                    
+                    Long selfObservationCount = Long.valueOf(c.getCallData().stream()
+                            .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum));
+                    Long descendantObservationCount = Long.valueOf(c.getCallData().stream()
+                            .map(ExpressionCallData::getDescendantObservationCount).reduce(0, Integer::sum));
 
                     SingleSpeciesCompleteExprFileBean completeBean = new SingleSpeciesCompleteExprFileBean(
                             geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
-                            summaryCallType, summaryQuality,
-                            expressionRank, expressionScore,
-                            convertObservedDataToString(includingObservedData),
-                            counts);
+                            sex, strain, summaryCallType, summaryQuality, expressionRank, expressionScore, 
+                            fdr, convertObservedDataToString(includingObservedData), selfObservationCount, 
+                            descendantObservationCount, counts);
                     try {
                         writerFileType.getValue().write(completeBean, processors.get(writerFileType.getKey()));
                         rowCount.getAndIncrement();
@@ -1067,7 +1220,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @return          A {@code DataExprCounts} that is the counts from {@code call} for {@code dataType}.
      */
     private DataExprCounts getDataExprCountByDataType(ExpressionCall call, DataType dataType) {
-        log.entry(call, dataType);
+        log.traceEntry("{}, {}", call, dataType);
 
         ExpressionCall callFromDataType = CallService.deriveCallForDataType(call, dataType);
         
@@ -1079,37 +1232,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             return log.traceExit(new DataExprCounts(dataType,
                     convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
                     convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
-                    this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.HIGH,
-                            PropagationState.ALL),
-                    this.getCountValue(data, CallType.Expression.EXPRESSED, DataQuality.LOW,
-                            PropagationState.ALL),
-                    dataType.equals(DataType.EST)? 0: this.getCountValue(data,
-                            CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH, PropagationState.ALL),
-                    dataType.equals(DataType.EST)? 0: this.getCountValue(data,
-                            CallType.Expression.NOT_EXPRESSED, DataQuality.LOW, PropagationState.ALL),
-                    convertObservedDataToString(callFromDataType.getDataPropagation().isIncludingObservedData()),
+                    callFromDataType.getFirstPValue() == null ? NA_VALUE : callFromDataType.getFirstPValue()
+                            .getFormatedFDRPValue(),
+                    convertObservedDataToString(true),
+                    Long.valueOf(callFromDataType.getCallData().stream()
+                            .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum)),
+                    Long.valueOf(callFromDataType.getCallData().stream()
+                            .map(ExpressionCallData::getDescendantObservationCount).reduce(0, Integer::sum)),
                     callFromDataType.getMeanRank() == null ? NA_VALUE : callFromDataType.getFormattedMeanRank(),
                     callFromDataType.getExpressionScore() == null ? NA_VALUE : callFromDataType.getFormattedExpressionScore(),
                     data.getWeightForMeanRank() == null ? NA_VALUE : data.getWeightForMeanRank().toPlainString()));
         }
-        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, 0L, 0L, 0L, 0L,
-                    convertObservedDataToString(false), NA_VALUE, NA_VALUE, NA_VALUE));
-    }
-
-    /** 
-     * Get the count of an {@code ExpressionCallData} for an {@code Expression},
-     * a {@code DataQuality}, and a {@code PropagationState}.
-     * 
-     * @param callData      An {@code ExpressionCallData} 
-     * @param expression    An {@code Expression}
-     * @param dataQuality   A {@code DataQuality}
-     * @param propState     A {@code PropagationState}
-     * @return              A {@code Long}
-     */
-    private Long getCountValue(ExpressionCallData callData, Expression expression,
-            DataQuality dataQuality, PropagationState propState) {
-        log.entry(callData, expression, dataQuality, propState);
-        return Long.valueOf(callData.getExperimentCount(expression, dataQuality, propState).getCount());
+        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, NA_VALUE, 
+                    convertObservedDataToString(false), 0L, 0L, NA_VALUE, NA_VALUE, NA_VALUE));
     }
 
     /**
@@ -1117,7 +1252,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * holding parameters common to all of them.
      *
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
+     * @version Bgee 15, May. 2021
      * @since   Bgee 13
      */
     public static abstract class SingleSpeciesExprFileBean {
@@ -1128,10 +1263,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private String anatEntityName;
         private String devStageId;
         private String devStageName;
+        private String sex;
+        private String strain;
         private String expression;
         private String callQuality;
         private String expressionRank;
         private String expressionScore;
+        private String fdr;
 
         /**
          * 0-argument constructor of the bean.
@@ -1146,17 +1284,22 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String expression, String callQuality, String expressionRank, String expressionScore) {
+                String sex, String strain, String expression, 
+                String callQuality, String expressionRank, String expressionScore, String fdr) {
             this.geneId = geneId;
             this.geneName = geneName;
             this.anatEntityId = anatEntityId;
             this.anatEntityName = anatEntityName;
             this.devStageId = devStageId;
             this.devStageName = devStageName;
+            this.sex = sex;
+            this.strain = strain;
+            this.devStageName = devStageName;
             this.expression = expression;
             this.callQuality = callQuality;
             this.expressionRank = expressionRank;
             this.expressionScore = expressionScore;
+            this.fdr = fdr;
         }
 
         public String getGeneId() {
@@ -1177,6 +1320,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String getDevStageName() {
             return devStageName;
         }
+        public String getSex() {
+            return sex;
+        }
+        public String getStrain() {
+            return strain;
+        }
         public String getExpression() {
             return expression;
         }
@@ -1188,6 +1337,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         public String getExpressionScore() {
             return expressionScore;
+        }
+        public String getFdr() {
+            return fdr;
         }
         public void setGeneId(String geneId) {
             this.geneId = geneId;
@@ -1207,6 +1359,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setDevStageName(String devStageName) {
             this.devStageName = devStageName;
         }
+        public void setSex(String sex) {
+            this.sex = sex;
+        }
+        public void setStrain(String strain) {
+            this.strain = strain;
+        }
         public void setExpression(String expression) {
             this.expression = expression;
         }
@@ -1219,6 +1377,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setExpressionScore(String expressionScore) {
             this.expressionScore = expressionScore;
         }
+        public void setFdr(String fdr) {
+            this.fdr = fdr;
+        }
 
         @Override
         public int hashCode() {
@@ -1230,10 +1391,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             result = prime * result + ((anatEntityName == null) ? 0 : anatEntityName.hashCode());
             result = prime * result + ((devStageId == null) ? 0 : devStageId.hashCode());
             result = prime * result + ((devStageName == null) ? 0 : devStageName.hashCode());
+            result = prime * result + ((sex == null) ? 0 : sex.hashCode());
+            result = prime * result + ((strain == null) ? 0 : strain.hashCode());
             result = prime * result + ((expression == null) ? 0 : expression.hashCode());
             result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result + ((expressionRank == null) ? 0 : expressionRank.hashCode());
             result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
+            result = prime * result + ((fdr == null) ? 0 : fdr.hashCode());
             return result;
         }
 
@@ -1276,6 +1440,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     return false;
             } else if (!devStageName.equals(other.devStageName))
                 return false;
+            if (sex == null) {
+                if (other.sex != null)
+                    return false;
+            } else if (!sex.equals(other.sex))
+                return false;
+            if (strain == null) {
+                if (other.strain != null)
+                    return false;
+            } else if (!strain.equals(other.strain))
+                return false;
             if (expression == null) {
                 if (other.expression != null)
                     return false;
@@ -1296,6 +1470,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     return false;
             } else if (!expressionScore.equals(other.expressionScore))
                 return false;
+            if (fdr == null) {
+                if (other.fdr != null)
+                    return false;
+            } else if (!fdr.equals(other.fdr))
+                return false;
             return true;
         }
         
@@ -1306,9 +1485,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .append(", geneName=").append(geneName).append(", anatEntityId=").append(anatEntityId)
                 .append(", anatEntityName=").append(anatEntityName)
                 .append(", devStageId=").append(devStageId).append(", devStageName=").append(devStageName)
+                .append(", sex=").append(sex).append(", strain=").append(strain)
                 .append(", expression=").append(expression).append(", callQuality=").append(callQuality)
                 .append(", expressionRank=").append(expressionRank)
-                .append(", expressionScore=").append(expressionScore).append("]");
+                .append(", expressionScore=").append(expressionScore)
+                .append(", fdr=").append(fdr).append("]");
             return builder.toString();
         }
     }
@@ -1317,7 +1498,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * A bean representing a row of a single-species simple expression file. 
      * 
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
+     * @version Bgee 15, May. 2021
      * @since   Bgee 13, Sept. 2016
      */
     public static class SingleSpeciesSimpleExprFileBean extends SingleSpeciesExprFileBean {
@@ -1335,9 +1516,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesSimpleExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String expression, String callQuality, String expressionRank, String expressionScore) {
-            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
-                    expression, callQuality, expressionRank, expressionScore);
+                String sex, String strain, String expression, String callQuality, 
+                String expressionRank, String expressionScore, String fdr) {
+            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, 
+                    strain, expression, callQuality, expressionRank, expressionScore, fdr);
         }
     }
     
@@ -1345,12 +1527,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * A bean representing a row of a single-species complete expression file. 
      *
      * @author  Valentine Rech de Laval
-     * @version Bgee 14, Mar. 2017
+     * @version Bgee 15, May. 2021
      * @since   Bgee 13, Sept. 2016
      */
     public static class SingleSpeciesCompleteExprFileBean extends SingleSpeciesExprFileBean {
 
         private String includingObservedData;
+        private Long selfObservationCount;
+        private Long descendantObservationCount;
         /**
          * See {@link #getDataExprCounts()}.
          */
@@ -1369,11 +1553,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesCompleteExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String expression, String callQuality, String expressionRank, String expressionScore,
-                String includingObservedData, List<DataExprCounts> dataExprCounts) {
-            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
-                    expression, callQuality, expressionRank, expressionScore);
+                String sex, String strain, String expression, String callQuality, String expressionRank, 
+                String expressionScore, String fdr, String includingObservedData, 
+                Long selfObservationCount, Long descendantObservationCount, 
+                List<DataExprCounts> dataExprCounts) {
+            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, strain, 
+                    expression, callQuality, expressionRank, expressionScore, fdr);
             this.includingObservedData = includingObservedData;
+            this.selfObservationCount = selfObservationCount;
+            this.descendantObservationCount = descendantObservationCount;
             this.dataExprCounts = Collections.unmodifiableList(dataExprCounts == null ?
                     new ArrayList<>() : new ArrayList<>(dataExprCounts));
         }
@@ -1383,6 +1571,18 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         public void setIncludingObservedData(String includingObservedData) {
             this.includingObservedData = includingObservedData;
+        }
+        public Long getSelfObservationCount() {
+            return selfObservationCount;
+        }
+        public void setSelfObservationCount(Long selfObservationCount) {
+            this.selfObservationCount = selfObservationCount;
+        }
+        public Long getDescendantObservationCount() {
+            return descendantObservationCount;
+        }
+        public void setDescendantObservationCount(Long descendantObservationCount) {
+            this.descendantObservationCount = descendantObservationCount;
         }
         public List<DataExprCounts> getDataExprCounts() {
             return dataExprCounts;
@@ -1397,6 +1597,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             int result = super.hashCode();
             result = prime * result + ((dataExprCounts == null) ? 0 : dataExprCounts.hashCode());
             result = prime * result + ((includingObservedData == null) ? 0 : includingObservedData.hashCode());
+            result = prime * result + ((selfObservationCount == null) ? 0 : selfObservationCount.hashCode());
+            result = prime * result + ((descendantObservationCount == null) ? 0 : descendantObservationCount.hashCode());
             return result;
         }
 
@@ -1426,6 +1628,20 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             } else if (!includingObservedData.equals(other.includingObservedData)) {
                 return false;
             }
+            if (selfObservationCount == null) {
+                if (other.selfObservationCount != null) {
+                    return false;
+                }
+            } else if (!selfObservationCount.equals(other.selfObservationCount)) {
+                return false;
+            }
+            if (descendantObservationCount == null) {
+                if (other.descendantObservationCount != null) {
+                    return false;
+                }
+            } else if (!descendantObservationCount.equals(other.descendantObservationCount)) {
+                return false;
+            }
             return true;
         }
 
@@ -1433,6 +1649,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("SingleSpeciesCompleteExprFileBean [includingObservedData=").append(includingObservedData)
+                    .append(", selfObservationCount=").append(selfObservationCount).append("]")
+                    .append(", descendantObservationCount=").append(descendantObservationCount).append("]")
                     .append(", dataExprCounts=").append(dataExprCounts).append("]");
             return builder.toString();
         }
@@ -1443,7 +1661,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *
      * @author  Valentine Rech de Laval
      * @author Frederic Bastian
-     * @version Bgee 14, Sep. 2020
+     * @version Bgee 15, May. 2021
      * @since   Bgee 14, Mar. 2017
      */
     public static class DataExprCounts {
@@ -1451,26 +1669,24 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private DataType dataType;
         private String callType;
         private String callQuality;
-        private Long presentHighCount;
-        private Long presentLowCount;
-        private Long absentHighCount;
-        private Long absentLowCount;
+        private String fdr;
         private String observedData;
+        private Long selfObservationCount;
+        private Long descendantObservationCount;
         private String expressionRank;
         private String expressionScore;
         private String weight;
 
-        public DataExprCounts(DataType dataType, String callType, String callQuality,
-                Long presentHighCount, Long presentLowCount, Long absentHighCount, Long absentLowCount,
-                String observedData, String expressionRank, String expressionScore, String weight) {
+        public DataExprCounts(DataType dataType, String callType, String callQuality, String fdr,
+                String observedData, Long selfObservationCount, Long descendantObservationCount, 
+                String expressionRank, String expressionScore, String weight) {
             this.dataType = dataType;
             this.callType = callType;
             this.callQuality = callQuality;
-            this.presentHighCount = presentHighCount;
-            this.presentLowCount = presentLowCount;
-            this.absentHighCount = absentHighCount;
-            this.absentLowCount = absentLowCount;
+            this.fdr= fdr;
             this.observedData = observedData;
+            this.selfObservationCount = selfObservationCount;
+            this.descendantObservationCount = descendantObservationCount;
             this.expressionRank = expressionRank;
             this.expressionScore = expressionScore;
             this.weight = weight;
@@ -1494,35 +1710,29 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public void setCallQuality(String callQuality) {
             this.callQuality = callQuality;
         }
-        public Long getPresentHighCount() {
-            return presentHighCount;
+        public String getFdr() {
+            return fdr;
         }
-        public void setPresentHighCount(Long presentHighCount) {
-            this.presentHighCount = presentHighCount;
-        }
-        public Long getPresentLowCount() {
-            return presentLowCount;
-        }
-        public void setPresentLowCount(Long presentLowCount) {
-            this.presentLowCount = presentLowCount;
-        }
-        public Long getAbsentHighCount() {
-            return absentHighCount;
-        }
-        public void setAbsentHighCount(Long absentHighCount) {
-            this.absentHighCount = absentHighCount;
-        }
-        public Long getAbsentLowCount() {
-            return absentLowCount;
-        }
-        public void setAbsentLowCount(Long absentLowCount) {
-            this.absentLowCount = absentLowCount;
+        public void setFdr(String fdr) {
+            this.fdr = fdr;
         }
         public String getObservedData() {
             return observedData;
         }
         public void setObservedData(String observedData) {
             this.observedData = observedData;
+        }
+        public Long getSelfObservationCount() {
+            return selfObservationCount;
+        }
+        public void setSelfObservationCount(Long selfObservationCount) {
+            this.selfObservationCount = selfObservationCount;
+        }
+        public Long getDescendantObservationCount() {
+            return descendantObservationCount;
+        }
+        public void setDescendantObservationCount(Long descendantObservationCount) {
+            this.descendantObservationCount = descendantObservationCount;
         }
         public String getExpressionRank() {
             return expressionRank;
@@ -1547,16 +1757,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((absentHighCount == null) ? 0 : absentHighCount.hashCode());
-            result = prime * result + ((absentLowCount == null) ? 0 : absentLowCount.hashCode());
             result = prime * result + ((callType == null) ? 0 : callType.hashCode());
             result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
+            result = prime * result + ((descendantObservationCount == null) ? 0 : 
+                descendantObservationCount.hashCode());
             result = prime * result + ((expressionRank == null) ? 0 : expressionRank.hashCode());
             result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());
+            result = prime * result + ((fdr == null) ? 0 : fdr.hashCode());
             result = prime * result + ((observedData == null) ? 0 : observedData.hashCode());
-            result = prime * result + ((presentHighCount == null) ? 0 : presentHighCount.hashCode());
-            result = prime * result + ((presentLowCount == null) ? 0 : presentLowCount.hashCode());
+            result = prime * result + ((selfObservationCount == null) ? 0 : selfObservationCount.hashCode());
             result = prime * result + ((weight == null) ? 0 : weight.hashCode());
             return result;
         }
@@ -1572,20 +1782,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 return false;
             }
             DataExprCounts other = (DataExprCounts) obj;
-            if (absentHighCount == null) {
-                if (other.absentHighCount != null) {
-                    return false;
-                }
-            } else if (!absentHighCount.equals(other.absentHighCount)) {
-                return false;
-            }
-            if (absentLowCount == null) {
-                if (other.absentLowCount != null) {
-                    return false;
-                }
-            } else if (!absentLowCount.equals(other.absentLowCount)) {
-                return false;
-            }
             if (callType == null) {
                 if (other.callType != null) {
                     return false;
@@ -1598,6 +1794,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     return false;
                 }
             } else if (!callQuality.equals(other.callQuality)) {
+                return false;
+            }
+            if (fdr == null) {
+                if (other.fdr != null) {
+                    return false;
+                }
+            } else if (!fdr.equals(other.fdr)) {
                 return false;
             }
             if (dataType != other.dataType) {
@@ -1624,18 +1827,18 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             } else if (!observedData.equals(other.observedData)) {
                 return false;
             }
-            if (presentHighCount == null) {
-                if (other.presentHighCount != null) {
+            if (selfObservationCount == null) {
+                if (other.selfObservationCount != null) {
                     return false;
                 }
-            } else if (!presentHighCount.equals(other.presentHighCount)) {
+            } else if (!selfObservationCount.equals(other.selfObservationCount)) {
                 return false;
             }
-            if (presentLowCount == null) {
-                if (other.presentLowCount != null) {
+            if (descendantObservationCount == null) {
+                if (other.descendantObservationCount != null) {
                     return false;
                 }
-            } else if (!presentLowCount.equals(other.presentLowCount)) {
+            } else if (!descendantObservationCount.equals(other.descendantObservationCount)) {
                 return false;
             }
             if (weight == null) {
@@ -1654,11 +1857,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             builder.append("DataExprCounts [dataType=").append(dataType)
                    .append(", callType=").append(callType)
                    .append(", callQuality=").append(callQuality)
-                   .append(", presentHighCount=").append(presentHighCount)
-                   .append(", presentLowCount=").append(presentLowCount)
-                   .append(", absentHighCount=").append(absentHighCount)
-                   .append(", absentLowCount=").append(absentLowCount)
+                   .append(", fdr=").append(fdr)
                    .append(", observedData=").append(observedData)
+                   .append(", selfObservationCount=").append(selfObservationCount)
+                   .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", expressionRank=").append(expressionRank)
                    .append(", expressionScore=").append(expressionScore)
                    .append(", weight=").append(weight).append("]");

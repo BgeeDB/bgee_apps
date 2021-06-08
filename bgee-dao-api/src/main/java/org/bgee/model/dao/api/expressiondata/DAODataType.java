@@ -29,18 +29,20 @@ public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
     AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
             "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
-            "affymetrixGlobalDistinctRankSum", false),
+            "affymetrixGlobalDistinctRankSum", "affymetrixMaxRank", "affymetrixGlobalMaxRank", false),
     EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
-            "estMaxRank", "estGlobalMaxRank", true),
+            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true),
     IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
-            "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank", true),
+            "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank",
+            "inSituMaxRank", "inSituGlobalMaxRank", true),
     RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
             "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
-            "rnaSeqGlobalDistinctRankSum", false),
+            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false),
     FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
             "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
             "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
-            "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum", false);
+            "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum",
+            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
@@ -108,6 +110,8 @@ public enum DAODataType implements EnumDAOField {
     private final String globalRankNormFieldName;
     private final String rankWeightFieldName;
     private final String globalRankWeightFieldName;
+    private final String condMaxRankFieldName;
+    private final String condGlobalMaxRankFieldName;
     private final boolean rankWeightRelatedToCondition;
 
     /**
@@ -121,7 +125,8 @@ public enum DAODataType implements EnumDAOField {
     private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart,
             String rankFieldName, String globalRankFieldName, String rankNormFieldName,
             String globalRankNormFieldName, String rankWeightFieldName,
-            String globalRankWeightFieldName, boolean rankWeightRelatedToCondition) {
+            String globalRankWeightFieldName, String condMaxRankFieldName,
+            String condGlobalMaxRankFieldName, boolean rankWeightRelatedToCondition) {
         this.stringRepresentation = stringRepresentation;
         this.fieldNamePrefix = fieldNamePrefix;
         this.fieldNamePart = fieldNamePart;
@@ -131,6 +136,8 @@ public enum DAODataType implements EnumDAOField {
         this.globalRankNormFieldName = globalRankNormFieldName;
         this.rankWeightFieldName = rankWeightFieldName;
         this.globalRankWeightFieldName = globalRankWeightFieldName;
+        this.condMaxRankFieldName = condMaxRankFieldName;
+        this.condGlobalMaxRankFieldName = condGlobalMaxRankFieldName;
         this.rankWeightRelatedToCondition = rankWeightRelatedToCondition;
     }
     @Override
@@ -174,6 +181,13 @@ public enum DAODataType implements EnumDAOField {
             return rankWeightFieldName;
         }
         return globalRankWeightFieldName;
+    }
+
+    public String getCondMaxRankFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return condMaxRankFieldName;
+        }
+        return condGlobalMaxRankFieldName;
     }
 
     public boolean isRankWeightRelatedToCondition() {

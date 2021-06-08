@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -409,45 +410,20 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         Set<DAODataType> clonedDataTypes = Collections.unmodifiableSet(
                 dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class): EnumSet.copyOf(dataTypes));
 
-        StringBuilder rankSb = new StringBuilder();
-        StringBuilder globalRankSb = new StringBuilder();
-        boolean first = true;
-        for (DAODataType dataType: clonedDataTypes) {
-            if (!first) {
-                rankSb.append(", ");
-                globalRankSb.append(", ");
-            }
-            String rankField = null;
-            String globalRankField = null;
-            //TODO: to move to DAODataType attributes
-            switch(dataType) {
-            case EST:
-                rankField = "estMaxRank";
-                globalRankField = "estGlobalMaxRank";
-                break;
-            case AFFYMETRIX:
-                rankField = "affymetrixMaxRank";
-                globalRankField = "affymetrixGlobalMaxRank";
-                break;
-            case IN_SITU:
-                rankField = "inSituMaxRank";
-                globalRankField = "inSituGlobalMaxRank";
-                break;
-            case RNA_SEQ:
-                rankField = "rnaSeqMaxRank";
-                globalRankField = "rnaSeqGlobalMaxRank";
-                break;
-            case FULL_LENGTH:
-                rankField = "scRnaSeqFullLengthMaxRank";
-                globalRankField = "scRnaSeqFullLengthGlobalMaxRank";
-                break;
-            default:
-                throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
-            }
+        //As of Bgee 15.0, we always use globalRanks. Maybe we don't need to retrieve both
+        //normal max ranks and global max ranks
+        BiFunction<DAODataType, Boolean, String> dataTypeToMaxRank = (dt, globalRank) -> {
+            String rankField = dt.getCondMaxRankFieldName(globalRank);
+            StringBuilder rankSb = new StringBuilder();
             rankSb.append("IF (").append(rankField).append(" IS NULL, 0, ").append(rankField).append(")");
-            globalRankSb.append("IF (").append(globalRankField).append(" IS NULL, 0, ").append(globalRankField).append(")");
-            first = false;
-        }
+            return rankSb.toString();
+        };
+        String maxRankExpr = clonedDataTypes.stream()
+                .map(dt -> dataTypeToMaxRank.apply(dt, false))
+                .collect(Collectors.joining(", "));
+        String globalMaxRankExpr = clonedDataTypes.stream()
+                .map(dt -> dataTypeToMaxRank.apply(dt, true))
+                .collect(Collectors.joining(", "));
         
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ").append(SPECIES_ID)
@@ -455,17 +431,16 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         if (clonedDataTypes.size() > 1) {
             sb.append("GREATEST(");
         }
-        sb.append(rankSb.toString());
+        sb.append(maxRankExpr);
         if (clonedDataTypes.size() > 1) {
             sb.append(")");
         }
         sb.append(") AS maxRank")
-          //Of note, global max ranks were not generated for bgee v14
           .append(", MAX(");
         if (clonedDataTypes.size() > 1) {
             sb.append("GREATEST(");
         }
-        sb.append(globalRankSb.toString());
+        sb.append(globalMaxRankExpr);
         if (clonedDataTypes.size() > 1) {
             sb.append(")");
         }

@@ -59,7 +59,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
      * @version Bgee 14, Oct. 2018
      * @since   Bgee 14, Oct. 2018
      */
-    protected static class ConditionEntities {
+    public static class ConditionEntities {
         private final Set<AnatEntity> anatEntities;
         private final Set<String> anatEntityIds;
         private final Set<DevStage> devStages;

@@ -29,23 +29,23 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -194,6 +194,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 put("ID", "globalConditionId");
                 put("ANAT_ENTITY_ID", "anatEntityId");
                 put("STAGE_ID", "stageId");
+                put("CELL_TYPE_ID", "cellTypeId");
+                put("SEX_ID", "sex");
+                put("STRAIN_ID", "strain");
                 put("SPECIES_ID", "speciesId");
             }
         }, new LinkedHashMap<String, Integer>() {
@@ -201,6 +204,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 put("ID", Types.INTEGER);
                 put("ANAT_ENTITY_ID", Types.VARCHAR);
                 put("STAGE_ID", Types.VARCHAR);
+                put("CELL_TYPE_ID", Types.VARCHAR);
+                put("SEX_ID", Types.VARCHAR);
+                put("STRAIN_ID", Types.VARCHAR);
                 put("SPECIES_ID", Types.INTEGER);
             }
         }, new LinkedHashMap<String, Boolean>() {
@@ -208,8 +214,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 put("ID", false);
                 // according to the bgee schema anatEntityId could be null. In
                 // reality it is never the case.
-                put("ANAT_ENTITY_ID", true);
-                put("STAGE_ID", true);
+                put("ANAT_ENTITY_ID", false);
+                put("STAGE_ID", false);
+                put("CELL_TYPE_ID", false);
+                put("SEX_ID", false);
+                put("STRAIN_ID", false);                
                 put("SPECIES_ID", false);
             }
         }), GLOBALEXPRESSION_OUTPUT_FILE("global_expression_easy_bgee.tsv", "globalExpression",
@@ -220,6 +229,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         put("SUMMARY_QUALITY", "summaryQuality");
                         put("MEAN_RANK", "rank");
                         put("MEAN_SCORE", "score");
+                        put("FDR_PVALUE", "pValue");
                         put("ORIGIN", "propagationOrigin");
                         put("CALL_TYPE", "callType");
                     }
@@ -230,6 +240,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         put("SUMMARY_QUALITY", Types.VARCHAR);
                         put("MEAN_RANK", Types.DECIMAL);
                         put("MEAN_SCORE", Types.DECIMAL);
+                        put("FDR_PVALUE", Types.DECIMAL);
                         put("ORIGIN", Types.VARCHAR);
                         put("CALL_TYPE", Types.VARCHAR);
                     }
@@ -240,6 +251,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         put("SUMMARY_QUALITY", false);
                         put("MEAN_RANK", false);
                         put("MEAN_SCORE", false);
+                        put("FDR_PVALUE", true);
                         put("ORIGIN", false);
                         put("CALL_TYPE", false);
                     }
@@ -287,6 +299,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     private static String GLOBAL_EXPRESSION_SUMMARY_QUALITY = "SUMMARY_QUALITY";
     private static String GLOBAL_EXPRESSION_MEAN_SCORE = "MEAN_SCORE";
     private static String GLOBAL_EXPRESSION_ORIGIN = "ORIGIN";
+    private static String GLOBAL_EXPRESSION_FDR_PVALUE = "FDR_PVALUE";
     private static String GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE = "CALL_TYPE";
     
     private final static Logger log = LogManager.getLogger(BgeeToEasyBgee.class);
@@ -405,7 +418,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      *            A {@code String} that is the directory where to store files.
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
-        log.entry(inputSpeciesIds, directory);
+        log.traceEntry("{}, {}", inputSpeciesIds, directory);
         SpeciesTOResultSet speciesTOs = getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
@@ -422,47 +435,77 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceExit();
     }
 
-    private void extractGlobalExpressionTable(Map<String, Integer> ensemblIdToBgeeGeneId,
+    private void extractGlobalExpressionTable(Map<String, Integer> ensemblIdToBgeeGeneIds,
             Map<Condition, String> condToConditionId, Integer speciesId, String directory) {
-        log.entry(ensemblIdToBgeeGeneId, condToConditionId, speciesId, directory);
+        log.traceEntry("{}, {}, {}, {}",ensemblIdToBgeeGeneIds, condToConditionId, speciesId, directory);
 
         log.info("Start extracting global expressions for the species {}...", speciesId);
 
         String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                 GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(), GLOBAL_EXPRESSION_MEAN_SCORE, 
+                GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(), GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
+        
+        // init summaryCallTypeQualityFilter
+        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverCallFilter = new HashMap<>();
+        silverCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        silverCallFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
-        // init ordering attributes for anatEntity and devStage
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAnatStage = new LinkedHashMap<>();
-        orderingAnatStage.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        orderingAnatStage.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
-        orderingAnatStage.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        // init ordering attributes
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
+        orderingAttributes.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+        orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        orderingAttributes.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
+        
+        // init geneFilter
+        GeneFilter geneFilter = new GeneFilter(speciesId);
+        
+        // init queried attributes
+        EnumSet<CallService.Attribute> baseAttributes = EnumSet.of(
+                CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.CELL_TYPE_ID,
+                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
+                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
+                //We need the p-value info per data type to know which data types
+                //produced the calls
+                //TODO: reactivate this attribute when the bug allowing to detect propagation
+                // state is fixed.
+                //CallService.Attribute.OBSERVED_DATA,
+                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
+                //We also want to know the global FDR-corrected p-value
+                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
 
-        // init ordering attributes for anatEntity only
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAnatOnly = new LinkedHashMap<>();
-        orderingAnatOnly.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        orderingAnatOnly.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        // return calls with SILVER quality for anat. entities
+         List<ExpressionCall> silverAnatCalls =serviceFactory.getCallService().loadExpressionCalls(
+                new ExpressionCallFilter(silverCallFilter, 
+                        Collections.singleton(geneFilter), 
+                        ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT), 
+                baseAttributes, orderingAttributes).collect(Collectors.toList());
+                
+         final List<Map<String, String>> callsInformation = getGlobalExpressionMap(silverAnatCalls, 
+                 ensemblIdToBgeeGeneIds, condToConditionId);
+         
+         
+        // return calls with SILVER quality for all condition parameters
+         EnumSet<CallService.Attribute> allCondParamAttrs = EnumSet.copyOf(baseAttributes);
+         allCondParamAttrs.addAll(CallService.Attribute.getAllConditionParameters());
+         ConditionEntities condEntities = new ConditionEntities(silverAnatCalls.stream()
+                 .map(c -> c.getCondition())
+                 .collect(Collectors.toSet()));
 
-        // return calls where both anatEntity and devStage are not null AND with
-        // a SILVER quality
-        final List<Map<String, String>> callsInformation = 
-                getGlobalExpressionMap(speciesId, ensemblIdToBgeeGeneId, condToConditionId,
-                        EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.DATA_QUALITY,
-                        		CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID, 
-                                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
-                                CallService.Attribute.CALL_TYPE, CallService.Attribute.OBSERVED_DATA),
-                        orderingAnatStage);
-
-        // return calls with null devStage AND with a SILVER quality
+         final List<ExpressionCall> allCondsCalls = serviceFactory.getCallService()
+                 .loadExpressionCalls(
+                         new ExpressionCallFilter(silverCallFilter,
+                                 Collections.singleton(geneFilter),
+                                 null,
+                                 null, true, null),
+                         allCondParamAttrs,
+                         orderingAttributes)
+                 .collect(Collectors.toList());
+         
         callsInformation.addAll(
-        		getGlobalExpressionMap(speciesId,
-                        ensemblIdToBgeeGeneId, condToConditionId, EnumSet.of(CallService.Attribute.GENE, 
-                        		CallService.Attribute.DATA_QUALITY, CallService.Attribute.ANAT_ENTITY_ID, 
-                        		CallService.Attribute.MEAN_RANK, 
-                        		CallService.Attribute.EXPRESSION_SCORE, CallService.Attribute.CALL_TYPE, 
-                        		CallService.Attribute.OBSERVED_DATA),
-                        orderingAnatOnly));
+        		getGlobalExpressionMap(allCondsCalls,
+                        ensemblIdToBgeeGeneIds, condToConditionId));
 
         // use TsvFile enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
@@ -472,36 +515,30 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceExit();
     }
 
-    private List<Map<String, String>> getGlobalExpressionMap(Integer speciesId,
-            Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId,
-            Collection<CallService.Attribute> attributes,
-            LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.entry(speciesId, ensemblIdToBgeeGeneId, condToConditionId, attributes, orderingAttributes);
+    private List<Map<String, String>> getGlobalExpressionMap(List<ExpressionCall> expressionCalls,
+            Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId) {
+        log.traceEntry("{}, {}, {}, {}, {}", expressionCalls, ensemblIdToBgeeGeneId, condToConditionId);
 
-        // init summaryCallTypeQualityFilter
-        Map<SummaryCallType.ExpressionSummary, SummaryQuality> silverCallFilter = new HashMap<>();
-        silverCallFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
-        silverCallFilter.put(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
-
-        // init callObservedData
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(null, true);
-        return log.traceExit(serviceFactory.getCallService()
-                .loadExpressionCalls(new ExpressionCallFilter(silverCallFilter,
-                        Collections.singleton(new GeneFilter(speciesId, ensemblIdToBgeeGeneId.keySet())), null, null,
-                        obsDataFilter, null, null, null, null, null), attributes, orderingAttributes)
-                
-
+        return log.traceExit(expressionCalls.stream()
                 .map(call -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
                     Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
-                            call.getCondition().getDevStageId() == null ? null : new DevStage(call.getCondition().getDevStageId()),
-                                    call.getCondition().getCellTypeId() == null ? null : new AnatEntity(call.getCondition().getCellTypeId()),
-                                    call.getCondition().getSexId() == null ? null : new Sex(call.getCondition().getSexId()),
-                                    call.getCondition().getStrainId() == null ? null : new Strain(call.getCondition().getStrainId()),
-                                    new Species(call.getCondition().getSpeciesId()));
+                            call.getCondition().getDevStageId() == null ? 
+                                    new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) : 
+                                    new DevStage(call.getCondition().getDevStageId()),
+                            call.getCondition().getCellTypeId() == null ? 
+                                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) : 
+                                    new AnatEntity(call.getCondition().getCellTypeId()),
+                            call.getCondition().getSex() == null ? 
+                                    new Sex(ConditionDAO.SEX_ROOT_ID) : 
+                                    new Sex(call.getCondition().getSexId()),
+                            call.getCondition().getStrain() == null ? 
+                                    new Strain(ConditionDAO.STRAIN_ROOT_ID) : 
+                                    new Strain(call.getCondition().getStrainId()),
+                            new Species(call.getCondition().getSpeciesId()));
+
                     String conditionId = condToConditionId.get(updatedCond);
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
@@ -511,6 +548,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     headerToValue.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
                     headerToValue.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(call.getDataPropagation()));
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
+                    headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFormatedFDRPValue());
                     return headerToValue;
                 }).collect(Collectors.toList()));
     }
@@ -581,27 +619,32 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     }
 
     private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
-        log.entry(speciesId, directory);
+        log.traceEntry("{}, {}", speciesId, directory);
         log.info("Start extracting global conditions for the species {}...", speciesId);
-        List<ConditionDAO.Attribute> condAttributesAnatAndStage = 
-                Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
-        List<ConditionDAO.Attribute> condAttributesAnat = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+//        List<ConditionDAO.Attribute> condAttributesAnatAndStage = 
+//                Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
+//        List<ConditionDAO.Attribute> condAttributesAnat = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+        
+        DAOConditionFilter condFilterAnatEntity = new DAOConditionFilter(null, Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID), 
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID), Collections.singleton(ConditionDAO.SEX_ROOT_ID), 
+                Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID,
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
-                ConditionDAO.Attribute.SPECIES_ID);
+                ConditionDAO.Attribute.CELL_TYPE_ID, ConditionDAO.Attribute.SEX_ID,
+                ConditionDAO.Attribute.STRAIN_ID, ConditionDAO.Attribute.SPECIES_ID);
         String[] header = new String[] { ConditionDAO.Attribute.ID.name(), 
                 ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), ConditionDAO.Attribute.STAGE_ID.name(), 
-                ConditionDAO.Attribute.SPECIES_ID.name() };
+                ConditionDAO.Attribute.CELL_TYPE_ID.name(), ConditionDAO.Attribute.SEX_ID.name(), 
+                ConditionDAO.Attribute.STRAIN_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name() };
         
-        // Retrieve conditions with devStage = null
+        // Retrieve all conditions
         List<ConditionTO> conditionTOs = getManager().getConditionDAO()
-                .getGlobalConditionsBySpeciesIds(Collections.singleton(speciesId), condAttributesAnat, attributes)
-                .getAllTOs();
-        
-        // Retrieve conditions where both anatEntity and devStage are not null
-        conditionTOs.addAll(getManager().getConditionDAO().getGlobalConditionsBySpeciesIds(
-                Collections.singleton(speciesId), condAttributesAnatAndStage, attributes)
-                .getAllTOs());
+                .getGlobalConditions(Collections.singleton(speciesId), null, attributes).getAllTOs();
+
+//        // Retrieve conditions where both anatEntity and devStage are not null
+//        conditionTOs.addAll(getManager().getConditionDAO().getGlobalConditionsBySpeciesIds(
+//                Collections.singleton(speciesId), condAttributesAnatAndStage, attributes)
+//                .getAllTOs());
         
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {
@@ -609,10 +652,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             headerToValue.put(ConditionDAO.Attribute.ID.name(), String.valueOf(cond.getId()));
             headerToValue.put(ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), cond.getAnatEntityId());
             headerToValue.put(ConditionDAO.Attribute.STAGE_ID.name(), cond.getStageId());
+            headerToValue.put(ConditionDAO.Attribute.CELL_TYPE_ID.name(), cond.getCellTypeId());
+            headerToValue.put(ConditionDAO.Attribute.SEX_ID.name(), cond.getSex().getStringRepresentation());
+            headerToValue.put(ConditionDAO.Attribute.STRAIN_ID.name(), cond.getStrainId());
             headerToValue.put(ConditionDAO.Attribute.SPECIES_ID.name(), String.valueOf(cond.getSpeciesId()));
             return headerToValue;
         })
         .collect(Collectors.toList());
+        
         
         //use TsvFile Enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALCOND_OUTPUT_FILE);

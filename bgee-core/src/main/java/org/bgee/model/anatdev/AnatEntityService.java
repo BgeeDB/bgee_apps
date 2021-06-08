@@ -149,7 +149,9 @@ public class AnatEntityService extends Service {
     /**
      * Retrieves non-informative anatomical entities for the requested species. They
      * correspond to anatomical entities belonging to non-informative subsets in Uberon,
-     * and with no observed data from Bgee (no basic calls of any type in them).
+     * and not used in raw data annotations in Bgee.
+     * <p>
+     * Note: only the ID is populated in the returned {@code AnatEntity}s.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
@@ -159,8 +161,10 @@ public class AnatEntityService extends Service {
     public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
         log.traceEntry("{}", speciesIds);
         
-        return log.traceExit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
-                    speciesIds).stream()
+        return log.traceExit(this.getDaoManager().getAnatEntityDAO()
+                .getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                        EnumSet.of(AnatEntityDAO.Attribute.ID))
+                .stream()
                 .map(AnatEntityService::mapFromTO));
     }
     

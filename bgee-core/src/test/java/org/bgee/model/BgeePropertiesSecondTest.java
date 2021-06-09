@@ -44,6 +44,10 @@ public class BgeePropertiesSecondTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","3.10",
                 bgeeProp.getBioconductorReleaseNumber());
+        assertEquals("Wrong property value retrieved", "genes_index",
+                bgeeProp.getSearchGenesIndex());
+        assertEquals("Wrong property value retrieved", "autocomplete_index",
+                bgeeProp.getSearchAutocompleteIndex());
         assertEquals("Wrong property value retrieved","/filerexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/filecallerwd",

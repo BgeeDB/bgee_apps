@@ -43,6 +43,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "/injectedsphinxurl");
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "/injectedsphinxport");
         prop.put(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY, "injectedbioconductor");
+        prop.put(BgeeProperties.BGEE_SEARCH_INDEX_GENES_KEY, "/injectedsphinxGenesIndex");
+        prop.put(BgeeProperties.BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY, "/injectedsphinxAutocompleteIndex");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
         prop.put(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY, "/injectedrwd");
         prop.put(BgeeProperties.TOP_ANAT_FUNCTION_FILE_KEY, "/injectedfunctionfile");
@@ -61,6 +63,10 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","injectedbioconductor",
                 bgeeProp.getBioconductorReleaseNumber());
+        assertEquals("Wrong property value retrieved","/injectedsphinxGenesIndex",
+                bgeeProp.getSearchGenesIndex());
+        assertEquals("Wrong property value retrieved","/injectedsphinxAutocompleteIndex",
+                bgeeProp.getSearchAutocompleteIndex());
         assertEquals("Wrong property value retrieved","/injectedrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/injectedrwd",

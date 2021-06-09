@@ -288,10 +288,11 @@ public class ServiceFactory implements AutoCloseable {
         log.traceEntry("{}", props);
         return log.traceExit(new GeneMatchResultService(props, this));
     }
-    public GeneMatchResultService getGeneMatchResultService(SphinxClient sphinxClient) {
-        log.traceEntry("{}", sphinxClient);
-        return log.traceExit(new GeneMatchResultService(sphinxClient, this));
-    }
+
+//    public GeneMatchResultService getGeneMatchResultService(SphinxClient sphinxClient) {
+//        log.traceEntry("{}", sphinxClient);
+//        return log.traceExit(new GeneMatchResultService(sphinxClient, this, sphinxClient));
+//    }
 
     /**
      * @return  The {@code DAOManager} used by this {@code ServiceFactory} to instantiate services.

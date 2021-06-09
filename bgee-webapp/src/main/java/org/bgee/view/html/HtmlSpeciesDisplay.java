@@ -282,10 +282,11 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         text.append(getFileLi(file, "File with advanced columns"));
         text.append("</ul>");
 
-        text.append("<h3>Anatomical entities and developmental stages</h3>");
+        text.append("<h3>Anatomical entities, developmental stages, sexes and strains</h3>");
         text.append("<ul>");
         condParam = new HashSet<>(Arrays.asList(
-                CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID));
+                CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID,
+                CallService.Attribute.SEX_ID, CallService.Attribute.STRAIN_ID));
         file = this.getCallFile(speciesDataGroup, EXPR_CALLS_SIMPLE, condParam);
         text.append(getFileLi(file, "File without advanced column"));
         file = this.getCallFile(speciesDataGroup, EXPR_CALLS_COMPLETE, condParam);
@@ -330,6 +331,16 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
         section.append(getFileLi(file, "Experiments/libraries annotations and meta data"));
         file = speciesDataGroup.getDownloadFiles().stream()
                 .filter(f -> RNASEQ_DATA.equals(f.getCategory())).findFirst();
+        section.append(getFileLi(file, "Data (read counts, TPMs, and FPKMs)"));
+        section.append("</ul>");
+        
+        section.append("<h3>Single cell full length RNA-Seq</h3>");
+        section.append("<ul>");
+        file = speciesDataGroup.getDownloadFiles().stream()
+                .filter(f -> FULL_LENGTH_ANNOT.equals(f.getCategory())).findFirst();
+        section.append(getFileLi(file, "Experiments/libraries annotations and meta data"));
+        file = speciesDataGroup.getDownloadFiles().stream()
+                .filter(f -> FULL_LENGTH_DATA.equals(f.getCategory())).findFirst();
         section.append(getFileLi(file, "Data (read counts, TPMs, and FPKMs)"));
         section.append("</ul>");
 

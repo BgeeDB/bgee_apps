@@ -32,7 +32,7 @@ var download = {
         $bgeeExprDataFormInputs: null,
         $bgeeExprDataFormSubmit: null,
         $bgeeExprDataFormAnatEntityCheck: null,
-        $bgeeExprDataFormDevStageCheck: null,
+        $bgeeExprDataFormAllCondCheck: null,
         $bgeeExprDataFormAdvancedColumnsYes: null,
         $bgeeExprDataFormAdvancedColumnsNo: null,
         $orthologButtons: null,
@@ -54,6 +54,11 @@ var download = {
         $affyDataCsv: null,
         $affyAnnotCsv: null,
         $affyDataRoot: null,
+        $fullLengthData: null,
+        $fullLengthNoData: null,
+        $fullLengthDataCsv: null,
+        $fullLengthAnnotCsv: null,
+        $fullLengthDataRoot: null,
         $inSituData: null,
         $inSituNoData: null,
         $inSituDataCsv: null,
@@ -116,7 +121,7 @@ var download = {
             this.$bgeeExprDataFormInputs = $( "#expr_data_form input" );
             this.$bgeeExprDataFormSubmit = $( "#download_expr_data" );
             this.$bgeeExprDataFormAnatEntityCheck = $( "#expr_data_form input.anatEntityCheck" );
-            this.$bgeeExprDataFormDevStageCheck = $( "#expr_data_form input.anatEntityCheck" );
+            this.$bgeeExprDataFormAllCondCheck = $( "#expr_data_form input.anatEntityCheck" );
             this.$bgeeExprDataFormAdvancedColumnsYes = $( "#advancedDataRadioYes" );
             this.$bgeeExprDataFormAdvancedColumnsNo = $( "#advancedDataRadioNo" );
             // Data
@@ -138,6 +143,12 @@ var download = {
             this.$rnaSeqDataCsv = $( "#rnaseq_data_csv" );
             this.$rnaSeqAnnotCsv = $( "#rnaseq_annot_csv" );
             this.$rnaSeqDataRoot = $( "#rna_seq_data_root_link" );
+            // Single cell full length RNA-Seq processed expression values
+            this.$fullLengthData = $( "#full_length_data" );
+            this.$fullLengthNoData = $( "#full_length_no_data" );
+            this.$fullLengthDataCsv = $( "#full_length_data_csv" );
+            this.$fullLengthAnnotCsv = $( "#full_length_annot_csv" );
+            this.$fullLengthDataRoot = $( "#full_length_data_root_link" );
             // Affymetrix processed expression values
             this.$affyData = $( "#affy_data" );
             this.$affyNoData = $( "#affy_no_data" );
@@ -341,7 +352,7 @@ var download = {
         /**
          * This function update the URL of the download form button.
          */
-        updateFormURL: function(organStageCompleteFileUrl, organStageSimpleFileUrl,
+        updateFormURL: function(allCondCompleteFileUrl, allCondSimpleFileUrl,
         		organCompleteFileUrl, organSimpleFileUrl) {
         	
         	// Form
@@ -349,15 +360,15 @@ var download = {
             
         	// Get actual form parameters
         	var isAnatEntity = exprDataForm.elements["anatEntityCheck"].checked;
-        	var isDevStage = exprDataForm.elements["devStageCheck"].checked;
+        	var isAllCond = exprDataForm.elements["allCondCheck"].checked;
         	var isAdvancedColumns = exprDataForm.elements["advancedDataRadioYes"].checked;
 
         	var url = undefined;
-        	if (isAnatEntity && isDevStage) {
+        	if (isAnatEntity && isAllCond) {
         		if (isAdvancedColumns) {
-        			url = organStageCompleteFileUrl;
+        			url = allCondCompleteFileUrl;
         		} else {
-        			url= organStageSimpleFileUrl;
+        			url= allCondSimpleFileUrl;
         		}
         	} else {
         		if (isAdvancedColumns) {
@@ -507,8 +518,8 @@ var download = {
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
             var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
             var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
-            var bgeeExprOrganStageSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
-            var bgeeExprOrganStageCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprAllCondSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
+            var bgeeExprAllCondCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
             var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
@@ -518,8 +529,8 @@ var download = {
             var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
             var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
             var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
-            var bgeeExprOrganStageSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage" ]);
-            var bgeeExprOrganStageCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage" ]);
+            var bgeeExprAllCondSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
+            var bgeeExprAllCondCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
             var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");
@@ -531,6 +542,13 @@ var download = {
             var bgeeRNASeqDataRootURL = getUrlForFileCategory(files, "rnaseq_root");
             var bgeeRnaSeqDataFileSize = getSizeForFileCategory(files, "rnaseq_data");
             var bgeeRnaSeqAnnotFileSize = getSizeForFileCategory(files, "rnaseq_annot");
+            
+           // Single cell full length RNA-Seq processed expression values
+            var bgeeFullLengthDataFileUrl = getUrlForFileCategory(files, "full_length_data");
+            var bgeeFullLengthAnnotFileUrl = getUrlForFileCategory(files, "full_length_annot");
+            var bgeeFullLengthDataRootURL = getUrlForFileCategory(files, "full_length_root");
+            var bgeeFullLengthDataFileSize = getSizeForFileCategory(files, "full_length_data");
+            var bgeeFullLengthAnnotFileSize = getSizeForFileCategory(files, "full_length_annot");
 
             // Affymetrix processed expression values
             var bgeeAffyDataFileUrl = getUrlForFileCategory(files, "affy_data");
@@ -624,13 +642,13 @@ var download = {
                 	urlDoc.setURLHash(urlDoc.HASH_DOC_CALL_SINGLE_DIFF());
                 	this.$diffDevHelp.attr( "href", urlDoc.getRequestURL());
                 	this.$diffAnatHelp.attr( "href", urlDoc.getRequestURL());
-                    this.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                    this.updateFormURL( bgeeExprAllCondCompleteFileUrl, bgeeExprAllCondSimpleFileUrl,
                     		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
                 }
             }
             
             this.$bgeeExprDataFormInputs.on("click", function() {
-                download.updateFormURL( bgeeExprOrganStageCompleteFileUrl, bgeeExprOrganStageSimpleFileUrl,
+                download.updateFormURL( bgeeExprAllCondCompleteFileUrl, bgeeExprAllCondSimpleFileUrl,
                 		bgeeExprOrganCompleteFileUrl, bgeeExprOrganSimpleFileUrl );
             });
             
@@ -737,6 +755,20 @@ var download = {
             	this.$affyAnnotCsv.text( "Download experiments/chips info (" + bgeeAffyAnnotFileSize + ")" );
             	this.$affyDataCsv.text( "Download signal intensities (" + bgeeAffyDataFileSize + ")" );
             	this.$affyDataRoot.attr("href", affyExprValuesDirs[id]);
+            }
+            
+         // Single cell full length RNA-Seq processed expression values
+            if (!this.$refExpr.length || bgeeFullLengthDataFileUrl === undefined) {
+            	this.$fullLengthData.hide(); 
+            	this.$fullLengthNoData.show();
+            } else {
+            	this.$fullLengthData.show(); 
+            	this.$fullLengthNoData.hide();
+            	this.$fullLengthDataCsv.attr( "href", bgeeFullLengthDataFileUrl );
+            	this.$fullLengthAnnotCsv.attr( "href", bgeeFullLengthAnnotFileUrl );
+            	this.$fullLengthAnnotCsv.text( "Download experiments/libraries info (" + bgeeFullLengthAnnotFileSize + ")" );
+            	this.$fullLengthDataCsv.text( "Download read counts, TPMs, and FPKMs (" + bgeeFullLengthDataFileSize + ")" );
+            	this.$fullLengthDataRoot.attr("href", fullLengthExprValuesDirs[id]);
             }
 
             // In situ processed expression values

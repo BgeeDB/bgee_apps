@@ -115,7 +115,9 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
             AFFY_ANNOT("affy_annot"),
             AFFY_DATA("affy_data"),
             RNASEQ_ANNOT("rnaseq_annot"),
-            RNASEQ_DATA("rnaseq_data");
+            RNASEQ_DATA("rnaseq_data"),
+            FULL_LENGTH_ANNOT("full_length_annot"),
+            FULL_LENGTH_DATA("full_length_data");
 
             /**
              * Constructor

@@ -96,6 +96,10 @@ public class DownloadFileService extends Service {
                 return log.traceExit(DownloadFile.CategoryEnum.RNASEQ_ANNOT);
             case RNASEQ_DATA:
                 return log.traceExit(DownloadFile.CategoryEnum.RNASEQ_DATA);
+            case FULL_LENGTH_ANNOT:
+                return log.traceExit(DownloadFile.CategoryEnum.FULL_LENGTH_ANNOT);
+            case FULL_LENGTH_DATA:
+                return log.traceExit(DownloadFile.CategoryEnum.FULL_LENGTH_DATA);
             default:
                 throw log.throwing(new IllegalArgumentException("Category not supported: " + daoEnum));
         }

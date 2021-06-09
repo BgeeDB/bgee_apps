@@ -54,7 +54,9 @@ public class DownloadFile {
         AFFY_ANNOT("affy_annot", false),
         AFFY_DATA("affy_data", false),
         RNASEQ_ANNOT("rnaseq_annot", false),
-        RNASEQ_DATA("rnaseq_data", false);
+        RNASEQ_DATA("rnaseq_data", false),
+        FULL_LENGTH_ANNOT("full_length_annot", false),
+        FULL_LENGTH_DATA("full_length_data", false);
 
         /**
          * A {@code String} that is the string representation.

@@ -64,6 +64,10 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
             return log.traceExit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         } else if ("developmentalStage".equals(value)) {
             return log.traceExit(ConditionDAO.Attribute.STAGE_ID);
+        } else if ("sex".equals(value)) {
+            return log.traceExit(ConditionDAO.Attribute.SEX_ID);
+        } else if ("strain".equals(value)) {
+            return log.traceExit(ConditionDAO.Attribute.STRAIN_ID);
         } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized value"));
         }

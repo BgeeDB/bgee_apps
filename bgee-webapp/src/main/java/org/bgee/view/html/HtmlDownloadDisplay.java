@@ -262,8 +262,8 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
     /**
      * Generates a javascript tag defining variables providing mappings 
      * from {@code SpeciesDataGroup} IDs to directories storing 
-     * all Affymetrix and RNA-Seq processed expression values download files, 
-     * for the corresponding group. 
+     * all Affymetrix, RNA-Seq and Single cell Full length processed expression values 
+     * download files, or the corresponding group. 
      * <p>
      * The javascript maps created in the tag are named {@code rna_seq_expr_values_dirs} 
      * and {@code affy_expr_values_dirs}. 
@@ -295,6 +295,16 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 g -> affyRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
             ))
         ));
+        sb.append(";");
+        
+        String fullLengthRootDir = this.prop.getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory();
+        sb.append("var fullLengthExprValuesDirs = ");
+        sb.append(this.getJsonHelper().toJson(groups.stream().filter(SpeciesDataGroup::isSingleSpecies)
+            .collect(Collectors.toMap(
+                SpeciesDataGroup::getId, 
+                g -> fullLengthRootDir + g.getMembers().get(0).getScientificName().replace(" ", "_") + "/"
+            ))
+        ));
         sb.append(";</script>");
         
         return log.traceExit(sb.toString());
@@ -320,7 +330,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
                 + "Click on a species or a group of species to browse files available for download.");
         } else if (pageType == DownloadPageType.PROC_EXPR_VALUES) {
         	intro.append("<p>This page provides annotations and experiment information "
-                    + "(e.g., annotations to anatomy and development, quality scores used in QCs, "
+                    + "(e.g., annotations to anatomy, development, sex and strain, quality scores used in QCs, "
                     + "chip or library information), and processed expression values "
                     + "(e.g., read counts, TPM and FPKM values, log values of Affymetrix "
                     + "probeset normalized signal intensities). Click on a species "
@@ -554,6 +564,24 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
 		
 		banner.append("</div>"); // end of Affy data
 		
+		// Single cell Full Length RNA-Seq data
+        banner.append("<div class='col-xs-12 bgee_download_file_buttons'>");
+        
+        banner.append("<h2>Single cell full length RNA-Seq data</h2>");
+        banner.append("<p id='full_length_no_data' class='no_data'>No data</p>");
+        
+        //data section
+        banner.append("<div id='full_length_data'>");
+        banner.append("<a id='full_length_annot_csv' class='download_link' href='' download></a>" +
+                "<a id='full_length_data_csv' class='download_link' href='' download></a>");
+        banner.append("<p class='file_info'>Files can also be retrieved per experiment, "
+                //href will be filed by the javascript.
+                + "see <a id='full_length_data_root_link' title='Retrieve Single cell full length RNA-Seq data "
+                + "per experiment for this species'>Full length single cell RNA-Seq data directory</a>.</p>");
+        banner.append("</div>"); //end data section
+        
+        banner.append("</div>"); // end Single cell full length RNA-Seq data
+		
 		//TODO uncomment in-situ and EST data in processed values section when files are available
 //		// In situ data
 //		banner.append("<div class='col-xs-12 bgee_download_file_buttons'>");
@@ -613,7 +641,7 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("        <div class='item_category'>Choose condition parameters");
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +
                                         "data-toggle='popover' data-trigger='hover' " +
-                                        "data-content='Only anatomy, or combinations anatomy-development'></span>");
+                                        "data-content='Anatomy, or combination of all conditions (anatomy-development-sex-strain)'></span>");
         banner.append("        </div>");
         banner.append("        <label class='checkbox-inline'>");
         banner.append("            <input type='hidden' name='downloadParam' value='anatEntity'>" );
@@ -622,9 +650,9 @@ public class HtmlDownloadDisplay extends HtmlParentDisplay implements DownloadDi
         banner.append("            Anatomical entity");
         banner.append("        </label>");
         banner.append("        <label class='checkbox-inline'>");
-        banner.append("            <input id='devStageCheck' type='checkbox' " + 
-                                        "name='downloadParam' value='devStage' checked='checked'>");
-        banner.append("            Developmental stage");
+        banner.append("            <input id='allCondCheck' type='checkbox' " + 
+                                        "name='downloadParam' value='allCond' checked='checked'>");
+        banner.append("            All conditions");
         banner.append("        </label>");
         banner.append("        <div class='item_category' >Get advanced columns ");
         banner.append("            <span class='glyphicon glyphicon-question-sign' data-placement='right' " +

@@ -81,6 +81,7 @@ public class CommandRPackage extends CommandParent {
     public final static String SPECIES_EST_PARAM = "EST";
     public final static String SPECIES_IN_SITU_PARAM = "IN_SITU";
     public final static String SPECIES_RNA_SEQ_PARAM = "RNA_SEQ";
+    public final static String SPECIES_FULL_LENGTH_PARAM = "FULL_LENGTH";
 
           /**
      * Constructor
@@ -350,6 +351,7 @@ public class CommandRPackage extends CommandParent {
             requestedAttrs.add(SPECIES_EST_PARAM);
             requestedAttrs.add(SPECIES_IN_SITU_PARAM);
             requestedAttrs.add(SPECIES_RNA_SEQ_PARAM);
+            requestedAttrs.add(SPECIES_FULL_LENGTH_PARAM);
         }
         checkSpeciesAttrs(requestedAttrs);
         //****************************************
@@ -436,7 +438,8 @@ public class CommandRPackage extends CommandParent {
                     && !rqAttr.equals(SPECIES_AFFYMETRIX_PARAM)
                     && !rqAttr.equals(SPECIES_EST_PARAM)
                     && !rqAttr.equals(SPECIES_IN_SITU_PARAM)
-                    && !rqAttr.equals(SPECIES_RNA_SEQ_PARAM)){
+                    && !rqAttr.equals(SPECIES_RNA_SEQ_PARAM)
+                    && !rqAttr.equals(SPECIES_FULL_LENGTH_PARAM)){
                 throw log.throwing(new UnsupportedOperationException(
                         "Attribute parameter not supported: " + rqAttr));
             }

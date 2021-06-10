@@ -186,6 +186,16 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         speMap.put(header[columnNumber], "F");
                         columnNumber++;
                         break;
+                    case CommandRPackage.SPECIES_FULL_LENGTH_PARAM:
+                        if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
+                                .filter(dt -> dt.equals(DataType.FULL_LENGTH)).collect(Collectors.toSet()).size() > 0) {
+                            speMap.put(header[columnNumber], "T");
+                            columnNumber++;
+                            break;
+                        }
+                        speMap.put(header[columnNumber], "F");
+                        columnNumber++;
+                        break;
                     default:
                         throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
                     }

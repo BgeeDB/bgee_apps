@@ -192,10 +192,61 @@ public class DataPropagation {
     public PropagationState getStrainPropagationState() {
         return strainPropagationState;
     }
+
     /**
-     * @return  A {@code Boolean} defining whether the data includes some that were observed 
-     *          in the condition itself, and not only in an ancestor or a descendant. 
-     *          If {@code null}, it means that this information is unknown.  
+     * Returns whether this {@code DataPropagation} is linked to data including observed data,
+     * meaning, not from call propagation only.
+     * <p>
+     * <strong>Warning:</strong>
+     * <ul>
+     * <li>the value returned by this method is informative only when the associated data
+     * were based on calls using <strong>all</strong> condition parameters.
+     * <li>when only one condition parameter was requested, users can use the related
+     * {@code PropagationState} (for instance, when retrieving calls by requesting only
+     * {@code CallService.Attribute.ANAT_ENTITY_ID}, using the value returned by
+     * {@code #getAnatEntityPropagationState()#isIncludingObservedData()}.
+     * <li>when more than one, but not all, condition parameters are requested, for now there is no way
+     * to determine if the call was observed or not. Prior to Bgee 15.0 it was possible,
+     * because we were computing calls for all combinations of condition parameters.
+     * But we don't do that anymore, as we use the roots of the respective ontologies
+     * for condition parameters that we do not want to consider.
+     * </ul>
+     * <p>
+     *
+     * @apiNote this {@code isIncludingObservedData} is problematic when user requested
+     *          more than 1 condition parameter, but not all, for instance,
+     *          {@code CallService.Attribute.ANAT_ENTITY_ID} and {@code CallService.Attribute.DEV_STAGE_ID}:
+     *          <ul>
+     *          <li>when not all condition parameters were requested, this method will almost always
+     *          returns {@code false}, because we will have calls with {@code Condition}s
+     *          using the root of the ontologies for all the condition parameters that were not requested.
+     *          For instance, if we requested {@code CallService.Attribute.ANAT_ENTITY_ID} and
+     *          {@code CallService.Attribute.DEV_STAGE_ID}, we could end up with a call
+     *          in the following {@code Condition}:
+     *          <pre>
+     *          AnatEntity=brain, DevStage=embryo, CellType=cellular_component, Sex=any, Strain=wild-type
+     *          </pre>
+     *          => since the roots of the cell type, sex, and strain ontologies have been targeted,
+     *          most likely we had no data annotated  in this condition, and it will be considered
+     *          propagated. While actually we might have data annotated to:
+     *          <pre>
+     *          AnatEntity=brain and DevStage=embryo (with other cell type, sex, strain info).
+     *          </pre>
+     *          <li>So, what we want really, is to know whether we have data annotated to the condition
+     *          considering only the requested condition parameters. In our example, it means
+     *          considering only {@code anatEntityPropagationState} and {@code devStagePropagationState}.
+     *          But actually, even if both {@code anatEntityPropagationState#isIncludingObservedData()}
+     *          and {@code devStagePropagationState#isIncludingObservedData()} returns {@code true},
+     *          we cannot conclude that {@code isIncludingObservedData()} for the call is {@code true}.
+     *          It is because we could have for instance one experiment providing data in the organ itself,
+     *          but not in the stage itself (e.g., {@code AnatEntity=brain and DevStage=gastrula});
+     *          and another experiment providing data in the stage itself, but not in the organ itself
+     *          (e.g., {@code AnatEntity=hypothalamus and DevStage=embryo}).
+     *          => as a result, both {@code anatEntityPropagationState.isIncludingObservedData()} and
+     *          {@code devStagePropagationState.isIncludingObservedData()} would return {@code true},
+     *          but we would never have observed the call in {@code AnatEntity=brain and DevStage=embryo}.
+     * @return  {@code true} if the related data included observed data, {@code false} otherwise,
+     *          {@code null} if this cannot be determined or the information was not requested.
      */
     public Boolean isIncludingObservedData() {
         return includingObservedData;

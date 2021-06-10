@@ -46,7 +46,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
-import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -1079,9 +1078,10 @@ public class InsertPropagatedCalls extends CallService {
             try {
                 //If all the global conds should have been inserted already
                 if (!this.callPropagator.computeAndInsertGlobalCond &&
-                        condDAO.getGlobalConditionsBySpeciesIds(
+                        condDAO.getGlobalConditions(
                                 Collections.singleton(this.callPropagator.speciesId),
-                                this.callPropagator.condParams, null)
+                                generateDAOConditionFilters(null, this.callPropagator.condParams),
+                                null)
                         .stream().noneMatch(e -> true)) {
                     throw log.throwing(new IllegalStateException(
                             "Global conditions should have been inserted for species " +
@@ -1885,7 +1885,7 @@ public class InsertPropagatedCalls extends CallService {
      * A {@code Set} of {@code ConditionDAO.Attribute}s defining the condition parameters
      * that were requested for queries, allowing to determine how the data should be aggregated.
      */
-    private final Set<ConditionDAO.Attribute> condParams;
+    private final EnumSet<ConditionDAO.Attribute> condParams;
     /**
      * An {@code int} that is the ID of the species to propagate calls for.
      */
@@ -1931,7 +1931,7 @@ public class InsertPropagatedCalls extends CallService {
                     "geneRowCount must be provided if geneOffset is provided"));
         }
         this.serviceFactorySupplier = serviceFactorySupplier;
-        this.condParams = Collections.unmodifiableSet(new HashSet<>(condParams));
+        this.condParams = EnumSet.copyOf(condParams);
         this.speciesId = speciesId;
         this.geneOffset = geneOffset;
         this.geneRowCount = geneRowCount;
@@ -2053,8 +2053,10 @@ public class InsertPropagatedCalls extends CallService {
             log.info("{} Conditions for species {}", rawCondMap.size(), speciesId);
             //Retrieve the global conditions and mappings to raw conditions already inserted
             final Map<Condition, Integer> globalCondAlreadyInserted = loadGlobalConditionMap(
-                    Collections.singleton(species), this.condParams,
-                    null, mainManager.getConditionDAO(),
+                    Collections.singleton(species),
+                    generateDAOConditionFilters(null, this.condParams),
+                    null,
+                    mainManager.getConditionDAO(),
                     this.getServiceFactory().getAnatEntityService(),
                     this.getServiceFactory().getDevStageService(),
                     this.getServiceFactory().getSexService(),

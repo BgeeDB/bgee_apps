@@ -12,9 +12,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -41,12 +39,8 @@ import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.Ontology;
@@ -684,33 +678,29 @@ public class GenerateRankFile {
         //all data from one gene at a time, for clustering and redundancy discovery. 
         //The ordering by rank is not mandatory, for a given gene we are going to reorder anyway
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
         //XXX: originally we wanted to order using ExpressionCall.RankComparator, 
         //to detect redundant calls and order most precise conditions first, 
         //but it is too slow, so we do a basic ordering in the query
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
         if (!anatEntityOnly) {
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         }
         
         Set<CallService.Attribute> attrs = EnumSet.of(
-                CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
+                CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.CELL_TYPE_ID,
                 CallService.Attribute.MEAN_RANK);
         if (!anatEntityOnly) {
             attrs.add(CallService.Attribute.DEV_STAGE_ID);
         }
-
-        Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
-        obsDataFilter.put(CallType.Expression.EXPRESSED, true);
 
         // Do not want to create a List containing only one null value
         List<DataType> dataTypeFilters = null;
         if(dataType != null){
             dataTypeFilters = Arrays.asList(dataType);
         }
-        
-        Map<ExpressionSummary, SummaryQuality> summarySilverCallTypeQualityFilter = new HashMap<>();
-        summarySilverCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         
         // XXX: deactivate this until MySQLExpressionCallDAO is debugged.
         // if (dataType == null) {
@@ -721,70 +711,25 @@ public class GenerateRankFile {
         // if anatEntity only we need to retrieve silver calls for anat entity and then retrieve
         // bronze calls for condition in order to retrieve the smallest rank for all dev stages.
         if (anatEntityOnly) {
-            Stream<ExpressionCall> organCalls = service.loadExpressionCalls(
-                    new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
-                            Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters, obsDataFilter,
-                            true, null, null, null, null),
+            return log.traceExit(service.loadExpressionCalls(
+                    new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
+                            Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
+                            null, ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
                     //service ordering is null because we need to retrieve highest rank for bronze organ-stage calls
                     //before sorting by rank
-                    attrs, null);
-
-            attrs.add(CallService.Attribute.DEV_STAGE_ID);
-            serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-            Map<ExpressionSummary, SummaryQuality> summaryCondCallTypeQualityFilter = new HashMap<>();
-            summaryCondCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
-
-            // Create a Map of Map where first key is the ensembl geneId, second
-            // key is an anatEntityId and the value is the highest rank
-            Map<String, Map<String, BigDecimal>> minRankByAnatEntityIdByGeneId =
-                    service.loadExpressionCalls(
-                                new ExpressionCallFilter(summaryCondCallTypeQualityFilter,
-                                        Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
-                                        obsDataFilter, true, true, true, true, true),
-                                attrs, serviceOrdering)
-                            .collect(Collectors.groupingBy(
-                                    c -> c.getGene().getEnsemblGeneId(),
-                                    Collectors.toMap(c -> c.getCondition().getAnatEntityId(),
-                                            c -> c.getMeanRank(),
-                                            (l1, l2) -> {
-                                                if (l1.compareTo(l2) > 0) {
-                                                    return l2;
-                                                }
-                                                return l1;
-                                            }))
-                            );
-            
-            //Create a comparator that will be used to order ExpressionCall. Once we retrieved the best 
-            //rank for each ExpressionCall we can order them.
-            Comparator<ExpressionCall> callComparator = Comparator
-                    .comparing((ExpressionCall call) -> call.getGene().getEnsemblGeneId())
-                    .thenComparing(call -> call.getMeanRank())
-                    .thenComparing(call -> call.getCondition().getAnatEntityId());
-            
-            return log.traceExit(organCalls
-                    .map(call -> {
-                        BigDecimal minRank = minRankByAnatEntityIdByGeneId.get(call.getGene().getEnsemblGeneId())
-                                .get(call.getCondition().getAnatEntityId());
-                        if (minRank == null) {
-                            throw log.throwing(new IllegalStateException("Minimum rank should not be null for gene "
-                                    + call.getGene().getEnsemblGeneId() + " and anat. entity "
-                                    + call.getCondition().getAnatEntityId() +".\n"
-                                    + "One anat. entity only condition has no corresponding anatEntity + devStage condition"));
-                        }
-                        return new ExpressionCall(call.getGene(), call.getCondition(), call.getDataPropagation(), 
-                                call.getSummaryCallType(), call.getSummaryQuality(), call.getCallData(), 
-                                new ExpressionLevelInfo(minRank));
-                    })
-                    .sorted(callComparator));
+                    attrs, null));
         }
 
         // Now, we manage the retrieving of calls by considering anatEntity and devStage
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         attrs.add(CallService.Attribute.DEV_STAGE_ID);
         return log.traceExit(service.loadExpressionCalls(
-                new ExpressionCallFilter(summarySilverCallTypeQualityFilter,
+                new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
                         Collections.singleton(new GeneFilter(speciesId)),
-                        null, dataTypeFilters, obsDataFilter, true, true, true, true, true),
+                        null, dataTypeFilters, null,
+                        EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
+                                CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.DEV_STAGE_ID)
+                        .stream().collect(Collectors.toMap(a -> a, a -> true))),
                 attrs,
                 serviceOrdering));
 

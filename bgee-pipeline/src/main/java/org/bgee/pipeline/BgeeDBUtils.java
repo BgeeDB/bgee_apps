@@ -273,8 +273,9 @@ public class BgeeDBUtils {
         Map<String, Set<String>> relativesMap = new HashMap<String, Set<String>>();
         try {
             if (anatEntityRelatives) {
-                relTORs = relationDAO.getAnatEntityRelationsBySpeciesIds(
-                        speciesIds, EnumSet.of(RelationType.ISA_PARTOF), null);
+                relTORs = relationDAO.getAnatEntityRelations(speciesIds, true, null, null, null,
+                        EnumSet.of(RelationType.ISA_PARTOF), null,
+                        EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID));
             } else {
                 relTORs = relationDAO.getStageRelationsBySpeciesIds(speciesIds, null);
             }

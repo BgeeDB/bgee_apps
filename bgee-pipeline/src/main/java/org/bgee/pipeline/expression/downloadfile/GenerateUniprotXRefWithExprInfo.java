@@ -176,7 +176,9 @@ public class GenerateUniprotXRefWithExprInfo {
         final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
         final EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
         final Map<Integer, ConditionGraph> condGraphBySpeId = Collections.unmodifiableMap(speciesIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> condGraphService.loadConditionGraph(id, allCondParams))));
+                .collect(Collectors.toMap(id -> id,
+                        id -> condGraphService.loadConditionGraphFromSpeciesIds(
+                                Collections.singleton(id), null, allCondParams))));
         //Release resources before launching analyses in several threads
         serviceFactory.close();
         

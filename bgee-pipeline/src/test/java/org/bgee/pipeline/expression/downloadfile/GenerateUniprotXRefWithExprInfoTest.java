@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -164,8 +165,10 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
         ConditionGraph graphSpe1 = mock(ConditionGraph.class);
         ConditionGraph graphSpe2 = mock(ConditionGraph.class);
-        when(condGraphService.loadConditionGraph(sp1.getId(), allCondParams)).thenReturn(graphSpe1);
-        when(condGraphService.loadConditionGraph(sp2.getId(), allCondParams)).thenReturn(graphSpe2);
+        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp1.getId()),
+                null, allCondParams)).thenReturn(graphSpe1);
+        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp2.getId()),
+                null, allCondParams)).thenReturn(graphSpe2);
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                 new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene1);

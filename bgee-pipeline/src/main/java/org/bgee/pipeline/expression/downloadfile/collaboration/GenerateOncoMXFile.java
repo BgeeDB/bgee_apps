@@ -190,10 +190,10 @@ public class GenerateOncoMXFile {
                         Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds,
                                 null, null, null)),
                         DATA_TYPES, //data requested by OncoMX only
-                        obsDataFilter, //only observed data
-                        //no filter on observed data in anat. entity and stage,
-                        //it will anyway be both from the previous filter
-                        null, null, null, null, null
+                        null,
+                        EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID)
+                        .stream()
+                        .collect(Collectors.toMap(a -> a, a -> true))
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {
@@ -213,7 +213,7 @@ public class GenerateOncoMXFile {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         return log.traceExit(serviceOrdering);

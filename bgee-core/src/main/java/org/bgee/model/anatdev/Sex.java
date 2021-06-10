@@ -29,7 +29,7 @@ public class Sex extends NamedEntity<String> implements OntologyElement<Sex, Str
      * @throws IllegalArgumentException     if {@code id} is blank. 
      **/
     public Sex(String id) {
-        super(id);
+        super(id, id, null);
         Set <String> allowedSexRepresentations = SexEnum.getAllowedRepresentations();
         if(!allowedSexRepresentations.contains(id)) {
             throw log.throwing(new IllegalArgumentException("Can only use values from ["

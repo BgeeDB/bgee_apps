@@ -19,7 +19,7 @@ public class Strain extends NamedEntity<String> implements OntologyElement<Strai
      * @throws IllegalArgumentException     if {@code id} is blank. 
      **/
     public Strain(String id) {
-        super(id.trim());
+        super(id.trim(), id.trim(), null);
     }
 
     //We need to reimplement equals/hashCode (usually, it is not necessary for subclasses of Entity,

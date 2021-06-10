@@ -349,7 +349,11 @@ public class CommonService extends Service {
                     if (e.getValue().equals(retrievedGeneIds)) {
                         return null;
                     }
-                    Set<String> offendingGeneIds = e.getValue().stream()
+                    Set<String> offendingGeneIds =
+                            //Maybe no gene at all were retrieved based on the GeneFilter
+                            retrievedGeneIds == null? new HashSet<>(e.getValue()):
+                            //Otherwise, find the missing genes
+                            e.getValue().stream()
                             .filter(id -> !retrievedGeneIds.contains(id))
                             .collect(Collectors.toSet());
                     return new AbstractMap.SimpleEntry<>(e.getKey(), offendingGeneIds);

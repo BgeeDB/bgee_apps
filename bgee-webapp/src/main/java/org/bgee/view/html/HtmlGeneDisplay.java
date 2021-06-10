@@ -1217,12 +1217,18 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //TODO: there should be a better mechanism to handle that, and definitely not in the view, 
         //it is not its role to determine what is of low confidence...
         //Maybe create in bgee-core a new RankScore class, storing the rank and the confidence.
-        EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+
+        //For the gene page, for now we always consider all data types, so we retrieve the FDR
+        //computed by taking into account all data types
+        String fdr = htmlEntities(call.getPValueWithEqualDataTypes(EnumSet.allOf(DataType.class))
+                .getFormatedFDRPValue());
+        //Now, we also want to know which data types have data supporting this call
+        EnumSet<DataType> dataTypesWithData = call.getCallData().stream().map(ExpressionCallData::getDataType)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-        String fdr = htmlEntities(call.getPValueWithEqualDataTypes(dataTypes).getFormatedFDRPValue());
-        if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-                (dataTypes.contains(DataType.AFFYMETRIX) || 
-                dataTypes.contains(DataType.RNA_SEQ) || 
+        if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) &&
+                (dataTypesWithData.contains(DataType.AFFYMETRIX) ||
+                 dataTypesWithData.contains(DataType.RNA_SEQ) ||
+                 dataTypesWithData.contains(DataType.FULL_LENGTH) ||
                 call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
             return log.traceExit(fdr);
         }

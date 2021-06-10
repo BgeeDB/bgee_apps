@@ -2151,7 +2151,8 @@ public class CallService extends CommonService {
         if (callData == null || callData.isEmpty() || callData.stream()
                 .anyMatch(cd -> cd.getDataPropagation() == null ||
                         cd.getDataPropagation().isIncludingObservedData() == null)) {
-            throw log.throwing(new IllegalArgumentException("Missing info for inferring data propagation"));
+            throw log.throwing(new IllegalArgumentException(
+                    "Missing info for inferring data propagation. CallData: " + callData));
         }
         return log.traceExit(callData.stream()
                 .map(cd -> cd.getDataPropagation())

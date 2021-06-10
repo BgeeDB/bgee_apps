@@ -1431,9 +1431,12 @@ implements GlobalExpressionCallDAO {
             }
             if (!infoFound || (conditionObservedData == null
                     && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
-                    && selfObservationCount == null && descendantObservationCount == null
-                    && fdrPValue == null && bestDescendantFDRPValue == null
-                    && rank == null && rankNorm == null
+                    && (selfObservationCount == null || selfObservationCount == 0)
+                    && (descendantObservationCount == null || descendantObservationCount == 0)
+                    && fdrPValue == null
+                    && bestDescendantFDRPValue == null
+                    && rank == null
+                    && rankNorm == null
                     //Bug fix: for EST and in situ data, weightForMeanRank is retrieved from globalCond table,
                     //not globalExpression table. It means we can have a non-null value for weightForMeanRank
                     //even if there is no EST or in situ data for this call.

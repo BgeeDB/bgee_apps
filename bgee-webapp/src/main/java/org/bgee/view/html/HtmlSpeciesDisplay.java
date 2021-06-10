@@ -268,7 +268,7 @@ public class HtmlSpeciesDisplay extends HtmlParentDisplay implements SpeciesDisp
 
         text.append("<p>Bgee provides calls of presence/absence of expression. Each call " +
                 "corresponds to a unique combination of a gene, an anatomical entity, " +
-                "and a life stage, with reported presence or absence of expression. " +
+                "a life stage, a sex, and a strain, with reported presence or absence of expression. " +
                 "More information in our <a href='").append(urlDoc.getRequestURL())
                 .append("'>documentation</a></p>");
 

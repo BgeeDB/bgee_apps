@@ -149,7 +149,7 @@ public class AnatEntityService extends Service {
     /**
      * Retrieves non-informative anatomical entities for the requested species. They
      * correspond to anatomical entities belonging to non-informative subsets in Uberon,
-     * and not used in raw data annotations in Bgee.
+     * and not used in raw data annotations in Bgee (expression data and similarity annotations).
      * <p>
      * Note: only the ID is populated in the returned {@code AnatEntity}s.
      * 

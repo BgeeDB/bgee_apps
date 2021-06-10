@@ -188,6 +188,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
 
         String condTabName = "cond";
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
+        String similarityTabName = "similarityAnnotationToAnatEntityId";
 
         if (isSpeciesFilter) {
             sql += " INNER JOIN " + anatEntTaxConstTabName + " ON " +
@@ -201,7 +202,10 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                    "))";
         }
         sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName
-                        + " WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+                        + " WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId "
+                        + "OR " + condTabName + ".cellTypeId = " + tableName + ".anatEntityId)"
+             + " AND NOT EXISTS (SELECT 1 FROM " + similarityTabName
+                        + " WHERE " + similarityTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.

@@ -142,7 +142,7 @@ public interface AnatEntityDAO extends DAO<AnatEntityDAO.Attribute> {
 
     /**
      * Retrieves non-informative anatomical entities that are non-informative
-     * and not used in raw data annotations.
+     * and not used in raw data annotations (expression data and similarity annotations).
      * <p>
      * The non-informative anatomical entities are retrieved and returned as
      * a {@code AnatEntityTOResultSet}. It is the responsibility of the caller to close

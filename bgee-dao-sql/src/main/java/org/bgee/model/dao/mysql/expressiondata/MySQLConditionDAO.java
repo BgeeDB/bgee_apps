@@ -244,7 +244,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                     .append(" = ").append(condTableName).append(".").append(a.getTOFieldName())
                     .append(" OR ")
                     .append(globalCondTableName).append(".").append(a.getTOFieldName())
-                    .append(" = ").append(a.getRootId()).append(" AND (")
+                    .append(" = '").append(a.getRootId()).append("' AND (")
                     .append(condTableName).append(".").append(a.getTOFieldName())
                     .append(" IS NULL");
                     //Here we treat special cases
@@ -253,13 +253,14 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         .append(" IN (")
                         .append(Arrays.stream(RawDataConditionTO.DAORawDataSex.values())
                                 .filter(s -> !s.isInformative())
-                                .map(s -> s.getStringRepresentation())
+                                .map(s -> "'" + s.getStringRepresentation() + "'")
                                 .collect(Collectors.joining(", ")))
                         .append(")");
                     } else if (a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
                         sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
                         .append(" IN (")
                         .append(RawDataConditionDAO.NO_INFO_STRAINS.stream()
+                                .map(s -> "'" + s + "'")
                                 .collect(Collectors.joining(", ")))
                         .append(")");
                     }

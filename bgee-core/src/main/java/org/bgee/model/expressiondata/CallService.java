@@ -515,10 +515,6 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
 
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderBy =
-                new LinkedHashMap<>();
-        orderBy.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
-
         EnumSet<CallService.Attribute> baseAttributes = EnumSet.of(
                 CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
                 CallService.Attribute.CELL_TYPE_ID,
@@ -533,13 +529,19 @@ public class CallService extends CommonService {
         //**************************************************
         // Load silver organ calls
         //**************************************************
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderByOrgan =
+                new LinkedHashMap<>();
+        orderByOrgan.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
+        orderByOrgan.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        orderByOrgan.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
+        
         List<ExpressionCall> organCalls = this
                 .loadExpressionCalls(
                         new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
                                 Collections.singleton(geneFilter),
                                 ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
                         baseAttributes,
-                        orderBy)
+                        orderByOrgan)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
             log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
@@ -549,6 +551,15 @@ public class CallService extends CommonService {
         //**************************************************
         // Load bronze calls with all condition Parameters
         //**************************************************
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderByAllCond =
+                new LinkedHashMap<>();
+        orderByAllCond.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
+        orderByAllCond.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        orderByAllCond.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
+        orderByAllCond.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
+        orderByAllCond.put(CallService.OrderingAttribute.SEX_ID, Service.Direction.ASC);
+        orderByAllCond.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
+        
         EnumSet<CallService.Attribute> allCondParamAttrs = EnumSet.copyOf(baseAttributes);
         allCondParamAttrs.addAll(CallService.Attribute.getAllConditionParameters());
         ConditionEntities condEntities = new ConditionEntities(organCalls.stream()
@@ -562,7 +573,7 @@ public class CallService extends CommonService {
                                 Collections.singleton(new ConditionFilter(condEntities, null)),
                                 null, true, null),
                         allCondParamAttrs,
-                        orderBy)
+                        orderByAllCond)
                 .collect(Collectors.toList());
         
         return log.traceExit(this.loadCondCallsBySilverAnatEntityCalls(

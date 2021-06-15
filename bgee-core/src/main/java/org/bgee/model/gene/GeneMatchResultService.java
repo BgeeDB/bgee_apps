@@ -42,7 +42,8 @@ public class GeneMatchResultService extends CommonService {
      */
     private final static Logger log = LogManager.getLogger(GeneMatchResultService.class.getName());
 
-
+    // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
+    private static final int SPHINX_CONNECT_TIMEOUT = 3000;
     private static final String SPHINX_SEPARATOR = "\\|\\|";
     /**
      * @see #getSphinxClient()
@@ -70,6 +71,7 @@ public class GeneMatchResultService extends CommonService {
     public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGenesIndex,
             String sphinxAutocompleteIndex) {
         super(serviceFactory);
+        sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
         this.sphinxGenesIndex = sphinxGenesIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;

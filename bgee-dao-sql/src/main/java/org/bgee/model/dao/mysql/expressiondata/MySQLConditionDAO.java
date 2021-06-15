@@ -177,11 +177,16 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 new HashSet<>(): new HashSet<>(speciesIds));
         final LinkedHashSet<DAOConditionFilter> condFilters = conditionFilters == null?
                 new LinkedHashSet<>(): new LinkedHashSet<>(conditionFilters);
+        if (condFilters.stream().map(condFilter -> condFilter.getObservedCondForParams())
+                .collect(Collectors.toSet()).size() > 1) {
+            throw log.throwing(new IllegalStateException(
+                    "Handling of several different getObservedCondForParams not yet implemented."));
+        }
         final Set<ConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
         //do we need a join to the cond table
         boolean observedConditionFilter = condFilters.stream()
-                .anyMatch(condFilter -> condFilter.getObservedConditions() != null);
+                .anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty());
         final String tableName = "globalCond";
         final String condTableName = "cond";
 
@@ -199,7 +204,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 true, 
                 attrs)).append(" FROM ").append(tableName);
         if (observedConditionFilter) {
-            sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName));
+            sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName,
+                    condFilters.iterator().next().getObservedCondForParams()));
         }
         if (!condFilters.isEmpty() || !speIds.isEmpty()) {
             sb.append(" WHERE ");
@@ -230,39 +236,52 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     }
 
     static String getCondTableToGlobalCondTableJoinClause(String globalCondTableName,
-            String condTableName) {
-        log.traceEntry("{}, {}", globalCondTableName, condTableName);
+            String condTableName, EnumSet<ConditionDAO.Attribute> observedCondForParams) {
+        log.traceEntry("{}, {}, {}", globalCondTableName, condTableName, observedCondForParams);
+        if (observedCondForParams == null || observedCondForParams.isEmpty()) {
+            return log.traceExit("");
+        }
+        if (observedCondForParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A ConditionDAO.Attribute that is not a condition parameter was provided"));
+        }
 
-        return log.traceExit(" LEFT OUTER JOIN cond AS " + condTableName
-                + " ON " + Arrays.stream(ConditionDAO.Attribute.values())
-                .filter(a -> a.isConditionParameter())
+        return log.traceExit(" INNER JOIN cond AS " + condTableName
+                + " ON " + observedCondForParams.stream()
                 .map(a -> {
                     StringBuilder sb2 = new StringBuilder();
                     
                     //This part is general to all condition parameters
                     sb2.append("(").append(globalCondTableName).append(".").append(a.getTOFieldName())
-                    .append(" = ").append(condTableName).append(".").append(a.getTOFieldName())
-                    .append(" OR ")
-                    .append(globalCondTableName).append(".").append(a.getTOFieldName())
-                    .append(" = '").append(a.getRootId()).append("' AND (")
-                    .append(condTableName).append(".").append(a.getTOFieldName())
-                    .append(" IS NULL");
+                    .append(" = ").append(condTableName).append(".").append(a.getTOFieldName());
                     //Here we treat special cases
-                    if (a.equals(ConditionDAO.Attribute.SEX_ID)) {
-                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
-                        .append(" IN (")
-                        .append(Arrays.stream(RawDataConditionTO.DAORawDataSex.values())
-                                .filter(s -> !s.isInformative())
-                                .map(s -> "'" + s.getStringRepresentation() + "'")
-                                .collect(Collectors.joining(", ")))
-                        .append(")");
-                    } else if (a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
-                        sb2.append(" OR ").append(condTableName).append(".").append(a.getTOFieldName())
-                        .append(" IN (")
-                        .append(RawDataConditionDAO.NO_INFO_STRAINS.stream()
-                                .map(s -> "'" + s + "'")
-                                .collect(Collectors.joining(", ")))
-                        .append(")");
+                    if (a.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                            a.equals(ConditionDAO.Attribute.SEX_ID) ||
+                            a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
+
+                        sb2.append(" OR ")
+                           .append(globalCondTableName).append(".").append(a.getTOFieldName())
+                           .append(" = '").append(a.getRootId()).append("' AND ");
+
+                        if (a.equals(ConditionDAO.Attribute.CELL_TYPE_ID)) {
+                            sb2.append(condTableName).append(".").append(a.getTOFieldName())
+                               .append(" IS NULL");
+                        } else if (a.equals(ConditionDAO.Attribute.SEX_ID)) {
+                            sb2.append(condTableName).append(".").append(a.getTOFieldName())
+                               .append(" IN (")
+                               .append(Arrays.stream(RawDataConditionTO.DAORawDataSex.values())
+                                    .filter(s -> !s.isInformative())
+                                    .map(s -> "'" + s.getStringRepresentation() + "'")
+                                    .collect(Collectors.joining(", ")))
+                               .append(")");
+                        } else if (a.equals(ConditionDAO.Attribute.STRAIN_ID)) {
+                            sb2.append(condTableName).append(".").append(a.getTOFieldName())
+                               .append(" IN (")
+                               .append(RawDataConditionDAO.NO_INFO_STRAINS.stream()
+                                    .map(s -> "'" + s + "'")
+                                    .collect(Collectors.joining(", ")))
+                               .append(")");
+                        }
                     }
                     sb2.append("))");
                     
@@ -331,19 +350,23 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                         f.getStrainIds().size()))
                 .append(")");
             }
-            if (f.getObservedConditions() != null) {
-                if (!firstCondParam) {
-                    sb2.append(" AND ");
-                }
-                firstCondParam = false;
-                sb2.append(condTableName).append(".")
-                   .append(MySQLConditionDAO.RAW_COND_ID_FIELD);
-                if (f.getObservedConditions()) {
-                    sb2.append(" IS NOT NULL ");
-                } else {
-                    sb2.append(" IS NULL ");
-                }
-            }
+            //We don't offer anymore the possibility to retrieve non-observed conditions,
+            //so this parameter is solely managed in the join clause.
+            //And if it was handled here, the if statement would be now:
+            //if (!f.getObservedCondForParams().isEmpty()) {
+//            if (f.getObservedConditions() != null) {
+//                if (!firstCondParam) {
+//                    sb2.append(" AND ");
+//                }
+//                firstCondParam = false;
+//                sb2.append(condTableName).append(".")
+//                   .append(MySQLConditionDAO.RAW_COND_ID_FIELD);
+//                if (f.getObservedConditions()) {
+//                    sb2.append(" IS NOT NULL ");
+//                } else {
+//                    sb2.append(" IS NULL ");
+//                }
+//            }
 
             return sb2.toString();
 

@@ -1,6 +1,7 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,9 +18,9 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
     private final static Logger log = LogManager.getLogger(DAOConditionFilter.class.getName());
 
     /**
-     * @see #getObservedConditions()
+     * @see #getObservedCondForParams()
      */
-    private final Boolean observedConditions;
+    private final EnumSet<ConditionDAO.Attribute> observedCondForParams;
     
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -37,47 +38,65 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
      * @param strainIds             A {@code Collection} of {@code String}s that are the IDs 
      *                              of the strains that this {@code DAOConditionFilter} 
      *                              will specify to use.
-     * @param observedConditions    A {@code Boolean} defining whether the conditions considered
-     *                              should have been observed in expression data in any species.
-     *                              See {@link #getObservedConditions()} for more details.
+     * @param observedCondForParams A {@code Collection} of {@code ConditionDAO.Attribute}s specifying
+     *                              that the conditions considered should have been observed
+     *                              in data annotations (not created only from propagation),
+     *                              using the specified condition parameters to perform the check.
+     *                              For instance, if this {@code Collection} contains only the parameter
+     *                              {@code ConditionDAO.Attribute.ANAT_ENTITY_ID}, any condition
+     *                              using an anat. entity used in an annotation will be valid
+     *                              (but of course, the other attributes of this {@code DAOConditionFilter}
+     *                              will also be considered). If this {@code Collection} contains
+     *                              a {@code ConditionDAO.Attribute} that is not a condition parameter,
+     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}),
+     *                              an {@code IllegalArgumentException} is thrown. If {@code null}
+     *                              or empty, no filtering will be performed on whether
+     *                              the global conditions considered have been observed in annotations.
      * @throws IllegalArgumentException If no anatomical entity IDs and no developmental stage IDs 
      *                                  are provided. 
      */
     public DAOConditionFilter(Collection<String> anatEntitieIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds,
-            Boolean observedConditions) throws IllegalArgumentException {
+            Collection<ConditionDAO.Attribute> observedCondForParams) throws IllegalArgumentException {
         super(anatEntitieIds, devStageIds, cellTypeIds, sexIds, strainIds);
         if ((anatEntitieIds == null || anatEntitieIds.isEmpty()) && 
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
                 (sexIds == null || sexIds.isEmpty()) &&
                 (strainIds == null || strainIds.isEmpty()) &&
-                observedConditions == null) {
+                (observedCondForParams == null || observedCondForParams.isEmpty())) {
             throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
                     + "developmental stage IDs, cell type IDs, sex IDs, strain IDs or observed "
                     + "data status must be provided."));
         }
-        this.observedConditions = observedConditions;
+        this.observedCondForParams = observedCondForParams == null || observedCondForParams.isEmpty()?
+                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(observedCondForParams);
+        if (this.observedCondForParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A ConditionDAO.Attribute that is not a condition parameter was provided"));
+        }
     }
 
     /**
-     * @return  A {@code Boolean} defining whether the conditions considered should have been
-     *          observed in expression data. If {@code true}, only conditions
-     *          observed in expression data are considered, not resulting
-     *          only from a data propagation; if {@code false}, only conditions resulting
-     *          from data propagation, never observed in expression data,
-     *          are considered; if {@code null}, conditions are considered whatever
-     *          their observed data status.
+     * @return  An {@code EnumSet} of {@code ConditionDAO.Attribute}s specifying
+     *          that the conditions considered should have been observed in data annotations
+     *          (not created only from propagation), using the specified condition parameters
+     *          to perform the check. For instance, if this {@code EnumSet} contains only
+     *          the parameter {@code ConditionDAO.Attribute.ANAT_ENTITY_ID}, any condition
+     *          using an anat. entity used in an annotation will be valid (but of course,
+     *          the other attributes of this {@code DAOConditionFilter} will also be considered).
+     *          If empty, no filtering will be performed on whether
+     *          the global conditions considered have been observed in annotations.
      */
-    public Boolean getObservedConditions() {
-        return observedConditions;
+    public EnumSet<ConditionDAO.Attribute> getObservedCondForParams() {
+        return observedCondForParams;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
+        result = prime * result + ((observedCondForParams == null) ? 0 : observedCondForParams.hashCode());
         return result;
     }
     @Override
@@ -92,11 +111,11 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
             return false;
         }
         DAOConditionFilter other = (DAOConditionFilter) obj;
-        if (observedConditions == null) {
-            if (other.observedConditions != null) {
+        if (observedCondForParams == null) {
+            if (other.observedCondForParams != null) {
                 return false;
             }
-        } else if (!observedConditions.equals(other.observedConditions)) {
+        } else if (!observedCondForParams.equals(other.observedCondForParams)) {
             return false;
         }
         return true;
@@ -155,7 +174,7 @@ public class DAOConditionFilter extends DAOBaseConditionFilter {
                .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", sexIds=").append(getSexIds())
                .append(", strainIds=").append(getStrainIds())
-               .append(", observedConditions=").append(observedConditions).append("]");
+               .append(", observedCondForParams=").append(observedCondForParams).append("]");
         return builder.toString();
     }
 }

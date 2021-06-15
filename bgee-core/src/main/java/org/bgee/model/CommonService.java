@@ -670,7 +670,8 @@ public class CommonService extends Service {
                 !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
                         Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
                             condFilter != null? condFilter.getStrainIds(): null,
-                condFilter != null? condFilter.getObservedConditions(): null);
+                condFilter != null?
+                        convertCondParamAttrsToCondDAOAttrs(condFilter.getObservedCondForParams()): null);
         log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
                 condFilter, condParamCombination, daoCondFilter);
         return log.traceExit(daoCondFilter);

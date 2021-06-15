@@ -281,11 +281,11 @@ implements GlobalExpressionCallDAO {
     private static String generateTableReferences(final String globalExprTableName,
             final String globalCondTableName, final String condTableName,
             final String geneTableName, final String speciesIdFilterTableName,
-            final boolean globalCondFiltering, boolean observedConditionFiltering,
+            final boolean globalCondFiltering, EnumSet<ConditionDAO.Attribute> observedCondForParams,
             final boolean geneSort) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
                 condTableName, geneTableName, speciesIdFilterTableName, globalCondFiltering,
-                observedConditionFiltering, geneSort);
+                observedCondForParams, geneSort);
 
         //****************************************
         // Create the necessary joins
@@ -317,7 +317,8 @@ implements GlobalExpressionCallDAO {
         //of the respective ontologies for each parameter instead).
             if (condTableName != null) {
                 condTableToGlobalCondTableJoinClause = MySQLConditionDAO
-                        .getCondTableToGlobalCondTableJoinClause(globalCondTableName, condTableName);
+                        .getCondTableToGlobalCondTableJoinClause(globalCondTableName, condTableName,
+                                observedCondForParams);
             }
         }
 
@@ -342,7 +343,8 @@ implements GlobalExpressionCallDAO {
         //(again, we have a clustered index (bgeeGeneId, globalConditionId), and we might use
         //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
         boolean geneTableFirst = geneTableName != null && geneTableName.equals(speciesIdFilterTableName);
-        boolean globalCondTableNeeded = globalCondFiltering || observedConditionFiltering;
+        boolean globalCondTableNeeded = globalCondFiltering ||
+                observedCondForParams != null && !observedCondForParams.isEmpty();
         if (geneTableFirst) {
             sb.append("gene AS ").append(geneTableName);
         }
@@ -356,7 +358,7 @@ implements GlobalExpressionCallDAO {
                 .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.SPECIES_ID);
             }
         }
-        if (observedConditionFiltering) {
+        if (observedCondForParams != null && !observedCondForParams.isEmpty()) {
             sb.append(condTableToGlobalCondTableJoinClause);
         }
 
@@ -895,9 +897,15 @@ implements GlobalExpressionCallDAO {
                 clonedOrderingAttrs.keySet().stream().anyMatch(a -> a.getAttribute().isRequireExtraGlobalCondInfo()) ||
                 clonedAttrs.stream().anyMatch(ai -> ai.getAttribute().isRequireExtraGlobalCondInfo());
         //do we need a join to the cond table
+        if (clonedCallFilters.stream().flatMap(callFilter -> callFilter.getConditionFilters().stream())
+                .map(condFilter -> condFilter.getObservedCondForParams())
+                .collect(Collectors.toSet()).size() > 1) {
+            throw log.throwing(new IllegalStateException(
+                    "Handling of several different getObservedCondForParams not yet implemented."));
+        }
         boolean observedConditionFilter = clonedCallFilters.stream()
                 .anyMatch(callFilter -> callFilter.getConditionFilters()
-                        .stream().anyMatch(condFilter -> condFilter.getObservedConditions() != null));
+                        .stream().anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty()));
         //do we need a join to the gene table
         boolean geneSort = clonedOrderingAttrs.keySet().stream()
                 .anyMatch(a -> a.getAttribute().isRequireExtraGeneInfo());
@@ -915,9 +923,12 @@ implements GlobalExpressionCallDAO {
         sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(),
                 globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter,
                 globalRank));
-        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
-                geneTableName, speciesIdFilterTableName, globalCondFilter, observedConditionFilter,
+        if (observedConditionFilter) {
+            sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
+                geneTableName, speciesIdFilterTableName, globalCondFilter,
+                clonedCallFilters.iterator().next().getConditionFilters().iterator().next().getObservedCondForParams(),
                 geneSort));
+        }
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 condTableName, speciesIdFilterTableName));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
@@ -1007,7 +1018,7 @@ implements GlobalExpressionCallDAO {
           .append(", MAX(").append(rankClause).append(") AS ").append(MIN_MAX_RANK_MAX_RANK_FIELD);
 
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null, null,
-                true, false, false));
+                true, null, false));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 null, globalCondTableName));
 

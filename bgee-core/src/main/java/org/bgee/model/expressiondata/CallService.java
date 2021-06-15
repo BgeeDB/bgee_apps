@@ -1215,7 +1215,8 @@ public class CallService extends CommonService {
             return log.traceExit(false);
         }
         //Same for observed conditions (it's different from observed *calls")
-        if (callFilter.getConditionFilters().stream().anyMatch(cf -> cf.getObservedConditions() != null)) {
+        if (callFilter.getConditionFilters().stream()
+                .anyMatch(cf -> !cf.getObservedCondForParams().isEmpty())) {
             return log.traceExit(false);
         }
 

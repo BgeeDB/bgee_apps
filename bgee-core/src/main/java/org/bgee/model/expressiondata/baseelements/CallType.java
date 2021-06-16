@@ -76,7 +76,12 @@ public interface CallType {
                 break;
             case NOT_EXPRESSED:
                 //As of Bgee 14.2, no propagation of absent calls at all.
-                if (PropagationState.ANCESTOR.equals(propState)) {
+                //As of Bgee 15.0, p-values are always computed from observations in the condition itself,
+                //but also from observations in sub-conditions. But to accept a NOT_EXPRESSED calls,
+                //we request that the p-value is at least supported by some observations
+                //in the condition itself.
+                if (PropagationState.DESCENDANT.equals(propState) ||
+                        PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;

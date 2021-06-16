@@ -52,15 +52,17 @@ public class DAOFDRPValueFilter {
     private final DAOFDRPValue fdrPValue;
     private final Qualifier qualifier;
     private final DAOPropagationState propagationState;
+    private final boolean selfObservationRequired;
 
     public DAOFDRPValueFilter(BigDecimal fdrPValue, Collection<DAODataType> dataTypes,
-            Qualifier qualifier, DAOPropagationState daoPropagationState) {
-        this(new DAOFDRPValue(fdrPValue, dataTypes), qualifier, daoPropagationState);
+            Qualifier qualifier, DAOPropagationState daoPropagationState, boolean selfObservationRequired) {
+        this(new DAOFDRPValue(fdrPValue, dataTypes), qualifier, daoPropagationState, selfObservationRequired);
     }
     //dependency injection of DAOFDRPValue rather than inheritance
     public DAOFDRPValueFilter(DAOFDRPValue fdrPValue, Qualifier qualifier,
-            DAOPropagationState propagationState) throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}", fdrPValue, qualifier, propagationState);
+            DAOPropagationState propagationState, boolean selfObservationRequired)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired);
 
         if (fdrPValue == null || qualifier == null) {
             throw log.throwing(new IllegalArgumentException("No argument can be null"));
@@ -69,10 +71,16 @@ public class DAOFDRPValueFilter {
             throw log.throwing(new IllegalArgumentException("Invalid DAOPropagationState: "
                     + propagationState));
         }
+        if (DAOPropagationState.DESCENDANT.equals(propagationState) && selfObservationRequired) {
+            throw log.throwing(new IllegalArgumentException(
+                    "When creating a filter for a p-value in descendant conditions, "
+                    + "selfObservationRequired can only be false"));
+        }
 
         this.fdrPValue = fdrPValue;
         this.qualifier = qualifier;
         this.propagationState = propagationState;
+        this.selfObservationRequired = selfObservationRequired;
 
         log.traceExit();
     }
@@ -104,6 +112,16 @@ public class DAOFDRPValueFilter {
     public DAOPropagationState getPropagationState() {
         return this.propagationState;
     }
+    /**
+     * @return  A {@code boolean} defining whether observations from the requested data types
+     *          returned by {@link #getFDRPValue()}#{@link DAOBigDecimalLinkedToDataTypes#getDataTypes()}
+     *          must include observations in the condition itself. If {@link #getPropagationState()}
+     *          is equal to {@code DAOPropagationState.DESCENDANT}, this {@code boolean} can only
+     *          be equal to {@code false}.
+     */
+    public boolean isSelfObservationRequired() {
+        return selfObservationRequired;
+    }
 
     @Override
     public int hashCode() {
@@ -114,6 +132,7 @@ public class DAOFDRPValueFilter {
         result = prime * result + ((fdrPValue == null) ? 0 : fdrPValue.getFdrPValue().hashCode());
         result = prime * result + ((qualifier == null) ? 0 : qualifier.hashCode());
         result = prime * result + ((propagationState == null) ? 0 : propagationState.hashCode());
+        result = prime * result + (selfObservationRequired ? 1231 : 1237);
         return result;
     }
 
@@ -146,6 +165,9 @@ public class DAOFDRPValueFilter {
         if (propagationState != other.propagationState) {
             return false;
         }
+        if (selfObservationRequired != other.selfObservationRequired) {
+            return false;
+        }
         return true;
     }
 
@@ -155,6 +177,7 @@ public class DAOFDRPValueFilter {
         builder.append("DAOFDRPValueFilter [qualifier=").append(qualifier)
                .append(", FDRPValue=").append(fdrPValue)
                .append(", propagationState=").append(propagationState)
+               .append(", selfObservationRequired=").append(selfObservationRequired)
                .append("]");
         return builder.toString();
     }

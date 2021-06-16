@@ -649,12 +649,20 @@ implements GlobalExpressionCallDAO {
                                     "Unsupported propagation state in PValueFilter: "
                                     + pValFilter.getPropagationState()));
                         }
-                        sb.append(getFieldNamePartFromDataTypes(
+                        EnumSet<DAODataType> dataTypes =
                                 pValFilter.getFDRPValue().getDataTypes().isEmpty()?
-                                        EnumSet.allOf(DAODataType.class):
-                                        pValFilter.getFDRPValue().getDataTypes()))
+                                EnumSet.allOf(DAODataType.class):
+                                pValFilter.getFDRPValue().getDataTypes();
+                        sb.append(getFieldNamePartFromDataTypes(dataTypes))
                           .append(" ").append(pValFilter.getQualifier().getSymbol())
                           .append(" ?");
+
+                        if (pValFilter.isSelfObservationRequired()) {
+                            sb.append(dataTypes.stream()
+                                    .map(dataType -> dataType.getFieldNamePrefix()
+                                            + P_VALUE_SELF_OBS_COUNT_SUFFIX)
+                                    .collect(Collectors.joining(" + ", " AND (", ") > 0")));
+                        }
 
                         return sb.toString();
                     })

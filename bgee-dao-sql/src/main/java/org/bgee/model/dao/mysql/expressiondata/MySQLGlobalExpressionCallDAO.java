@@ -935,12 +935,11 @@ implements GlobalExpressionCallDAO {
         sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(),
                 globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter,
                 globalRank));
-        if (observedConditionFilter) {
-            sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
+        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
                 geneTableName, speciesIdFilterTableName, globalCondFilter,
-                clonedCallFilters.iterator().next().getConditionFilters().iterator().next().getObservedCondForParams(),
+                clonedCallFilters.iterator().next().getConditionFilters().iterator().next()
+                    .getObservedCondForParams(),
                 geneSort));
-        }
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 condTableName, speciesIdFilterTableName));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));

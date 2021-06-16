@@ -9,6 +9,8 @@ import java.util.EnumSet;
  * on a selection of {@code DAODataType}s.
  * <p>
  *  Only the dataTypes are considered for the hashCode/equals methods.
+ * Implements {@code Comparable} for more consistent ordering when used in a {@link CallDAOFilter}
+ * and improving chances of cache hit.
  *
  * @author Frederic Bastian
  * @version Bgee 15.0, Apr. 2021
@@ -65,5 +67,13 @@ public abstract class DAOBigDecimalLinkedToDataTypes {
             return false;
         }
         return true;
+    }
+
+    protected int compareTo(DAOBigDecimalLinkedToDataTypes o) {
+        if (o == null) {
+            throw new NullPointerException("The compared object cannot be null.");
+        }
+        return (new DAODataType.DAODataTypeEnumSetComparator())
+                .compare(this.getDataTypes(), o.getDataTypes());
     }
 }

@@ -69,9 +69,15 @@ public class CallDAOFilter extends DAODataFilter<DAOConditionFilter> {
         }
 
         this.callObservedDataFilters = callObservedDataFilters == null? new LinkedHashSet<>():
-            new LinkedHashSet<>(callObservedDataFilters);
+            //For having a predictable iteration order and improve cache hit.
+            //CallObservedDataDAOFilter implements Comparable.
+            callObservedDataFilters.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
         this.pValueFilters = pValueFilters == null? new LinkedHashSet<>():
-            pValueFilters.stream().map(s -> new LinkedHashSet<>(s))
+            //For having a predictable iteration order and improve cache hit.
+            //DAOFDRPValueFilter implements Comparable.
+            pValueFilters.stream()
+            .map(s -> s.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new)))
+            .sorted(new DAOFDRPValueFilter.DAOFDRPvalueFilterLinkedHashSetComparator())
             .collect(Collectors.toCollection(LinkedHashSet::new));
         
         if (this.getGeneIds().isEmpty() && this.getSpeciesIds().isEmpty() &&

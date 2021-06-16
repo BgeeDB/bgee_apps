@@ -2,6 +2,7 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -63,6 +64,34 @@ public enum DAODataType implements EnumDAOField {
     public static final DAODataType convertToDataType(String representation) {
         log.traceEntry("{}", representation);
         return log.traceExit(TransferObject.convert(DAODataType.class, representation));
+    }
+
+    public static class DAODataTypeEnumSetComparator implements Comparator<EnumSet<DAODataType>> {
+        @Override
+        public int compare(EnumSet<DAODataType> e1, EnumSet<DAODataType> e2) {
+            log.traceEntry("{}, {}", e1, e2);
+            if (e1 == null || e2 == null) {
+                throw log.throwing(new NullPointerException("None of the EnumSets can be null"));
+            }
+            if (e1.equals(e2)) {
+                return log.traceExit(0);
+            }
+            if (e1.size() < e2.size()) {
+                return log.traceExit(-1);
+            } else if (e1.size() > e2.size()) {
+                return log.traceExit(+1);
+            }
+            for (DAODataType dt: DAODataType.values()) {
+                boolean e1Contains = e1.contains(dt);
+                boolean e2Contains = e2.contains(dt);
+                if (e1Contains && !e2Contains) {
+                    return log.traceExit(-1);
+                } else if (!e1Contains && e2Contains) {
+                    return log.traceExit(+1);
+                }
+            }
+            throw log.throwing(new AssertionError("Unreachable code, " + e1 + " - " + e2));
+        }
     }
 
     private static final List<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {

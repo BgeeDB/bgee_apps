@@ -1,22 +1,27 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * A filter to parameterize expression data queries based on data produced by each data type. 
+ * A filter to parameterize expression data queries based on data produced by each data type.
+ * Implements {@code Comparable} for more consistent ordering when used in a {@link CallDAOFilter}
+ * and improving chances of cache hit.
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Jun. 2021
  * @since   Bgee 14, Mar. 2017
  */
-public class CallObservedDataDAOFilter {
+public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAOFilter> {
     private final static Logger log = LogManager.getLogger(CallObservedDataDAOFilter.class.getName());
 
     /**
@@ -61,7 +66,12 @@ public class CallObservedDataDAOFilter {
                     EnumSet.copyOf(dataTypes);
         this.callObservedData = callObservedData;
         this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
-            new LinkedHashMap<>(observedDataFilter);
+            //For having a predictable iteration order and improve cache hit
+            observedDataFilter.entrySet().stream()
+            .sorted(Comparator.comparing(e -> e.getKey()))
+            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                    (v1, v2) -> {throw log.throwing(new IllegalStateException("Impossible collision"));},
+                    LinkedHashMap::new));
     }
 
     /**
@@ -154,5 +164,63 @@ public class CallObservedDataDAOFilter {
                 .append(", callObservedData=").append(callObservedData)
                 .append(", observedDataFilter=").append(observedDataFilter).append("]");
         return builder.toString();
+    }
+
+    @Override
+    public int compareTo(CallObservedDataDAOFilter o) {
+        log.traceEntry("{}", 0);
+        if (o == null) {
+            throw new NullPointerException("The compared object cannot be null.");
+        }
+        if (o.equals(this)) {
+            return log.traceExit(0);
+        }
+
+        int compareDataType = (new DAODataType.DAODataTypeEnumSetComparator())
+                .compare(this.getDataTypes(), o.getDataTypes());
+        if (compareDataType != 0) {
+            return log.traceExit(compareDataType);
+        }
+
+        if (!this.getObservedDataFilter().equals(o.getObservedDataFilter())) {
+            if (this.getObservedDataFilter().size() < o.getObservedDataFilter().size()) {
+                return log.traceExit(-1);
+            } else if (this.getObservedDataFilter().size() > o.getObservedDataFilter().size()) {
+                return log.traceExit(+1);
+            }
+            for (ConditionDAO.Attribute a: ConditionDAO.Attribute.values()) {
+                Boolean thisValue = this.getObservedDataFilter().get(a);
+                Boolean otherValue = o.getObservedDataFilter().get(a);
+                if (Objects.equals(thisValue, otherValue)) {
+                    continue;
+                }
+                if (thisValue != null && otherValue == null) {
+                    return log.traceExit(-1);
+                } else if (thisValue == null && otherValue != null) {
+                    return log.traceExit(+1);
+                } else if (thisValue && !otherValue) {
+                    return log.traceExit(-1);
+                } else if (!thisValue && otherValue) {
+                    return log.traceExit(+1);
+                }
+                assert false: "Unreachable code, " + thisValue + " - " + otherValue;
+            }
+            assert false: "Unreachable code, " + this.getObservedDataFilter() + " - " + o.getObservedDataFilter();
+        }
+
+        if (!Objects.equals(this.getCallObservedData(), o.getCallObservedData())) {
+            if (this.getCallObservedData() == null && o.getCallObservedData() != null) {
+                return log.traceExit(-1);
+            } else if (this.getCallObservedData() != null && o.getCallObservedData() == null) {
+                return log.traceExit(+1);
+            } else if (this.getCallObservedData() && !o.getCallObservedData()) {
+                return log.traceExit(-1);
+            } else if (!this.getCallObservedData() && o.getCallObservedData()) {
+                return log.traceExit(+1);
+            }
+            assert false: "Unreachable code, " + this.getCallObservedData() + " - " + o.getCallObservedData();
+        }
+
+        throw log.throwing(new AssertionError("Unreachable code: " + this + ", " + o));
     }
 }

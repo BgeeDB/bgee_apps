@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DAOFDRPValue extends DAOBigDecimalLinkedToDataTypes {
+public class DAOFDRPValue extends DAOBigDecimalLinkedToDataTypes implements Comparable<DAOFDRPValue> {
     private final static Logger log = LogManager.getLogger(DAOFDRPValue.class.getName());
     
     //Only the dataTypes are considered for the hashCode/equals methods
@@ -48,5 +48,11 @@ public class DAOFDRPValue extends DAOBigDecimalLinkedToDataTypes {
                .append(", dataTypes=").append(this.getDataTypes())
                .append("]");
         return builder.toString();
+    }
+
+    @Override
+    public int compareTo(DAOFDRPValue o) {
+        log.traceEntry("{}", o);
+        return log.traceExit(super.compareTo(o));
     }
 }

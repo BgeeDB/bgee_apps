@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,13 +12,15 @@ import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 /**
  * Class allowing to filter the retrieval of {@link GlobalExpressionCallTO}s
  * based on FDR p-values supporting the call.
+ * Implements {@code Comparable} for more consistent ordering when used in a {@link CallDAOFilter}
+ * and improving chances of cache hit.
  *
  * @author Frederic Bastian
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Jun. 2021
  * @see GlobalExpressionCallDAO
  * @since Bgee 15.0, Apr. 2021
  */
-public class DAOFDRPValueFilter {
+public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
     private final static Logger log = LogManager.getLogger(DAOFDRPValueFilter.class.getName());
 
     public static enum Qualifier {
@@ -47,6 +51,37 @@ public class DAOFDRPValueFilter {
             return log.traceExit(false);
         }
         return log.traceExit(true);
+    }
+
+    public static class DAOFDRPvalueFilterLinkedHashSetComparator
+        implements Comparator<LinkedHashSet<DAOFDRPValueFilter>> {
+        @Override
+        public int compare(LinkedHashSet<DAOFDRPValueFilter> s1, LinkedHashSet<DAOFDRPValueFilter> s2) {
+            log.traceEntry("{}, {}", s1, s2);
+            if (s1 == null || s2 == null) {
+                throw log.throwing(new NullPointerException("None of the LinkedHashSets can be null"));
+            }
+            if (s1.equals(s2)) {
+                return log.traceExit(0);
+            }
+            if (s1.size() < s2.size()) {
+                return log.traceExit(-1);
+            }
+            if (s1.size() > s2.size()) {
+                return log.traceExit(+1);
+            }
+            DAOFDRPValueFilter[] arr1 = new DAOFDRPValueFilter[s1.size()];
+            arr1 = s1.toArray(arr1);
+            DAOFDRPValueFilter[] arr2 = new DAOFDRPValueFilter[s1.size()];
+            arr2 = s2.toArray(arr2);
+            for (int i = 0; i < s1.size(); i++) {
+                int compareFilter = arr1[i].compareTo(arr2[i]);
+                if (compareFilter != 0) {
+                    return log.traceExit(compareFilter);
+                }
+            }
+            throw log.throwing(new AssertionError("Unreachable code, " + s1 + " - " + s2));
+        }
     }
 
     private final DAOFDRPValue fdrPValue;
@@ -180,5 +215,34 @@ public class DAOFDRPValueFilter {
                .append(", selfObservationRequired=").append(selfObservationRequired)
                .append("]");
         return builder.toString();
+    }
+    @Override
+    public int compareTo(DAOFDRPValueFilter o) {
+        log.traceEntry("{}", 0);
+        if (o == null) {
+            throw new NullPointerException("The compared object cannot be null.");
+        }
+        if (this.equals(o)) {
+            return log.traceExit(0);
+        }
+        int compareFDR = this.getFDRPValue().compareTo(o.getFDRPValue());
+        if (compareFDR != 0) {
+            return log.traceExit(compareFDR);
+        }
+        int compareQualifier = this.getQualifier().compareTo(o.getQualifier());
+        if (compareQualifier != 0) {
+            return log.traceExit(compareQualifier);
+        }
+        int comparePropagationState = this.getPropagationState().compareTo(o.getPropagationState());
+        if (comparePropagationState != 0) {
+            return log.traceExit(comparePropagationState);
+        }
+        if (this.isSelfObservationRequired() && !o.isSelfObservationRequired()) {
+            return log.traceExit(-1);
+        }
+        if (!this.isSelfObservationRequired() && o.isSelfObservationRequired()) {
+            return log.traceExit(+1);
+        }
+        throw log.throwing(new AssertionError("Unreachable code: " + this + ", " + o));
     }
 }

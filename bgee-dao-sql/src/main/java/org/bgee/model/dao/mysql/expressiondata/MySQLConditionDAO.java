@@ -207,18 +207,21 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName,
                     condFilters.iterator().next().getObservedCondForParams()));
         }
-        if (!condFilters.isEmpty() || !speIds.isEmpty()) {
+        boolean containsCondFilter = condFilters.stream().anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
+                !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
+                !c.getStrainIds().isEmpty());
+        if (containsCondFilter || !speIds.isEmpty()) {
             sb.append(" WHERE ");
         }
         if (!speIds.isEmpty()) {
             sb.append(tableName).append(".").append(SPECIES_ID).append(" IN (")
               .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
               .append(")");
-            if (!condFilters.isEmpty()) {
+            if (containsCondFilter) {
                 sb.append(" AND ");
             }
         }
-        if (!condFilters.isEmpty()) {
+        if (containsCondFilter) {
             sb.append(getConditionFilterWhereClause(condFilters, tableName, condTableName));
         }
         try {
@@ -283,7 +286,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                                .append(")");
                         }
                     }
-                    sb2.append("))");
+                    sb2.append(")");
                     
                     return sb2.toString();
                 }).collect(Collectors.joining(" AND ")));
@@ -294,7 +297,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             String globalCondTableName, String condTableName) {
         log.traceEntry("{}, {}, {}", conditionFilters, globalCondTableName, condTableName);
 
-        return log.traceExit(conditionFilters.stream().map(f -> {
+        String sb = conditionFilters.stream().map(f -> {
             StringBuilder sb2 = new StringBuilder();
             boolean firstCondParam = true;
 
@@ -370,7 +373,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
             return sb2.toString();
 
-        }).collect(Collectors.joining(" OR ", "(", ")")));
+        }).collect(Collectors.joining(" OR ", "(", ")"));
+        return log.traceExit(sb);
     }
 
     static int configureConditionFiltersStmt(BgeePreparedStatement stmt,

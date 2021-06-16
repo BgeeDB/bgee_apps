@@ -68,7 +68,7 @@ public interface CallType {
 
             switch (this) {
             case EXPRESSED:
-                //no propagation from parents allowed for expression calls, 
+                //no propagation from parents allowed for expressed calls,
                 //all other propagations allowed. 
                 if (PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
@@ -76,11 +76,17 @@ public interface CallType {
                 break;
             case NOT_EXPRESSED:
                 //As of Bgee 14.2, no propagation of absent calls at all.
-                //As of Bgee 15.0, p-values are always computed from observations in the condition itself,
-                //but also from observations in sub-conditions. But to accept a NOT_EXPRESSED calls,
-                //we request that the p-value is at least supported by some observations
-                //in the condition itself.
-                if (PropagationState.DESCENDANT.equals(propState) ||
+                //As of Bgee 15.0, p-values are always computed from observations
+                //both in the condition itself and in sub-conditions.
+                //When we request absent expression calls, we notably request calls
+                //with a global p-value > 0.05 taking into all requested data types,
+                //AND having at least one selfObservationCount > 0 for one of these data types.
+                //But that still leaves the possibility to have a p-value > 0.05 for one of this data type
+                //(represented by this CallType.Expression class), but with selfObservationCount == 0
+                //for this data type, meaning that the propagation state will be DESCENDANT.
+                //=> The checkPropagationState method in SummaryCallType.ExpressionSummary
+                //does not accept DESCENDANT for absent calls, but this method does.
+                if (/*PropagationState.DESCENDANT.equals(propState) ||*/
                         PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }

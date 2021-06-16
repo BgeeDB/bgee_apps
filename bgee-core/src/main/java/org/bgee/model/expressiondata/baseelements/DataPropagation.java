@@ -139,15 +139,17 @@ public class DataPropagation {
         //The only check we can make is the following:
         if (Boolean.TRUE.equals(includingObservedData) && EnumSet.of(
                 anatEntityPropagationState == null? PropagationState.UNKNOWN: anatEntityPropagationState,
-                devStagePropagationState == null? PropagationState.UNKNOWN: devStagePropagationState,
                 cellTypePropagationState == null? PropagationState.UNKNOWN: cellTypePropagationState,
+                devStagePropagationState == null? PropagationState.UNKNOWN: devStagePropagationState,
                 sexPropagationState == null? PropagationState.UNKNOWN: sexPropagationState,
                 strainPropagationState == null? PropagationState.UNKNOWN: strainPropagationState)
                 .stream().anyMatch(s -> Boolean.FALSE.equals(s.isIncludingObservedData()))) {
             throw log.throwing(new IllegalArgumentException("The provided observed data state ("
                     + includingObservedData + ") is incompatible with the provided PropagationStates ("
-                    + "anatomy: " + anatEntityPropagationState + " - stage: " + devStagePropagationState
-                    + " - sex: " + sexPropagationState + " - strain: " + strainPropagationState));
+                    + "anatomy: " + anatEntityPropagationState
+                    + " - cell type: " + cellTypePropagationState
+                    + " - stage: " + devStagePropagationState + " - sex: " + sexPropagationState
+                    + " - strain: " + strainPropagationState));
         }
 
         this.anatEntityPropagationState = anatEntityPropagationState;

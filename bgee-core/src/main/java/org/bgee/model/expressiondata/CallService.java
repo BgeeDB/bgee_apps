@@ -2256,8 +2256,16 @@ public class CallService extends CommonService {
                 dataProp1.getAnatEntityPropagationState(), dataProp2.getAnatEntityPropagationState());
         PropagationState stagePropState = mergePropagationStates(
                 dataProp1.getDevStagePropagationState(), dataProp2.getDevStagePropagationState());
-        PropagationState cellTypePropState = mergePropagationStates(
-                dataProp1.getCellTypePropagationState(), dataProp2.getCellTypePropagationState());
+        //Cell type propagation states are for now only available for scRNA-Seq data,
+        //it is always null for other data types
+        PropagationState cellTypePropState = null;
+        if (dataProp1.getCellTypePropagationState() != null ||
+                dataProp2.getCellTypePropagationState() != null) {
+            cellTypePropState = mergePropagationStates(dataProp1.getCellTypePropagationState() == null?
+                    PropagationState.SELF: dataProp1.getCellTypePropagationState(),
+                    dataProp2.getCellTypePropagationState() == null? PropagationState.SELF:
+                        dataProp2.getCellTypePropagationState());
+        }
         PropagationState sexPropState = mergePropagationStates(
                 dataProp1.getSexPropagationState(), dataProp2.getSexPropagationState());
         PropagationState strainPropState = mergePropagationStates(

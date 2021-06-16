@@ -76,8 +76,7 @@ public interface CallType {
                 break;
             case NOT_EXPRESSED:
                 //As of Bgee 14.2, no propagation of absent calls at all.
-                if (PropagationState.DESCENDANT.equals(propState) ||
-                        PropagationState.ANCESTOR.equals(propState)) {
+                if (PropagationState.ANCESTOR.equals(propState)) {
                     incorrectPropagation = true;
                 }
                 break;

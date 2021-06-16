@@ -431,7 +431,11 @@ implements GlobalExpressionCallDAO {
                     sb.append(")");
                 }
 
-                if (callFilter.getConditionFilters() != null && !callFilter.getConditionFilters().isEmpty()) {
+                boolean containsCondFilter = callFilter.getConditionFilters().stream()
+                        .anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
+                        !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
+                        !c.getStrainIds().isEmpty());
+                if (containsCondFilter) {
                     if (!firstCond) {
                         sb.append(" AND ");
                     }

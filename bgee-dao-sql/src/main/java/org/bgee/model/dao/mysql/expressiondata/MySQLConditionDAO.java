@@ -297,7 +297,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             String globalCondTableName, String condTableName) {
         log.traceEntry("{}, {}, {}", conditionFilters, globalCondTableName, condTableName);
 
-        String sb = conditionFilters.stream().map(f -> {
+        return log.traceExit(conditionFilters.stream().map(f -> {
             StringBuilder sb2 = new StringBuilder();
             boolean firstCondParam = true;
 
@@ -373,8 +373,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 
             return sb2.toString();
 
-        }).collect(Collectors.joining(" OR ", "(", ")"));
-        return log.traceExit(sb);
+        }).collect(Collectors.joining(" OR ", "(", ")")));
     }
 
     static int configureConditionFiltersStmt(BgeePreparedStatement stmt,

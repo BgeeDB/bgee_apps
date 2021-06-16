@@ -213,7 +213,7 @@ public class GeneMatchResultService extends CommonService {
             if (ranker != null) {
                 sphinxClient.SetRankingMode(ranker, null);
             }
-            String queryTerm = "\"" + this.getFormattedTerm(searchTerm) + "\"";
+            String queryTerm = "^" + this.getFormattedTerm(searchTerm) + "$ | \"" + this.getFormattedTerm(searchTerm) + "\"";
             return log.traceExit(sphinxClient.Query(queryTerm, index));
         } catch (SphinxException e) {
             throw log.throwing(new IllegalStateException(

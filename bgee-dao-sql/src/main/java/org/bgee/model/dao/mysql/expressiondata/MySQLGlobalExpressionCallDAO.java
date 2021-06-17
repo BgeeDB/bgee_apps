@@ -958,7 +958,7 @@ implements GlobalExpressionCallDAO {
                 globalRank));
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
                 geneTableName, speciesIdFilterTableName, globalCondFilter,
-                clonedCallFilters.isEmpty()? null: clonedCallFilters.iterator().next()
+                !observedConditionFilter? null: clonedCallFilters.iterator().next()
                         .getConditionFilters().iterator().next().getObservedCondForParams(),
                 geneSort));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,

@@ -112,28 +112,29 @@ public class ConditionGraph {
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
-        if (anatEntityOnt == null && devStageOnt == null) {
+
+        Set<Integer> speciesIds = new HashSet<>();
+        if (anatEntityOnt != null) {
+            speciesIds.add(anatEntityOnt.getSpeciesId());
+        }
+        if (cellTypeOnt != null) {
+            speciesIds.add(cellTypeOnt.getSpeciesId());
+        }
+        if (devStageOnt != null) {
+            speciesIds.add(devStageOnt.getSpeciesId());
+        }
+        if (sexOnt != null) {
+            speciesIds.add(sexOnt.getSpeciesId());
+        }
+        if (strainOnt != null) {
+            speciesIds.add(strainOnt.getSpeciesId());
+        }
+        if (speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Ontologies must be provided."));
         }
-        if (anatEntityOnt != null && devStageOnt != null 
-                && anatEntityOnt.getSpeciesId() != devStageOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and dev. stage ontologies "
-                    + "should be in the same species."));
-        }
-        if (anatEntityOnt != null && cellTypeOnt != null 
-                && anatEntityOnt.getSpeciesId() != cellTypeOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and cell type ontologies "
-                    + "should be in the same species."));
-        }
-        if (strainOnt != null && anatEntityOnt != null 
-                && strainOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and strains ontologies "
-                    + "should be in the same species."));
-        }
-        if (sexOnt != null && anatEntityOnt != null 
-                && sexOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and sexes ontologies "
-                    + "should be in the same species."));
+        if (speciesIds.size() > 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "All ontologies should be in the same species."));
         }
 
         this.conditions = Collections.unmodifiableSet(new HashSet<>(conditions));

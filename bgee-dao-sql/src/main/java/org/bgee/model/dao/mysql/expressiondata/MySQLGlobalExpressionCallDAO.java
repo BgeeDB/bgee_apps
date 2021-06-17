@@ -73,14 +73,14 @@ implements GlobalExpressionCallDAO {
     private static final String MIN_MAX_RANK_MAX_RANK_FIELD = "maxRank";
 
 
-    private static String generateSelectClause(Set<GlobalExpressionCallDAO.AttributeInfo> attrs,
+    private static String generateSelectClause(Collection<GlobalExpressionCallDAO.AttributeInfo> attrs,
             Collection<GlobalExpressionCallDAO.OrderingAttributeInfo> orderingAttrs,
             final String globalExprTableName, final String globalCondTableName,
             String geneTableName, boolean observedConditionFiltering, boolean globalRank) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", attrs, orderingAttrs, globalExprTableName,
                 globalCondTableName, geneTableName, observedConditionFiltering, globalRank);
         
-        Set<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = new HashSet<>(attrs);
+        LinkedHashSet<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = new LinkedHashSet<>(attrs);
         //fix for #173, see also the end of this method for columns having no corresponding attributes
         for (GlobalExpressionCallDAO.OrderingAttributeInfo a: orderingAttrs) {
             switch (a.getAttribute()) {
@@ -105,6 +105,7 @@ implements GlobalExpressionCallDAO {
                 break;
             }
         }
+        clonedAttrs = clonedAttrs.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");

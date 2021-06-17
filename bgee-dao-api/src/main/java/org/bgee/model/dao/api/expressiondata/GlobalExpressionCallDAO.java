@@ -220,7 +220,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 15.0, Apr. 2021
      */
-    public static class GenericAttributeInfo<T extends Enum<T> & CanBeDataTypeDependent> {
+    public static class GenericAttributeInfo<T extends Enum<T> & CanBeDataTypeDependent>
+    implements Comparable<GenericAttributeInfo<T>> {
         private final T attribute;
         private final EnumSet<DAODataType> targetedDataTypes;
 
@@ -304,6 +305,21 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                 return false;
             }
             return true;
+        }
+        @Override
+        public int compareTo(GenericAttributeInfo<T> o) {
+            if (o == null) {
+                throw new NullPointerException();
+            }
+            if (this.equals(o)) {
+                return 0;
+            }
+            int compareAttr = this.getAttribute().compareTo(o.getAttribute());
+            if (compareAttr != 0) {
+                return compareAttr;
+            }
+            return (new DAODataType.DAODataTypeEnumSetComparator())
+                    .compare(this.getTargetedDataTypes(), o.getTargetedDataTypes());
         }
     }
 

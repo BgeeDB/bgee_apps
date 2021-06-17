@@ -554,11 +554,11 @@ implements GlobalExpressionCallDAO {
                         sb.append(" AND ");
                     }
                     previousClause = true;
-                    sb.append(dataFilter.getObservedDataFilter().entrySet().stream()
+                    String completeObsDataFilter = dataFilter.getObservedDataFilter().entrySet().stream()
                         .map(e -> {
                             ConditionDAO.Attribute condParam = e.getKey();
-                            StringBuilder sbObsDataFilter =  new StringBuilder(
-                                    dataFilter.getDataTypes().stream()
+                            StringBuilder sbObsDataFilter =  new StringBuilder();
+                            String obsDataFilter = dataFilter.getDataTypes().stream()
                                 //For now, the cell type propagation state is defined
                                 //only for scRNA-Seq full-length data
                                 .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
@@ -597,7 +597,14 @@ implements GlobalExpressionCallDAO {
                                     //=> OR delimiter
                                     //If we request non-observed data, it must by non-observed by each data type
                                     //=> AND delimiter
-                                    e.getValue()? " OR ": " AND ", "(", ")")));
+                                    e.getValue()? " OR ": " AND "));
+                            if (!obsDataFilter.isEmpty()) {
+                                sbObsDataFilter.append("(");
+                            }
+                            sbObsDataFilter.append(obsDataFilter);
+                            if (!obsDataFilter.isEmpty()) {
+                                sbObsDataFilter.append(")");
+                            }
                             //If we request non-observed data, it must be non-observed
                             //by each data type => AND delimiter between cond. parameters.
                             //But we need to account for the fact that not all data types might
@@ -606,8 +613,7 @@ implements GlobalExpressionCallDAO {
                             //IS NOT NULL, otherwise, if not all data types are requested,
                             //we might retrieve calls with observed data and/or from other data types
                             if (!e.getValue() && dataFilter.getDataTypes().size() > 1) {
-                                sbObsDataFilter.append(
-                                        dataFilter.getDataTypes().stream()
+                                String addObsDataFilter = dataFilter.getDataTypes().stream()
                                         //For now, the cell type propagation state is defined
                                         //only for scRNA-Seq full-length data
                                         .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
@@ -615,12 +621,26 @@ implements GlobalExpressionCallDAO {
                                         .map(d -> globalExprTableName + "."
                                                 + getCallCondParamObservedDataFieldName(d, condParam)
                                                 + " IS NOT NULL")
-                                        .collect(Collectors.joining(" OR ", " AND (", ")"))
-                                );
+                                        .collect(Collectors.joining(" OR "));
+                                if (!addObsDataFilter.isEmpty()) {
+                                    sbObsDataFilter.append(" AND (");
+                                }
+                                sbObsDataFilter.append(addObsDataFilter);
+                                if (!addObsDataFilter.isEmpty()) {
+                                    sbObsDataFilter.append(")");
+                                }
                             }
-
                             return sbObsDataFilter.toString();
-                        }).collect(Collectors.joining(" AND ", "(", ")")));
+                        })
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(" AND "));
+                    if (!completeObsDataFilter.isEmpty()) {
+                        sb.append("(");
+                    }
+                    sb.append(completeObsDataFilter);
+                    if (!completeObsDataFilter.isEmpty()) {
+                        sb.append(")");
+                    }
                 }
                 
                 return sb.toString();

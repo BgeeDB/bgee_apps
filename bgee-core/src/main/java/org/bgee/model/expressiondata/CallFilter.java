@@ -133,7 +133,10 @@ extends DataFilter<ConditionFilter> {
          *                                      otherwise an {@code IllegalArgumentException} is thrown.
          * @param conditionFilters              A {@code Collection} of {@code ConditionFilter}s
          *                                      allowing to specify the requested parameters regarding
-         *                                      conditions related to the expression calls.
+         *                                      conditions related to the expression calls. If several
+         *                                      {@code ConditionFilter}s are provided, they are seen
+         *                                      as "OR" conditions. Can be {@code null} or empty
+         *                                      if some {@code GeneFilter}s are provided.
          *                                      if contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
          *                                      At least one {@code GeneFilter} or one

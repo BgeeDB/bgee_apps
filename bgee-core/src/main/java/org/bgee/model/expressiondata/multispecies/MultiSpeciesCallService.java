@@ -866,7 +866,9 @@ public class MultiSpeciesCallService extends CommonService {
                 .collect(Collectors.toSet());
         ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null,
                 allCellTypeIds, null, null,
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
+                //Deactivate the filtering on observed conditions, it is too slow
+//                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID)
+                null);
 
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);

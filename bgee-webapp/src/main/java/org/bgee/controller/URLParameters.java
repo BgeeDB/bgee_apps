@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
@@ -457,6 +458,26 @@ public class URLParameters {
     private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
             false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
             1000000, DEFAULT_LIST_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the condition parameters to be used 
+     * for pages displaying expression results.
+     * Corresponds to the URL parameter "cond_param".
+     */
+    private static final Parameter<String> COND_PARAM = new Parameter<String>("cond_param",
+            true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            //We don't check precisely the length since we can have several cond. parameters
+            //provided in one query parameter
+            100, 
+            "(?i:" + RequestParameters.ALL_VALUE + "|" 
+                   + CallService.Attribute.getAllConditionParameters().stream()
+                    .map(a -> a.getCondParamName())
+                    .collect(Collectors.joining("|"))
+                   + "|"
+                   + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining("|"))
+                   + ")*", 
+             String.class);
     
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -511,6 +532,7 @@ public class URLParameters {
             GENE_ID,
             SPECIES_ID,
             QUERY,
+            COND_PARAM,
             // Species request
             SPECIES_LIST,
             // Anat. similarity analyze params
@@ -867,6 +889,9 @@ public class URLParameters {
     public Parameter<String> getParamAnatEntityList() {
         return ANAT_ENTITY_LIST;
     }
+    public Parameter<String> getCondParam() {
+        return COND_PARAM;
+    }
     /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 
@@ -976,8 +1001,8 @@ public class URLParameters {
         protected Parameter(String name, boolean allowsMultipleValues, boolean allowsSeparatedValues,
                 List<String> separators, boolean isStorable, boolean isSecure, int maxSize,
                 String format, Class<T> type) throws IllegalArgumentException {
-
-            log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}", name, allowsMultipleValues, isStorable,
+                    isSecure, maxSize, format, type);
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

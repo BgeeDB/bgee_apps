@@ -5,9 +5,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.Entity;
 import org.bgee.model.SearchResult;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
@@ -23,6 +23,7 @@ import org.bgee.view.JsonHelper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,7 +41,8 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code ExpressionComparisonDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, July 2019
+ * @author  Frederic Bastian
+ * @version Bgee 15.0, Jun 2021
  * @version Bgee 14, June 2019
  * @since   Bgee 14, May 2019
  */
@@ -91,7 +94,9 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, SingleSpeciesExprAnalysis result) {
         log.traceEntry("{} - {}", searchResult, result);
 
-        Function<Condition, Set<AnatEntity>> fun = c -> Collections.singleton(c.getAnatEntity());
+        Function<Condition, Entry<Set<AnatEntity>, Set<AnatEntity>>> fun =
+                c -> new AbstractMap.SimpleEntry<>(Collections.singleton(c.getCellType()),
+                        Collections.singleton(c.getAnatEntity()));
         this.displayExpressionComparison(searchResult, result, fun, false, null);
 
         log.traceExit();
@@ -101,15 +106,19 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     public void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiSpeciesExprAnalysis result) {
         log.traceEntry("{} - {}", searchResult, result);
 
-        Function<MultiSpeciesCondition, Set<AnatEntity>> fun = msc -> msc.getAnatSimilarity().getSourceAnatEntities();
+        Function<MultiSpeciesCondition, Entry<Set<AnatEntity>, Set<AnatEntity>>> fun =
+                msc -> new AbstractMap.SimpleEntry<>(msc.getCellTypeSimilarity().getSourceAnatEntities(),
+                        msc.getAnatSimilarity().getSourceAnatEntities())
+        ;
         this.displayExpressionComparison(searchResult, result, fun, true, null);
 
         log.traceExit();
     }
 
-    private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
-                                                 Function<T, Set<AnatEntity>> function, Boolean isMultiSpecies,
-                                                 String errorMsg) {
+    private <T> void displayExpressionComparison(SearchResult<String, Gene> searchResult,
+            MultiGeneExprAnalysis<T> result,
+            Function<T, Entry<Set<AnatEntity>, Set<AnatEntity>>> function, Boolean isMultiSpecies,
+            String errorMsg) {
         log.traceEntry("{} - {} - {} - {} - {}", searchResult, result, function, isMultiSpecies, errorMsg);
         
         this.startDisplay("Expression comparison page");
@@ -209,7 +218,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     }
 
     private <T> String getResult(SearchResult<String, Gene> searchResult, MultiGeneExprAnalysis<T> result,
-            Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
+            Function<T, Entry<Set<AnatEntity>, Set<AnatEntity>>> function, boolean isMultiSpecies) {
         log.traceEntry("{} - {} - {}", result, function, isMultiSpecies);
 
         StringBuilder sb = new StringBuilder();
@@ -266,21 +275,37 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
     }
 
+    /**
+     * 
+     * @param condToCounts
+     * @param function          A {@code Function} extracting from {@code T} a {@code Map}
+     *                          where keys is an {@code AnatEntity} representing
+     *                          a cell type and the associated value an {@code AnatEntity} representing
+     *                          an anat. entity (post-composition of terms).
+     * 
+     * @param isMultiSpecies
+     * @param T                 Either {@code Condition} or {@code MultiSpeciesCondition}
+     * @return
+     */
     private <T> String getRow(Map.Entry<T, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts,
-                              Function<T, Set<AnatEntity>> function, boolean isMultiSpecies) {
+                              Function<T, Entry<Set<AnatEntity>, Set<AnatEntity>>> function, boolean isMultiSpecies) {
         log.traceEntry("{} - {} - {}", condToCounts, function, isMultiSpecies);
+
+        Entry<List<AnatEntity>, List<AnatEntity>> anatEntities = Optional.of(
+                function.apply(condToCounts.getKey()))
+                .map(aes -> new AbstractMap.SimpleEntry<>(
+                        aes.getKey().stream()
+                            .sorted(Comparator.comparing(a -> a.getName()))
+                            .collect(Collectors.toList()),
+                        aes.getValue().stream()
+                            .sorted(Comparator.comparing(a -> a.getName()))
+                            .collect(Collectors.toList())))
+                .get();
 
         StringBuilder row = new StringBuilder();
         row.append("<tr>");
-        
-        List<AnatEntity> anatEntities = function.apply(condToCounts.getKey()).stream()
-                .sorted(Comparator.comparing(AnatEntity::getName))
-                .collect(Collectors.toList());
-        
         row.append("    <td>");
-        row.append(anatEntities.stream()
-                .map(ae -> getAnatEntityUrl(ae, ae.getName()))
-                .collect(Collectors.joining(ENTITIES_SEPARATOR)));
+        row.append("        " + getAnatEntityText(anatEntities, false));
         row.append("    </td>");
 
         Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
@@ -319,9 +344,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         row.append("    <td><span class='expandable' title='Click to expand'>[+]</span></td>");
 
         // Columns for export only
-        row.append("<td>").append(anatEntities.stream()
-                .map(Entity::getId)
-                .collect(Collectors.joining(ENTITIES_SEPARATOR))).append("</td>");
+        row.append("<td>").append(getAnatEntityText(anatEntities, true)).append("</td>");
         row.append("<td>").append(expressedGenes.size()).append("</td>");
         row.append("<td>").append(notExpressedGenes.size()).append("</td>");
         row.append("<td>").append(condToCounts.getValue().getGenesWithNoData().size()).append("</td>");
@@ -336,6 +359,40 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         row.append("</tr>");
         return log.traceExit(row.toString());
+    }
+
+    private String getAnatEntityText(Entry<List<AnatEntity>, List<AnatEntity>> anatEntities,
+            boolean textExport) {
+        log.traceEntry("{}, {}", anatEntities, textExport);
+
+        StringBuilder sb = new StringBuilder();
+        boolean hasCellType = false;
+        for (AnatEntity cellType: anatEntities.getKey()) {
+            if (hasCellType) {
+                sb.append(ENTITIES_SEPARATOR);
+            }
+            if(cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                if (!textExport) {
+                    sb.append(getAnatEntityUrl(cellType, cellType.getName()));
+                } else {
+                    sb.append(cellType.getId());
+                }
+                hasCellType = true;
+            }
+        }
+        if (hasCellType) {
+            sb.append(" <i>in</i> ");
+        }
+        sb.append(anatEntities.getValue().stream()
+                .map(anatEntity -> {
+                    if (!textExport) {
+                        return getAnatEntityUrl(anatEntity, anatEntity.getName());
+                    }
+                    return anatEntity.getId();
+                })
+                .collect(Collectors.joining(ENTITIES_SEPARATOR)));
+
+        return log.traceExit(sb.toString());
     }
 
     /**

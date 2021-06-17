@@ -821,7 +821,9 @@ public class MultiSpeciesCallService extends CommonService {
                         .collect(Collectors.toSet()):
                             new HashSet<>(geneFilters));
 
-        // Retrieve AnatEntitySimilarity from the provided taxon
+        // Retrieve AnatEntitySimilarity from the provided taxon.
+        // Of note, the root of cell types MUST have a similarity annotation, otherwise,
+        // calls in conditions not using cell types would not be retrieved
         Set<AnatEntitySimilarity> anatEntitySimilaritiesFromAnatFilter = anatEntitySimilarityService
                 .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
         Set<AnatEntitySimilarity> anatEntitySimilaritiesFromCellTypeFilter =
@@ -863,7 +865,8 @@ public class MultiSpeciesCallService extends CommonService {
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
         ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null,
-                allCellTypeIds, null, null);
+                allCellTypeIds, null, null,
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
 
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
@@ -1046,8 +1049,10 @@ public class MultiSpeciesCallService extends CommonService {
                 //streaming Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 .entrySet().stream()
                 //Keep only conditions where at least one gene has observed data in it
-                .filter(e -> e.getValue().stream().anyMatch(sc -> sc.getCalls().stream()
-                        .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData()))))
+                //As of Bgee 15.0, because of the way we manage call propagation along
+                //condition parameters now, we disable this filter
+//                .filter(e -> e.getValue().stream().anyMatch(sc -> sc.getCalls().stream()
+//                        .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData()))))
                 //mapping Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 //to Entry<MultiSpeciesCondition, MultiGeneExprCounts>
                 .map(e -> {

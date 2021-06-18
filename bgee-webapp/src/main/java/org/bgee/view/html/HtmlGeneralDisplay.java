@@ -514,13 +514,16 @@ public class HtmlGeneralDisplay extends HtmlParentDisplay implements GeneralDisp
 
         this.writeln("<div class='panel-body'>");
 
-        this.writeOneNews("2021-04-28", "<strong>Release of Bgee version 15.0</strong>"
+        this.writeOneNews("2021-06-15", "<strong>Release of Bgee version 15 beta</strong>"
                 + "<p>This is a major update of Bgee, with 28 new species; "
                 + "integration of single-cell RNA-Seq full-length data; improved treatment "
                 + "of bulk RNA-Seq, and addition of new libraries; and improved statistical treatment "
                 + "to control for False Discovery Rate. All <i>in situ</i> hybridization data "
                 + "retrieved from Model Organism Databases, and all genomes and underlying ontologies, "
                 + "have been updated.</p>"
+                + "<p>It is for now released as a beta version. <strong>Please note that the data "
+                + "for this beta release will not be archived and should not be used in publications, "
+                + "expecting long-term retrieval</strong>. The SPARQL endpoint was not updated.</p>"
                 + "<ul>"
                 + "<li>We are happy to announce that <strong>Bgee now includes single-cell RNA-Seq "
                 + "full-length data</strong>. We have designed statistical methods allowing "

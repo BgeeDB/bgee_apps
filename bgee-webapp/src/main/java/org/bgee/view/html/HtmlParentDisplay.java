@@ -783,7 +783,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
 
         if (StringUtils.isNotBlank(this.prop.getWarningMessage())) {
             this.writeln("<div class='alert alert-warning'>" +
-                htmlEntities(this.prop.getWarningMessage()) +
+                this.prop.getWarningMessage() +
             "</div>");
         }
 

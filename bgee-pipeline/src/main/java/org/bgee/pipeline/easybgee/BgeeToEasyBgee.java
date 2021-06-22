@@ -470,7 +470,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 //produced the calls
                 //TODO: reactivate this attribute when the bug allowing to detect propagation
                 // state is fixed.
-                //CallService.Attribute.OBSERVED_DATA,
+                CallService.Attribute.OBSERVED_DATA,
                 CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
                 //We also want to know the global FDR-corrected p-value
                 CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);

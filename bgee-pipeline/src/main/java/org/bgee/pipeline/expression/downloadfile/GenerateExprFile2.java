@@ -435,11 +435,20 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             serviceOrdering.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
             observedDataFilter.put(CallService.Attribute.STRAIN_ID, true);
         }
+        
+        // if observed 
+        Boolean callObservedData = null;
+        if( observedDataFilter.keySet().containsAll(CallService.Attribute.getAllConditionParameters()) ) {
+            observedDataFilter = null;
+            callObservedData = true;
+        }
+        
 
         log.debug(clnAttr);
         log.debug(observedDataFilter);
+        log.debug(callObservedData);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null,  null, 
+                Collections.singleton(new GeneFilter(speciesId)), null, null,  callObservedData, 
                 observedDataFilter);
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
@@ -631,16 +640,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 case STAGE_NAME_COLUMN_NAME:
                 case STRAIN_COLUMN_NAME:
                 case SEX_COLUMN_NAME:
-                	processors[i] = new StrNotNullOrEmpty();
-                	break;
+                    processors[i] = new StrNotNullOrEmpty();
+                    break;
                 case GENE_NAME_COLUMN_NAME:
-                	processors[i] = new NotNull();
+                    processors[i] = new NotNull();
                     break;
                 case EXPRESSION_COLUMN_NAME:
                     processors[i] = new IsElementOf(expressionSummaries);
                     break;
                 case QUALITY_COLUMN_NAME:
-                	processors[i] = new IsElementOf(qualitySummaries);
+                    processors[i] = new IsElementOf(qualitySummaries);
                     break;
                 case EXPRESSION_SCORE_COLUMN_NAME:
                 case EXPRESSION_RANK_COLUMN_NAME:
@@ -660,15 +669,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             }
 
             if (!fileType.isSimpleFileType()) {
-            	// *** Attributes specific to complete file ***
-            	switch (header[i]) {
-            	    case AFFYMETRIX_DATA_COLUMN_NAME:
-            	    case EST_DATA_COLUMN_NAME:
-            	    case IN_SITU_DATA_COLUMN_NAME:
-            	    case RNASEQ_DATA_COLUMN_NAME:
-            	    case FULL_LENGTH_DATA_COLUMN_NAME:
+                // *** Attributes specific to complete file ***
+                switch (header[i]) {
+                    case AFFYMETRIX_DATA_COLUMN_NAME:
+                    case EST_DATA_COLUMN_NAME:
+                    case IN_SITU_DATA_COLUMN_NAME:
+                    case RNASEQ_DATA_COLUMN_NAME:
+                    case FULL_LENGTH_DATA_COLUMN_NAME:
                         processors[i] = new IsElementOf(expressionSummaries);
-            	        break;
+                        break;
                     case AFFYMETRIX_QUAL_COLUMN_NAME:
                     case EST_QUAL_COLUMN_NAME:
                     case IN_SITU_QUAL_COLUMN_NAME:
@@ -688,16 +697,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     case FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
                     case SELF_OBSERVATION_COUNT_COLUMN_NAME:
                     case DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-            	        processors[i] = new LMinMax(0, Long.MAX_VALUE);
-            	        break;
-            	    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
-            	    case EST_OBSERVED_DATA_COLUMN_NAME:
-            	    case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
-            	    case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
-            	    case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
-            	    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
-            	        processors[i] = new IsElementOf(originValues);
-            	        break;
+                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
+                        break;
+                    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
+                    case EST_OBSERVED_DATA_COLUMN_NAME:
+                    case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
+                    case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
+                    case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
+                    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
+                        processors[i] = new IsElementOf(originValues);
+                        break;
                     case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
                     case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
                     case AFFYMETRIX_WEIGHT_COLUMN_NAME:
@@ -724,7 +733,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 //                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
                         processors[i] = new StrNotNullOrEmpty();
                         break;
-            	}
+                }
             }
             if (processors[i] == null) {
                 throw log.throwing(new IllegalArgumentException("Unrecognized header: " 

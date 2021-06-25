@@ -45,7 +45,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -489,9 +488,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         // return calls with SILVER quality for all condition parameters
          EnumSet<CallService.Attribute> allCondParamAttrs = EnumSet.copyOf(baseAttributes);
          allCondParamAttrs.addAll(CallService.Attribute.getAllConditionParameters());
-         ConditionEntities condEntities = new ConditionEntities(silverAnatCalls.stream()
-                 .map(c -> c.getCondition())
-                 .collect(Collectors.toSet()));
+//         ConditionEntities condEntities = new ConditionEntities(silverAnatCalls.stream()
+//                 .map(c -> c.getCondition())
+//                 .collect(Collectors.toSet()));
 
          final List<ExpressionCall> allCondsCalls = serviceFactory.getCallService()
                  .loadExpressionCalls(
@@ -921,30 +920,54 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         }
         //FIXME: the propagation state can be null or equals to UNKNOWN
         EnumSet<PropagationState> allPropagationState = dataPropagation.getAllPropagationStates();
-        if (dataPropagation.isIncludingObservedData()) {
+//        if (dataPropagation.isIncludingObservedData()) {
             if (allPropagationState.contains(PropagationState.ALL) || 
-                    allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
-                    (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) && 
-                            allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT))) {
+                    ( allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) && 
+                            (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
+                            allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) ||
+                            allPropagationState.contains(PropagationState.SELF)) ) || 
+                    ( allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) && (
+                            allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
+                            allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) ||
+                            allPropagationState.contains(PropagationState.DESCENDANT)) ) ||
+                    ( allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) && (
+                            allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
+                            allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
+                            allPropagationState.contains(PropagationState.ANCESTOR)) ) ||
+                    ( allPropagationState.contains(PropagationState.SELF) && 
+                            allPropagationState.contains(PropagationState.ANCESTOR) &&
+                            allPropagationState.contains(PropagationState.DESCENDANT) )) {
                 return log.traceExit("all");
-            } else if (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR)) {
+            } else if (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
+                    ( allPropagationState.contains(PropagationState.SELF) &&
+                    allPropagationState.contains(PropagationState.ANCESTOR) )) {
                 return log.traceExit("self and ancestor");
-            } else if (allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT)) {
+            } else if (allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT)||
+                    ( allPropagationState.contains(PropagationState.SELF) &&
+                    allPropagationState.contains(PropagationState.DESCENDANT) )) {
                 return log.traceExit("self and descendant");
+            } else if (allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)||
+                    ( allPropagationState.contains(PropagationState.ANCESTOR) &&
+                    allPropagationState.contains(PropagationState.DESCENDANT) )) {
+                return log.traceExit("ancestor and descendant");
             } else if (allPropagationState.contains(PropagationState.SELF)) {
             	return log.traceExit("self");
-            }
-        } else {
-            if ( (allPropagationState.contains(PropagationState.ANCESTOR) && 
-                    allPropagationState.contains(PropagationState.DESCENDANT)) ||
-                    allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-                return log.traceExit("ancestor and descendant");
             } else if (allPropagationState.contains(PropagationState.ANCESTOR)) {
                 return log.traceExit("ancestor");
             } else if (allPropagationState.contains(PropagationState.DESCENDANT)) {
                 return log.traceExit("descendant");
             }
-        }
+//        } else {
+//            else if ( (allPropagationState.contains(PropagationState.ANCESTOR) && 
+//                    allPropagationState.contains(PropagationState.DESCENDANT)) ||
+//                    allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
+//                return log.traceExit("ancestor and descendant");
+//            } else if (allPropagationState.contains(PropagationState.ANCESTOR)) {
+//                return log.traceExit("ancestor");
+//            } else if (allPropagationState.contains(PropagationState.DESCENDANT)) {
+//                return log.traceExit("descendant");
+//            }
+//        }
         throw log.throwing(new IllegalArgumentException("Unknown data propagation status  "
                 + dataPropagation));
     }

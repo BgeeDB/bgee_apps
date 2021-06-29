@@ -160,6 +160,8 @@ $( document ).ready( function(){
     $('table.orthologs').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
+    	"paging": false,
+    	"info":     false,
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -218,6 +220,8 @@ $( document ).ready( function(){
     $('table.paralogs').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
+    	"paging": false,
+    	"info":     false,
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {

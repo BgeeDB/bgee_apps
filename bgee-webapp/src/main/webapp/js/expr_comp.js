@@ -133,6 +133,9 @@ $( document ).ready( function(){
     // If you change any option of this table, take care to also change it for the single-species table
     $('table.expr_comp.multi-sp').DataTable( {
         order: order,
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         dom: dom,
         buttons: getButtons([0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]),
         responsive: responsive,
@@ -197,6 +200,9 @@ $( document ).ready( function(){
     $('table.expr_comp.single-sp').DataTable( {
         order: order, //  score desc, expressed genes desc, rank asc
         dom: dom,
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         buttons: getButtons([0, 1, 2, 3, 4, 5, 7, 8, 9, 10]),
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order

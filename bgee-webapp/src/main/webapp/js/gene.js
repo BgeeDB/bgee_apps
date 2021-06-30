@@ -20,6 +20,9 @@ $( document ).ready( function(){
     $('table.gene-search-result').DataTable( {
         //enable ordering but apply no ordering during initialization
         "order": [],
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -78,6 +81,9 @@ $( document ).ready( function(){
     $('table.expression').DataTable( {
     	//enable ordering but apply no ordering during initialization
     	"order": [],
+    	oLanguage: {
+            sSearch: "Filter:"
+        },
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -162,6 +168,9 @@ $( document ).ready( function(){
     	"order": [],
     	"paging": false,
     	"info":     false,
+    	oLanguage: {
+            sSearch: "Filter:"
+        },
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {
@@ -222,6 +231,9 @@ $( document ).ready( function(){
     	"order": [],
     	"paging": false,
     	"info":     false,
+    	oLanguage: {
+            sSearch: "Filter:"
+        },
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.modal( {

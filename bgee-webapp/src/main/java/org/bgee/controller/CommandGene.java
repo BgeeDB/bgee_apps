@@ -176,7 +176,7 @@ public class CommandGene extends CommandParent {
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
-                    .searchByTerm(search, null, 0, 1000);
+                    .searchByTerm(search, null, 0, 10000);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         }

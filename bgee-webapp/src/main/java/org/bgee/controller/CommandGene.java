@@ -236,7 +236,7 @@ public class CommandGene extends CommandParent {
 
     private GeneResponse buildGeneResponse(Gene gene) 
             throws IllegalStateException {
-        log.entry(gene);
+        log.traceEntry("{}", gene);
         //retrieve calls with silver quality for one anat. entity and at least bronze quality
         //for the same anat. entity and other conditions
         LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByOrganCall = serviceFactory
@@ -287,7 +287,8 @@ public class CommandGene extends CommandParent {
     private GeneResponse buildGeneResponse(Gene gene, LinkedHashMap<ExpressionCall, 
             List<ExpressionCall>> callsByOrganCall, GeneHomologs geneHomologs, 
             boolean filterRedundantCalls) {
-        log.entry(gene, callsByOrganCall, geneHomologs, filterRedundantCalls);
+        log.traceEntry("{}, {}, {}, {}, {}", gene, callsByOrganCall, geneHomologs, 
+                filterRedundantCalls);
 
         long startFilteringTimeInMs = System.currentTimeMillis();
 

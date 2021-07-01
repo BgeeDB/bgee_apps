@@ -44,7 +44,7 @@ public class GeneMatchResultService extends CommonService {
 
     // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
     private static final int SPHINX_CONNECT_TIMEOUT = 3000;
-    private static final int SPHINX_MAX_RESULTS = 10000;
+    public static final int SPHINX_MAX_RESULTS = 10000;
     private static final String SPHINX_SEPARATOR = "\\|\\|";
     /**
      * @see #getSphinxClient()

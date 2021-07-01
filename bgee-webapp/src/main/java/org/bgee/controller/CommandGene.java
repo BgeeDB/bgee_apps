@@ -24,6 +24,7 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -176,7 +177,7 @@ public class CommandGene extends CommandParent {
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
-                    .searchByTerm(search, null, 0, 10000);
+                    .searchByTerm(search, null, 0, GeneMatchResultService.SPHINX_MAX_RESULTS);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         }

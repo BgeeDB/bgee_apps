@@ -848,12 +848,14 @@ public class MultiSpeciesCallService extends CommonService {
 
         // Build a new condition filter based on retrieved anat. entity similarities
         // For non-transitive similarity relations, an AnatEntity
-        //could be part of several AnatEntitySimilaritys
+        // could be part of several AnatEntitySimilaritys.
+        // It should not be the case in most cases for transitive similarity relations
+        // (see method AnatEntitySimilarityService.getValidMultipleEntityAnnotations)
         Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromAnatFilter =
                 anatEntitySimilaritiesFromAnatFilter.stream()
                         .flatMap(sim -> sim.getSourceAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
-                        .collect(Collectors.groupingBy(SimpleEntry::getKey, 
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
                                 Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
         Set<String> allAnatEntityIds = similaritiesByAnatEntityFromAnatFilter.keySet().stream()
                 .map(Entity::getId)
@@ -862,7 +864,7 @@ public class MultiSpeciesCallService extends CommonService {
                 anatEntitySimilaritiesFromCellTypeFilter.stream()
                         .flatMap(sim -> sim.getSourceAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
-                        .collect(Collectors.groupingBy(SimpleEntry::getKey, 
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
                                 Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
         Set<String> allCellTypeIds = similaritiesByAnatEntityFromCellTypeFilter.keySet().stream()
                 .map(Entity::getId)
@@ -899,30 +901,29 @@ public class MultiSpeciesCallService extends CommonService {
                 new ElementGroupFromListSpliterator<>(callStream, Call::getGene, Gene.COMPARATOR), false);
 
         // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
-        
-        
         Stream<SimilarityExpressionCall> similarityExpressionCallStream =
                 callsByGene.flatMap(callList -> {
+                    //As of Bgee 15.0, since we can have post-composition of anat. entity and cell type,
+                    //the key of the Map changes from AnatEntitySimilarity to MultiSpeciesCondition
                     LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall>> callsPerSimilarity =
-                            new LinkedHashMap<>();
+                            callList.stream()
+                            .flatMap(c -> similaritiesByAnatEntityFromAnatFilter
+                                    .get(c.getCondition().getAnatEntity()).stream()
+                                    .flatMap(anatSim -> similaritiesByAnatEntityFromCellTypeFilter
+                                        .get(c.getCondition().getCellType()).stream()
+                                        .map(cellTypeSim -> new AbstractMap.SimpleEntry<>(
+                                            new MultiSpeciesCondition(anatSim, null, cellTypeSim, null),
+                                            new ArrayList<>(Arrays.asList(c))))))
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                                    (v1, v2) -> {v1.addAll(v2); return v1;},
+                                    //Need compiler hint on my Eclipse version
+                                    () -> new LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall>>()));
+
                     Gene gene = callList.get(0).getGene();
-                    callList.forEach(call -> {
-                        Set<AnatEntitySimilarity> anatSims = similaritiesByAnatEntityFromAnatFilter.get(call.getCondition().getAnatEntity());
-                        Set<AnatEntitySimilarity> cellTypeSims = similaritiesByAnatEntityFromCellTypeFilter.get(call.getCondition().getCellType());
-                        anatSims.forEach(anatSim -> cellTypeSims.forEach(cellTypeSim -> {
-                            MultiSpeciesCondition msCond = new MultiSpeciesCondition(anatSim, null, cellTypeSim, null);
-                            List<ExpressionCall> c = callsPerSimilarity.get(msCond);
-                            if (c != null) {
-                                c.add(call);
-                            } else {
-                                callsPerSimilarity.put(msCond, Arrays.asList(call));
-                            }
-                        }));
-                    });
                     return callsPerSimilarity.entrySet().stream().map(e -> {
                         MultiSpeciesCondition cond = e.getKey();
                         boolean hasExpression = e.getValue().stream()
-                                                 .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
+                                .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
                         return new SimilarityExpressionCall(gene, cond, e.getValue(),
                                 hasExpression? ExpressionSummary.EXPRESSED: ExpressionSummary.NOT_EXPRESSED);
                     });

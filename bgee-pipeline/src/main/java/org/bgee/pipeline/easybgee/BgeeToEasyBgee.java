@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -343,7 +344,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      *            parameters.
      */
     public static void main(String[] args) {
-        log.entry((Object[]) args);
         if (args == null || args[0] == null) {
             throw log.throwing(new IllegalArgumentException("No arguments are provided. At least one argument"
                     + "corresponding to the action to do should be provided"));
@@ -395,7 +395,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      * @param directory to the output directory to cleanpath 
      */
     private void cleanOutputDir(String directory) {
-        log.entry(directory);
+        log.traceEntry("{}", directory);
         File dir = new File(directory);
         dir.mkdir();
         for (TsvFile fileName : TsvFile.values()) {
@@ -439,6 +439,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceEntry("{}, {}, {}, {}",ensemblIdToBgeeGeneIds, condToConditionId, speciesId, directory);
 
         log.info("Start extracting global expressions for the species {}...", speciesId);
+        
+        // use TsvFile enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
         String[] header = new String[] { GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                 GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY,
@@ -475,14 +478,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
 
         // return calls with SILVER quality for anat. entities
-         List<ExpressionCall> silverAnatCalls =serviceFactory.getCallService().loadExpressionCalls(
+         Stream<ExpressionCall> silverAnatCalls =serviceFactory.getCallService().loadExpressionCalls(
                 new ExpressionCallFilter(silverCallFilter, 
                         Collections.singleton(geneFilter), 
                         ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT), 
-                baseAttributes, orderingAttributes).collect(Collectors.toList());
+                baseAttributes, orderingAttributes);
                 
-         final List<Map<String, String>> callsInformation = getGlobalExpressionMap(silverAnatCalls, 
-                 ensemblIdToBgeeGeneIds, condToConditionId);
+         writeGlobalExpressionFile(silverAnatCalls, ensemblIdToBgeeGeneIds, condToConditionId, 
+                 directory, header, processors);
          
          
         // return calls with SILVER quality for all condition parameters
@@ -491,35 +494,31 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
 //         ConditionEntities condEntities = new ConditionEntities(silverAnatCalls.stream()
 //                 .map(c -> c.getCondition())
 //                 .collect(Collectors.toSet()));
-
-         final List<ExpressionCall> allCondsCalls = serviceFactory.getCallService()
+         Map<CallService.Attribute, Boolean> allCondParamFilter = 
+                 CallService.Attribute.getAllConditionParameters().stream()
+                 .collect(Collectors.toMap(a -> a, a -> true));
+         final Stream<ExpressionCall> allCondsCalls = serviceFactory.getCallService()
                  .loadExpressionCalls(
                          new ExpressionCallFilter(silverCallFilter,
                                  Collections.singleton(geneFilter),
-                                 null,
-                                 null, true, null),
+                                 allCondParamFilter),
                          allCondParamAttrs,
-                         orderingAttributes)
-                 .collect(Collectors.toList());
+                         orderingAttributes);
          
-        callsInformation.addAll(
-        		getGlobalExpressionMap(allCondsCalls,
-                        ensemblIdToBgeeGeneIds, condToConditionId));
+        writeGlobalExpressionFile(allCondsCalls, ensemblIdToBgeeGeneIds, condToConditionId, 
+                directory, header, processors);
 
-        // use TsvFile enum to generate the CellProcessor
-        final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
-
-        File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
-        writeOutputFile(file, callsInformation, header, processors);
         log.traceExit();
     }
 
-    private List<Map<String, String>> getGlobalExpressionMap(List<ExpressionCall> expressionCalls,
-            Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId) {
+    private void writeGlobalExpressionFile(Stream<ExpressionCall> expressionCalls,
+            Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId,
+            String directory, String[] header, CellProcessor[] processors) {
         log.traceEntry("{}, {}, {}, {}, {}", expressionCalls, ensemblIdToBgeeGeneId, condToConditionId);
 
-        return log.traceExit(expressionCalls.stream()
-                .map(call -> {
+        File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
+
+        writeOutputFile(file, expressionCalls.map(call -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
                             String.valueOf(ensemblIdToBgeeGeneId.get(call.getGene().getEnsemblGeneId())));
@@ -549,11 +548,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
                     headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFormatedFDRPValue());
                     return headerToValue;
-                }).collect(Collectors.toList()));
+                }).collect(Collectors.toList()),
+                header, processors);
     }
 
     private Map<String, Integer> extractGeneTable(Integer speciesId, String directory) {
-        log.entry(speciesId, directory);
+        log.traceEntry("{}, {}", speciesId, directory);
         log.info("Start extracting genes for the species {}...", speciesId);
         String[] header = new String[] { GeneDAO.Attribute.ID.name(), GeneDAO.Attribute.ENSEMBL_ID.name(),
                 GeneDAO.Attribute.NAME.name(), GeneDAO.Attribute.DESCRIPTION.name(),
@@ -578,7 +578,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     }
 
     private void extractAnatEntityTable(String directory) {
-        log.entry(directory);
+        log.traceEntry("{}", directory);
         log.info("Start extracting anatomical entities...");
         String[] header = new String[] { AnatEntityDAO.Attribute.ID.name(), AnatEntityDAO.Attribute.NAME.name(),
                 AnatEntityDAO.Attribute.DESCRIPTION.name() };
@@ -598,7 +598,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     }
 
     private void extractStageTable(String directory) {
-        log.entry(directory);
+        log.traceEntry("{}", directory);
         log.info("Start extracting developmental stages");
         String[] header = new String[] { StageDAO.Attribute.ID.name(), StageDAO.Attribute.NAME.name(),
                 StageDAO.Attribute.DESCRIPTION.name() };
@@ -620,13 +620,13 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
         log.traceEntry("{}, {}", speciesId, directory);
         log.info("Start extracting global conditions for the species {}...", speciesId);
-//        List<ConditionDAO.Attribute> condAttributesAnatAndStage = 
-//                Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID);
-//        List<ConditionDAO.Attribute> condAttributesAnat = Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         
-        DAOConditionFilter condFilterAnatEntity = new DAOConditionFilter(null, Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID), 
-                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID), Collections.singleton(ConditionDAO.SEX_ROOT_ID), 
-                Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
+        //retrieve conditions for anat entity observed and for all cond. parameters observed
+//        DAOConditionFilter condFilterAnatEntity = new DAOConditionFilter(null, null, 
+//                null, null, null, Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
+//                        ConditionDAO.Attribute.CELL_TYPE_ID));
+//        DAOConditionFilter condFilterAllParams = new DAOConditionFilter(null, null, 
+//                null, null, null, ConditionDAO.Attribute.getCondParams());
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID,
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
                 ConditionDAO.Attribute.CELL_TYPE_ID, ConditionDAO.Attribute.SEX_ID,
@@ -638,12 +638,12 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         
         // Retrieve all conditions
         List<ConditionTO> conditionTOs = getManager().getConditionDAO()
-                .getGlobalConditions(Collections.singleton(speciesId), null, attributes).getAllTOs();
-
-//        // Retrieve conditions where both anatEntity and devStage are not null
-//        conditionTOs.addAll(getManager().getConditionDAO().getGlobalConditionsBySpeciesIds(
-//                Collections.singleton(speciesId), condAttributesAnatAndStage, attributes)
-//                .getAllTOs());
+                .getGlobalConditions(Collections.singleton(speciesId), 
+                        null, attributes).getAllTOs();
+        
+//        conditionTOs.addAll(getManager().getConditionDAO()
+//                .getGlobalConditions(Collections.singleton(speciesId), 
+//                        Arrays.asList(condFilterAllParams), attributes).getAllTOs());
         
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
         List<Map<String, String>> allGlobalCondInformation = conditionTOs.stream().map(cond -> {
@@ -670,7 +670,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     }
 
     private Set<Integer> extractSpeciesTable(SpeciesTOResultSet speciesTOs, String directory) {
-        log.entry(speciesTOs, directory);
+        log.traceEntry("{}, {}", speciesTOs, directory);
         Set<Integer> speciesIds = new HashSet<>();
         String[] header = new String[] { SpeciesDAO.Attribute.ID.name(), SpeciesDAO.Attribute.GENUS.name(),
                 SpeciesDAO.Attribute.SPECIES_NAME.name(), SpeciesDAO.Attribute.COMMON_NAME.name(),
@@ -702,7 +702,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      * @return A table of {@code CellProcessor}
      */
     private CellProcessor[] createCellProcessor(TsvFile enumValue) {
-        log.entry(enumValue);
+        log.traceEntry("{}", enumValue);
         CellProcessor[] cellProcessor = new CellProcessor[enumValue.getDatatypes().size()];
         int index = 0;
         for (Map.Entry<String, Integer> entry : enumValue.getDatatypes().entrySet()) {
@@ -754,7 +754,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      */
     private void writeOutputFile(File file, Collection<Map<String, String>> fileLines, String[] header,
             CellProcessor[] processors) {
-        log.entry(file, fileLines, header, processors);
+        log.traceEntry("{}, {}, {}, {}", file, fileLines, header, processors);
         try {
         	boolean writeHeader = false;
         	if (!file.exists()) {
@@ -811,7 +811,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      *         the ID of the associated condition.
      */
     private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
-        log.entry(conditionTOs);
+        log.traceEntry("{}", conditionTOs);
         return log
                 .traceExit(conditionTOs.stream()
                         .collect(
@@ -835,7 +835,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      *            files are stored
      */
     private void tsvToEasyBgee(String directory) {
-        log.entry(directory);
+        log.traceEntry("{}", directory);
 
         for (TsvFile tsvFile : TsvFile.values()) {
             log.info("start integration of data from file {}", tsvFile.getFileName());
@@ -913,7 +913,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     }
     
     private String dataPropagationToString(DataPropagation dataPropagation) {
-        log.entry(dataPropagation);
+        log.traceEntry("{}", dataPropagation);
         //TODO: to remove when the API can return all types of propagation
         if(dataPropagation == null) {
             return log.traceExit("");

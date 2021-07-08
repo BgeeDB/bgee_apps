@@ -342,6 +342,13 @@ public class URLParameters {
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
+     * A {@code Parameter<String>} that contains the propagation to be used.
+     * Corresponds to the URL parameter "propagation".
+     */
+    private static final Parameter<String> PROPAGATION = new Parameter<>("propagation",
+            false, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
      * for TopAnat analysis.
      * Corresponds to the URL parameter "decorr_type".
@@ -451,10 +458,20 @@ public class URLParameters {
 
     /**
      * A {@code Parameter<String>} that contains the anatomical entity IDs to be used 
-     * for anatomical similarity analysis.
+     * for anatomical similarity analysis and for retrieval of propagated anatomical entity
+     * IDs.
      * Corresponds to the URL parameter "ae_list".
      */
     private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
+            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            1000000, DEFAULT_LIST_FORMAT, String.class);
+    
+    /**
+     * A {@code Parameter<String>} that contains the dev. stage IDs to be used 
+     * for retrieval of propagated (parents or descendants) dev. stage IDs.
+     * Corresponds to the URL parameter "ds_list".
+     */
+    private static final Parameter<String> DEV_STAGE_LIST = new Parameter<>("ds_list",
             false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
             1000000, DEFAULT_LIST_FORMAT, String.class);
     
@@ -515,6 +532,9 @@ public class URLParameters {
             SPECIES_LIST,
             // Anat. similarity analyze params
             ANAT_ENTITY_LIST,
+            // propagated ontology terms request
+            DEV_STAGE_LIST,
+            PROPAGATION,
             // Expression comparison request
             GENE_LIST,
             // TopAnat analyze params
@@ -868,6 +888,20 @@ public class URLParameters {
         return ANAT_ENTITY_LIST;
     }
     /**
+     * @return  A {@code Parameter<String>} defining a dev. stage ID list.
+     *          Corresponds to the URL parameter "ds_list".
+     */
+    public Parameter<String> getParamDevStageList() {
+        return DEV_STAGE_LIST;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a propagation.
+     *          Corresponds to the URL parameter "propagation".
+     */
+    public Parameter<String> getParamPropagation() {
+        return PROPAGATION;
+    }
+    /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 
      * It contains several properties related to the parameter and its usage.
@@ -977,7 +1011,8 @@ public class URLParameters {
                 List<String> separators, boolean isStorable, boolean isSecure, int maxSize,
                 String format, Class<T> type) throws IllegalArgumentException {
 
-            log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}", name, allowsMultipleValues, isStorable, 
+                    isSecure, maxSize, format, type);
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

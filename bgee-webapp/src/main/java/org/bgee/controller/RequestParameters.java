@@ -2454,6 +2454,29 @@ public class RequestParameters {
     }
     
     /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamPropagation()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code propagation} URL parameter. Can be {@code null}.
+     */
+    public String getPropagation() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamPropagation());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by 
+     * {@link URLParameters#getParamDevStageList()}. Equivalent to calling 
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of 
+     *          the {@code ds_list} URL parameter. Can be {@code null}.
+     */
+    public List<String> getDevStageList() {
+        return this.getValues(this.getUrlParametersInstance().getParamDevStageList());
+    }
+    
+    /**
      * Convenient method to set value of the parameter returned by 
      * {@link URLParameters#getParamAnatEntityList()}. Equivalent to calling 
      * {@link #addValue(URLParameters.Parameter, Object)} for this parameter.

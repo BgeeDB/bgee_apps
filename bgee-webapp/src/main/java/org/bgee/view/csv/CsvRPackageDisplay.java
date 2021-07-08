@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,6 +17,7 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandRPackage;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.ontology.Ontology;
@@ -80,7 +82,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
 
     @Override
     public void displayAnatEntities(List<String> attrs, Stream<AnatEntity> anatEntitiesStream) {
-        log.entry(attrs, anatEntitiesStream);
+        log.traceEntry("{}, {}", attrs, anatEntitiesStream);
         String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
         try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
             this.startDisplay();
@@ -118,7 +120,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     }
 
     public void displaySpecies(List<String> attrs, List<Species> speciesList) {
-        log.entry(attrs, speciesList);
+        log.traceEntry("{}, {}", attrs, speciesList);
         String[] header = attrs.stream().map(attr -> attr.toString()).toArray(String[]::new);
 
         try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
@@ -212,7 +214,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
 
     @Override
     public void displayAERelations(List<String> attrs, Ontology<AnatEntity, String> anatEntityOnt) {
-        log.entry(attrs, anatEntityOnt);
+        log.traceEntry("{}, {}", attrs, anatEntityOnt);
         String[] header = attrs.toArray(new String[attrs.size()]);
         try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
             this.startDisplay();
@@ -282,5 +284,90 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
             throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
         }
 
+    }
+
+    @Override
+    public void displayAnatEntityPropagation(List<String> attrs, Set<AnatEntity> propagatedAnatEntities) {
+        log.traceEntry("{}, {}", attrs, propagatedAnatEntities);
+        String[] header = attrs.toArray(new String[attrs.size()]);
+        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
+            this.startDisplay();
+            mapWriter.writeHeader(header);
+            propagatedAnatEntities.stream().sorted().forEach(e -> {
+                final Map<String, Object> speMap = new HashMap<String, Object>();
+                for (int columnNumber = 0; columnNumber < header.length; columnNumber++) {
+                    switch (header[columnNumber]) {
+                    case CommandRPackage.PROPAGATION_ID_PARAM:
+                        speMap.put(header[columnNumber], e.getId());
+                        break;
+                    case CommandRPackage.PROPAGATION_NAME_PARAM:
+                        speMap.put(header[columnNumber], e.getName());
+                        break;
+                    case CommandRPackage.PROPAGATION_DESCRIPTION_PARAM:
+                        speMap.put(header[columnNumber], e.getDescription());
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
+                    }
+                }
+                try {
+                    mapWriter.write(speMap, header);
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            });
+            mapWriter.flush();
+        } catch (IOException e) {
+            log.catching(e);
+            throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
+        }
+    }
+
+    @Override
+    public void displayDevStagePropagation(List<String> attrs, Set<DevStage> propagatedDevStages) {
+        log.traceEntry("{}, {}", attrs, propagatedDevStages);
+        String[] header = attrs.toArray(new String[attrs.size()]);
+        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
+            this.startDisplay();
+            mapWriter.writeHeader(header);
+            propagatedDevStages.stream().sorted().forEach(e -> {
+                final Map<String, Object> speMap = new HashMap<String, Object>();
+                for (int columnNumber = 0; columnNumber < header.length; columnNumber++) {
+                    switch (header[columnNumber]) {
+                    case CommandRPackage.PROPAGATION_ID_PARAM:
+                        speMap.put(header[columnNumber], e.getId());
+                        break;
+                    case CommandRPackage.PROPAGATION_NAME_PARAM:
+                        speMap.put(header[columnNumber], e.getName());
+                        break;
+                    case CommandRPackage.PROPAGATION_DESCRIPTION_PARAM:
+                        speMap.put(header[columnNumber], e.getDescription());
+                        break;
+                    case CommandRPackage.PROPAGATION_LEVEL_PARAM:
+                        speMap.put(header[columnNumber], e.getDescription());
+                        break;
+                    case CommandRPackage.PROPAGATION_LEFTBOUND_PARAM:
+                        speMap.put(header[columnNumber], e.getDescription());
+                        break;
+                    case CommandRPackage.PROPAGATION_RIGHTBOUND_PARAM:
+                        speMap.put(header[columnNumber], e.getDescription());
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
+                    }
+                }
+                try {
+                    mapWriter.write(speMap, header);
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            });
+            mapWriter.flush();
+        } catch (IOException e) {
+            log.catching(e);
+            throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
+        }
     }
 }

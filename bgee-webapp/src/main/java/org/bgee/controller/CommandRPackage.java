@@ -425,7 +425,8 @@ public class CommandRPackage extends CommandParent {
             return;
         }
         Boolean descendant = propagation.equals(DESCENDANT_PARAM) ? true : false;
-        Boolean ancestor = propagation.equals(ANCESTOR_PARAM) ? true : false;
+        Boolean ancestor = propagation.equals(ANCESTOR_PARAM) || 
+                propagation.equals(LEAST_COMMON_ANCESTOR_PARAM) ? true : false;
         if( (stageIds == null || stageIds.isEmpty()) && 
                 (anatEntityIds == null || anatEntityIds.isEmpty())) {
             errorDisplay.displayControllerException(new InvalidRequestException("At least one dev. "
@@ -506,21 +507,21 @@ public class CommandRPackage extends CommandParent {
             Set<AnatEntity> propagatedAnatEntityIds = null;
             
             //retrieve descendants of provided anatomical entities
-            if (propagation == DESCENDANT_PARAM) {
+            if (propagation.equals(DESCENDANT_PARAM)) {
                 propagatedAnatEntityIds = anatEntities.stream()
                 .map(s -> anatEntityOntology.getDescendants(s))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
                 
             //retrieve ancestors of provided anatomical entities
-            } else if (propagation == ANCESTOR_PARAM) {
+            } else if (propagation.equals(ANCESTOR_PARAM)) {
                 propagatedAnatEntityIds = anatEntities.stream()
                 .map(s -> anatEntityOntology.getAncestors(s))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
             
             //retrieve least common ancestor of provided anatomical entities
-            } else if (propagation == LEAST_COMMON_ANCESTOR_PARAM) {
+            } else if (propagation.equals(LEAST_COMMON_ANCESTOR_PARAM)) {
                 if(anatEntities.size() < 2) {
                     errorDisplay.displayControllerException(new InvalidRequestException("at least 2 "
                             + "ontology terms should be provided to retrieve least common ancestor"));

@@ -490,7 +490,7 @@ public class HtmlParentDisplay extends ConcreteDisplayParent {
         this.writeln("    <li>");
         this.writeln("        <a rel='license noopener' href='" + LICENCE_CC0_URL + "' target='_blank'>");
         this.writeln("            <img src='" + this.prop.getBgeeRootDirectory() + this.prop.getImagesRootDirectory() +
-                                    "cc-zero.png' width='80' height='15' alt='CC0' />");
+                                    "cc-zero.png' width='80' height='15' alt='CC0 license' />");
         this.writeln("        </a>");
         this.writeln("    </li>");
         this.writeln("</ul>");

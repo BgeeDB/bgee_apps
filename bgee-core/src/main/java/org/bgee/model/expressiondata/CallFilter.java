@@ -198,7 +198,7 @@ extends DataFilter<ConditionFilter> {
             if (observedDataFilter != null && observedDataFilter.entrySet().stream()
                     .anyMatch(e -> e.getKey() == null || e.getValue() == null ||
                                   !e.getKey().isConditionParameter())) {
-                throw log.throwing(new IllegalArgumentException("Only condition parameters,non-null, "
+                throw log.throwing(new IllegalArgumentException("Only condition parameters, non-null, "
                         + "and non-null Booleans are accepted in the Map of observedDataFilter"));
             }
 

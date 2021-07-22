@@ -782,29 +782,16 @@ public class InsertPropagatedCalls extends CallService {
 
         final private DataPropagation dataPropagation;
 
-        final private Set<ExperimentExpressionTO> parentExperimentExpr;
-        final private Set<ExperimentExpressionTO> selfExperimentExpr;
-        final private Set<ExperimentExpressionTO> descendantExperimentExpr;
-
         final private Set<SamplePValueTO<T, U>> parentPValues;
         final private Set<SamplePValueTO<T, U>> selfPValues;
         final private Set<SamplePValueTO<T, U>> descendantPValues;
         
         private PipelineCallData(DataType dataType, DataPropagation dataPropagation,
-                Set<ExperimentExpressionTO> parentExperimentExpr,
-                Set<ExperimentExpressionTO> selfExperimentExpr,
-                Set<ExperimentExpressionTO> descendantExperimentExpr,
                 Set<SamplePValueTO<T, U>> parentPValues,
                 Set<SamplePValueTO<T, U>> selfPValues,
                 Set<SamplePValueTO<T, U>> descendantPValues) {
             this.dataType = dataType;
             this.dataPropagation = dataPropagation;
-            this.parentExperimentExpr = parentExperimentExpr == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(parentExperimentExpr));
-            this.selfExperimentExpr = selfExperimentExpr == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(selfExperimentExpr));
-            this.descendantExperimentExpr = descendantExperimentExpr == null? null: 
-                Collections.unmodifiableSet(new HashSet<>(descendantExperimentExpr));
             this.parentPValues = Collections.unmodifiableSet(parentPValues == null?
                     new HashSet<>(): new HashSet<>(parentPValues));
             this.selfPValues = Collections.unmodifiableSet(selfPValues == null?
@@ -818,15 +805,6 @@ public class InsertPropagatedCalls extends CallService {
         }
         public DataPropagation getDataPropagation() {
             return dataPropagation;
-        }
-        public Set<ExperimentExpressionTO> getParentExperimentExpr() {
-            return parentExperimentExpr;
-        }
-        public Set<ExperimentExpressionTO> getSelfExperimentExpr() {
-            return selfExperimentExpr;
-        }
-        public Set<ExperimentExpressionTO> getDescendantExperimentExpr() {
-            return descendantExperimentExpr;
         }
         public Set<SamplePValueTO<T, U>> getParentPValues() {
             return parentPValues;
@@ -845,9 +823,6 @@ public class InsertPropagatedCalls extends CallService {
             StringBuilder builder = new StringBuilder();
             builder.append("PipelineCallData [dataType=").append(dataType)
                    .append(", dataPropagation=").append(dataPropagation)
-                   .append(", parentExperimentExpr=").append(parentExperimentExpr)
-                   .append(", selfExperimentExpr=").append(selfExperimentExpr)
-                   .append(", descendantExperimentExpr=").append(descendantExperimentExpr)
                    .append(", parentPValues=").append(parentPValues)
                    .append(", selfPValues=").append(selfPValues)
                    .append(", descendantPValues=").append(descendantPValues)
@@ -2874,19 +2849,12 @@ public class InsertPropagatedCalls extends CallService {
                         devStagePropagationState, cellTypePropagationState, sexPropagationState,
                         strainPropagationState, false);
 
-                Set<ExperimentExpressionTO> parentExperimentExpr = null;
-                Set<ExperimentExpressionTO> descendantExperimentExpr = null;
-                if (areAncestors) {
-                    descendantExperimentExpr = pipelineData.getSelfExperimentExpr();
-                } else {
-                    parentExperimentExpr = pipelineData.getSelfExperimentExpr();
-                }
                 switch(pipelineData.getDataType()) {
                 case EST:
                 case IN_SITU:
                 case RNA_SEQ:
                 case FULL_LENGTH:
-                    //We know the gneric types depending on the data types
+                    //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
                     Set<SamplePValueTO<String, String>> localPValues = pipelineData.getSelfPValues()
                         .stream()
@@ -2901,11 +2869,10 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     relativeData.add(new PipelineCallData<>(pipelineData.getDataType(),
                             dataPropagation,
-                            parentExperimentExpr, null, descendantExperimentExpr,
                             parentPValues, null, descendantPValues));
                     break;
                 case AFFYMETRIX:
-                    //We know the gneric types depending on the data types
+                    //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
                     Set<SamplePValueTO<String, Integer>> localPValues2 = pipelineData.getSelfPValues()
                         .stream()
@@ -2920,7 +2887,6 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     relativeData.add(new PipelineCallData<>(pipelineData.getDataType(),
                             dataPropagation,
-                            parentExperimentExpr, null, descendantExperimentExpr,
                             parentPValues2, null, descendantPValues2));
                     break;
                 }
@@ -3007,7 +2973,9 @@ public class InsertPropagatedCalls extends CallService {
             return log.traceExit((PipelineCall) null);
         }
 
-        // DataPropagation
+        //************************
+        // Data propagation
+        //************************
         DataPropagation dataProp = expressionCallData.stream().map(cd -> cd.getDataPropagation())
                 .reduce(DATA_PROPAGATION_IDENTITY, (dp1, dp2) -> mergeDataPropagations(dp1, dp2));
 
@@ -3142,29 +3110,8 @@ public class InsertPropagatedCalls extends CallService {
 
         assert pipelineCallData.stream().noneMatch(pcd -> !dataType.equals(pcd.getDataType()));
         //at this point, we have only propagated one call at a time, so we should have
-        //ExperimentExpressionTOs in only one of these 3 attributes
+        //p-values in only one of these 3 attributes
         assert pipelineCallData.stream().allMatch(pcd ->
-            //as of Bgee 15.0 we do not retrieve experiment expression counts,
-            //so we add the possibility to have the 3 experiment expression attributes null
-            ((pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) &&
-            (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().isEmpty()) &&
-            (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().isEmpty()) ||
-        
-            (pcd.getSelfExperimentExpr() != null && !pcd.getSelfExperimentExpr().isEmpty()) &&
-            (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().isEmpty()) &&
-            (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().isEmpty()) ||
- 
-            (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) &&
-            (pcd.getParentExperimentExpr() != null && !pcd.getParentExperimentExpr().isEmpty()) &&
-            (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().isEmpty()) ||
- 
-            (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) &&
-            (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().isEmpty()) &&
-            (pcd.getDescendantExperimentExpr() != null && !pcd.getDescendantExperimentExpr().isEmpty()))
-
-            &&
-
-            //Now we do the same with pvalues, and we should always have some
             ((pcd.getSelfPValues() != null && !pcd.getSelfPValues().isEmpty()) &&
             (pcd.getParentPValues() == null || pcd.getParentPValues().isEmpty()) &&
             (pcd.getDescendantPValues() == null || pcd.getDescendantPValues().isEmpty()) ||
@@ -3417,7 +3364,6 @@ public class InsertPropagatedCalls extends CallService {
             .map(dt -> {
                 return new PipelineCallData<>(
                         dt, getSelfDataProp(condParams),
-                        null, expExprsByDataTypes == null? null: expExprsByDataTypes.get(dt), null,
                         null,
                         pValuesByDataTypes.get(dt).stream()
                         .map(pval -> pval)

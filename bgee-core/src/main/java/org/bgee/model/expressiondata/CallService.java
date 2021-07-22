@@ -25,6 +25,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.CommonService;
 import org.bgee.model.ElementGroupFromListSpliterator;
 import org.bgee.model.Service;
@@ -181,15 +182,37 @@ public class CallService extends CommonService {
         P_VALUE_INFO_ALL_DATA_TYPES(false, null), P_VALUE_INFO_EACH_DATA_TYPE(false, null),
         GENE_QUAL_EXPR_LEVEL(false, null), ANAT_ENTITY_QUAL_EXPR_LEVEL(false, null);
 
+
+        private final static Set<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
+                getAllPossibleCondParamCombinations(EnumSet.allOf(Attribute.class));
+
         /**
          * @return  An {@code EnumSet} containing all {@code Attribute}s that are condition parameters
          *          ({@link #isConditionParameter()} returns {@code true}).
          */
-        public static EnumSet<Attribute> getAllConditionParameters() {
+        public static final EnumSet<Attribute> getAllConditionParameters() {
             log.traceEntry();
             return log.traceExit(Arrays.stream(CallService.Attribute.values())
                     .filter(a -> a.isConditionParameter())
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
+        }
+        public static final Set<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
+            log.traceEntry();
+            //defensive copying
+            return log.traceExit(ALL_COND_PARAM_COMBINATIONS.stream()
+                    .map(s -> EnumSet.copyOf(s))
+                    .collect(Collectors.toSet()));
+        }
+        public static final Set<EnumSet<Attribute>> getAllPossibleCondParamCombinations(
+                Collection<Attribute> condParams) {
+            log.traceEntry("{}", condParams);
+            if (condParams == null || condParams.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Some condition parameters must be provided."));
+            }
+            if (condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+                throw log.throwing(new IllegalArgumentException("Only condition parameters are considered."));
+            }
+            return log.traceExit(BgeeEnum.getAllPossibleEnumCombinations(Attribute.class, condParams));
         }
 
         private final String condParamName;

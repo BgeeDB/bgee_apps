@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -184,5 +185,38 @@ public abstract class BgeeEnum {
             }
         }
         return log.traceExit(true);
+    }
+
+    public static final <T extends Enum<T>> Set<EnumSet<T>> getAllPossibleEnumCombinations(
+            Class<T> enumClass, Collection<T> enums) {
+        log.traceEntry("{}", enums);
+        if (enums == null || enums.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some values must be provided."));
+        }
+        EnumSet<T> filteredEnums = EnumSet.copyOf(enums);
+        Set<EnumSet<T>> combinations = new HashSet<>();
+        //we provide the class as argument so we're safe for the cast
+        @SuppressWarnings("unchecked")
+        T[] enumArr = filteredEnums.toArray((T[]) Array.newInstance(enumClass, filteredEnums.size()));
+        final int n = enumArr.length;
+
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<T> combination = EnumSet.noneOf(enumClass);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(enumArr[j]);
+                }
+            }
+            //We don't want the combination where nothing is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return log.traceExit(combinations);
     }
 }

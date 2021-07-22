@@ -96,29 +96,7 @@ public enum DataType implements BgeeEnumField {
         if (dataTypes == null || dataTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some data types must be provided."));
         }
-        EnumSet<DataType> filteredDataTypes = EnumSet.copyOf(dataTypes);
-        Set<EnumSet<DataType>> combinations = new HashSet<>();
-        DataType[] dataTypeArr = filteredDataTypes.toArray(new DataType[filteredDataTypes.size()]);
-        final int n = dataTypeArr.length;
-        
-        for (int i = 0; i < Math.pow(2, n); i++) {
-            String bin = Integer.toBinaryString(i);
-            while (bin.length() < n) {
-                bin = "0" + bin;
-            }
-            EnumSet<DataType> combination = EnumSet.noneOf(DataType.class);
-            char[] chars = bin.toCharArray();
-            for (int j = 0; j < n; j++) {
-                if (chars[j] == '1') {
-                    combination.add(dataTypeArr[j]);
-                }
-            }
-            //We don't want the combination where no data type is considered
-            if (!combination.isEmpty()) {
-                combinations.add(combination);
-            }
-        }
-        return log.traceExit(combinations);
+        return log.traceExit(BgeeEnum.getAllPossibleEnumCombinations(DataType.class, dataTypes));
     }
     public static EnumSet<DataType> findCombinationWithGreatestOverlap(
             Collection<EnumSet<DataType>> dataTypeCombinations, Collection<DataType> dataTypeCombination) {

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -567,7 +566,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * from a specific {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}.
      * 
      * @author Frederic Bastian
-     * @version Bgee 15.0, Apr. 2021
+     * @version Bgee 15.0, Jul. 2021
      * @see GlobalExpressionCallTO
      * @since Bgee 14 Mar. 2017
      */
@@ -577,11 +576,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private final DAODataType dataType;
 
-        private final Boolean conditionObservedData;
-        private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
-
-        private final Integer selfObservationCount;
-        private final Integer descendantObservationCount;
+        private final Map<EnumSet<ConditionDAO.Attribute>, Integer> selfObservationCount;
+        private final Map<EnumSet<ConditionDAO.Attribute>, Integer> descendantObservationCount;
         private final BigDecimal fdrPValue;
         private final BigDecimal bestDescendantFDRPValue;
 
@@ -589,22 +585,36 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final BigDecimal rankNorm;
         private final BigDecimal weightForMeanRank;
 
-        public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
-                Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
-                Integer selfObservationCount, Integer descendantObservationCount,
+        public GlobalExpressionCallDataTO(DAODataType dataType,
+                Map<EnumSet<ConditionDAO.Attribute>, Integer> selfObservationCount,
+                Map<EnumSet<ConditionDAO.Attribute>, Integer> descendantObservationCount,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
-            if (dataPropagation != null && dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
-                throw log.throwing(new IllegalArgumentException("Invalid condition parameters: "
-                        + dataPropagation.keySet()));
+            if (selfObservationCount != null && selfObservationCount.entrySet().stream().anyMatch(e ->
+                    e.getKey() == null || e.getValue() == null ||
+                    e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                    e.getValue() < 0)) {
+                throw log.throwing(new IllegalArgumentException("Invalid selfObservationCount"));
+            }
+            if (descendantObservationCount != null && descendantObservationCount.entrySet().stream().anyMatch(e ->
+                    e.getKey() == null || e.getValue() == null ||
+                    e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                    e.getValue() < 0)) {
+                throw log.throwing(new IllegalArgumentException("Invalid descendantObservationCount"));
             }
             this.dataType = dataType;
-            this.conditionObservedData = conditionObservedData;
-            this.dataPropagation = dataPropagation == null? null: Collections.unmodifiableMap(new HashMap<>(dataPropagation));
 
-            this.selfObservationCount = selfObservationCount;
-            this.descendantObservationCount = descendantObservationCount;
+            this.selfObservationCount = selfObservationCount == null? null:
+                selfObservationCount.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> EnumSet.copyOf(e.getKey()),
+                        e -> e.getValue()));
+            this.descendantObservationCount = descendantObservationCount == null? null:
+                descendantObservationCount.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> EnumSet.copyOf(e.getKey()),
+                        e -> e.getValue()));
             this.fdrPValue = fdrPValue;
             this.bestDescendantFDRPValue = bestDescendantFDRPValue;
 
@@ -616,46 +626,30 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public DAODataType getDataType() {
             return dataType;
         }
-        /**
-         * @return  A {@code Boolean} defining whether the call was observed in the condition.
-         *          This is independent from {@link #getDataPropagation()},
-         *          because even if a data aggregation have produced only SELF propagation states,
-         *          we cannot have the guarantee that data were actually observed in the condition
-         *          by looking at these independent propagation states.
-         */
-        public Boolean isConditionObservedData() {
-            return conditionObservedData;
-        }
-        /**
-         * @return  A {@code Map} where keys are {@code ConditionDAO.Attribute}s that are
-         *          condition parameters (see {@link ConditionDAO.Attribute#isConditionParameter()}),
-         *          the associated value being a {@code DAOPropagationState} indicating where the call
-         *          originated from in that condition parameter
-         *          (for instance, data observed in a given anatomical entity).
-         */
-        public Map<ConditionDAO.Attribute, DAOPropagationState> getDataPropagation() {
-            return dataPropagation;
-        }
 
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
-         *          in the condition itself. ({@link #getSelfObservationCount()} +
-         *          {@link #getDescendantObservationCount()}) allows to retrieve the total number
-         *          of p-values used to compute the FDR-corrected p-value returned by
-         *          {@link #getFDRPValue()}.
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code ConditionDAO.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
+         *          in the condition itself.
          */
-        public Integer getSelfObservationCount() {
-            return selfObservationCount;
+        public Map<EnumSet<ConditionDAO.Attribute>, Integer> getSelfObservationCount() {
+            return selfObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code ConditionDAO.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
          *          in the descendant conditions of the requested condition.
-         *          ({@link #getSelfObservationCount()} + {@link #getDescendantObservationCount()})
-         *          allows to retrieve the total number of p-values used to compute
-         *          the FDR-corrected p-value returned by {@link #getFDRPValue()}.
          */
-        public Integer getDescendantObservationCount() {
-            return descendantObservationCount;
+        public Map<EnumSet<ConditionDAO.Attribute>, Integer> getDescendantObservationCount() {
+            return descendantObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
         /**
          * @return  A {@code BigDecimal} that is the FDR corrected p-value computed from
@@ -687,7 +681,6 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallDataTO [dataType=").append(dataType)
-                   .append(", dataPropagation=").append(dataPropagation)
                    .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", fdrPValue=").append(fdrPValue)

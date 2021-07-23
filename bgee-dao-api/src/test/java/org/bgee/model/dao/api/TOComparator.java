@@ -72,7 +72,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Jul. 2021
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -954,8 +954,10 @@ public class TOComparator {
     private static boolean areTOsEqual(GlobalExpressionCallDataTO to1, GlobalExpressionCallDataTO to2) {
         log.entry(to1, to2);
         if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
-                Objects.equals(to1.getDataPropagation(), to2.getDataPropagation()) &&
-                Objects.equals(to1.isConditionObservedData(), to2.isConditionObservedData()) &&
+                Objects.equals(to1.getSelfObservationCount(), to2.getSelfObservationCount()) &&
+                Objects.equals(to1.getDescendantObservationCount(), to2.getDescendantObservationCount()) &&
+                Objects.equals(to1.getFDRPValue(), to2.getFDRPValue()) &&
+                Objects.equals(to1.getBestDescendantFDRPValue(), to2.getBestDescendantFDRPValue()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
                 areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {

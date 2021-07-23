@@ -5,8 +5,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
@@ -187,10 +191,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
         private final List<BigDecimal> selfPValues;
         //useful if we don't want to retrieve all self p-values but just to retrieve the count
-        private final Integer selfObservationCount;
+        private final Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount;
         private final List<BigDecimal> descendantPValues;
         //useful if we don't want to retrieve all descendant p-values but just to retrieve the count
-        private final Integer descendantObservationCount;
+        private final Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount;
         private final List<BigDecimal> allPValues;
         private final BigDecimal fdrPValue;
         private final BigDecimal bestDescendantFDRPValue;
@@ -202,15 +206,21 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private final BigDecimal weightForMeanRank;
 
         public ExpressionCallData(DataType dataType,
-                Collection<BigDecimal> selfPValues, Collection<BigDecimal> descendantPValues,
+                Collection<BigDecimal> selfPValues,
+                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
+                Collection<BigDecimal> descendantPValues,
+                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, selfPValues, null, descendantPValues, null, null, null, 
+            this(dataType, selfPValues, selfObservationCount,
+                    descendantPValues, descendantObservationCount,
+                    null, null, 
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         public ExpressionCallData(DataType dataType,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
-                Integer selfObservationCount, Integer descendantObservationCount,
+                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
+                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
             this(dataType, null, selfObservationCount, null, descendantObservationCount,
@@ -218,8 +228,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         public ExpressionCallData(DataType dataType,
-                Collection<BigDecimal> selfPValues, Integer selfObservationCount,
-                Collection<BigDecimal> descendantPValues, Integer descendantObservationCount,
+                Collection<BigDecimal> selfPValues,
+                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
+                Collection<BigDecimal> descendantPValues,
+                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
@@ -230,10 +242,23 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 new ArrayList<>(selfPValues);
             Collections.sort(sortedSelfPValues);
             this.selfPValues = Collections.unmodifiableList(sortedSelfPValues);
+            //we will use defensive copying for this attribute,
+            //there is no unmodifiableEnumSet
             if (selfObservationCount == null && selfPValues != null && !selfPValues.isEmpty()) {
-                this.selfObservationCount = selfPValues.size();
+                this.selfObservationCount = new HashMap<>();
+                this.selfObservationCount.put(CallService.Attribute.getAllConditionParameters(),
+                        selfPValues.size());
             } else if (selfObservationCount != null) {
-                this.selfObservationCount = selfObservationCount;
+                if (selfObservationCount.entrySet().stream().anyMatch(e ->
+                        e.getKey() == null || e.getValue() == null ||
+                        e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                        e.getValue() < 0)) {
+                    throw log.throwing(new IllegalArgumentException("Invalid selfObservationCount"));
+                }
+                this.selfObservationCount = selfObservationCount.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                e -> EnumSet.copyOf(e.getKey()),
+                                e -> e.getValue()));
             } else {
                 this.selfObservationCount = null;
             }
@@ -241,10 +266,23 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 new ArrayList<>(descendantPValues);
             Collections.sort(sortedDescendantPValues);
             this.descendantPValues = Collections.unmodifiableList(sortedDescendantPValues);
+            //we will use defensive copying for this attribute,
+            //there is no unmodifiableEnumSet
             if (descendantObservationCount == null && descendantPValues != null && !descendantPValues.isEmpty()) {
-                this.descendantObservationCount = descendantPValues.size();
+                this.descendantObservationCount = new HashMap<>();
+                this.descendantObservationCount.put(CallService.Attribute.getAllConditionParameters(),
+                        descendantPValues.size());
             } else if (descendantObservationCount != null) {
-                this.descendantObservationCount = descendantObservationCount;
+                if (descendantObservationCount.entrySet().stream().anyMatch(e ->
+                        e.getKey() == null || e.getValue() == null ||
+                        e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                        e.getValue() < 0)) {
+                    throw log.throwing(new IllegalArgumentException("Invalid descendantObservationCount"));
+                }
+                this.descendantObservationCount = descendantObservationCount.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                e -> EnumSet.copyOf(e.getKey()),
+                                e -> e.getValue()));
             } else {
                 this.descendantObservationCount = null;
             }
@@ -277,6 +315,12 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         }
 
         /**
+         * Returns the p-values produced from expression data of a gene in a condition itself.
+         * Of note, as opposed to the method {@ink #getSelfObservationCount()},
+         * which allows to specify the condition parameters to consider,
+         * the p-values returned are all observed in the condition itself by considering
+         * all condition parameters.
+         *
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
          *          computed from tests to detect active signal of expression of a gene
          *          using {@link #getDataType()}, in the condition itself.
@@ -286,12 +330,40 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return selfPValues;
         }
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
+         * Returns the count of observations in the condition itself, considering some combinations
+         * of condition parameters (see {@link
+         * org.bgee.model.expressiondata.CallService.Attribute#isConditionParameter()
+         * CallService.Attribute#isConditionParameter()}). The "official" "real" count would be associated
+         * to the {@code EnumSet} returned by {@link
+         * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
+         * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
+         * two observations of expression data for a gene in:
+         * <ul>
+         * <li>{@code AnatEntity=hypothalamus, DevStage=early adulthood}
+         * <li>{@code AnatEntity=brain, DevStage=late adulthood}
+         * </ul>
+         * and the condition we are considering is {@code AnatEntity=brain, DevStage=adult}.
+         * The "real" self observation count in the condition itself, considering the condition parameters
+         * {@code CallService.Attribute.ANAT_ENTITY_ID} and {@code CallService.Attribute.DEV_STAGE_ID},
+         * is 0, the "real" descendant observation count is 2 (all data have been propagated to the parent
+         * stage "adult"). But we might be interested in knowing how many observations we have
+         * in "brain" at any "adult" dev. stage. The self observation count in the condition itself,
+         * considering only the condition parameter {@code CallService.Attribute.ANAT_ENTITY_ID},
+         * is 1, and the descendant observation count is 1.
+         *
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code CallService.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
          *          in the condition itself.
          * @see #getSelfPValues()
+         * @see #getDescendantObservationCount()
          */
-        public Integer getSelfObservationCount() {
-            return selfObservationCount;
+        public Map<EnumSet<CallService.Attribute>, Integer> getSelfObservationCount() {
+            //defensive copying, there is no unmodifiableEnumSet
+            return selfObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
         /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
@@ -303,12 +375,23 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return descendantPValues;
         }
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
+         * Returns the count of observations in the descendant conditions of the requested condition,
+         * considering some combinations of condition parameters. See {@link #getSelfObservationCount()}
+         * for more details.
+         *
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code CallService.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
          *          in the descendant conditions of the requested condition.
          * @see #getDescendantPValues()
+         * @see #getSelfObservationCount()
          */
-        public Integer getDescendantObservationCount() {
-            return descendantObservationCount;
+        public Map<EnumSet<CallService.Attribute>, Integer> getDescendantObservationCount() {
+            //defensive copying, there is no unmodifiableEnumSet
+            return descendantObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
         /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
@@ -340,10 +423,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          * @see #getAllPValues()
          */
         public Integer getAllObservationCount() {
-            if (this.selfObservationCount == null || this.descendantObservationCount == null) {
+            if (this.selfObservationCount.isEmpty() || this.descendantObservationCount.isEmpty() ||
+                    Collections.disjoint(this.selfObservationCount.keySet(),
+                            this.descendantObservationCount.keySet())) {
                 return null;
             }
-            return this.selfObservationCount + this.descendantObservationCount;
+            Set<EnumSet<CallService.Attribute>> commonCondParamCombinations =
+                    new HashSet<>(this.selfObservationCount.keySet());
+            commonCondParamCombinations.retainAll(this.descendantObservationCount.keySet());
+            EnumSet<CallService.Attribute> selectedCondParamComb =
+                    commonCondParamCombinations.iterator().next();
+            return this.selfObservationCount.get(selectedCondParamComb) +
+                    this.descendantObservationCount.get(selectedCondParamComb);
         }
         public BigDecimal getRank() {
             return rank;
@@ -360,24 +451,24 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         // hashCode/equals/toString
         //********************************************
         @Override
-        //TODO: remove ranks from hashCode/equals after reactivating unit tests?
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
-            result = prime * result + ((selfPValues == null) ? 0 : selfPValues.hashCode());
-            result = prime * result + ((descendantPValues == null) ? 0 : descendantPValues.hashCode());
             result = prime * result + ((allPValues == null) ? 0 : allPValues.hashCode());
-            result = prime * result + ((fdrPValue == null) ? 0 : fdrPValue.hashCode());
             result = prime * result + ((bestDescendantFDRPValue == null) ? 0 : bestDescendantFDRPValue.hashCode());
-            result = prime * result + ((rank == null) ? 0 : rank.hashCode());
+            result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
+            result = prime * result
+                    + ((descendantObservationCount == null) ? 0 : descendantObservationCount.hashCode());
+            result = prime * result + ((descendantPValues == null) ? 0 : descendantPValues.hashCode());
+            result = prime * result + ((fdrPValue == null) ? 0 : fdrPValue.hashCode());
             result = prime * result + ((normalizedRank == null) ? 0 : normalizedRank.hashCode());
+            result = prime * result + ((rank == null) ? 0 : rank.hashCode());
+            result = prime * result + ((selfObservationCount == null) ? 0 : selfObservationCount.hashCode());
+            result = prime * result + ((selfPValues == null) ? 0 : selfPValues.hashCode());
             result = prime * result + ((weightForMeanRank == null) ? 0 : weightForMeanRank.hashCode());
             return result;
         }
-
         @Override
-        //TODO: remove ranks from hashCode/equals after reactivating unit tests?
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
@@ -389,6 +480,22 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 return false;
             }
             ExpressionCallData other = (ExpressionCallData) obj;
+            //comparison based on equals of BigDecimal while it would be better to use compareTo
+            //But what about hashCode?
+            if (allPValues == null) {
+                if (other.allPValues != null) {
+                    return false;
+                }
+            } else if (!allPValues.equals(other.allPValues)) {
+                return false;
+            }
+            if (bestDescendantFDRPValue == null) {
+                if (other.bestDescendantFDRPValue != null) {
+                    return false;
+                }
+            } else if (!bestDescendantFDRPValue.equals(other.bestDescendantFDRPValue)) {
+                return false;
+            }
             if (dataPropagation == null) {
                 if (other.dataPropagation != null) {
                     return false;
@@ -396,29 +503,32 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!dataPropagation.equals(other.dataPropagation)) {
                 return false;
             }
-            //comparison based on equals of BigDecimal while it would be better to use compareTo.
-            //But what about hashCode?
-            if (!Objects.equals(selfPValues, other.selfPValues)) {
+            if (descendantObservationCount == null) {
+                if (other.descendantObservationCount != null) {
+                    return false;
+                }
+            } else if (!descendantObservationCount.equals(other.descendantObservationCount)) {
                 return false;
             }
-            //comparison based on equals of BigDecimal while it would be better to use compareTo
-            //But what about hashCode?
-            if (!Objects.equals(descendantPValues, other.descendantPValues)) {
+            if (descendantPValues == null) {
+                if (other.descendantPValues != null) {
+                    return false;
+                }
+            } else if (!descendantPValues.equals(other.descendantPValues)) {
                 return false;
             }
-            //comparison based on equals of BigDecimal while it would be better to use compareTo
-            //But what about hashCode?
-            if (!Objects.equals(allPValues, other.allPValues)) {
+            if (fdrPValue == null) {
+                if (other.fdrPValue != null) {
+                    return false;
+                }
+            } else if (!fdrPValue.equals(other.fdrPValue)) {
                 return false;
             }
-            //comparison based on equals of BigDecimal while it would be better to use compareTo
-            //But what about hashCode?
-            if (!Objects.equals(fdrPValue, other.fdrPValue)) {
-                return false;
-            }
-            //comparison based on equals of BigDecimal while it would be better to use compareTo
-            //But what about hashCode?
-            if (!Objects.equals(bestDescendantFDRPValue, other.bestDescendantFDRPValue)) {
+            if (normalizedRank == null) {
+                if (other.normalizedRank != null) {
+                    return false;
+                }
+            } else if (!normalizedRank.equals(other.normalizedRank)) {
                 return false;
             }
             if (rank == null) {
@@ -428,11 +538,18 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!rank.equals(other.rank)) {
                 return false;
             }
-            if (normalizedRank == null) {
-                if (other.normalizedRank != null) {
+            if (selfObservationCount == null) {
+                if (other.selfObservationCount != null) {
                     return false;
                 }
-            } else if (!normalizedRank.equals(other.normalizedRank)) {
+            } else if (!selfObservationCount.equals(other.selfObservationCount)) {
+                return false;
+            }
+            if (selfPValues == null) {
+                if (other.selfPValues != null) {
+                    return false;
+                }
+            } else if (!selfPValues.equals(other.selfPValues)) {
                 return false;
             }
             if (weightForMeanRank == null) {
@@ -448,15 +565,20 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCallData [dataType=").append(getDataType())
+            builder.append("ExpressionCallData [")
+                   .append("dataType=").append(getDataType())
                    .append(", callType=").append(getCallType())
-                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", dataPropagation=").append(dataPropagation)
+                   .append(", fdrPValue=").append(fdrPValue)
+                   .append(", bestDescendantFDRPValue=").append(bestDescendantFDRPValue)
                    .append(", selfPValues=").append(selfPValues)
+                   .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantPValues=").append(descendantPValues)
-                   .append(", allPValues=").append(allPValues)
+                   .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", rank=").append(rank)
                    .append(", normalizedRank=").append(normalizedRank)
-                   .append(", weightForMeanRank=").append(weightForMeanRank).append("]");
+                   .append(", weightForMeanRank=").append(weightForMeanRank)
+                    .append("]");
             return builder.toString();
         }
     }

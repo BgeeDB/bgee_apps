@@ -30,22 +30,27 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
  */
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
 
-    public interface CanBeDataTypeDependent {
-        public boolean isDataTypeDependant();
+    public interface CanBeParamDependent {
+        public boolean isDataTypeDependent();
+        public boolean isCondParamDependent();
     }
-    public enum Attribute implements DAO.Attribute, CanBeDataTypeDependent {
+    public enum Attribute implements DAO.Attribute, CanBeParamDependent {
 //        //As of Bgee 15.0, there is no longer a globalExpressionId field.
 //        ID(false),
-        BGEE_GENE_ID(false, false), GLOBAL_CONDITION_ID(false, false), MEAN_RANK(true, true),
-        DATA_TYPE_RANK_INFO(true, true), DATA_TYPE_OBSERVED_DATA(false, true),
-        FDR_P_VALUE_COND_INFO(false, true), FDR_P_VALUE_DESCENDANT_COND_INFO(false, true);
+        BGEE_GENE_ID(false, false, false), GLOBAL_CONDITION_ID(false, false, false),
+        MEAN_RANK(true, true, false), DATA_TYPE_RANK_INFO(true, true, false),
+        DATA_TYPE_OBSERVATION_COUNT_INFO(false, true, true),
+        FDR_P_VALUE_COND_INFO(false, true, false), FDR_P_VALUE_DESCENDANT_COND_INFO(false, true, false);
 
         private final boolean requireExtraGlobalCondInfo;
         private final boolean dataTypeDependant;
+        private final boolean condParamDependant;
 
-        private Attribute(boolean requireExtraGlobalCondInfo, boolean dataTypeDependant) {
+        private Attribute(boolean requireExtraGlobalCondInfo, boolean dataTypeDependant,
+                boolean condParamDependant) {
             this.requireExtraGlobalCondInfo = requireExtraGlobalCondInfo;
             this.dataTypeDependant = dataTypeDependant;
+            this.condParamDependant = condParamDependant;
         }
         public boolean isRequireExtraGlobalCondInfo() {
             return requireExtraGlobalCondInfo;
@@ -58,8 +63,19 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
          * @see AttributeInfo
          */
         @Override
-        public boolean isDataTypeDependant() {
+        public boolean isDataTypeDependent() {
             return dataTypeDependant;
+        }
+        /**
+         * @return  {@code true} if this {@code Attribute} corresponds to different results
+         *          depending on a condition parameter selection, {@code false} otherwise.
+         *          For instance, the self and descendant observation counts are
+         *          condition parameter dependent.
+         * @see AttributeInfo
+         */
+        @Override
+        public boolean isCondParamDependent() {
+            return condParamDependant;
         }
     }
     /**
@@ -83,7 +99,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * Only the mean ranks computed from the data types requested in the query are considered. 
      * </ul>
      */
-    enum OrderingAttribute implements DAO.OrderingAttribute, CanBeDataTypeDependent {
+    enum OrderingAttribute implements DAO.OrderingAttribute, CanBeParamDependent {
         BGEE_GENE_ID("bgeeGeneId", false, false, false), PUBLIC_GENE_ID("geneId", false, true, false),
         OMA_GROUP_ID("OMAParentNodeId", false, true, false),
         GLOBAL_CONDITION_ID("globalConditionId", false, false, false),
@@ -120,8 +136,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
          * @see OrderingAttributeInfo
          */
         @Override
-        public boolean isDataTypeDependant() {
+        public boolean isDataTypeDependent() {
             return dataTypeDependant;
+        }
+        //there is not ordering attribute dependent on condition parameter combination for now.
+        @Override
+        public boolean isCondParamDependent() {
+            return false;
         }
     }
 
@@ -139,30 +160,43 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         /**
          * To instantiate an {@code AttributeInfo} independent from a data type selection.
          *
-         * @param attribute An {@code Attribute} for which {@link Attribute#isDataTypeDependent()}
-         *                  returns {@code false}.
+         * @param attribute An {@code Attribute} for which both
+         *                  {@link Attribute#isDataTypeDependent()} and
+         *                  {@link Attribute#isCondParamDependent()}
+         *                  return {@code false}.
          * @throws IllegalArgumentException If calling {@link Attribute#isDataTypeDependent()}
+         *                                  or {@link Attribute#isCondParamDependent()}
          *                                  on {@code attribute} returns {@code true}.
          * @see Attribute#isDataTypeDependent()
+         * @see Attribute#isCondParamDependent()
          */
         public AttributeInfo(Attribute attribute) {
             super(attribute);
         }
         /**
-         * To instantiate an {@code AttributeInfo} dependent on a data type selection.
+         * To instantiate an {@code AttributeInfo} dependent on parameter selection.
          *
-         * @param attribute         An {@code Attribute} for which {@link Attribute#isDataTypeDependent()}
-         *                          returns {@code true}.
-         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
-         *                          the data types for which {@code attribute} is requested.
-         *                          If {@code null} or empty, all {@code DAODataType}s
-         *                          are considered.
-         * @throws IllegalArgumentException If calling {@link Attribute#isDataTypeDependent()}
-         *                                  on {@code attribute} returns {@code false}.
+         * @param attribute             An {@code Attribute} for which
+         *                              {@link Attribute#isDataTypeDependent()} or
+         *                              {@link Attribute#isCondParamDependent()}
+         *                              returns {@code true}.
+         * @param targetedDataTypes     A {@code Collection} of {@code DAODataType}s specifying
+         *                              the data types for which {@code attribute} is requested.
+         *                              If {@code null} or empty, all {@code DAODataType}s
+         *                              are considered.
+         * @param targetedCondParams    A {@code Collection} of {@code ConditionDAO.Attribute}s
+         *                              specifying the condition parameters for which {@code attribute}
+         *                              is requested. If {@code null} or empty, all
+         *                              {@code ConditionDAO.Attribute}s are considered.
+         * @throws IllegalArgumentException If both {@link Attribute#isDataTypeDependent()}
+         *                                  {@link Attribute#isCondParamDependent()}
+         *                                  on {@code attribute} return {@code false}.
          * @see Attribute#isDataTypeDependent()
+         * @see Attribute#isCondParamDependent()
          */
-        public AttributeInfo(Attribute attribute, Collection<DAODataType> targetedDataTypes) {
-            super(attribute, targetedDataTypes);
+        public AttributeInfo(Attribute attribute, Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
+            super(attribute, targetedDataTypes, targetedCondParams);
         }
     }
     /**
@@ -203,7 +237,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
          */
         public OrderingAttributeInfo(OrderingAttribute attribute,
                 Collection<DAODataType> targetedDataTypes) {
-            super(attribute, targetedDataTypes);
+            super(attribute, targetedDataTypes, null);
         }
     }
     /**
@@ -219,52 +253,73 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 15.0, Apr. 2021
      */
-    public static class GenericAttributeInfo<T extends Enum<T> & CanBeDataTypeDependent>
+    public static class GenericAttributeInfo<T extends Enum<T> & CanBeParamDependent>
     implements Comparable<GenericAttributeInfo<T>> {
         private final T attribute;
         private final EnumSet<DAODataType> targetedDataTypes;
+        private final EnumSet<ConditionDAO.Attribute> targetedCondParams;
 
         /**
          * To instantiate a {@code GenericAttributeInfo} independent from a data type selection.
          *
-         * @param attribute A {@code CanBeDataTypeDependent} for which
-         *                  {@link CanBeDataTypeDependent#isDataTypeDependent()} returns {@code false}.
-         * @throws IllegalArgumentException If calling {@link CanBeDataTypeDependent#isDataTypeDependent()}
+         * @param attribute A {@code CanBeParamDependent} for which
+         *                  {@link CanBeParamDependent#isDataTypeDependent()} and
+         *                  {@link CanBeParamDependent#isCondParamDependent()}
+         *                  return {@code false}.
+         * @throws IllegalArgumentException If calling {@link
+         *                                  CanBeParamDependent#isDataTypeDependent()} or
+         *                                  {@link CanBeParamDependent#isCondParamDependent()}
          *                                  on {@code attribute} returns {@code true}.
-         * @see CanBeDataTypeDependent#isDataTypeDependent()
+         * @see CanBeParamDependent#isDataTypeDependent()
+         * @see CanBeParamDependent#isCondParamDependent()
          */
         public GenericAttributeInfo(T attribute) {
-            this(attribute, false, null);
+            this(attribute, false, null, null);
         }
         /**
          * To instantiate an {@code GenericAttributeInfo} dependent on a data type selection.
          *
-         * @param attribute         An {@code CanBeDataTypeDependent} for which
-         *                          {@link CanBeDataTypeDependent#isDataTypeDependent()}
-         *                          returns {@code true}.
-         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
-         *                          the data types for which {@code attribute} is requested.
-         *                          If {@code null} or empty, all {@code DAODataType}s
-         *                          are considered.
-         * @throws IllegalArgumentException If calling {@link CanBeDataTypeDependent#isDataTypeDependent()}
-         *                                  on {@code attribute} returns {@code false}.
+         * @param attribute             A {@code CanBeParamDependent} for which
+         *                              {@link CanBeParamDependent#isDataTypeDependent()}
+         *                              and/or {@link
+         *                              CanBeParamDependent#isCondParamDependent()}
+         *                              return {@code true}.
+         * @param targetedDataTypes     A {@code Collection} of {@code DAODataType}s specifying
+         *                              the data types for which {@code attribute} is requested.
+         *                              If {@code null} or empty, all {@code DAODataType}s
+         *                              are considered.
+         * @param targetedCondParams    A {@code Collection} of {@code ConditionDAO.Attribute}s
+         *                              specifying the condition parameters for which {@code attribute}
+         *                              is requested. If {@code null} or empty,
+         *                              all {@code ConditionDAO.Attribute}s are considered.
+         * @throws IllegalArgumentException If both {@link
+         *                                  CanBeDataTypeDependent#isDataTypeDependent()} and
+         *                                  {@link CanBeParamDependent#isCondParamDependent()}
+         *                                  on {@code attribute} return {@code false}.
          * @see CanBeDataTypeDependent#isDataTypeDependent()
+         * @see CanBeParamDependent#isCondParamDependent()
          */
-        public GenericAttributeInfo(T attribute, Collection<DAODataType> targetedDataTypes) {
-            this(attribute, true, targetedDataTypes);
+        public GenericAttributeInfo(T attribute, Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
+            this(attribute, true, targetedDataTypes, targetedCondParams);
         }
-        private GenericAttributeInfo(T attribute, boolean shouldBeDataTypeDependent,
-                Collection<DAODataType> targetedDataTypes) {
+        private GenericAttributeInfo(T attribute, boolean shouldBeParamDependent,
+                Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
             if (attribute == null) {
                 throw new IllegalArgumentException("Attribute cannot be null.");
             }
-            if (shouldBeDataTypeDependent != attribute.isDataTypeDependant()) {
+            if (shouldBeParamDependent && !attribute.isDataTypeDependent() &&
+                            !attribute.isCondParamDependent() ||
+                !shouldBeParamDependent && (attribute.isDataTypeDependent() || attribute.isCondParamDependent())) {
                 throw new IllegalArgumentException(
-                        "Incorrect definition of data type selection for Attribute: " + attribute);
+                        "Incorrect definition of parameter selection for Attribute: " + attribute);
             }
             this.attribute = attribute;
             this.targetedDataTypes = targetedDataTypes == null || targetedDataTypes.isEmpty()?
                     EnumSet.allOf(DAODataType.class): EnumSet.copyOf(targetedDataTypes);
+            this.targetedCondParams = targetedCondParams == null || targetedCondParams.isEmpty()?
+                    EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(targetedCondParams);
         }
         public T getAttribute() {
             return attribute;
@@ -273,12 +328,17 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             //Defensive copying, no Collections.unmodifiableEnumSet
             return EnumSet.copyOf(targetedDataTypes);
         }
+        public EnumSet<ConditionDAO.Attribute> getTargetedCondParams() {
+            //Defensive copying, no Collections.unmodifiableEnumSet
+            return EnumSet.copyOf(targetedCondParams);
+        }
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((attribute == null) ? 0 : attribute.hashCode());
             result = prime * result + ((targetedDataTypes == null) ? 0 : targetedDataTypes.hashCode());
+            result = prime * result + ((targetedCondParams == null) ? 0 : targetedCondParams.hashCode());
             return result;
         }
         @Override
@@ -303,6 +363,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             } else if (!targetedDataTypes.equals(other.targetedDataTypes)) {
                 return false;
             }
+            if (targetedCondParams == null) {
+                if (other.targetedCondParams != null) {
+                    return false;
+                }
+            } else if (!targetedCondParams.equals(other.targetedCondParams)) {
+                return false;
+            }
             return true;
         }
         @Override
@@ -317,8 +384,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             if (compareAttr != 0) {
                 return compareAttr;
             }
-            return (new DAODataType.DAODataTypeEnumSetComparator())
+            int compareDataTypes = (new DAODataType.DAODataTypeEnumSetComparator())
                     .compare(this.getTargetedDataTypes(), o.getTargetedDataTypes());
+            if (compareDataTypes != 0) {
+                return compareDataTypes;
+            }
+            return (new ConditionDAO.CondParamEnumSetComparator())
+                    .compare(this.getTargetedCondParams(), o.getTargetedCondParams());
         }
     }
 

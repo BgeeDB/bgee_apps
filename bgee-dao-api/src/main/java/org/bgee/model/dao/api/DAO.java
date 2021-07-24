@@ -1,6 +1,10 @@
 package org.bgee.model.dao.api;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,6 +20,7 @@ import java.util.Set;
  */
 //TODO: when all DAOs will be immutable, this class will not need a generic type anymore.
 public interface DAO<T extends Enum<T> & DAO.Attribute> {
+
     /**
      * Interface implemented by {@code Enum} classes allowing to select 
      * what are the attributes to populate in the {@code TransferObject}s obtained 
@@ -68,6 +73,62 @@ public interface DAO<T extends Enum<T> & DAO.Attribute> {
     ////XXX: when all DAOs will be immutable, will we still actually need this interface?
     public static interface OrderingAttribute {
         //nothing here, it is only used for typing the Enum classes.
+    }
+
+    public static <U extends Enum<U>> List<EnumSet<U>> getAllPossibleEnumCombinations(
+            Class<U> enumClass, Collection<U> enums) {
+        if (enums == null || enums.isEmpty()) {
+            throw new IllegalArgumentException("Some values must be provided.");
+        }
+        EnumSet<U> filteredEnums = EnumSet.copyOf(enums);
+        List<EnumSet<U>> combinations = new ArrayList<>();
+        //we provide the class as argument so we're safe for the cast
+        @SuppressWarnings("unchecked")
+        U[] enumArr = filteredEnums.toArray((U[]) Array.newInstance(enumClass, filteredEnums.size()));
+        final int n = enumArr.length;
+
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<U> combination = EnumSet.noneOf(enumClass);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(enumArr[j]);
+                }
+            }
+            //We don't want the combination where nothing is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return combinations;
+    }
+    public static <U extends Enum<U>> int compareEnumSets(EnumSet<U> e1, EnumSet<U> e2,
+            Class<U> enumClass) {
+        if (e1 == null || e2 == null) {
+            throw new NullPointerException("None of the EnumSets can be null");
+        }
+        if (e1.equals(e2)) {
+            return 0;
+        }
+        if (e1.size() < e2.size()) {
+            return -1;
+        } else if (e1.size() > e2.size()) {
+            return +1;
+        }
+        for (U e: EnumSet.allOf(enumClass)) {
+            boolean e1Contains = e1.contains(e);
+            boolean e2Contains = e2.contains(e);
+            if (e1Contains && !e2Contains) {
+                return -1;
+            } else if (!e1Contains && e2Contains) {
+                return +1;
+            }
+        }
+        throw new AssertionError("Unreachable code, " + e1 + " - " + e2);
     }
 
     /**

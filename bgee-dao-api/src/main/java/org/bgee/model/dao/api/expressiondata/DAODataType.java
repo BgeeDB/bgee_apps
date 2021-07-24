@@ -1,13 +1,12 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.TransferObject.EnumDAOField;
 
@@ -70,55 +69,14 @@ public enum DAODataType implements EnumDAOField {
         @Override
         public int compare(EnumSet<DAODataType> e1, EnumSet<DAODataType> e2) {
             log.traceEntry("{}, {}", e1, e2);
-            if (e1 == null || e2 == null) {
-                throw log.throwing(new NullPointerException("None of the EnumSets can be null"));
-            }
-            if (e1.equals(e2)) {
-                return log.traceExit(0);
-            }
-            if (e1.size() < e2.size()) {
-                return log.traceExit(-1);
-            } else if (e1.size() > e2.size()) {
-                return log.traceExit(+1);
-            }
-            for (DAODataType dt: DAODataType.values()) {
-                boolean e1Contains = e1.contains(dt);
-                boolean e2Contains = e2.contains(dt);
-                if (e1Contains && !e2Contains) {
-                    return log.traceExit(-1);
-                } else if (!e1Contains && e2Contains) {
-                    return log.traceExit(+1);
-                }
-            }
-            throw log.throwing(new AssertionError("Unreachable code, " + e1 + " - " + e2));
+            return log.traceExit(DAO.compareEnumSets(e1, e2, DAODataType.class));
         }
     }
 
     private static final List<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {
         log.traceEntry();
-        Collection<DAODataType> allDataTypes = EnumSet.allOf(DAODataType.class);
-        List<EnumSet<DAODataType>> combinations = new ArrayList<>();
-        DAODataType[] dataTypeArr = allDataTypes.toArray(new DAODataType[allDataTypes.size()]);
-        final int n = dataTypeArr.length;
-        
-        for (int i = 0; i < Math.pow(2, n); i++) {
-            String bin = Integer.toBinaryString(i);
-            while (bin.length() < n) {
-                bin = "0" + bin;
-            }
-            EnumSet<DAODataType> combination = EnumSet.noneOf(DAODataType.class);
-            char[] chars = bin.toCharArray();
-            for (int j = 0; j < n; j++) {
-                if (chars[j] == '1') {
-                    combination.add(dataTypeArr[j]);
-                }
-            }
-            //We don't want the combination where no data type is considered
-            if (!combination.isEmpty()) {
-                combinations.add(combination);
-            }
-        }
-        return combinations;
+        return log.traceExit(DAO.getAllPossibleEnumCombinations(DAODataType.class,
+                EnumSet.allOf(DAODataType.class)));
     }
 
     /**

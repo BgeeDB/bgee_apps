@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -80,6 +82,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         SEX_ID("sex", "SexPropagationState", SEX_ROOT_ID, true),
         STRAIN_ID("strain", "StrainPropagationState", STRAIN_ROOT_ID, true);
 
+        public static final List<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
+                getAllPossibleCondParamCombinations();
+
+        private static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, getCondParams());
+        }
+
         public static EnumSet<Attribute> getCondParams() {
             return Arrays.stream(Attribute.values()).filter(a -> a.isConditionParameter())
             .collect(Collectors.toCollection(() -> EnumSet.noneOf(Attribute.class)));
@@ -129,6 +138,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          */
         public boolean isConditionParameter() {
             return this.conditionParameter;
+        }
+    }
+
+    public static class CondParamEnumSetComparator implements Comparator<EnumSet<Attribute>> {
+        @Override
+        public int compare(EnumSet<Attribute> e1, EnumSet<Attribute> e2) {
+            return DAO.compareEnumSets(e1, e2, Attribute.class);
         }
     }
     

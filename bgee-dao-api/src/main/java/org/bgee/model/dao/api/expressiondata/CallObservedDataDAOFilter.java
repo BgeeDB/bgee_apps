@@ -1,24 +1,26 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * A filter to parameterize expression data queries based on data produced by each data type.
+ * A filter to request expression calls based on their observation status in a condition:
+ * whether the call has been directly observed in a condition, or propagated from some descendant
+ * conditions of the considered condition. This filter accepts the data types to consider
+ * (for instance, whether the call was observed from Affymetrix and/or RNA-Seq data)
+ * and the condition parameters to consider (for instance, whether the call was observed
+ * in an anat. entity, while accepting that it might have been propagated along the dev. stage
+ * ontology).
+ * <p>
  * Implements {@code Comparable} for more consistent ordering when used in a {@link CallDAOFilter}
  * and improving chances of cache hit.
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 15.0, Jun. 2021
+ * @version Bgee 15.0, Jul. 2021
  * @since   Bgee 14, Mar. 2017
  */
 public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAOFilter> {
@@ -29,63 +31,57 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
      */
     private final EnumSet<DAODataType> dataTypes;
     /**
-     * @see #getCallObservedData()
+     * @see #getCondParams()
      */
-    private final Boolean callObservedData;
+    private final EnumSet<ConditionDAO.Attribute> condParams;
     /**
-     * @see #getObservedDataFilter()
+     * @see #isCallObservedData()
      */
-    private final LinkedHashMap<ConditionDAO.Attribute, Boolean> observedDataFilter;
+    private final boolean callObservedData;
 
     /**
      * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
-     *                                  which attributes will be sum up to match the provided
-     *                                  {@code DAOFDRPValueFilter}s. If {@code null} or empty,
-     *                                  then all data types are used.
-     * @param callObservedData          See {@link #getCallObservedData()}.
-     * @param observedDataFilter        See {@link #getObservedDataFilter()}. If a key or a value is {@code null},
-     *                                  an {@code IllegalArgumentException} is thrown.
-     * @throws IllegalArgumentException If any of the {@code Set}s used in {@code dAOExperimentCountFilters}
-     *                                  is {@code null}, empty, or contains {@code null} elements.
+     *                                  considered to check whether a call was observed or not.
+     *                                  If {@code null} or empty, all data types are considered.
+     * @param condParams                A {@code Collection} of {@code ConditionDAO.Attribute}s
+     *                                  that are condition parameters (see {@link
+     *                                  org.bgee.model.dao.api.expressiondata.ConditionDAO.Attribute
+     *                                  #isConditionParameter() ConditionDAO.Attribute#isConditionParameter()})
+     *                                  specifying which condition parameters to consider to determine
+     *                                  whether the call was observed or not.
+     *                                  If {@code null} or empty, all condition parameters are considered.
+     * @param callObservedData          A {@code boolean} defining whether this filter will allow
+     *                                  to retrieve calls that have been observed (if {@code true})
+     *                                  or not observed (if {@code false}).
+     * @throws IllegalArgumentException If {@code condParams} contains a {@code ConditionDAO.Attribute}
+     *                                  that is not a condition parameter.
      */
-    public CallObservedDataDAOFilter(Collection<DAODataType> dataTypes, Boolean callObservedData,
-            Map<ConditionDAO.Attribute, Boolean> observedDataFilter) throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}", dataTypes, callObservedData, observedDataFilter);
-        if (observedDataFilter != null && observedDataFilter.entrySet().stream()
-                .anyMatch(e -> e.getKey() == null || e.getValue() == null)) {
-            throw log.throwing(new IllegalArgumentException("No ObservedData Entry can have null key or value"));
-        }
-        if (observedDataFilter != null && observedDataFilter.keySet().stream()
-                .anyMatch(a -> !a.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException("Not a condition parameter in observedDataFilter."));
-        }
-        if (callObservedData == null && (observedDataFilter == null || observedDataFilter.isEmpty())) {
-            throw log.throwing(new IllegalArgumentException("No filter provided in CallObservedDataDAOFilter"));
+    public CallObservedDataDAOFilter(Collection<DAODataType> dataTypes,
+            Collection<ConditionDAO.Attribute> condParams, boolean callObservedData)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", dataTypes, condParams, callObservedData);
+        if (condParams != null && condParams.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException("Not a condition parameter in condParams."));
         }
         this.dataTypes = dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DAODataType.class):
                     EnumSet.copyOf(dataTypes);
+        this.condParams = condParams == null || condParams.isEmpty()?
+                EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(condParams);
         this.callObservedData = callObservedData;
-        this.observedDataFilter = observedDataFilter == null? new LinkedHashMap<>():
-            //For having a predictable iteration order and improve cache hit
-            observedDataFilter.entrySet().stream()
-            .sorted(Comparator.comparing(e -> e.getKey()))
-            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
-                    (v1, v2) -> {throw log.throwing(new IllegalStateException("Impossible collision"));},
-                    LinkedHashMap::new));
     }
 
     /**
-     * @return      An {@code EnumSet} of {@code DAODataType}s that are the data types which attributes
-     *              will be sum up to match the provided {@code DAOFDRPValueFilter}s.
-     * @see #getExperimentCountFilters()
+     * @return      An {@code EnumSet} of {@code DAODataType}s that are the data types
+     *              that will be considered to determine whether the call was observed or not
+     *              (depending on {@link #isCallObservedData()}.
      */
     public EnumSet<DAODataType> getDataTypes() {
         //Defensive copying, no Collections.unmodifiableEnumSet
         return EnumSet.copyOf(dataTypes);
     }
     /**
-     * @return  A {@code Boolean} defining a filtering on whether the call was observed in the condition,
-     *          if not {@code null}. This is independent from {@link #getObservedDataFilter()} to be able
+     * @return  A {@code Boolean} defining a filtering on whether the call was observed in the condition.
+     *          This is independent from {@link #getObservedDataFilter()} to be able
      *          to distinguish between whether data were observed in, for instance, the anatomical entity,
      *          and propagated along the dev. stage ontology. For instance, you might want to retrieve expression calls
      *          at a given dev. stage (using any propagation states), only if observed in the anatomical structure itself.
@@ -93,32 +89,29 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
      *          Note that this is simply a helper method and field as compared to using propagation states
      *          and "self" p-values.
      */
-    //XXX: maybe to remove and always set appropriate observation state/"self" p-values
-    public Boolean getCallObservedData() {
+    public boolean isCallObservedData() {
         return callObservedData;
     }
     /**
-     * @return  A {@code LinkedHashMap} where keys are {@code ConditionDAO.Attribute}s that are 
-     *          condition parameters (see {@link ConditionDAO.Attribute#isConditionParameter()}),
-     *          the associated value being a {@code Boolean} indicating whether the retrieved data
-     *          should have been observed in the specified condition parameter.
-     *          The {@code Boolean} values are never {@code null}.
-     *          Provided as a {@code LinkedHashMap} for convenience, to consistently set parameters
-     *          in queries.
-     *          The filtering used only the data types defined in this {@code CallObservedDataDAOFilter}.
+     * @return  An {@code EnumSet} of {@code ConditionDAO.Attribute}s that are the condition parameters
+     *          that will be considered to determine whether the call was observed or not
+     *          (depending on {@link #isCallObservedData()}. For instance, you might want
+     *          to retrieve expression calls at a given dev. stage (using any propagation states),
+     *          only if observed in the anatomical entity itself.
      */
-    public LinkedHashMap<ConditionDAO.Attribute, Boolean> getObservedDataFilter() {
-        //defensive copying, no unmodifiable LinkedHashMap
-        return new LinkedHashMap<>(observedDataFilter);
+    public EnumSet<ConditionDAO.Attribute> getCondParams() {
+        //Defensive copying, no Collections.unmodifiableEnumSet
+        return EnumSet.copyOf(condParams);
     }
+
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (callObservedData ? 1231 : 1237);
+        result = prime * result + ((condParams == null) ? 0 : condParams.hashCode());
         result = prime * result + ((dataTypes == null) ? 0 : dataTypes.hashCode());
-        result = prime * result + ((callObservedData == null) ? 0 : callObservedData.hashCode());
-        result = prime * result + ((observedDataFilter == null) ? 0 : observedDataFilter.hashCode());
         return result;
     }
     @Override
@@ -133,25 +126,21 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
             return false;
         }
         CallObservedDataDAOFilter other = (CallObservedDataDAOFilter) obj;
+        if (callObservedData != other.callObservedData) {
+            return false;
+        }
+        if (condParams == null) {
+            if (other.condParams != null) {
+                return false;
+            }
+        } else if (!condParams.equals(other.condParams)) {
+            return false;
+        }
         if (dataTypes == null) {
             if (other.dataTypes != null) {
                 return false;
             }
         } else if (!dataTypes.equals(other.dataTypes)) {
-            return false;
-        }
-        if (callObservedData == null) {
-            if (other.callObservedData != null) {
-                return false;
-            }
-        } else if (!callObservedData.equals(other.callObservedData)) {
-            return false;
-        }
-        if (observedDataFilter == null) {
-            if (other.observedDataFilter != null) {
-                return false;
-            }
-        } else if (!observedDataFilter.equals(other.observedDataFilter)) {
             return false;
         }
         return true;
@@ -161,19 +150,26 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("CallObservedDataDAOFilter [dataTypes=").append(dataTypes)
-                .append(", callObservedData=").append(callObservedData)
-                .append(", observedDataFilter=").append(observedDataFilter).append("]");
+               .append(", condParams=").append(condParams)
+               .append(", callObservedData=").append(callObservedData).append("]");
         return builder.toString();
     }
 
     @Override
     public int compareTo(CallObservedDataDAOFilter o) {
-        log.traceEntry("{}", 0);
+        log.traceEntry("{}", o);
         if (o == null) {
             throw new NullPointerException("The compared object cannot be null.");
         }
         if (o.equals(this)) {
             return log.traceExit(0);
+        }
+
+        if (this.isCallObservedData() && !o.isCallObservedData()) {
+            return log.traceExit(-1);
+        }
+        if (!this.isCallObservedData() && o.isCallObservedData()) {
+            return log.traceExit(+1);
         }
 
         int compareDataType = (new DAODataType.DAODataTypeEnumSetComparator())
@@ -182,45 +178,8 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
             return log.traceExit(compareDataType);
         }
 
-        if (!this.getObservedDataFilter().equals(o.getObservedDataFilter())) {
-            if (this.getObservedDataFilter().size() < o.getObservedDataFilter().size()) {
-                return log.traceExit(-1);
-            } else if (this.getObservedDataFilter().size() > o.getObservedDataFilter().size()) {
-                return log.traceExit(+1);
-            }
-            for (ConditionDAO.Attribute a: ConditionDAO.Attribute.values()) {
-                Boolean thisValue = this.getObservedDataFilter().get(a);
-                Boolean otherValue = o.getObservedDataFilter().get(a);
-                if (Objects.equals(thisValue, otherValue)) {
-                    continue;
-                }
-                if (thisValue != null && otherValue == null) {
-                    return log.traceExit(-1);
-                } else if (thisValue == null && otherValue != null) {
-                    return log.traceExit(+1);
-                } else if (thisValue && !otherValue) {
-                    return log.traceExit(-1);
-                } else if (!thisValue && otherValue) {
-                    return log.traceExit(+1);
-                }
-                assert false: "Unreachable code, " + thisValue + " - " + otherValue;
-            }
-            assert false: "Unreachable code, " + this.getObservedDataFilter() + " - " + o.getObservedDataFilter();
-        }
-
-        if (!Objects.equals(this.getCallObservedData(), o.getCallObservedData())) {
-            if (this.getCallObservedData() == null && o.getCallObservedData() != null) {
-                return log.traceExit(-1);
-            } else if (this.getCallObservedData() != null && o.getCallObservedData() == null) {
-                return log.traceExit(+1);
-            } else if (this.getCallObservedData() && !o.getCallObservedData()) {
-                return log.traceExit(-1);
-            } else if (!this.getCallObservedData() && o.getCallObservedData()) {
-                return log.traceExit(+1);
-            }
-            assert false: "Unreachable code, " + this.getCallObservedData() + " - " + o.getCallObservedData();
-        }
-
-        throw log.throwing(new AssertionError("Unreachable code: " + this + ", " + o));
+        int compareComdParams = (new ConditionDAO.CondParamEnumSetComparator())
+                .compare(this.getCondParams(), o.getCondParams());
+        return log.traceExit(compareComdParams);
     }
 }

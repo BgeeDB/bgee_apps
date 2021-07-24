@@ -97,7 +97,7 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
     public DAOFDRPValueFilter(DAOFDRPValue fdrPValue, Qualifier qualifier,
             DAOPropagationState propagationState, boolean selfObservationRequired)
                     throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired);
+        log.traceEntry("{}, {}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired);
 
         if (fdrPValue == null || qualifier == null) {
             throw log.throwing(new IllegalArgumentException("No argument can be null"));

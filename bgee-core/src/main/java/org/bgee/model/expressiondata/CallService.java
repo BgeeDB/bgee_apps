@@ -1547,6 +1547,11 @@ public class CallService extends CommonService {
                 //If we request SILVER or GOLD, and there is no data type requested
                 //that we trust for generating ABSENT calls, we make an impossible condition
                 //so that it returns no result
+                //FIXME: the use of this boolean selfObservationRequired in DAOFDRPValueFilter
+                //is maybe problematic, probably we should allow to target a specific combination
+                //of condition parameters to assess whether there are observed data? I'm not sure,
+                //to think about. Or actually, do we still really want this filtering that we must
+                //have observed data? (yes, maybe)
                 if (daoDataTypesTrustedForNotExpressed.isEmpty() && !qual.equals(SummaryQuality.BRONZE)) {
                     absentAndFilters.add(new DAOFDRPValueFilter(new BigDecimal("1"),
                                         daoDataTypes,

@@ -783,19 +783,37 @@ public class InsertPropagatedCalls extends CallService {
         final private DataPropagation dataPropagation;
 
         final private Set<SamplePValueTO<T, U>> parentPValues;
-        final private Set<SamplePValueTO<T, U>> selfPValues;
+        //this stores the "self" p-values (in the condition itself)
+        //for all possible combination of condition parameters
+        final private Map<EnumSet<CallService.Attribute>, Set<SamplePValueTO<T, U>>>
+        selfPValuesPerCondParamCombinations;
         final private Set<SamplePValueTO<T, U>> descendantPValues;
         
         private PipelineCallData(DataType dataType, DataPropagation dataPropagation,
                 Set<SamplePValueTO<T, U>> parentPValues,
-                Set<SamplePValueTO<T, U>> selfPValues,
+                Map<EnumSet<CallService.Attribute>, Set<SamplePValueTO<T, U>>>
+                selfPValuesPerCondParamCombinations,
                 Set<SamplePValueTO<T, U>> descendantPValues) {
             this.dataType = dataType;
             this.dataPropagation = dataPropagation;
             this.parentPValues = Collections.unmodifiableSet(parentPValues == null?
                     new HashSet<>(): new HashSet<>(parentPValues));
-            this.selfPValues = Collections.unmodifiableSet(selfPValues == null?
-                    new HashSet<>(): new HashSet<>(selfPValues));
+            if (selfPValuesPerCondParamCombinations != null &&
+                    !selfPValuesPerCondParamCombinations.keySet().equals(
+                            CallService.Attribute.getAllPossibleCondParamCombinations())) {
+                throw log.throwing(new IllegalArgumentException("Invalid condition parameters."));
+            }
+            if (selfPValuesPerCondParamCombinations != null &&
+                    selfPValuesPerCondParamCombinations.values().stream()
+                    .anyMatch(v -> v == null)) {
+                throw log.throwing(new IllegalArgumentException("Invalid null values."));
+            }
+            //we will use defensive copying, there is no unmodifiableEnumSet
+            this.selfPValuesPerCondParamCombinations = selfPValuesPerCondParamCombinations == null?
+                    new HashMap<>(): selfPValuesPerCondParamCombinations.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> new HashSet<>(e.getValue())));
             this.descendantPValues = Collections.unmodifiableSet(descendantPValues == null?
                     new HashSet<>(): new HashSet<>(descendantPValues));
         }
@@ -809,8 +827,13 @@ public class InsertPropagatedCalls extends CallService {
         public Set<SamplePValueTO<T, U>> getParentPValues() {
             return parentPValues;
         }
-        public Set<SamplePValueTO<T, U>> getSelfPValues() {
-            return selfPValues;
+        public Map<EnumSet<CallService.Attribute>, Set<SamplePValueTO<T, U>>>
+        getSelfPValuesPerCondParamCombinations() {
+            //defensive copying, there is no unmodifiableEnumSet
+            return selfPValuesPerCondParamCombinations.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> new HashSet<>(e.getValue())));
         }
         public Set<SamplePValueTO<T, U>> getDescendantPValues() {
             return descendantPValues;
@@ -824,7 +847,7 @@ public class InsertPropagatedCalls extends CallService {
             builder.append("PipelineCallData [dataType=").append(dataType)
                    .append(", dataPropagation=").append(dataPropagation)
                    .append(", parentPValues=").append(parentPValues)
-                   .append(", selfPValues=").append(selfPValues)
+                   .append(", selfPValuesPerCondParamCombinations=").append(selfPValuesPerCondParamCombinations)
                    .append(", descendantPValues=").append(descendantPValues)
                    .append("]");
             return builder.toString();
@@ -2849,6 +2872,52 @@ public class InsertPropagatedCalls extends CallService {
                         devStagePropagationState, cellTypePropagationState, sexPropagationState,
                         strainPropagationState, false);
 
+                //We want to count the number of self p-values for all combinations of condition parameters
+                EnumSet<CallService.Attribute> selfPropStateParams = EnumSet.noneOf(
+                        CallService.Attribute.class);
+                for (CallService.Attribute condParam: CallService.Attribute.getAllConditionParameters()) {
+                    switch(condParam) {
+                    case ANAT_ENTITY_ID:
+                        if (anatEntityPropagationState.equals(PropagationState.SELF)) {
+                            selfPropStateParams.add(condParam);
+                        }
+                        break;
+                    case CELL_TYPE_ID:
+                        if (cellTypePropagationState.equals(PropagationState.SELF)) {
+                            selfPropStateParams.add(condParam);
+                        }
+                        break;
+                    case DEV_STAGE_ID:
+                        if (devStagePropagationState.equals(PropagationState.SELF)) {
+                            selfPropStateParams.add(condParam);
+                        }
+                        break;
+                    case SEX_ID:
+                        if (sexPropagationState.equals(PropagationState.SELF)) {
+                            selfPropStateParams.add(condParam);
+                        }
+                        break;
+                    case STRAIN_ID:
+                        if (strainPropagationState.equals(PropagationState.SELF)) {
+                            selfPropStateParams.add(condParam);
+                        }
+                        break;
+                    default:
+                        throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
+                                + condParam));
+                    }
+                }
+                Set<EnumSet<CallService.Attribute>> selfPropStateParamCombinations =
+                        selfPropStateParams.isEmpty()? new HashSet<>():
+                        CallService.Attribute.getAllPossibleCondParamCombinations(selfPropStateParams);
+                assert !selfPropStateParamCombinations.contains(
+                        CallService.Attribute.getAllConditionParameters());
+                Set<EnumSet<CallService.Attribute>> notSelfPropStateParamCombinations =
+                        CallService.Attribute.getAllPossibleCondParamCombinations();
+                notSelfPropStateParamCombinations.removeAll(selfPropStateParamCombinations);
+                assert notSelfPropStateParamCombinations.contains(
+                        CallService.Attribute.getAllConditionParameters());
+
                 switch(pipelineData.getDataType()) {
                 case EST:
                 case IN_SITU:
@@ -2856,10 +2925,19 @@ public class InsertPropagatedCalls extends CallService {
                 case FULL_LENGTH:
                     //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
-                    Set<SamplePValueTO<String, String>> localPValues = pipelineData.getSelfPValues()
+                    Set<SamplePValueTO<String, String>> localPValues = pipelineData
+                        .getSelfPValuesPerCondParamCombinations().get(
+                                CallService.Attribute.getAllConditionParameters())
                         .stream()
                         .map(pval -> (SamplePValueTO<String, String>) pval)
                         .collect(Collectors.toSet());
+                    assert !localPValues.isEmpty();
+
+                    Map<EnumSet<CallService.Attribute>, Set<SamplePValueTO<String, String>>>
+                    selfPValuesPerCondParamCombinations = selfPropStateParamCombinations.stream()
+                            .collect(Collectors.toMap(comb -> comb, comb -> localPValues));
+                    selfPValuesPerCondParamCombinations.putAll(notSelfPropStateParamCombinations.stream()
+                            .collect(Collectors.toMap(comb -> comb, comb -> new HashSet<>())));
                     Set<SamplePValueTO<String, String>> parentPValues = null;
                     Set<SamplePValueTO<String, String>> descendantPValues = null;
                     if (areAncestors) {
@@ -2869,15 +2947,24 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     relativeData.add(new PipelineCallData<>(pipelineData.getDataType(),
                             dataPropagation,
-                            parentPValues, null, descendantPValues));
+                            parentPValues, selfPValuesPerCondParamCombinations, descendantPValues));
                     break;
                 case AFFYMETRIX:
                     //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
-                    Set<SamplePValueTO<String, Integer>> localPValues2 = pipelineData.getSelfPValues()
+                    Set<SamplePValueTO<String, Integer>> localPValues2 = pipelineData
+                        .getSelfPValuesPerCondParamCombinations().get(
+                                CallService.Attribute.getAllConditionParameters())
                         .stream()
                         .map(pval -> (SamplePValueTO<String, Integer>) pval)
                         .collect(Collectors.toSet());
+                    assert !localPValues2.isEmpty();
+
+                    Map<EnumSet<CallService.Attribute>, Set<SamplePValueTO<String, Integer>>>
+                    selfPValuesPerCondParamCombinations2 = selfPropStateParamCombinations.stream()
+                            .collect(Collectors.toMap(comb -> comb, comb -> localPValues2));
+                    selfPValuesPerCondParamCombinations2.putAll(notSelfPropStateParamCombinations.stream()
+                            .collect(Collectors.toMap(comb -> comb, comb -> new HashSet<>())));
                     Set<SamplePValueTO<String, Integer>> parentPValues2 = null;
                     Set<SamplePValueTO<String, Integer>> descendantPValues2 = null;
                     if (areAncestors) {
@@ -2887,7 +2974,7 @@ public class InsertPropagatedCalls extends CallService {
                     }
                     relativeData.add(new PipelineCallData<>(pipelineData.getDataType(),
                             dataPropagation,
-                            parentPValues2, null, descendantPValues2));
+                            parentPValues2, selfPValuesPerCondParamCombinations2, descendantPValues2));
                     break;
                 }
             }
@@ -3112,15 +3199,15 @@ public class InsertPropagatedCalls extends CallService {
         //at this point, we have only propagated one call at a time, so we should have
         //p-values in only one of these 3 attributes
         assert pipelineCallData.stream().allMatch(pcd ->
-            ((pcd.getSelfPValues() != null && !pcd.getSelfPValues().isEmpty()) &&
+            (/*(pcd.getSelfPValues() != null && !pcd.getSelfPValues().isEmpty()) &&*/
             (pcd.getParentPValues() == null || pcd.getParentPValues().isEmpty()) &&
             (pcd.getDescendantPValues() == null || pcd.getDescendantPValues().isEmpty()) ||
 
-            (pcd.getSelfPValues() == null || pcd.getSelfPValues().isEmpty()) &&
+            /*(pcd.getSelfPValues() == null || pcd.getSelfPValues().isEmpty()) &&*/
             (pcd.getParentPValues() != null && !pcd.getParentPValues().isEmpty()) &&
             (pcd.getDescendantPValues() == null || pcd.getDescendantPValues().isEmpty()) ||
 
-            (pcd.getSelfPValues() == null || pcd.getSelfPValues().isEmpty()) &&
+            /*(pcd.getSelfPValues() == null || pcd.getSelfPValues().isEmpty()) &&*/
             (pcd.getParentPValues() == null || pcd.getParentPValues().isEmpty()) &&
             (pcd.getDescendantPValues() != null && !pcd.getDescendantPValues().isEmpty())));
 

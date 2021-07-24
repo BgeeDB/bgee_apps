@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,15 +57,8 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_P_VALUE_FIELD_START = "pVal";
     private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValBestDescendant";
     private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START = "gCIdPValBD";
-    private final static String COND_OBSERVED_DATA_SUFFIX = "ConditionObservedData";
-    private final static String P_VALUE_SELF_OBS_COUNT_SUFFIX = "SelfObservationCount";
-    private final static String P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX = "DescendantObservationCount";
-    private final static Set<DAOPropagationState> OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
-            .stream().filter(s -> s.getObservedState())
-            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
-    private final static Set<DAOPropagationState> NON_OBSERVED_STATES = EnumSet.allOf(DAOPropagationState.class)
-            .stream().filter(s -> !s.getObservedState())
-            .collect(Collectors.toCollection(() -> EnumSet.noneOf(DAOPropagationState.class)));
+    private final static String GLOBAL_SELF_OBS_COUNT_PREFIX = "selfObsCount";
+    private final static String GLOBAL_DESCENDANT_OBS_COUNT_PREFIX = "descObsCount";
 
     private static final String MIN_MAX_RANK_ENTITY_ID_FIELD = "entitiyId";
     private static final String MIN_MAX_RANK_MIN_RANK_FIELD = "minRank";
@@ -97,7 +89,8 @@ implements GlobalExpressionCallDAO {
                         GlobalExpressionCallDAO.Attribute.MEAN_RANK) &&
                         ai.getTargetedDataTypes().equals(a.getTargetedDataTypes()))) {
                     clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
-                            GlobalExpressionCallDAO.Attribute.MEAN_RANK, a.getTargetedDataTypes()));
+                            GlobalExpressionCallDAO.Attribute.MEAN_RANK, a.getTargetedDataTypes(),
+                            null));
                 }
                 break;
             default:
@@ -136,18 +129,6 @@ implements GlobalExpressionCallDAO {
                 return generateMeanRankClause(ai.getTargetedDataTypes(), globalExprTableName,
                         globalCondTableName, globalRank) + " AS " + GLOBAL_MEAN_RANK_FIELD
                         + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
-            case DATA_TYPE_OBSERVED_DATA:
-                return ai.getTargetedDataTypes().stream()
-                        .map(dataType -> Arrays.stream(ConditionDAO.Attribute.values())
-                            .filter(a -> a.isConditionParameter())
-                            //For now we store the cell type propagation state only for
-                            //scRNA-Seq data
-                            .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
-                                    !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
-                            .map(a -> dataType.getFieldNamePrefix() + a.getPropagationStateNameSuffix())
-                            .collect(Collectors.joining(", "))
-                            + ", " + dataType.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX)
-                        .collect(Collectors.joining(", "));
 
             case DATA_TYPE_RANK_INFO:
                 return ai.getTargetedDataTypes().stream()
@@ -159,9 +140,6 @@ implements GlobalExpressionCallDAO {
                         .collect(Collectors.joining(", "));
 
             case FDR_P_VALUE_COND_INFO:
-                //The observation counts per data type will be queried outside of this loop
-                //(in case FDR_P_VALUE_COND_INFO is requested several times with different
-                //data type combinations)
                 return GLOBAL_P_VALUE_FIELD_START
                         + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
 
@@ -172,25 +150,36 @@ implements GlobalExpressionCallDAO {
                         + GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START
                         + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
 
+            case DATA_TYPE_OBSERVATION_COUNT_INFO:
+                return ai.getTargetedDataTypes().stream().map(dataType -> {
+                    EnumSet<ConditionDAO.Attribute> allCondParams =
+                            ConditionDAO.Attribute.getCondParams();
+                    String allCondParamsSelfObsCountField = getObsCountFieldName(dataType,
+                            allCondParams, true);
+                    String allCondParamsDescObsCountField = getObsCountFieldName(dataType,
+                            allCondParams, false);
+
+                    EnumSet<ConditionDAO.Attribute> requestedCondParamCombination =
+                            ai.getTargetedCondParams();
+                    if (requestedCondParamCombination.equals(allCondParams)) {
+                        return allCondParamsSelfObsCountField + ", " + allCondParamsDescObsCountField;
+                    }
+
+                    String requestedCondParamsSelfObsCountField = getObsCountFieldName(dataType,
+                            requestedCondParamCombination, true);
+
+                    return requestedCondParamsSelfObsCountField
+                           + ", "
+                           + "(" + allCondParamsSelfObsCountField + " + "
+                           + allCondParamsDescObsCountField + " - "
+                           + requestedCondParamsSelfObsCountField + ") AS "
+                           + getObsCountFieldName(dataType, requestedCondParamCombination, false);
+                }).collect(Collectors.joining(", "));
+
             default:
                 throw log.throwing(new IllegalStateException("Unsupported attribute: " + ai.getAttribute()));
             }
         }).collect(Collectors.joining(", ")));
-
-        //To avoid requesting the p-value observation counts per data type several times
-        //(in case FDR_P_VALUE_COND_INFO is requested several times with different data type combinations),
-        //we retrieve this information out of the previous loop.
-        String selectObsCounts = clonedAttrs.stream()
-                .filter(ai -> ai.getAttribute().equals(
-                        GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO))
-                .flatMap(ai -> ai.getTargetedDataTypes().stream())
-                .distinct()
-                .map(dataType -> dataType.getFieldNamePrefix() + P_VALUE_SELF_OBS_COUNT_SUFFIX
-                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)
-                .collect(Collectors.joining(", "));
-        if (StringUtils.isNotBlank(selectObsCounts)) {
-            sb.append(", ").append(selectObsCounts);
-        }
 
 
         //fix for #173, see also beginning of this method
@@ -280,20 +269,17 @@ implements GlobalExpressionCallDAO {
     }
 
     private static String generateTableReferences(final String globalExprTableName,
-            final String globalCondTableName, final String condTableName,
-            final String geneTableName, final String speciesIdFilterTableName,
-            final boolean globalCondFiltering, EnumSet<ConditionDAO.Attribute> observedCondForParams,
+            final String globalCondTableName, final String geneTableName,
+            final String speciesIdFilterTableName, final boolean globalCondFiltering,
             final boolean geneSort) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
-                condTableName, geneTableName, speciesIdFilterTableName, globalCondFiltering,
-                observedCondForParams, geneSort);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", globalExprTableName, globalCondTableName,
+                geneTableName, speciesIdFilterTableName, globalCondFiltering, geneSort);
 
         //****************************************
         // Create the necessary joins
         //****************************************
         String geneTableToGlobalExprTableJoinClause = "";
         String globalCondTableToGlobalExprTableJoinClause = "";
-        String condTableToGlobalCondTableJoinClause = "";
         if (geneTableName != null) {
             geneTableToGlobalExprTableJoinClause = geneTableName + "."
                 + MySQLGeneDAO.BGEE_GENE_ID + " = " + globalExprTableName + "."
@@ -303,24 +289,6 @@ implements GlobalExpressionCallDAO {
             globalCondTableToGlobalExprTableJoinClause = globalCondTableName + "."
                 + MySQLConditionDAO.GLOBAL_COND_ID_FIELD + " = " + globalExprTableName
                 + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
-        //XXX: we can have multiple lines in cond table matching a globalCondition
-        //(and also, multiple lines in globalCondToCond matching a globalConditionId with 'self' origin),
-        //this is why we add DISTINCT to the SELECT clause when observedConditionFiltering is true.
-        //Maybe we could use this table differently (a subquery in the join,
-        //an EXISTS clause in the where?).
-        //
-        //We want to filter for observed conditions *without considering the species*,
-        //so we can't simply use the globalCondToCond table. Prior to Bgee 15,
-        //we simply used anatEntityId and stageId to join to the cond table.
-        //But it's more complicated now that we have also sex/strain,
-        //and that we have some standardization for insertion into the globalCond table
-        //(e.g., we don't use null parameters anymore but mapped to the roots
-        //of the respective ontologies for each parameter instead).
-            if (condTableName != null) {
-                condTableToGlobalCondTableJoinClause = MySQLConditionDAO
-                        .getCondTableToGlobalCondTableJoinClause(globalCondTableName, condTableName,
-                                observedCondForParams);
-            }
         }
 
 
@@ -344,12 +312,10 @@ implements GlobalExpressionCallDAO {
         //(again, we have a clustered index (bgeeGeneId, globalConditionId), and we might use
         //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
         boolean geneTableFirst = geneTableName != null && geneTableName.equals(speciesIdFilterTableName);
-        boolean globalCondTableNeeded = globalCondFiltering ||
-                observedCondForParams != null && !observedCondForParams.isEmpty();
         if (geneTableFirst) {
             sb.append("gene AS ").append(geneTableName);
         }
-        if (globalCondTableNeeded) {
+        if (globalCondFiltering) {
             if (geneTableFirst) {
                 sb.append(" INNER JOIN ");
             }
@@ -359,23 +325,20 @@ implements GlobalExpressionCallDAO {
                 .append(" = ").append(globalCondTableName).append(".").append(MySQLGeneDAO.SPECIES_ID);
             }
         }
-        if (observedCondForParams != null && !observedCondForParams.isEmpty()) {
-            sb.append(condTableToGlobalCondTableJoinClause);
-        }
 
-        if (geneTableFirst || globalCondTableNeeded) {
+        if (geneTableFirst || globalCondFiltering) {
             sb.append(" INNER JOIN ");
         }
         sb.append("globalExpression AS ").append(globalExprTableName);
-        if (geneTableFirst || globalCondTableNeeded) {
+        if (geneTableFirst || globalCondFiltering) {
             sb.append(" ON ");
             if (geneTableFirst) {
                 sb.append(geneTableToGlobalExprTableJoinClause);
-                if (globalCondTableNeeded) {
+                if (globalCondFiltering) {
                     sb.append(" AND ");
                 }
             }
-            if (globalCondTableNeeded) {
+            if (globalCondFiltering) {
                 sb.append(globalCondTableToGlobalExprTableJoinClause);
             }
         }
@@ -431,7 +394,13 @@ implements GlobalExpressionCallDAO {
                     }
                     sb.append(")");
                 }
-
+                //TODO: manage filtering on observedConditionFilter based on the new fields
+                //in globalCond table
+                boolean observedConditionFilter = callFilter.getConditionFilters()
+                                .stream().anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty());
+                //Note from previous code:
+                //!observedConditionFilter? null: clonedCallFilters.iterator().next()
+                //.getConditionFilters().iterator().next().getObservedCondForParams()
                 boolean containsCondFilter = callFilter.getConditionFilters().stream()
                         .anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
                         !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
@@ -475,172 +444,56 @@ implements GlobalExpressionCallDAO {
         return log.traceExit(sb.toString());
     }
 
-    private static String getCallCondParamObservedDataFieldName(DAODataType dataType,
-            ConditionDAO.Attribute condParam) {
-        log.traceEntry("{}, {}", dataType, condParam);
-
-        if (condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) &&
-                !dataType.equals(DAODataType.FULL_LENGTH)) {
-            throw log.throwing(new IllegalArgumentException("For now, the cell type "
-                    + "propagation state is defined only for scRNA-Seq full-length data"));
-        }
-        return log.traceExit(dataType.getFieldNamePrefix() + condParam.getPropagationStateNameSuffix());
-    }
-
     private static String generateObservedDataFilters(
-            final LinkedHashSet<CallObservedDataDAOFilter> dataFilters,
+            final LinkedHashSet<CallObservedDataDAOFilter> observedDataFilters,
             final String globalExprTableName) {
-        log.traceEntry("{}, {}", dataFilters, globalExprTableName);
+        log.traceEntry("{}, {}", observedDataFilters, globalExprTableName);
 
-        return dataFilters.stream()
+        return observedDataFilters.stream()
             .map(dataFilter -> {
                 StringBuilder sb = new StringBuilder();
-                boolean previousClause = false;
 
-                if (dataFilter.getCallObservedData() != null) {
-                    if (previousClause) {
-                        sb.append(" AND ");
-                    }
-                    previousClause = true;
-                    sb.append(dataFilter.getDataTypes().stream()
-                                .map(d -> {
-                                    StringBuilder sbObsData = new StringBuilder();
-                                    if (!dataFilter.getCallObservedData() &&
-                                            dataFilter.getDataTypes().size() > 1) {
-                                        sbObsData.append("(");
-                                    }
-                                    sbObsData.append(d.getFieldNamePrefix())
-                                             .append(COND_OBSERVED_DATA_SUFFIX);
-                                    String columnName = sbObsData.toString();
-                                    sbObsData.append(" = ?");
-                                    //If we request non-observed data, it must be non-observed
-                                    //by each data type => AND delimiter between data types.
-                                    //But we need to account for the fact that not all data types might
-                                    //support the call (the field value will be NULL then)
-                                    if (!dataFilter.getCallObservedData() &&
-                                            dataFilter.getDataTypes().size() > 1) {
-                                        sbObsData.append(" OR ").append(columnName)
-                                                 .append(" IS NULL)");
-                                    }
-                                    return sbObsData.toString();
-                                })
-                                .collect(Collectors.joining(
-                                        //If we request observed data, it can be observed
-                                        //by any data type => OR delimiter
-                                        //If we request non-observed data, it must be non-observed
-                                        //by each data type => AND delimiter
-                                        dataFilter.getCallObservedData()? " OR ": " AND ", "(", ")")));
-
-                    //If we request non-observed data, it must be non-observed
-                    //by each data type => AND delimiter between data types.
-                    //But we need to account for the fact that not all data types might
-                    //support the call (the field value will be NULL then).
-                    //AND WE NEED TO MAKE SURE AT LEAST ONE OF THE REQUESTED DATA TYPES
-                    //IS NOT NULL, otherwise, if not all data types are requested,
-                    //we might retrieve calls with observed data and/or from other data types
-                    if (!dataFilter.getCallObservedData() &&
-                            dataFilter.getDataTypes().size() > 1) {
-                        sb.append(
-                                dataFilter.getDataTypes().stream()
-                                .map(d -> d.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX
-                                        + " IS NOT NULL")
-                                .collect(Collectors.joining(" OR ", " AND (", ")"))
-                        );
-                    }
-                }
-
-                if (!dataFilter.getObservedDataFilter().isEmpty()) {
-                    if (previousClause) {
-                        sb.append(" AND ");
-                    }
-                    previousClause = true;
-                    String completeObsDataFilter = dataFilter.getObservedDataFilter().entrySet().stream()
-                        .map(e -> {
-                            ConditionDAO.Attribute condParam = e.getKey();
-                            StringBuilder sbObsDataFilter =  new StringBuilder();
-                            String obsDataFilter = dataFilter.getDataTypes().stream()
-                                //For now, the cell type propagation state is defined
-                                //only for scRNA-Seq full-length data
-                                .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
-                                             d.equals(DAODataType.FULL_LENGTH))
-                                .map(d -> {
-                                    String columnName = getCallCondParamObservedDataFieldName(
-                                            d, condParam);
-                                    StringBuilder sbPropStateParam = new StringBuilder();
-                                    if (!e.getValue() && dataFilter.getDataTypes().size() > 1 ||
-                                            condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID)) {
-                                        sbPropStateParam.append("(");
-                                    }
-                                    sbPropStateParam
-                                    .append(globalExprTableName).append(".").append(columnName)
-                                    .append(" IN (")
-                                    .append(BgeePreparedStatement.generateParameterizedQueryString(
-                                            e.getValue()? OBSERVED_STATES.size():
-                                                NON_OBSERVED_STATES.size()))
-                                    .append(")");
-                                    //If we request non-observed data, it must be non-observed
-                                    //by each data type => AND delimiter between cond. parameters.
-                                    //But we need to account for the fact that not all data types might
-                                    //support the call (the field value will be NULL then)
-                                    if (!e.getValue() && dataFilter.getDataTypes().size() > 1 ||
-                                            //XXX: and for cell-type propagation state, as of Bgee 15.0
-                                            //only one data type has this field, so we need
-                                            //to take care of it differently
-                                            condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID)) {
-                                        sbPropStateParam.append(" OR ").append(columnName)
-                                                        .append(" IS NULL)");
-                                    }
-                                    return sbPropStateParam.toString();
-                                })
-                                .collect(Collectors.joining(
-                                    //If we request observed data, it can be observed by any data type
-                                    //=> OR delimiter
-                                    //If we request non-observed data, it must by non-observed by each data type
-                                    //=> AND delimiter
-                                    e.getValue()? " OR ": " AND "));
-                            if (!obsDataFilter.isEmpty()) {
-                                sbObsDataFilter.append("(");
+                sb.append(dataFilter.getDataTypes().stream()
+                        .map(d -> {
+                            String fieldname = globalExprTableName + "."
+                                    + getObsCountFieldName(d, dataFilter.getCondParams(), true);
+                            if (dataFilter.isCallObservedData()) {
+                                return fieldname + " > 0";
                             }
-                            sbObsDataFilter.append(obsDataFilter);
-                            if (!obsDataFilter.isEmpty()) {
-                                sbObsDataFilter.append(")");
-                            }
-                            //If we request non-observed data, it must be non-observed
-                            //by each data type => AND delimiter between cond. parameters.
-                            //But we need to account for the fact that not all data types might
-                            //support the call (the field value will be NULL then).
-                            //AND WE NEED TO MAKE SURE AT LEAST ON OF THE REQUESTED DATA TYPES
-                            //IS NOT NULL, otherwise, if not all data types are requested,
-                            //we might retrieve calls with observed data and/or from other data types
-                            if (!e.getValue() && dataFilter.getDataTypes().size() > 1) {
-                                String addObsDataFilter = dataFilter.getDataTypes().stream()
-                                        //For now, the cell type propagation state is defined
-                                        //only for scRNA-Seq full-length data
-                                        .filter(d -> !condParam.equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
-                                                     d.equals(DAODataType.FULL_LENGTH))
-                                        .map(d -> globalExprTableName + "."
-                                                + getCallCondParamObservedDataFieldName(d, condParam)
-                                                + " IS NOT NULL")
-                                        .collect(Collectors.joining(" OR "));
-                                if (!addObsDataFilter.isEmpty()) {
-                                    sbObsDataFilter.append(" AND (");
-                                }
-                                sbObsDataFilter.append(addObsDataFilter);
-                                if (!addObsDataFilter.isEmpty()) {
-                                    sbObsDataFilter.append(")");
-                                }
-                            }
-                            return sbObsDataFilter.toString();
+                            return fieldname + " = 0";
                         })
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining(" AND "));
-                    if (!completeObsDataFilter.isEmpty()) {
-                        sb.append("(");
-                    }
-                    sb.append(completeObsDataFilter);
-                    if (!completeObsDataFilter.isEmpty()) {
-                        sb.append(")");
-                    }
+                        .collect(Collectors.joining(
+                                //If we request observed data, it can be observed
+                                //by any data type => OR delimiter
+                                //If we request non-observed data, it must be non-observed
+                                //by each data type => AND delimiter
+                                dataFilter.isCallObservedData()? " OR ": " AND ", "(", ")"))
+                );
+
+                //If we request non-observed data, it must be non-observed
+                //by each data type => AND delimiter between data types.
+                //But we need to account for the fact that not all data types might
+                //support the call (the field value will be 0 then).
+                //AND WE NEED TO MAKE SURE WE HAVE DATA FOR AT LEAST ONE OF THE REQUESTED DATA TYPES,
+                //otherwise, if not all data types are requested,
+                //we might retrieve calls with observed data and/or from other data types
+                if (!dataFilter.isCallObservedData() &&
+                        !dataFilter.getDataTypes().equals(EnumSet.allOf(DAODataType.class))) {
+                    //Only for all condition parameters there is a field descendant observation count.
+                    //And this is why we sum the self and descendant observation counts
+                    //using all condition parameters to determine whether there are data
+                    //for this data type. Maybe we could use the FDR field instead?
+                    EnumSet<ConditionDAO.Attribute> allCondParams = ConditionDAO.Attribute.getCondParams();
+                    sb.append(
+                            dataFilter.getDataTypes().stream()
+                            .map(d -> "(" + globalExprTableName + "."
+                                    + getObsCountFieldName(d, allCondParams, true)
+                                    + " + "
+                                    + globalExprTableName + "."
+                                    + getObsCountFieldName(d, allCondParams, false)
+                                    + ") > 0")
+                            .collect(Collectors.joining(" OR ", " AND (", ")"))
+                            );
                 }
                 
                 return sb.toString();
@@ -679,9 +532,12 @@ implements GlobalExpressionCallDAO {
                           .append(" ?");
 
                         if (pValFilter.isSelfObservationRequired()) {
+                            //XXX: check whether this isSelfObservationRequired should actually
+                            //specify the condition parameters to target
+                            EnumSet<ConditionDAO.Attribute> allCondParams =
+                                    ConditionDAO.Attribute.getCondParams();
                             sb.append(dataTypes.stream()
-                                    .map(dataType -> dataType.getFieldNamePrefix()
-                                            + P_VALUE_SELF_OBS_COUNT_SUFFIX)
+                                    .map(d -> getObsCountFieldName(d, allCondParams, true))
                                     .collect(Collectors.joining(" + ", " AND (", ") > 0")));
                         }
 
@@ -722,31 +578,6 @@ implements GlobalExpressionCallDAO {
                         callFilter.getConditionFilters(), offsetParamIndex);
             }
 
-            for (CallObservedDataDAOFilter dataFilter: callFilter.getCallObservedDataFilters()) {
-
-                if (dataFilter.getCallObservedData() != null) {
-                    for (int i = 0; i < dataFilter.getDataTypes().size(); i++) {
-                        stmt.setBoolean(offsetParamIndex, dataFilter.getCallObservedData());
-                        offsetParamIndex++;
-                    }
-                }
-
-                for (Entry<ConditionDAO.Attribute, Boolean> isObservedData:
-                    dataFilter.getObservedDataFilter().entrySet()) {
-                    Set<DAOPropagationState> toUse = isObservedData.getValue()?
-                            OBSERVED_STATES: NON_OBSERVED_STATES;
-                    for (DAODataType dataType: dataFilter.getDataTypes()) {
-                        //For now, the cell type propagation state is defined
-                        //only for scRNA-Seq full-length data
-                        if (!isObservedData.getKey().equals(ConditionDAO.Attribute.CELL_TYPE_ID) ||
-                                dataType.equals(DAODataType.FULL_LENGTH)) {
-                            stmt.setEnumDAOFields(offsetParamIndex, toUse, true);
-                            offsetParamIndex += toUse.size();
-                        }
-                    }
-                }
-            }
-
             for (LinkedHashSet<DAOFDRPValueFilter> pValOrFilter: callFilter.getFDRPValueFilters()) {
                 for (DAOFDRPValueFilter pValFilter : pValOrFilter) {
                     stmt.setBigDecimal(offsetParamIndex, pValFilter.getFDRPValue().getFdrPValue());
@@ -784,6 +615,27 @@ implements GlobalExpressionCallDAO {
         }
         return log.traceExit(dataTypes);
     }
+    private static EnumSet<ConditionDAO.Attribute> getCondParamsFromFieldName(String fieldName) {
+        log.traceEntry("{}", fieldName);
+
+        EnumSet<ConditionDAO.Attribute> condParams = EnumSet.allOf(ConditionDAO.Attribute.class).stream()
+                .filter(cp -> {
+                    if (!cp.isConditionParameter()) {
+                        return false;
+                    }
+                    if (fieldName.contains(cp.getFieldNamePart())) {
+                        return true;
+                    }
+                    return false;
+                })
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)));
+
+        if (condParams.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Field name with no condition parameter info: "
+                    + fieldName));
+        }
+        return log.traceExit(condParams);
+    }
 
     private static String getFieldNamePartFromDataTypes(EnumSet<DAODataType> dataTypes) {
         log.traceEntry("{}", dataTypes);
@@ -791,6 +643,20 @@ implements GlobalExpressionCallDAO {
         return log.traceExit(dataTypes.stream()
                 .map(dt -> dt.getFieldNamePart())
                 .collect(Collectors.joining()));
+    }
+    private static String getFieldNamePartFromCondParams(EnumSet<ConditionDAO.Attribute> condParams) {
+        log.traceEntry("{}", condParams);
+        //We iterate an EnumSet to have a predictable order of iteration to generate fieldNamePart
+        return log.traceExit(condParams.stream()
+                .map(dt -> dt.getFieldNamePart())
+                .collect(Collectors.joining()));
+    }
+    private static String getObsCountFieldName(DAODataType dataType,
+            EnumSet<ConditionDAO.Attribute> condParams, boolean selfObsCount) {
+        log.traceEntry("{}, {}, {}", dataType, condParams, selfObsCount);
+        return log.traceExit((selfObsCount? GLOBAL_SELF_OBS_COUNT_PREFIX: GLOBAL_DESCENDANT_OBS_COUNT_PREFIX)
+                            + dataType.getFieldNamePart()
+                            + getFieldNamePartFromCondParams(condParams));
     }
 
     /**
@@ -905,8 +771,8 @@ implements GlobalExpressionCallDAO {
         //attributes
         Set<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = attributes != null && !attributes.isEmpty()?
                 new HashSet<>(attributes): Arrays.stream(GlobalExpressionCallDAO.Attribute.values())
-                .map(a -> a.isDataTypeDependant()? new GlobalExpressionCallDAO.AttributeInfo(
-                        a, EnumSet.allOf(DAODataType.class)):
+                .map(a -> a.isDataTypeDependent()? new GlobalExpressionCallDAO.AttributeInfo(
+                        a, null, null):
                         new GlobalExpressionCallDAO.AttributeInfo(a))
                 .collect(Collectors.toSet());
         //ordering attributes
@@ -956,10 +822,8 @@ implements GlobalExpressionCallDAO {
         sb.append(generateSelectClause(clonedAttrs, clonedOrderingAttrs.keySet(),
                 globalExprTableName, globalCondTableName, geneTableName, observedConditionFilter,
                 globalRank));
-        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, condTableName,
+        sb.append(generateTableReferences(globalExprTableName, globalCondTableName,
                 geneTableName, speciesIdFilterTableName, globalCondFilter,
-                !observedConditionFilter? null: clonedCallFilters.iterator().next()
-                        .getConditionFilters().iterator().next().getObservedCondForParams(),
                 geneSort));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 condTableName, speciesIdFilterTableName));
@@ -1049,8 +913,8 @@ implements GlobalExpressionCallDAO {
         sb.append(", MIN(").append(rankClause).append(") AS ").append(MIN_MAX_RANK_MIN_RANK_FIELD)
           .append(", MAX(").append(rankClause).append(") AS ").append(MIN_MAX_RANK_MAX_RANK_FIELD);
 
-        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null, null,
-                true, null, false));
+        sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null,
+                true, false));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
                 null, globalCondTableName));
 
@@ -1118,24 +982,18 @@ implements GlobalExpressionCallDAO {
                 .collect(Collectors.joining(", ", "", ", ")));
 
         //the order in which we set the parameters is important, so we use EnumSets.
-        //Prepare propagation states, observed data state, self and descendant observation counts
+        //Prepare self and descendant observation counts
         sql.append(
                 EnumSet.allOf(DAODataType.class).stream()
                 .map(dataType ->
-                        //propagation states
-                        ConditionDAO.Attribute.getCondParams().stream()
-                        //for now we only store cell type propagation state for
-                        //scRNA-Seq full-length data
-                        .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
-                                !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
-                        .map(a -> dataType.getFieldNamePrefix() + a.getPropagationStateNameSuffix())
+                        //Self observation counts for all combinations of condition parameters
+                        ConditionDAO.Attribute.ALL_COND_PARAM_COMBINATIONS.stream()
+                        .map(comb -> getObsCountFieldName(dataType, comb, true))
                         .collect(Collectors.joining(", "))
-                        //observed data state
-                        + ", " + dataType.getFieldNamePrefix() + COND_OBSERVED_DATA_SUFFIX
-                        //self and descendant observation counts
-                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_SELF_OBS_COUNT_SUFFIX
-                        + ", " + dataType.getFieldNamePrefix() + P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)
-                .collect(Collectors.joining(", "))
+                        //Descendant observation count taking into account all condition parameters
+                        + ", " + getObsCountFieldName(dataType, ConditionDAO.Attribute.getCondParams(),
+                                false)
+                ).collect(Collectors.joining(", "))
         )
         .append(") VALUES ");
 
@@ -1150,16 +1008,12 @@ implements GlobalExpressionCallDAO {
                     //Then, for each data type:
                     + EnumSet.allOf(DAODataType.class).stream()
                     .mapToInt(dataType ->
-                        //first count the number of propagation states per data type
-                        Math.toIntExact(
-                                ConditionDAO.Attribute.getCondParams().stream()
-                                //for now we only store cell type propagation state for
-                                //scRNA-Seq full-length data
-                                .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
-                                        !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
-                                .count())
-                        //then add observed data state, self and descendant observation count, per data type
-                        + 3)
+                        //count the number of self observation counts for all combinations
+                        //of condition parameters
+                        ConditionDAO.Attribute.ALL_COND_PARAM_COMBINATIONS.size()
+                        //then the descendant observation count taking into account
+                        //all condition parameters
+                        + 1)
                     .sum()
                     //Then the 3 p-value info for all combinations of data types
                     + (DAODataType.ALL_COMBINATIONS.size() * 3)))
@@ -1241,53 +1095,32 @@ implements GlobalExpressionCallDAO {
         
         int newParamIndex = paramIndex;
         if (callDataTO == null) {
-            int stateAttrCount =
-                    //count of Propagation states, different between FULL_LENGTH and other data types
-                    //TODO: code repeated several times, to put in a function
-                    Math.toIntExact(ConditionDAO.Attribute.getCondParams().stream()
-                    //for now we only store cell type propagation state for scRNA-Seq full-length data
-                    .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
-                            !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID)).count());
-            for (int i = 0; i < stateAttrCount; i++) {
-                stmt.setNull(newParamIndex, Types.VARCHAR);
-                newParamIndex++;
-            }
-            //observed data state, type TINYINT
-            stmt.setNull(newParamIndex, Types.TINYINT);
-            newParamIndex++;
-            //ObservationCounts
+            //Self observation counts for all combinations of condition parameters
             //The default value here is 0, not "null".
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < ConditionDAO.Attribute.ALL_COND_PARAM_COMBINATIONS.size(); i++) {
                 stmt.setInt(newParamIndex, 0);
                 newParamIndex++;
             }
+            //Descendant observation count
+            //The default value here is 0, not "null".
+            stmt.setInt(newParamIndex, 0);
+            newParamIndex++;
+
             return log.traceExit(newParamIndex);
         }
 
-        //** propagation states **
-        for (ConditionDAO.Attribute attr: ConditionDAO.Attribute.getCondParams().stream()
-                //for now we only store cell type propagation state for scRNA-Seq full-length data
-                .filter(a -> dataType.equals(DAODataType.FULL_LENGTH) ||
-                        !a.equals(ConditionDAO.Attribute.CELL_TYPE_ID))
-                //The order is important this is why we need an EnumSet
-                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)))) {
-            DAOPropagationState propState = callDataTO.getDataPropagation().get(attr);
-            if (propState == null) {
-                stmt.setNull(newParamIndex, Types.VARCHAR);
-            } else {
-                stmt.setString(newParamIndex, propState.getStringRepresentation());
-            }
+        //** Observation counts **
+        // Self observation counts
+        for (EnumSet<ConditionDAO.Attribute> condParamCombination:
+            ConditionDAO.Attribute.ALL_COND_PARAM_COMBINATIONS) {
+            stmt.setInt(newParamIndex, Optional.ofNullable(
+                    callDataTO.getSelfObservationCount().get(condParamCombination))
+                    .orElse(0));
             newParamIndex++;
         }
-        //** observed data state **
-        stmt.setBoolean(newParamIndex, callDataTO.isConditionObservedData());
-        newParamIndex++;
-
-        //** Observation counts **
-        stmt.setInt(newParamIndex, Optional.ofNullable(callDataTO.getSelfObservationCount())
-                .orElse(0));
-        newParamIndex++;
-        stmt.setInt(newParamIndex, Optional.ofNullable(callDataTO.getDescendantObservationCount())
+        // Descendant observation count
+        stmt.setInt(newParamIndex, Optional.ofNullable(
+                callDataTO.getDescendantObservationCount().get(ConditionDAO.Attribute.getCondParams()))
                 .orElse(0));
         newParamIndex++;
 
@@ -1386,9 +1219,8 @@ implements GlobalExpressionCallDAO {
             log.traceEntry("{}, {}", rs, dataType);
 
             final ResultSet currentResultSet = rs.getCurrentResultSet();
-            Boolean conditionObservedData = null;
-            Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
-            Integer selfObservationCount = null, descendantObservationCount = null;
+            Map<EnumSet<ConditionDAO.Attribute>, Integer> selfObservationCount = new HashMap<>(),
+                    descendantObservationCount = new HashMap<>();
             BigDecimal fdrPValue = null, bestDescendantFDRPValue = null,
                        rank = null, rankNorm = null, weightForMeanRank = null;
 
@@ -1431,51 +1263,30 @@ implements GlobalExpressionCallDAO {
                         fdrPValue = currentResultSet.getBigDecimal(columnName);
                         infoFound = true;
                     }
-                }
-                //Important to test this last, since the field name prefix would also match
-                //the rank field name, rank norm field name, rank weight field name
-                else if (columnName.startsWith(dataType.getFieldNamePrefix())) {
-                    if (columnName.endsWith(COND_OBSERVED_DATA_SUFFIX)) {
-                        // As getBoolean() returns false if the value is SQL NULL,
-                        // we need to check if the column read had a value of SQL NULL
-                        boolean isConditionObservedData = currentResultSet.getBoolean(columnName);
-                        if (!currentResultSet.wasNull()) {
-                            conditionObservedData = isConditionObservedData;
-                        }
-                        infoFound = true;
-                    } else if (columnName.endsWith(P_VALUE_SELF_OBS_COUNT_SUFFIX)) {
+                } else if (columnName.startsWith(GLOBAL_SELF_OBS_COUNT_PREFIX)) {
+
+                    if (getDataTypesFromFieldName(columnName).equals(EnumSet.of(dataType))) {
                         // getInt() returns 0 if the value is SQL NULL,
                         // but in db, counts are not null so we do not need to check
                         // if the column read had a value of SQL NULL
-                        selfObservationCount = currentResultSet.getInt(columnName);
+                        selfObservationCount.put(getCondParamsFromFieldName(columnName),
+                                currentResultSet.getInt(columnName));
                         infoFound = true;
-                    } else if (columnName.endsWith(P_VALUE_DESCENDANT_OBS_COUNT_SUFFIX)) {
+                    }
+                } else if (columnName.startsWith(GLOBAL_DESCENDANT_OBS_COUNT_PREFIX)) {
+
+                    if (getDataTypesFromFieldName(columnName).equals(EnumSet.of(dataType))) {
                         // getInt() returns 0 if the value is SQL NULL,
                         // but in db, counts are not null so we do not need to check
                         // if the column read had a value of SQL NULL
-                        descendantObservationCount = currentResultSet.getInt(columnName);
+                        descendantObservationCount.put(getCondParamsFromFieldName(columnName),
+                                currentResultSet.getInt(columnName));
                         infoFound = true;
-                    } else {
-                        ConditionDAO.Attribute condParam = Arrays.stream(ConditionDAO.Attribute.values())
-                            .filter(a -> {
-                                if(a.getPropagationStateNameSuffix() == null) {
-                                    return false;
-                                } 
-                                return columnName.endsWith(a.getPropagationStateNameSuffix());
-                            })
-                            .findAny().orElse(null);
-                        if (condParam != null) {
-                            dataPropagation.put(condParam, DAOPropagationState.convertToPropagationState(
-                                currentResultSet.getString(columnName)));
-                            infoFound = true;
-                        }
                     }
                 }
             }
-            if (!infoFound || (conditionObservedData == null
-                    && (dataPropagation.isEmpty() || dataPropagation.values().stream().allMatch(dp -> dp == null))
-                    && (selfObservationCount == null || selfObservationCount == 0)
-                    && (descendantObservationCount == null || descendantObservationCount == 0)
+            if (!infoFound || (selfObservationCount.isEmpty()
+                    && descendantObservationCount.isEmpty()
                     && fdrPValue == null
                     && bestDescendantFDRPValue == null
                     && rank == null
@@ -1488,8 +1299,8 @@ implements GlobalExpressionCallDAO {
                 // If all variables are null/empty/0, this means that there is no data for the current data type
                 return log.traceExit((GlobalExpressionCallDataTO) null);
             }
-            return log.traceExit(new GlobalExpressionCallDataTO(dataType, conditionObservedData,
-                    dataPropagation, selfObservationCount, descendantObservationCount,
+            return log.traceExit(new GlobalExpressionCallDataTO(dataType,
+                    selfObservationCount, descendantObservationCount,
                     fdrPValue, bestDescendantFDRPValue,
                     rank, rankNorm, weightForMeanRank));
         }

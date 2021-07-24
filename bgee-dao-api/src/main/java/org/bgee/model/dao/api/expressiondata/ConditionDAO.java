@@ -76,11 +76,12 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("id", null, null, false),
         SPECIES_ID("speciesId", null, null, false),
-        ANAT_ENTITY_ID("anatEntityId", "AnatEntityPropagationState", ANAT_ENTITY_ROOT_ID, true),
-        STAGE_ID("stageId", "StagePropagationState", DEV_STAGE_ROOT_ID, true),
-        CELL_TYPE_ID("cellTypeId", "CellTypePropagationState", CELL_TYPE_ROOT_ID, true),
-        SEX_ID("sex", "SexPropagationState", SEX_ROOT_ID, true),
-        STRAIN_ID("strain", "StrainPropagationState", STRAIN_ROOT_ID, true);
+        //The order of the condition parameters is important and is used to generate field names
+        ANAT_ENTITY_ID("anatEntityId", "AnatEntity", ANAT_ENTITY_ROOT_ID, true),
+        CELL_TYPE_ID("cellTypeId", "CellType", CELL_TYPE_ROOT_ID, true),
+        STAGE_ID("stageId", "Stage", DEV_STAGE_ROOT_ID, true),
+        SEX_ID("sex", "Sex", SEX_ROOT_ID, true),
+        STRAIN_ID("strain", "Strain", STRAIN_ROOT_ID, true);
 
         public static final List<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
                 getAllPossibleCondParamCombinations();
@@ -98,17 +99,17 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          * @see {@link Attribute#getTOFieldName()}
          */
         private final String fieldName;
-        private final String propagationStateNameSuffix;
+        private final String fieldNamePart;
         private final String rootId;
         /**
          * @see #isConditionParameter()
          */
         private final boolean conditionParameter;
         
-        private Attribute(String fieldName, String propagationStateNameSuffix, String rootId,
+        private Attribute(String fieldName, String fieldNamePart, String rootId,
                 boolean conditionParameter) {
             this.fieldName = fieldName;
-            this.propagationStateNameSuffix = propagationStateNameSuffix;
+            this.fieldNamePart = fieldNamePart;
             this.rootId = rootId;
             this.conditionParameter = conditionParameter;
         }
@@ -117,11 +118,11 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             return this.fieldName;
         }
         /**
-         * @return  A {@code String} that might be used to suffix the fields related to propagation state
-         *          for this {@code Attribute}.
+         * @return  A {@code String} that is the substring used in field names
+         *          related to this {@code Attribute}.
          */
-        public String getPropagationStateNameSuffix() {
-            return this.propagationStateNameSuffix;
+        public String getFieldNamePart() {
+            return this.fieldNamePart;
         }
         /**
          * @return  A {@code String} that is the ID of the root of the ontology for the related

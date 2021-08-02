@@ -141,6 +141,7 @@ public class InsertPropagatedCalls extends CallService {
     private final static AtomicLong EXPR_ID_COUNTER = new AtomicLong(0);
     private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
     private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
+    private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.0000000000000001");
 
     /**
      * A {@code Set} of {@code String}s storing the IDs of anatomical terms corresponding to
@@ -3175,7 +3176,13 @@ public class InsertPropagatedCalls extends CallService {
             }
         }
         //Find the smallest corrected p-value
-        return log.traceExit(BigDecimal.valueOf(Arrays.stream(adjustedPValues).min().getAsDouble()));
+        BigDecimal fdr = BigDecimal.valueOf(Arrays.stream(adjustedPValues).min().getAsDouble());
+        //If the FDR is less than MIN_FDR_BIGDECIMAL, change it to MIN_FDR_BIGDECIMAL
+        //(in order to avoid having fields in the globalExpression table with too  much precision)
+        if (fdr.compareTo(MIN_FDR_BIGDECIMAL) < 0) {
+            fdr = MIN_FDR_BIGDECIMAL;
+        }
+        return log.traceExit(fdr);
     }
     
     /**

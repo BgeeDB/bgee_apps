@@ -1378,17 +1378,6 @@ public class InsertPropagatedCalls extends CallService {
 
             return log.traceExit(pipelineCall.getCallData().stream()
                     .map(cd -> {
-//                        //Experiment expression counts
-//                        if (cd.getExperimentCounts() == null) {
-//                            throw log.throwing(new IllegalArgumentException("No count found in: "
-//                                    + pipelineCall));
-//                        }
-//                        Set<DAOExperimentCount> daoCounts = cd.getExperimentCounts().stream()
-//                                .map(c -> convertExperimentExpressionCountToDAOExperimentCount(c))
-//                                .collect(Collectors.toSet());
-//
-//                        //Propagated experiment count
-//                        Integer expPropagatedCount = cd.getPropagatedExperimentCount();
 
                         //Rank info: computed by the Perl pipeline after generation
                         //of these global calls
@@ -3094,6 +3083,7 @@ public class InsertPropagatedCalls extends CallService {
        //And now we correct the p-values for all possible combination of the data types used
        Set<FDRPValue> correctedPValues = usedDataTypeCombs.stream()
                .map(dtComb -> {
+                   //Use List to not loose equal pvalues
                    List<BigDecimal> pValues = expressionCallData.stream()
                            .filter(ecd -> dtComb.contains(ecd.getDataType()))
                            .flatMap(ecd -> ecd.getAllPValues().stream())
@@ -3225,123 +3215,9 @@ public class InsertPropagatedCalls extends CallService {
                 pcd.getDataPropagation().isIncludingObservedData() != null): pipelineCallData;
 
 
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        int presentHighTotalCount = getTotalCount(pipelineCallData,
-//            CallDirection.PRESENT, CallQuality.HIGH);
-//        int presentLowTotalCount = getTotalCount(pipelineCallData,
-//            CallDirection.PRESENT, CallQuality.LOW);
-//        int absentHighTotalCount = getTotalCount(pipelineCallData,
-//            CallDirection.ABSENT, CallQuality.HIGH);
-//        int absentLowTotalCount = getTotalCount(pipelineCallData,
-//            CallDirection.ABSENT, CallQuality.LOW);
-
-        //In case there is no data valid to be propagated (e.g., only expression calls in parents).
-        //As of Bge 15.0, w do not determine anymore present/absent based on a single call,
-        //so this is irrelevant
-//        if ((presentHighTotalCount + presentLowTotalCount 
-//                + absentHighTotalCount + absentLowTotalCount) == 0) {
-//            assert pipelineCallData.stream().allMatch(pcd -> 
-//                (pcd.getSelfExperimentExpr() == null || pcd.getSelfExperimentExpr().isEmpty()) && 
-//                (pcd.getParentExperimentExpr() == null || pcd.getParentExperimentExpr().stream()
-//                        //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-////                        .noneMatch(eeto -> CallDirection.ABSENT.equals(eeto.getCallDirection()))) &&
-//                        .noneMatch(eeto -> false)) &&
-//                (pcd.getDescendantExperimentExpr() == null || pcd.getDescendantExperimentExpr().stream()
-//                        .noneMatch(eeto -> CallDirection.PRESENT.equals(eeto.getCallDirection()))));
-//            
-//            return log.traceExit((ExpressionCallData) null);
-//        }
-
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        int presentHighSelfCount = getSpecificCount(pipelineCallData,
-//            PipelineCallData::getSelfExperimentExpr, CallDirection.PRESENT, CallQuality.HIGH);
-//        int presentLowSelfCount = getSpecificCount(pipelineCallData,
-//            PipelineCallData::getSelfExperimentExpr, CallDirection.PRESENT, CallQuality.LOW);
-//        int absentHighSelfCount = getSpecificCount(pipelineCallData,
-//            PipelineCallData::getSelfExperimentExpr, CallDirection.ABSENT, CallQuality.HIGH);
-//        int absentLowSelfCount = getSpecificCount(pipelineCallData,
-//            PipelineCallData::getSelfExperimentExpr, CallDirection.ABSENT, CallQuality.LOW);
-        
-        
-        //The method 'getSpecificCount' use the method 'getBestExperimentExpressionTOs' 
-        //to keep only the "best" call for each experiment. Since "present" calls always win over
-        //"absent" calls, this would result in incorrectly discarding some experiments, 
-        //for instance if an experiment shows expression of the gene in one parent,
-        //and absence of expression in another parent. For this reason,
-        //we keep only ABSENT calls from parent structures before sending them to 'getSpecificCount': 
-        //we want ABSENT calls to win over PRESENT calls in that case, since PRESENT calls
-        //are not propagated to descendant conditions; but we still want to count
-        //experiments only once between ABSENT HIGH and ABSENT LOW.
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        final Function<PipelineCallData<?, ?>, Set<ExperimentExpressionTO>> funCallDataAbsentToEETO = 
-//            p -> p.getParentExperimentExpr() == null? null: p.getParentExperimentExpr().stream()
-//                //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
-////                .filter(eeTO -> CallDirection.ABSENT.equals(eeTO.getCallDirection()))
-//                .filter(eeTO -> false)
-//                .collect(Collectors.toSet());
-        //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
-//        int absentHighParentCount = getSpecificCount(pipelineCallData,
-//            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.HIGH);
-//        int absentLowParentCount = getSpecificCount(pipelineCallData,
-//            funCallDataAbsentToEETO, CallDirection.ABSENT, CallQuality.LOW);
-        
-        //not really needed since PRESENT calls always win over ABSENT calls, 
-        //but formally we do not propagate ABSENT calls to parent condition, 
-        //so here we keep only PRESENT calls.
-        //Also, we use this Function to compute DataPropagation state at the end of this method.
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        final Function<PipelineCallData<?, ?>, Set<ExperimentExpressionTO>> funCallDataPresentToEETO = 
-//            p -> p.getDescendantExperimentExpr() == null? null: p.getDescendantExperimentExpr().stream()
-//                .filter(eeTO -> CallDirection.PRESENT.equals(eeTO.getCallDirection()))
-//                .collect(Collectors.toSet());
-//        int presentHighDescCount = getSpecificCount(pipelineCallData,
-//            funCallDataPresentToEETO, CallDirection.PRESENT, CallQuality.HIGH);
-//        int presentLowDescCount = getSpecificCount(pipelineCallData,
-//            funCallDataPresentToEETO, CallDirection.PRESENT, CallQuality.LOW);
-
-
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        //count number of experiments part of the "total" count that did not come from "self".
-//        //First, get all ExperimentExpressionTOs that were considered for the "total" count
-//        Set<ExperimentExpressionTO> bestTotalEETOs = getBestTotalEETOs(pipelineCallData);
-//        //now we retrieve the best ExperimentExpressionTO for each experiment among the "self" attribute.
-//        Set<ExperimentExpressionTO> bestSelfEETOs = getBestSelectedEETOs(pipelineCallData, 
-//                p -> p.getSelfExperimentExpr());
-//        //now we count the number of ExperimentExpressionTOs that do not have a as good or better call 
-//        //from this experiment in the "self" attribute
-//        int propagatedCount = (int) bestTotalEETOs.stream()
-//            .filter(tot -> bestSelfEETOs.stream()
-//                .noneMatch(self -> self.getExperimentId().equals(tot.getExperimentId()) && 
-//                        (self.getCallDirection().equals(CallDirection.PRESENT) && 
-//                            tot.getCallDirection().equals(CallDirection.ABSENT) || 
-//                         self.getCallDirection().equals(tot.getCallDirection()) && 
-//                            self.getCallQuality().ordinal() >= tot.getCallQuality().ordinal()))
-//            ).map(eeTO -> eeTO.getExperimentId())
-//            .distinct()
-//            .count();
-
-
         //infer DataPropagation. We need to look only at valid PipelineCallData,
         //with some valid data to propagate
         DataPropagation dataProp = pipelineCallData.stream()
-                //As of Bgee 15.0, not used anymore, we rely on p-values
-//                .filter(pcd -> {
-//                    if (pcd.getSelfExperimentExpr() != null && !pcd.getSelfExperimentExpr().isEmpty()) {
-//                        log.trace("valid data for {}: {}", pcd, pcd.getSelfExperimentExpr());
-//                        return true;
-//                    }
-//                    Set<ExperimentExpressionTO> parentAbsentTOs = funCallDataAbsentToEETO.apply(pcd);
-//                    if (parentAbsentTOs != null && !parentAbsentTOs.isEmpty()) {
-//                        log.trace("valid data for {}: {}", pcd, parentAbsentTOs);
-//                        return true;
-//                    }
-//                    Set<ExperimentExpressionTO> descendantPresentTOs = funCallDataPresentToEETO.apply(pcd);
-//                    if (descendantPresentTOs != null && !descendantPresentTOs.isEmpty()) {
-//                        log.trace("valid data for {}: {}", pcd, descendantPresentTOs);
-//                        return true;
-//                    }
-//                    return false;
-//                })
                 .map(pcd -> pcd.getDataPropagation())
                 .reduce(DATA_PROPAGATION_IDENTITY, (dp1, dp2) -> mergeDataPropagations(dp1, dp2));
         assert ALLOWED_PROP_STATES.containsAll(dataProp.getAllPropagationStates().stream()
@@ -3380,33 +3256,6 @@ public class InsertPropagatedCalls extends CallService {
 //            }
 //        }
 
-        //As of Bgee 15.0, not used anymore, we rely on p-values
-//        Set<ExperimentExpressionCount> counts = new HashSet<>();
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-//            PropagationState.SELF, presentHighSelfCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-//            PropagationState.SELF, presentLowSelfCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-//            PropagationState.SELF, absentHighSelfCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-//            PropagationState.SELF, absentLowSelfCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-//            PropagationState.DESCENDANT, presentHighDescCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-//            PropagationState.DESCENDANT, presentLowDescCount));
-//        //Note: as of Bgee 14.2, we do not propagate absent calls to substructures anymore
-////        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-////            PropagationState.ANCESTOR, absentHighParentCount));
-////        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-////            PropagationState.ANCESTOR, absentLowParentCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.HIGH,
-//            PropagationState.ALL, presentHighTotalCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.EXPRESSED, DataQuality.LOW,
-//            PropagationState.ALL, presentLowTotalCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.HIGH,
-//            PropagationState.ALL, absentHighTotalCount));
-//        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
-//            PropagationState.ALL, absentLowTotalCount));
 
         EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
         //We map to PipelineSamplePValueTO because it implements hashCode/equals,

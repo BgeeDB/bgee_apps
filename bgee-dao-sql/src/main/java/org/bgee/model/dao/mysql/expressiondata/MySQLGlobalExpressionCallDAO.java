@@ -394,17 +394,14 @@ implements GlobalExpressionCallDAO {
                     }
                     sb.append(")");
                 }
-                //TODO: manage filtering on observedConditionFilter based on the new fields
-                //in globalCond table
-                boolean observedConditionFilter = callFilter.getConditionFilters()
-                                .stream().anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty());
                 //Note from previous code:
                 //!observedConditionFilter? null: clonedCallFilters.iterator().next()
                 //.getConditionFilters().iterator().next().getObservedCondForParams()
                 boolean containsCondFilter = callFilter.getConditionFilters().stream()
                         .anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
                         !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
-                        !c.getStrainIds().isEmpty());
+                        !c.getStrainIds().isEmpty() ||
+                        !c.getObservedCondForParams().isEmpty());
                 if (containsCondFilter) {
                     if (!firstCond) {
                         sb.append(" AND ");

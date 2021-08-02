@@ -354,22 +354,17 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 .append(")");
             }
             //We don't offer anymore the possibility to retrieve non-observed conditions,
-            //so this parameter is solely managed in the join clause.
-            //And if it was handled here, the if statement would be now:
-            //if (!f.getObservedCondForParams().isEmpty()) {
-//            if (f.getObservedConditions() != null) {
-//                if (!firstCondParam) {
-//                    sb2.append(" AND ");
-//                }
-//                firstCondParam = false;
-//                sb2.append(condTableName).append(".")
-//                   .append(MySQLConditionDAO.RAW_COND_ID_FIELD);
-//                if (f.getObservedConditions()) {
-//                    sb2.append(" IS NOT NULL ");
-//                } else {
-//                    sb2.append(" IS NULL ");
-//                }
-//            }
+            //but with the current database design it would be easy
+            if (!f.getObservedCondForParams().isEmpty()) {
+                if (!firstCondParam) {
+                    sb2.append(" AND ");
+                }
+                firstCondParam = false;
+                sb2.append(f.getObservedCondForParams().stream()
+                        .map(condParam -> globalCondTableName + ".condObserved"
+                                          + condParam.getFieldNamePart() + " = 1")
+                        .collect(Collectors.joining(" AND ")));
+            }
 
             return sb2.toString();
 

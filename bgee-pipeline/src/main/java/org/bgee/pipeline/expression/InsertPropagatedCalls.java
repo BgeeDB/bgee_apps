@@ -1394,23 +1394,20 @@ public class InsertPropagatedCalls extends CallService {
 //                        BigDecimal meanRank = cd.getRank();
 //                        BigDecimal meanRankNorm = cd.getNormalizedRank();
 //                        BigDecimal weightForMeanRank = cd.getWeightForMeanRank();
-
-                        //Observed data boolean per condition parameter
-                        Map<ConditionDAO.Attribute, DAOPropagationState> daoPropStates =
-                                convertDataPropToDAOPropStates(cd.getDataPropagation());
-                        assert !daoPropStates.isEmpty();
                         
                         return new GlobalExpressionCallDataTO(
                                 //data type
                                 convertDataTypeToDAODataType(Collections.singleton(cd.getDataType())).iterator().next(),
-                                //observedData Boolean
-                                cd.getDataPropagation().isIncludingObservedData(),
-                                //DataPropagation Map
-                                daoPropStates,
                                 //self p-value observation counts
-                                cd.getSelfObservationCount(),
+                                cd.getSelfObservationCount().entrySet().stream()
+                                .collect(Collectors.toMap(
+                                        e -> convertCondParamAttrsToCondDAOAttrs(e.getKey()),
+                                        e -> e.getValue())),
                                 //descendant p-value observation counts
-                                cd.getDescendantObservationCount(),
+                                cd.getDescendantObservationCount().entrySet().stream()
+                                .collect(Collectors.toMap(
+                                        e -> convertCondParamAttrsToCondDAOAttrs(e.getKey()),
+                                        e -> e.getValue())),
                                 //FDR-corrected p-values for individual data type:
                                 //they are not produced and stored in database in this way
                                 null, null,
@@ -3404,20 +3401,27 @@ public class InsertPropagatedCalls extends CallService {
 //        counts.add(new ExperimentExpressionCount(CallType.Expression.NOT_EXPRESSED, DataQuality.LOW,
 //            PropagationState.ALL, absentLowTotalCount));
 
-        Set<PipelineSamplePValueTO<?, ?>> selfPValues = pipelineCallData.stream()
-                .flatMap(pcd -> pcd.getSelfPValues().stream()
-                        //We map to PipelineSamplePValueTO because it implements hashCode/equals,
-                        //taking into account the experiment and sample IDs, so that we can be sure
-                        //we don't count a p-value coming from a same observation several times.
-                        .map(p -> new PipelineSamplePValueTO<>(p)))
-                .collect(Collectors.toSet());
+        EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
+        //We map to PipelineSamplePValueTO because it implements hashCode/equals,
+        //taking into account the experiment and sample IDs, so that we can be sure
+        //we don't count a p-value coming from a same observation several times.
+        Map<EnumSet<CallService.Attribute>, Set<PipelineSamplePValueTO<?, ?>>> selfPValuesPerCondParamComb =
+                pipelineCallData.stream()
+                .flatMap(pcd -> pcd.getSelfPValuesPerCondParamCombinations().entrySet().stream())
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().map(p -> new PipelineSamplePValueTO<>(p))
+                        .collect(Collectors.toSet()),
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
         Set<PipelineSamplePValueTO<?, ?>> descendantPValues = pipelineCallData.stream()
                 .flatMap(pcd -> pcd.getDescendantPValues().stream()
-                        //We map to PipelineSamplePValueTO because it implements hashCode/equals,
-                        //taking into account the experiment and sample IDs, so that we can be sure
-                        //we don't count a p-value coming from a same observation several times.
                         .map(p -> new PipelineSamplePValueTO<>(p)))
                 .collect(Collectors.toSet());
+        Set<PipelineSamplePValueTO<?, ?>> selfPValues = selfPValuesPerCondParamComb.get(allCondParams);
+
+        assert Stream.concat(selfPValues.stream(), descendantPValues.stream())
+        .collect(Collectors.toSet()).containsAll(selfPValuesPerCondParamComb.values().stream()
+                .flatMap(s -> s.stream()).collect(Collectors.toSet()));
         if (!Collections.disjoint(selfPValues, descendantPValues)) {
             selfPValues.retainAll(descendantPValues);
             throw log.throwing(new IllegalStateException(
@@ -3426,11 +3430,17 @@ public class InsertPropagatedCalls extends CallService {
         }
         
         log.trace(COMPUTE_MARKER, "ExpressionCallData to be created: {} - {} - {} - {}",
-                dataType, selfPValues, descendantPValues, dataProp);
+                dataType, selfPValuesPerCondParamComb, descendantPValues, dataProp);
         return log.traceExit(new ExpressionCallData(dataType,
+                //We collect to a List to not eliminate equals pvalues
                 selfPValues.stream().map(p -> p.getpValue()).collect(Collectors.toList()),
+                selfPValuesPerCondParamComb.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().size())),
+                //We collect to a List to not eliminate equals pvalues
                 descendantPValues.stream().map(p -> p.getpValue()).collect(Collectors.toList()),
-            null, null, null, dataProp));
+                null,
+                null, null, null,
+                dataProp));
     }
 
     //*************************************************************************
@@ -3452,9 +3462,11 @@ public class InsertPropagatedCalls extends CallService {
                 return new PipelineCallData<>(
                         dt, getSelfDataProp(condParams),
                         null,
-                        pValuesByDataTypes.get(dt).stream()
-                        .map(pval -> pval)
-                        .collect(Collectors.toSet()),
+                        CallService.Attribute.getAllPossibleCondParamCombinations().stream()
+                        .collect(Collectors.toMap(comb -> comb ,
+                                comb -> pValuesByDataTypes.get(dt).stream()
+                                        .map(pval -> pval)
+                                        .collect(Collectors.toSet()))),
                         null);
 //                switch(dt) {
 //                case EST:

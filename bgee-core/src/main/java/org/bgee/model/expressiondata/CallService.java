@@ -184,7 +184,7 @@ public class CallService extends CommonService {
 
 
         private final static Set<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
-                getAllPossibleCondParamCombinations(EnumSet.allOf(Attribute.class));
+                getAllPossibleCondParamCombinations(Attribute.getAllConditionParameters());
 
         /**
          * @return  An {@code EnumSet} containing all {@code Attribute}s that are condition parameters

@@ -260,7 +260,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                                 e -> EnumSet.copyOf(e.getKey()),
                                 e -> e.getValue()));
             } else {
-                this.selfObservationCount = null;
+                this.selfObservationCount = new HashMap<>();
             }
             List<BigDecimal> sortedDescendantPValues = descendantPValues == null? new ArrayList<>():
                 new ArrayList<>(descendantPValues);
@@ -284,7 +284,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                                 e -> EnumSet.copyOf(e.getKey()),
                                 e -> e.getValue()));
             } else {
-                this.descendantObservationCount = null;
+                this.descendantObservationCount = new HashMap<>();
             }
             List<BigDecimal> allPValues = new ArrayList<>(sortedSelfPValues);
             allPValues.addAll(sortedDescendantPValues);

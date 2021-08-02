@@ -977,9 +977,9 @@ implements GlobalExpressionCallDAO {
                 .map(c -> GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
                 .collect(Collectors.joining(", ", "", ", ")));
 
-        sql.append(DAODataType.ALL_COMBINATIONS.stream()
-                .map(c -> GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
-                .collect(Collectors.joining(", ", "", ", ")));
+//        sql.append(DAODataType.ALL_COMBINATIONS.stream()
+//                .map(c -> GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START + getFieldNamePartFromDataTypes(c))
+//                .collect(Collectors.joining(", ", "", ", ")));
 
         //the order in which we set the parameters is important, so we use EnumSets.
         //Prepare self and descendant observation counts
@@ -1005,6 +1005,8 @@ implements GlobalExpressionCallDAO {
                     //Count number of parameters:
                     //bgeeGeneId, globalConditionId
                     2
+                    //Then the 2 p-value (self and best descendant) info for all combinations of data types
+                    + (DAODataType.ALL_COMBINATIONS.size() * 2)
                     //Then, for each data type:
                     + EnumSet.allOf(DAODataType.class).stream()
                     .mapToInt(dataType ->
@@ -1014,9 +1016,7 @@ implements GlobalExpressionCallDAO {
                         //then the descendant observation count taking into account
                         //all condition parameters
                         + 1)
-                    .sum()
-                    //Then the 3 p-value info for all combinations of data types
-                    + (DAODataType.ALL_COMBINATIONS.size() * 3)))
+                    .sum()))
                .append(") ");
         }
         try (BgeePreparedStatement stmt = 
@@ -1057,16 +1057,16 @@ implements GlobalExpressionCallDAO {
                     paramIndex++;
                 }
 
-                for (EnumSet<DAODataType> comb: DAODataType.ALL_COMBINATIONS) {
-                    DAOFDRPValue pVal = descPValMap.get(comb);
-                    if (pVal == null) {
-                        stmt.setNull(paramIndex, Types.INTEGER);
-                    } else {
-                        assert pVal.getConditionId() != null;
-                        stmt.setInt(paramIndex, pVal.getConditionId());
-                    }
-                    paramIndex++;
-                }
+//                for (EnumSet<DAODataType> comb: DAODataType.ALL_COMBINATIONS) {
+//                    DAOFDRPValue pVal = descPValMap.get(comb);
+//                    if (pVal == null) {
+//                        stmt.setNull(paramIndex, Types.INTEGER);
+//                    } else {
+//                        assert pVal.getConditionId() != null;
+//                        stmt.setInt(paramIndex, pVal.getConditionId());
+//                    }
+//                    paramIndex++;
+//                }
                 
                 //create a Map<DAODataType, GlobalExpressionCallDataTO>,
                 //to be able to select the appropriate data in the appropriate INSERT order.

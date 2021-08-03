@@ -141,7 +141,7 @@ public class InsertPropagatedCalls extends CallService {
     private final static AtomicLong EXPR_ID_COUNTER = new AtomicLong(0);
     private final static BigDecimal ZERO_BIGDECIMAL = new BigDecimal("0");
     private final static BigDecimal ABOVE_ZERO_BIGDECIMAL = new BigDecimal("0.000000000000000000000000000001");
-    private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.0000000000000001");
+    private final static BigDecimal MIN_FDR_BIGDECIMAL = new BigDecimal("0.00000000000001");
 
     /**
      * A {@code Set} of {@code String}s storing the IDs of anatomical terms corresponding to

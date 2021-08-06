@@ -45,7 +45,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
     /**
      * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
      */
-    private static final Comparator<Condition> COND_COMPARATOR = Comparator
+    public static final Comparator<Condition> COND_COMPARATOR = Comparator
             .<Condition, Condition>comparing(c -> c, BaseCondition.COND_COMPARATOR)
             .thenComparing(Condition::getSexId, Comparator.nullsLast(String::compareTo))
             .thenComparing(Condition::getStrainId, Comparator.nullsLast(String::compareTo))

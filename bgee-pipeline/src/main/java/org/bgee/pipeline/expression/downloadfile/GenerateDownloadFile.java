@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
@@ -105,288 +106,280 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     public final static String DESCENDANT_OBSERVATION_COUNT_PREFIX = 
             "Descendant observation count ";
     public final static String SELF_OBSERVATION_COUNT_PREFIX = "Self observation count ";
-    
-    protected final static String AFFYMETRIX_DATATYPE_NAME = "Affymetrix"; 
 
+    //TODO: manage all these attributes by generalizing over DataType enum, e.g.,
+    //using a Map<DataType, Map<String, String>>
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_DATA_COLUMN_NAME = 
-            AFFYMETRIX_DATATYPE_NAME + CALL_TYPE_COLUMN_NAME_SUFFIX;
+            DataType.AFFYMETRIX.getStringRepresentation() + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_QUAL_COLUMN_NAME = 
-            AFFYMETRIX_DATATYPE_NAME + CALL_QUALITY_COLUMN_NAME_SUFFIX;
+            DataType.AFFYMETRIX.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * Affymetrix experiment, in the download file.
      */
     public final static String AFFYMETRIX_FDR_COLUMN_NAME = 
-            AFFYMETRIX_DATATYPE_NAME + FDR_COLUMN_NAME_SUFFIX;
+            DataType.AFFYMETRIX.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if an Affymetrix experiment 
      * is observed, in the download file.
      */
     public final static String AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME = 
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + AFFYMETRIX_DATATYPE_NAME + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.AFFYMETRIX.getStringRepresentation() + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed Affymetrix data, in the download file.
      */
     public final static String AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX + AFFYMETRIX_DATATYPE_NAME;
+            SELF_OBSERVATION_COUNT_PREFIX + DataType.AFFYMETRIX.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed Affymetrix data, in the download file.
      */
     public final static String AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + AFFYMETRIX_DATATYPE_NAME;
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.AFFYMETRIX.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from Affymetrix data in the download file.
      */
-    public final static String AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME = AFFYMETRIX_DATATYPE_NAME
+    public final static String AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME = DataType.AFFYMETRIX.getStringRepresentation()
              + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from Affymetrix data in the download file.
      */
-    public final static String AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME = AFFYMETRIX_DATATYPE_NAME
+    public final static String AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME = DataType.AFFYMETRIX.getStringRepresentation()
              + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for Affymetrix data when computing mean rank/score.
      */
-    public final static String AFFYMETRIX_WEIGHT_COLUMN_NAME = AFFYMETRIX_DATATYPE_NAME
-             + WEIGHT_COLUMN_NAME_SUFFIX;
-    
-    protected final static String EST_DATATYPE_NAME = "EST"; 
+    public final static String AFFYMETRIX_WEIGHT_COLUMN_NAME = DataType.AFFYMETRIX.getStringRepresentation()
+             + WEIGHT_COLUMN_NAME_SUFFIX; 
     
     /**
      * A {@code String} that is the name of the column containing expression/no-expression found
      * with EST experiment, in the download file.
      */
-    public final static String EST_DATA_COLUMN_NAME = EST_DATATYPE_NAME + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    public final static String EST_DATA_COLUMN_NAME = DataType.EST.getStringRepresentation() + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * EST experiment, in the download file.
      */
-    public final static String EST_QUAL_COLUMN_NAME = EST_DATATYPE_NAME + CALL_QUALITY_COLUMN_NAME_SUFFIX;
+    public final static String EST_QUAL_COLUMN_NAME = DataType.EST.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * EST experiment, in the download file.
      */
-    public final static String EST_FDR_COLUMN_NAME = EST_DATATYPE_NAME + FDR_COLUMN_NAME_SUFFIX;
+    public final static String EST_FDR_COLUMN_NAME = DataType.EST.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if an EST experiment is observed, 
      * in the download file.
      */
     public final static String EST_OBSERVED_DATA_COLUMN_NAME =
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + EST_DATATYPE_NAME + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.EST.getStringRepresentation() + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed EST data, in the download file.
      */
     public final static String EST_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX + EST_DATATYPE_NAME;
+            SELF_OBSERVATION_COUNT_PREFIX + DataType.EST.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed EST data, in the download file.
      */
     public final static String EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + EST_DATATYPE_NAME;
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.EST.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from EST data in the download file.
      */
-    public final static String EST_EXPRESSION_RANK_COLUMN_NAME = EST_DATATYPE_NAME
+    public final static String EST_EXPRESSION_RANK_COLUMN_NAME = DataType.EST.getStringRepresentation()
              + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from EST data in the download file.
      */
-    public final static String EST_EXPRESSION_SCORE_COLUMN_NAME = EST_DATATYPE_NAME
+    public final static String EST_EXPRESSION_SCORE_COLUMN_NAME = DataType.EST.getStringRepresentation()
              + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for EST data when computing mean rank/score.
      */
-    public final static String EST_WEIGHT_COLUMN_NAME = EST_DATATYPE_NAME
-             + WEIGHT_COLUMN_NAME_SUFFIX;
-    
-    protected final static String IN_SITU_DATATYPE_NAME = "In situ hybridization"; 
+    public final static String EST_WEIGHT_COLUMN_NAME = DataType.EST.getStringRepresentation()
+             + WEIGHT_COLUMN_NAME_SUFFIX; 
 
     /**
      * A {@code String} that is the name of the column containing expression/no-expression
      * found with <em>in situ</em> experiment, in the download file.
      */
     public final static String IN_SITU_DATA_COLUMN_NAME = 
-            IN_SITU_DATATYPE_NAME + CALL_TYPE_COLUMN_NAME_SUFFIX;
+            DataType.IN_SITU.getStringRepresentation() + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * in situ hybridization experiment, in the download file.
      */
     public final static String IN_SITU_QUAL_COLUMN_NAME = 
-            IN_SITU_DATATYPE_NAME + CALL_QUALITY_COLUMN_NAME_SUFFIX;
+            DataType.IN_SITU.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * RNA-Seq experiment, in the download file.
      */
     public final static String IN_SITU_FDR_COLUMN_NAME = 
-            IN_SITU_DATATYPE_NAME + FDR_COLUMN_NAME_SUFFIX;
+            DataType.IN_SITU.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if an <em>in situ</em> experiment 
      * is observed, in the download file.
      */
     public final static String IN_SITU_OBSERVED_DATA_COLUMN_NAME =
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + IN_SITU_DATATYPE_NAME + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.IN_SITU.getStringRepresentation() + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed IN_SITU data, in the download file.
      */
     public final static String IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX + IN_SITU_DATATYPE_NAME;
+            SELF_OBSERVATION_COUNT_PREFIX + DataType.IN_SITU.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed IN_SITU data, in the download file.
      */
     public final static String IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + IN_SITU_DATATYPE_NAME;
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.IN_SITU.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from in situ hybridization data in the download file.
      */
-    public final static String IN_SITU_EXPRESSION_RANK_COLUMN_NAME = IN_SITU_DATATYPE_NAME
+    public final static String IN_SITU_EXPRESSION_RANK_COLUMN_NAME = DataType.IN_SITU.getStringRepresentation()
              + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from in situ hybridization data in the download file.
      */
-    public final static String IN_SITU_EXPRESSION_SCORE_COLUMN_NAME = IN_SITU_DATATYPE_NAME
+    public final static String IN_SITU_EXPRESSION_SCORE_COLUMN_NAME = DataType.IN_SITU.getStringRepresentation()
              + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for in situ hybridization data when computing mean rank/score.
      */
-    public final static String IN_SITU_WEIGHT_COLUMN_NAME = IN_SITU_DATATYPE_NAME
+    public final static String IN_SITU_WEIGHT_COLUMN_NAME = DataType.IN_SITU.getStringRepresentation()
              + WEIGHT_COLUMN_NAME_SUFFIX;
-
-    protected final static String RNASEQ_DATATYPE_NAME = "RNA-Seq"; 
     
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_DATA_COLUMN_NAME = RNASEQ_DATATYPE_NAME + CALL_TYPE_COLUMN_NAME_SUFFIX;
+    public final static String RNASEQ_DATA_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_QUAL_COLUMN_NAME = RNASEQ_DATATYPE_NAME + CALL_QUALITY_COLUMN_NAME_SUFFIX;
+    public final static String RNASEQ_QUAL_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String RNASEQ_FDR_COLUMN_NAME = RNASEQ_DATATYPE_NAME + FDR_COLUMN_NAME_SUFFIX;
+    public final static String RNASEQ_FDR_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation() + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
      */
     public final static String RNASEQ_OBSERVED_DATA_COLUMN_NAME =
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + RNASEQ_DATATYPE_NAME + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.RNA_SEQ.getStringRepresentation() + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed RNA-Seq data, in the download file.
      */
     public final static String RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX + RNASEQ_DATATYPE_NAME;
+            SELF_OBSERVATION_COUNT_PREFIX + DataType.RNA_SEQ.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed RNA-Seq data, in the download file.
      */
     public final static String RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + RNASEQ_DATATYPE_NAME;
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.RNA_SEQ.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from RNA-Seq data in the download file.
      */
-    public final static String RNASEQ_EXPRESSION_RANK_COLUMN_NAME = RNASEQ_DATATYPE_NAME
+    public final static String RNASEQ_EXPRESSION_RANK_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation()
              + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from RNA-Seq data in the download file.
      */
-    public final static String RNASEQ_EXPRESSION_SCORE_COLUMN_NAME = RNASEQ_DATATYPE_NAME
+    public final static String RNASEQ_EXPRESSION_SCORE_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation()
              + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for RNA-Seq data when computing mean rank/score.
      */
-    public final static String RNASEQ_WEIGHT_COLUMN_NAME = RNASEQ_DATATYPE_NAME
+    public final static String RNASEQ_WEIGHT_COLUMN_NAME = DataType.RNA_SEQ.getStringRepresentation()
              + WEIGHT_COLUMN_NAME_SUFFIX;
-    
-    
-    protected final static String FULL_LENGTH_DATATYPE_NAME = "Full Length Single cell RNA-Seq"; 
+ 
     
     /**
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_DATA_COLUMN_NAME = FULL_LENGTH_DATATYPE_NAME
+    public final static String FULL_LENGTH_DATA_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation()
             + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_QUAL_COLUMN_NAME = FULL_LENGTH_DATATYPE_NAME 
+    public final static String FULL_LENGTH_QUAL_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation() 
             + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_FDR_COLUMN_NAME = FULL_LENGTH_DATATYPE_NAME
+    public final static String FULL_LENGTH_FDR_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation()
             + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
      */
     public final static String FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME =
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + FULL_LENGTH_DATATYPE_NAME 
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.FULL_LENGTH.getStringRepresentation() 
             + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed RNA-Seq data, in the download file.
      */
     public final static String FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX  + FULL_LENGTH_DATATYPE_NAME;
+            SELF_OBSERVATION_COUNT_PREFIX  + DataType.FULL_LENGTH.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed RNA-Seq data, in the download file.
      */
     public final static String FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + FULL_LENGTH_DATATYPE_NAME;
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.FULL_LENGTH.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from RNA-Seq data in the download file.
      */
     public final static String FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME = 
-            FULL_LENGTH_DATATYPE_NAME + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+            DataType.FULL_LENGTH.getStringRepresentation() + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from RNA-Seq data in the download file.
      */
     public final static String FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME = 
-            FULL_LENGTH_DATATYPE_NAME + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+            DataType.FULL_LENGTH.getStringRepresentation() + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for RNA-Seq data when computing mean rank/score.
      */
     public final static String FULL_LENGTH_WEIGHT_COLUMN_NAME = 
-            FULL_LENGTH_DATATYPE_NAME + WEIGHT_COLUMN_NAME_SUFFIX;
+            DataType.FULL_LENGTH.getStringRepresentation() + WEIGHT_COLUMN_NAME_SUFFIX;
 
     /**
      * A {@code String} that is the name of the column containing whether the call include

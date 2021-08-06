@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -186,6 +185,32 @@ public class CallService extends CommonService {
         private final static Set<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
                 getAllPossibleCondParamCombinations(Attribute.getAllConditionParameters());
 
+
+        /**
+         * Convert a {@code Collection} of {@code CallService.Attribute}s that are condition parameters
+         * into an {@code EnumSet}. This method checks that all provided {@code CallService.Attribute}s
+         * are indeed condition parameters (see {@link #isConditionParameter()}). If the {@code Collection}
+         * is {@code null} or empty, an {@code EnumSet} containing all condition parameters
+         * is returned (see {@link #getAllConditionParameters()}.
+         *
+         * @param comb  The {@code Collection} of {@code Attribute}s to convert.
+         * @return      A valid {@code EnumSet} of condition parameters.
+         * @throws IllegalArgumentException If {@code comb} contains {@code CallService.Attribute}s
+         *                                  that are not condition parameters.
+         */
+        public static final EnumSet<Attribute> getCondParamCombination(
+                Collection<CallService.Attribute> comb) {
+            log.traceEntry("{}", comb);
+            if (comb != null && comb.stream().anyMatch(a -> !a.isConditionParameter())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The combination contains Attributes that are not condition parameters: "
+                        + comb));
+            }
+            if (comb == null || comb.isEmpty()) {
+                return log.traceExit(getAllConditionParameters());
+            }
+            return log.traceExit(EnumSet.copyOf(comb));
+        }
         /**
          * @return  An {@code EnumSet} containing all {@code Attribute}s that are condition parameters
          *          ({@link #isConditionParameter()} returns {@code true}).
@@ -290,7 +315,6 @@ public class CallService extends CommonService {
      */
     public final static BigDecimal ABSENT_LOW_GREATER_THAN = PRESENT_LOW_LESS_THAN_OR_EQUALS_TO;
 
-    protected static final DataPropagation DATA_PROPAGATION_IDENTITY = new DataPropagation(null, null, null, null, null, null);
     protected final static Set<PropagationState> ALLOWED_PROP_STATES = EnumSet.of(
             //As of Bgee 14.2 we do not propagate absent calls to substructures anymore
             PropagationState.SELF, /*PropagationState.ANCESTOR,*/ PropagationState.DESCENDANT,
@@ -594,7 +618,7 @@ public class CallService extends CommonService {
                         new ExpressionCallFilter(ExpressionCallFilter.BRONZE_PRESENT_ARGUMENT,
                                 Collections.singleton(geneFilter),
                                 Collections.singleton(new ConditionFilter(condEntities, null)),
-                                null, true, null),
+                                null, ExpressionCallFilter.ALL_COND_PARAMS_OBSERVED_DATA_ARGUMENT),
                         allCondParamAttrs,
                         orderByAllCond)
                 .collect(Collectors.toList());
@@ -800,7 +824,7 @@ public class CallService extends CommonService {
                 geneFilters,                       //requested genes
                 null,                              //any condition
                 null,                              //any data type
-                null, null                         //both observed and propagated calls
+                null                               //both observed and propagated calls
                 );
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, clonedGenes));
     }
@@ -820,25 +844,30 @@ public class CallService extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "This method is for comparing the expression of genes in a single species"));
         }
-        Set<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.ANAT_ENTITY_ID,
-                Attribute.CALL_TYPE, Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
+        EnumSet<Attribute> condParameters = EnumSet.of(Attribute.ANAT_ENTITY_ID, Attribute.CELL_TYPE_ID);
+        EnumSet<Attribute> attributes = EnumSet.of(Attribute.GENE, Attribute.CALL_TYPE,
+                Attribute.DATA_QUALITY, Attribute.OBSERVED_DATA, Attribute.EXPRESSION_SCORE);
+        attributes.addAll(condParameters);
         LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes = new LinkedHashMap<>();
         //IMPORTANT: results must be ordered by anat. entity so that we can compare expression
         //in each anat. entity without overloading the memory.
         orderingAttributes.put(OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
+        orderingAttributes.put(OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
 
 
-        Stream<ExpressionCall> callStream = this.loadExpressionCalls(callFilter, attributes, orderingAttributes);
+        Stream<ExpressionCall> callStream = this.loadExpressionCalls(callFilter, attributes,
+                orderingAttributes);
         //We're going to group the calls per anat. entity, to be able to compare expression
         //of all genes in anat. entities
-        Comparator<Condition> comp = Comparator.comparing(cond -> cond.getAnatEntityId());
         Stream<List<ExpressionCall>> callsByAnatEntity = StreamSupport.stream(
-                new ElementGroupFromListSpliterator<>(callStream, ExpressionCall::getCondition, comp),
+                new ElementGroupFromListSpliterator<>(callStream, ExpressionCall::getCondition,
+                        Condition.COND_COMPARATOR),
                 false);
         Map<Condition, MultiGeneExprCounts> condToCounts = callsByAnatEntity
         //We keep only conditions where at least one gene has observed data in it
         .filter(list -> list.stream()
-                .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData())))
+                .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation()
+                        .isIncludingObservedData(condParameters))))
         //Now we create for each Condition an Entry<Condition, MultiGeneExprCounts>
         .map(list -> {
             Map<ExpressionSummary, Collection<Gene>> callTypeToGenes = list.stream()
@@ -897,9 +926,8 @@ public class CallService extends CommonService {
                 //we keep the same data types as requested
                 callFilter.getDataTypeFilters(),
                 //get both observed and propagated calls, as since Bgee 15.0 a rank is always computed,
-                //not only for observed calls
-                null,
-                //then we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
+                //not only for observed calls.
+                //we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
                 null);
         //convert ExpressionCallFilter into CallDAOFilter
         CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
@@ -956,9 +984,8 @@ public class CallService extends CommonService {
                 //we keep the same data types as requested
                 callFilter.getDataTypeFilters(),
                 //get both observed and propagated calls, as since Bgee 15.0 a rank is always computed,
-                //not only for observed calls
-                null,
-              //then we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
+                //not only for observed calls.
+                //and we don't care about anat. entity/dev. stage/celltype/sex/strain observed data specifically
                 null);
         //convert ExpressionCallFilter into CallDAOFilter
         CallDAOFilter daoFilter = convertCallFilterToCallDAOFilter(geneMap, newFilter,
@@ -1012,7 +1039,7 @@ public class CallService extends CommonService {
                 //generate an ExpressionCallDAOFilter from callFilter
                 convertCallFilterToCallDAOFilter(geneMap, callFilter, condParamCombination)),
                 // Attributes
-                convertServiceAttrToGlobalExprDAOAttr(attributes, callFilter),
+                convertServiceAttrToGlobalExprDAOAttr(attributes, callFilter, condParamCombination),
                 convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(orderingAttributes, callFilter))
             //retrieve the Stream resulting from the query. Note that the query is not executed
             //as long as the Stream is not consumed (lazy-loading).
@@ -1233,8 +1260,7 @@ public class CallService extends CommonService {
 
         //We need calls to include any observed call state, as since Bgee 15.0 we compute a rank
         //for all calls, propagated or observed
-        if (callFilter.getCallObservedData() != null || callFilter.getObservedDataFilter().values()
-                .stream().anyMatch(v -> v != null)) {
+        if (!callFilter.getCallObservedDataFilter().isEmpty()) {
             return log.traceExit(false);
         }
         //Same for observed conditions (it's different from observed *calls")
@@ -1361,18 +1387,12 @@ public class CallService extends CommonService {
         // *********************************
         // Call observed data filter
         //**********************************
-        Set<CallObservedDataDAOFilter> daoObservedDataFilters =
-                callFilter.getCallObservedData() == null &&
-                callFilter.getObservedDataFilter().isEmpty()? null:
-
-                Collections.singleton(new CallObservedDataDAOFilter(
+        Set<CallObservedDataDAOFilter> daoObservedDataFilters = callFilter.getCallObservedDataFilter()
+                .entrySet().stream().map(e -> new CallObservedDataDAOFilter(
                         convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
-                        callFilter.getCallObservedData(),
-                        callFilter.getObservedDataFilter().entrySet().stream()
-                        .collect(Collectors.toMap(
-                                e -> convertCondParamAttrToCondDAOAttr(e.getKey()),
-                                e -> e.getValue()))
-                ));
+                        convertCondParamAttrsToCondDAOAttrs(e.getKey()),
+                        e.getValue())
+                ).collect(Collectors.toSet());
 
         // *********************************
         // P-value filters
@@ -1468,8 +1488,8 @@ public class CallService extends CommonService {
                     return daoAttrs.stream();
                 }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class)));
 
-            filterAttrs.addAll(callFilter.getObservedDataFilter().keySet()
-                    .stream().map(a -> convertCondParamAttrToCondDAOAttr(a))
+            filterAttrs.addAll(callFilter.getCallObservedDataFilter().keySet()
+                    .stream().flatMap(es -> es.stream().map(a -> convertCondParamAttrToCondDAOAttr(a)))
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
         }
 
@@ -1635,8 +1655,9 @@ public class CallService extends CommonService {
     }
 
     private static Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
-        Set<Attribute> attributes, ExpressionCallFilter callFilter) {
-        log.traceEntry("{}, {}", attributes, callFilter);
+        Set<Attribute> attributes, ExpressionCallFilter callFilter,
+        EnumSet<ConditionDAO.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}, {}", attributes, callFilter, condParamCombination);
 
         EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
         EnumSet<DAODataType> daoDataTypesTrustedForAbsentCalls =
@@ -1655,17 +1676,17 @@ public class CallService extends CommonService {
                 Set<GlobalExpressionCallDAO.AttributeInfo> pValAttributes = new HashSet<>();
                 pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
                                 GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                                daoDataTypes));
+                                daoDataTypes, null));
                 pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
                         GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                        daoDataTypes));
+                        daoDataTypes, null));
                 if (!daoDataTypesTrustedForAbsentCalls.isEmpty()) {
                     pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
                             GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls));
+                            daoDataTypesTrustedForAbsentCalls, null));
                     pValAttributes.add(new GlobalExpressionCallDAO.AttributeInfo(
                             GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                            daoDataTypesTrustedForAbsentCalls));
+                            daoDataTypesTrustedForAbsentCalls, null));
                 }
                 return pValAttributes.stream();
 
@@ -1675,10 +1696,10 @@ public class CallService extends CommonService {
                         .flatMap(dt -> Stream.of(
                                 new GlobalExpressionCallDAO.AttributeInfo(
                                         GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_COND_INFO,
-                                        EnumSet.of(dt)),
+                                        EnumSet.of(dt), null),
                                 new GlobalExpressionCallDAO.AttributeInfo(
                                         GlobalExpressionCallDAO.Attribute.FDR_P_VALUE_DESCENDANT_COND_INFO,
-                                        EnumSet.of(dt))));
+                                        EnumSet.of(dt), null)));
 
             } else if (attr.equals(CallService.Attribute.GENE)) {
 
@@ -1687,9 +1708,10 @@ public class CallService extends CommonService {
 
             } else if (attr.equals(CallService.Attribute.OBSERVED_DATA)) {
 
-                return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
-                        GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVED_DATA,
-                        daoDataTypes));
+                return ConditionDAO.Attribute.getAllPossibleCondParamCombinations(condParamCombination)
+                        .stream().map(comb -> new GlobalExpressionCallDAO.AttributeInfo(
+                                GlobalExpressionCallDAO.Attribute.DATA_TYPE_OBSERVATION_COUNT_INFO,
+                                daoDataTypes, comb));
 
             } else if (attr.equals(CallService.Attribute.MEAN_RANK) ||
                     attr.equals(CallService.Attribute.EXPRESSION_SCORE) ||
@@ -1698,13 +1720,13 @@ public class CallService extends CommonService {
 
                 return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
                         GlobalExpressionCallDAO.Attribute.MEAN_RANK,
-                        daoDataTypes));
+                        daoDataTypes, null));
 
             } else if (attr.equals(CallService.Attribute.DATA_TYPE_RANK_INFO)) {
 
                 return Stream.of(new GlobalExpressionCallDAO.AttributeInfo(
                         GlobalExpressionCallDAO.Attribute.DATA_TYPE_RANK_INFO,
-                        daoDataTypes));
+                        daoDataTypes, null));
 
             } else {
                 throw log.throwing(new IllegalStateException(
@@ -1884,7 +1906,7 @@ public class CallService extends CommonService {
         }
 
         return log.traceExit(new ExpressionCall(call.getGene(), call.getCondition(),
-                call.getDataPropagation() == null? null: inferDataPropagation(consideredCallData),
+                call.getDataPropagation() == null? null: computeDataPropagation(consideredCallData),
                 fdrPValues, bestDescendantFdrPValues,
                 exprSummary,
                 summaryQual,
@@ -2016,7 +2038,7 @@ public class CallService extends CommonService {
             attrs == null || attrs.isEmpty() || attrs.stream().anyMatch(a -> a.isConditionParameter())?
                     cond: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.OBSERVED_DATA)?
-                    inferDataPropagation(callData): null,
+                    computeDataPropagation(callData): null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
                     fdrPValues: null,
             attrs == null || attrs.isEmpty() || attrs.contains(Attribute.P_VALUE_INFO_ALL_DATA_TYPES)?
@@ -2084,14 +2106,8 @@ public class CallService extends CommonService {
             DataType dt = mapDAODataTypeToDataType(Collections.singleton(cdTO.getDataType()),
                     requestedDataTypes).iterator().next();
 
-            //Of note, for now we have not implemented the possibility to retrieve
-            //selfObservationCount and descendantObservationCount from the data source,
-            //this might change in the future.
-
             boolean getRankInfo = attrs == null || attrs.isEmpty() ||
                     attrs.contains(Attribute.DATA_TYPE_RANK_INFO);
-            boolean getDataProp = attrs == null || attrs.isEmpty() ||
-                    attrs.contains(Attribute.OBSERVED_DATA);
             //This info of FDR-corrected p-values is stored in the ExpressionCall,
             //but when we also have the p-values per data type, we also store them
             //in the related ExpressionCallData objet.
@@ -2103,27 +2119,20 @@ public class CallService extends CommonService {
                     attrs.contains(Attribute.P_VALUE_INFO_EACH_DATA_TYPE) ||
                     attrs.contains(Attribute.P_VALUE_INFO_ALL_DATA_TYPES) ||
                     attrs.contains(Attribute.CALL_TYPE) ||
-                    attrs.contains(Attribute.DATA_QUALITY);
-            //Old note: The following assertion was incorrect: as of Bgee 14.1, if the call is not observed
-            //(propagation only), there is no associated rank. Even when we'll have globalRanks,
-            //as of Bgee 14.2, there can still be an absent call propagated from a parent,
-            //and thus with no rank associated.
-            //New note: as of Bgee 15.0, we have global ranks, PLUS we don't propagate absent calls
-            //from parents anymore, so we should ALWAYS have a rank, and we reenable this assert
+                    attrs.contains(Attribute.DATA_QUALITY) ||
+                    attrs.contains(Attribute.OBSERVED_DATA);
             assert !getRankInfo || cdTO.getRank() != null && cdTO.getRankNorm() != null &&
                     cdTO.getWeightForMeanRank() != null;
-            assert !getDataProp || cdTO.getDataPropagation() != null &&
-                    !cdTO.getDataPropagation().isEmpty() && cdTO.isConditionObservedData() != null;
+            assert !getObsCount || cdTO.getSelfObservationCount() != null &&
+                    cdTO.getDescendantObservationCount() != null;
 
             return new ExpressionCallData(dt,
                     getPValues? cdTO.getFDRPValue(): null,
                     getPValues? cdTO.getBestDescendantFDRPValue(): null,
-                    getObsCount? cdTO.getSelfObservationCount(): null,
-                    getObsCount? cdTO.getDescendantObservationCount(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
-                    getDataProp? mapDAOCallDataTOToDataPropagation(cdTO): null);
+                    getObsCount? mapDAOCallDataTOToDataPropagation(cdTO): null);
         }).collect(Collectors.toSet()));
     }
 
@@ -2165,164 +2174,88 @@ public class CallService extends CommonService {
         return log.traceExit(mappedDataTypes);
     }
 
-    private static PropagationState mapDAOPropStateToPropState(DAOPropagationState propState) {
-        log.traceEntry("{}", propState);
-        if (propState == null) {
-            return log.traceExit((PropagationState) null);
-        }
-        switch(propState) {
-        case ALL:
-            return log.traceExit(PropagationState.ALL);
-        case SELF:
-            return log.traceExit(PropagationState.SELF);
-        case ANCESTOR:
-            return log.traceExit(PropagationState.ANCESTOR);
-        case DESCENDANT:
-            return log.traceExit(PropagationState.DESCENDANT);
-        case SELF_AND_ANCESTOR:
-            return log.traceExit(PropagationState.SELF_AND_ANCESTOR);
-        case SELF_AND_DESCENDANT:
-            return log.traceExit(PropagationState.SELF_AND_DESCENDANT);
-        case ANCESTOR_AND_DESCENDANT:
-            return log.traceExit(PropagationState.ANCESTOR_AND_DESCENDANT);
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported DAOPropagationState: "
-                    + propState));
-        }
-    }
-
     //*************************************************************************
     // HELPER METHODS FOR INFERENCES
     //*************************************************************************
 
-    private static DataPropagation inferDataPropagation(Set<ExpressionCallData> callData) {
+    private static DataPropagation computeDataPropagation(Set<ExpressionCallData> callData) {
         log.traceEntry("{}", callData);
 
         if (callData == null || callData.isEmpty() || callData.stream()
-                .anyMatch(cd -> cd.getDataPropagation() == null ||
-                        cd.getDataPropagation().isIncludingObservedData() == null)) {
+                .anyMatch(cd -> cd.getDataPropagation() == null)) {
             throw log.throwing(new IllegalArgumentException(
                     "Missing info for inferring data propagation. CallData: " + callData));
         }
-        return log.traceExit(callData.stream()
+
+        return log.traceExit(mergeDataPropagations(callData.stream()
                 .map(cd -> cd.getDataPropagation())
-                .reduce(
-                        DATA_PROPAGATION_IDENTITY,
-                        //note to self: if we were not mapping to DataPropagation,
-                        //we would need to provide the following accumulator BiFunction
-//                        (dataProp, cd) -> mergeDataPropagations(dataProp, cd.getDataPropagation()),
-                        (dataProp1, dataProp2) -> mergeDataPropagations(dataProp1, dataProp2)
-                ));
+                .collect(Collectors.toSet())));
     }
+    protected static DataPropagation mergeDataPropagations(Collection<DataPropagation> dataProps) {
+        log.traceEntry("{}", dataProps);
+
+        if (dataProps == null || dataProps.isEmpty() || dataProps.contains(null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid DataPropagations"));
+        }
+        Map<EnumSet<CallService.Attribute>, Integer> selfObservationCounts = dataProps.stream()
+                .flatMap(dp -> dp.getSelfObservationCounts().entrySet().stream())
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> (v1 + v2)));
+        Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCounts = dataProps.stream()
+                .flatMap(dp -> dp.getDescendantObservationCounts().entrySet().stream())
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> (v1 + v2)));
+
+        return log.traceExit(new DataPropagation(selfObservationCounts, descendantObservationCounts));
+    }
+
     private static DataPropagation mapDAOCallDataTOToDataPropagation(
             GlobalExpressionCallDataTO callDataTO) {
         log.traceEntry("{}", callDataTO);
 
-        if (callDataTO == null || callDataTO.getDataPropagation() == null ||
-                callDataTO.getDataPropagation().isEmpty()) {
+        if (callDataTO == null || callDataTO.getSelfObservationCount() == null ||
+                callDataTO.getDescendantObservationCount() == null ||
+                callDataTO.getSelfObservationCount().values().stream().allMatch(v -> v == 0) &&
+                callDataTO.getDescendantObservationCount().values().stream().allMatch(v -> v == 0)) {
             return log.traceExit((DataPropagation) null);
         }
 
-        PropagationState anatEntityPropState = null;
-        PropagationState stagePropState = null;
-        PropagationState cellTypePropState = null;
-        PropagationState sexPropState = null;
-        PropagationState strainPropState = null;
-        for (Entry<ConditionDAO.Attribute, DAOPropagationState> observedDataEntry:
-            callDataTO.getDataPropagation().entrySet()) {
-            switch(observedDataEntry.getKey()) {
+        return log.traceExit(new DataPropagation(
+                callDataTO.getSelfObservationCount().entrySet().stream().collect(Collectors.toMap(
+                        e -> mapCondDAOAttrsToCondParamAttrs(e.getKey()),
+                        e -> e.getValue())),
+                callDataTO.getDescendantObservationCount().entrySet().stream().collect(Collectors.toMap(
+                        e -> mapCondDAOAttrsToCondParamAttrs(e.getKey()),
+                        e -> e.getValue()))));
+    }
+
+    private static EnumSet<CallService.Attribute> mapCondDAOAttrsToCondParamAttrs(
+            Collection<ConditionDAO.Attribute> daoAttrs) {
+        log.traceEntry("{}", daoAttrs);
+        return log.traceExit(daoAttrs.stream()
+                .filter(a -> a.isConditionParameter())
+                .map(a -> mapCondDAOAttrToCondParamAttr(a))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(Attribute.class))));
+    }
+    private static Attribute mapCondDAOAttrToCondParamAttr(ConditionDAO.Attribute daoAttr) {
+        log.traceEntry("{}", daoAttr);
+        switch (daoAttr) {
             case ANAT_ENTITY_ID:
-                anatEntityPropState = mapDAOPropStateToPropState(
-                        observedDataEntry.getValue());
-                break;
+                return log.traceExit(Attribute.ANAT_ENTITY_ID);
             case STAGE_ID:
-                stagePropState = mapDAOPropStateToPropState(
-                        observedDataEntry.getValue());
-                break;
+                return log.traceExit(Attribute.DEV_STAGE_ID);
             case CELL_TYPE_ID:
-                cellTypePropState = mapDAOPropStateToPropState(
-                        observedDataEntry.getValue());
-                break;
+                return log.traceExit(Attribute.CELL_TYPE_ID);
             case SEX_ID:
-                sexPropState = mapDAOPropStateToPropState(
-                        observedDataEntry.getValue());
-                break;
+                return log.traceExit(Attribute.SEX_ID);
             case STRAIN_ID:
-                strainPropState = mapDAOPropStateToPropState(
-                        observedDataEntry.getValue());
-                break;
+                return log.traceExit(Attribute.STRAIN_ID);
             default:
-                throw log.throwing(new IllegalStateException(
-                        "ConditionDAO.Attribute not supported for DataPropagation: "
-                        + observedDataEntry.getKey()));
-            }
+                throw log.throwing(new UnsupportedOperationException(
+                    "Condition parameter not supported: " + daoAttr));
         }
-        assert anatEntityPropState != null || stagePropState != null || cellTypePropState != null
-                || sexPropState != null || strainPropState != null;
-        
-
-        Boolean observedData = callDataTO.isConditionObservedData();
-
-        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, cellTypePropState,
-                sexPropState, strainPropState, observedData));
     }
-    protected static DataPropagation mergeDataPropagations(DataPropagation dataProp1,
-            DataPropagation dataProp2) {
-        log.traceEntry("{}, {}", dataProp1, dataProp2);
 
-        if (dataProp1 == null && dataProp2 == null) {
-            return log.traceExit(DATA_PROPAGATION_IDENTITY);
-        }
-        if (dataProp1 == null || dataProp1.equals(DATA_PROPAGATION_IDENTITY)) {
-            return log.traceExit(dataProp2);
-        }
-        if (dataProp2 == null || dataProp2.equals(DATA_PROPAGATION_IDENTITY)) {
-            return log.traceExit(dataProp1);
-        }
-
-        PropagationState anatEntityPropState = mergePropagationStates(
-                dataProp1.getAnatEntityPropagationState(), dataProp2.getAnatEntityPropagationState());
-        PropagationState stagePropState = mergePropagationStates(
-                dataProp1.getDevStagePropagationState(), dataProp2.getDevStagePropagationState());
-        //Cell type propagation states are for now only available for scRNA-Seq data,
-        //it is always null for other data types
-        PropagationState cellTypePropState = null;
-        if (dataProp1.getCellTypePropagationState() != null ||
-                dataProp2.getCellTypePropagationState() != null) {
-            cellTypePropState = mergePropagationStates(dataProp1.getCellTypePropagationState() == null?
-                    PropagationState.SELF: dataProp1.getCellTypePropagationState(),
-                    dataProp2.getCellTypePropagationState() == null? PropagationState.SELF:
-                        dataProp2.getCellTypePropagationState());
-        }
-        PropagationState sexPropState = mergePropagationStates(
-                dataProp1.getSexPropagationState(), dataProp2.getSexPropagationState());
-        PropagationState strainPropState = mergePropagationStates(
-                dataProp1.getStrainPropagationState(), dataProp2.getStrainPropagationState());
-
-        //Here we cannot infer the ObservedData state from the condition parameter propagation states,
-        //as in the method inferDataPropagation: maybe a data type observed some data in an anat. entity
-        //but not in a stage (so ObservedData = false), another data type observed some data
-        //in a stage but not in an anat. entity (so ObservedData = false).
-        //We cannot infer that ObservedData = true simply because merging these DataPropagations
-        //will result in having observed data in both the anat. entity and the stage.
-        Boolean retrievedObservedData = null;
-        if (Boolean.TRUE.equals(dataProp1.isIncludingObservedData()) ||
-                Boolean.TRUE.equals(dataProp2.isIncludingObservedData())) {
-            retrievedObservedData = true;
-        } else if (Boolean.FALSE.equals(dataProp1.isIncludingObservedData()) &&
-                Boolean.FALSE.equals(dataProp2.isIncludingObservedData())) {
-            retrievedObservedData = false;
-        } else {
-            //if one of the DataPropagation isIncludingObservedData is null, and none is True,
-            //then we cannot know for sure whether there are observed data,
-            //so retrievedObservedData will stay null. In practice this should never happen
-            throw log.throwing(new IllegalArgumentException("Inconsistent DataPropagations: "
-                    + dataProp1 + " - " + dataProp2));
-        }
-
-        return log.traceExit(new DataPropagation(anatEntityPropState, stagePropState, cellTypePropState,
-                sexPropState, strainPropState, retrievedObservedData));
-    }
     private static PropagationState mergePropagationStates(PropagationState state1,
             PropagationState state2) {
         log.traceEntry("{}, {}", state1, state2);

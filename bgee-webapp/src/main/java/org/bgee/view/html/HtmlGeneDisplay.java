@@ -1157,7 +1157,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
             Set<ExpressionCallData> dtCallData = callsByDataTypes.get(type);
             boolean containsDatatype = dtCallData != null && dtCallData.stream()
-                .anyMatch(c -> c.getAllObservationCount() != null && c.getAllObservationCount() > 0);
+                    .anyMatch(c -> c.getDataPropagation() != null &&
+                    c.getDataPropagation().getCondParamCombinations().stream().anyMatch(
+                            comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0));
             return getDataSpan(type, containsDatatype);
         }).collect(Collectors.joining()));
     }

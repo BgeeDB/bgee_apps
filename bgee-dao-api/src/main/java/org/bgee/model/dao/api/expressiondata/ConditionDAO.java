@@ -89,6 +89,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
         private static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
             return DAO.getAllPossibleEnumCombinations(Attribute.class, getCondParams());
         }
+        public static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations(
+                Collection<Attribute> attrs) {
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, attrs);
+        }
 
         public static EnumSet<Attribute> getCondParams() {
             return Arrays.stream(Attribute.values()).filter(a -> a.isConditionParameter())

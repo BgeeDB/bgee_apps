@@ -35,7 +35,6 @@ import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
-import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
@@ -484,7 +483,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT), 
                 baseAttributes, orderingAttributes);
                 
-         writeGlobalExpressionFile(silverAnatCalls, ensemblIdToBgeeGeneIds, condToConditionId, 
+         writeGlobalExpressionFile(silverAnatCalls,
+                 baseAttributes.stream().filter(a -> a.isConditionParameter())
+                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+                 ensemblIdToBgeeGeneIds, condToConditionId, 
                  directory, header, processors);
          
          
@@ -494,27 +496,31 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
 //         ConditionEntities condEntities = new ConditionEntities(silverAnatCalls.stream()
 //                 .map(c -> c.getCondition())
 //                 .collect(Collectors.toSet()));
-         Map<CallService.Attribute, Boolean> allCondParamFilter = 
-                 CallService.Attribute.getAllConditionParameters().stream()
-                 .collect(Collectors.toMap(a -> a, a -> true));
+         Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+         callObservedDataFilter.put(CallService.Attribute.getAllConditionParameters(), true);
          final Stream<ExpressionCall> allCondsCalls = serviceFactory.getCallService()
                  .loadExpressionCalls(
                          new ExpressionCallFilter(silverCallFilter,
                                  Collections.singleton(geneFilter),
-                                 allCondParamFilter),
+                                 callObservedDataFilter),
                          allCondParamAttrs,
                          orderingAttributes);
          
-        writeGlobalExpressionFile(allCondsCalls, ensemblIdToBgeeGeneIds, condToConditionId, 
+        writeGlobalExpressionFile(allCondsCalls,
+                allCondParamAttrs.stream().filter(a -> a.isConditionParameter())
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+                ensemblIdToBgeeGeneIds, condToConditionId, 
                 directory, header, processors);
 
         log.traceExit();
     }
 
     private void writeGlobalExpressionFile(Stream<ExpressionCall> expressionCalls,
+            EnumSet<CallService.Attribute> condParamComb,
             Map<String, Integer> ensemblIdToBgeeGeneId, Map<Condition, String> condToConditionId,
             String directory, String[] header, CellProcessor[] processors) {
-        log.traceEntry("{}, {}, {}, {}, {}", expressionCalls, ensemblIdToBgeeGeneId, condToConditionId);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, ensemblIdToBgeeGeneId,
+                condToConditionId);
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
@@ -544,7 +550,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     headerToValue.put(GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(),
                             call.getMeanRank().toString());
                     headerToValue.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
-                    headerToValue.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(call.getDataPropagation()));
+                    headerToValue.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
+                            call.getDataPropagation(), condParamComb));
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
                     headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFormatedFDRPValue());
                     return headerToValue;
@@ -912,49 +919,23 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceExit();
     }
     
-    private String dataPropagationToString(DataPropagation dataPropagation) {
-        log.traceEntry("{}", dataPropagation);
+    private String dataPropagationToString(DataPropagation dataPropagation,
+            EnumSet<CallService.Attribute> condParamComb) {
+        log.traceEntry("{}, {}", dataPropagation, condParamComb);
         //TODO: to remove when the API can return all types of propagation
         if(dataPropagation == null) {
             return log.traceExit("");
         }
         //FIXME: the propagation state can be null or equals to UNKNOWN
-        EnumSet<PropagationState> allPropagationState = dataPropagation.getAllPropagationStates();
+        PropagationState propState = dataPropagation.getPropagationState(condParamComb);
 //        if (dataPropagation.isIncludingObservedData()) {
-            if (allPropagationState.contains(PropagationState.ALL) || 
-                    ( allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) && 
-                            (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
-                            allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) ||
-                            allPropagationState.contains(PropagationState.SELF)) ) || 
-                    ( allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) && (
-                            allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
-                            allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) ||
-                            allPropagationState.contains(PropagationState.DESCENDANT)) ) ||
-                    ( allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT) && (
-                            allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT) ||
-                            allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
-                            allPropagationState.contains(PropagationState.ANCESTOR)) ) ||
-                    ( allPropagationState.contains(PropagationState.SELF) && 
-                            allPropagationState.contains(PropagationState.ANCESTOR) &&
-                            allPropagationState.contains(PropagationState.DESCENDANT) )) {
-                return log.traceExit("all");
-            } else if (allPropagationState.contains(PropagationState.SELF_AND_ANCESTOR) ||
-                    ( allPropagationState.contains(PropagationState.SELF) &&
-                    allPropagationState.contains(PropagationState.ANCESTOR) )) {
-                return log.traceExit("self and ancestor");
-            } else if (allPropagationState.contains(PropagationState.SELF_AND_DESCENDANT)||
-                    ( allPropagationState.contains(PropagationState.SELF) &&
-                    allPropagationState.contains(PropagationState.DESCENDANT) )) {
+            if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
                 return log.traceExit("self and descendant");
-            } else if (allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)||
-                    ( allPropagationState.contains(PropagationState.ANCESTOR) &&
-                    allPropagationState.contains(PropagationState.DESCENDANT) )) {
-                return log.traceExit("ancestor and descendant");
-            } else if (allPropagationState.contains(PropagationState.SELF)) {
+            }
+            if (PropagationState.SELF.equals(propState)) {
             	return log.traceExit("self");
-            } else if (allPropagationState.contains(PropagationState.ANCESTOR)) {
-                return log.traceExit("ancestor");
-            } else if (allPropagationState.contains(PropagationState.DESCENDANT)) {
+            }
+            if (PropagationState.DESCENDANT.equals(propState)) {
                 return log.traceExit("descendant");
             }
 //        } else {

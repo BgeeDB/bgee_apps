@@ -5,12 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
@@ -41,10 +36,9 @@ import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Aug. 2021
  * @since   Bgee 13, Sept. 2015
  */
-//TODO: javadoc of all attributes and methods
 public abstract class CallData<T extends Enum<T> & CallType> {
     private final static Logger log = LogManager.getLogger(CallData.class.getName());
 
@@ -132,7 +126,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
     }
 
-    //TODO: javadoc of all methods and attributes
     public static class ExpressionCallData extends CallData<Expression> {
         //********************************************
         // STATIC ATTRIBUTES AND METHODS
@@ -190,11 +183,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private final DataPropagation dataPropagation;
 
         private final List<BigDecimal> selfPValues;
-        //useful if we don't want to retrieve all self p-values but just to retrieve the count
-        private final Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount;
         private final List<BigDecimal> descendantPValues;
-        //useful if we don't want to retrieve all descendant p-values but just to retrieve the count
-        private final Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount;
         private final List<BigDecimal> allPValues;
         private final BigDecimal fdrPValue;
         private final BigDecimal bestDescendantFDRPValue;
@@ -205,33 +194,27 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         
         private final BigDecimal weightForMeanRank;
 
+        //Self and descendant observation counts are contained in the DataPropagation object
         public ExpressionCallData(DataType dataType,
                 Collection<BigDecimal> selfPValues,
-                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
                 Collection<BigDecimal> descendantPValues,
-                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, selfPValues, selfObservationCount,
-                    descendantPValues, descendantObservationCount,
-                    null, null, 
+            this(dataType, selfPValues, descendantPValues, null, null, 
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
+        //Self and descendant observation counts are contained in the DataPropagation object
         public ExpressionCallData(DataType dataType,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
-                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
-                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
-            this(dataType, null, selfObservationCount, null, descendantObservationCount,
-                    fdrPValue, bestDescendantFDRPValue,
+            this(dataType, null, null, fdrPValue, bestDescendantFDRPValue,
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
+        //Self and descendant observation counts are contained in the DataPropagation object
         public ExpressionCallData(DataType dataType,
                 Collection<BigDecimal> selfPValues,
-                Map<EnumSet<CallService.Attribute>, Integer> selfObservationCount,
                 Collection<BigDecimal> descendantPValues,
-                Map<EnumSet<CallService.Attribute>, Integer> descendantObservationCount,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
                 DataPropagation dataPropagation) {
@@ -242,50 +225,12 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                 new ArrayList<>(selfPValues);
             Collections.sort(sortedSelfPValues);
             this.selfPValues = Collections.unmodifiableList(sortedSelfPValues);
-            //we will use defensive copying for this attribute,
-            //there is no unmodifiableEnumSet
-            if (selfObservationCount == null && selfPValues != null && !selfPValues.isEmpty()) {
-                this.selfObservationCount = new HashMap<>();
-                this.selfObservationCount.put(CallService.Attribute.getAllConditionParameters(),
-                        selfPValues.size());
-            } else if (selfObservationCount != null) {
-                if (selfObservationCount.entrySet().stream().anyMatch(e ->
-                        e.getKey() == null || e.getValue() == null ||
-                        e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
-                        e.getValue() < 0)) {
-                    throw log.throwing(new IllegalArgumentException("Invalid selfObservationCount"));
-                }
-                this.selfObservationCount = selfObservationCount.entrySet().stream()
-                        .collect(Collectors.toMap(
-                                e -> EnumSet.copyOf(e.getKey()),
-                                e -> e.getValue()));
-            } else {
-                this.selfObservationCount = new HashMap<>();
-            }
+
             List<BigDecimal> sortedDescendantPValues = descendantPValues == null? new ArrayList<>():
                 new ArrayList<>(descendantPValues);
             Collections.sort(sortedDescendantPValues);
             this.descendantPValues = Collections.unmodifiableList(sortedDescendantPValues);
-            //we will use defensive copying for this attribute,
-            //there is no unmodifiableEnumSet
-            if (descendantObservationCount == null && descendantPValues != null && !descendantPValues.isEmpty()) {
-                this.descendantObservationCount = new HashMap<>();
-                this.descendantObservationCount.put(CallService.Attribute.getAllConditionParameters(),
-                        descendantPValues.size());
-            } else if (descendantObservationCount != null) {
-                if (descendantObservationCount.entrySet().stream().anyMatch(e ->
-                        e.getKey() == null || e.getValue() == null ||
-                        e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
-                        e.getValue() < 0)) {
-                    throw log.throwing(new IllegalArgumentException("Invalid descendantObservationCount"));
-                }
-                this.descendantObservationCount = descendantObservationCount.entrySet().stream()
-                        .collect(Collectors.toMap(
-                                e -> EnumSet.copyOf(e.getKey()),
-                                e -> e.getValue()));
-            } else {
-                this.descendantObservationCount = new HashMap<>();
-            }
+
             List<BigDecimal> allPValues = new ArrayList<>(sortedSelfPValues);
             allPValues.addAll(sortedDescendantPValues);
             Collections.sort(allPValues);
@@ -293,11 +238,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
             this.fdrPValue = fdrPValue;
             this.bestDescendantFDRPValue = bestDescendantFDRPValue;
-
-            if (dataPropagation != null && this.getCallType() != null) {
-                dataPropagation.getAllPropagationStates().stream()
-                .forEach(state -> this.getCallType().checkPropagationState(state));
-            }
 
             this.dataPropagation = dataPropagation;
             //BigDecimal are immutable so we're good
@@ -330,42 +270,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return selfPValues;
         }
         /**
-         * Returns the count of observations in the condition itself, considering some combinations
-         * of condition parameters (see {@link
-         * org.bgee.model.expressiondata.CallService.Attribute#isConditionParameter()
-         * CallService.Attribute#isConditionParameter()}). The "official" "real" count would be associated
-         * to the {@code EnumSet} returned by {@link
-         * org.bgee.model.expressiondata.CallService.Attribute#getAllConditionParameters()
-         * CallService.Attribute#getAllConditionParameters()}. For instance, if we have
-         * two observations of expression data for a gene in:
-         * <ul>
-         * <li>{@code AnatEntity=hypothalamus, DevStage=early adulthood}
-         * <li>{@code AnatEntity=brain, DevStage=late adulthood}
-         * </ul>
-         * and the condition we are considering is {@code AnatEntity=brain, DevStage=adult}.
-         * The "real" self observation count in the condition itself, considering the condition parameters
-         * {@code CallService.Attribute.ANAT_ENTITY_ID} and {@code CallService.Attribute.DEV_STAGE_ID},
-         * is 0, the "real" descendant observation count is 2 (all data have been propagated to the parent
-         * stage "adult"). But we might be interested in knowing how many observations we have
-         * in "brain" at any "adult" dev. stage. The self observation count in the condition itself,
-         * considering only the condition parameter {@code CallService.Attribute.ANAT_ENTITY_ID},
-         * is 1, and the descendant observation count is 1.
-         *
-         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code CallService.Attribute}s
-         *          representing the combinations of condition parameters considered, the associated
-         *          value being an {@code Integer} that is the number of observations producing a p-value
-         *          in the condition itself.
-         * @see #getSelfPValues()
-         * @see #getDescendantObservationCount()
-         */
-        public Map<EnumSet<CallService.Attribute>, Integer> getSelfObservationCount() {
-            //defensive copying, there is no unmodifiableEnumSet
-            return selfObservationCount.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            e -> EnumSet.copyOf(e.getKey()),
-                            e -> e.getValue()));
-        }
-        /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
          *          computed from tests to detect active signal of expression of a gene
          *          using {@link #getDataType()}, in the descendant conditions
@@ -373,25 +277,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          */
         public List<BigDecimal> getDescendantPValues() {
             return descendantPValues;
-        }
-        /**
-         * Returns the count of observations in the descendant conditions of the requested condition,
-         * considering some combinations of condition parameters. See {@link #getSelfObservationCount()}
-         * for more details.
-         *
-         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code CallService.Attribute}s
-         *          representing the combinations of condition parameters considered, the associated
-         *          value being an {@code Integer} that is the number of observations producing a p-value
-         *          in the descendant conditions of the requested condition.
-         * @see #getDescendantPValues()
-         * @see #getSelfObservationCount()
-         */
-        public Map<EnumSet<CallService.Attribute>, Integer> getDescendantObservationCount() {
-            //defensive copying, there is no unmodifiableEnumSet
-            return descendantObservationCount.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            e -> EnumSet.copyOf(e.getKey()),
-                            e -> e.getValue()));
         }
         /**
          * @return  A {@code List} of {@code BigDecimal}s representing the p-values
@@ -417,25 +302,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         public BigDecimal getBestDescendantFDRPValue() {
             return bestDescendantFDRPValue;
         }
-        /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
-         *          in a condition itself and its descendant conditions.
-         * @see #getAllPValues()
-         */
-        public Integer getAllObservationCount() {
-            if (this.selfObservationCount.isEmpty() || this.descendantObservationCount.isEmpty() ||
-                    Collections.disjoint(this.selfObservationCount.keySet(),
-                            this.descendantObservationCount.keySet())) {
-                return null;
-            }
-            Set<EnumSet<CallService.Attribute>> commonCondParamCombinations =
-                    new HashSet<>(this.selfObservationCount.keySet());
-            commonCondParamCombinations.retainAll(this.descendantObservationCount.keySet());
-            EnumSet<CallService.Attribute> selectedCondParamComb =
-                    commonCondParamCombinations.iterator().next();
-            return this.selfObservationCount.get(selectedCondParamComb) +
-                    this.descendantObservationCount.get(selectedCondParamComb);
-        }
+
         public BigDecimal getRank() {
             return rank;
         }
@@ -457,13 +324,10 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             result = prime * result + ((allPValues == null) ? 0 : allPValues.hashCode());
             result = prime * result + ((bestDescendantFDRPValue == null) ? 0 : bestDescendantFDRPValue.hashCode());
             result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
-            result = prime * result
-                    + ((descendantObservationCount == null) ? 0 : descendantObservationCount.hashCode());
             result = prime * result + ((descendantPValues == null) ? 0 : descendantPValues.hashCode());
             result = prime * result + ((fdrPValue == null) ? 0 : fdrPValue.hashCode());
             result = prime * result + ((normalizedRank == null) ? 0 : normalizedRank.hashCode());
             result = prime * result + ((rank == null) ? 0 : rank.hashCode());
-            result = prime * result + ((selfObservationCount == null) ? 0 : selfObservationCount.hashCode());
             result = prime * result + ((selfPValues == null) ? 0 : selfPValues.hashCode());
             result = prime * result + ((weightForMeanRank == null) ? 0 : weightForMeanRank.hashCode());
             return result;
@@ -503,13 +367,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             } else if (!dataPropagation.equals(other.dataPropagation)) {
                 return false;
             }
-            if (descendantObservationCount == null) {
-                if (other.descendantObservationCount != null) {
-                    return false;
-                }
-            } else if (!descendantObservationCount.equals(other.descendantObservationCount)) {
-                return false;
-            }
             if (descendantPValues == null) {
                 if (other.descendantPValues != null) {
                     return false;
@@ -536,13 +393,6 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                     return false;
                 }
             } else if (!rank.equals(other.rank)) {
-                return false;
-            }
-            if (selfObservationCount == null) {
-                if (other.selfObservationCount != null) {
-                    return false;
-                }
-            } else if (!selfObservationCount.equals(other.selfObservationCount)) {
                 return false;
             }
             if (selfPValues == null) {
@@ -572,9 +422,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
                    .append(", fdrPValue=").append(fdrPValue)
                    .append(", bestDescendantFDRPValue=").append(bestDescendantFDRPValue)
                    .append(", selfPValues=").append(selfPValues)
-                   .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantPValues=").append(descendantPValues)
-                   .append(", descendantObservationCount=").append(descendantObservationCount)
                    .append(", rank=").append(rank)
                    .append(", normalizedRank=").append(normalizedRank)
                    .append(", weightForMeanRank=").append(weightForMeanRank)

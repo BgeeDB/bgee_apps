@@ -182,6 +182,10 @@ public class GenerateOncoMXFile {
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID),
+                true);
         return log.traceExit(new ExpressionCallFilter(
                         null, //we want expressed/not-expressed calls of any quality
                         //all genes for the requested species
@@ -190,10 +194,7 @@ public class GenerateOncoMXFile {
                         Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds,
                                 null, null, null)),
                         DATA_TYPES, //data requested by OncoMX only
-                        null,
-                        EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID)
-                        .stream()
-                        .collect(Collectors.toMap(a -> a, a -> true))
+                        callObservedDataFilter
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {

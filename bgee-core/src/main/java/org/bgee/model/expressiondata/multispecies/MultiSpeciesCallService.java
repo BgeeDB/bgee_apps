@@ -770,18 +770,14 @@ public class MultiSpeciesCallService extends CommonService {
     	speToGeneIds.keySet().stream().forEach( s -> {
     		geneFilters.add(new GeneFilter(s, speToGeneIds.get(s)));
     	});
-    	//Observed data filter
-    	Map<CallService.Attribute, Boolean> observedDataFilter = CallService.Attribute
-    	        .getAllConditionParameters().stream()
-    	        //XXX: for now we don't use strain in multi-species queries because
-    	        //we don't have any comparison criteria as of Bgee 15.0.
-    	        .filter(a -> !a.equals(CallService.Attribute.STRAIN_ID))
-    	        .collect(Collectors.toMap(a -> a, a -> true));
+
     	return new ExpressionCallFilter(filter.getSummaryCallTypeQualityFilter(), geneFilters, 
     			Collections.singleton(new ConditionFilter(expressionCallAEntityIds,
     			        expressionCallDevStageIds, expressionCallCellTypeIds,
     			        filter.getMultiSpeciesCondFilter().getSexIds(), null)), 
-    			filter.getDataTypeFilters(), null, observedDataFilter);
+    			filter.getDataTypeFilters(),
+    			//no filtering on observed data
+    			null);
     }
 
     //TODO: once the method accepting ExpressionCallFilter will be ready, change this method
@@ -871,9 +867,8 @@ public class MultiSpeciesCallService extends CommonService {
                 .collect(Collectors.toSet());
         ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null,
                 allCellTypeIds, null, null,
-                //Deactivate the filtering on observed conditions, it is too slow
-//                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID)
-                null);
+                //filtering on observed conditions
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
 
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
@@ -882,7 +877,7 @@ public class MultiSpeciesCallService extends CommonService {
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
                 summaryCallTypeQualityFilter, clnGeneFilters,
-                Collections.singleton(newConditionFilter), null, null, null);
+                Collections.singleton(newConditionFilter), null, null);
 
         // Define an order to be able to use an ElementGroupFromListSpliterator
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =

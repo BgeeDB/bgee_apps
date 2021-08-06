@@ -616,7 +616,7 @@ public class TopAnatParams {
             Map<ExpressionSummary, SummaryQuality> callQualFilter = new HashMap<>();
             callQualFilter.put(ExpressionSummary.EXPRESSED, this.summaryQuality);
 
-            Map<CallService.Attribute, Boolean> observedDataFilter = null;
+            Map<EnumSet<CallService.Attribute>, Boolean> observedDataFilter = null;
             //retrieve also propagated anat. entities when no decorrelation is requested in order to run
             //a Fisher test without running topGo (faster)
             if (this.decorrelationType != DecorrelationType.NONE) {
@@ -631,9 +631,6 @@ public class TopAnatParams {
                     condFilters,
                     //data type filter
                     this.dataTypes,
-                    //observed data filter. This can be used in this context only when
-                    //all condition parameters are requested
-                    null,
                     //cond. params observed states
                     observedDataFilter
             ));

@@ -1220,11 +1220,13 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         attrs = EnumSet.copyOf(allCondParams);
         attrs.addAll(baseAttrs);
         attrs.add(CallService.Attribute.MEAN_RANK);
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(allCondParams, true);
         List<ExpressionCall> conditionCalls = callService
                 .loadExpressionCalls(
                         new ExpressionCallFilter(null,
                                 Collections.singleton(geneFilter),
-                                allCondParams.stream().collect(Collectors.toMap(a -> a, a -> true))),
+                                callObservedDataFilter),
                         attrs,
                         serviceOrdering)
                 .collect(Collectors.toList());

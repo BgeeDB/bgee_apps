@@ -64,18 +64,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(GenerateExprFile2.class.getName());
-
-    // We sort data types by name lengths from the longest to the shortest.
-    /**
-     * A {@code List} of {@code DataType}s used to define order of data type columns in files to be generated.
-     **/
-    private final static List<DataType> DATA_TYPE_ORDER = 
-            Arrays.asList(DataType.AFFYMETRIX, DataType.EST, DataType.IN_SITU, DataType.RNA_SEQ, DataType.FULL_LENGTH);
     
     private final static Map<Attribute, String> CONDITION_FILE_NAME;
     
     static {
         CONDITION_FILE_NAME =  new LinkedHashMap<Attribute, String>();
+        //XXX: what about cell type?
         CONDITION_FILE_NAME.put(Attribute.ANAT_ENTITY_ID, "anat");
         CONDITION_FILE_NAME.put(Attribute.DEV_STAGE_ID, "development");
         CONDITION_FILE_NAME.put(Attribute.SEX_ID, "sex");
@@ -158,7 +152,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @throws IOException              If an error occurred while trying to write generated files.
      */
     public static void main(String[] args) throws IllegalArgumentException, UncheckedIOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
 
         int expectedArgLength = 4;
         if (args.length != expectedArgLength) {
@@ -409,47 +403,40 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
         
         // generate expression call filter
-        Map<CallService.Attribute, Boolean> observedDataFilter = new HashMap<>();
+        EnumSet<CallService.Attribute> observedDataCombination = EnumSet.noneOf(CallService.Attribute.class);
         
         // update attributes, ordering attributes and observed data filter to add condition
         // parameters depending on this.param
         if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
             clnAttr.add(CallService.Attribute.ANAT_ENTITY_ID);
             clnAttr.add(CallService.Attribute.CELL_TYPE_ID);
-            observedDataFilter = ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT;
+            observedDataCombination.addAll(ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT
+                    .keySet().iterator().next());
             serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
             serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
         }
         if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
             clnAttr.add(CallService.Attribute.DEV_STAGE_ID);
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-            observedDataFilter.put(CallService.Attribute.DEV_STAGE_ID, true);
+            observedDataCombination.add(CallService.Attribute.DEV_STAGE_ID);
         }
         if (this.params.contains(CallService.Attribute.SEX_ID)) {
             clnAttr.add(CallService.Attribute.SEX_ID);
             serviceOrdering.put(CallService.OrderingAttribute.SEX_ID, Service.Direction.ASC);
-            observedDataFilter.put(CallService.Attribute.SEX_ID, true);
+            observedDataCombination.add(CallService.Attribute.SEX_ID);
         }
         if (this.params.contains(CallService.Attribute.STRAIN_ID)) {
             clnAttr.add(CallService.Attribute.STRAIN_ID);
             serviceOrdering.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
-            observedDataFilter.put(CallService.Attribute.STRAIN_ID, true);
+            observedDataCombination.add(CallService.Attribute.STRAIN_ID);
         }
-        
-        // if observed 
-        Boolean callObservedData = null;
-        if( observedDataFilter.keySet().containsAll(CallService.Attribute.getAllConditionParameters()) ) {
-            observedDataFilter = null;
-            callObservedData = true;
-        }
-        
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(observedDataCombination, true);
 
         log.debug(clnAttr);
-        log.debug(observedDataFilter);
-        log.debug(callObservedData);
+        log.debug(callObservedDataFilter);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                Collections.singleton(new GeneFilter(speciesId)), null, null,  callObservedData, 
-                observedDataFilter);
+                Collections.singleton(new GeneFilter(speciesId)), null, null, callObservedDataFilter);
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
                 callFilter, clnAttr, serviceOrdering)
@@ -530,7 +517,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             // ****************************
             // WRITE ROWS
             // ****************************
-            numberOfRows = this.writeRows(writersUsed, processors, headers, calls);
+            numberOfRows = this.writeRows(writersUsed, processors, headers, observedDataCombination, calls);
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;
@@ -670,69 +657,63 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
             if (!fileType.isSimpleFileType()) {
                 // *** Attributes specific to complete file ***
-                switch (header[i]) {
-                    case AFFYMETRIX_DATA_COLUMN_NAME:
-                    case EST_DATA_COLUMN_NAME:
-                    case IN_SITU_DATA_COLUMN_NAME:
-                    case RNASEQ_DATA_COLUMN_NAME:
-                    case FULL_LENGTH_DATA_COLUMN_NAME:
-                        processors[i] = new IsElementOf(expressionSummaries);
-                        break;
-                    case AFFYMETRIX_QUAL_COLUMN_NAME:
-                    case EST_QUAL_COLUMN_NAME:
-                    case IN_SITU_QUAL_COLUMN_NAME:
-                    case RNASEQ_QUAL_COLUMN_NAME:
-                    case FULL_LENGTH_QUAL_COLUMN_NAME:
-                        processors[i] = new IsElementOf(qualitySummaries);
-                        break;
-                    case AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                    case EST_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                    case IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                    case RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                    case FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                    case SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                    case DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
-                        break;
-                    case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
-                    case EST_OBSERVED_DATA_COLUMN_NAME:
-                    case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
-                    case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
-                    case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
-                    case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
-                        processors[i] = new IsElementOf(originValues);
-                        break;
-                    case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
-                    case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
-                    case AFFYMETRIX_WEIGHT_COLUMN_NAME:
-                    case AFFYMETRIX_FDR_COLUMN_NAME:
-                    case EST_EXPRESSION_SCORE_COLUMN_NAME:
-                    case EST_EXPRESSION_RANK_COLUMN_NAME:
-                    case EST_WEIGHT_COLUMN_NAME:
-                    case EST_FDR_COLUMN_NAME:
-                    case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
-                    case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
-                    case IN_SITU_WEIGHT_COLUMN_NAME:
-                    case IN_SITU_FDR_COLUMN_NAME:
-                    case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
-                    case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
-                    case RNASEQ_WEIGHT_COLUMN_NAME:
-                    case RNASEQ_FDR_COLUMN_NAME:
-                    case FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME:
-                    case FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME:
-                    case FULL_LENGTH_WEIGHT_COLUMN_NAME:
-                    case FULL_LENGTH_FDR_COLUMN_NAME:
-                        // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
-                        // It could be a Long if we didn't want exponential values
-                        // and if all columns had a score and a rank => not the case
-//                        processors[i] = new LMinMax(0, Long.MAX_VALUE);
-                        processors[i] = new StrNotNullOrEmpty();
-                        break;
+                if (header[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
+                        header[i].equals(EST_DATA_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_DATA_COLUMN_NAME)) {
+                    processors[i] = new IsElementOf(expressionSummaries);
+                } else if (header[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
+                        header[i].equals(EST_QUAL_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_QUAL_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_QUAL_COLUMN_NAME)) {
+                    processors[i] = new IsElementOf(qualitySummaries);
+                } else if (header[i].equals(AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(EST_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                        header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) {
+                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
+                } else if (header[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(EST_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME) ||
+                        header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
+                    processors[i] = new IsElementOf(originValues);
+                } else if (header[i].equals(AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(AFFYMETRIX_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(AFFYMETRIX_FDR_COLUMN_NAME) ||
+                        header[i].equals(EST_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(EST_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(EST_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(EST_FDR_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(IN_SITU_FDR_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(RNASEQ_FDR_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_WEIGHT_COLUMN_NAME) ||
+                        header[i].equals(FULL_LENGTH_FDR_COLUMN_NAME)) {
+                    // It is a String to be able to write values such as '3.32e4' and NA_VALUE.
+                    // It could be a Long if we didn't want exponential values
+                    // and if all columns had a score and a rank => not the case
+//                    processors[i] = new LMinMax(0, Long.MAX_VALUE);
+                    processors[i] = new StrNotNullOrEmpty();
                 }
             }
             if (processors[i] == null) {
@@ -872,7 +853,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.traceEntry("{}, {}", fileType, header);
         
         //to do a sanity check on species columns in simple files
-        Set<DataType> dataTypeFound = new HashSet<DataType>();
+        EnumSet<DataType> dataTypeFound = EnumSet.noneOf(DataType.class);
 
         String[] mapping = new String[header.length];
         for (int i = 0; i < header.length; i++) {
@@ -950,24 +931,20 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 // For that, we iterate all data types to retrieve the data.
                 int index = -1;
                 DataType dataType = null;
-                if (header[i].toLowerCase().contains(AFFYMETRIX_DATATYPE_NAME.toLowerCase())) {
-                    index = DATA_TYPE_ORDER.indexOf(DataType.AFFYMETRIX);
-                    dataType = DataType.AFFYMETRIX;
-                } else if (header[i].toLowerCase().contains(EST_DATATYPE_NAME.toLowerCase())) {
-                    index = DATA_TYPE_ORDER.indexOf(DataType.EST);
-                    dataType = DataType.EST;
-                } else if (header[i].toLowerCase().contains(IN_SITU_DATATYPE_NAME.toLowerCase())) {
-                    index = DATA_TYPE_ORDER.indexOf(DataType.IN_SITU);
-                    dataType = DataType.IN_SITU;
-                } else if (header[i].toLowerCase().contains(FULL_LENGTH_DATATYPE_NAME.toLowerCase())) {
-                    index = DATA_TYPE_ORDER.indexOf(DataType.FULL_LENGTH);
-                    dataType = DataType.FULL_LENGTH;
-                // needs to be after single cell otherwise single cell 
-                // will be map to bulk RNA-Seq
-                } else if (header[i].toLowerCase().contains(RNASEQ_DATATYPE_NAME.toLowerCase())) {
-                    index = DATA_TYPE_ORDER.indexOf(DataType.RNA_SEQ);
-                    dataType = DataType.RNA_SEQ;
-                } else {
+                DataType[] dataTypes = DataType.values();
+                for (int dtIndex = 0; dtIndex < dataTypes.length; dtIndex++) {
+                    DataType dt = dataTypes[dtIndex];
+                    if (header[i].toLowerCase().contains(dt.getStringRepresentation().toLowerCase()) &&
+                            //Need this check because the name of full-length includes the name
+                            //of RNA-Seq
+                            (!dt.equals(DataType.RNA_SEQ) || !header[i].toLowerCase().contains(
+                                    DataType.FULL_LENGTH.getStringRepresentation().toLowerCase()))) {
+                        index = dtIndex;
+                        dataType = dt;
+                        break;
+                    }
+                }
+                if (dataType == null) {
                     throw log.throwing(new IllegalArgumentException("Column does not correspond to "
                             + "any datatype."));
                 }
@@ -1016,10 +993,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             }
         }
         // Verify that we found all data types
-        assert fileType.isSimpleFileType() || dataTypeFound.containsAll(DATA_TYPE_ORDER) &&
-            DATA_TYPE_ORDER.containsAll(dataTypeFound):
+        assert fileType.isSimpleFileType() || dataTypeFound.containsAll(EnumSet.allOf(DataType.class)) &&
+        EnumSet.allOf(DataType.class).containsAll(dataTypeFound):
             "Some of data types were not found in the header: expected: "
-            + DATA_TYPE_ORDER + " - found: " + dataTypeFound;
+            + EnumSet.allOf(DataType.class) + " - found: " + dataTypeFound;
 
         return log.traceExit(mapping);
     }
@@ -1033,79 +1010,83 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                  whether each column should be quoted or not.
      */
     private boolean[] generateQuoteMode(String[] headers) {
-        log.entry((Object[]) headers);
+        log.traceEntry("{}", (Object[]) headers);
         
         boolean[] quoteMode = new boolean[headers.length];
         for (int i = 0; i < headers.length; i++) {
-            switch (headers[i]) {
-                case GENE_ID_COLUMN_NAME:
-                case ANAT_ENTITY_ID_COLUMN_NAME:
-                case STAGE_ID_COLUMN_NAME:
-                case CELL_TYPE_ID_COLUMN_NAME:
-                case SEX_COLUMN_NAME:
-                case STRAIN_COLUMN_NAME:
-                case EXPRESSION_COLUMN_NAME:
-                case QUALITY_COLUMN_NAME:
-                case EXPRESSION_RANK_COLUMN_NAME:
-                case EXPRESSION_SCORE_COLUMN_NAME:
-                case INCLUDING_OBSERVED_DATA_COLUMN_NAME:
-                case AFFYMETRIX_DATA_COLUMN_NAME:
-                case AFFYMETRIX_QUAL_COLUMN_NAME:
-                case AFFYMETRIX_FDR_COLUMN_NAME:
-                case AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME:
-                case AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME:
-                case AFFYMETRIX_WEIGHT_COLUMN_NAME:
-                case AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME:
-                case AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case EST_DATA_COLUMN_NAME:
-                case EST_QUAL_COLUMN_NAME:
-                case EST_FDR_COLUMN_NAME:
-                case EST_EXPRESSION_RANK_COLUMN_NAME:
-                case EST_EXPRESSION_SCORE_COLUMN_NAME:
-                case EST_WEIGHT_COLUMN_NAME:
-                case EST_OBSERVED_DATA_COLUMN_NAME:
-                case EST_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case IN_SITU_DATA_COLUMN_NAME:
-                case IN_SITU_QUAL_COLUMN_NAME:
-                case IN_SITU_FDR_COLUMN_NAME:
-                case IN_SITU_EXPRESSION_RANK_COLUMN_NAME:
-                case IN_SITU_EXPRESSION_SCORE_COLUMN_NAME:
-                case IN_SITU_WEIGHT_COLUMN_NAME:
-                case IN_SITU_OBSERVED_DATA_COLUMN_NAME:
-                case IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case RNASEQ_DATA_COLUMN_NAME:
-                case RNASEQ_QUAL_COLUMN_NAME:
-                case RNASEQ_FDR_COLUMN_NAME:
-                case RNASEQ_EXPRESSION_RANK_COLUMN_NAME:
-                case RNASEQ_EXPRESSION_SCORE_COLUMN_NAME:
-                case RNASEQ_WEIGHT_COLUMN_NAME:
-                case RNASEQ_OBSERVED_DATA_COLUMN_NAME:
-                case RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case FULL_LENGTH_DATA_COLUMN_NAME:
-                case FULL_LENGTH_QUAL_COLUMN_NAME:
-                case FULL_LENGTH_FDR_COLUMN_NAME:
-                case FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME:
-                case FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME:
-                case FULL_LENGTH_WEIGHT_COLUMN_NAME:
-                case FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME:
-                case FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case SELF_OBSERVATION_COUNT_COLUMN_NAME:
-                case DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME:
-                case FDR_COLUMN_NAME:
-                    quoteMode[i] = false; 
-                    break;
-                case GENE_NAME_COLUMN_NAME:
-                case ANAT_ENTITY_NAME_COLUMN_NAME:
-                case STAGE_NAME_COLUMN_NAME:
-                case CELL_TYPE_NAME_COLUMN_NAME:
-                    quoteMode[i] = true; 
-                    break;
-                default:
+            if (headers[i].equals(GENE_ID_COLUMN_NAME) ||
+                    headers[i].equals(ANAT_ENTITY_ID_COLUMN_NAME) ||
+                    headers[i].equals(STAGE_ID_COLUMN_NAME) ||
+                    headers[i].equals(CELL_TYPE_ID_COLUMN_NAME) ||
+                    headers[i].equals(SEX_COLUMN_NAME) ||
+                    headers[i].equals(STRAIN_COLUMN_NAME) ||
+                    headers[i].equals(EXPRESSION_COLUMN_NAME) ||
+                    headers[i].equals(QUALITY_COLUMN_NAME) ||
+                    headers[i].equals(EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_DATA_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_FDR_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(AFFYMETRIX_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+
+                    headers[i].equals(EST_DATA_COLUMN_NAME) ||
+                    headers[i].equals(EST_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(EST_FDR_COLUMN_NAME) ||
+                    headers[i].equals(EST_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(EST_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(EST_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(EST_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(EST_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(EST_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+
+                    headers[i].equals(IN_SITU_DATA_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_FDR_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(IN_SITU_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+
+                    headers[i].equals(RNASEQ_DATA_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_FDR_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(RNASEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+
+                    headers[i].equals(FULL_LENGTH_DATA_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_QUAL_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_FDR_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_WEIGHT_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+
+                    headers[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
+                    headers[i].equals(FDR_COLUMN_NAME)) {
+
+                quoteMode[i] = false; 
+            } else if (headers[i].equals(GENE_NAME_COLUMN_NAME) ||
+                        headers[i].equals(ANAT_ENTITY_NAME_COLUMN_NAME) ||
+                        headers[i].equals(STAGE_NAME_COLUMN_NAME) ||
+                        headers[i].equals(CELL_TYPE_NAME_COLUMN_NAME)) {
+
+                quoteMode[i] = true; 
+            } else {
                     throw log.throwing(new IllegalArgumentException(
                             "Unrecognized header: " + headers[i] + " for OMA TSV file."));
             }
@@ -1135,6 +1116,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      *                              corresponding to which type of file should be generated, the 
      *                              associated values being an {@code Array} of {@code String}s used 
      *                              to produce the header.
+     * @param condParamCombination  An {@code EnumSet} of {@code CallService.Attribute}s that are
+     *                              condition parameters representing the targeted combination.
      * @param calls                 A {@code Stream} of {@code ExpressionCall}s that are expression
      *                              calls to be written into files.
      * @return                      An {@code int} that is the addition of number of rows added to files.
@@ -1143,8 +1126,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     private int writeRows(Map<SingleSpExprFileType2, ICsvDozerBeanWriter> writersUsed, 
             Map<SingleSpExprFileType2, CellProcessor[]> processors, 
             Map<SingleSpExprFileType2, String[]> headers,
+            EnumSet<CallService.Attribute> condParamCombination,
             Stream<ExpressionCall> calls) throws UncheckedIOException {
-        log.traceEntry("{}, {}, {}, {}", writersUsed, processors, headers, calls);
+        log.traceEntry("{}, {}, {}, {}, {}", writersUsed, processors, headers, condParamCombination, calls);
 
         // We use an AtomicInteger instead of using .mapToInt(Integer::intValue).sum() on the stream 
         // to try to avoid memory problems
@@ -1192,17 +1176,14 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         throw new UncheckedIOException(e);
                     }
                 } else if (!writerFileType.getKey().isSimpleFileType()) {
-                    List<DataExprCounts> counts = new ArrayList<>();
-                    counts.add(getDataExprCountByDataType(c, DataType.AFFYMETRIX));
-                    counts.add(getDataExprCountByDataType(c, DataType.EST));
-                    counts.add(getDataExprCountByDataType(c, DataType.IN_SITU));
-                    counts.add(getDataExprCountByDataType(c, DataType.RNA_SEQ));
-                    counts.add(getDataExprCountByDataType(c, DataType.FULL_LENGTH));
+                    List<DataExprCounts> counts = EnumSet.allOf(DataType.class).stream()
+                            .map(dt -> getDataExprCountByDataType(c, dt, condParamCombination))
+                            .collect(Collectors.toList());
                     
-                    Long selfObservationCount = Long.valueOf(c.getCallData().stream()
-                            .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum));
-                    Long descendantObservationCount = Long.valueOf(c.getCallData().stream()
-                            .map(ExpressionCallData::getDescendantObservationCount).reduce(0, Integer::sum));
+                    Long selfObservationCount = Long.valueOf(c.getDataPropagation()
+                            .getSelfObservationCount(condParamCombination));
+                    Long descendantObservationCount = Long.valueOf(c.getDataPropagation()
+                            .getDescendantObservationCount(condParamCombination));
 
                     SingleSpeciesCompleteExprFileBean completeBean = new SingleSpeciesCompleteExprFileBean(
                             geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName,
@@ -1226,10 +1207,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * 
      * @param call      An {@code ExpressionCall} that is the expression call for which retrieve counts.
      * @param dataType  A {@code DataType} that is the data type allowing to filter counts to retrieve.
+     * @param condParamCombination  An {@code EnumSet} of {@code CallService.Attribute}s that are
+     *                              condition parameters representing the targeted combination.
      * @return          A {@code DataExprCounts} that is the counts from {@code call} for {@code dataType}.
      */
-    private DataExprCounts getDataExprCountByDataType(ExpressionCall call, DataType dataType) {
-        log.traceEntry("{}, {}", call, dataType);
+    private DataExprCounts getDataExprCountByDataType(ExpressionCall call, DataType dataType,
+            EnumSet<CallService.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}, {}", call, dataType, condParamCombination);
 
         ExpressionCall callFromDataType = CallService.deriveCallForDataType(call, dataType);
         
@@ -1244,10 +1228,10 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     callFromDataType.getFirstPValue() == null ? NA_VALUE : callFromDataType.getFirstPValue()
                             .getFormatedFDRPValue(),
                     convertObservedDataToString(true),
-                    Long.valueOf(callFromDataType.getCallData().stream()
-                            .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum)),
-                    Long.valueOf(callFromDataType.getCallData().stream()
-                            .map(ExpressionCallData::getDescendantObservationCount).reduce(0, Integer::sum)),
+                    Long.valueOf(callFromDataType.getDataPropagation()
+                            .getSelfObservationCount(condParamCombination)),
+                    Long.valueOf(callFromDataType.getDataPropagation()
+                            .getDescendantObservationCount(condParamCombination)),
                     callFromDataType.getMeanRank() == null ? NA_VALUE : callFromDataType.getFormattedMeanRank(),
                     callFromDataType.getExpressionScore() == null ? NA_VALUE : callFromDataType.getFormattedExpressionScore(),
                     data.getWeightForMeanRank() == null ? NA_VALUE : data.getWeightForMeanRank().toPlainString()));

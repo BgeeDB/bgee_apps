@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -201,13 +202,13 @@ public class CommandRPackage extends CommandParent {
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, this.checkAndGetSummaryQuality());
         // retrieve calls for 
-        Map<CallService.Attribute, Boolean> observedDataFilter = new HashMap<>();
-        observedDataFilter.put(CallService.Attribute.ANAT_ENTITY_ID, true);
+        Map<EnumSet<CallService.Attribute>, Boolean> observedDataFilter = new HashMap<>();
+        observedDataFilter.put(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID), true);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(geneFilter),
                 conditionFilter, dataTypes,
                 //for now, we always include substages when stages requested, and never include substructures
-                null, observedDataFilter);
+                observedDataFilter);
 
 
         //****************************************

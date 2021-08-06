@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -714,7 +715,7 @@ public class GenerateRankFile {
             return log.traceExit(service.loadExpressionCalls(
                     new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
                             Collections.singleton(new GeneFilter(speciesId)), null, dataTypeFilters,
-                            null, ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
+                            ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT),
                     //service ordering is null because we need to retrieve highest rank for bronze organ-stage calls
                     //before sorting by rank
                     attrs, null));
@@ -723,13 +724,14 @@ public class GenerateRankFile {
         // Now, we manage the retrieving of calls by considering anatEntity and devStage
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         attrs.add(CallService.Attribute.DEV_STAGE_ID);
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
+                CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.DEV_STAGE_ID), true);
         return log.traceExit(service.loadExpressionCalls(
                 new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
                         Collections.singleton(new GeneFilter(speciesId)),
-                        null, dataTypeFilters, null,
-                        EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
-                                CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.DEV_STAGE_ID)
-                        .stream().collect(Collectors.toMap(a -> a, a -> true))),
+                        null, dataTypeFilters,
+                        callObservedDataFilter),
                 attrs,
                 serviceOrdering));
 

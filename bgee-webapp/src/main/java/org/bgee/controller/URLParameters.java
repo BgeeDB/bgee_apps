@@ -466,15 +466,6 @@ public class URLParameters {
             false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
             1000000, DEFAULT_LIST_FORMAT, String.class);
     
-    /**
-     * A {@code Parameter<String>} that contains the dev. stage IDs to be used 
-     * for retrieval of propagated (parents or descendants) dev. stage IDs.
-     * Corresponds to the URL parameter "ds_list".
-     */
-    private static final Parameter<String> DEV_STAGE_LIST = new Parameter<>("ds_list",
-            false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
-            1000000, DEFAULT_LIST_FORMAT, String.class);
-    
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
 //     * an ontology should be displayed. (and not only structures with the parent manually
@@ -533,7 +524,6 @@ public class URLParameters {
             // Anat. similarity analyze params
             ANAT_ENTITY_LIST,
             // propagated ontology terms request
-            DEV_STAGE_LIST,
             PROPAGATION,
             // Expression comparison request
             GENE_LIST,
@@ -887,13 +877,7 @@ public class URLParameters {
     public Parameter<String> getParamAnatEntityList() {
         return ANAT_ENTITY_LIST;
     }
-    /**
-     * @return  A {@code Parameter<String>} defining a dev. stage ID list.
-     *          Corresponds to the URL parameter "ds_list".
-     */
-    public Parameter<String> getParamDevStageList() {
-        return DEV_STAGE_LIST;
-    }
+
     /**
      * @return  A {@code Parameter<String>} defining a propagation.
      *          Corresponds to the URL parameter "propagation".

@@ -36,6 +36,7 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
+import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
@@ -143,10 +144,12 @@ public class CommandRPackage extends CommandParent {
                     this.requestParameters.getAction())) { 
 
                 this.processGetAllSpecies();
-            } else if ("get_propagation".equals(
+            } else if ("get_propagation_anat_entity".equals(
                     this.requestParameters.getAction())) { 
-
-                this.processPropagation();
+                this.processPropagationAnatEntity();
+            } else if ("get_propagation_dev_stage".equals(
+                    this.requestParameters.getAction())) { 
+                this.processPropagationDevStage();
             } else {
                 throw log.throwing(new PageNotFoundException("Incorrect " + 
                         this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -386,7 +389,95 @@ public class CommandRPackage extends CommandParent {
         log.traceExit();
     }
     
-    private void processPropagation() throws IOException {
+    private void processPropagationAnatEntity() throws IOException {
+        log.traceEntry();
+        
+        OntologyService ontoService = this.serviceFactory.getOntologyService();
+        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
+        ErrorDisplay errorDisplay = this.viewFactory.getErrorDisplay();
+
+        //****************************************
+        // Retrieve and filter request parameters
+        //****************************************
+
+        final Integer speciesId = this.requestParameters.getSpeciesId();
+        final List<String> anatEntityIds   = this.requestParameters
+                .getValues(this.requestParameters.getUrlParametersInstance().getParamAttributeList());
+        String propagation = this.requestParameters.getPropagation();
+        
+        if(propagation == null) {
+            propagation = DESCENDANT_PARAM;
+        } else if ( !(propagation.equals(DESCENDANT_PARAM) || propagation.equals(ANCESTOR_PARAM) || 
+                propagation.equals(LEAST_COMMON_ANCESTOR_PARAM)) ) {
+            errorDisplay.displayControllerException(new InvalidRequestException("propagation can only be " + 
+                    DESCENDANT_PARAM + ", " + ANCESTOR_PARAM + " or " + LEAST_COMMON_ANCESTOR_PARAM));
+            log.traceExit();
+            return;
+        }
+       
+        Boolean descendant = propagation.equals(DESCENDANT_PARAM) ? true : false;
+        Boolean ancestor = propagation.equals(ANCESTOR_PARAM) || 
+                propagation.equals(LEAST_COMMON_ANCESTOR_PARAM) ? true : false;
+        if (anatEntityIds == null || anatEntityIds.isEmpty()) {
+            errorDisplay.displayControllerException(new InvalidRequestException("At least one " +
+                    "anatomical entity ID should be provided"));
+            log.traceExit();
+            return;
+        }
+        
+        Ontology<AnatEntity, String> anatEntityOntology = ontoService
+                .getAnatEntityOntology(speciesId, anatEntityIds, Arrays.asList(RelationType.ISA_PARTOF), 
+                        ancestor, descendant);
+        
+        Set<AnatEntity> anatEntities = anatEntityIds.stream()
+                .map(s -> anatEntityOntology.getElement(s))
+                .collect(Collectors.toSet());
+        if(anatEntities == null || anatEntities.isEmpty()) {
+            errorDisplay.displayControllerException(new InvalidRequestException("provided "
+                    + "anatomical entities are not part of the anatomical entity ontology"));
+            log.traceExit();
+            return;
+        }
+        
+        Set<AnatEntity> propagatedAnatEntityIds = null;
+        
+        //retrieve descendants of provided anatomical entities
+        if (propagation.equals(DESCENDANT_PARAM)) {
+            propagatedAnatEntityIds = anatEntities.stream()
+            .map(s -> anatEntityOntology.getDescendants(s))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+            
+        //retrieve ancestors of provided anatomical entities
+        } else if (propagation.equals(ANCESTOR_PARAM)) {
+            propagatedAnatEntityIds = anatEntities.stream()
+            .map(s -> anatEntityOntology.getAncestors(s))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+        
+        //retrieve least common ancestor of provided anatomical entities
+        } else if (propagation.equals(LEAST_COMMON_ANCESTOR_PARAM)) {
+            if(anatEntities.size() < 2) {
+                errorDisplay.displayControllerException(new InvalidRequestException("at least 2 "
+                        + "ontology terms should be provided to retrieve least common ancestor"));
+                log.traceExit();
+                return;
+            }
+            propagatedAnatEntityIds = anatEntityOntology
+                    .getLeastCommonAncestors(anatEntities, null).stream()
+                    .collect(Collectors.toSet());
+        }
+        
+        // attributes used to generate the tsv file
+        List<String> requestedAttrs = new ArrayList<>();
+        requestedAttrs.add(PROPAGATION_ID_PARAM);
+        requestedAttrs.add(PROPAGATION_NAME_PARAM);
+        requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
+        
+        display.displayAnatEntityPropagation(requestedAttrs, propagatedAnatEntityIds);
+    }
+    
+    private void processPropagationDevStage() throws IOException {
         log.traceEntry();
         
         //SpeciesService spService = this.serviceFactory.getSpeciesService();
@@ -399,21 +490,16 @@ public class CommandRPackage extends CommandParent {
         //****************************************
         //TODO : add getOntology (devStage, AE, sex strain)
         //       add propagation (descendant, parent)
-        final Integer speciesId = this.requestParameters.getSpeciesId();
-        final List<String> stageIds   = this.requestParameters.getDevStageList();
-        final List<String> anatEntityIds   = this.requestParameters.getAnatEntityList();
+        final List<Integer> speciesIds = this.requestParameters.getSpeciesList();
+        final List<String> devStageIds   = this.requestParameters
+                .getValues(this.requestParameters.getUrlParametersInstance().getParamAttributeList());
         String propagation = this.requestParameters.getPropagation();
         
-        List<String> requestedAttrs = this.requestParameters.getValues(
-                this.requestParameters.getUrlParametersInstance().getParamAttributeList());
-        if(requestedAttrs == null){
-            requestedAttrs = new ArrayList<>();
-        }
-        if(requestedAttrs.isEmpty()){
-            requestedAttrs.add(PROPAGATION_ID_PARAM);
-            requestedAttrs.add(PROPAGATION_NAME_PARAM);
-            requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
-        }
+        // attributes used to generate the tsv file
+        List<String> requestedAttrs = new ArrayList<>();
+        requestedAttrs.add(PROPAGATION_ID_PARAM);
+        requestedAttrs.add(PROPAGATION_NAME_PARAM);
+        requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
         
         if(propagation == null) {
             propagation = DESCENDANT_PARAM;
@@ -427,29 +513,21 @@ public class CommandRPackage extends CommandParent {
         Boolean descendant = propagation.equals(DESCENDANT_PARAM) ? true : false;
         Boolean ancestor = propagation.equals(ANCESTOR_PARAM) || 
                 propagation.equals(LEAST_COMMON_ANCESTOR_PARAM) ? true : false;
-        if( (stageIds == null || stageIds.isEmpty()) && 
-                (anatEntityIds == null || anatEntityIds.isEmpty())) {
+        if (devStageIds == null || devStageIds.isEmpty()) {
             errorDisplay.displayControllerException(new InvalidRequestException("At least one dev. "
-                    + "stage ID or one anatomical entity ID should be provided"));
-        } else if( (stageIds != null && !stageIds.isEmpty()) && 
-                (anatEntityIds != null && !anatEntityIds.isEmpty())) {
-            errorDisplay.displayControllerException(new InvalidRequestException("Only available "
-                    + "for anat. entity OR dev. stage. Can not propagate for both conditions at "
-                    + "the same time"));
+                    + "stage ID should be provided"));
             log.traceExit();
             return;
         }
-
         //****************************************
         // Perform query and display results
         //****************************************
         
         // retrieve data for developmental stage IDs
-        if (stageIds != null && !stageIds.isEmpty()) {
-            Ontology<DevStage, String> devStageOntology = ontoService
-                    .getDevStageOntology(speciesId, stageIds, ancestor, descendant);
+            MultiSpeciesOntology<DevStage, String> devStageOntology = ontoService
+                    .getDevStageOntology(speciesIds, devStageIds, ancestor, descendant);
             
-            Set<DevStage> devStages = stageIds.stream()
+            Set<DevStage> devStages = devStageIds.stream()
                     .map(s -> devStageOntology.getElement(s))
                     .collect(Collectors.toSet());
             if(devStages == null || devStages.isEmpty()) {
@@ -489,51 +567,7 @@ public class CommandRPackage extends CommandParent {
             display.displayDevStagePropagation(requestedAttrs, propagatedStageIds);
             
         // retrieve data for anatomical entity IDs
-        } else if (anatEntityIds != null && !anatEntityIds.isEmpty()) {
-            Ontology<AnatEntity, String> anatEntityOntology = ontoService
-                    .getAnatEntityOntology(speciesId, anatEntityIds, Collections.singleton(RelationType.ISA_PARTOF), 
-                            ancestor, descendant);
-            
-            Set<AnatEntity> anatEntities = anatEntityIds.stream()
-                    .map(s -> anatEntityOntology.getElement(s))
-                    .collect(Collectors.toSet());
-            if(anatEntities == null || anatEntities.isEmpty()) {
-                errorDisplay.displayControllerException(new InvalidRequestException("provided "
-                        + "anatomical entities are not part of the anatomical entity ontology"));
-                log.traceExit();
-                return;
-            }
-            
-            Set<AnatEntity> propagatedAnatEntityIds = null;
-            
-            //retrieve descendants of provided anatomical entities
-            if (propagation.equals(DESCENDANT_PARAM)) {
-                propagatedAnatEntityIds = anatEntities.stream()
-                .map(s -> anatEntityOntology.getDescendants(s))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
-                
-            //retrieve ancestors of provided anatomical entities
-            } else if (propagation.equals(ANCESTOR_PARAM)) {
-                propagatedAnatEntityIds = anatEntities.stream()
-                .map(s -> anatEntityOntology.getAncestors(s))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
-            
-            //retrieve least common ancestor of provided anatomical entities
-            } else if (propagation.equals(LEAST_COMMON_ANCESTOR_PARAM)) {
-                if(anatEntities.size() < 2) {
-                    errorDisplay.displayControllerException(new InvalidRequestException("at least 2 "
-                            + "ontology terms should be provided to retrieve least common ancestor"));
-                    log.traceExit();
-                    return;
-                }
-                propagatedAnatEntityIds = anatEntityOntology
-                        .getLeastCommonAncestors(anatEntities, null).stream()
-                        .collect(Collectors.toSet());
-            }
-            display.displayAnatEntityPropagation(requestedAttrs, propagatedAnatEntityIds);
-        }
+        
             
         
         log.traceExit();

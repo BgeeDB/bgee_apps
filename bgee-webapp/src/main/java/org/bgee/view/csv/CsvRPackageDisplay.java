@@ -293,7 +293,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
         try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
             this.startDisplay();
             mapWriter.writeHeader(header);
-            propagatedAnatEntities.stream().sorted().forEach(e -> {
+            propagatedAnatEntities.stream().forEach(e -> {
                 final Map<String, Object> speMap = new HashMap<String, Object>();
                 for (int columnNumber = 0; columnNumber < header.length; columnNumber++) {
                     switch (header[columnNumber]) {

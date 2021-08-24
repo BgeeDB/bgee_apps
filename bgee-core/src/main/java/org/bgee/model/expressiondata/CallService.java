@@ -2181,13 +2181,13 @@ public class CallService extends CommonService {
     private static DataPropagation computeDataPropagation(Set<ExpressionCallData> callData) {
         log.traceEntry("{}", callData);
 
-        if (callData == null || callData.isEmpty() || callData.stream()
-                .anyMatch(cd -> cd.getDataPropagation() == null)) {
+        if (callData == null || callData.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "Missing info for inferring data propagation. CallData: " + callData));
         }
 
         return log.traceExit(mergeDataPropagations(callData.stream()
+                .filter(cd -> cd.getDataPropagation() != null)
                 .map(cd -> cd.getDataPropagation())
                 .collect(Collectors.toSet())));
     }

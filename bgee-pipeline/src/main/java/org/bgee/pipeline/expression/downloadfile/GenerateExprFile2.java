@@ -391,7 +391,6 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         // We retrieve calls with all attributes that are not condition parameters.
         Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
                 .filter(a -> !a.isConditionParameter())
-                .filter(a -> !a.equals(Attribute.OBSERVED_DATA))
                 //we also don't want the qualitative expression levels
                 .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
                         !a.equals(Attribute.GENE_QUAL_EXPR_LEVEL))

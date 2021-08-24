@@ -56,7 +56,6 @@ implements GlobalExpressionCallDAO {
     private final static String GLOBAL_MEAN_RANK_FIELD = "meanRank";
     private final static String GLOBAL_P_VALUE_FIELD_START = "pVal";
     private final static String GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START = "pValBestDescendant";
-    private final static String GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START = "gCIdPValBD";
     private final static String GLOBAL_SELF_OBS_COUNT_PREFIX = "selfObsCount";
     private final static String GLOBAL_DESCENDANT_OBS_COUNT_PREFIX = "descObsCount";
 
@@ -145,9 +144,6 @@ implements GlobalExpressionCallDAO {
 
             case FDR_P_VALUE_DESCENDANT_COND_INFO:
                 return GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START
-                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes())
-                        + ", "
-                        + GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START
                         + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
 
             case DATA_TYPE_OBSERVATION_COUNT_INFO:
@@ -1162,7 +1158,6 @@ implements GlobalExpressionCallDAO {
 
                         conditionId = currentResultSet.getInt(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
                     } else if (colName.startsWith(GLOBAL_MEAN_RANK_FIELD)) {
-
                         BigDecimal rank = currentResultSet.getBigDecimal(colName);
                         //the rank should never be null
                         assert rank != null;
@@ -1174,16 +1169,6 @@ implements GlobalExpressionCallDAO {
 
                         Integer descendantConditionId = null;
                         EnumSet<DAODataType> dataTypesUsedInField = getDataTypesFromFieldName(colName);
-                        String condFieldName = GLOBAL_COND_BEST_DESCENDANT_P_VALUE_FIELD_START +
-                                getFieldNamePartFromDataTypes(dataTypesUsedInField);
-                        if (this.getColumnLabels().values().contains(condFieldName)) {
-                            int readDescendantConditionId = currentResultSet.getInt(condFieldName);
-                            // As getInt() returns 0 if the value is SQL NULL, 
-                            // we need to check if the column read had a value of SQL NULL
-                            if (!currentResultSet.wasNull()) {
-                                descendantConditionId = readDescendantConditionId;
-                            }
-                        }
                         BigDecimal pVal = currentResultSet.getBigDecimal(colName);
                         if (pVal != null) {
                             bestDescendantPValues.add(new DAOFDRPValue(pVal, descendantConditionId,

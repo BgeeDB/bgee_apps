@@ -27,6 +27,8 @@ import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.io.ICsvMapWriter;
+import org.supercsv.prefs.CsvPreference;
+import org.supercsv.quote.AlwaysQuoteMode;
 
 //XXX: javadoc, author, date
 public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisplay {
@@ -290,7 +292,8 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     public void displayAnatEntityPropagation(List<String> attrs, Set<AnatEntity> propagatedAnatEntities) {
         log.traceEntry("{}, {}", attrs, propagatedAnatEntities);
         String[] header = attrs.toArray(new String[attrs.size()]);
-        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
+        final CsvPreference quotes_pref = new CsvPreference.Builder(this.csvPref).useQuoteMode(new AlwaysQuoteMode()).build();
+        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), quotes_pref)) {
             this.startDisplay();
             mapWriter.writeHeader(header);
             propagatedAnatEntities.stream().forEach(e -> {
@@ -328,7 +331,8 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     public void displayDevStagePropagation(List<String> attrs, Set<DevStage> propagatedDevStages) {
         log.traceEntry("{}, {}", attrs, propagatedDevStages);
         String[] header = attrs.toArray(new String[attrs.size()]);
-        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), this.csvPref)) {
+        final CsvPreference quotes_pref = new CsvPreference.Builder(this.csvPref).useQuoteMode(new AlwaysQuoteMode()).build();
+        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(),quotes_pref)) {
             this.startDisplay();
             mapWriter.writeHeader(header);
             propagatedDevStages.stream().sorted().forEach(e -> {

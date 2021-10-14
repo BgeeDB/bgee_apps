@@ -26,7 +26,6 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.species.Species;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -52,17 +51,17 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
-    	LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
-    	resultHashMap.put("query", searchTerm);
-    	resultHashMap.put("result", getSearchResultTable(result.getGeneMatches(), searchTerm));
-    	this.sendResponse("General information, expression calls and cross-references of the requested gene",
+        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
+        resultHashMap.put("query", searchTerm);
+        resultHashMap.put("result", getSearchResultTable(result.getGeneMatches(), searchTerm));
+        this.sendResponse("General information, expression calls and cross-references of the requested gene",
                 resultHashMap);
-    	
+        
     }
 
     @Override
     public void displayGene(GeneResponse geneResponse) {
-        log.entry(geneResponse);
+        log.traceEntry("{}", geneResponse);
 
         // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
         LinkedHashMap<String, Object> JSONHashMap = new LinkedHashMap<String, Object>();
@@ -77,7 +76,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         ArrayList<LinkedHashMap<String, Object>> anatEntitiesList = 
                 new ArrayList<LinkedHashMap<String, Object>>(); 
         // for each anatomical entity
-        geneResponse.getCallsByAnatEntity().forEach((anat, calls) -> {
+        geneResponse.getCallsByOrganCall().forEach((anat, calls) -> {
             ArrayList<LinkedHashMap<String, Object>> developmentalStages = 
                     new ArrayList<LinkedHashMap<String, Object>>();
 
@@ -104,14 +103,15 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
             }
             LinkedHashMap<String, Object> anatEntitieHashMap = new LinkedHashMap<String, Object>();
-            anatEntitieHashMap.put("id", anat.getId());
-            anatEntitieHashMap.put("name", anat.getName());
-            // The min rank and highest expression score of all dev. stages is used at anat. entity 
-            // level
-            anatEntitieHashMap.put("rank", calls.get(0).getMeanRank());
-            anatEntitieHashMap.put("score", calls.get(0).getExpressionScore());
-            anatEntitieHashMap.put("devStages", developmentalStages);
-            anatEntitiesList.add(anatEntitieHashMap);
+            //TODO: to adapt to new code
+//            anatEntitieHashMap.put("id", anat.getId());
+//            anatEntitieHashMap.put("name", anat.getName());
+//            // The min rank and highest expression score of all dev. stages is used at anat. entity 
+//            // level
+//            anatEntitieHashMap.put("rank", calls.get(0).getMeanRank());
+//            anatEntitieHashMap.put("score", calls.get(0).getExpressionScore());
+//            anatEntitieHashMap.put("devStages", developmentalStages);
+//            anatEntitiesList.add(anatEntitieHashMap);
 
         });
 
@@ -132,28 +132,28 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
 
     private static List<Boolean> getDataTypeSpans(Collection<ExpressionCallData> callData) {
-        log.entry(callData);
+        log.traceEntry("{}", callData);
         final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
         log.debug(callsByDataTypes);
 
-        return log.exit(EnumSet.allOf(DataType.class).stream().map(type -> {
+        return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
             return getDataSpan(type, callsByDataTypes.containsKey(type));
         }).collect(Collectors.toList()));
     }
 
     private static Boolean getDataSpan(DataType type, boolean hasData) {
-        log.entry(hasData, type);
+        log.traceEntry("{}, {}", hasData, type);
 
         boolean presence = false;
         if (hasData) {
             presence = true;
         }
-        return log.exit(presence);
+        return log.traceExit(presence);
     }
 
     private LinkedHashMap<String, LinkedHashMap<String, String>> getXRefDisplay(Set<XRef> xRefs) {
-        log.entry(xRefs);
+        log.traceEntry("{}", xRefs);
 
         LinkedHashMap<String, LinkedHashMap<String, String>> xRefsBySource = new ArrayList<>(xRefs).stream()
                 .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl())).sorted(X_REF_COMPARATOR)
@@ -167,17 +167,17 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
 
     protected String urlEncode(String stringToWrite) {
-        log.entry(stringToWrite);
+        log.traceEntry("{}", stringToWrite);
         try {
-            return log.exit(java.net.URLEncoder.encode(stringToWrite, "UTF-8"));
+            return log.traceExit(java.net.URLEncoder.encode(stringToWrite, "UTF-8"));
         } catch (Exception e) {
             log.catching(e);
-            return log.exit("");
+            return log.traceExit("");
         }
     }
     
     private ArrayList<LinkedHashMap<String, String>> getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
-        log.entry(geneMatches, searchTerm);
+        log.traceEntry("{}, {}", geneMatches, searchTerm);
 
         ArrayList<LinkedHashMap<String, String>> searchResultArrayList = new ArrayList<LinkedHashMap<String, String>>(); 
                 
@@ -195,16 +195,13 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
     
     private String getMatch(GeneMatch geneMatch, String searchTerm) {
-        log.entry(geneMatch, searchTerm);
+        log.traceEntry("{}, {}", geneMatch, searchTerm);
         
         if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
-            return log.exit("no exact match");
+            return log.traceExit("no exact match");
         }
 
-        return log.exit(geneMatch.getMatch() +
+        return log.traceExit(geneMatch.getMatch() +
                 " (" + geneMatch.getMatchSource().toString().toLowerCase() + ")");
     }
-
-    
-
 }

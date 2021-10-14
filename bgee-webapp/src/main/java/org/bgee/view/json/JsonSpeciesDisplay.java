@@ -19,7 +19,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -68,9 +67,9 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
 
     @Override
     public void displaySpeciesHomePage(List<Species> speciesList) {
-    	
-    	log.debug("hello world");
-    	ArrayList<LinkedHashMap<String, String>> speciesHomePageList = new ArrayList<LinkedHashMap<String, String>>();
+        
+        log.debug("hello world");
+        ArrayList<LinkedHashMap<String, String>> speciesHomePageList = new ArrayList<LinkedHashMap<String, String>>();
         speciesList.forEach((currentSpecies) -> {
             LinkedHashMap<String, String> speciesInfo = new LinkedHashMap<String, String>();
             speciesInfo.put("id", String.valueOf(currentSpecies.getId()));
@@ -87,7 +86,7 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
 
     @Override
     public void sendSpeciesResponse(List<Species> species) {
-        log.entry(species);
+        log.traceEntry("{}", species);
         
         LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
         data.put(this.getRequestParameters().getUrlParametersInstance()
@@ -100,21 +99,21 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
 
     @Override
     public void displaySpecies(Species species, SpeciesDataGroup speciesDataGroup) {
-    	
+        
         // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
         LinkedHashMap<String, Object> JSONHashMap = new LinkedHashMap<String, Object>();
         
-    	//LinkedHashMap containing General information:
+        //LinkedHashMap containing General information:
         LinkedHashMap<String, String> generalInformation = new LinkedHashMap<String, String>();
-    	generalInformation.put("scientificName", species.getScientificName());
-    	generalInformation.put("commonName", species.getName());
-    	generalInformation.put("speciesID", String.valueOf(species.getId()));
-    	generalInformation.put("taxonomyURL", getSpeciesIdURL(species));
-    	generalInformation.put("genomeSource", species.getGenomeSource().getName());
-    	generalInformation.put("genomeSourceUrl", getSpeciesGenomeSourceURL(species));
-    	generalInformation.put("Genome version", species.getGenomeVersion());
+        generalInformation.put("scientificName", species.getScientificName());
+        generalInformation.put("commonName", species.getName());
+        generalInformation.put("speciesID", String.valueOf(species.getId()));
+        generalInformation.put("taxonomyURL", getSpeciesIdURL(species));
+        generalInformation.put("genomeSource", species.getGenomeSource().getName());
+        generalInformation.put("genomeSourceUrl", getSpeciesGenomeSourceURL(species));
+        generalInformation.put("Genome version", species.getGenomeVersion());
         
-    	//LinkedHashMap containing Gene expression call files
+        //LinkedHashMap containing Gene expression call files
         LinkedHashMap<String, String> geneExpressionCallFiles = new LinkedHashMap<String, String>();
         Set<CallService.Attribute> condParam = Collections.singleton(CallService.Attribute.ANAT_ENTITY_ID);
         Optional<DownloadFile> fileExpr = this.getCallFile(speciesDataGroup, EXPR_CALLS_SIMPLE, condParam);
@@ -130,7 +129,7 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
         
 
 
-    	//LinkedHashMap containing Processed expression value files
+        //LinkedHashMap containing Processed expression value files
         LinkedHashMap<String, String> processedExpressionValueFiles = new LinkedHashMap<String, String>();
         Optional<DownloadFile> filePro = speciesDataGroup.getDownloadFiles().stream()
                 .filter(f -> AFFY_ANNOT.equals(f.getCategory())).findFirst();
@@ -158,36 +157,34 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
     }
     
     private String getSpeciesIdURL(Species species){
-    	final String speciesIdUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&amp;id=" + String.valueOf(species.getId());
-    	return speciesIdUrl;
-    	
+        final String speciesIdUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&amp;id=" + String.valueOf(species.getId());
+        return speciesIdUrl;
+        
     }
     
     private String getSpeciesGenomeSourceURL(Species species){
-    	final String speciesSourceURL = species.getGenomeSource().getBaseUrl() + species.getScientificName().replace(" ", "_");
-    	return speciesSourceURL;
+        final String speciesSourceURL = species.getGenomeSource().getBaseUrl() + species.getScientificName().replace(" ", "_");
+        return speciesSourceURL;
 
     }
     
     private Optional<DownloadFile> getCallFile(SpeciesDataGroup speciesDataGroup, CategoryEnum category,
             Set<CallService.Attribute> attrs) {
-	log.entry(speciesDataGroup, category, attrs);
-	
-	return log.exit(speciesDataGroup.getDownloadFiles().stream()
-	.filter(f -> category.equals(f.getCategory()))
-	.filter(f -> attrs.equals(f.getConditionParameters()))
-	.findFirst());
-	}
+        log.traceEntry("{}, {}, {}", speciesDataGroup, category, attrs);
+    
+        return log.traceExit(speciesDataGroup.getDownloadFiles().stream()
+                .filter(f -> category.equals(f.getCategory()))
+                .filter(f -> attrs.equals(f.getConditionParameters()))
+                .findFirst());
+    }
     
     private String getFileLi(Optional<DownloadFile> file) {
-        log.entry(file);
+        log.traceEntry("{}", file);
         
         if (file.isPresent()) {
             DownloadFile downloadFile = file.get();
-            return log.exit(this.prop.getDownloadRootDirectory() + downloadFile.getPath());
+            return log.traceExit(this.prop.getDownloadRootDirectory() + downloadFile.getPath());
         }
-        return log.exit("");
+        return log.traceExit("");
     }
-    
-    
 }

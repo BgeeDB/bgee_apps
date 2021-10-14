@@ -6,7 +6,7 @@
     <groupId>org.bgee</groupId>
     <artifactId>bgee-applications</artifactId>
     <packaging>pom</packaging>
-    <version>15</version>
+    <version>14</version>
     <name>Bgee</name>
     <url>https://bgee.org/</url>
     <description>Bgee allows to automatically compare gene expression patterns between species, by referencing expression data on anatomical ontologies, and designing homology relationships between them.</description>

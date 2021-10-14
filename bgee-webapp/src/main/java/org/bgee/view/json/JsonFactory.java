@@ -100,9 +100,11 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-	public GeneDisplay getGeneDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-	}
+	public GeneDisplay getGeneDisplay()  throws IOException{
+		log.entry();
+        return log.exit(new JsonGeneDisplay(this.response, this.requestParameters, this.prop,
+        		this.jsonHelper, this));
+    }
 
     @Override
     public ExpressionComparisonDisplay getExpressionComparisonDisplay() {

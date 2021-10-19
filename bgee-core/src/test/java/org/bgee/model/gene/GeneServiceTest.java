@@ -150,11 +150,11 @@ public class GeneServiceTest extends TestAncestor {
                         new GeneTO(4, "ID4", "Name4", null, 1, 1, null, null, 1)));
         when(geneDao.getGenesByBgeeIds(bgeeGeneIds)).thenReturn(mockGeneRs1);
 
-        // Mock the GeneDAO response from ensembl ids
+        // Mock the GeneDAO response from IDs
         GeneTOResultSet mockGeneRs2 = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1),
                         new GeneTO(11, "ID1", "Name1b", null, 2, 1, null, null, 1)));
-        when(geneDao.getGenesByEnsemblGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
+        when(geneDao.getGenesByGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
                 .thenReturn(mockGeneRs2);
 
         when(geneDao.getGeneBioTypes()).thenAnswer(
@@ -187,7 +187,7 @@ public class GeneServiceTest extends TestAncestor {
      * Test {@link GeneService#loadGeneById(String)}.
      */
     @Test
-    public void shouldLoadGeneByEnsemblId() {
+    public void shouldLoadGeneById() {
         // Initialize mock
         int bgeeGeneId = 1;
         String geneId = "ID1";
@@ -223,7 +223,7 @@ public class GeneServiceTest extends TestAncestor {
         // Mock gene DAO
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1)));
-        when(geneDao.getGenesByEnsemblGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
+        when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
 
         // Mock species service
         Set<Integer> speciesId = new HashSet<>(Arrays.asList(10090));
@@ -238,7 +238,7 @@ public class GeneServiceTest extends TestAncestor {
         GeneService service = new GeneService(serviceFactory);
 
         assertEquals("Incorrect gene", new HashSet<>(Arrays.asList(expectedGene)),
-                service.loadGenesByEnsemblId(geneId));
+                service.loadGenesById(geneId));
     }
 
 }

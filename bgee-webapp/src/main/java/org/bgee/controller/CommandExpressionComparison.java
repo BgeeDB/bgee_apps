@@ -61,12 +61,12 @@ public class CommandExpressionComparison extends CommandParent {
             log.traceExit(); return;
         }
         if (userGeneList.size() == 1) {
-            display.displayExpressionComparison("At least two Ensembl IDs should be provided.");
+            display.displayExpressionComparison("At least two IDs should be provided.");
             log.traceExit(); return;
         }
 
         SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
-                .searchGenesByEnsemblIds(userGeneList);
+                .searchGenesByIds(userGeneList);
         Set<Species> species = searchResult.getResults().stream()
                 .map(Gene::getSpecies).collect(Collectors.toSet());
 

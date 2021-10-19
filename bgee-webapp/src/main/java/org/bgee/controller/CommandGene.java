@@ -188,21 +188,21 @@ public class CommandGene extends CommandParent {
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true);
+        Set<Gene> genes = serviceFactory.getGeneService().loadGenesById(geneId, true);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }
 
         if (genes.size() == 1 && speciesId != null) {
             //we want to avoid the use of 'species_id' parameter in URL if not necessary,
-            //so if an Ensembl ID has an unique hit in Bgee, and there is a 'species_id'
+            //so if an ID has an unique hit in Bgee, and there is a 'species_id'
             //in the URL, then we redirect to a page without 'species_id' in the URL,
             //for nicer URLs, and to avoid duplicated content.
             // XXX: we do not check that the user gives a bad species?
             RequestParameters url = new RequestParameters(
                     this.requestParameters.getUrlParametersInstance(), this.prop, false, "&");
             url.setPage(RequestParameters.PAGE_GENE);
-            url.setGeneId(genes.iterator().next().getEnsemblGeneId());
+            url.setGeneId(genes.iterator().next().getGeneId());
             this.response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
             this.response.addHeader("Location", url.getRequestURL());
             log.traceExit(); return;
@@ -242,17 +242,17 @@ public class CommandGene extends CommandParent {
         //for the same anat. entity and other conditions
         LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByOrganCall = serviceFactory
                 .getCallService().loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                        new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId()));
+                        new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()));
         
         // Load homology information. As we decided to only show in species paralogs in the gene
         // page, we do not use same filters to retrieve orthologs and paralogs. That is why we 
         // first create one GeneHomologs object containing only paralogs and one GeneHomologs 
         // object containing only orthologs.
         GeneHomologs geneOrthologs = serviceFactory.getGeneHomologsService()
-                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
                         true, false);
         GeneHomologs geneParalogs = serviceFactory.getGeneHomologsService()
-                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
                         Collections.singleton(gene.getSpecies().getId()), null, true, 
                         false, true);
         // generate one unique GeneHomologs object containing both paralogs and orthologs 
@@ -260,7 +260,7 @@ public class CommandGene extends CommandParent {
         GeneHomologs geneHomologs = GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs);
         
         if (callsByOrganCall == null || callsByOrganCall.isEmpty()) {
-            log.debug("No calls for gene {}", gene.getEnsemblGeneId());
+            log.debug("No calls for gene {}", gene.getGeneId());
             return log.traceExit(new GeneResponse(gene, true, callsByOrganCall,
                     new HashMap<>(), new HashMap<>(), geneHomologs));
         }

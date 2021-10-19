@@ -264,7 +264,7 @@ public class GeneMatchResultService extends CommonService {
         final String termLowerCase = term.toLowerCase();
         final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
 
-        final String geneIdLowerCase = gene.getEnsemblGeneId().toLowerCase();
+        final String geneIdLowerCase = gene.getGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
             return log.traceExit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
         }

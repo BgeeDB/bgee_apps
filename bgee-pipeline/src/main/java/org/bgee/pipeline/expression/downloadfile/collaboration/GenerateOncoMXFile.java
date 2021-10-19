@@ -221,7 +221,7 @@ public class GenerateOncoMXFile {
     }
     protected static String[] getHeader() {
         log.traceEntry();
-        return log.traceExit(new String[] { "Ensembl gene ID", "Gene name",
+        return log.traceExit(new String[] { "Gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",
                     "Expression level relative to gene",
@@ -340,7 +340,7 @@ public class GenerateOncoMXFile {
 
                     List<Object> toWrite = new ArrayList<>();
                     try {
-                        toWrite.add(call.getGene().getEnsemblGeneId());
+                        toWrite.add(call.getGene().getGeneId());
                         toWrite.add(call.getGene().getName());
                         toWrite.add(call.getCondition().getAnatEntity().getId());
                         toWrite.add(call.getCondition().getAnatEntity().getName());

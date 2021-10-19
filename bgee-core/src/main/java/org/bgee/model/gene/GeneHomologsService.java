@@ -49,7 +49,7 @@ public class GeneHomologsService extends CommonService{
     /**
      * get homolog genes from one gene
      * 
-     * @param ensemblGeneId     A {@code String} corresponding to the Ensembl ID of the gene 
+     * @param geneId     A {@code String} corresponding to the ID of the gene 
      *                          homologs have to be retrieved.
      * @param speciesId         An {@code int} corresponding to the species ID of the gene
      *                          homologs have to be retrieved.
@@ -59,10 +59,10 @@ public class GeneHomologsService extends CommonService{
      *                          retrieved.
      * @return                  A {@code GeneHomologs} object containing requested homologs
      */
-    public GeneHomologs getGeneHomologs(String ensemblGeneId, int speciesId, 
+    public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(ensemblGeneId, speciesId, withOrthologs, withParalogs);
-        GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
+        log.entry(geneId, speciesId, withOrthologs, withParalogs);
+        GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), null, null, 
                 true, withOrthologs, withParalogs).iterator().next());
     }
@@ -70,7 +70,7 @@ public class GeneHomologsService extends CommonService{
     /**
      * get homolog genes from one gene
      * 
-     * @param ensemblGeneId         A {@code String} corresponding to the Ensembl ID of the gene 
+     * @param geneId         A {@code String} corresponding to the ID of the gene 
      *                              homologs have to be retrieved.
      * @param speciesId             An {@code int} corresponding to the species ID of the gene
      *                              homologs have to be retrieved.
@@ -89,12 +89,12 @@ public class GeneHomologsService extends CommonService{
      *                              retrieved.
      * @return                      A {@code GeneHomologs} object containing requested homologs
      */
-    public GeneHomologs getGeneHomologs(String ensemblGeneId, int speciesId, 
+    public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon,
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(ensemblGeneId, speciesId, homologsSpeciesIds, taxonId, withDescendantTaxon,
+        log.entry(geneId, speciesId, homologsSpeciesIds, taxonId, withDescendantTaxon,
                 withOrthologs, withParalogs);
-        GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
+        GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs).iterator().next());
     }
@@ -160,7 +160,7 @@ public class GeneHomologsService extends CommonService{
         
         // transform geneFilter to a map of speciesId as key and set of geneId as value
         Map<Integer, Set<String>> speciesIdToGeneIds = geneFilters.stream()
-                .collect(Collectors.toMap(p -> p.getSpeciesId(), p -> p.getEnsemblGeneIds()));
+                .collect(Collectors.toMap(p -> p.getSpeciesId(), p -> p.getGeneIds()));
         
         // load geneTOs for which we want homologs
         Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()

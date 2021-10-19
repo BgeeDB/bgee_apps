@@ -260,7 +260,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                             .thenComparing(e -> e.getValue() == null? null : e.getValue().getSpecies().getId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             //Now by their gene ID
-                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getEnsemblGeneId(),
+                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getGeneId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             ))
 
@@ -465,8 +465,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 //Retrieve the validated conditions for the currently iterated gene
                 Set<Condition> validatedCondition = validatedCalls.stream()
                         .filter(c -> Objects.equals(
-                            c.getGene() == null ? null: c.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId()))
+                            c.getGene() == null ? null: c.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId()))
                         //Filter by species as, in bgee 14, gene IDs are not unique
                         .filter(c -> Objects.equals(
                             c.getGene() == null ? null: c.getGene().getSpecies().getId(),
@@ -561,8 +561,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                                 "Provided List incorrectly sorted"));
                     }
                     if (!Objects.equals(
-                            previousCall.getGene() == null ? null: previousCall.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId())) {
+                            previousCall.getGene() == null ? null: previousCall.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId())) {
                         throw log.throwing(new IllegalArgumentException(
                                 "A clustering can only be performed one gene at a time"));
                     }

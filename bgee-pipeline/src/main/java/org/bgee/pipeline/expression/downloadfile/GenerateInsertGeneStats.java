@@ -1118,7 +1118,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
 
             GeneStatsBean bean = new GeneStatsBean();
             bean.setGeneName(gene.getName());
-            bean.setGeneId(gene.getEnsemblGeneId());
+            bean.setGeneId(gene.getGeneId());
             bean.setBioTypeName(gene.getGeneBioType().getName());
 
             this.generateGeneStats(bean, gene, nonInformativeAnatEntities, allCondParams, condGraph);
@@ -1196,7 +1196,7 @@ public class GenerateInsertGeneStats extends MySQLDAOUser {
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         CallService callService = serviceFactory.getCallService();
 
-        GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getEnsemblGeneId());
+        GeneFilter geneFilter = new GeneFilter(gene.getSpecies().getId(), gene.getGeneId());
         EnumSet<CallService.Attribute> baseAttrs = EnumSet.of(CallService.Attribute.CALL_TYPE,
                 CallService.Attribute.DATA_QUALITY);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =

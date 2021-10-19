@@ -238,7 +238,7 @@ public class GenerateRankFile {
         
         int arrLength = 6 + (anatEntityOnly? 0: 2) + (dataType != null? 0: 0);
         String[] header = new String[arrLength];
-        header[0] = "Ensembl gene ID";
+        header[0] = "Gene ID";
         header[1] = "gene name";
         header[2] = "anatomical entity ID";
         header[3] = "anatomical entity name";
@@ -571,7 +571,7 @@ public class GenerateRankFile {
         //Retrieve the genes of the species, mapped to their gene IDs, notably to display their names
         Map<String, Gene> genes = serviceFactory.getGeneService()
                 .loadGenes(new GeneFilter(speciesId))
-                .collect(Collectors.toMap(g -> g.getEnsemblGeneId(), g -> g));
+                .collect(Collectors.toMap(g -> g.getGeneId(), g -> g));
         
         //Load ontologies with all data for the requested species, will avoid to make one query 
         //for each gene
@@ -620,7 +620,7 @@ public class GenerateRankFile {
             while (callIt.hasNext()) {
                 rowWritten = true;
                 ExpressionCall call = callIt.next();
-                geneId = call.getGene().getEnsemblGeneId();
+                geneId = call.getGene().getGeneId();
                 
                 if (previousGeneId != null && !geneId.equals(previousGeneId)) {
                     assert previousGeneId.compareTo(geneId) < 0: 
@@ -814,7 +814,7 @@ public class GenerateRankFile {
         
         //map ExpressionCalls to ExpressionCallBean to be written in output file
         return log.traceExit(singleGeneExprCalls.stream().map(c -> {
-            if (!gene.getEnsemblGeneId().equals(c.getGene().getEnsemblGeneId())) {
+            if (!gene.getGeneId().equals(c.getGene().getGeneId())) {
                 throw log.throwing(new IllegalArgumentException("The provided gene does not correspond to "
                         + "the expression calls."));
             }
@@ -835,7 +835,7 @@ public class GenerateRankFile {
                                     c.getSummaryQuality() != null && 
                                     !DataQuality.NODATA.equals(c.getSummaryQuality()))));
             return new ExpressionCallBean(
-                c.getGene().getEnsemblGeneId(), gene.getName(), 
+                c.getGene().getGeneId(), gene.getName(), 
                 cond.getAnatEntityId(), anatEntity == null? null: anatEntity.getName(), 
                 cond.getDevStageId(), devStage == null? null: devStage.getName(), 
                 FORMATTER.apply(c.getMeanRank()), 

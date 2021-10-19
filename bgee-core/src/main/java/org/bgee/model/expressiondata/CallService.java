@@ -558,7 +558,7 @@ public class CallService extends CommonService {
         //**************************************************
         // Sanity checks and prepare arguments
         //**************************************************
-        if (geneFilter.getEnsemblGeneIds().size() != 1) {
+        if (geneFilter.getGeneIds().size() != 1) {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
 
@@ -591,7 +591,7 @@ public class CallService extends CommonService {
                         orderByOrgan)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
-            log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
+            log.debug("No calls for gene {}", geneFilter.getGeneIds().iterator().next());
             return log.traceExit(new LinkedHashMap<>());
         }
 
@@ -1183,13 +1183,13 @@ public class CallService extends CommonService {
 
         //We would also need the results to be retrieved ordered by gene IDs first,
         //unless only one gene is requested
-        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //Will work if the query is done on one species only, otherwise we can have a same gene ID
         //linked to different species, when we use the genome of a closely related species
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
         if ((orderingAttributes.isEmpty() ||
                 !orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) &&
                 (callFilter.getGeneFilters().size() != 1 ||
-                callFilter.getGeneFilters().iterator().next().getEnsemblGeneIds().size() != 1)) {
+                callFilter.getGeneFilters().iterator().next().getGeneIds().size() != 1)) {
             return log.traceExit(false);
         }
 
@@ -1236,7 +1236,7 @@ public class CallService extends CommonService {
         //We would need the query to retrieve expression calls in any dev. stage and for any gene,
         //not discarding observed conditions or calls, to compute the expression level categories
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
-        if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+        if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getGeneIds().isEmpty())) {
             return log.traceExit(false);
         }
 
@@ -1271,7 +1271,7 @@ public class CallService extends CommonService {
 
         //We would also need the results to be retrieved ordered by gene/anat. entity IDs first,
         //unless one specific gene or one specific anat. entity was requested (checked in the calling methods).
-        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //Will work if the query is done on one species only, otherwise we can have a same gene ID
         //(when we use the genome of a closely related species), or same anat. entity ID,
         //linked to different species.
         Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
@@ -1360,7 +1360,7 @@ public class CallService extends CommonService {
         // *********************************
         // Gene and species IDs filters
         //**********************************
-        //we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
+        //we map each GeneFilter to Bgee gene IDs rather than gene IDs.
         Set<Integer> geneIdFilter = null;
         Set<Integer> speciesIds = null;
         if (callFilter != null) {

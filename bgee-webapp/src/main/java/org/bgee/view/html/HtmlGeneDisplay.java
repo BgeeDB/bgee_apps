@@ -68,7 +68,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     
     private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
             .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
-            .thenComparing(x -> x.getEnsemblGeneId(), Comparator.nullsLast(String::compareTo));
+            .thenComparing(x -> x.getGeneId(), Comparator.nullsLast(String::compareTo));
     
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
@@ -86,7 +86,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         super(response, requestParameters, prop, jsonHelper, factory);
     }
 
-    /*Genes: the terms you enter are searched in gene IDs from Ensembl, names, and synonyms.*/
+    /*Genes: the terms you enter are searched in gene IDs, names, and synonyms.*/
     @Override
     public void displayGeneHomePage() {
         log.traceEntry();
@@ -96,13 +96,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
-        log.entry(searchTerm, result);
+        log.traceEntry("{}, {}", searchTerm, result);
         this.displayGeneSearchPage(searchTerm, result);
         log.traceExit();
     }
 
     private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
-        log.entry(searchTerm, result);
+        log.traceEntry("{}, {}", searchTerm, result);
         String geneSearchDescription = null;
         if(searchTerm != null) {
             geneSearchDescription = "Genes matching " + htmlEntities(searchTerm) + "in Bgee";
@@ -112,7 +112,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<h1 property='schema:name'>Gene search</h1>");
 
         this.writeln("<div id='bgee_introduction' property='schema:description'>");
-        this.writeln("<p>Search for genes based on Ensembl gene IDs, gene names, " +
+        this.writeln("<p>Search for genes based on gene IDs, gene names, " +
                 "gene descriptions, synonyms and cross-references.</p>");
         this.writeln("</div>");
 
@@ -149,12 +149,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     private String getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
-        log.entry(geneMatches, searchTerm);
+        log.traceEntry("{}, {}", geneMatches, searchTerm);
         
         StringBuilder sb = new StringBuilder();
         sb.append("<table class='gene-search-result stripe wrap compact responsive'>")
                 .append("<thead><tr>")
-                .append("   <th>Ensembl ID</th>")
+                .append("   <th>Gene ID</th>")
                 .append("   <th>Name</th>")
                 .append("   <th>Description</th>")
                 .append("   <th>Organism</th>")
@@ -166,7 +166,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             Gene gene = geneMatch.getGene();
 
             sb.append("<tr>");
-            sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getEnsemblGeneId())).append("</td>");
+            sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getGeneId())).append("</td>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, getStringNotBlankOrDash(gene.getName()))).append("</td>");
             sb.append("    <td>").append(getStringNotBlankOrDash(htmlEntities(gene.getDescription()))).append("</td>");
             sb.append("    <td>").append(getCompleteSpeciesNameLink(gene.getSpecies(), false)).append("</td>");
@@ -187,7 +187,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return              The {@code String} representing the match.
      */
     private String getMatch(GeneMatch geneMatch, String searchTerm) {
-        log.entry(geneMatch, searchTerm);
+        log.traceEntry("{}, {}", geneMatch, searchTerm);
         
         if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
             return log.traceExit("no exact match");
@@ -205,7 +205,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return
      */
     private String highlightSearchTerm(String label, String searchTerm) {
-        log.entry(label, searchTerm);
+        log.traceEntry("{}, {}", label, searchTerm);
 
         //we modify the string to highlight the search term
         //we do not use the tag <strong> yet, so that we can escape htmlentities after the replacement
@@ -226,7 +226,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     
     @Override
     public void displayGeneChoice(Set<Gene> genes) {
-        log.entry(genes);
+        log.traceEntry("{}", genes);
         
         if (genes == null || genes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -236,7 +236,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         List<Gene> clnGenes = new ArrayList<>(genes);
         Gene gene = clnGenes.iterator().next();
         
-        String titleStart = "Genes: " + gene.getName() + " - " + gene.getEnsemblGeneId();
+        String titleStart = "Genes: " + gene.getName() + " - " + gene.getGeneId();
         
         this.startDisplay(titleStart, "WebPage");
         
@@ -273,7 +273,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return      The {@code String} that is the link to the gene page as a HTML 'a' element.
      */
     private String getSpecificGenePageLink(Gene gene) {
-        log.entry(gene);
+        log.traceEntry("{}", gene);
         return log.traceExit(getSpecificGenePageLink(gene, null));
     }
 
@@ -285,18 +285,18 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return          The {@code String} that is the link to the gene page as a HTML 'a' element.
      */
     private String getSpecificGenePageLink(Gene gene, String linkText) {
-        log.entry(gene, linkText);
+        log.traceEntry("{}, {}", gene, linkText);
         RequestParameters url = this.getNewRequestParameters();
         url.setPage(RequestParameters.PAGE_GENE);
-        url.setGeneId(gene.getEnsemblGeneId());
+        url.setGeneId(gene.getGeneId());
 
-        //speciesId only necessary if there are several genes matching a same Ensembl ID
-        if (gene.getGeneMappedToSameEnsemblGeneIdCount() > 1) {
+        //speciesId only necessary if there are several genes matching a same ID
+        if (gene.getGeneMappedToSameGeneIdCount() > 1) {
             url.setSpeciesId(gene.getSpecies().getId());
         }
 
         String text = StringUtils.isNotBlank(linkText)? htmlEntities(linkText):
-                htmlEntities(gene.getName() + " - " + gene.getEnsemblGeneId())
+                htmlEntities(gene.getName() + " - " + gene.getGeneId())
                         + " in " + getCompleteSpeciesName(gene.getSpecies(), false);
 
         return log.traceExit("<a href='" + url.getRequestURL() + "'>" + text + "</a>");
@@ -308,7 +308,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return  the {@code String} that is the search box as HTML 'div' element.
      */
     protected String getGeneSearchBox(boolean isSmallBox, String searchTerm) {
-        log.entry(isSmallBox, searchTerm);
+        log.traceEntry("{}, {}", isSmallBox, searchTerm);
     
         RequestParameters urlExample = this.getNewRequestParameters();
         urlExample.setPage(RequestParameters.PAGE_GENE);
@@ -360,13 +360,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGene(GeneResponse geneResponse) {
-        log.entry(geneResponse);
+        log.traceEntry("{}", geneResponse);
         
         Gene gene = geneResponse.getGene();
         GeneHomologs geneHomologs = geneResponse.getGeneHomologs();
         
         String titleStart = "Gene: " + htmlEntities(gene.getName()) 
-                + " - " + htmlEntities(gene.getEnsemblGeneId()); 
+                + " - " + htmlEntities(gene.getGeneId()); 
         String description = htmlEntities(gene.getName()) + " gene expression in Bgee.";
         this.startDisplay(titleStart, "WebPage", description);
 
@@ -493,8 +493,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             
             this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
             this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/vps/" + gene.getEnsemblGeneId() 
-                    + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");
+                    + "href='https://omabrowser.org/oma/vps/" + gene.getGeneId() 
+                    + "'>" + gene.getGeneId() + "</a>.</p>");
             this.writeln("</div>");
             
             this.writeln("</div>"); // end orthologs_data 
@@ -515,8 +515,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             
             this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
             this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/pps/" + gene.getEnsemblGeneId() 
-                    + "'>" + gene.getEnsemblGeneId() + "</a>.</p>");
+                    + "href='https://omabrowser.org/oma/pps/" + gene.getGeneId() 
+                    + "'>" + gene.getGeneId() + "</a>.</p>");
             this.writeln("</div>");
             
             this.writeln("</div>"); // end orthologs_data 
@@ -547,7 +547,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param text              A {@code String} that is the sentence before the list of sources.
      */
     private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
-        log.entry(map, allowedDataTypes, text);
+        log.traceEntry("{}, {}, {}", map, allowedDataTypes, text);
 
         // First, we invert map to be able to display data sources according to data types.
         // We use TreeMap to conserve order of data types.
@@ -618,7 +618,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private String getExpressionHTMLByAnat(Map<ExpressionCall, List<ExpressionCall>> byOrganCall, 
             Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
             Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-        log.entry(byOrganCall, clusteringBestEachAnatEntity, clusteringWithinAnatEntity);
+        log.traceEntry("{}, {}, {}", byOrganCall, clusteringBestEachAnatEntity, clusteringWithinAnatEntity);
 
 
         StringBuilder rowSb = new StringBuilder();
@@ -683,7 +683,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     private String getExpressionRowsForAnatEntity(ExpressionCall anatEntityCall,
             List<ExpressionCall> conditionCalls, boolean scoreShift, 
             Map<ExpressionCall, Integer> clusteringWithinAnatEntity) {
-        log.entry(anatEntityCall, conditionCalls, scoreShift, clusteringWithinAnatEntity);
+        log.traceEntry("{}, {}, {}, {}", anatEntityCall, conditionCalls, scoreShift, clusteringWithinAnatEntity);
         
         AnatEntity anatEntity = anatEntityCall.getCondition().getAnatEntity();
         AnatEntity cellType = anatEntityCall.getCondition().getCellType();
@@ -841,7 +841,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     */
     private String getHomologyHTMLByTaxon(Gene gene, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon, 
             boolean orthologs) {
-        log.entry(homologsByTaxon, orthologs);
+        log.traceEntry("{}, {}", homologsByTaxon, orthologs);
         //TODO shity part to modify once code is ok
         String homologyString = orthologs ? "Orthologs" : "Paralogs";
 
@@ -937,7 +937,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                         sbRow.append(" gene-score-shift");
                     }
                     sbRow.append("'><span class='details small'>")
-                    .append(getSpecificGenePageLink(orthoGene, orthoGene.getEnsemblGeneId()))
+                    .append(getSpecificGenePageLink(orthoGene, orthoGene.getGeneId()))
                     .append(StringUtils.isBlank(orthoGene.getName())? "": " " + htmlEntities(orthoGene.getName()))
                     .append("</span></li>").append("\n");
                     needSpeciesSeparator = false;
@@ -950,8 +950,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             RequestParameters exprComparison = this.getNewRequestParameters();
             exprComparison.setPage(RequestParameters.PAGE_EXPR_COMPARISON);
             List<String> genesToCompare = allGenes.stream()
-                    .map(Gene::getEnsemblGeneId).collect(Collectors.toList());
-            genesToCompare.add(gene.getEnsemblGeneId());
+                    .map(Gene::getGeneId).collect(Collectors.toList());
+            genesToCompare.add(gene.getGeneId());
             exprComparison.setGeneList(genesToCompare);
             sbRow.append("<td><a href='").append(exprComparison.getRequestURL())
                 .append("'>Compare expression</a></td>");
@@ -976,12 +976,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return         A {@code String} containing the HTML table containing the information.
      */
     private String getGeneralInfo(Gene gene, GeneHomologs geneHomologs) {
-        log.entry(gene);
+        log.traceEntry("{}, {}", gene, geneHomologs);
 
         final StringBuilder table = new StringBuilder("<div class='info-content'>");
         table.append("<table class='info-table'>");
-        table.append("<tr><th scope='row'>Ensembl ID</th><td>")
-                .append(htmlEntities(gene.getEnsemblGeneId())).append("</td></tr>");
+        table.append("<tr><th scope='row'>Gene ID</th><td>")
+                .append(htmlEntities(gene.getGeneId())).append("</td></tr>");
         table.append("<tr><th scope='row'>Name</th><td property='bs:name'>")
                 .append(htmlEntities(getStringNotBlankOrDash(gene.getName()))).append("</td></tr>");
         table.append("<tr><th scope='row'>Description</th><td property='bs:description'>")
@@ -994,7 +994,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             table.append("</td></tr>");
         }
         // add orthologs and paralogs number
-        if (geneHomologs.getOrthologsByTaxon() != null && 
+        if (geneHomologs != null && geneHomologs.getOrthologsByTaxon() != null && 
                 !geneHomologs.getOrthologsByTaxon().isEmpty()) {
             table.append("<tr><th scope='row'>Orthologs(s)</th><td>")
                 .append("<a href='#orthologs' title='orthologs details'>")
@@ -1003,7 +1003,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                         .collect(Collectors.toSet()).size() + " orthologs</a>");
             table.append("</td></tr>");
         }
-        if (geneHomologs.getParalogsByTaxon() != null && 
+        if (geneHomologs != null && geneHomologs.getParalogsByTaxon() != null && 
                 !geneHomologs.getParalogsByTaxon().isEmpty()) {
             table.append("<tr><th scope='row'>Paralog(s)</th><td>")
                     .append("<a href='#paralogs' title='paralogs details'>")
@@ -1025,7 +1025,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return          A {@code String} that is the HTML code to display synonyms
      */
     private static String getSynonymDisplay(Set<String> synonyms) {
-        log.entry(synonyms);
+        log.traceEntry("{}", synonyms);
 
         if (synonyms == null || synonyms.size() == 0) {
             return "No synonyms";
@@ -1047,7 +1047,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return      A {@code String} containing the HTML code of the cross-references table
      */
     private String getXRefDisplay(Set<XRef> xRefs) {
-        log.entry(xRefs);
+        log.traceEntry("{}", xRefs);
 
         if (xRefs == null || xRefs.size() == 0) {
             return "No cross-references";
@@ -1096,7 +1096,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return      The {@code String} that is the cross-reference name to display.
      */
     private static String getFormattedXRefName(XRef xRef) {
-        log.entry(xRef);
+        log.traceEntry("{}", xRef);
         String xRefName = "";
         if (StringUtils.isNotBlank(xRef.getXRefName())) {
             String[] split = xRef.getXRefName().split("; ");
@@ -1116,7 +1116,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return          A {@code String} that is the HTML code to display items
      */
     private static String getListDisplay(String idPrefix, List<String> items) {
-        log.entry(idPrefix, idPrefix);
+        log.traceEntry("{}, {}", idPrefix, idPrefix);
 
         boolean tooManyItems = items.size() > MAX_DISPLAYED_ITEMS;
 
@@ -1150,7 +1150,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return             The {@code String} containing the HTML code of the 'span' elements.
      */
     private static String getDataTypeSpans(Collection<ExpressionCallData> callData) {
-        log.entry(callData);
+        log.traceEntry("{}", callData);
         final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
 
@@ -1172,7 +1172,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @return         The {@code String} containing the HTML code for the quality 'span'.
      */
     private static String getDataSpan(DataType type, boolean hasData) {
-        log.entry(hasData, type);
+        log.traceEntry("{}, {}", hasData, type);
         
         StringBuilder sb = new StringBuilder();
         sb.append("<span class='quality ");
@@ -1212,7 +1212,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *             notably displaying information about confidence in the FDR.
      */
     private static String getFdrHTML(ExpressionCall call) {
-        log.entry(call);
+        log.traceEntry("{}", call);
 
         //If the rank is above a threshold and is only supported by ESTs and/or in situ data, 
         //then we consider it of low confidence
@@ -1245,7 +1245,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      *             notably displaying information about confidence in the call.
      */
     private static String getExpressionScoreHTML(ExpressionCall call) {
-        log.entry(call);
+        log.traceEntry("{}", call);
 
         //If the rank of the call is above a threshold AND the call is only supported by ESTs 
         //and/or in situ data, then we consider it of low confidence and the corresponding score

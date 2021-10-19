@@ -87,7 +87,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
         Gene gene2a = new Gene("gene2a", species2, new GeneBioType("biotype1"));
         Gene gene2b = new Gene("gene2b", species2, new GeneBioType("biotype1"));
-        Set<String> sp1GenesIds = Collections.singleton(gene1.getEnsemblGeneId());
+        Set<String> sp1GenesIds = Collections.singleton(gene1.getGeneId());
         GeneFilter geneFilter1 = new GeneFilter(speciesId1, sp1GenesIds);
         Set<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
 
@@ -392,8 +392,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         when(this.taxonService.loadLeastCommonAncestor(new HashSet<>(Arrays.asList(spe1.getId(), spe2.getId()))))
         .thenReturn(lca);
         Set<GeneFilter> geneFilters = new HashSet<>(Arrays.asList(
-                new GeneFilter(spe1.getId(), Arrays.asList(g1.getEnsemblGeneId())),
-                new GeneFilter(spe2.getId(), Arrays.asList(g2.getEnsemblGeneId()))));
+                new GeneFilter(spe1.getId(), Arrays.asList(g1.getGeneId())),
+                new GeneFilter(spe2.getId(), Arrays.asList(g2.getGeneId()))));
 
         MultiSpeciesCondition cond1 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("1")), null, lca,

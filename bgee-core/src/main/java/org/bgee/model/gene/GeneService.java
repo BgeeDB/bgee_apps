@@ -64,7 +64,7 @@ public class GeneService extends CommonService {
      * @return              A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenes(GeneFilter filter) {
-        log.entry(filter);
+        log.traceEntry("{}", filter);
         return log.traceExit(this.loadGenes(Collections.singleton(filter)));
     }
 
@@ -78,11 +78,11 @@ public class GeneService extends CommonService {
      * @return              A {@code Stream} of matching {@code Gene}s.
      */
     public Stream<Gene> loadGenes(Collection<GeneFilter> filters) {
-        log.entry(filters);
+        log.traceEntry("{}", filters);
         
         Set<GeneFilter> clonedFilters = filters == null? new HashSet<>(): new HashSet<>(filters);
         Map<Integer, Set<String>> filtersToMap = clonedFilters.stream()
-                .collect(Collectors.toMap(f -> f.getSpeciesId(), f -> new HashSet<>(f.getEnsemblGeneIds()),
+                .collect(Collectors.toMap(f -> f.getSpeciesId(), f -> new HashSet<>(f.getGeneIds()),
                         (s1, s2) -> {s1.addAll(s2); return s1;}));
 
         //retrieve the Species requested in GeneFilters
@@ -104,63 +104,63 @@ public class GeneService extends CommonService {
     }
 
     /**
-     * Loads {@code Gene}s from an Ensembl gene ID. Please note that in Bgee a same Ensembl gene ID
+     * Loads {@code Gene}s from a gene ID. Please note that in Bgee a same gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
      * in Bgee, the genome of a species can be used for another closely-related species.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method will load synonyms and cross-references in {@code Gene}s.
      * 
-     * @param ensemblGeneId A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @param geneId        A {@code String} that is the ID of genes to retrieve.
      * @return              A {@code Set} of matching {@code Gene}s.
      */
-    public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId) {
-        log.entry(ensemblGeneId);
-        return log.traceExit(this.loadGenesByEnsemblId(ensemblGeneId, false));
+    public Set<Gene> loadGenesById(String geneId) {
+        log.traceEntry("{}", geneId);
+        return log.traceExit(this.loadGenesById(geneId, false));
     }
 
     /**
-     * Loads {@code Gene}s from Ensembl gene IDs. Please note that in Bgee a same Ensembl gene ID
+     * Loads {@code Gene}s from gene IDs. Please note that in Bgee a same gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
      * in Bgee, the genome of a species can be used for another closely-related species.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      *
-     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
+     * @param geneIds           A {@code Collection} of {@code String}s that are the IDs
      *                          of genes to retrieve.
      * @return                  A {@code Stream} of matching {@code Gene}s.
      */
-    public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds) {
-        log.entry(ensemblGeneIds);
-        return log.traceExit(this.loadGenesByEnsemblIds(ensemblGeneIds, false));
+    public Stream<Gene> loadGenesByIds(Collection<String> geneIds) {
+        log.traceEntry("{}", geneIds);
+        return log.traceExit(this.loadGenesByIds(geneIds, false));
     }
 
     /**
-     * Retrieves genes from their Ensembl IDs as a {@code SearchResult}. {@code SearchResult} allows
+     * Retrieves genes from their IDs as a {@code SearchResult}. {@code SearchResult} allows
      * also to retrieve the IDs that were <strong>not</strong> found in the database.
-     * The {@code Gene}s retrieved are the same as a call to {@link #loadGenesByEnsemblIds(Collection)}
+     * The {@code Gene}s retrieved are the same as a call to {@link #loadGenesByIds(Collection)}
      * would return (except that this method does not accept {@code null} or empty argument).
      *
-     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
-     *                          of genes to retrieve. Cannot be {@code null} or emty, otherwise
+     * @param geneIds           A {@code Collection} of {@code String}s that are the IDs
+     *                          of genes to retrieve. Cannot be {@code null} or empty, otherwise
      *                          an {@code IllegalArgumentException} is thrown.
      * @return                  A {@code SearchResult} holding the requested IDs, the {@code Gene}s
      *                          retrieved, and the IDs that could not be found in Bgee.
-     * @see #loadGenesByEnsemblIds(Collection)
-     * @throws IllegalArgumentException If {@code ensemblGeneIds} is {@code null} or empty.
+     * @see #loadGenesByIds(Collection)
+     * @throws IllegalArgumentException If {@code geneIds} is {@code null} or empty.
      */
-    public SearchResult<String, Gene> searchGenesByEnsemblIds(Collection<String> ensemblGeneIds)
+    public SearchResult<String, Gene> searchGenesByIds(Collection<String> geneIds)
     throws IllegalArgumentException {
-        log.entry(ensemblGeneIds);
-        if (ensemblGeneIds == null || ensemblGeneIds.isEmpty()) {
+        log.traceEntry("{}", geneIds);
+        if (geneIds == null || geneIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some genes must be provided"));
         }
-        Set<String> clonedGeneIds = new HashSet<>(ensemblGeneIds);
-        Set<Gene> genes = this.loadGenesByEnsemblIds(clonedGeneIds).collect(Collectors.toSet());
-        Set<String> geneIdsFound = genes.stream().map(g -> g.getEnsemblGeneId())
+        Set<String> clonedGeneIds = new HashSet<>(geneIds);
+        Set<Gene> genes = this.loadGenesByIds(clonedGeneIds).collect(Collectors.toSet());
+        Set<String> geneIdsFound = genes.stream().map(g -> g.getGeneId())
                 .collect(Collectors.toSet());
         Set<String> geneIdsNotFound = new HashSet<>(clonedGeneIds);
         geneIdsNotFound.removeAll(geneIdsFound);
@@ -168,29 +168,29 @@ public class GeneService extends CommonService {
     }
 
     /**
-     * Loads {@code Gene}s from an Ensembl gene ID. Please note that in Bgee a same Ensembl gene ID
+     * Loads {@code Gene}s from a gene ID. Please note that in Bgee a same gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
      * in Bgee, the genome of a species can be used for another closely-related species.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method will load synonyms and cross-references in {@code Gene}s.
      *
-     * @param ensemblGeneId     A {@code String} that is the Ensembl ID of genes to retrieve.
+     * @param geneId            A {@code String} that is the ID of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
      * @return                  A {@code Set} of matching {@code Gene}s.
      */
-    public Set<Gene> loadGenesByEnsemblId(String ensemblGeneId, boolean withSpeciesInfo) {
-        log.entry(ensemblGeneId, withSpeciesInfo);
-        if (StringUtils.isBlank(ensemblGeneId)) {
+    public Set<Gene> loadGenesById(String geneId, boolean withSpeciesInfo) {
+        log.traceEntry("{}, {}", geneId, withSpeciesInfo);
+        if (StringUtils.isBlank(geneId)) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
         }
         
-        //we expect very few results from a single Ensembl ID, so we don't preload all species
-        //in database as for method 'loadGenesByEnsemblIds'
+        //we expect very few results from a single ID, so we don't preload all species
+        //in database as for method 'loadGenesByIds'
         Set<GeneTO> geneTOs = this.geneDAO
-                .getGenesByEnsemblGeneIds(Collections.singleton(ensemblGeneId))
+                .getGenesByGeneIds(Collections.singleton(geneId))
                 .stream().collect(Collectors.toSet());
         //In case the ID provided was incorrect/doesn't match any gene in Bgee
         if (geneTOs == null || geneTOs.isEmpty()) {
@@ -198,12 +198,12 @@ public class GeneService extends CommonService {
         }
         final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(loadSpeciesMap(geneTOs, withSpeciesInfo));
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
-        // we expect very few results from a single Ensembl ID, so we preload synonyms and x-refs
+        // we expect very few results from a single ID, so we preload synonyms and x-refs
         // from database
         Map<Integer, Set<String>> synonymMap = loadSynonymsByBgeeGeneIds(geneTOs);
         Map<Integer, Set<GeneXRefTO>> xRefsMap = loadXrefTOsByBgeeGeneIds(geneTOs);
 
-        //We load all sources, to be able to retrieve the Ensembl and Ensembl metazoa sources anyway
+        //We load all sources, to be able to retrieve the genome sources anyway
         final Map<Integer, Source> sourceMap = getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
         
@@ -213,23 +213,23 @@ public class GeneService extends CommonService {
     }
 
     /**
-     * Loads {@code Gene}s from Ensembl gene IDs. Please note that in Bgee a same Ensembl gene ID
+     * Loads {@code Gene}s from gene IDs. Please note that in Bgee a same gene ID
      * can correspond to several {@code Gene}s, belonging to different species. This is because
      * in Bgee, the genome of a species can be used for another closely-related species.
-     * For instance, in Bgee the chimpanzee genome is used for analyzing bonobo data.
+     * For instance, at some point in Bgee the chimpanzee genome was used for analyzing bonobo data.
      * For unambiguous retrieval of {@code Gene}s, see {@link #loadGenes(Collection)}.
      * <p>
      * This method won't load synonyms and cross-references in {@code Gene}s, to avoid memory problems.
      *
-     * @param ensemblGeneIds    A {@code Collection} of {@code String}s that are the Ensembl IDs
+     * @param geneIds           A {@code Collection} of {@code String}s that are the IDs
      *                          of genes to retrieve.
      * @param withSpeciesInfo   A {@code boolean}s defining whether data sources of the species
      *                          is retrieved or not.
      * @return                  A {@code Stream} of matching {@code Gene}s.
      */
-    public Stream<Gene> loadGenesByEnsemblIds(Collection<String> ensemblGeneIds, boolean withSpeciesInfo) {
-        log.entry(ensemblGeneIds, withSpeciesInfo);
-        if (ensemblGeneIds != null && ensemblGeneIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
+    public Stream<Gene> loadGenesByIds(Collection<String> geneIds, boolean withSpeciesInfo) {
+        log.traceEntry("{}, {}", geneIds, withSpeciesInfo);
+        if (geneIds != null && geneIds.stream().anyMatch(id -> StringUtils.isBlank(id))) {
             throw log.throwing(new IllegalArgumentException("No gene ID can be blank."));
         }
 
@@ -244,7 +244,7 @@ public class GeneService extends CommonService {
         // so we won't load synonyms
         
         return log.traceExit(mapGeneTOStreamToGeneStream(
-                this.geneDAO.getGenesByEnsemblGeneIds(ensemblGeneIds).stream(),
+                this.geneDAO.getGenesByGeneIds(geneIds).stream(),
                 speciesMap, null, null, null, geneBioTypeMap));
     }
 
@@ -263,7 +263,7 @@ public class GeneService extends CommonService {
      */
     public Stream<Entry<String, Set<Gene>>> loadGenesByAnyId(Collection<String> mixedGeneIDs,
                                                              boolean withSpeciesInfo) {
-        log.entry(mixedGeneIDs, withSpeciesInfo);
+        log.traceEntry("{}, {}", mixedGeneIDs, withSpeciesInfo);
 
         Set<String> clnMixedGeneIDs = mixedGeneIDs == null? new HashSet<>(): new HashSet<>(mixedGeneIDs);
         if (clnMixedGeneIDs.isEmpty()) {
@@ -278,14 +278,14 @@ public class GeneService extends CommonService {
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
 
 
-        //Retrieve genes by Ensembl IDs
-        Map<String, Set<Gene>> mapAnyIdToGenes = this.loadGenesByEnsemblIds(clnMixedGeneIDs, 
+        //Retrieve genes by IDs
+        Map<String, Set<Gene>> mapAnyIdToGenes = this.loadGenesByIds(clnMixedGeneIDs, 
                 withSpeciesInfo)
-                .collect(Collectors.groupingBy(Gene::getEnsemblGeneId,
+                .collect(Collectors.groupingBy(Gene::getGeneId,
                         Collectors.mapping(x -> x, Collectors.toSet())));
         log.debug("Gene IDs identified: {}", mapAnyIdToGenes.keySet());
 
-        // Retrieve Genes that were not found using Ensembl IDs (i.e. XRef IDs)
+        // Retrieve Genes that were not found using IDs (i.e. XRef IDs)
         Set<String> notGeneIds = clnMixedGeneIDs.stream()
                     .filter(id -> !mapAnyIdToGenes.containsKey(id))
                     .collect(Collectors.toSet());
@@ -344,7 +344,7 @@ public class GeneService extends CommonService {
      *              and values are {@code Set} of {@code Integers}s that are the associated Bgee gene IDs.
      */
     private Map<String, Set<Integer>> loadMappingXRefIdToBgeeGeneIds(Collection<String> ids) {
-        log.entry(ids);
+        log.traceEntry("{}", ids);
         if (ids == null || ids.isEmpty()) {
             return log.traceExit(new HashMap<>());
         }
@@ -366,7 +366,7 @@ public class GeneService extends CommonService {
      *                  being the corresponding {@code Species}.
      */
     private Map<Integer, Species> loadSpeciesMap(Collection<GeneTO> geneTOs, boolean withSpeciesInfo) {
-        log.entry(geneTOs, withSpeciesInfo);
+        log.traceEntry("{}, {}", geneTOs, withSpeciesInfo);
         if (geneTOs == null || geneTOs.isEmpty()) {
             return log.traceExit(new HashMap<>());
         }
@@ -392,7 +392,7 @@ public class GeneService extends CommonService {
      *                  being a {@code Set} of {@code String}s that are the corresponding synonyms.
      */
     private Map<Integer, Set<String>> loadSynonymsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
-        log.entry(geneTOs);
+        log.traceEntry("{}, {}", geneTOs);
         if (geneTOs == null || geneTOs.isEmpty()) {
             return log.traceExit(new HashMap<>());
         }
@@ -420,7 +420,7 @@ public class GeneService extends CommonService {
      *                  being a {@code Set} of {@code GeneXRefTO}s that are the corresponding XRefs.
      */
     private Map<Integer, Set<GeneXRefTO>> loadXrefTOsByBgeeGeneIds(Collection<GeneTO> geneTOs) {
-        log.entry(geneTOs);
+        log.traceEntry("{}, {}", geneTOs);
         if (geneTOs == null || geneTOs.isEmpty()) {
             return log.traceExit(new HashMap<>());
         }
@@ -446,14 +446,14 @@ public class GeneService extends CommonService {
 
     private static GeneXRef mapGeneXRefTOToXRef(GeneXRefTO to, Map<Integer, Source> sourceMap,
             GeneTO geneTO, Map<Integer, Species> speciesMap) {
-        log.entry(to, sourceMap, geneTO, speciesMap);
+        log.traceEntry("{}, {}, {}, {}", to, sourceMap, geneTO, speciesMap);
         return log.traceExit(new GeneXRef(to.getXRefId(), to.getXRefName(), sourceMap.get(to.getDataSourceId()), 
                 geneTO.getGeneId(), speciesMap.get(geneTO.getSpeciesId()).getScientificName()));
     }
     
     private static Set<GeneXRef> getGeneXRefs(GeneTO to, Map<Integer, Set<GeneXRefTO>> xrefTOs,
             Map<Integer, Source> sourceMap, Map<Integer, Species> speciesMap) {
-        log.entry(to, xrefTOs, sourceMap, speciesMap);
+        log.traceEntry("{}, {}, {}, {}", to, xrefTOs, sourceMap, speciesMap);
         if (sourceMap == null) {
             return log.traceExit((Set<GeneXRef>) null);
         }
@@ -480,7 +480,8 @@ public class GeneService extends CommonService {
             Map<Integer, Species> speciesMap, Map<Integer, Set<String>> synonyms,
             Map<Integer, Set<GeneXRefTO>> xrefTOs, Map<Integer, Source> sourceMap,
             Map<Integer, GeneBioType> geneBioTypeMap) {
-        log.entry(geneTOStream, speciesMap, synonyms, xrefTOs, sourceMap, geneBioTypeMap);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneTOStream, speciesMap, synonyms, xrefTOs,
+                sourceMap, geneBioTypeMap);
         return log.traceExit(geneTOStream.map(to -> mapGeneTOToGene(to, speciesMap.get(to.getSpeciesId()),
                 synonyms == null ? null : synonyms.get(to.getId()),
                 getGeneXRefs(to, xrefTOs, sourceMap, speciesMap),

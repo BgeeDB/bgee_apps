@@ -34,6 +34,7 @@ public class Source extends NamedEntity<Integer> {
      * The {@code String} that is the tag to be replaced by a species scientific name
      * in URLs returned by {@link #getXRefUrl()}.
      */
+    //FIXME: check new  tag
     public final static String SPECIES_SCIENTIFIC_NAME_TAG = "[species_ensembl_link]";
 
     /**

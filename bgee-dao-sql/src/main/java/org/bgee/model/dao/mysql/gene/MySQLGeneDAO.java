@@ -56,7 +56,7 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     static {
         columnToAttributesMap = new HashMap<>();
         columnToAttributesMap.put(BGEE_GENE_ID, GeneDAO.Attribute.ID);
-        columnToAttributesMap.put("geneId", GeneDAO.Attribute.ENSEMBL_ID);
+        columnToAttributesMap.put("geneId", GeneDAO.Attribute.GENE_ID);
         columnToAttributesMap.put("geneName", GeneDAO.Attribute.NAME);
         columnToAttributesMap.put("geneDescription", GeneDAO.Attribute.DESCRIPTION);
         columnToAttributesMap.put("speciesId", GeneDAO.Attribute.SPECIES_ID);
@@ -100,11 +100,11 @@ public class MySQLGeneDAO extends MySQLDAO<GeneDAO.Attribute> implements GeneDAO
     }
 
     @Override
-    public GeneTOResultSet getGenesByEnsemblGeneIds(Collection<String> ensemblGeneIds) throws DAOException {
-        log.traceEntry("{}", ensemblGeneIds);
+    public GeneTOResultSet getGenesByGeneIds(Collection<String> geneIds) throws DAOException {
+        log.traceEntry("{}", geneIds);
         Map<Integer, Set<String>> speToGeneMap = new HashMap<>();
         //sanity checks on geneIds will be performed by the getGenes method
-        speToGeneMap.put(null, ensemblGeneIds == null? null: new HashSet<>(ensemblGeneIds));
+        speToGeneMap.put(null, geneIds == null? null: new HashSet<>(geneIds));
         return log.traceExit(getGenes(speToGeneMap, null, null, false, 0, 0));
     }
     

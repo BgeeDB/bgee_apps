@@ -191,7 +191,7 @@ public class CommonService extends Service {
         }
         if (geneTO.getGeneMappedToGeneIdCount() == null) {
             throw log.throwing(new IllegalArgumentException(
-                    "The number of genes with the same Ensembl gene ID must be provided."));
+                    "The number of genes with the same gene ID must be provided."));
         }
         if (geneBioType == null) {
             throw log.throwing(new IllegalArgumentException("A GeneBioType must be provided."));
@@ -309,7 +309,7 @@ public class CommonService extends Service {
 
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getGeneIds())));
         final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(geneDAO));
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
@@ -327,11 +327,11 @@ public class CommonService extends Service {
                         )));
 
         //check that we get all specifically requested genes.
-        //First, build a Map Species ID -> Ensembl gene IDs for the retrieved genes.
+        //First, build a Map Species ID -> gene IDs for the retrieved genes.
         final Map<Integer, Set<String>> retrievedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneMap.values().stream()
                 .collect(Collectors.toMap(g -> g.getSpecies().getId(),
-                        g -> Stream.of(g.getEnsemblGeneId()).collect(Collectors.toSet()),
+                        g -> Stream.of(g.getGeneId()).collect(Collectors.toSet()),
                         (s1, s2) -> {s1.addAll(s2); return s1;})));
         //now, check that we found all requested genes.
         Map<Integer, Set<String>> notFoundSpeToGeneIdsMap = requestedSpeToGeneIdsMap.entrySet().stream()
@@ -405,16 +405,16 @@ public class CommonService extends Service {
         //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getGeneIds())));
 
         //now we retrieve the appropriate Bgee gene IDs
         Set<Integer> geneIdFilter = null;
-        if (geneFilters.stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+        if (geneFilters.stream().anyMatch(gf -> !gf.getGeneIds().isEmpty())) {
             geneIdFilter = geneMap.entrySet().stream()
                     .filter(entry -> {
                         Set<String> speReqGeneIds = requestedSpeToGeneIdsMap.get(entry.getValue().getSpecies().getId());
                         if (speReqGeneIds == null || speReqGeneIds.isEmpty()) return false;
-                        return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
+                        return speReqGeneIds.contains(entry.getValue().getGeneId());
                     })
                     .map(entry -> entry.getKey())
                     .collect(Collectors.toSet());
@@ -423,7 +423,7 @@ public class CommonService extends Service {
         //Identify the species IDs for which no gene IDs were specifically requested.
         //It is needed to provide the species ID only if no specific genes are requested for that species.
         Set<Integer> speciesIds = geneFilters.stream()
-                .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
+                .filter(gf -> gf.getGeneIds().isEmpty())
                 .map(gf -> gf.getSpeciesId())
                 .collect(Collectors.toSet());
 
@@ -436,7 +436,7 @@ public class CommonService extends Service {
         }
         return log.traceExit(genes.stream()
                 .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
-                        Collectors.mapping(g -> g.getEnsemblGeneId(), Collectors.toSet())))
+                        Collectors.mapping(g -> g.getGeneId(), Collectors.toSet())))
                 .entrySet().stream()
                 .map(e -> new GeneFilter(e.getKey(), e.getValue()))
                 .collect(Collectors.toSet()));

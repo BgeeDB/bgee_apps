@@ -48,7 +48,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                 while (columnNumber < attrs.size()) {
                     switch (attrs.get(columnNumber)) {
                     case CommandRPackage.CALLS_GENE_ID_PARAM:
-                        speMap.put(header[columnNumber], call.getGene().getEnsemblGeneId());
+                        speMap.put(header[columnNumber], call.getGene().getGeneId());
                         columnNumber++;
                         break;
                     case CommandRPackage.CALLS_ANAT_ENTITY_ID_PARAM:

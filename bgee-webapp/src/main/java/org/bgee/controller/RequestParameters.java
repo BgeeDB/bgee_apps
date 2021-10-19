@@ -63,7 +63,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * <p>
  * The idea is: if, through a form, a user submit parameters that can be put in URL, 
  * then so be it. But if the user submit, for instance, a list of thousands of 
- * Ensembl gene IDs, that cannot be passed through URLs because of URLs length
+ * gene IDs, that cannot be passed through URLs because of URLs length
  * limitation, these parameters will be stored on disk: 
  * the query string will be stored in a file, 
  * an ID will be generated to be used as an index to retrieve the file, 

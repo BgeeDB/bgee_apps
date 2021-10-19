@@ -820,7 +820,7 @@ public class CommandTopAnat extends CommandParent {
 
         if (!idsMappingMultipleGenes.isEmpty()) {
             throw log.throwing(new InvalidRequestException(
-                    "At least one ID maps to severals Ensembl gene IDs: " + idsMappingMultipleGenes));
+                    "At least one ID maps to several gene IDs: " + idsMappingMultipleGenes));
         }
 
         // Identify IDs not in the selected species
@@ -1108,7 +1108,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs (Ensembl IDs)
+     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs
      * and removing gene IDs not in the selected species and the undetermined gene IDs.
      *
      * @param geneResponse  A {@code GeneListResponse} that is the gene list response
@@ -1137,7 +1137,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Retrieve Bgee gene IDs (Ensembl IDs) from any ID list.
+     * Retrieve Bgee gene IDs from any ID list.
      *
      * @param ids   A {@code Collection} of {@code String}s that are the IDs to be converted in Bgee gene IDs.
      * @return      The {@code Set} of {@code String}s that are the Bgee gene IDs.
@@ -1150,7 +1150,7 @@ public class CommandTopAnat extends CommandParent {
                 serviceFactory.getGeneService().loadGenesByAnyId(
                         Optional.ofNullable(ids).orElse(new HashSet<>()), false)
                         .flatMap(m -> m.getValue().stream())
-                        .map(g -> g.getEnsemblGeneId())
+                        .map(g -> g.getGeneId())
                         .collect(Collectors.toSet())));
     }
 

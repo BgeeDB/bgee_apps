@@ -15,7 +15,7 @@ $( document ).ready( function(){
 
         // Check that something is written in the gene list textarea.
         if ($("#bgee_gene_list").val().replace(' ', '').length === 0) {
-            message += "At least two Ensembl IDs should be provided. ";
+            message += "At least two gene IDs should be provided. ";
         }
         // Check if there is an error.
         if (message !== '') {

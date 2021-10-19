@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.gene.GeneMatch;
 
 public class FakeSearchDisplay extends FakeParentDisplay implements SearchDisplay {
 
@@ -16,11 +15,6 @@ public class FakeSearchDisplay extends FakeParentDisplay implements SearchDispla
             ViewFactory factory) throws IOException {
         super(response, requestParameters, prop, factory);
     }
-
-	@Override
-	public void displayGeneCompletionByGeneList(Collection<GeneMatch> geneMatches) {
-        this.out.println("Test search container");
-	}
 
     @Override
     public void displayExpasyResult(int count, String searchTerm) {

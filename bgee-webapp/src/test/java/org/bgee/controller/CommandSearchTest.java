@@ -72,8 +72,6 @@ public class CommandSearchTest extends TestAncestor {
 
         CommandSearch controller = new CommandSearch(mock(HttpServletResponse.class), params,
                 mock(BgeeProperties.class), viewFac, serviceFac);
-        controller.processRequest();
-        verify(display).displayGeneCompletionByGeneList(geneMatches);
 
         params = mock(RequestParameters.class);
         when(params.getAction()).thenReturn("any action");

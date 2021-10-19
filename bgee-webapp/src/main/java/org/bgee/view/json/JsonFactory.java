@@ -123,8 +123,10 @@ public class JsonFactory extends ViewFactory {
             this.prop, this.jsonHelper, this));
     }
     @Override
-    public SearchDisplay getSearchDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    public SearchDisplay getSearchDisplay() throws IllegalArgumentException, IOException {
+        log.traceEntry();
+        return log.traceExit(new JsonSearchDisplay(this.response, this.requestParameters,
+            this.prop, this.jsonHelper, this));
     }
     @Override
     public SparqlDisplay getSparqlDisplay() {

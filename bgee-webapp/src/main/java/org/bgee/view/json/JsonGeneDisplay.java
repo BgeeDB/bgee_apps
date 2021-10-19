@@ -53,8 +53,8 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
-        resultHashMap.put("result", getSearchResultTable(result.getGeneMatches(), searchTerm));
-        this.sendResponse("General information, expression calls and cross-references of the requested gene",
+        resultHashMap.put("result", result);
+        this.sendResponse("Gene search result",
                 resultHashMap);
         
     }
@@ -174,34 +174,5 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
             log.catching(e);
             return log.traceExit("");
         }
-    }
-    
-    private ArrayList<LinkedHashMap<String, String>> getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
-        log.traceEntry("{}, {}", geneMatches, searchTerm);
-
-        ArrayList<LinkedHashMap<String, String>> searchResultArrayList = new ArrayList<LinkedHashMap<String, String>>(); 
-                
-        for (GeneMatch geneMatch: geneMatches) {
-            LinkedHashMap<String, String> geneMatchHashMap = new LinkedHashMap<String, String>();
-            Gene gene = geneMatch.getGene();
-            geneMatchHashMap.put("id",gene.getEnsemblGeneId());
-            geneMatchHashMap.put("name",gene.getName());
-            geneMatchHashMap.put("description",gene.getDescription());
-            geneMatchHashMap.put("organism",gene.getSpecies().getScientificName() + " (" + gene.getSpecies().getName() + ")");
-            geneMatchHashMap.put("match",getMatch(geneMatch, searchTerm));
-            searchResultArrayList.add(geneMatchHashMap);
-        }
-        return searchResultArrayList;
-    }
-    
-    private String getMatch(GeneMatch geneMatch, String searchTerm) {
-        log.traceEntry("{}, {}", geneMatch, searchTerm);
-        
-        if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
-            return log.traceExit("no exact match");
-        }
-
-        return log.traceExit(geneMatch.getMatch() +
-                " (" + geneMatch.getMatchSource().toString().toLowerCase() + ")");
     }
 }

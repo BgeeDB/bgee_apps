@@ -12,6 +12,8 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.job.Job;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
@@ -37,108 +39,39 @@ public class JsonHelper {
     private static final Logger log = LogManager.getLogger(JsonHelper.class.getName());
     
     /**
-     * A {@code TypeAdapterFactory} made to return {@code StreamTypeAdapter}s, capable 
-     * of correctly dumping a {@code Stream} and its elements. The correct type of the elements 
-     * is determined, to be able to use the appropriate {@code TypeAdapter}. For instance, 
-     * if a custom {@code TypeAdapter} is registered for the elements of a given {@code Stream}, 
-     * then this {@code TypeAdapter} will be correctly used, and not the default 
-     * {@code TypeAdapter} for {@code Object}s. 
-     * <p>
-     * Rational: in order to access the {@code TypeAdapter}s necessary for correctly dumping 
-     * {@code Stream} elements, it is needed to have access to the {@code Gson} object, 
-     * and its {@code getTypeAdapter} methods. So it is needed to register a custom 
-     * {@code TypeAdapterFactory}, because the methods of a custom {@code TypeAdapter} 
-     * wouldn't have access to the {@code Gson} object, while the {@code TypeAdapterFactory} 
-     * method receives a {@code Gson} object. 
-     * <p>
-     * What we would like to do, ideally, is something along the line: 
-     * <pre><code>
-     * public &lt;T&gt; TypeAdapter&lt;T&gt; create(Gson gson, TypeToken&lt;T&gt; typeToken) {
-     *     if (Stream.class.isAssignableFrom(typeToken.getRawType()) && 
-     *             typeToken.getType() instanceof ParameterizedType) {
-     *         //need to manage wildcards, but you get the idea
-     *         TypeAdapter&lt;T&gt; typeAdapter = (TypeAdapter&lt;T&gt;) gson.getAdapter(
-     *             ((ParameterizedType) typeToken.getType()).getActualTypeArguments()[0]);
-     *         
-     *         //Now, our TypeAdapter implementation for Stream class should accept 
-     *         //the underlying TypeAdapter as constructor argument, for correctly dumping 
-     *         //the elements of the Stream: 
-     *         StreamTypeAdapter adapter = new StreamTypeAdapter(typeAdapter);
-     *         //and everything would work fine
-     *         return adapter;
-     *     }
-     *     return null;
-     * }
-     * </code></pre>
-     * The problem is, as the object processed is not really a {@code Stream} under the hood 
-     * (as of matter of {@code Stream}, it's something looking like 
-     * {@code java.util.stream.ReferencePipeline<E_IN, E_OUT>}), and because of type erasure, 
-     * it won't work, the method {@code getActualTypeArguments} will returned non-sense values, 
-     * unless... 
-     * <p>
-     * Unless we always provide the appropriate {@code TypeToken} when processing a {@code Stream}, 
-     * after having registered our {@code StreamTypeAdapterFactory}: 
-     * <pre><code>
-     * //imagine it is a Stream of more complex objects ;)
-     * Stream&lt;String&gt; stream = Stream.of("a", "b");
-     * String dumpStream = gson.toJson(stream, new TypeToken&lt;Stream&lt;String&gt;&gt;(){}.getType());
-     * </code></pre>
-     * But this method does not allow to provide a writer, to immediately write the output, 
-     * and to not store the resulting dump in memory. This is especially problematic 
-     * for {@code Stream}s that can be infinite, or at least, very large. 
-     * <p>
-     * Another possible solution would be to create our own wrapper for {@code Stream}, 
-     * that would be shipped with the appropriate {@code TypeToken}, 
-     * for a {@code TypeAdapterFactory} to easily discover the correct {@code TypeAdapter} to use, e.g.: 
-     * <pre><code>
-     * Stream&lt;String&gt; stream = Stream.of("1", "2");
-     * StreamWrapper&lt;String&gt; streamWrapper = new StreamWrapper&lt;&gt;(stream, 
-     *     new TypeToken&lt;StreamWrapper&lt;String&gt;&gt;(){});
-     * //our custom {@code TypeAdapterFactory} should now be able to detect that the type 
-     * //of the processed object is 'StreamWrapper', and could retrieve the actual value 
-     * //of the generic type from it.
-     * gson.toJson(streamWrapper, ourWriter);
-     * </code></pre>
-     * This solution is acceptable, however, it would make deep-dumping of objects very difficult: 
-     * we would need to make sure we never provide unwrapped {@code Stream}s to {@code Gson} 
-     * unintentionally, in the field of another object for instance.
-     * <p>
-     * The solution adopted, while not ideal, is to directly provide to our custom {@code TypeAdapter} 
-     * the {@code Gson} object, so that it can on-the-fly be provided with the appropriate 
-     * {@code TypeAdapter}, by calling {@code getClass} on the iterated elements. 
-     * Our custom {@code TypeAdapterFactory} is responsible for providing the {@code Gson} object 
-     * to our custom {@code TypeAdapter}. See this class, and {@link StreamTypeAdapter}. 
-     * This has other limitations: for instance, if a {@code Stream} was declared as 
-     * {@code Stream<? extends MyInterface>}, we will always use the {@code TypeAdapter} 
-     * for the concrete implementations, and not a potential {@code TypeAdapter} 
-     * declared for the interface. So, if we needed a custom {@code TypeAdapter}, 
-     * we would need to declare one for each implementation; or to make the custom 
-     * {@code TypeAdapterFactory} to return the same {@code TypeAdapter} for all implementations.
-     * <p>
-     * For now, this factory manages only {@code Stream}s, but we could use it 
-     * for other complex types.
-     * 
+     * A {@code TypeAdapterFactory} notably used when we need to provide the {@code Gson} object
+     * to a custom {@code TypeAdapter}.
+     *
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 15 Oct. 2021
      * @since Bgee 13 Nov. 2015
      * @see StreamTypeAdapter
+     * @see GeneMatchAdapter
      *
      */
     private static class BgeeTypeAdapterFactory implements TypeAdapterFactory {
 
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
-            log.entry(gson, typeToken);
-            
-            if (!Stream.class.isAssignableFrom(typeToken.getRawType())) {
-              return log.traceExit((TypeAdapter<T>) null);
+            log.traceEntry("{}, {}", gson, typeToken);
+
+            final Class<? super T> rawClass = typeToken.getRawType();
+
+            if (Stream.class.isAssignableFrom(rawClass)) {
+                //it is mandatory to cast the returned factory, the test isAssignableFrom
+                //is not enough for the warning to disappear. Note that this is also the case
+                //in Gson factory implementations
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
+                return log.traceExit(result);
             }
-            //it is mandatory to cast the returned factory, the test isAssignableFrom 
-            //is not enough for the warning to disappear. Note that this is also the case 
-            //in Gson factory implementations
-            @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
-            return log.traceExit(result);
+            if (GeneMatch.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchAdapter(gson);
+                return log.traceExit(result);
+            }
+            //let Gson find somebody else
+            return log.traceExit((TypeAdapter<T>) null);
         }
     }
     /**
@@ -168,7 +101,7 @@ public class JsonHelper {
         
         @Override
         public void write(JsonWriter out, Stream<T> stream) throws IOException {
-            log.entry(out, stream);
+            log.traceEntry("{}, {}", out, stream);
             if (stream == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -236,7 +169,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, DownloadFile value) throws IOException {
-            log.entry(out, value);
+            log.traceEntry("{}, {}", out, value);
             if (value == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -286,7 +219,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, RequestParameters rqParams) throws IOException {
-            log.entry(out, rqParams);
+            log.traceEntry("{}, {}", out, rqParams);
             if (rqParams == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -363,7 +296,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, TopAnatResults results) throws IOException {
-            log.entry(out, results);
+            log.traceEntry("{}, {}", out, results);
             if (results == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -439,7 +372,7 @@ public class JsonHelper {
         
         @Override
         public void write(JsonWriter out, Job value) throws IOException {
-            log.entry(out, value);
+            log.traceEntry("{}, {}", out, value);
             if (value == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -469,6 +402,44 @@ public class JsonHelper {
             //for now, we never read JSON values
             throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Job."));
         } 
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneMatch}s in JSON. It is needed because
+     * the {@code getTerm()} method of {@code GeneMatch} is not always filled, and this is the attribute
+     * that GSON would use by default. With this {@code TypeAdapter} we can always use the method
+     * {@code getMatch()}.
+     */
+    private static final class GeneMatchAdapter extends TypeAdapter<GeneMatch> {
+        private final Gson gson;
+
+        private GeneMatchAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneMatch value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("gene");
+            this.gson.getAdapter(Gene.class).write(out, value.getGene());
+            out.name("match").value(value.getMatch());
+            out.name("matchSource").value(value.getMatchSource().toString().toLowerCase());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneMatch read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Job."));
+        }
     }
 
     /**
@@ -539,7 +510,7 @@ public class JsonHelper {
      * @see #toJson(LinkedHashMap, Appendable)
      */
     public String toJson(Object object) {
-        log.entry(object);
+        log.traceEntry("{}", object);
         return log.traceExit(gson.toJson(object));
     }
     
@@ -553,7 +524,7 @@ public class JsonHelper {
      * @param out       An {@code Appendable} used to print the generated JSON.
      */
     public void toJson(LinkedHashMap<String, Object> response, Appendable out) {
-        log.entry(response, out);
+        log.traceEntry("{}, {}", response, out);
         gson.toJson(response, out);
         log.traceExit();
     }

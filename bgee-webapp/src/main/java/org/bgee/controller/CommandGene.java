@@ -35,7 +35,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Oct. 2021
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -174,6 +174,7 @@ public class CommandGene extends CommandParent {
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
         String search = requestParameters.getQuery();
+        String action = requestParameters.getAction();
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
@@ -184,6 +185,13 @@ public class CommandGene extends CommandParent {
 
         if (geneId == null) {
             display.displayGeneHomePage();
+            log.traceExit(); return;
+        }
+
+
+        if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
+            display.displayGeneGeneralInformation(serviceFactory.getGeneService().loadGenesById(geneId,
+                    false, true, false));
             log.traceExit(); return;
         }
 

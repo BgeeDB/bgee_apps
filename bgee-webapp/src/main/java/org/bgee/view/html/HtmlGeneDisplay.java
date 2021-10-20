@@ -1268,6 +1268,53 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         sb.append("<span class='low-qual-score'>").append(expressionScore).append("</span>");
         return log.traceExit(sb.toString());
     }
+
+    @Override
+    public void displayGeneGeneralInformation(Collection<Gene> genes) {
+        log.traceEntry("{}", genes);
+
+        //All genes are supposed to have the same ID here
+        Set<String> ids = genes.stream().map(g -> g.getGeneId()).collect(Collectors.toSet());
+        if (ids.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("All genes should have the same ID"));
+        }
+        String id = ids.iterator().next();
+        String titleStart = "Gene " + htmlEntities(id) + " expression in Bgee";
+        String description = titleStart + ".";
+        this.startDisplay(titleStart, "WebPage", description);
+
+        // Gene search
+        this.writeln("<div class='row'>");
+
+        this.writeln("<div class='col-sm-3'>");
+        this.writeln(getGeneSearchBox(true, null));
+        this.writeln("</div>"); // close div
+
+        //page title
+        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
+        this.writeln(titleStart);
+        this.writeln("</h1>");
+
+        this.writeln("</div>"); // close row
+
+        StringBuilder geneList = new StringBuilder();
+        geneList.append("<div class='row'>");
+        geneList.append(genes.stream()
+            .sorted(Comparator.comparing(g -> g.getSpecies() == null?
+                null: g.getSpecies().getPreferredDisplayOrder(), Comparator.nullsLast(Comparator.naturalOrder())))
+            .map(g -> "<img src='" + this.getSpeciesImageSrc(g.getSpecies(), true) + "' " +
+                    "alt='" + htmlEntities(g.getSpecies().getShortName())
+                    + "' />" + getSpecificGenePageLink(g)
+                    + "<h2>General information</h2><div class='gene'>" + getGeneralInfo(g, null) + "</div>")
+            .collect(Collectors.joining("</div><div class='col-md-offset-3 col-md-6 gene_choice'>",
+                    "<div class='col-md-offset-3 col-md-6 gene_choice'>", "</div>")));
+        geneList.append("</div>");
+
+        this.writeln(geneList.toString());
+
+        this.endDisplay();
+        log.traceExit();
+    }
     
 
     @Override

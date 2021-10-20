@@ -24,7 +24,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
@@ -51,11 +50,13 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
+        log.traceEntry("{}. {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
         resultHashMap.put("result", result);
         this.sendResponse("Gene search result",
                 resultHashMap);
+        log.traceExit();
         
     }
 
@@ -65,12 +66,6 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
         // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
         LinkedHashMap<String, Object> JSONHashMap = new LinkedHashMap<String, Object>();
-
-        // LinkedHashMap containing gene infos
-        LinkedHashMap<String, String> geneHashMap = new LinkedHashMap<String, String>();
-        Gene gene = geneResponse.getGene();
-        geneHashMap.put("geneId", gene.getEnsemblGeneId());
-        geneHashMap.put("geneName", gene.getName());
 
         // ArrayList of anatomical entities
         ArrayList<LinkedHashMap<String, Object>> anatEntitiesList = 
@@ -115,13 +110,38 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
         });
 
-        JSONHashMap.put("gene", geneHashMap);
+        JSONHashMap.put("gene", geneResponse.getGene());
         JSONHashMap.put("anatEntities", anatEntitiesList);
-        JSONHashMap.put("sources", getXRefDisplay(gene.getXRefs()));
+        JSONHashMap.put("sources", getXRefDisplay(geneResponse.getGene().getXRefs()));
 
         this.sendResponse("General information, expression calls and cross-references of the requested gene",
                 JSONHashMap);
+        log.traceExit();
 
+    }
+
+    @Override
+    public void displayGeneGeneralInformation(Collection<Gene> genes) {
+        log.traceEntry("{}", genes);
+
+        // create LinkedHashMap to generate the JSON
+        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
+        resultHashMap.put("genes", genes.stream()
+            .sorted(Comparator.comparing(g -> g.getSpecies() == null?
+                    null: g.getSpecies().getPreferredDisplayOrder(),
+                    Comparator.nullsLast(Comparator.naturalOrder())))
+            .collect(Collectors.toList()));
+
+        //All genes are supposed to have the same ID here
+        Set<String> ids = genes.stream().map(g -> g.getGeneId()).collect(Collectors.toSet());
+        if (ids.size() != 1) {
+            throw log.throwing(new IllegalArgumentException("All genes should have the same ID"));
+        }
+        String id = ids.iterator().next();
+        String msg = "General information for gene " + id;
+
+        this.sendResponse(msg, resultHashMap);
+        log.traceExit();
     }
 
     @Override
@@ -163,7 +183,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
                                     throw new IllegalStateException(String.format("Duplicate key %s", u));
                                 }, LinkedHashMap::new)));
 
-        return xRefsBySource;
+        return log.traceExit(xRefsBySource);
     }
 
     protected String urlEncode(String stringToWrite) {

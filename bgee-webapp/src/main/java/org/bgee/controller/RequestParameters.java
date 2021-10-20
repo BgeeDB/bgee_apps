@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -377,6 +377,12 @@ public class RequestParameters {
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
     public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when general information about a gene
+     * is requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_GENERAL_INFO = "general_info";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.

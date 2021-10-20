@@ -113,6 +113,10 @@ public interface GeneXRefDAO extends DAO<GeneXRefDAO.Attribute> {
             Collection<String> xRefIds, Collection<Integer> dataSourceIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException;
 
+    public GeneXRefTOResultSet getGeneXRefs(Collection<String> geneIds, Collection<Integer> speciesIds,
+            Collection<String> xRefIds, Collection<Integer> dataSourceIds,
+            Collection<GeneXRefDAO.Attribute> attributes) throws DAOException;
+
     /**
      * {@code DAOResultSet} specifics to {@code GeneXRefTO}s
      * 

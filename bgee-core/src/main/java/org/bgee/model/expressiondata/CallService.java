@@ -78,7 +78,7 @@ import org.bgee.model.species.Species;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15, Oct 2021
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -437,8 +437,8 @@ public class CallService extends CommonService {
         }
 
         // Retrieve species, get a map species ID -> Species
-        final Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(),
-                this.getServiceFactory().getSpeciesService());
+        final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters());
         //If several species were requested, it is necessary to request at least GENE
         //or a condition parameter (ANAT_ENTITY_ID, etc)
         if (speciesMap.size() > 1 && !clonedAttrs.isEmpty() &&
@@ -833,7 +833,8 @@ public class CallService extends CommonService {
         if (callFilter.getGeneFilters().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
         }
-        Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters())
+        Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters(),
+                false, false, false)
                 .collect(Collectors.toSet());
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
     }

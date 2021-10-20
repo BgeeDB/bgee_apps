@@ -1,6 +1,7 @@
 package org.bgee.model;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -28,6 +29,8 @@ import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
@@ -38,6 +41,10 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionFilter;
@@ -47,8 +54,8 @@ import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneXRef;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
 
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
@@ -264,30 +271,100 @@ public class CommonService extends Service {
             throw log.throwing(new IllegalStateException("Unsupported Condition.Sex: " + sex));
         }
     }
-    
+
+    protected Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesSourceInfo,
+            Map<Integer, Source> sourceMap) {
+        log.traceEntry("{}, {}, {}", speciesIds, withSpeciesSourceInfo, sourceMap);
+        return log.traceExit(this.loadSpecies(
+                ids -> this.getDaoManager().getSpeciesDAO().getSpeciesByIds(ids, null),
+                speciesIds, withSpeciesSourceInfo, sourceMap)
+                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
+    }
     /**
-     * Load a {@code Species} {@code Map} from the provided {@code GeneFilter}s, retrieved from the data source.
-     *
-     * @param geneFilters       A {@code Set} of {@code GeneFilter}s containing the IDs of the {@code Species} to load.
-     * @param speciesService    A {@code SpeciesService} to load {@code Species} from their IDs.
-     * @return                  An unmodifiable {@code Map} where keys are species IDs, the associated value being
-     *                          the corresponding {@code Species}.
-     * @throws IllegalArgumentException If a {@code Species} could not be retrieved based on a ID
-     *                                  provided in {@code geneFilter}s.
+     * @param daoCall           A {@code Function} accepting a {@code Set} of {@code Integer}s
+     *                          that are, in our case, IDs of species or of taxa, and returning
+     *                          a {@code SpeciesTOResultSet}, by calling, in our case, a method
+     *                          of {@code SpeciesDAO} to retrieve species either by species IDs
+     *                          or taxon IDs.
+     * @param speOrTaxIds
+     * @param withSpeciesSourceInfo
+     * @return
+     * @throws DAOException
+     * @throws QueryInterruptedException
      */
-    protected static Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters,
-            SpeciesService speciesService) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneFilters, speciesService);
-        // Retrieve species, get a map species ID -> Species
-        final Set<Integer> clnSpeIds =  Collections.unmodifiableSet(
-                geneFilters.stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet()));
-        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(
-                speciesService.loadSpeciesMap(clnSpeIds, false));
-        if (speciesMap.size() != clnSpeIds.size()) {
-            throw new IllegalArgumentException("Some provided species not found in data source");
+    protected Set<Species> loadSpecies(Function<Set<Integer>, SpeciesTOResultSet> daoCall,
+            Collection<Integer> speOrTaxIds, boolean withSpeciesSourceInfo,
+            Map<Integer, Source> sourceMap) throws DAOException, QueryInterruptedException {
+        log.traceEntry("{}, {}, {}, {}", daoCall, speOrTaxIds, withSpeciesSourceInfo, sourceMap);
+
+        Set<Integer> filteredIds = speOrTaxIds == null? new HashSet<>(): new HashSet<>(speOrTaxIds);
+        Set<SpeciesTO> speciesTOs = daoCall.apply(filteredIds).stream().collect(Collectors.toSet());
+        Set<Integer> sourceIds = new HashSet<>();
+        Set<Integer> speciesIds = new HashSet<>();
+        for (SpeciesTO speciesTO: speciesTOs) {
+            sourceIds.add(speciesTO.getDataSourceId());
+            speciesIds.add(speciesTO.getId());
         }
-        return log.traceExit(speciesMap);
+
+        Set<SourceToSpeciesTO> sourceToSpeciesTOs = !withSpeciesSourceInfo? new HashSet<>():
+            getDaoManager().getSourceToSpeciesDAO()
+                .getSourceToSpecies(null, speciesIds, null, null, null)
+                .stream().collect(Collectors.toSet());
+        sourceIds.addAll(sourceToSpeciesTOs.stream()
+                .map(s -> s.getDataSourceId()).collect(Collectors.toSet()));
+
+        Map<Integer, Source> sourceMapToUse = sourceMap != null && !sourceMap.isEmpty()? sourceMap:
+            !sourceIds.isEmpty()? getServiceFactory().getSourceService().loadSourcesByIds(sourceIds):
+                new HashMap<>();
+
+        Set<Species> species = speciesTOs.stream().map(speciesTO -> {
+            Map<Source, Set<DataType>> forData = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sourceMapToUse, speciesTO.getId(), InfoType.DATA);
+            Map<Source, Set<DataType>> forAnnotation = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sourceMapToUse, speciesTO.getId(), InfoType.ANNOTATION);
+
+            return new Species(speciesTO.getId(), speciesTO.getName(), speciesTO.getDescription(),
+                    speciesTO.getGenus(), speciesTO.getSpeciesName(), speciesTO.getGenomeVersion(),
+                    //Genome source
+                    Optional.ofNullable(sourceMapToUse.get(speciesTO.getDataSourceId()))
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Could not find source with ID " + speciesTO.getDataSourceId())),
+                    speciesTO.getGenomeSpeciesId(),
+                    speciesTO.getParentTaxonId(),
+                    forData, forAnnotation, speciesTO.getDisplayOrder());
+        }).collect(Collectors.toSet());
+
+        return log.traceExit(species);
+    }
+    /** 
+     * Retrieve data types by species from {@code SourceToSpeciesTO}.
+     * 
+     * @param sourceToSpeciesTOs    A {@code Collection} of {@code SourceToSpeciesTO}s that are sources 
+     *                              to species to be grouped.
+     * @param sources               A {@code List} of {@code Source}s that are sources to be grouped.
+     * @param infoType              An {@code InfoType} that is the information type for which
+     *                              to return data types by species.
+     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     *                              species IDs, the associated values being a {@code Set} of 
+     *                              {@code DataType}s corresponding to data types of {@code infoType}
+     *                              data of the provided {@code sourceId}.
+     */
+    private Map<Source, Set<DataType>> getDataTypesByDataSource(
+            Collection<SourceToSpeciesTO> sourceToSpeciesTOs, Map<Integer, Source> sourceMap, 
+            Integer speciesId, InfoType infoType) {
+        log.traceEntry("{}, {}, {}, {}", sourceToSpeciesTOs, sourceMap, speciesId, infoType);
+
+        Map<Source, Set<DataType>> map = sourceToSpeciesTOs.stream()
+                .filter(to -> to.getInfoType().equals(infoType))
+                .filter(to -> to.getSpeciesId().equals(speciesId))
+                .collect(Collectors.toMap(
+                        to -> Optional.ofNullable(sourceMap.get(to.getDataSourceId()))
+                                      .orElseThrow(() -> new IllegalStateException(
+                                              "Could not find source with ID " + to.getDataSourceId())), 
+                        to -> new HashSet<DataType>(Arrays.asList(convertDaoDataTypeToDataType(
+                                to.getDataType()))), 
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+        return log.traceExit(map);
     }
 
     /**

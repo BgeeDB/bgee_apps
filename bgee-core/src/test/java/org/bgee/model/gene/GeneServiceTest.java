@@ -1,7 +1,6 @@
 package org.bgee.model.gene;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,16 +19,11 @@ import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
-import org.bgee.model.dao.api.source.SourceDAO;
-import org.bgee.model.dao.api.source.SourceDAO.SourceTO;
-import org.bgee.model.dao.api.source.SourceDAO.SourceTO.SourceCategory;
-import org.bgee.model.dao.api.source.SourceDAO.SourceTOResultSet;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.source.Source;
 import org.bgee.model.source.SourceService;
-import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -50,7 +44,7 @@ import org.mockito.stubbing.Answer;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Julien Wollbrett
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Nov. 2015
  */
 public class GeneServiceTest extends TestAncestor {

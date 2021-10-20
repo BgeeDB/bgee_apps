@@ -298,7 +298,7 @@ implements GlobalExpressionCallDAO {
         //Note that there is a clustered index for the globalExpression table that is
         //PRIMAR KEY(bgeeGeneId, globalConditionId). So we try as much as possible to have bgeeGeneIds
         //as filters, in order to use this clustered index.
-        // We filter genes based on the bgeeGeneId rather than the Ensembl geneId,
+        // We filter genes based on the bgeeGeneId rather than the public geneId,
         // to avoid joins to gene table when it is not needed because in reality,
         // at the time of writing, queries take much more time. For instance,
         // to retrieve calls in zebrafish, using gene table it took 22 minutes

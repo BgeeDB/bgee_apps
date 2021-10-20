@@ -25,6 +25,7 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.gene.GeneMatchResultService;
+import org.bgee.model.gene.GeneService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -175,6 +176,7 @@ public class CommandGene extends CommandParent {
         Integer speciesId = requestParameters.getSpeciesId();
         String search = requestParameters.getQuery();
         String action = requestParameters.getAction();
+        GeneService geneService = serviceFactory.getGeneService();
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
@@ -190,13 +192,27 @@ public class CommandGene extends CommandParent {
 
 
         if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
-            display.displayGeneGeneralInformation(serviceFactory.getGeneService().loadGenesById(geneId,
-                    false, true, false));
+            Set<Gene> genes = null;
+            try {
+                genes = speciesId != null && speciesId > 0?
+                    geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
+                            false, true, false).collect(Collectors.toSet()):
+                    geneService.loadGenesById(geneId, false, true, false);
+            } catch (IllegalArgumentException e) {
+                //we do nothing here, maybe the speciesId was incorrect, this will throw
+                //a PageNotFoundException below;
+                log.catching(e);
+            }
+            if (genes == null || genes.size() == 0) {
+                throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
+                        + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
+            }
+            display.displayGeneGeneralInformation(genes);
             log.traceExit(); return;
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
-        Set<Gene> genes = serviceFactory.getGeneService().loadGenesById(geneId, true, true, true);
+        Set<Gene> genes = geneService.loadGenesById(geneId, true, true, true);
         if (genes.size() == 0) {
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));
         }

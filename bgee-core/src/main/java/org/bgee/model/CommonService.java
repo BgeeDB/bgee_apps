@@ -381,13 +381,15 @@ public class CommonService extends Service {
      * @see #loadSpeciesMapFromGeneFilters(Set, SpeciesService)
      */
     protected static Map<Integer, Gene> loadGeneMapFromGeneFilters(Set<GeneFilter> geneFilters,
-            Map<Integer, Species> speciesMap, GeneDAO geneDAO) throws GeneNotFoundException {
+            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap, GeneDAO geneDAO)
+                    throws GeneNotFoundException {
         log.traceEntry("{}, {}, {}", geneFilters, speciesMap, geneDAO);
 
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
                 .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getGeneIds())));
-        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(geneDAO));
+        Map<Integer, GeneBioType> geneBioTypeMapToUse = geneBioTypeMap == null || geneBioTypeMap.isEmpty()?
+                loadGeneBioTypeMap(geneDAO): geneBioTypeMap;
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(geneDAO
@@ -399,7 +401,7 @@ public class CommonService extends Service {
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
                                 null, null,
-                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                Optional.ofNullable(geneBioTypeMapToUse.get(gTO.getGeneBioTypeId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))
                         )));
 

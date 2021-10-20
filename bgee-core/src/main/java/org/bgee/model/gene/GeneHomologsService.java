@@ -28,17 +28,31 @@ import org.bgee.model.species.Taxon;
  * {@link org.bgee.model.ServiceFactory ServiceFactory} to obtain {@code GeneHomologsService}s.
  * 
  * @author  Julien Wollbrett
- * @version Bgee 14.2, Feb. 2021
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 14.2, Feb. 2021
 */
 
 //TODO check which services/DAO are used more than once
 
 public class GeneHomologsService extends CommonService{
-    
     private static final Logger log = LogManager.getLogger(GeneHomologsService.class.getName());
-    private GeneHomologsDAO geneHomologsDAO;
-    private GeneDAO geneDAO;
+
+    protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
+        log.traceEntry("{}", toSort);
+        return log.traceExit(toSort.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
+                .collect(Collectors
+                    //Type hint necessary for some compilers
+                    .<Entry<Taxon, Set<Gene>>, Taxon, Set<Gene>, LinkedHashMap<Taxon, Set<Gene>>>toMap(
+                        Entry::getKey, Entry::getValue,
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException(
+                                "Collision impossible"));},
+                        LinkedHashMap::new)));
+    }
+
+    private final GeneHomologsDAO geneHomologsDAO;
+    private final GeneDAO geneDAO;
     
     public GeneHomologsService(ServiceFactory serviceFactory) {
         super(serviceFactory);
@@ -61,7 +75,7 @@ public class GeneHomologsService extends CommonService{
      */
     public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(geneId, speciesId, withOrthologs, withParalogs);
+        log.traceEntry("{}, {}, {}, {}", geneId, speciesId, withOrthologs, withParalogs);
         GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), null, null, 
                 true, withOrthologs, withParalogs).iterator().next());
@@ -92,8 +106,8 @@ public class GeneHomologsService extends CommonService{
     public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon,
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(geneId, speciesId, homologsSpeciesIds, taxonId, withDescendantTaxon,
-                withOrthologs, withParalogs);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneId, speciesId, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
         GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs).iterator().next());
@@ -122,9 +136,8 @@ public class GeneHomologsService extends CommonService{
     public Set<GeneHomologs> getGeneHomologs(GeneFilter geneFilter, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon, 
             boolean withOrthologs, boolean withParalogs) {
-        
-        log.entry(geneFilter, homologsSpeciesIds, taxonId, withDescendantTaxon, withOrthologs, 
-                withParalogs);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneFilter, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
         
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds,
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs));
@@ -154,51 +167,37 @@ public class GeneHomologsService extends CommonService{
     public Set<GeneHomologs> getGeneHomologs(Collection<GeneFilter> geneFilters, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon, 
             boolean withOrthologs, boolean withParalogs) {
-        
-        log.entry(geneFilters, homologsSpeciesIds, taxonId, withDescendantTaxon, withOrthologs, 
-                withParalogs);
-        
-        // transform geneFilter to a map of speciesId as key and set of geneId as value
-        Map<Integer, Set<String>> speciesIdToGeneIds = geneFilters.stream()
-                .collect(Collectors.toMap(p -> p.getSpeciesId(), p -> p.getGeneIds()));
-        
-        // load geneTOs for which we want homologs
-        Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()
-                .getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)
-                .stream().collect(Collectors.toSet());
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneFilters, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
+
+        if (geneFilters == null || geneFilters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("GeneFilters must be provided"));
+        }
+        Set<GeneFilter> clonedGeneFilter = new HashSet<>(geneFilters);
+        // load Species, we need all Species to be able to later load homologs,
+        // this is why we don't use the geneFilters here.
+        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesMap(null, false);
+        // load GeneBioTypes by geneBioTypeId, because we will also need them for homologs later
+        Map<Integer,GeneBioType> geneBioTypeMap = Collections
+                .unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
+        // load Genes by bgeeGeneId
+        Map<Integer, Gene> genesByBgeeGeneId = loadGeneMapFromGeneFilters(clonedGeneFilter,
+                speciesMap, geneBioTypeMap, geneDAO);
         
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> orthologsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
         Set<GeneHomologsTO> paralogsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
-        Set<Integer> bgeeGeneIds = geneTOs.stream().map(gTO -> gTO.getId()).collect(Collectors.toSet());
         if (withOrthologs) {
-            orthologsTOs = new HashSet<>(geneHomologsDAO.getOrthologousGenesAtTaxonLevel(bgeeGeneIds, 
-                    taxonId, withDescendantTaxon, homologsSpeciesIds).getAllTOs());
+            orthologsTOs = new HashSet<>(geneHomologsDAO.getOrthologousGenesAtTaxonLevel(
+                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
+                    .getAllTOs());
         }
         if (withParalogs) {
-            paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(bgeeGeneIds,
-                    taxonId, withDescendantTaxon, homologsSpeciesIds).getAllTOs());
+            paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(
+                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
+                    .getAllTOs());
         }
-        
-        // load GeneBioTypes by geneBioTypeId
-        Map<Integer,GeneBioType> geneBioTypeMap = Collections
-                .unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
-        
-        // load Species by SpeciesId
-        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesMap(null, false);
-        
-        // load Genes by bgeeGeneId
-        Map<Integer, Gene> genesByBgeeGeneId = geneTOs.stream()
-                .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO,
-                      Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                      .orElseThrow(() -> new IllegalStateException("Missing species ID " + 
-                              gTO.getSpeciesId() + "for gene " + gTO.getId())),
-                      null, null,
-                      Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                      .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID"
-                              + " for gene"))
-              )));
         
         // create Map with Taxon as key and Set of Gene as value and add them as value of a Map
         // where keys are bgeeGeneIds
@@ -208,14 +207,11 @@ public class GeneHomologsService extends CommonService{
                 groupHomologsByBgeeGeneId(paralogsTOs, geneBioTypeMap, speciesMap);
         
         // Create the Set of GeneHomologs
-        Set<GeneHomologs> homologsGeneSet = new HashSet<GeneHomologs>();
-        for (Integer bgeeGeneId : bgeeGeneIds) {
-            homologsGeneSet.add(new GeneHomologs(
-                    genesByBgeeGeneId.get(bgeeGeneId), 
-                    orthologsMap.get(bgeeGeneId), 
-                    paralogsMap.get(bgeeGeneId)
-                ));
-        }
+        Set<GeneHomologs> homologsGeneSet = genesByBgeeGeneId.keySet().stream()
+                .map(bgeeGeneId -> new GeneHomologs(genesByBgeeGeneId.get(bgeeGeneId),
+                    orthologsMap.get(bgeeGeneId), paralogsMap.get(bgeeGeneId)
+                ))
+                .collect(Collectors.toSet());
         
         return log.traceExit(homologsGeneSet);
     }
@@ -236,7 +232,7 @@ public class GeneHomologsService extends CommonService{
     private Map<Integer, LinkedHashMap<Taxon, Set<Gene>>> groupHomologsByBgeeGeneId(
             Set<GeneHomologsTO> homologsTOs, Map<Integer, GeneBioType> geneBioTypeMap,
             Map<Integer, Species> speciesMap) {
-        log.entry(homologsTOs, geneBioTypeMap, speciesMap);
+        log.traceEntry("{}, {}, {}", homologsTOs, geneBioTypeMap, speciesMap);
         
         // Map with geneId as Key and Map as value having taxonId as key and Set of bgeeGeneId 
         // as value.
@@ -248,8 +244,7 @@ public class GeneHomologsService extends CommonService{
         
         // Create Map with bgeeGeneId as key and the corresponding Gene as value. 
         Map<Integer, Gene> homologousGenesByBgeeGeneId = (homologsTOs != null && !homologsTOs.isEmpty())
-                ? geneDAO
-                        .getGenesByBgeeIds(
+                ? geneDAO.getGenesByBgeeIds(
                                 homologsTOs.stream().map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet()))
                         .stream()
                         .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO, Optional
@@ -292,18 +287,5 @@ public class GeneHomologsService extends CommonService{
             homologsGeneByTaxonBygeneId.put(entryByGeneId.getKey(), homologsGeneByTaxon);
         }
         return log.traceExit(homologsGeneByTaxonBygeneId);
-    }
-
-    protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
-        log.entry(toSort);
-        return log.traceExit(toSort.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
-                .collect(Collectors
-                    //Type hint necessary for some compilers
-                    .<Entry<Taxon, Set<Gene>>, Taxon, Set<Gene>, LinkedHashMap<Taxon, Set<Gene>>>toMap(
-                        Entry::getKey, Entry::getValue,
-                        (v1, v2) -> {throw log.throwing(new IllegalStateException(
-                                "Collision impossible"));},
-                        LinkedHashMap::new)));
     }
 }

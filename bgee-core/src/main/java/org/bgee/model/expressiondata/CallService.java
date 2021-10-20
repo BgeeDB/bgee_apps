@@ -451,7 +451,7 @@ public class CallService extends CommonService {
         //Retrieve a Map of Bgee gene IDs to Gene. This will throw a GeneNotFoundException
         //if some requested gene IDs were not found in Bgee.
         Map<Integer, Gene> geneMap = loadGeneMapFromGeneFilters(callFilter.getGeneFilters(),
-                speciesMap, this.geneDAO);
+                speciesMap, null, this.geneDAO);
         assert !geneMap.isEmpty();
 
         // Define condition parameter combination allowing to target a specific data aggregation

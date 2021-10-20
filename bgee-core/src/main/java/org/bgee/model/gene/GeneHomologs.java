@@ -23,7 +23,6 @@ import org.bgee.model.species.Taxon;
  * @see Gene 
  */
 public class GeneHomologs {
-    
     private final static Logger log = LogManager.getLogger(GeneHomologs.class.getName());
 
     /**
@@ -38,7 +37,7 @@ public class GeneHomologs {
      */
     public static GeneHomologs mergeGeneHomologs(GeneHomologs gh1, GeneHomologs gh2)
             throws IllegalArgumentException {
-        log.entry(gh1, gh2);
+        log.traceEntry("{}, {}", gh1, gh2);
         if (!gh1.getGene().equals(gh2.getGene())) {
             throw log.throwing(new IllegalArgumentException(
                     "Cannot merge GeneHomologs for different genes"));
@@ -66,7 +65,7 @@ public class GeneHomologs {
     
     public GeneHomologs(Gene gene, LinkedHashMap<Taxon, Set<Gene>> orthologsByTaxon,
             LinkedHashMap<Taxon, Set<Gene>> paralogsByTaxon) {
-        log.entry(gene, orthologsByTaxon, paralogsByTaxon);
+        log.traceEntry("{}, {}, {}", gene, orthologsByTaxon, paralogsByTaxon);
         if (gene == null) {
             throw log.throwing(new IllegalArgumentException("a gene can not be null"));
         }

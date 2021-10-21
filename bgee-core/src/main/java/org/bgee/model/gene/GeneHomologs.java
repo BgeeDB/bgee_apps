@@ -25,6 +25,23 @@ import org.bgee.model.species.Taxon;
 public class GeneHomologs {
     private final static Logger log = LogManager.getLogger(GeneHomologs.class.getName());
 
+    public static enum HomologyType {
+        PARALOGY("pps"), ORTHOLOGY("vps");
+
+        private final String replacementForHomologyTypeURLTag;
+
+        private HomologyType(String replacementForHomologyTypeURLTag) {
+            this.replacementForHomologyTypeURLTag = replacementForHomologyTypeURLTag;
+        }
+        /**
+         * @return  A {@code String} to be used to replace {@link Source#HOMOLOGY_TYPE_TAG}
+         *          in XRef URLs.
+         */
+        public String getReplacementForHomologyTypeURLTag() {
+            return this.replacementForHomologyTypeURLTag;
+        }
+    }
+
     /**
      * Merge the orthologs and paralogs {@code Map}s of two {@code GeneHomologs} related to a same
      * target {@code Gene}. The {@code Map}s are re-ordered appropriatly based on the taxonomic level.

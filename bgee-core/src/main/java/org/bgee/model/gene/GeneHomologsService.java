@@ -1,5 +1,6 @@
 package org.bgee.model.gene;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +21,7 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO.GeneHomologsTO;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
@@ -37,6 +39,9 @@ import org.bgee.model.species.Taxon;
 
 public class GeneHomologsService extends CommonService{
     private static final Logger log = LogManager.getLogger(GeneHomologsService.class.getName());
+
+    private final static int OMA_SOURCE_ID = 28;
+    private final static String OMA_SOURCE_NAME = "OMA";
 
     protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
         log.traceEntry("{}", toSort);
@@ -184,6 +189,22 @@ public class GeneHomologsService extends CommonService{
         // load Genes by bgeeGeneId
         Map<Integer, Gene> genesByBgeeGeneId = loadGeneMapFromGeneFilters(clonedGeneFilter,
                 speciesMap, geneBioTypeMap, geneDAO);
+
+        // We will need the source of homology information.
+        // For now, it is always and only OMA
+        Source omaSource = this.getServiceFactory().getSourceService()
+                .loadSourcesByIds(Collections.singleton(OMA_SOURCE_ID))
+                .values().stream().findFirst().orElse(null);
+        //Basic sanity check on OMA source
+        if (omaSource == null || !OMA_SOURCE_NAME.equals(omaSource.getName())) {
+            throw log.throwing(new IllegalStateException("OMA source not found"));
+        }
+        if (!omaSource.getXRefUrl().contains(Source.HOMOLOGY_TYPE_TAG)) {
+            throw log.throwing(new IllegalStateException("Could not find homology type tag in XRefURL. "
+                    + "URL: " + omaSource.getXRefUrl() + "- Tag: " + Source.HOMOLOGY_TYPE_TAG));
+        }
+        Source orthologySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.ORTHOLOGY);
+        Source paralogySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.PARALOGY);
         
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> orthologsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
@@ -208,12 +229,45 @@ public class GeneHomologsService extends CommonService{
         
         // Create the Set of GeneHomologs
         Set<GeneHomologs> homologsGeneSet = genesByBgeeGeneId.keySet().stream()
-                .map(bgeeGeneId -> new GeneHomologs(genesByBgeeGeneId.get(bgeeGeneId),
+                .map(bgeeGeneId -> new GeneHomologs(
+                    //We need to recreate the gene to provide the orthology and paralogy XRef
+                    loadGeneWithXRefs(genesByBgeeGeneId.get(bgeeGeneId), orthologySource, paralogySource),
                     orthologsMap.get(bgeeGeneId), paralogsMap.get(bgeeGeneId)
                 ))
                 .collect(Collectors.toSet());
         
         return log.traceExit(homologsGeneSet);
+    }
+    /**
+     * We recreate separate OMA {@code Source}s for orthology and paralogy (in order to appropriately
+     * replaced the {@link Source#HOMOLOGY_TYPE_TAG}) tag in {@link Source#getXRefUrl()}).
+     *
+     * @param omaSource The original {@code Source} for homology information.
+     * @param type      THe {@code GeneHomologs.HomologyType} that is orthology or paralogy.
+     * @return          The new {@code Source} with correct XRefURL.
+     */
+    private static Source loadHomologySource(Source source, GeneHomologs.HomologyType type) {
+        log.traceEntry("{}, {}", source, type);
+        //This assume that type.getReplacementForHomologyTypeURLTag()
+        //does not need URL encoding. We will not replace the gene ID tag here.
+        String xRefUrl = source.getXRefUrl().replace(Source.HOMOLOGY_TYPE_TAG,
+                type.getReplacementForHomologyTypeURLTag());
+        return log.traceExit(new Source(source.getId(), source.getName(),
+                type.name().toLowerCase() + " information from OMA",
+                xRefUrl, source.getExperimentUrl(), source.getEvidenceUrl(), source.getBaseUrl(),
+                source.getReleaseDate(), source.getReleaseVersion(), source.getToDisplay(),
+                source.getCategory(), source.getDisplayOrder()));
+    }
+    private static Gene loadGeneWithXRefs(Gene gene, Source orthologySource, Source paralogySource) {
+        log.traceEntry("{}, {}, {}", gene, orthologySource, paralogySource);
+        GeneXRef orthologXRef = new GeneXRef(gene.getGeneId(), gene.getName(), orthologySource,
+                gene.getGeneId(), gene.getSpecies().getScientificName());
+        GeneXRef paralogXRef = new GeneXRef(gene.getGeneId(), gene.getName(), paralogySource,
+                gene.getGeneId(), gene.getSpecies().getScientificName());
+        Set<GeneXRef> xRefs = new HashSet<>(Arrays.asList(orthologXRef, paralogXRef));
+        return log.traceExit(new Gene(gene.getGeneId(), gene.getName(), gene.getDescription(),
+                gene.getSynonyms(), xRefs, gene.getSpecies(), gene.getGeneBioType(),
+                gene.getGeneMappedToSameGeneIdCount()));
     }
     /**
      * create a {@code Map} where keys are bgeeGeneIds and value is a second {@code Map} with

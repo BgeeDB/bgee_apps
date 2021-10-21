@@ -35,6 +35,11 @@ public class Source extends NamedEntity<Integer> {
      */
     //FIXME: check new  tag
     public final static String SPECIES_SCIENTIFIC_NAME_TAG = "[species_ensembl_link]";
+    /**
+     * The {@code String} that is the tag to be replaced by a homology type
+     * in URLs returned by {@link #getXRefUrl()}.
+     */
+    public final static String HOMOLOGY_TYPE_TAG = "[homology_type]";
 
     /**
      * A {@code String} that is the URL for cross-references to data source.

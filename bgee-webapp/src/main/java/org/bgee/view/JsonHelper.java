@@ -13,15 +13,24 @@ import org.bgee.controller.URLParameters;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
+import org.bgee.model.species.Taxon;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -68,6 +77,11 @@ public class JsonHelper {
             if (GeneMatch.class.isAssignableFrom(rawClass) ) {
                 @SuppressWarnings("unchecked")
                 TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsAdapter(gson);
                 return log.traceExit(result);
             }
             //let Gson find somebody else
@@ -438,7 +452,148 @@ public class JsonHelper {
         @Override
         public GeneMatch read(JsonReader in) throws IOException {
             //for now, we never read JSON values
-            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Job."));
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneMatch."));
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneHomologs}s in JSON. It is notably to be able
+     * to call the method {@code getXRefUrl()}.
+     */
+    private static final class GeneXRefAdapter extends TypeAdapter<GeneXRef> {
+
+        private final Function<String, String> urlEncodeFunction;
+        private GeneXRefAdapter(Function<String, String> urlEncodeFunction) {
+            this.urlEncodeFunction = urlEncodeFunction;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneXRef value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("xRefId").value(value.getXRefId());
+            out.name("xRefName").value(value.getXRefName());
+            out.name("xRefURL").value(value.getXRefUrl(false, urlEncodeFunction));
+
+            //Simplified display of Source inside XRefs
+            out.name("source");
+            out.beginObject();
+            out.name("name").value(value.getSource().getName());
+            out.name("description").value(value.getSource().getDescription());
+            out.name("baseUrl").value(value.getSource().getBaseUrl());
+            out.endObject();
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneXRef read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneXRef."));
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneHomologs}s in JSON. It is a complex object
+     * notably with {@code Map}s.
+     */
+    private static final class GeneHomologsAdapter extends TypeAdapter<GeneHomologs> {
+        private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
+                .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(),
+                        Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(x -> x.getGeneId(), Comparator.nullsLast(String::compareTo));
+
+        private final Gson gson;
+
+        private GeneHomologsAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneHomologs value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("gene");
+            this.writeSimplifiedGene(out, value.getGene());
+
+            //We need to provide all taxa to be able to use their IDs as keys below
+            out.name("taxa");
+            this.gson.getAdapter(Set.class).write(out, value.getAllTaxa());
+
+            out.name("orthologsByTaxon");
+            this.writeHomologsByTaxon(out, value.getOrthologsByTaxon());
+            out.name("paralogsByTaxon");
+            this.writeHomologsByTaxon(out, value.getParalogsByTaxon());
+
+            out.name("orthologyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getOrthologyXRef());
+            out.name("paralogyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getParalogyXRef());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneHomologs read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
+        }
+
+        private void writeSimplifiedGene(JsonWriter out, Gene gene) throws IOException {
+            log.traceEntry("{}, {}", out, gene);
+            out.beginObject();
+            out.name("geneId").value(gene.getGeneId());
+            out.name("name").value(gene.getName());
+
+            //Simplified display of Species
+            out.name("species");
+            out.beginObject();
+            out.name("id").value(gene.getSpecies().getId());
+            out.name("name").value(gene.getSpecies().getName());
+            out.name("genus").value(gene.getSpecies().getGenus());
+            out.name("speciesName").value(gene.getSpecies().getSpeciesName());
+            out.endObject();
+
+            out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
+            out.endObject();
+            log.traceExit();
+        }
+
+        private void writeHomologsByTaxon(JsonWriter out, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon)
+                throws IOException {
+            log.traceEntry("{}, {}", out, homologsByTaxon);
+            out.beginObject();
+            // all homologs of one taxon
+            // We will display to each taxon level all genes from more recent taxon
+            Set<Gene> allGenes = new HashSet<>();
+            for (Entry<Taxon, Set<Gene>> e: homologsByTaxon.entrySet()) {
+                allGenes.addAll(e.getValue());
+                // sort genes
+                List<Gene> orderedHomologsWithDescendant = allGenes.stream()
+                        .sorted(GENE_HOMOLOGY_COMPARATOR)
+                        .collect(Collectors.toList());
+
+                out.name(e.getKey().getId().toString());
+                out.beginArray();
+                for (Gene gene: orderedHomologsWithDescendant) {
+                    this.writeSimplifiedGene(out, gene);
+                }
+                out.endArray();
+            }
+            out.endObject();
+            log.traceExit();
         }
     }
 
@@ -454,6 +609,10 @@ public class JsonHelper {
      * A {@code RequestParameters} corresponding to the current request to the webapp.
      */
     private final RequestParameters requestParameters;
+    /**
+     * A {@code String} defining the character encoding for encoding query strings.
+     */
+    private final String charEncoding;
     
     /**
      * Default constructor delegating to {@link #JsonHelper(BgeeProperties)} with null arguments.
@@ -483,8 +642,10 @@ public class JsonHelper {
         }
         if (requestParameters == null) {
             this.requestParameters = null;
+            this.charEncoding = null;
         } else {
             this.requestParameters = requestParameters.cloneWithAllParameters();
+            this.charEncoding = this.requestParameters.getCharacterEncoding();
         }
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
@@ -494,6 +655,7 @@ public class JsonHelper {
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
+                .registerTypeAdapter(GeneXRef.class, new GeneXRefAdapter(s -> this.urlEncode(s)))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
@@ -527,5 +689,21 @@ public class JsonHelper {
         log.traceEntry("{}, {}", response, out);
         gson.toJson(response, out);
         log.traceExit();
+    }
+
+    /**
+     * URL encode the provided {@code String}, with the character encoding used to generate URLs.
+     *
+     * @param stringToWrite A {@code String} to be encoded.
+     * @return              The encoded {@code String}.
+     */
+    private String urlEncode(String stringToWrite) {
+        log.traceEntry("{}", stringToWrite);
+        try {
+            return log.traceExit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.traceExit("");
+        }
     }
 }

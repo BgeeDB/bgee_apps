@@ -197,6 +197,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         return log.traceExit(xRefsBySource);
     }
 
+    //FIXME: to remove once everything is moved to JsonHelper
     protected String urlEncode(String stringToWrite) {
         log.traceEntry("{}", stringToWrite);
         try {

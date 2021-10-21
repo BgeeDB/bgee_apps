@@ -823,7 +823,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             
             // sort genes by Id and group then by species Id in order to add a line as species 
             // separator
-            Map<Integer, List<Gene>> homologsWithDescendantBySpeciesId = allGenes.stream()
+            LinkedHashMap<Integer, List<Gene>> homologsWithDescendantBySpeciesId = allGenes.stream()
                     .sorted(GENE_HOMOLOGY_COMPARATOR)
                     .collect(Collectors.groupingBy(g -> g.getSpecies().getId(), LinkedHashMap::new,
                             Collectors.mapping(g -> g, Collectors.toList())));

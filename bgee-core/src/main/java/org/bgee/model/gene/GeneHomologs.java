@@ -116,6 +116,12 @@ public class GeneHomologs {
         this.paralogyXRef = paralogyXRef;
     }
 
+    public Set<Taxon> getAllTaxa() {
+        log.traceEntry();
+        Set<Taxon> taxa = new HashSet<>(this.orthologsByTaxon.keySet());
+        taxa.addAll(this.paralogsByTaxon.keySet());
+        return log.traceExit(taxa);
+    }
     /**
      * @return  The {@code Gene} for which orthologs and/or paralogs were requested.
      */

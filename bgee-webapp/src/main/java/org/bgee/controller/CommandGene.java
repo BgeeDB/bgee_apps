@@ -311,7 +311,7 @@ public class CommandGene extends CommandParent {
                 geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
                         false, true, false).collect(Collectors.toSet()):
                 geneService.loadGenesById(geneId, false, true, false);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
             //we do nothing here, the speciesId was probably incorrect, this will throw
             //a PageNotFoundException below;
             log.catching(e);

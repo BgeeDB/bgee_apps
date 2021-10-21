@@ -979,12 +979,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end class
 
             this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
-            this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/vps/" + gene.getGeneId() 
-                    + "'>" + gene.getGeneId() + "</a>.</p>");
+            this.writeln("<p>Orthology information comes from "
+                    + htmlEntities(geneHomologs.getOrthologyXRef().getSource().getName())
+                    + ": <a  target='_blank' rel='noopener' href='"
+                    + geneHomologs.getOrthologyXRef().getXRefUrl(true, s -> this.urlEncode(s))
+                    + "'>" + htmlEntities(geneHomologs.getOrthologyXRef().getXRefId()) + "</a>.</p>");
             this.writeln("</div>");
 
-            this.writeln("</div>"); // end orthologs_data 
+            this.writeln("</div>"); // end orthologs_data
         }
 
         // Paralogs info
@@ -1001,12 +1003,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end class
 
             this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
-            this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/pps/" + gene.getGeneId() 
-                    + "'>" + gene.getGeneId() + "</a>.</p>");
+            this.writeln("<p>Paralogy information comes from "
+                    + htmlEntities(geneHomologs.getParalogyXRef().getSource().getName())
+                    + ": <a  target='_blank' rel='noopener' href='"
+                    + geneHomologs.getParalogyXRef().getXRefUrl(true, s -> this.urlEncode(s))
+                    + "'>" + htmlEntities(geneHomologs.getParalogyXRef().getXRefId()) + "</a>.</p>");
             this.writeln("</div>");
 
-            this.writeln("</div>"); // end orthologs_data 
+            this.writeln("</div>"); // end orthologs_data
         }
         log.traceExit();
     }

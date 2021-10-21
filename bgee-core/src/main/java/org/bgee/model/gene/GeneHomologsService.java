@@ -1,6 +1,5 @@
 package org.bgee.model.gene;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -203,6 +202,11 @@ public class GeneHomologsService extends CommonService{
             throw log.throwing(new IllegalStateException("Could not find homology type tag in XRefURL. "
                     + "URL: " + omaSource.getXRefUrl() + "- Tag: " + Source.HOMOLOGY_TYPE_TAG));
         }
+        //XXX: maybe a better solution would be to have the OMA source twice in the database,
+        //once for orthology with the orthology XRef URL, once for paralogy with the paralogy XRef URL.
+        //But it doesn't change the fact that we currently have no mechanism in database
+        //to link homology info to these sources. So this solution is acceptable as long as
+        //we don't have a way to not hardcode the use of OMA here.
         Source orthologySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.ORTHOLOGY);
         Source paralogySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.PARALOGY);
         
@@ -229,11 +233,11 @@ public class GeneHomologsService extends CommonService{
         
         // Create the Set of GeneHomologs
         Set<GeneHomologs> homologsGeneSet = genesByBgeeGeneId.keySet().stream()
-                .map(bgeeGeneId -> new GeneHomologs(
-                    //We need to recreate the gene to provide the orthology and paralogy XRef
-                    loadGeneWithXRefs(genesByBgeeGeneId.get(bgeeGeneId), orthologySource, paralogySource),
-                    orthologsMap.get(bgeeGeneId), paralogsMap.get(bgeeGeneId)
-                ))
+                .map(bgeeGeneId -> {
+                    Gene gene = genesByBgeeGeneId.get(bgeeGeneId);
+                    return new GeneHomologs(gene, orthologsMap.get(bgeeGeneId), paralogsMap.get(bgeeGeneId),
+                    loadXRef(gene, orthologySource), loadXRef(gene, paralogySource));
+                })
                 .collect(Collectors.toSet());
         
         return log.traceExit(homologsGeneSet);
@@ -241,6 +245,12 @@ public class GeneHomologsService extends CommonService{
     /**
      * We recreate separate OMA {@code Source}s for orthology and paralogy (in order to appropriately
      * replaced the {@link Source#HOMOLOGY_TYPE_TAG}) tag in {@link Source#getXRefUrl()}).
+     * <p>
+     * maybe a better solution would be to have the OMA source twice in the database,
+     * once for orthology with the orthology XRef URL, once for paralogy with the paralogy XRef URL.
+     * But it doesn't change the fact that we currently have no mechanism in database
+     * to link homology info to these sources. So this solution is acceptable as long as
+     * we don't have a way to not hardcode the use of OMA here.
      *
      * @param omaSource The original {@code Source} for homology information.
      * @param type      THe {@code GeneHomologs.HomologyType} that is orthology or paralogy.
@@ -253,21 +263,15 @@ public class GeneHomologsService extends CommonService{
         String xRefUrl = source.getXRefUrl().replace(Source.HOMOLOGY_TYPE_TAG,
                 type.getReplacementForHomologyTypeURLTag());
         return log.traceExit(new Source(source.getId(), source.getName(),
-                type.name().toLowerCase() + " information from OMA",
+                type.name().toLowerCase() + " information from " + OMA_SOURCE_NAME,
                 xRefUrl, source.getExperimentUrl(), source.getEvidenceUrl(), source.getBaseUrl(),
                 source.getReleaseDate(), source.getReleaseVersion(), source.getToDisplay(),
                 source.getCategory(), source.getDisplayOrder()));
     }
-    private static Gene loadGeneWithXRefs(Gene gene, Source orthologySource, Source paralogySource) {
-        log.traceEntry("{}, {}, {}", gene, orthologySource, paralogySource);
-        GeneXRef orthologXRef = new GeneXRef(gene.getGeneId(), gene.getName(), orthologySource,
-                gene.getGeneId(), gene.getSpecies().getScientificName());
-        GeneXRef paralogXRef = new GeneXRef(gene.getGeneId(), gene.getName(), paralogySource,
-                gene.getGeneId(), gene.getSpecies().getScientificName());
-        Set<GeneXRef> xRefs = new HashSet<>(Arrays.asList(orthologXRef, paralogXRef));
-        return log.traceExit(new Gene(gene.getGeneId(), gene.getName(), gene.getDescription(),
-                gene.getSynonyms(), xRefs, gene.getSpecies(), gene.getGeneBioType(),
-                gene.getGeneMappedToSameGeneIdCount()));
+    private static GeneXRef loadXRef(Gene gene, Source source) {
+        log.traceEntry("{}, {}", gene, source);
+        return log.traceExit(new GeneXRef(gene.getGeneId(), gene.getName(), source,
+                gene.getGeneId(), gene.getSpecies().getScientificName()));
     }
     /**
      * create a {@code Map} where keys are bgeeGeneIds and value is a second {@code Map} with

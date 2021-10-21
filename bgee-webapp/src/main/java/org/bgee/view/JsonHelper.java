@@ -527,10 +527,6 @@ public class JsonHelper {
             out.name("gene");
             this.writeSimplifiedGene(out, value.getGene());
 
-            //We need to provide all taxa to be able to use their IDs as keys below
-            out.name("taxa");
-            this.gson.getAdapter(Set.class).write(out, value.getAllTaxa());
-
             out.name("orthologsByTaxon");
             this.writeHomologsByTaxon(out, value.getOrthologsByTaxon());
             out.name("paralogsByTaxon");
@@ -574,25 +570,31 @@ public class JsonHelper {
         private void writeHomologsByTaxon(JsonWriter out, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon)
                 throws IOException {
             log.traceEntry("{}, {}", out, homologsByTaxon);
-            out.beginObject();
+            out.beginArray();
             // all homologs of one taxon
             // We will display to each taxon level all genes from more recent taxon
             Set<Gene> allGenes = new HashSet<>();
             for (Entry<Taxon, Set<Gene>> e: homologsByTaxon.entrySet()) {
+                out.beginObject();
+
+                out.name("taxon");
+                this.gson.getAdapter(Taxon.class).write(out, e.getKey());
+
                 allGenes.addAll(e.getValue());
                 // sort genes
                 List<Gene> orderedHomologsWithDescendant = allGenes.stream()
                         .sorted(GENE_HOMOLOGY_COMPARATOR)
                         .collect(Collectors.toList());
-
-                out.name(e.getKey().getId().toString());
+                out.name("genes");
                 out.beginArray();
                 for (Gene gene: orderedHomologsWithDescendant) {
                     this.writeSimplifiedGene(out, gene);
                 }
                 out.endArray();
+
+                out.endObject();
             }
-            out.endObject();
+            out.endArray();
             log.traceExit();
         }
     }

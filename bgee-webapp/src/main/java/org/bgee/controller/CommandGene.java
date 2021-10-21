@@ -1,6 +1,5 @@
 package org.bgee.controller;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
@@ -23,8 +23,10 @@ import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
+import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.model.gene.GeneMatchResultService;
+import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
@@ -177,37 +179,21 @@ public class CommandGene extends CommandParent {
         String search = requestParameters.getQuery();
         String action = requestParameters.getAction();
         GeneService geneService = serviceFactory.getGeneService();
+        GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
                     .searchByTerm(search, null, 0, GeneMatchResultService.SPHINX_MAX_RESULTS);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
-        }
-
-        if (geneId == null) {
+        } else if (geneId == null) {
             display.displayGeneHomePage();
             log.traceExit(); return;
-        }
-
-
-        if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
-            Set<Gene> genes = null;
-            try {
-                genes = speciesId != null && speciesId > 0?
-                    geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
-                            false, true, false).collect(Collectors.toSet()):
-                    geneService.loadGenesById(geneId, false, true, false);
-            } catch (IllegalArgumentException e) {
-                //we do nothing here, maybe the speciesId was incorrect, this will throw
-                //a PageNotFoundException below;
-                log.catching(e);
-            }
-            if (genes == null || genes.size() == 0) {
-                throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
-                        + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
-            }
-            display.displayGeneGeneralInformation(genes);
+        } else if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
+            this.processGeneralInfoRequest(geneService, display);
+            log.traceExit(); return;
+        } else if (RequestParameters.ACTION_GENE_HOMOLOGS.equals(action)) {
+            this.processHomologsRequest(geneService, geneHomologsService, display);
             log.traceExit(); return;
         }
 
@@ -259,8 +245,86 @@ public class CommandGene extends CommandParent {
         log.traceExit();
     }
 
+    private void processGeneralInfoRequest(GeneService geneService, GeneDisplay display)
+            throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}", geneService, display);
+        String geneId = requestParameters.getGeneId();
+        Integer speciesId = requestParameters.getSpeciesId();
+
+        Set<Gene> genes = this.loadGenes(geneService, geneId, speciesId, false, true, false);
+        assert genes != null && !genes.isEmpty();
+        display.displayGeneGeneralInformation(genes);
+        log.traceExit();
+    }
+
+    private void processHomologsRequest(GeneService geneService, GeneHomologsService homologsService,
+            GeneDisplay display) throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}, {}", geneService, homologsService, display);
+        String geneId = requestParameters.getGeneId();
+        Integer speciesId = requestParameters.getSpeciesId();
+
+        //Other sanity checks will be performed by the method loadGenes
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+        GeneHomologs homologs = this.loadHomologs(geneId, speciesId, homologsService);
+        display.displayGeneHomologs(homologs);
+        log.traceExit();
+    }
+
+    /**
+     * Load {@code Gene}s from a gene ID and potentially with species ID information as well.
+     * Several {@code Gene}s can be returned when no species ID is provided, since in Bgee
+     * we sometimes use the genome of a closely related species from species with no genome,
+     * leading to have a same gene ID in different species.
+     *
+     * @param geneService           The {@code GeneService} to retrieve {@code Gene}s.
+     * @param geneId                A {@code String} that is the requested gene ID. Cannot be blank.
+     * @param speciesId             A {@code Integer} that is the requested species ID. Can be {@code null}
+     *                              but if non-null it must be greater than 0.
+     * @param withSpeciesSourceInfo A {@code boolean}s defining whether data sources of the species
+     *                              is retrieved or not.
+     * @param withSynonymInfo       A {@code boolean} defining whether synonyms of the genes are retrieved.
+     * @param withXRefInfo          A {@code boolean} defining whether XRefs of the genes are retrieved.
+     * @return                      A {@code Set} containing the matching {@code Gene}s.
+     * @throws InvalidRequestException  If {@code geneId} is blank or {@code speciesId} is non-null and
+     *                                  not greater than 0.
+     * @throws PageNotFoundException    If the {@code geneId} or {@code speciesId} are not found in Bgee.
+     */
+    private Set<Gene> loadGenes(GeneService geneService, String geneId, Integer speciesId,
+            boolean withSpeciesSourceInfo, boolean withSynonymInfo, boolean withXRefInfo)
+                    throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneService, geneId, speciesId, withSpeciesSourceInfo,
+                withSynonymInfo, withXRefInfo);
+
+        //Sanity checks
+        if (StringUtils.isBlank(geneId)) {
+            throw log.throwing(new InvalidRequestException("Gene ID cannot be blank"));
+        }
+        if (speciesId != null && speciesId <= 0) {
+            throw log.throwing(new InvalidRequestException("Species ID must be greater than 0"));
+        }
+
+        Set<Gene> genes = null;
+        try {
+            genes = speciesId != null && speciesId > 0?
+                geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
+                        false, true, false).collect(Collectors.toSet()):
+                geneService.loadGenesById(geneId, false, true, false);
+        } catch (IllegalArgumentException e) {
+            //we do nothing here, the speciesId was probably incorrect, this will throw
+            //a PageNotFoundException below;
+            log.catching(e);
+        }
+        if (genes == null || genes.size() == 0) {
+            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
+                    + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
+        }
+        return log.traceExit(genes);
+    }
+
     private GeneResponse buildGeneResponse(Gene gene) 
-            throws IllegalStateException {
+            throws IllegalStateException, PageNotFoundException {
         log.traceEntry("{}", gene);
         //retrieve calls with silver quality for one anat. entity and at least bronze quality
         //for the same anat. entity and other conditions
@@ -268,20 +332,9 @@ public class CommandGene extends CommandParent {
                 .getCallService().loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
                         new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()));
         
-        // Load homology information. As we decided to only show in species paralogs in the gene
-        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we 
-        // first create one GeneHomologs object containing only paralogs and one GeneHomologs 
-        // object containing only orthologs.
-        GeneHomologs geneOrthologs = serviceFactory.getGeneHomologsService()
-                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
-                        true, false);
-        GeneHomologs geneParalogs = serviceFactory.getGeneHomologsService()
-                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
-                        Collections.singleton(gene.getSpecies().getId()), null, true, 
-                        false, true);
-        // generate one unique GeneHomologs object containing both paralogs and orthologs 
-        // retrieved using different filters
-        GeneHomologs geneHomologs = GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs);
+        // Load homology information.
+        GeneHomologs geneHomologs = this.loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),
+                serviceFactory.getGeneHomologsService());
         
         if (callsByOrganCall == null || callsByOrganCall.isEmpty()) {
             log.debug("No calls for gene {}", gene.getGeneId());
@@ -293,6 +346,29 @@ public class CommandGene extends CommandParent {
         // Clustering, Building GeneResponse
         //**************************************
         return log.traceExit(this.buildGeneResponse(gene, callsByOrganCall, geneHomologs, true));
+    }
+
+    private GeneHomologs loadHomologs(String geneId, Integer speciesId, GeneHomologsService homologsService)
+            throws PageNotFoundException {
+        log.traceEntry("{}, {}, {}", geneId, speciesId, homologsService);
+
+        // Load homology information. As we decided to only show in species paralogs in the gene
+        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we
+        // first create one GeneHomologs object containing only paralogs and one GeneHomologs
+        // object containing only orthologs.
+        // TODO: improve that, because as a result, the main gene is requested twice,
+        // data sources are requested twice, etc.
+        try {
+            GeneHomologs geneOrthologs = homologsService.getGeneHomologs(geneId, speciesId, true, false);
+            GeneHomologs geneParalogs = homologsService.getGeneHomologs(geneId, speciesId,
+                    Collections.singleton(speciesId), null, true, false, true);
+            // generate one unique GeneHomologs object containing both paralogs and orthologs
+            // retrieved using different filters
+            return log.traceExit(GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs));
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
+            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
+                    + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
+        }
     }
     
     /**

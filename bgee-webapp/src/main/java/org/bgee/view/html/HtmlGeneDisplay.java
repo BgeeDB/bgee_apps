@@ -368,24 +368,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String titleStart = "Gene: " + htmlEntities(gene.getName()) 
                 + " - " + htmlEntities(gene.getGeneId()); 
         String description = htmlEntities(gene.getName()) + " gene expression in Bgee.";
-        this.startDisplay(titleStart, "WebPage", description);
 
-        // Gene search
-        this.writeln("<div class='row'>");
-
-        this.writeln("<div class='col-sm-3'>");
-        this.writeln(getGeneSearchBox(true, null));
-        this.writeln("</div>"); // close div
-
-        //page title
-        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
-        this.writeln("<img src='" + this.getSpeciesImageSrc(gene.getSpecies(), true)
-                + "' alt='" + htmlEntities(gene.getSpecies().getShortName()) + "' />");
-        this.writeln(htmlEntities(titleStart));
-        this.writeln(" - " + getCompleteSpeciesName(gene.getSpecies(), false));
-        this.writeln("</h1>");
-        
-        this.writeln("</div>"); // close row
+        //Start of the page, gene search, title
+        this.displayGenePageStart(titleStart, description);
 
         //Gene general information
         this.writeln("<div typeof='bs:Gene'>");
@@ -449,7 +434,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes. "
                 + "Scores are normalized and comparable across genes, conditions and species.</p></div>");
         
-      //Source info
+        //Source info
         Set<DataType> allowedDataTypes = geneResponse.getCallsByOrganCall().values().stream()
                 .flatMap(List::stream)
                 .flatMap(call -> call.getCallData().stream())
@@ -477,52 +462,11 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln("</div>"); // end info_sources 
         }
         this.writeln("</div>"); // end other info
-        
-        // Orthologs info
-        if(geneHomologs.getOrthologsByTaxon() != null &&
-                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
-            this.writeln("<a id='orthologs' class='inactiveLink'><h2>Orthologs</h2></a>");
-            this.writeln("<div id='orthologs_data' class='row'>");
-            //table-container
-            this.writeln("<div class='col-xs-12 col-md-12'>");
-            this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getOrthologsByTaxon(), true));
-            this.writeln("</div>"); // end table-container
-            this.writeln("</div>"); // end class
-            
-            this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
-            this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/vps/" + gene.getGeneId() 
-                    + "'>" + gene.getGeneId() + "</a>.</p>");
-            this.writeln("</div>");
-            
-            this.writeln("</div>"); // end orthologs_data 
-        }
-        
-        // Paralogs info
-        if(geneHomologs.getParalogsByTaxon() != null &&
-                !geneHomologs.getParalogsByTaxon().isEmpty()) {
-            this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs (same species)</h2></a>");
-            this.writeln("<div id='paralogs_data' class='row'>");
-            //table-container
-            this.writeln("<div class='col-xs-12 col-md-12'>");
-            this.writeln("<div class='table-container'>");
 
-            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getParalogsByTaxon(), false));
-            this.writeln("</div>"); // end table-container
-            this.writeln("</div>"); // end class
-            
-            this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
-            this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
-                    + "href='https://omabrowser.org/oma/pps/" + gene.getGeneId() 
-                    + "'>" + gene.getGeneId() + "</a>.</p>");
-            this.writeln("</div>");
-            
-            this.writeln("</div>"); // end orthologs_data 
-        }
+        // Homology info
+        this.displayHomologsInfo(geneHomologs);
 
-        
         
         // Cross-references
         if (gene.getXRefs() != null && gene.getXRefs().size() > 0) {
@@ -1018,6 +962,55 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         return log.traceExit(table.toString());
     }
 
+    private void displayHomologsInfo(GeneHomologs geneHomologs) {
+        log.traceEntry("{}", geneHomologs);
+        Gene gene = geneHomologs.getGene();
+        // Orthologs info
+        if(geneHomologs.getOrthologsByTaxon() != null &&
+                !geneHomologs.getOrthologsByTaxon().isEmpty()) {
+            this.writeln("<a id='orthologs' class='inactiveLink'><h2>Orthologs</h2></a>");
+            this.writeln("<div id='orthologs_data' class='row'>");
+            //table-container
+            this.writeln("<div class='col-xs-12 col-md-12'>");
+            this.writeln("<div class='table-container'>");
+
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getOrthologsByTaxon(), true));
+            this.writeln("</div>"); // end table-container
+            this.writeln("</div>"); // end class
+
+            this.writeln("<div id='orthology_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<p>Orthology information comes from OMA : <a  target='_blank' rel='noopener' "
+                    + "href='https://omabrowser.org/oma/vps/" + gene.getGeneId() 
+                    + "'>" + gene.getGeneId() + "</a>.</p>");
+            this.writeln("</div>");
+
+            this.writeln("</div>"); // end orthologs_data 
+        }
+
+        // Paralogs info
+        if(geneHomologs.getParalogsByTaxon() != null &&
+                !geneHomologs.getParalogsByTaxon().isEmpty()) {
+            this.writeln("<a id='paralogs' class='inactiveLink'><h2>Paralogs (same species)</h2></a>");
+            this.writeln("<div id='paralogs_data' class='row'>");
+            //table-container
+            this.writeln("<div class='col-xs-12 col-md-12'>");
+            this.writeln("<div class='table-container'>");
+
+            this.writeln(getHomologyHTMLByTaxon(gene, geneHomologs.getParalogsByTaxon(), false));
+            this.writeln("</div>"); // end table-container
+            this.writeln("</div>"); // end class
+
+            this.writeln("<div id='paralogy_source' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>");
+            this.writeln("<p>Paralogy information comes from OMA : <a  target='_blank' rel='noopener' "
+                    + "href='https://omabrowser.org/oma/pps/" + gene.getGeneId() 
+                    + "'>" + gene.getGeneId() + "</a>.</p>");
+            this.writeln("</div>");
+
+            this.writeln("</div>"); // end orthologs_data 
+        }
+        log.traceExit();
+    }
+
     /**
      * Generates the HTML code to display the synonyms.
      *
@@ -1281,21 +1274,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String id = ids.iterator().next();
         String titleStart = "Gene " + htmlEntities(id) + " expression in Bgee";
         String description = titleStart + ".";
-        this.startDisplay(titleStart, "WebPage", description);
 
-        // Gene search
-        this.writeln("<div class='row'>");
-
-        this.writeln("<div class='col-sm-3'>");
-        this.writeln(getGeneSearchBox(true, null));
-        this.writeln("</div>"); // close div
-
-        //page title
-        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
-        this.writeln(titleStart);
-        this.writeln("</h1>");
-
-        this.writeln("</div>"); // close row
+        this.displayGenePageStart(titleStart, description);
 
         StringBuilder geneList = new StringBuilder();
         geneList.append("<div class='row'>");
@@ -1313,6 +1293,43 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(geneList.toString());
 
         this.endDisplay();
+        log.traceExit();
+    }
+
+    @Override
+    public void displayGeneHomologs(GeneHomologs geneHomologs) {
+        log.traceEntry("{}", geneHomologs);
+
+        Gene gene = geneHomologs.getGene();
+        String titleStart = "Homology information for gene: " + htmlEntities(gene.getName())
+                          + " - " + htmlEntities(gene.getGeneId());
+        String description = titleStart + ".";
+
+        this.displayGenePageStart(titleStart, description);
+        this.displayHomologsInfo(geneHomologs);
+
+        this.endDisplay();
+        log.traceExit();
+    }
+
+    private void displayGenePageStart(String title, String description) {
+        log.traceEntry(title, description);
+
+        this.startDisplay(title, "WebPage", description);
+
+        // Gene search
+        this.writeln("<div class='row'>");
+
+        this.writeln("<div class='col-sm-3'>");
+        this.writeln(getGeneSearchBox(true, null));
+        this.writeln("</div>"); // close div
+
+        //page title
+        this.writeln("<h1 class='gene_title col-sm-9 col-lg-7' property='schema:name'>");
+        this.writeln(title);
+        this.writeln("</h1>");
+
+        this.writeln("</div>"); // close row
         log.traceExit();
     }
     

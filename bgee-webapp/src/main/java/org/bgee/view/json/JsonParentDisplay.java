@@ -51,7 +51,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
          * @throws IllegalArgumentException     If {@code code} is negative or not supported.
          */
         private static ResponseStatus getResponseStatusFromCode(int code) throws IllegalArgumentException {
-            log.entry(code);
+            log.traceEntry("{}", code);
             if (code < 0) {
                 throw log.throwing(new IllegalArgumentException("Accept only positive integer."));
             }
@@ -122,10 +122,14 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      * with a "200" HTTP response status.
      * 
      * @param msg
-     * @param data
+     * @param data                      An {@code Object} to be dumped. Usually, if several objects
+     *                                  must be dumped, {@code data} is a {@code LinkedHashMap}
+     *                                  where keys are {@code String}s that are parameter names,
+     *                                  the associated value being the value to be dumped.
+     *                                  Provided as {@code LinkedHashMap} to obtain predictable responses. 
      */
-    protected void sendResponse(String msg, LinkedHashMap<String, Object> data) {
-        log.entry(msg, data);
+    protected void sendResponse(String msg, Object data) {
+        log.traceEntry("{}, {}", msg, data);
         this.sendResponse(HttpServletResponse.SC_OK, msg, data);
         log.traceExit();   
     }
@@ -139,13 +143,14 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      * 
      * @param code                      An {@code int} that is the HTTP response status code.
      * @param msg                       A {@code String} that is a message describing the response.
-     * @param data                      A {@code LinkedHashMap} where keys are {@code String}s 
-     *                                  that are parameter names, the associated value being 
-     *                                  the value to be dumped. Provided as {@code LinkedHashMap} 
-     *                                  to obtain predictable responses. 
+     * @param data                      An {@code Object} to be dumped. Usually, if several objects
+     *                                  must be dumped, {@code data} is a {@code LinkedHashMap}
+     *                                  where keys are {@code String}s that are parameter names,
+     *                                  the associated value being the value to be dumped.
+     *                                  Provided as {@code LinkedHashMap} to obtain predictable responses. 
      */
-    protected void sendResponse(int code, String msg, LinkedHashMap<String, Object> data) {
-        log.entry(code, msg, data);
+    protected void sendResponse(int code, String msg, Object data) {
+        log.traceEntry("{}, {}, {}", code, msg, data);
         
         //The code will be validated by the calls to the methods sendAppropriateHeaders and 
         //getResponseStatusFromCode. 
@@ -177,7 +182,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      * @param code  An {@code int} that is the HTTP response status code.
      */
     private void sendAppropriateHeaders(int code) {
-        log.entry(code);
+        log.traceEntry("{}", code);
         if (ResponseStatus.getResponseStatusFromCode(code).equals(ResponseStatus.SUCCESS)) {
             super.sendHeaders();
             log.traceExit(); return;

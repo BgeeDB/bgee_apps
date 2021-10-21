@@ -24,6 +24,7 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
@@ -111,6 +112,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         });
 
         JSONHashMap.put("gene", geneResponse.getGene());
+        JSONHashMap.put("homologs", geneResponse.getGeneHomologs());
         JSONHashMap.put("anatEntities", anatEntitiesList);
         JSONHashMap.put("sources", getXRefDisplay(geneResponse.getGene().getXRefs()));
 
@@ -141,6 +143,15 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         String msg = "General information for gene " + id;
 
         this.sendResponse(msg, resultHashMap);
+        log.traceExit();
+    }
+
+    @Override
+    public void displayGeneHomologs(GeneHomologs geneHomologs) {
+        log.traceEntry("{}", geneHomologs);
+        Gene gene = geneHomologs.getGene();
+        String msg = "Homology information for gene: " + gene.getName() + " - " + gene.getGeneId();
+        this.sendResponse(msg, geneHomologs);
         log.traceExit();
     }
 

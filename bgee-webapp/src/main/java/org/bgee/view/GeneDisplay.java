@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
 
 /**
@@ -48,6 +49,14 @@ public interface GeneDisplay {
      * @param genes  The {@code Collection} of {@code Gene}s for which we want to display general information for.
      */
     void displayGeneGeneralInformation(Collection<Gene> genes);
+
+    /**
+     * Displays homology information for a gene. Is also used as part of the response
+     * {@link #displayGene(GeneResponse)}.
+     *
+     * @param geneHomologs  The {@code GeneHomologs} containing the homologs of the requested genes.
+     */
+    void displayGeneHomologs(GeneHomologs geneHomologs);
 
     /**
      * Displays a {@code Set} of {@code Gene}s.

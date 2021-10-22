@@ -43,20 +43,26 @@ public interface GeneDisplay {
     void displayGene(GeneResponse geneResponse);
 
     /**
-     * Displays the general information for a list of genes. Is also used as part of the response
-     * {@link #displayGene(GeneResponse)}.
+     * Displays the general information for a list of genes.
      *
      * @param genes  The {@code Collection} of {@code Gene}s for which we want to display general information for.
      */
     void displayGeneGeneralInformation(Collection<Gene> genes);
 
     /**
-     * Displays homology information for a gene. Is also used as part of the response
-     * {@link #displayGene(GeneResponse)}.
+     * Displays homology information for a gene.
      *
      * @param geneHomologs  The {@code GeneHomologs} containing the homologs of the requested genes.
      */
     void displayGeneHomologs(GeneHomologs geneHomologs);
+
+    /**
+     * Displays XRef information for a gene. Is also used as part of the response
+     * {@link #displayGene(GeneResponse)}.
+     *
+     * @param gene  The {@code Gene} for which to display XRef information.
+     */
+    void displayGeneXRefs(Gene gene);
 
     /**
      * Displays a {@code Set} of {@code Gene}s.

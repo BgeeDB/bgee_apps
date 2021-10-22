@@ -156,6 +156,16 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
 
     @Override
+    public void displayGeneXRefs(Gene gene) {
+        log.traceEntry("{}", gene);
+        String msg = "Cross-reference information for gene: " + gene.getName() + " - " + gene.getGeneId();
+        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
+        resultHashMap.put("gene", gene);
+        this.sendResponse(msg, resultHashMap);
+        log.traceExit();
+    }
+
+    @Override
     public void displayGeneChoice(Set<Gene> genes) {
         // TODO Auto-generated method stub
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));

@@ -390,6 +390,12 @@ public class RequestParameters {
      */
     public static final String ACTION_GENE_HOMOLOGS = "homologs";
     /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when XRefs information for a gene
+     * is requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_XREFS = "xrefs";
+    /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
      */

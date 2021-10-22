@@ -470,8 +470,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         
         // Cross-references
         if (gene.getXRefs() != null && gene.getXRefs().size() > 0) {
-            this.writeln("<h2>Cross-references</h2>");
-            this.writeln(getXRefDisplay(gene.getXRefs()));
+            this.displayXRefsInfo(gene);
         }
         
         this.writeln("</div>"); // end Gene
@@ -1016,6 +1015,57 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     /**
+     * Write the HTML code of the cross-references table.
+     *
+     * @param gene  A {@code Gene} for which we want to display the cross-references
+     */
+    private void displayXRefsInfo(Gene gene) {
+        log.traceEntry("{}", gene);
+    
+        Set<XRef> xRefs = gene.getXRefs();
+    
+        this.writeln("<h2>Cross-references</h2>");
+    
+        if (xRefs == null || xRefs.size() == 0) {
+            this.writeln("No cross-references");
+            log.traceExit(); return;
+        }
+    
+        LinkedHashMap<Source, List<String>> xRefsBySource = xRefs.stream()
+                .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl()))
+                .sorted(X_REF_COMPARATOR)
+                .collect(Collectors.groupingBy(XRef::getSource,
+                        LinkedHashMap::new,
+                        Collectors.mapping(x -> "<a typeof='bs:Gene' property='bs:sameAs' href='"
+                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank' rel='noopener'>"
+                                + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
+                            Collectors.toList())));
+        this.writeln("<div class='info-content'>");
+        this.writeln("<table class='info-table'>");
+    
+        for (Entry<Source, List<String>> entry : xRefsBySource.entrySet()) {
+            Source source = entry.getKey();
+    
+            List<String> sourceXRefs = entry.getValue();
+            sourceXRefs.sort(Comparator.naturalOrder());
+            
+            this.writeln("<tr>");
+            
+            this.writeln("<th>" + htmlEntities(source.getName()) + "</th>");
+            
+            this.writeln("<td>");
+            this.writeln(getListDisplay("source_" + source.getId(), sourceXRefs));
+            this.writeln("</td>");
+            
+            this.writeln("</tr>");
+        }
+        this.writeln("</table>");
+        this.writeln("</div>");
+    
+        log.traceExit();
+    }
+
+    /**
      * Generates the HTML code to display the synonyms.
      *
      * @param synonyms  A {@code Set} of {@code String}s that are the synonyms to display 
@@ -1035,53 +1085,6 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         String display = getListDisplay("syn", orderedEscapedSynonyms);
         return log.traceExit(display);
-    }
-
-    /**
-     * Return the {@code String} that is the HTML code of the cross-references table.
-     *
-     * @param xRefs A {@code Set} of {@code XRef}s that are the cross-references to display
-     * @return      A {@code String} containing the HTML code of the cross-references table
-     */
-    private String getXRefDisplay(Set<XRef> xRefs) {
-        log.traceEntry("{}", xRefs);
-
-        if (xRefs == null || xRefs.size() == 0) {
-            return "No cross-references";
-        }
-
-        LinkedHashMap<Source, List<String>> xRefsBySource = new ArrayList<>(xRefs).stream()
-                .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl()))
-                .sorted(X_REF_COMPARATOR)
-                .collect(Collectors.groupingBy(XRef::getSource,
-                        LinkedHashMap::new,
-                        Collectors.mapping(x -> "<a typeof='bs:Gene' property='bs:sameAs' href='"
-                                + x.getXRefUrl(true, s -> this.urlEncode(s)) + "' target='_blank' rel='noopener'>"
-                                + htmlEntities(x.getXRefId()) + "</a>" + htmlEntities(getFormattedXRefName(x)),
-                            Collectors.toList())));
-        StringBuilder display = new StringBuilder("<div class='info-content'>");
-        display.append("<table class='info-table'>");
-
-        for (Entry<Source, List<String>> entry : xRefsBySource.entrySet()) {
-            Source source = entry.getKey();
-
-            List<String> sourceXRefs = entry.getValue();
-            sourceXRefs.sort(Comparator.naturalOrder());
-            
-            display.append("<tr>");
-            
-            display.append("<th>").append(htmlEntities(source.getName())).append("</th>");
-            
-            display.append("<td>");
-            display.append(getListDisplay("source_" + source.getId(), sourceXRefs));
-            display.append("</td>");
-            
-            display.append("</tr>");
-        }
-        display.append("</table>");
-        display.append("</div>");
-
-        return log.traceExit(display.toString());
     }
 
     /**
@@ -1311,6 +1314,21 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         this.displayGenePageStart(titleStart, description);
         this.displayHomologsInfo(geneHomologs);
+
+        this.endDisplay();
+        log.traceExit();
+    }
+
+    @Override
+    public void displayGeneXRefs(Gene gene) {
+        log.traceEntry("{}", gene);
+
+        String titleStart = "Cross-reference information for gene: " + htmlEntities(gene.getName())
+                          + " - " + htmlEntities(gene.getGeneId());
+        String description = titleStart + ".";
+
+        this.displayGenePageStart(titleStart, description);
+        this.displayXRefsInfo(gene);
 
         this.endDisplay();
         log.traceExit();

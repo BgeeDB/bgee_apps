@@ -195,6 +195,9 @@ public class CommandGene extends CommandParent {
         } else if (RequestParameters.ACTION_GENE_HOMOLOGS.equals(action)) {
             this.processHomologsRequest(geneService, geneHomologsService, display);
             log.traceExit(); return;
+        } else if (RequestParameters.ACTION_GENE_XREFS.equals(action)) {
+            this.processXRefsRequest(geneService, display);
+            log.traceExit(); return;
         }
 
         // NOTE: we retrieve genes after the sanity check on geneId to avoid to throw an exception
@@ -245,6 +248,19 @@ public class CommandGene extends CommandParent {
         log.traceExit();
     }
 
+    /**
+     * Process the request for general information about a gene ID. The info for several genes
+     * can be displayed if the gene ID exists in several species (since in Bgee we sometimes use
+     * the genome of a closely related species for a species with no genome, a gene ID can exist
+     * in several species). It is mandatory to provide a gene ID in the request
+     * (see {@link #requestParameters}), and a species ID is optional to target a single gene
+     * in case of ambiguity.
+     *
+     * @param geneService
+     * @param display
+     * @throws InvalidRequestException
+     * @throws PageNotFoundException
+     */
     private void processGeneralInfoRequest(GeneService geneService, GeneDisplay display)
             throws InvalidRequestException, PageNotFoundException {
         log.traceEntry("{}, {}", geneService, display);
@@ -257,9 +273,47 @@ public class CommandGene extends CommandParent {
         log.traceExit();
     }
 
+    /**
+     * Process the request for homology information for a gene. It is mandatory to provide
+     * a gene ID and a species ID in the request (see {@link #requestParameters}),
+     * since in Bgee we sometimes use the genome of a closely related species
+     * for a species with no genome, a gene ID can exist in several species.
+     *
+     * @param geneService
+     * @param homologsService
+     * @param display
+     * @throws InvalidRequestException
+     * @throws PageNotFoundException
+     */
     private void processHomologsRequest(GeneService geneService, GeneHomologsService homologsService,
             GeneDisplay display) throws InvalidRequestException, PageNotFoundException {
         log.traceEntry("{}, {}, {}", geneService, homologsService, display);
+        String geneId = requestParameters.getGeneId();
+        Integer speciesId = requestParameters.getSpeciesId();
+
+        //Other sanity checks will be performed by the method loadHomologs
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+        GeneHomologs homologs = this.loadHomologs(geneId, speciesId, homologsService);
+        display.displayGeneHomologs(homologs);
+        log.traceExit();
+    }
+
+    /**
+     * Process the request for XRef information for a gene. It is mandatory to provide
+     * a gene ID and a species ID in the request (see {@link #requestParameters}),
+     * since in Bgee we sometimes use the genome of a closely related species
+     * for a species with no genome, a gene ID can exist in several species.
+     *
+     * @param geneService
+     * @param display
+     * @throws InvalidRequestException
+     * @throws PageNotFoundException
+     */
+    private void processXRefsRequest(GeneService geneService, GeneDisplay display)
+            throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}", geneService, display);
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
 
@@ -267,8 +321,10 @@ public class CommandGene extends CommandParent {
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        GeneHomologs homologs = this.loadHomologs(geneId, speciesId, homologsService);
-        display.displayGeneHomologs(homologs);
+        Set<Gene> genes = this.loadGenes(geneService, geneId, speciesId, false, false, true);
+        assert genes != null && genes.size() == 1;
+        display.displayGeneXRefs(genes.iterator().next());
+
         log.traceExit();
     }
 
@@ -309,8 +365,8 @@ public class CommandGene extends CommandParent {
         try {
             genes = speciesId != null && speciesId > 0?
                 geneService.loadGenes(Collections.singleton(new GeneFilter(speciesId, geneId)),
-                        false, true, false).collect(Collectors.toSet()):
-                geneService.loadGenesById(geneId, false, true, false);
+                        withSpeciesSourceInfo, withSynonymInfo, withXRefInfo).collect(Collectors.toSet()):
+                geneService.loadGenesById(geneId, withSpeciesSourceInfo, withSynonymInfo, withXRefInfo);
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             //we do nothing here, the speciesId was probably incorrect, this will throw
             //a PageNotFoundException below;
@@ -321,6 +377,40 @@ public class CommandGene extends CommandParent {
                     + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
         }
         return log.traceExit(genes);
+    }
+
+    /**
+     * Load {@code GeneHomologs} for a {@code Gene} uniquely identified thanks to {@code geneId}
+     * and {@code speciesId} (since in Bgee we sometimes use the genome of a closely related species
+     * for a species with no genome, a gene ID can exist in several species).
+     *
+     * @param geneId
+     * @param speciesId
+     * @param homologsService
+     * @return
+     * @throws PageNotFoundException
+     */
+    private GeneHomologs loadHomologs(String geneId, Integer speciesId, GeneHomologsService homologsService)
+            throws PageNotFoundException {
+        log.traceEntry("{}, {}, {}", geneId, speciesId, homologsService);
+
+        // Load homology information. As we decided to only show in species paralogs in the gene
+        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we
+        // first create one GeneHomologs object containing only paralogs and one GeneHomologs
+        // object containing only orthologs.
+        // TODO: improve that, because as a result, the main gene is requested twice,
+        // data sources are requested twice, etc.
+        try {
+            GeneHomologs geneOrthologs = homologsService.getGeneHomologs(geneId, speciesId, true, false);
+            GeneHomologs geneParalogs = homologsService.getGeneHomologs(geneId, speciesId,
+                    Collections.singleton(speciesId), null, true, false, true);
+            // generate one unique GeneHomologs object containing both paralogs and orthologs
+            // retrieved using different filters
+            return log.traceExit(GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs));
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
+            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
+                    + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
+        }
     }
 
     private GeneResponse buildGeneResponse(Gene gene) 
@@ -348,29 +438,6 @@ public class CommandGene extends CommandParent {
         return log.traceExit(this.buildGeneResponse(gene, callsByOrganCall, geneHomologs, true));
     }
 
-    private GeneHomologs loadHomologs(String geneId, Integer speciesId, GeneHomologsService homologsService)
-            throws PageNotFoundException {
-        log.traceEntry("{}, {}, {}", geneId, speciesId, homologsService);
-
-        // Load homology information. As we decided to only show in species paralogs in the gene
-        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we
-        // first create one GeneHomologs object containing only paralogs and one GeneHomologs
-        // object containing only orthologs.
-        // TODO: improve that, because as a result, the main gene is requested twice,
-        // data sources are requested twice, etc.
-        try {
-            GeneHomologs geneOrthologs = homologsService.getGeneHomologs(geneId, speciesId, true, false);
-            GeneHomologs geneParalogs = homologsService.getGeneHomologs(geneId, speciesId,
-                    Collections.singleton(speciesId), null, true, false, true);
-            // generate one unique GeneHomologs object containing both paralogs and orthologs
-            // retrieved using different filters
-            return log.traceExit(GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs));
-        } catch (IllegalArgumentException | GeneNotFoundException e) {
-            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
-                    + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
-        }
-    }
-    
     /**
      * Continue the building of a {@code GeneResponse}, by taking care of the steps 
      * of grouping of {@code ExpressionCall}s per anatomical entity, and of clustering. 

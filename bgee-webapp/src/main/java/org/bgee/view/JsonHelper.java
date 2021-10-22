@@ -5,18 +5,23 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
+import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
 import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
+import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
@@ -59,6 +64,11 @@ public class JsonHelper {
      *
      */
     private static class BgeeTypeAdapterFactory implements TypeAdapterFactory {
+        private final Function<String, String> urlEncodeFunction;
+
+        public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction) {
+            this.urlEncodeFunction = urlEncodeFunction;
+        }
 
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
@@ -82,6 +92,11 @@ public class JsonHelper {
             if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
                 @SuppressWarnings("unchecked")
                 TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (Gene.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneAdapter(gson, urlEncodeFunction);
                 return log.traceExit(result);
             }
             //let Gson find somebody else
@@ -476,16 +491,12 @@ public class JsonHelper {
             }
             out.beginObject();
 
-            out.name("xRefId").value(value.getXRefId());
-            out.name("xRefName").value(value.getXRefName());
-            out.name("xRefURL").value(value.getXRefUrl(false, urlEncodeFunction));
+            writeSimplifiedXRef(out, value, urlEncodeFunction);
 
             //Simplified display of Source inside XRefs
             out.name("source");
             out.beginObject();
-            out.name("name").value(value.getSource().getName());
-            out.name("description").value(value.getSource().getDescription());
-            out.name("baseUrl").value(value.getSource().getBaseUrl());
+            writeSimplifiedSource(out, value.getSource());
             out.endObject();
 
             out.endObject();
@@ -504,6 +515,7 @@ public class JsonHelper {
      * notably with {@code Map}s.
      */
     private static final class GeneHomologsAdapter extends TypeAdapter<GeneHomologs> {
+        //TODO: refactor with comparator in HtmlGeneDisplay
         private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
                 .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(),
                         Comparator.nullsLast(Integer::compareTo))
@@ -600,6 +612,107 @@ public class JsonHelper {
     }
 
     /**
+     * A {@code TypeAdapter} to read/write {@code Gene}s in JSON. It is notably to group XRefs
+     * per data source in the display.
+     */
+    private static final class GeneAdapter extends TypeAdapter<Gene> {
+        //TODO: refactor with comparator in HtmlGeneDisplay
+        private final static Comparator<XRef> X_REF_COMPARATOR = Comparator
+                .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
+                .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
+
+        private final Function<String, String> urlEncodeFunction;
+        private final Gson gson;
+
+        private GeneAdapter(Gson gson, Function<String, String> urlEncodeFunction) {
+            this.gson = gson;
+            this.urlEncodeFunction = urlEncodeFunction;
+        }
+
+        @Override
+        public void write(JsonWriter out, Gene value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("geneId").value(value.getGeneId());
+            out.name("name").value(value.getName());
+            out.name("description").value(value.getDescription());
+            out.name("synonyms");
+            this.gson.getAdapter(Set.class).write(out, value.getSynonyms());
+            out.name("xRefs");
+            this.writeXRefsBySource(out, value.getXRefs());
+            out.name("species");
+            this.gson.getAdapter(Species.class).write(out, value.getSpecies());
+            out.name("geneBioType");
+            this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
+            out.name("geneMappedToSameGeneIdCount").value(value.getGeneMappedToSameGeneIdCount());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public Gene read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
+        }
+
+        private void writeXRefsBySource(JsonWriter out, Set<XRef> xRefs)
+                throws IOException {
+            log.traceEntry("{}, {}", out, xRefs);
+            out.beginArray();
+
+            LinkedHashMap<Source, List<XRef>> xRefsBySource = xRefs.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl()))
+                    .sorted(X_REF_COMPARATOR)
+                    .collect(Collectors.groupingBy(XRef::getSource,
+                            LinkedHashMap::new,
+                            Collectors.toList()));
+            for (Entry<Source, List<XRef>> e: xRefsBySource.entrySet()) {
+                out.beginObject();
+
+                out.name("source");
+                out.beginObject();
+                writeSimplifiedSource(out, e.getKey());
+                out.endObject();
+
+                out.name("xRefs");
+                out.beginArray();
+                for (XRef xRef: e.getValue()) {
+                    out.beginObject();
+                    writeSimplifiedXRef(out, xRef, urlEncodeFunction);
+                    out.endObject();
+                }
+                out.endArray();
+
+                out.endObject();
+            }
+            out.endArray();
+            log.traceExit();
+        }
+    }
+
+    private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
+        log.traceEntry("{}, {}", out, source);
+        out.name("name").value(source.getName());
+        out.name("description").value(source.getDescription());
+        out.name("baseUrl").value(source.getBaseUrl());
+        log.traceExit();
+    }
+    private static void writeSimplifiedXRef(JsonWriter out, XRef xRef,
+            Function<String, String> urlEncodeFunction) throws IOException {
+        log.traceEntry("{}, {}", out, xRef, urlEncodeFunction);
+        out.name("xRefId").value(xRef.getXRefId());
+        out.name("xRefName").value(xRef.getXRefName());
+        out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
+        log.traceExit();
+    }
+    /**
      * The {@code Gson} used to dump JSON
      */
     private final Gson gson;
@@ -658,7 +771,7 @@ public class JsonHelper {
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
                 .registerTypeAdapter(GeneXRef.class, new GeneXRefAdapter(s -> this.urlEncode(s)))
-                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
+                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s)))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();

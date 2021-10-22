@@ -68,38 +68,38 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
         LinkedHashMap<String, Object> JSONHashMap = new LinkedHashMap<String, Object>();
 
+        //TODO: to adapt to new code
         // ArrayList of anatomical entities
         ArrayList<LinkedHashMap<String, Object>> anatEntitiesList = 
                 new ArrayList<LinkedHashMap<String, Object>>(); 
-        // for each anatomical entity
-        geneResponse.getCallsByOrganCall().forEach((anat, calls) -> {
-            ArrayList<LinkedHashMap<String, Object>> developmentalStages = 
-                    new ArrayList<LinkedHashMap<String, Object>>();
-
-            for (ExpressionCall call: calls) {
-                LinkedHashMap<String, Object> developmentalStageHashMap = 
-                        new LinkedHashMap<String, Object>();
-                developmentalStageHashMap.put("id", call.getCondition().getDevStage().getId());
-                developmentalStageHashMap.put("name", call.getCondition().getDevStage().getName());
-                developmentalStageHashMap.put("rank", call.getMeanRank());
-                developmentalStageHashMap.put("score", call.getExpressionScore());
-                List<Boolean> dataTypes = new ArrayList<Boolean>();
-                dataTypes = getDataTypeSpans(call.getCallData());
-                developmentalStageHashMap.put("Affymetrix", dataTypes.get(DataType
-                        .valueOf("AFFYMETRIX").ordinal()));
-                developmentalStageHashMap.put("EST", dataTypes.get(DataType.valueOf("EST")
-                        .ordinal()));
-                developmentalStageHashMap.put("in situ hybridization", dataTypes.get(DataType
-                        .valueOf("IN_SITU").ordinal()));
-                developmentalStageHashMap.put("RNA-Seq", dataTypes.get(DataType.valueOf("RNA_SEQ")
-                        .ordinal()));
-
-                log.debug(getDataTypeSpans(call.getCallData()));
-                developmentalStages.add(developmentalStageHashMap);
-
-            }
-            LinkedHashMap<String, Object> anatEntitieHashMap = new LinkedHashMap<String, Object>();
-            //TODO: to adapt to new code
+//        // for each anatomical entity
+//        geneResponse.getCallsByOrganCall().forEach((anat, calls) -> {
+//            ArrayList<LinkedHashMap<String, Object>> developmentalStages = 
+//                    new ArrayList<LinkedHashMap<String, Object>>();
+//
+//            for (ExpressionCall call: calls) {
+//                LinkedHashMap<String, Object> developmentalStageHashMap = 
+//                        new LinkedHashMap<String, Object>();
+//                developmentalStageHashMap.put("id", call.getCondition().getDevStage().getId());
+//                developmentalStageHashMap.put("name", call.getCondition().getDevStage().getName());
+//                developmentalStageHashMap.put("rank", call.getMeanRank());
+//                developmentalStageHashMap.put("score", call.getExpressionScore());
+//                List<Boolean> dataTypes = new ArrayList<Boolean>();
+//                dataTypes = getDataTypeSpans(call.getCallData());
+//                developmentalStageHashMap.put("Affymetrix", dataTypes.get(DataType
+//                        .valueOf("AFFYMETRIX").ordinal()));
+//                developmentalStageHashMap.put("EST", dataTypes.get(DataType.valueOf("EST")
+//                        .ordinal()));
+//                developmentalStageHashMap.put("in situ hybridization", dataTypes.get(DataType
+//                        .valueOf("IN_SITU").ordinal()));
+//                developmentalStageHashMap.put("RNA-Seq", dataTypes.get(DataType.valueOf("RNA_SEQ")
+//                        .ordinal()));
+//
+//                log.debug(getDataTypeSpans(call.getCallData()));
+//                developmentalStages.add(developmentalStageHashMap);
+//
+//            }
+//            LinkedHashMap<String, Object> anatEntitieHashMap = new LinkedHashMap<String, Object>();
 //            anatEntitieHashMap.put("id", anat.getId());
 //            anatEntitieHashMap.put("name", anat.getName());
 //            // The min rank and highest expression score of all dev. stages is used at anat. entity 
@@ -109,7 +109,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 //            anatEntitieHashMap.put("devStages", developmentalStages);
 //            anatEntitiesList.add(anatEntitieHashMap);
 
-        });
+//        });
 
         JSONHashMap.put("gene", geneResponse.getGene());
         JSONHashMap.put("homologs", geneResponse.getGeneHomologs());

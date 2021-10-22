@@ -2,10 +2,12 @@ package org.bgee.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,6 +22,7 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
@@ -54,30 +57,28 @@ public class CommandGene extends CommandParent {
      */
     public static class GeneResponse {
         private final Gene gene;
-        private final LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByOrganCall;
+        private final List<ExpressionCall> calls;
+        private final EnumSet<CallService.Attribute> condParams;
         private final GeneHomologs geneHomologs;
         private final boolean includingAllRedundantCalls;
-        private final Map<ExpressionCall, Integer> clusteringBestEachAnatEntity;
-        private final Map<ExpressionCall, Integer> clusteringWithinAnatEntity;
+        private final Map<ExpressionCall, Integer> clustering;
         
         /**
          * @param gene                          See {@link #getGene()}.
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
-         * @param callsByOrganCall              See {@link #getCallsByOrganCall()}.
-         * @param clusteringBestEachAnatEntity  See {@link #getClusteringBestEachAnatEntity()}.
-         * @param clusteringWithinAnatEntity    See {@link #getClusteringWithinAnatEntity()}.
+         * @param calls                         See {@link #getCalls()}
+         * @param condParams                    See {@link #getCondParams()}
+         * @param clustering                    See {@link #getClustering()}.
          */
         public GeneResponse(Gene gene, boolean includingAllRedundantCalls, 
-                LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByOrganCall, 
-                Map<ExpressionCall, Integer> clusteringBestEachAnatEntity, 
-                Map<ExpressionCall, Integer> clusteringWithinAnatEntity,
+                List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
+                Map<ExpressionCall, Integer> clustering,
                 GeneHomologs geneHomologs) {
             this.gene = gene;
             this.includingAllRedundantCalls = includingAllRedundantCalls;
-            //too boring to protect the Maps for this internal class...
-            this.callsByOrganCall = callsByOrganCall;
-            this.clusteringBestEachAnatEntity = clusteringBestEachAnatEntity;
-            this.clusteringWithinAnatEntity = clusteringWithinAnatEntity;
+            this.calls = calls;
+            this.condParams = condParams;
+            this.clustering = clustering;
             this.geneHomologs = geneHomologs;
         }
 
@@ -89,7 +90,7 @@ public class CommandGene extends CommandParent {
         }
         /**
          * @return  A {@code boolean} that is {@code true} if the information returned by 
-         *          {@link #getCallsByAnatEntity()}, {@link #getClusteringBestEachAnatEntity()}, 
+         *          {@link #getCalls()}, {@link #getClusteringBestEachAnatEntity()}, 
          *          and {@link #getClusteringWithinAnatEntity()}, were built by including all 
          *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
          */
@@ -97,49 +98,35 @@ public class CommandGene extends CommandParent {
             return includingAllRedundantCalls;
         }
         /**
-         * @return  A {@code LinkedHashMap} where keys are {@code ExpressionCall}s corresponding
-         *          to the call at anat. entity level, the associated value being a {@code List}
-         *          of {@code ExpressionCall}s in all conditions corresponding to the anat.
-         *          entity call, ordered by their global mean rank.
+         * @return  A {@code List} of {@code ExpressionCall}s for the requested condition parameters
+         *          (see #getRequestedCondParams()), ordered by their global mean rank and
+         *          most precise condition for equal ranks.
          *          Redundant {@code ExpressionCall}s may or may not have been considered, 
          *          depending on {@link #isIncludingAllRedundantCalls()}.
          * @see #isIncludingAllRedundantCalls()
          */
-        public LinkedHashMap<ExpressionCall, List<ExpressionCall>> getCallsByOrganCall() {
-            return callsByOrganCall;
+        public List<ExpressionCall> getCalls() {
+            return calls;
         }
         /**
-         * Returns a clustering of a set of {@code ExpressionCall}s generated by only considering  
-         * the best {@code ExpressionCall} from each anatomical entity. 
-         * Redundant {@code ExpressionCall}s may or may not have been considered, 
-         * depending on {@link #isIncludingAllRedundantCalls()}.
+         * @return  An {@code EnumSet} containing the condition parameters (see
+         *          {@link CallService.Attribute#isConditionParameter()}) requested to retrieve
+         *          the calls returned by {@link #getCalls()}.
+         */
+        public EnumSet<CallService.Attribute> getCondParams() {
+            return this.condParams;
+        }
+        /**
+         * Returns a clustering of the {@code ExpressionCall}s returned by {@link #getCalls()}.
          * 
          * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
          *              being the index of the group in which they are clustered, 
          *              based on their expression score. Group indexes are assigned in ascending 
-         *              order of expression score, starting from 0. Only one best 
-         *              {@code ExpressionCall} per anatomical entity is considered. 
-         * @see #isIncludingAllRedundantCalls()
+         *              order of expression score, starting from 0.
+         * @see #getCalls()
          */
-        public Map<ExpressionCall, Integer> getClusteringBestEachAnatEntity() {
-            return clusteringBestEachAnatEntity;
-        }
-        /**
-         * Returns a clustering of {@code ExpressionCall}s clustered independently 
-         * for each anatomical entity (so, {@code ExpressionCall}s associated to a same value 
-         * in the returned {@code Map} might not be part of a same cluster). 
-         * Redundant {@code ExpressionCall}s may or may not have been considered, 
-         * depending on {@link #isIncludingAllRedundantCalls()}. 
-         * 
-         * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
-         *              being the index of the group in which they are clustered, 
-         *              based on their expression score. Group indexes are assigned in ascending 
-         *              order of expression score, starting from 0. Clusters are independent 
-         *              per anatomical entities. 
-         * @see #isIncludingAllRedundantCalls()
-         */
-        public Map<ExpressionCall, Integer> getClusteringWithinAnatEntity() {
-            return clusteringWithinAnatEntity;
+        public Map<ExpressionCall, Integer> getClustering() {
+            return clustering;
         }
 
         /**
@@ -148,9 +135,6 @@ public class CommandGene extends CommandParent {
         public GeneHomologs getGeneHomologs() {
             return geneHomologs;
         }
-
-        
-        
     }
 
     /**
@@ -243,8 +227,12 @@ public class CommandGene extends CommandParent {
             throw log.throwing(new AssertionError("Impossible case"));
         }
 
-        
-        display.displayGene(this.buildGeneResponse(selectedGene));
+        URLParameters urlParameters = requestParameters.getUrlParametersInstance();
+        Set<String> selectedCondParams = new HashSet<>(
+                Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam()))
+                .orElseGet(() -> Collections.emptyList()));
+
+        display.displayGene(this.buildGeneResponse(selectedGene, selectedCondParams));
         log.traceExit();
     }
 
@@ -413,79 +401,45 @@ public class CommandGene extends CommandParent {
         }
     }
 
-    private GeneResponse buildGeneResponse(Gene gene) 
+    private GeneResponse buildGeneResponse(Gene gene, Set<String> condParams) 
             throws IllegalStateException, PageNotFoundException {
-        log.traceEntry("{}", gene);
-        //retrieve calls with silver quality for one anat. entity and at least bronze quality
-        //for the same anat. entity and other conditions
-        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsByOrganCall = serviceFactory
-                .getCallService().loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                        new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()));
+        log.traceEntry("{}, {}", gene, condParams);
+        //retrieve calls with silver quality for the requested condition parameters.
+        EnumSet<CallService.Attribute> condParamAttrs = condParams == null || condParams.isEmpty()?
+                //default value
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID):
+                //otherwise retrieve condition parameters from request
+                CallService.Attribute.getAllConditionParameters()
+                    .stream().filter(a -> condParams.contains(a.getCondParamName()))
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
+
+        List<ExpressionCall> calls = serviceFactory.getCallService().loadSilverCondObservedCalls(
+                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs);
         
         // Load homology information.
         GeneHomologs geneHomologs = this.loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),
                 serviceFactory.getGeneHomologsService());
-        
-        if (callsByOrganCall == null || callsByOrganCall.isEmpty()) {
+
+        if (calls.isEmpty()) {
             log.debug("No calls for gene {}", gene.getGeneId());
-            return log.traceExit(new GeneResponse(gene, true, callsByOrganCall,
-                    new HashMap<>(), new HashMap<>(), geneHomologs));
+            return log.traceExit(new GeneResponse(gene, true, calls, condParamAttrs,
+                    new HashMap<>(), geneHomologs));
         }
         
         //**************************************
         // Clustering, Building GeneResponse
         //**************************************
-        return log.traceExit(this.buildGeneResponse(gene, callsByOrganCall, geneHomologs, true));
-    }
-
-    /**
-     * Continue the building of a {@code GeneResponse}, by taking care of the steps 
-     * of grouping of {@code ExpressionCall}s per anatomical entity, and of clustering. 
-     * 
-     * @param gene                     The requested {@code Gene}.
-     * @param callsByOrganCall         A {@code LinkedHashMap} where values are {@code ExpressionCall}s sorted using the  
-     *                                 {@link ExpressionCall#filterAndOrderCallsByRank(Collection, ConditionGraph)}
-     *                                 and keys correspond {@code ExpressionCall}s at anat. entity level
-     * @param geneHomologs             A {@code Map} where keys are {@code Taxon) and values are @{code Set} of 
-     *                                 {@code Species}
-     * @param filterRedundantCalls     A {@code boolean} defining whether redundant calls 
-     *                                 should be filtered for the grouping and clustering steps.
-     * @return                         A built {@code GeneResponse}.
-     */
-    private GeneResponse buildGeneResponse(Gene gene, LinkedHashMap<ExpressionCall, 
-            List<ExpressionCall>> callsByOrganCall, GeneHomologs geneHomologs, 
-            boolean filterRedundantCalls) {
-        log.traceEntry("{}, {}, {}, {}, {}", gene, callsByOrganCall, geneHomologs, 
-                filterRedundantCalls);
-
         long startFilteringTimeInMs = System.currentTimeMillis();
-
-        //*********************
-        // Clustering
-        //*********************
         //define clustering method
         Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction = 
                 getClusteringFunction();
-        
-        //Store a clustering of ExpressionCalls, by considering only one best ExpressionCall 
-        //from each anatomical entity.
-        Map<ExpressionCall, Integer> clusteringBestEachAnatEntity = clusteringFunction.apply(
-                new ArrayList<>(callsByOrganCall.keySet()));
-        
-        //store a clustering, independent for each anatomical entity, of the ExpressionCalls 
-        //of an anatomical entity
-        Map<ExpressionCall, Integer> clusteringWithinAnatEntity = callsByOrganCall.values().stream()
-                .flatMap(callList -> clusteringFunction.apply(callList).entrySet().stream())
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-        
+        //Store a clustering of ExpressionCalls
+        Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
         log.debug("Total clustering of calls performed in {} ms", 
                 System.currentTimeMillis() - startFilteringTimeInMs);
-        
-        //*********************
-        // Build GeneResponse
-        //*********************
-        return log.traceExit(new GeneResponse(gene, !filterRedundantCalls, callsByOrganCall,
-                clusteringBestEachAnatEntity, clusteringWithinAnatEntity, geneHomologs));
+
+        return log.traceExit(new GeneResponse(gene, true, calls, condParamAttrs,
+                clustering, geneHomologs));
     }
     
     /**

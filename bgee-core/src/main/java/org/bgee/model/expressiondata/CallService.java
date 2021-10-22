@@ -173,13 +173,13 @@ public class CallService extends CommonService {
      */
     public static enum Attribute implements Service.Attribute {
         //TODO: remove the _ID part from condition parameters
-        GENE(false, null), ANAT_ENTITY_ID(true, "anatomicalEntity"),
-        DEV_STAGE_ID(true, "developmentalStage"), CELL_TYPE_ID(true, "cellType"),
-        SEX_ID(true, "sex"), STRAIN_ID(true, "strain"), CALL_TYPE(false, null),
-        DATA_QUALITY(false, null), OBSERVED_DATA(false, null), MEAN_RANK(false, null), 
-        EXPRESSION_SCORE(false, null), DATA_TYPE_RANK_INFO(false, null),
-        P_VALUE_INFO_ALL_DATA_TYPES(false, null), P_VALUE_INFO_EACH_DATA_TYPE(false, null),
-        GENE_QUAL_EXPR_LEVEL(false, null), ANAT_ENTITY_QUAL_EXPR_LEVEL(false, null);
+        GENE(false, null, null), ANAT_ENTITY_ID(true, "anat_entity", "Anat. entity"),
+        DEV_STAGE_ID(true, "dev_stage", "Dev. stage"), CELL_TYPE_ID(true, "cell_type", "Cell type"),
+        SEX_ID(true, "sex", "Sex"), STRAIN_ID(true, "strain", "Strain"), CALL_TYPE(false, null, null),
+        DATA_QUALITY(false, null, null), OBSERVED_DATA(false, null, null), MEAN_RANK(false, null, null), 
+        EXPRESSION_SCORE(false, null, null), DATA_TYPE_RANK_INFO(false, null, null),
+        P_VALUE_INFO_ALL_DATA_TYPES(false, null, null), P_VALUE_INFO_EACH_DATA_TYPE(false, null, null),
+        GENE_QUAL_EXPR_LEVEL(false, null, null), ANAT_ENTITY_QUAL_EXPR_LEVEL(false, null, null);
 
 
         private final static Set<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
@@ -241,14 +241,16 @@ public class CallService extends CommonService {
         }
 
         private final String condParamName;
+        private final String displayName;
         /**
          * @see #isConditionParameter()
          */
         private final boolean conditionParameter;
 
-        private Attribute(boolean conditionParameter, String condParamName) {
+        private Attribute(boolean conditionParameter, String condParamName, String displayName) {
             this.conditionParameter = conditionParameter;
             this.condParamName = condParamName;
+            this.displayName = displayName;
         }
 
         /**
@@ -261,6 +263,9 @@ public class CallService extends CommonService {
         }
         public String getCondParamName() {
             return this.condParamName;
+        }
+        public String getDisplayName() {
+            return this.displayName;
         }
     }
 
@@ -506,6 +511,51 @@ public class CallService extends CommonService {
             DiffExpressionCallFilter callFilter) {
         log.traceEntry("{} {}", speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
+    }
+
+    public List<ExpressionCall> loadSilverCondObservedCalls(GeneFilter geneFilter,
+            Collection<CallService.Attribute> condParams) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", geneFilter, condParams);
+
+        EnumSet<CallService.Attribute> clonedCondParams = condParams == null || condParams.isEmpty()?
+                CallService.Attribute.getAllConditionParameters(): EnumSet.copyOf(condParams);
+        EnumSet<CallService.Attribute> attrs = EnumSet.of(CallService.Attribute.GENE,
+                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
+                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
+                //We need the p-value info per data type to know which data types
+                //produced the calls
+                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
+                //We also want to know the global FDR-corrected p-value
+                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
+        attrs.addAll(clonedCondParams);
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderBy =
+                new LinkedHashMap<>();
+        orderBy.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
+
+        List<ExpressionCall> calls = this.loadExpressionCalls(
+                new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
+                        Collections.singleton(geneFilter),
+                        Collections.singleton(new ConditionFilter(null, null, null,
+                                null, null, clonedCondParams)),
+                        null, null),
+                attrs,
+                orderBy)
+                .collect(Collectors.toList());
+        if (calls.isEmpty()) {
+            return log.traceExit(calls);
+        }
+
+        ConditionGraph conditionGraph = this.getServiceFactory().getConditionGraphService()
+                .loadConditionGraph(calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
+        //order by rank and most precise conditions
+        calls = ExpressionCall.filterAndOrderCallsByRank(calls, conditionGraph);
+        //redundant calls
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                calls, conditionGraph);
+
+        return log.traceExit(calls.stream()
+                .filter(c -> !redundantCalls.contains(c))
+                .collect(Collectors.toList()));
     }
 
     /**

@@ -63,6 +63,7 @@ public class Gene {
      */
     //What we have are GeneXRefs, but the difference only matters for internal code,
     //for now we don't need to expose the difference to users.
+    //XXX: should it be a LinkedHashMap<Source, List<XRef>>?
     private final Set<XRef> xRefs;
 
     /**

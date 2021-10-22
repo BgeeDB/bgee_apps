@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
@@ -556,7 +557,7 @@ public class JsonHelper {
             out.beginObject();
 
             out.name("gene");
-            this.writeSimplifiedGene(out, value.getGene());
+            writeSimplifiedGene(out, value.getGene(), false, null);
 
             out.name("orthologsByTaxon");
             this.writeHomologsByTaxon(out, value.getOrthologsByTaxon());
@@ -576,26 +577,6 @@ public class JsonHelper {
         public GeneHomologs read(JsonReader in) throws IOException {
             //for now, we never read JSON values
             throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
-        }
-
-        private void writeSimplifiedGene(JsonWriter out, Gene gene) throws IOException {
-            log.traceEntry("{}, {}", out, gene);
-            out.beginObject();
-            out.name("geneId").value(gene.getGeneId());
-            out.name("name").value(gene.getName());
-
-            //Simplified display of Species
-            out.name("species");
-            out.beginObject();
-            out.name("id").value(gene.getSpecies().getId());
-            out.name("name").value(gene.getSpecies().getName());
-            out.name("genus").value(gene.getSpecies().getGenus());
-            out.name("speciesName").value(gene.getSpecies().getSpeciesName());
-            out.endObject();
-
-            out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
-            out.endObject();
-            log.traceExit();
         }
 
         private void writeHomologsByTaxon(JsonWriter out, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon)
@@ -619,7 +600,7 @@ public class JsonHelper {
                 out.name("genes");
                 out.beginArray();
                 for (Gene gene: orderedHomologsWithDescendant) {
-                    this.writeSimplifiedGene(out, gene);
+                    writeSimplifiedGene(out, gene, false, null);
                 }
                 out.endArray();
 
@@ -735,12 +716,8 @@ public class JsonHelper {
                 log.traceExit(); return;
             }
             out.beginObject();
+            //Retrieve requested condition parameters
             EnumSet<CallService.Attribute> condParams = value.getCondParams();
-
-            if (!value.getCalls().isEmpty()) {
-                out.name("gene");
-                this.gson.getAdapter(Gene.class).write(out, value.getCalls().iterator().next().getGene());
-            }
 
             out.name("requestedDataTypes");
             out.beginArray();
@@ -757,11 +734,13 @@ public class JsonHelper {
             }
             out.endArray();
 
+            EnumSet<DataType> dataTypesWithData = EnumSet.noneOf(DataType.class);
             out.name("calls");
             out.beginArray();
             for (ExpressionCall call: value.getCalls()) {
                 Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
                         .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                dataTypesWithData.addAll(dataTypes);
                 boolean highQualScore = false;
                 if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
                         (dataTypes.contains(DataType.AFFYMETRIX) ||
@@ -791,7 +770,7 @@ public class JsonHelper {
                 //computed by taking into account all data types
                 String fdr = call.getPValueWithEqualDataTypes(EnumSet.allOf(DataType.class))
                         .getFormatedFDRPValue();
-                out.name("FDR").value(fdr);
+                out.name("fdr").value(fdr);
 
                 out.name("dataTypesWithData");
 //                EnumSet<DataType> dtWithData = call.getCallData().stream()
@@ -813,6 +792,13 @@ public class JsonHelper {
                 out.endObject();
             }
             out.endArray();
+
+            if (!value.getCalls().isEmpty()) {
+                assert !dataTypesWithData.isEmpty();
+                out.name("gene");
+                writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
+                        true, dataTypesWithData);
+            }
 
             out.endObject();
             log.traceExit();
@@ -897,6 +883,65 @@ public class JsonHelper {
         out.name("xRefId").value(xRef.getXRefId());
         out.name("xRefName").value(xRef.getXRefName());
         out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
+        log.traceExit();
+    }
+    private static void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
+            EnumSet<DataType> allowedDataTypes)
+            throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, gene, withSpeciesDataSource, allowedDataTypes);
+        out.beginObject();
+        out.name("geneId").value(gene.getGeneId());
+        out.name("name").value(gene.getName());
+
+        //Simplified display of Species
+        out.name("species");
+        out.beginObject();
+        out.name("id").value(gene.getSpecies().getId());
+        out.name("name").value(gene.getSpecies().getName());
+        out.name("genus").value(gene.getSpecies().getGenus());
+        out.name("speciesName").value(gene.getSpecies().getSpeciesName());
+        if (withSpeciesDataSource) {
+            out.name("sourcesOfDataPerDataType");
+            writeSourcesPerDataType(out, gene.getSpecies().getDataSourcesForDataByDataTypes(),
+                    allowedDataTypes);
+            out.name("sourcesOfAnnotationsPerDataType");
+            writeSourcesPerDataType(out, gene.getSpecies().getDataSourcesForAnnotationByDataTypes(),
+                    allowedDataTypes);
+        }
+        out.endObject();
+
+        out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
+        out.endObject();
+        log.traceExit();
+    }
+    private static void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
+            EnumSet<DataType> allowedDataTypes) throws IOException {
+        log.traceEntry("{}, {}, {}", out, map, allowedDataTypes);
+        // We order the Map by DataType and Source alphabetical name order
+        LinkedHashMap<DataType, List<Source>> dsByDataTypes = map.entrySet().stream()
+                .filter(e -> allowedDataTypes == null || allowedDataTypes.contains(e.getKey()))
+                .sorted(Comparator.comparing(e -> e.getKey()))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().sorted(Comparator.comparing(s -> s.getName()))
+                                         .collect(Collectors.toList()),
+                        (v1, v2) -> {throw new AssertionError("Impossible collision");},
+                        LinkedHashMap::new));
+        out.beginArray();
+        for (Entry<DataType, List<Source>> e: dsByDataTypes.entrySet()) {
+            out.beginObject();
+            out.name("dataType").value(e.getKey().getStringRepresentation());
+            out.name("sources");
+            out.beginArray();
+            for (Source s: e.getValue()) {
+                out.beginObject();
+                writeSimplifiedSource(out, s);
+                out.endObject();
+            }
+            out.endArray();  // end List value
+            out.endObject(); // end Entry
+        }
+        out.endArray(); // end Map
         log.traceExit();
     }
     private static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)

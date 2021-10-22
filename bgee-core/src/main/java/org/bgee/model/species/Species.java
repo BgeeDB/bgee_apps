@@ -1,9 +1,13 @@
 package org.bgee.model.species;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -15,7 +19,7 @@ import org.bgee.model.source.Source;
  * @author  Frederic Bastian
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Mar. 2013
  */
 public class Species extends NamedEntity<Integer> {
@@ -34,10 +38,12 @@ public class Species extends NamedEntity<Integer> {
     private final Source genomeSource;
 	
     /**@see #getDataTypesByDataSourcesForData() */
-    private Map<Source, Set<DataType>> dataTypesByDataSourcesForData;
+    private final Map<Source, Set<DataType>> dataTypesByDataSourcesForData;
+    private final Map<DataType, Set<Source>> dataSourcesForDataByDataTypes;
 
     /**@see #getDataTypesByDataSourcesForAnnotation() */
-    private Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
+    private final Map<Source, Set<DataType>> dataTypesByDataSourcesForAnnotation;
+    private final Map<DataType, Set<Source>> dataSourcesForAnnotationByDataTypes;
 
     private final Integer parentTaxonId;
 
@@ -99,10 +105,27 @@ public class Species extends NamedEntity<Integer> {
             this.genomeSpeciesId = genomeSpeciesId;
         }
         this.parentTaxonId = parentTaxonId;
-        this.dataTypesByDataSourcesForData = dataTypesByDataSourcesForData == null ? 
-                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForData));
-        this.dataTypesByDataSourcesForAnnotation = dataTypesByDataSourcesForAnnotation == null ? 
-                null: Collections.unmodifiableMap(new HashMap<>(dataTypesByDataSourcesForAnnotation));
+        this.dataTypesByDataSourcesForData = Collections.unmodifiableMap(
+                dataTypesByDataSourcesForData == null? new HashMap<>():
+                    new HashMap<>(dataTypesByDataSourcesForData));
+        this.dataTypesByDataSourcesForAnnotation = Collections.unmodifiableMap(
+                dataTypesByDataSourcesForAnnotation == null? new HashMap<>():
+                    new HashMap<>(dataTypesByDataSourcesForAnnotation));
+        //We also inverse key/value in the Maps.
+        this.dataSourcesForDataByDataTypes = Collections.unmodifiableMap(
+                this.dataTypesByDataSourcesForData.entrySet().stream()
+                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
+                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
+                //collect the Entry<DataType, Source> into a Map<DataType, Set<Source>>
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
+                        (s1, s2) -> {s1.addAll(s2); return s1;})));
+        this.dataSourcesForAnnotationByDataTypes = Collections.unmodifiableMap(
+                this.dataTypesByDataSourcesForAnnotation.entrySet().stream()
+                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
+                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
+                //collect the Entry<DataType, Source> into a Map<DataType, Set<Source>>
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
+                        (s1, s2) -> {s1.addAll(s2); return s1;})));
         this.preferredDisplayOrder = preferredDisplayOrder;
     }
 
@@ -199,6 +222,13 @@ public class Species extends NamedEntity<Integer> {
     //empty if requested but no data types
     public Map<Source, Set<DataType>> getDataTypesByDataSourcesForAnnotation() {
         return dataTypesByDataSourcesForAnnotation;
+    }
+
+    public Map<DataType, Set<Source>> getDataSourcesForDataByDataTypes() {
+        return dataSourcesForDataByDataTypes;
+    }
+    public Map<DataType, Set<Source>> getDataSourcesForAnnotationByDataTypes() {
+        return dataSourcesForAnnotationByDataTypes;
     }
 
     /**

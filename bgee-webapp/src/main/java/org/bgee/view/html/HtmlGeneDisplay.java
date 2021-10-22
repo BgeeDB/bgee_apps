@@ -2,9 +2,7 @@ package org.bgee.view.html;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -16,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +26,6 @@ import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
@@ -463,27 +459,27 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /** 
      * Write sources corresponding to the gene species.
      * 
-     * @param map               A {@code Map} where keys are {@code Source}s corresponding to 
-     *                          data sources, the associated values being a {@code Set} of 
-     *                          {@code DataType}s corresponding to data types of data.
-     * @param allowedDataTypes  A {@code Set} of {@code DataType}s that are allowed data types
+     * @param map               A {@code Map} where keys are {@code DataType}s, the associated value
+     *                          being a {@code Set} of {@code Source}s providing annotations or data
+     *                          for the associated {@code DataType}.
+     * @param allowedDataTypes  An {@code EnumSet} of {@code DataType}s that are allowed data types
      *                          to display.
      * @param text              A {@code String} that is the sentence before the list of sources.
      */
-    private void writeSources(Map<Source, Set<DataType>> map, Set<DataType> allowedDataTypes, String text) {
+    private void writeSources(Map<DataType, Set<Source>> map, EnumSet<DataType> allowedDataTypes,
+            String text) {
         log.traceEntry("{}, {}, {}", map, allowedDataTypes, text);
 
-        // First, we invert map to be able to display data sources according to data types.
-        // We use TreeMap to conserve order of data types.
-        TreeMap<DataType, Set<Source>> dsByDataTypes = map.entrySet().stream()
-                //transform the Entry<Source, Set<DataType>> into several Entry<DataType, Source>
-                .flatMap(e -> e.getValue().stream().map(t -> new AbstractMap.SimpleEntry<>(t, e.getKey())))
-                //keep only allowed data types
+        // We order the Map by DataType and Source alphabetical name order
+        LinkedHashMap<DataType, List<Source>> dsByDataTypes = map.entrySet().stream()
                 .filter(e -> allowedDataTypes.contains(e.getKey()))
-                //collect the Entry<DataType, Source> into a TreeMap<DataType, Set<Source>>
-                .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(Arrays.asList(e.getValue())), 
-                        (s1, s2) -> {s1.addAll(s2); return s1;}, 
-                        TreeMap::new));
+                .sorted(Comparator.comparing(e -> e.getKey()))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().sorted(Comparator.comparing(s -> s.getName()))
+                                         .collect(Collectors.toList()),
+                        (v1, v2) -> {throw new AssertionError("Impossible collision");},
+                        LinkedHashMap::new));
         
         // Then, we display informations
         if (!dsByDataTypes.isEmpty()) {
@@ -492,13 +488,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             this.writeln(htmlEntities(text) + ": ");
             this.writeln("<ul>");
 
-            for (Entry<DataType, Set<Source>> e : dsByDataTypes.entrySet()) {
+            for (Entry<DataType, List<Source>> e : dsByDataTypes.entrySet()) {
                 this.writeln("<li>");
                 this.writeln(htmlEntities(e.getKey().getStringRepresentation().substring(0, 1).toUpperCase(Locale.ENGLISH) 
                         + e.getKey().getStringRepresentation().substring(1)) + " data: ");
                 StringJoiner sj = new StringJoiner(", ");
-                for (Source source : e.getValue().stream()
-                        .sorted(Comparator.comparing(NamedEntity::getName)).collect(Collectors.toList())) {
+                for (Source source : e.getValue()) {
                     String target = source.getName().toLowerCase().equals("bgee")? "" : " target='_blank' rel='noopener'";
                     sj.add("<a href='"
                             //XXX: We should think about how to handle this display better,
@@ -1018,29 +1013,29 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 + "Scores are normalized and comparable across genes, conditions and species.</p></div>");
         
         //Source info
-        Set<DataType> allowedDataTypes = geneExp.getCalls().stream()
+        EnumSet<DataType> allowedDataTypes = geneExp.getCalls().stream()
                 .flatMap(call -> call.getCallData().stream())
                 .map(d -> d.getDataType())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
 
         boolean hasSourcesForAnnot = gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
                 !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty();
         boolean hasSourcesForData = gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
                 !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
 
-        if (hasSourcesForAnnot && hasSourcesForData) {
+        if (hasSourcesForAnnot || hasSourcesForData) {
               this.writeln("<div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
         }
         if (hasSourcesForAnnot) {
-            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
+            this.writeSources(gene.getSpecies().getDataSourcesForAnnotationByDataTypes(), 
                     allowedDataTypes, "Sources of annotations to anatomy and development");
         }
         if (hasSourcesForData) {
-            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
+            this.writeSources(gene.getSpecies().getDataSourcesForDataByDataTypes(), 
                     allowedDataTypes, "Sources of raw data");
         }
         
-        if (hasSourcesForAnnot && hasSourcesForData) {
+        if (hasSourcesForAnnot || hasSourcesForData) {
             this.writeln("</div>"); // end info_sources 
         }
         this.writeln("</div>"); // end other info

@@ -76,8 +76,8 @@ public class FDRPValue {
                     + "for " + pValue));
         }
         //In Bgee 15 we limited the precision to 14 digits
-        return log.traceExit((pValue.compareTo(new BigDecimal(0.00000000000001)) <= 0? "<= ": "")
-                + formatter.format(pValue).toLowerCase(Locale.ENGLISH));
+        return log.traceExit((pValue.compareTo(new BigDecimal("0.00000000000001")) <= 0? "<= ": "")
+                + formatter.format(pValue).toLowerCase(Locale.US));
     }
 
     @Override

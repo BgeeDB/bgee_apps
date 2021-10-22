@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
@@ -162,6 +163,24 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("gene", gene);
         this.sendResponse(msg, resultHashMap);
+        log.traceExit();
+    }
+
+    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse) {
+        log.traceEntry("{}", geneExpressionResponse);
+        //See notes in CommandGene about retrieving the Gene even if there is no expression result.
+        //TODO: refactor with code in HtmlGeneDisplay#displayGeneExpression(GeneExpressionResponse)
+        String geneId = null;
+        String geneName = null;
+        if (geneExpressionResponse.getCalls() == null || geneExpressionResponse.getCalls().isEmpty()) {
+            geneId = this.getRequestParameters().getGeneId();
+        } else {
+            Gene gene = geneExpressionResponse.getCalls().iterator().next().getGene();
+            geneId = gene.getGeneId();
+            geneName = gene.getName();
+        }
+        String msg = "Gene expression for gene: " + geneId + (geneName != null? " - " + geneName: "");
+        this.sendResponse(msg, geneExpressionResponse);
         log.traceExit();
     }
 

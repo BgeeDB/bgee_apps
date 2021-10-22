@@ -396,6 +396,12 @@ public class RequestParameters {
      */
     public static final String ACTION_GENE_XREFS = "xrefs";
     /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when expression results for a gene
+     * are requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_EXPRESSION = "expression";
+    /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
      */

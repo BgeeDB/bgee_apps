@@ -9,10 +9,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
@@ -27,7 +39,9 @@ import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -97,6 +111,11 @@ public class JsonHelper {
             if (Gene.class.isAssignableFrom(rawClass) ) {
                 @SuppressWarnings("unchecked")
                 TypeAdapter<T> result = (TypeAdapter<T>) new GeneAdapter(gson, urlEncodeFunction);
+                return log.traceExit(result);
+            }
+            if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseAdapter(gson);
                 return log.traceExit(result);
             }
             //let Gson find somebody else
@@ -659,7 +678,7 @@ public class JsonHelper {
         @Override
         public Gene read(JsonReader in) throws IOException {
             //for now, we never read JSON values
-            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Gene."));
         }
 
         private void writeXRefsBySource(JsonWriter out, Set<XRef> xRefs)
@@ -697,6 +716,174 @@ public class JsonHelper {
         }
     }
 
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneExpressionResponse}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class GeneExpressionResponseAdapter extends TypeAdapter<GeneExpressionResponse> {
+        private final Gson gson;
+
+        private GeneExpressionResponseAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneExpressionResponse value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+            EnumSet<CallService.Attribute> condParams = value.getCondParams();
+
+            if (!value.getCalls().isEmpty()) {
+                out.name("gene");
+                this.gson.getAdapter(Gene.class).write(out, value.getCalls().iterator().next().getGene());
+            }
+
+            out.name("requestedDataTypes");
+            out.beginArray();
+            //For the gene page, for now we always consider all data types
+            for (DataType d: EnumSet.allOf(DataType.class)) {
+                out.value(d.getStringRepresentation());
+            }
+            out.endArray();
+
+            out.name("requestedConditionParameters");
+            out.beginArray();
+            for (CallService.Attribute a: condParams) {
+                out.value(a.getDisplayName());
+            }
+            out.endArray();
+
+            out.name("calls");
+            out.beginArray();
+            for (ExpressionCall call: value.getCalls()) {
+                Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                boolean highQualScore = false;
+                if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
+                        (dataTypes.contains(DataType.AFFYMETRIX) ||
+                        dataTypes.contains(DataType.RNA_SEQ) ||
+                        dataTypes.contains(DataType.FULL_LENGTH) ||
+                        call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+                    highQualScore = true;
+                }
+
+                out.beginObject();
+
+                out.name("condition");
+                writeSimplifiedCondition(out, call.getCondition(), condParams);
+
+                out.name("expressionScore");
+                out.beginObject();
+                out.name("expressionScore").value(call.getFormattedExpressionScore());
+                out.name("expressionScoreConfidence");
+                if (highQualScore) {
+                    out.value("high");
+                } else {
+                    out.value("low");
+                }
+                out.endObject();
+
+                //For the gene page, for now we always consider all data types, so we retrieve the FDR
+                //computed by taking into account all data types
+                String fdr = call.getPValueWithEqualDataTypes(EnumSet.allOf(DataType.class))
+                        .getFormatedFDRPValue();
+                out.name("FDR").value(fdr);
+
+                out.name("dataTypesWithData");
+//                EnumSet<DataType> dtWithData = call.getCallData().stream()
+//                        .filter(c -> c.getDataPropagation() != null &&
+//                            c.getDataPropagation().getCondParamCombinations().stream()
+//                            .anyMatch(comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0))
+//                        .map(c -> c.getDataType())
+//                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                out.beginArray();
+                for (DataType d: dataTypes) {
+                    out.value(d.getStringRepresentation());
+                }
+                out.endArray();
+                
+                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
+                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+                out.name("clusterIndex").value(value.getClustering().get(call));
+
+                out.endObject();
+            }
+            out.endArray();
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneExpressionResponse read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for GeneExpressionResponse."));
+        }
+
+        private void writeSimplifiedCondition(JsonWriter out, Condition cond,
+                EnumSet<CallService.Attribute> condParams) throws IOException {
+            log.traceEntry("{}, {}, {}", out, cond, condParams);
+            out.beginObject();
+
+            // Anat entity ID and Anat entity cells
+            AnatEntity anatEntity = cond.getAnatEntity();
+            out.name("anatEntity");
+            if (anatEntity != null && condParams.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+                assert condParams.contains(CallService.Attribute.CELL_TYPE_ID):
+                    "Anat. entity and cell type are requested together for the gene page";
+                writeSimplifiedNamedEntity(out, anatEntity);
+            } else {
+                out.nullValue();
+            }
+            
+            AnatEntity cellType = cond.getCellType();
+            out.name("cellType");
+            // post-composition if not the root of cell type
+            if (cellType != null && condParams.contains(CallService.Attribute.CELL_TYPE_ID) &&
+                    !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                assert condParams.contains(CallService.Attribute.ANAT_ENTITY_ID):
+                    "Anat. entity and cell type are requested together for the gene page";
+                writeSimplifiedNamedEntity(out, cellType);
+            } else {
+                out.nullValue();
+            }
+
+            // Dev stage
+            DevStage stage = cond.getDevStage();
+            out.name("devStage");
+            if (stage != null && condParams.contains(CallService.Attribute.DEV_STAGE_ID)) {
+                writeSimplifiedNamedEntity(out, stage);
+            } else {
+                out.nullValue();
+            }
+
+            // Sexes
+            Sex sex = cond.getSex();
+            out.name("sex");
+            if (sex != null && condParams.contains(CallService.Attribute.SEX_ID)) {
+                out.value(sex.getName());
+            } else {
+                out.nullValue();
+            }
+
+            // Strains
+            Strain strain = cond.getStrain();
+            out.name("strain");
+            if (strain != null && condParams.contains(CallService.Attribute.STRAIN_ID)) {
+                out.value(strain.getName());
+            } else {
+                out.nullValue();
+            }
+            out.endObject();
+            log.traceExit();
+        }
+    }
+
     private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
         out.name("name").value(source.getName());
@@ -710,6 +897,15 @@ public class JsonHelper {
         out.name("xRefId").value(xRef.getXRefId());
         out.name("xRefName").value(xRef.getXRefName());
         out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
+        log.traceExit();
+    }
+    private static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
+            throws IOException {
+        log.traceEntry("{}, {}", out, namedEntity);
+        out.beginObject();
+        out.name("id").value(namedEntity.getId());
+        out.name("name").value(namedEntity.getName());
+        out.endObject();
         log.traceExit();
     }
     /**

@@ -355,7 +355,7 @@ public class RawDataService extends CommonService {
                 .flatMap(f -> f.getGeneFilters().stream())
                 .collect(Collectors.toSet()));
         final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesMapFromGeneFilters(geneFilters);
+                .loadSpeciesMapFromGeneFilters(geneFilters, true);
         final Map<Integer, Gene> geneMap = loadGeneMapFromGeneFilters(geneFilters, speciesMap, null, this.geneDAO);
         Set<DAORawDataFilter> daoRawDataFilters = Collections.unmodifiableSet(clonedFilters.stream()
                 .map(f -> convertRawDataFilterToDAORawDataFilter(f, geneMap))

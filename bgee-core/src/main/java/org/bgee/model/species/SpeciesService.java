@@ -103,21 +103,20 @@ public class SpeciesService extends CommonService {
      * Load a {@code Species} {@code Map} from the provided {@code GeneFilter}s, retrieved from the data source.
      *
      * @param geneFilters       A {@code Set} of {@code GeneFilter}s containing the IDs of the {@code Species} to load.
-     * @param speciesService    A {@code SpeciesService} to load {@code Species} from their IDs.
      * @return                  An unmodifiable {@code Map} where keys are species IDs, the associated value being
      *                          the corresponding {@code Species}.
      * @throws IllegalArgumentException If a {@code Species} could not be retrieved based on a ID
      *                                  provided in {@code geneFilter}s.
      */
-    public Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters)
-            throws IllegalArgumentException {
-        log.traceEntry("{}", geneFilters);
+    public Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters,
+            boolean withSpeciesSourceInfo) throws IllegalArgumentException {
+        log.traceEntry("{, {}}", geneFilters, withSpeciesSourceInfo);
         // Retrieve species, get a map species ID -> Species
         Set<Integer> clnSpeIds =  Collections.unmodifiableSet(
                 geneFilters.stream().map(f -> f.getSpeciesId())
                 .collect(Collectors.toSet()));
         Map<Integer, Species> speciesMap = Collections.unmodifiableMap(
-                this.loadSpeciesMap(clnSpeIds, false));
+                this.loadSpeciesMap(clnSpeIds, withSpeciesSourceInfo));
         if (speciesMap.size() != clnSpeIds.size()) {
             clnSpeIds.removeAll(speciesMap.keySet());
             throw new IllegalArgumentException("Some species IDs not found in data source: " + clnSpeIds);

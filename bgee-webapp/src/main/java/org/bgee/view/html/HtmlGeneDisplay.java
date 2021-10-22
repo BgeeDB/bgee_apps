@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
@@ -379,97 +380,12 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<h2>General information</h2>");
         this.writeln("<div class='gene'>" + getGeneralInfo(gene, geneHomologs) + "</div>");
 
-
         //Expression data
-        this.writeln("<h2>Expression</h2>");
-
-        writeExpressionForm(gene);
-        
-        this.writeln("<div id='expr_data' class='row'>");
-        
-        //table-container
-        this.writeln("<div class='col-xs-12 col-md-10'>");
-        this.writeln("<div class='table-container'>");
-
-        this.writeln(getExpressionHTML(
-                geneResponse.getCalls(), 
-                geneResponse.getClustering(), 
-                geneResponse.getCondParams()));
-        
-        this.writeln("</div>"); // end table-container
-        this.writeln("</div>"); // end class
-        
-        //legend
-        this.writeln("<div class='legend col-xs-10 col-sm-8 col-md-2 row'>");
-        this.writeln("<table class='col-xs-5 col-sm-3 col-md-12'>"
-                + "<caption>Sources</caption>" +
-                "<tr><th>A</th><td>Affymetrix</td></tr>" +
-                "<tr><th>E</th><td>EST</td></tr>" +
-                "<tr><th>I</th><td>In Situ</td></tr>" +
-                "<tr><th>R</th><td>RNA-Seq</td></tr>" +
-                "<tr><th>FL</th><td>scRNA-Seq Full Length</td></tr></table>");
-        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-3 col-md-offset-0 col-md-12'>"
-                //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
-                //for now we only report presence/absence of data per data type.
-//                + "<caption>Qualities</caption>" +
-//                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
-//                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
-//                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
-                + "<tr><td><span class='quality presence'>data</span></td></tr>" +
-                  "<tr><td><span class='quality absence'>no data</span></td></tr></table>");
-        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-4 col-md-offset-0 col-md-12'>"
-                + "<caption>Expression scores</caption>"
-                + "<tr><th><span class='low-qual-score'>3.25e4</span></th>"
-                    + "<td>lightgrey: low confidence scores</td></tr>" +
-                "<tr><th><hr class='dotted-line' /></th>"
-                + "  <td>important score variation</td></tr></table>");
-        this.writeln("</div>"); // end legend
-        
-        this.writeln("</div>"); // end expr_data 
-
-        //other info
-        this.writeln("<div class='row'>");
-
-        this.writeln("<div id='expr_score_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
-                + "<p><strong>Expression scores </strong> of expression calls is based on the rank of a gene in a condition "
-                + "according to its expression levels (non-parametric statistics), normalized "
-                + "using the minimum and maximum Rank of the species. Values of Expression scores are between "
-                + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes. "
-                + "Scores are normalized and comparable across genes, conditions and species.</p></div>");
-        
-        //Source info
-        Set<DataType> allowedDataTypes = geneResponse.getCalls().stream()
-                .flatMap(call -> call.getCallData().stream())
-                .map(d -> d.getDataType())
-                .collect(Collectors.toSet());
-
-        boolean hasSourcesForAnnot = gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
-                !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty();
-        boolean hasSourcesForData = gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
-                !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
-
-        if (hasSourcesForAnnot && hasSourcesForData) {
-              this.writeln("<div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
-        }
-        if (hasSourcesForAnnot) {
-            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
-                    allowedDataTypes, "Sources of annotations to anatomy and development");
-        }
-        if (hasSourcesForData) {
-            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
-                    allowedDataTypes, "Sources of raw data");
-        }
-        
-        if (hasSourcesForAnnot && hasSourcesForData) {
-            this.writeln("</div>"); // end info_sources 
-        }
-        this.writeln("</div>"); // end other info
-
+        this.displayGeneExpressionSection(geneResponse);
 
         // Homology info
         this.displayHomologsInfo(geneHomologs);
 
-        
         // Cross-references
         if (gene.getXRefs() != null && gene.getXRefs().size() > 0) {
             this.displayXRefsInfo(gene);
@@ -1036,6 +952,100 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
+    private void displayGeneExpressionSection(GeneExpressionResponse geneExp) {
+        log.traceEntry("{}", geneExp);
+
+        this.writeln("<h2>Expression</h2>");
+
+        if (geneExp.getCalls() == null || geneExp.getCalls().isEmpty()) {
+            this.writeln("No expression data for this gene");
+            log.traceExit(); return;
+        }
+        Gene gene = geneExp.getCalls().iterator().next().getGene();
+
+        writeExpressionForm(gene);
+        
+        this.writeln("<div id='expr_data' class='row'>");
+        
+        //table-container
+        this.writeln("<div class='col-xs-12 col-md-10'>");
+        this.writeln("<div class='table-container'>");
+
+        this.writeln(getExpressionHTML(
+                geneExp.getCalls(), 
+                geneExp.getClustering(), 
+                geneExp.getCondParams()));
+        
+        this.writeln("</div>"); // end table-container
+        this.writeln("</div>"); // end class
+        
+        //legend
+        this.writeln("<div class='legend col-xs-10 col-sm-8 col-md-2 row'>");
+        this.writeln("<table class='col-xs-5 col-sm-3 col-md-12'>"
+                + "<caption>Sources</caption>" +
+                "<tr><th>A</th><td>Affymetrix</td></tr>" +
+                "<tr><th>E</th><td>EST</td></tr>" +
+                "<tr><th>I</th><td>In Situ</td></tr>" +
+                "<tr><th>R</th><td>RNA-Seq</td></tr>" +
+                "<tr><th>FL</th><td>scRNA-Seq Full Length</td></tr></table>");
+        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-3 col-md-offset-0 col-md-12'>"
+                //XXX: temporarily "hide" qualities, as they are so incorrect at the moment. 
+                //for now we only report presence/absence of data per data type.
+//                + "<caption>Qualities</caption>" +
+//                "<tr><td><span class='quality high'>high quality</span></td></tr>" +
+//                "<tr><td><span class='quality low'>low quality</span></td></tr>" +
+//                "<tr><td><span class='quality nodata'>no data</span></td></tr></table>");
+                + "<tr><td><span class='quality presence'>data</span></td></tr>" +
+                  "<tr><td><span class='quality absence'>no data</span></td></tr></table>");
+        this.writeln("<table class='col-xs-offset-2 col-xs-5 col-sm-offset-1 col-sm-4 col-md-offset-0 col-md-12'>"
+                + "<caption>Expression scores</caption>"
+                + "<tr><th><span class='low-qual-score'>3.25e4</span></th>"
+                    + "<td>lightgrey: low confidence scores</td></tr>" +
+                "<tr><th><hr class='dotted-line' /></th>"
+                + "  <td>important score variation</td></tr></table>");
+        this.writeln("</div>"); // end legend
+        
+        this.writeln("</div>"); // end expr_data 
+
+        //other info
+        this.writeln("<div class='row'>");
+
+        this.writeln("<div id='expr_score_def' class='col-xs-offset-1 col-sm-offset-2 col-sm-9 col-md-offset-0 col-md-10'>"
+                + "<p><strong>Expression scores </strong> of expression calls is based on the rank of a gene in a condition "
+                + "according to its expression levels (non-parametric statistics), normalized "
+                + "using the minimum and maximum Rank of the species. Values of Expression scores are between "
+                + "0 and 100. Low score means that the gene is lowly expressed in the condition compared to other genes. "
+                + "Scores are normalized and comparable across genes, conditions and species.</p></div>");
+        
+        //Source info
+        Set<DataType> allowedDataTypes = geneExp.getCalls().stream()
+                .flatMap(call -> call.getCallData().stream())
+                .map(d -> d.getDataType())
+                .collect(Collectors.toSet());
+
+        boolean hasSourcesForAnnot = gene.getSpecies().getDataTypesByDataSourcesForAnnotation() != null && 
+                !gene.getSpecies().getDataTypesByDataSourcesForAnnotation().isEmpty();
+        boolean hasSourcesForData = gene.getSpecies().getDataTypesByDataSourcesForData() != null && 
+                !gene.getSpecies().getDataTypesByDataSourcesForData().isEmpty();
+
+        if (hasSourcesForAnnot && hasSourcesForData) {
+              this.writeln("<div class='sources col-xs-offset-1 col-sm-offset-2 col-md-offset-0 row'>");
+        }
+        if (hasSourcesForAnnot) {
+            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForAnnotation(), 
+                    allowedDataTypes, "Sources of annotations to anatomy and development");
+        }
+        if (hasSourcesForData) {
+            this.writeSources(gene.getSpecies().getDataTypesByDataSourcesForData(), 
+                    allowedDataTypes, "Sources of raw data");
+        }
+        
+        if (hasSourcesForAnnot && hasSourcesForData) {
+            this.writeln("</div>"); // end info_sources 
+        }
+        this.writeln("</div>"); // end other info
+    }
+
     /**
      * Generates the HTML code to display the synonyms.
      *
@@ -1125,14 +1135,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
                 .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
 
-        return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
-            Set<ExpressionCallData> dtCallData = callsByDataTypes.get(type);
-            boolean containsDatatype = dtCallData != null && dtCallData.stream()
-                    .anyMatch(c -> c.getDataPropagation() != null &&
-                    c.getDataPropagation().getCondParamCombinations().stream().anyMatch(
-                            comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0));
-            return getDataSpan(type, containsDatatype);
-        }).collect(Collectors.joining()));
+        return log.traceExit(EnumSet.allOf(DataType.class).stream()
+                .map(type -> getDataSpan(type, callsByDataTypes.containsKey(type)))
+                .collect(Collectors.joining()));
     }
 
     /**
@@ -1249,8 +1254,17 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         if (ids.size() != 1) {
             throw log.throwing(new IllegalArgumentException("All genes should have the same ID"));
         }
-        String id = ids.iterator().next();
-        String titleStart = "Gene " + htmlEntities(id) + " expression in Bgee";
+        String geneId = ids.iterator().next();
+
+        Set<String> geneNames = genes.stream().map(g -> g.getName()).collect(Collectors.toSet());
+        String geneName = null;
+        if (geneNames.size() == 1) {
+            geneName = geneNames.iterator().next();
+        }
+
+        String titleStart = "Gene expression for gene: "
+                            + htmlEntities(geneId)
+                            + (geneName != null? " - " + htmlEntities(geneName): "");
         String description = titleStart + ".";
 
         this.displayGenePageStart(titleStart, description);
@@ -1300,6 +1314,33 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         this.displayGenePageStart(titleStart, description);
         this.displayXRefsInfo(gene);
+
+        this.endDisplay();
+        log.traceExit();
+    }
+
+    @Override
+    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse) {
+        log.traceEntry("{}", geneExpressionResponse);
+
+        //See notes in CommandGene about retrieving the Gene even if there is no expression result.
+        String geneId = null;
+        String geneName = null;
+        if (geneExpressionResponse.getCalls() == null || geneExpressionResponse.getCalls().isEmpty()) {
+            geneId = this.getRequestParameters().getGeneId();
+        } else {
+            Gene gene = geneExpressionResponse.getCalls().iterator().next().getGene();
+            geneId = gene.getGeneId();
+            geneName = gene.getName();
+        }
+        assert geneId != null;
+        String titleStart = "Gene expression for gene: "
+                            + htmlEntities(geneId)
+                            + (geneName != null? " - " + htmlEntities(geneName): "");
+        String description = titleStart + ".";
+
+        this.displayGenePageStart(titleStart, description);
+        this.displayGeneExpressionSection(geneExpressionResponse);
 
         this.endDisplay();
         log.traceExit();

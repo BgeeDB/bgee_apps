@@ -1,6 +1,5 @@
 package org.bgee.controller;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -47,61 +46,34 @@ import org.bgee.view.ViewFactory;
 public class CommandGene extends CommandParent {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
-    
-    /**
-     * Contains all information necessary to produce a view related to a {@code Gene}.
-     * 
-     * @author Frederic Bastian
-     * @version Bgee 13, June 2016
-     * @since   Bgee 13, Jan. 2016
-     */
-    public static class GeneResponse {
-        private final Gene gene;
+
+    public static class GeneExpressionResponse {
+        //Deactivated as long as we don't retrieve the Gene when there is no expression data
+//        private final Gene gene;
         private final List<ExpressionCall> calls;
         private final EnumSet<CallService.Attribute> condParams;
-        private final GeneHomologs geneHomologs;
         private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clustering;
         
         /**
-         * @param gene                          See {@link #getGene()}.
-         * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param calls                         See {@link #getCalls()}
          * @param condParams                    See {@link #getCondParams()}
+         * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param clustering                    See {@link #getClustering()}.
          */
-        public GeneResponse(Gene gene, boolean includingAllRedundantCalls, 
-                List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
-                Map<ExpressionCall, Integer> clustering,
-                GeneHomologs geneHomologs) {
-            this.gene = gene;
+        public GeneExpressionResponse(List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
+                boolean includingAllRedundantCalls, Map<ExpressionCall, Integer> clustering) {
             this.includingAllRedundantCalls = includingAllRedundantCalls;
             this.calls = calls;
             this.condParams = condParams;
             this.clustering = clustering;
-            this.geneHomologs = geneHomologs;
         }
 
-        /**
-         * @return  The {@code Gene} which information are requested for. 
-         */
-        public Gene getGene() {
-            return gene;
-        }
-        /**
-         * @return  A {@code boolean} that is {@code true} if the information returned by 
-         *          {@link #getCalls()}, {@link #getClusteringBestEachAnatEntity()}, 
-         *          and {@link #getClusteringWithinAnatEntity()}, were built by including all 
-         *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
-         */
-        public boolean isIncludingAllRedundantCalls() {
-            return includingAllRedundantCalls;
-        }
         /**
          * @return  A {@code List} of {@code ExpressionCall}s for the requested condition parameters
          *          (see #getRequestedCondParams()), ordered by their global mean rank and
          *          most precise condition for equal ranks.
-         *          Redundant {@code ExpressionCall}s may or may not have been considered, 
+         *          Redundant {@code ExpressionCall}s may or may not have been considered,
          *          depending on {@link #isIncludingAllRedundantCalls()}.
          * @see #isIncludingAllRedundantCalls()
          */
@@ -117,18 +89,62 @@ public class CommandGene extends CommandParent {
             return this.condParams;
         }
         /**
+         * @return  A {@code boolean} that is {@code true} if the information returned by
+         *          {@link #getCalls()}, {@link #getClusteringBestEachAnatEntity()},
+         *          and {@link #getClusteringWithinAnatEntity()}, were built by including all
+         *          redundant calls (see {@link #getRedundantExprCalls()}), {@code false} otherwise.
+         */
+        public boolean isIncludingAllRedundantCalls() {
+            return includingAllRedundantCalls;
+        }
+        /**
          * Returns a clustering of the {@code ExpressionCall}s returned by {@link #getCalls()}.
-         * 
-         * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value 
-         *              being the index of the group in which they are clustered, 
-         *              based on their expression score. Group indexes are assigned in ascending 
+         *
+         * @return      A {@code Map} where keys are {@code ExpressionCall}s, the associated value
+         *              being the index of the group in which they are clustered,
+         *              based on their expression score. Group indexes are assigned in ascending
          *              order of expression score, starting from 0.
          * @see #getCalls()
          */
         public Map<ExpressionCall, Integer> getClustering() {
             return clustering;
         }
+    }
+    /**
+     * Contains all information necessary to produce a view related to a {@code Gene}.
+     * 
+     * @author Frederic Bastian
+     * @version Bgee 15, Oct. 2021
+     * @since   Bgee 13, Jan. 2016
+     */
+    //TODO: to delete once the new website will be used
+    public static class GeneResponse extends GeneExpressionResponse {
+        private final Gene gene;
+        private final GeneHomologs geneHomologs;
+        
+        /**
+         * @param gene                          See {@link #getGene()}.
+         * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
+         * @param calls                         See {@link #getCalls()}
+         * @param condParams                    See {@link #getCondParams()}
+         * @param clustering                    See {@link #getClustering()}.
+         * @param geneHomologs                  See {@link #getGeneHomologs()}.
+         */
+        public GeneResponse(Gene gene, boolean includingAllRedundantCalls, 
+                List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
+                Map<ExpressionCall, Integer> clustering,
+                GeneHomologs geneHomologs) {
+            super(calls, condParams, includingAllRedundantCalls, clustering);
+            this.gene = gene;
+            this.geneHomologs = geneHomologs;
+        }
 
+        /**
+         * @return  The {@code Gene} which information are requested for. 
+         */
+        public Gene getGene() {
+            return gene;
+        }
         /**
          * @return  The {@code GeneHomologs} of the gene which information are requested for. 
          */
@@ -164,6 +180,7 @@ public class CommandGene extends CommandParent {
         String action = requestParameters.getAction();
         GeneService geneService = serviceFactory.getGeneService();
         GeneHomologsService geneHomologsService = serviceFactory.getGeneHomologsService();
+        CallService callService = serviceFactory.getCallService();
 
         if (StringUtils.isNotBlank(search)) {
             GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
@@ -181,6 +198,9 @@ public class CommandGene extends CommandParent {
             log.traceExit(); return;
         } else if (RequestParameters.ACTION_GENE_XREFS.equals(action)) {
             this.processXRefsRequest(geneService, display);
+            log.traceExit(); return;
+        } else if (RequestParameters.ACTION_GENE_EXPRESSION.equals(action)) {
+            this.processExpressionRequest(callService, display);
             log.traceExit(); return;
         }
 
@@ -255,7 +275,7 @@ public class CommandGene extends CommandParent {
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
 
-        Set<Gene> genes = this.loadGenes(geneService, geneId, speciesId, false, true, false);
+        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, true, false);
         assert genes != null && !genes.isEmpty();
         display.displayGeneGeneralInformation(genes);
         log.traceExit();
@@ -283,7 +303,7 @@ public class CommandGene extends CommandParent {
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        GeneHomologs homologs = this.loadHomologs(geneId, speciesId, homologsService);
+        GeneHomologs homologs = loadHomologs(geneId, speciesId, homologsService);
         display.displayGeneHomologs(homologs);
         log.traceExit();
     }
@@ -309,9 +329,41 @@ public class CommandGene extends CommandParent {
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        Set<Gene> genes = this.loadGenes(geneService, geneId, speciesId, false, false, true);
+        Set<Gene> genes = loadGenes(geneService, geneId, speciesId, false, false, true);
         assert genes != null && genes.size() == 1;
         display.displayGeneXRefs(genes.iterator().next());
+
+        log.traceExit();
+    }
+
+    /**
+     * Process the request for expression information for a gene. It is mandatory to provide
+     * a gene ID and a species ID in the request (see {@link #requestParameters}),
+     * since in Bgee we sometimes use the genome of a closely related species
+     * for a species with no genome, a gene ID can exist in several species.
+     *
+     * @param callService
+     * @param display
+     * @throws InvalidRequestException
+     * @throws PageNotFoundException
+     */
+    private void processExpressionRequest(CallService callService, GeneDisplay display)
+            throws InvalidRequestException, PageNotFoundException {
+        log.traceEntry("{}, {}", callService, display);
+        String geneId = requestParameters.getGeneId();
+        Integer speciesId = requestParameters.getSpeciesId();
+        URLParameters urlParameters = requestParameters.getUrlParametersInstance();
+        Set<String> selectedCondParams = new HashSet<>(
+                Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam()))
+                .orElseGet(() -> Collections.emptyList()));
+
+        //Other sanity checks will be performed by the method loadGenes
+        if (speciesId == null || speciesId < 1) {
+            throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
+        }
+        GeneExpressionResponse exprResponse = loadExpression(geneId, speciesId, selectedCondParams,
+                callService, getClusteringFunction());
+        display.displayGeneExpression(exprResponse);
 
         log.traceExit();
     }
@@ -335,7 +387,7 @@ public class CommandGene extends CommandParent {
      *                                  not greater than 0.
      * @throws PageNotFoundException    If the {@code geneId} or {@code speciesId} are not found in Bgee.
      */
-    private Set<Gene> loadGenes(GeneService geneService, String geneId, Integer speciesId,
+    private static Set<Gene> loadGenes(GeneService geneService, String geneId, Integer speciesId,
             boolean withSpeciesSourceInfo, boolean withSynonymInfo, boolean withXRefInfo)
                     throws InvalidRequestException, PageNotFoundException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", geneService, geneId, speciesId, withSpeciesSourceInfo,
@@ -378,7 +430,7 @@ public class CommandGene extends CommandParent {
      * @return
      * @throws PageNotFoundException
      */
-    private GeneHomologs loadHomologs(String geneId, Integer speciesId, GeneHomologsService homologsService)
+    private static GeneHomologs loadHomologs(String geneId, Integer speciesId, GeneHomologsService homologsService)
             throws PageNotFoundException {
         log.traceEntry("{}, {}, {}", geneId, speciesId, homologsService);
 
@@ -401,6 +453,47 @@ public class CommandGene extends CommandParent {
         }
     }
 
+    private static GeneExpressionResponse loadExpression(String geneId, Integer speciesId,
+            Set<String> condParams, CallService callService,
+            Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction)
+                    throws PageNotFoundException {
+        log.traceEntry("{}, {}, {}, {}, {}", geneId, speciesId, condParams, callService, clusteringFunction);
+
+        //retrieve calls with silver quality for the requested condition parameters.
+        EnumSet<CallService.Attribute> condParamAttrs = condParams == null || condParams.isEmpty()?
+                //default value
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID):
+                //otherwise retrieve condition parameters from request
+                CallService.Attribute.getAllConditionParameters()
+                    .stream().filter(a -> condParams.contains(a.getCondParamName()))
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
+
+        try {
+            List<ExpressionCall> calls = callService.loadSilverCondObservedCalls(
+                    new GeneFilter(speciesId, geneId), condParamAttrs);
+            if (calls.isEmpty()) {
+                log.debug("No calls for gene {} in species {}", geneId, speciesId);
+                //XXX: maybe we should retrieve the gene here with the method loadGenes
+                //to provide the gene info in the response even in the absence of expression?
+                //But CallService would have already loaded the gene, this duplicates the queries.
+                //Or CallService should return a Call container, allowing to retrieve the Gene
+                //even in the absence of expression?
+                //In the meantime, I removed the gene attribute from GeneExpressionResponse
+                return log.traceExit(new GeneExpressionResponse(calls, condParamAttrs, true, new HashMap<>()));
+            }
+
+            //Store a clustering of ExpressionCalls
+            Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
+
+            return log.traceExit(new GeneExpressionResponse(calls, condParamAttrs, true, clustering));
+            
+        } catch (IllegalArgumentException | GeneNotFoundException e) {
+            throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
+                    + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
+        }
+    }
+
+    //TODO: to delete once the new website is released.
     private GeneResponse buildGeneResponse(Gene gene, Set<String> condParams) 
             throws IllegalStateException, PageNotFoundException {
         log.traceEntry("{}, {}", gene, condParams);
@@ -417,7 +510,7 @@ public class CommandGene extends CommandParent {
                 new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs);
         
         // Load homology information.
-        GeneHomologs geneHomologs = this.loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),
+        GeneHomologs geneHomologs = loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),
                 serviceFactory.getGeneHomologsService());
 
         if (calls.isEmpty()) {

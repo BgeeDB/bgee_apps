@@ -3,6 +3,7 @@ package org.bgee.view;
 import java.util.Collection;
 import java.util.Set;
 
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
@@ -57,12 +58,18 @@ public interface GeneDisplay {
     void displayGeneHomologs(GeneHomologs geneHomologs);
 
     /**
-     * Displays XRef information for a gene. Is also used as part of the response
-     * {@link #displayGene(GeneResponse)}.
+     * Displays XRef information for a gene.
      *
      * @param gene  The {@code Gene} for which to display XRef information.
      */
     void displayGeneXRefs(Gene gene);
+
+    /**
+     * Displays expression results for the requested gene.
+     *
+     * @param gene  The {@code GeneExpressionResponse} containing the expression results for the requested gene.
+     */
+    void displayGeneExpression(GeneExpressionResponse geneExpressionResponse);
 
     /**
      * Displays a {@code Set} of {@code Gene}s.

@@ -75,7 +75,9 @@ public class FDRPValue {
             throw log.throwing(new IllegalStateException("No formatter could be defined "
                     + "for " + pValue));
         }
-        return log.traceExit(formatter.format(pValue).toLowerCase(Locale.ENGLISH));
+        //In Bgee 15 we limited the precision to 14 digits
+        return log.traceExit((pValue.compareTo(new BigDecimal(0.00000000000001)) <= 0? "<= ": "")
+                + formatter.format(pValue).toLowerCase(Locale.ENGLISH));
     }
 
     @Override

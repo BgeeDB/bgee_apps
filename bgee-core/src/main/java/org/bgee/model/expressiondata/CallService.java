@@ -443,7 +443,7 @@ public class CallService extends CommonService {
 
         // Retrieve species, get a map species ID -> Species
         final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters());
+                .loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(), true);
         //If several species were requested, it is necessary to request at least GENE
         //or a condition parameter (ANAT_ENTITY_ID, etc)
         if (speciesMap.size() > 1 && !clonedAttrs.isEmpty() &&

@@ -26,6 +26,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneHomologs;
@@ -237,7 +238,10 @@ public class JsonHelper {
                 value.getCategory().getStringRepresentation());
             out.name("conditionParameters");
             out.beginArray();
-            for (CallService.Attribute condParam: value.getConditionParameters()) {
+            EnumSet<CallService.Attribute> condParams = value.getConditionParameters().isEmpty()?
+                    CallService.Attribute.getAllConditionParameters():
+                        EnumSet.copyOf(value.getConditionParameters());
+            for (CallService.Attribute condParam: condParams) {
                 out.value(condParam.getCondParamName());
             }
             out.endArray();
@@ -870,6 +874,32 @@ public class JsonHelper {
         }
     }
 
+    private static final class Strategy implements ExclusionStrategy {
+        @Override
+        public boolean shouldSkipField(FieldAttributes field) {
+            if (field.getDeclaringClass() == Species.class) {
+                if (field.getName().equals("dataTypesByDataSourcesForData") ||
+                        field.getName().equals("dataTypesByDataSourcesForAnnotation")) {
+                    return true;
+                }
+            }
+            //XXX: we mask the ID because it is not stable between releases. This should go away once
+            //we redefine SpeciesDataGroup for not having an ID. In the interface, for single-species data groups,
+            //we should use the ID of the species.
+            //XXX: When we'll have multi-species files, we will need to define an Adapter for SpeciesDataGroup
+            //in order to provide an ID composed of the IDs of the species members.
+            else if (field.getDeclaringClass() == SpeciesDataGroup.class && field.getName().equals("id")) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;
+        }
+    };
+
     private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
         out.name("name").value(source.getName());
@@ -1007,6 +1037,7 @@ public class JsonHelper {
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
         this.gson = new GsonBuilder()
+                .addSerializationExclusionStrategy(new Strategy())
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))

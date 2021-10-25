@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.file.SpeciesDataGroup;
@@ -62,8 +63,7 @@ public class CommandSpecies extends CommandParent {
             final Set<Species> speciesSet = this.serviceFactory.getSpeciesService()
                     .loadSpeciesByIds(Collections.singleton(speciesId), true);
             if (speciesSet.isEmpty()) {
-                throw log.throwing(new IllegalStateException(
-                        "A SpeciesService did not allow to obtain any Species."));
+                throw log.throwing(new PageNotFoundException());
             }
             assert speciesSet.size() == 1;
             

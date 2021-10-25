@@ -105,6 +105,7 @@ public class CommandSpecies extends CommandParent {
                             .sorted(Comparator.comparing(Entity::getId))
                             .collect(Collectors.toList())
             );
+            log.traceExit(); return;
         }
 
         Set<Species> species = this.serviceFactory.getSpeciesService().loadSpeciesByIds(null, false);

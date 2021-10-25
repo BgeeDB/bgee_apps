@@ -302,7 +302,9 @@ public class CommonService extends Service {
         Set<Integer> sourceIds = new HashSet<>();
         Set<Integer> speciesIds = new HashSet<>();
         for (SpeciesTO speciesTO: speciesTOs) {
-            sourceIds.add(speciesTO.getDataSourceId());
+            if (withSpeciesSourceInfo) {
+                sourceIds.add(speciesTO.getDataSourceId());
+            }
             speciesIds.add(speciesTO.getId());
         }
 
@@ -326,9 +328,7 @@ public class CommonService extends Service {
             return new Species(speciesTO.getId(), speciesTO.getName(), speciesTO.getDescription(),
                     speciesTO.getGenus(), speciesTO.getSpeciesName(), speciesTO.getGenomeVersion(),
                     //Genome source
-                    Optional.ofNullable(sourceMapToUse.get(speciesTO.getDataSourceId()))
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Could not find source with ID " + speciesTO.getDataSourceId())),
+                    sourceMapToUse.get(speciesTO.getDataSourceId()),
                     speciesTO.getGenomeSpeciesId(),
                     speciesTO.getParentTaxonId(),
                     forData, forAnnotation, speciesTO.getDisplayOrder());

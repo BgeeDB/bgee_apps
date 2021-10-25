@@ -8,7 +8,6 @@ import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_ANNOT;
 import static org.bgee.model.file.DownloadFile.CategoryEnum.RNASEQ_DATA;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,7 +35,7 @@ import org.bgee.view.SpeciesDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, July 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, June 2015
  */
 public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisplay {
@@ -68,19 +67,9 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
     @Override
     public void displaySpeciesHomePage(List<Species> speciesList) {
         
-        log.debug("hello world");
-        ArrayList<LinkedHashMap<String, String>> speciesHomePageList = new ArrayList<LinkedHashMap<String, String>>();
-        speciesList.forEach((currentSpecies) -> {
-            LinkedHashMap<String, String> speciesInfo = new LinkedHashMap<String, String>();
-            speciesInfo.put("id", String.valueOf(currentSpecies.getId()));
-            speciesInfo.put("name", String.valueOf(currentSpecies.getScientificName()));
-            speciesHomePageList.add(speciesInfo);
-        });
-        LinkedHashMap<String, Object> resultSpeciesHome = new LinkedHashMap<String,Object>();
-        resultSpeciesHome.put("result", speciesHomePageList);
-        log.debug(resultSpeciesHome);
-        this.sendResponse("List of species", resultSpeciesHome);
-
+        LinkedHashMap<String, Object> resultSpeciesHome = new LinkedHashMap<String, Object>();
+        resultSpeciesHome.put("species", speciesList);
+        this.sendResponse("List of species in Bgee", resultSpeciesHome);
     }
     
 

@@ -354,7 +354,6 @@ var download = {
          */
         updateFormURL: function(allCondCompleteFileUrl, allCondSimpleFileUrl,
         		organCompleteFileUrl, organSimpleFileUrl) {
-        	
         	// Form
             var exprDataForm = document.forms["expr_data_form"];
             
@@ -516,10 +515,10 @@ var download = {
             //var bgeeOrthologFileUrl = $currentSpecies.data( "bgeeorthologfileurl" );
             var bgeeOrthologFileUrl = getUrlForFileCategory(files, "ortholog");
             //var bgeeExprSimpleFileUrl = $currentSpecies.data( "bgeeexprsimplefileurl" );
-            var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
-            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
-            var bgeeExprAllCondSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
-            var bgeeExprAllCondCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
+            var bgeeExprOrganSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anat_entity" ]);
+            var bgeeExprOrganCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anat_entity" ]);
+            var bgeeExprAllCondSimpleFileUrl = getUrlForFileCategory(files, "expr_simple", [ "anat_entity", "dev_stage", "sex", "strain" ]);
+            var bgeeExprAllCondCompleteFileUrl = getUrlForFileCategory(files, "expr_advanced", [ "anat_entity", "dev_stage", "sex", "strain" ]);
             var bgeeDiffExprAnatomySimpleFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileUrl = getUrlForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileUrl = getUrlForFileCategory(files, "diff_expr_dev_simple");
@@ -527,10 +526,10 @@ var download = {
 
              // get file sizes
             var bgeeOrthologFileSize = getSizeForFileCategory(files, "ortholog");
-            var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity" ]);
-            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity" ]);
-            var bgeeExprAllCondSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
-            var bgeeExprAllCondCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anatomicalEntity", "developmentalStage", "sex", "strain" ]);
+            var bgeeExprOrganSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anat_entity" ]);
+            var bgeeExprOrganCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anat_entity" ]);
+            var bgeeExprAllCondSimpleFileSize = getSizeForFileCategory(files, "expr_simple", [ "anat_entity", "dev_stage", "sex", "strain" ]);
+            var bgeeExprAllCondCompleteFileSize = getSizeForFileCategory(files, "expr_advanced", [ "anat_entity", "dev_stage", "sex", "strain" ]);
             var bgeeDiffExprAnatomySimpleFileSize =	getSizeForFileCategory(files, "diff_expr_anatomy_simple");
             var bgeeDiffExprAnatomyCompleteFileSize = getSizeForFileCategory(files, "diff_expr_anatomy_complete");
             var bgeeDiffExprDevelopmentSimpleFileSize = getSizeForFileCategory(files, "diff_expr_dev_simple");

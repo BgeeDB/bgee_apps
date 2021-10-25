@@ -26,7 +26,6 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneHomologs;
@@ -61,7 +60,8 @@ import java.util.stream.Stream;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2017
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelper {
@@ -888,9 +888,11 @@ public class JsonHelper {
             //we should use the ID of the species.
             //XXX: When we'll have multi-species files, we will need to define an Adapter for SpeciesDataGroup
             //in order to provide an ID composed of the IDs of the species members.
-            else if (field.getDeclaringClass() == SpeciesDataGroup.class && field.getName().equals("id")) {
-                return true;
-            }
+            //XXX: undoing this because it misght still be used by the current HTML Bgee code.
+            //To remove once the new website is ready.
+//            else if (field.getDeclaringClass() == SpeciesDataGroup.class && field.getName().equals("id")) {
+//                return true;
+//            }
             return false;
         }
 
@@ -898,7 +900,7 @@ public class JsonHelper {
         public boolean shouldSkipClass(Class<?> clazz) {
             return false;
         }
-    };
+    }
 
     private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);

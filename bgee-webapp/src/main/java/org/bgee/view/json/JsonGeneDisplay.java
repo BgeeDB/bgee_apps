@@ -21,7 +21,6 @@ import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
@@ -30,6 +29,14 @@ import org.bgee.model.gene.GeneMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
+/**
+ * Implementation in JSON of {@code GeneDisplay}
+ *
+ * @author Frederic Bastian
+ * @author Theo Cavinato
+ * @version Bgee 15, Oct. 2021
+ * @version Bgee 15, Oct. 2021
+ */
 public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     private final static Logger log = LogManager.getLogger(JsonGeneDisplay.class.getName());

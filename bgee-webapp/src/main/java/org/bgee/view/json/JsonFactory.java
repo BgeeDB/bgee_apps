@@ -75,8 +75,10 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public DownloadDisplay getDownloadDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    public DownloadDisplay getDownloadDisplay() throws IllegalArgumentException, IOException {
+        log.traceEntry();
+        return log.traceExit(new JsonDownloadDisplay(this.response, this.requestParameters, this.prop,
+                this.jsonHelper, this));
     }
 
     @Override

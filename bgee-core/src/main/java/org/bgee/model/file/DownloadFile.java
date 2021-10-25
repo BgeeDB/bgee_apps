@@ -15,7 +15,8 @@ import org.bgee.model.expressiondata.CallService;
  *
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2017
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13
  */
 //TODO: sanity checks

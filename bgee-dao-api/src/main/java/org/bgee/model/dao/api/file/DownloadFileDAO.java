@@ -42,17 +42,8 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
         ID, NAME, DESCRIPTION, PATH, FILE_SIZE, CATEGORY, SPECIES_DATA_GROUP_ID, CONDITION_PARAMETERS
     }
 
-    /**
-     * Get all download files.
-     * <p>
-     * The download files are retrieved and returned as a {@code DownloadFileTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
-     * are retrieved.
-     *
-     * @return  A {@code DownloadFileTOResultSet} containing all download files from data source.
-     * @throws DAOException If an error occurred when accessing the data source. 
-     */
-    public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException;
+    public DownloadFileTOResultSet getDownloadFiles(Collection<DownloadFileTO.CategoryEnum> categories)
+            throws DAOException;
 
     /**
      * Insert the provided download files into the Bgee database, represented as
@@ -144,7 +135,7 @@ public interface DownloadFileDAO extends DAO<DownloadFileDAO.Attribute> {
              * @see org.bgee.model.dao.api.TransferObject.EnumDAOField#convert(Class, String)
              */
             public static CategoryEnum convertToCategoryEnum(String stringRepresentation){
-                log.entry(stringRepresentation);
+                log.traceEntry("{}", stringRepresentation);
                 return log.traceExit(EntityTO.convert(CategoryEnum.class, stringRepresentation));
             }
 

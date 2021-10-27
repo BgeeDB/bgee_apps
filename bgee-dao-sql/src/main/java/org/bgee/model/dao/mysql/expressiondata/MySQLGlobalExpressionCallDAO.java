@@ -349,9 +349,9 @@ implements GlobalExpressionCallDAO {
     }
     private static String generateWhereClause(final LinkedHashSet<CallDAOFilter> callFilters,
             final String globalExprTableName, final String globalCondTableName,
-            final String condTableName, final String speciesIdFilterTableName) {
-        log.traceEntry("{}, {}, {}, {}, {}", callFilters, globalExprTableName, globalCondTableName,
-                condTableName, speciesIdFilterTableName);
+            final String speciesIdFilterTableName) {
+        log.traceEntry("{}, {}, {}, {}", callFilters, globalExprTableName, globalCondTableName,
+                speciesIdFilterTableName);
         
         StringBuilder sb = new StringBuilder();
 
@@ -404,7 +404,7 @@ implements GlobalExpressionCallDAO {
                     }
                     firstCond = false;
                     sb.append(MySQLConditionDAO.getConditionFilterWhereClause(
-                            callFilter.getConditionFilters(), globalCondTableName, condTableName));
+                            callFilter.getConditionFilters(), globalCondTableName));
                 }
 
                 if (callFilter.getCallObservedDataFilters() != null &&
@@ -781,7 +781,6 @@ implements GlobalExpressionCallDAO {
         //******************************************
         String globalExprTableName = "globalExpression";
         String globalCondTableName = "globalCond";
-        String condTableName = "cond";
         String geneTableName = "gene";
         //Do we need a filter to the globalCond table
         boolean globalCondFilter = clonedCallFilters.stream()
@@ -819,7 +818,7 @@ implements GlobalExpressionCallDAO {
                 geneTableName, speciesIdFilterTableName, globalCondFilter,
                 geneSort));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
-                condTableName, speciesIdFilterTableName));
+                speciesIdFilterTableName));
         sb.append(generateOrderByClause(clonedOrderingAttrs, globalExprTableName, globalCondTableName, geneTableName));
 
         //we don't use a try-with-resource, because we return a pointer to the results,
@@ -909,7 +908,7 @@ implements GlobalExpressionCallDAO {
         sb.append(generateTableReferences(globalExprTableName, globalCondTableName, null, null,
                 true, false));
         sb.append(generateWhereClause(clonedCallFilters, globalExprTableName, globalCondTableName,
-                null, globalCondTableName));
+                globalCondTableName));
 
         sb.append(" GROUP BY ").append(entityIdClause);
         if (!geneEntity) {

@@ -213,9 +213,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
 //            sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName,
 //                    condFilters.iterator().next().getObservedCondForParams()));
 //        }
-        boolean containsCondFilter = condFilters.stream().anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
-                !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
-                !c.getStrainIds().isEmpty());
+        boolean containsCondFilter = !condFilters.isEmpty();
         if (containsCondFilter || !speIds.isEmpty()) {
             sb.append(" WHERE ");
         }

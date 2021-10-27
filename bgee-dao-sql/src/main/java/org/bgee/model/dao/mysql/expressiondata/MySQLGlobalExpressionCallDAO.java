@@ -393,11 +393,7 @@ implements GlobalExpressionCallDAO {
                 //Note from previous code:
                 //!observedConditionFilter? null: clonedCallFilters.iterator().next()
                 //.getConditionFilters().iterator().next().getObservedCondForParams()
-                boolean containsCondFilter = callFilter.getConditionFilters().stream()
-                        .anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
-                        !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
-                        !c.getStrainIds().isEmpty() ||
-                        !c.getObservedCondForParams().isEmpty());
+                boolean containsCondFilter = !callFilter.getConditionFilters().isEmpty();
                 if (containsCondFilter) {
                     if (!firstCond) {
                         sb.append(" AND ");

@@ -185,10 +185,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         final Set<ConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
         //do we need a join to the cond table
-        boolean observedConditionFilter = condFilters.stream()
-                .anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty());
+        //Note: currently, we use the fields 'condObservedXXX' in the globalCond table to filter
+        //for observed condition, to avoid having to join to the 'cond' table when retrieving
+        //ExpressionCalls. It is not exactly equivalent, but for now we use this solution.
+//        boolean observedConditionFilter = condFilters.stream()
+//                .anyMatch(condFilter -> !condFilter.getObservedCondForParams().isEmpty());
+//        final String condTableName = "cond";
         final String tableName = "globalCond";
-        final String condTableName = "cond";
 
         StringBuilder sb = new StringBuilder();
 
@@ -203,10 +206,13 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
                 //so we don't bother and always add the DISTINCT clause.
                 true, 
                 attrs)).append(" FROM ").append(tableName);
-        if (observedConditionFilter) {
-            sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName,
-                    condFilters.iterator().next().getObservedCondForParams()));
-        }
+        //Note: currently, we use the fields 'condObservedXXX' in the globalCond table to filter
+        //for observed condition, to avoid having to join to the 'cond' table when retrieving
+        //ExpressionCalls. It is not exactly equivalent, but for now we use this solution.
+//        if (observedConditionFilter) {
+//            sb.append(getCondTableToGlobalCondTableJoinClause(tableName, condTableName,
+//                    condFilters.iterator().next().getObservedCondForParams()));
+//        }
         boolean containsCondFilter = condFilters.stream().anyMatch(c -> !c.getAnatEntityIds().isEmpty() || 
                 !c.getCellTypeIds().isEmpty() || !c.getDevStageIds().isEmpty() || !c.getSexIds().isEmpty() || 
                 !c.getStrainIds().isEmpty());
@@ -238,6 +244,10 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
     }
 
+    //Note: currently, we use the fields 'condObservedXXX' in the globalCond table to filter
+    //for observed condition, to avoid having to join to the 'cond' table when retrieving
+    //ExpressionCalls. It is not exactly equivalent, but for now we use this solution.
+    //As a result this method is currently not used anywhere.
     static String getCondTableToGlobalCondTableJoinClause(String globalCondTableName,
             String condTableName, EnumSet<ConditionDAO.Attribute> observedCondForParams) {
         log.traceEntry("{}, {}, {}", globalCondTableName, condTableName, observedCondForParams);

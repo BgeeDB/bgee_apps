@@ -222,7 +222,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
             }
         }
         if (containsCondFilter) {
-            sb.append(getConditionFilterWhereClause(condFilters, tableName, condTableName));
+            sb.append(getConditionFilterWhereClause(condFilters, tableName));
         }
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
@@ -294,8 +294,8 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     }
 
     static String getConditionFilterWhereClause(LinkedHashSet<DAOConditionFilter> conditionFilters,
-            String globalCondTableName, String condTableName) {
-        log.traceEntry("{}, {}, {}", conditionFilters, globalCondTableName, condTableName);
+            String globalCondTableName) {
+        log.traceEntry("{}, {}", conditionFilters, globalCondTableName);
 
         return log.traceExit(conditionFilters.stream().map(f -> {
             StringBuilder sb2 = new StringBuilder();

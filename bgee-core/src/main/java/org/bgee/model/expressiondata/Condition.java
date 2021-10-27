@@ -88,7 +88,7 @@ public class Condition extends BaseCondition<Condition> implements Comparable<Co
             Set<Integer> speciesIds = new HashSet<>();
             if (conditions != null) {
                 for (Condition cond: conditions) {
-                    log.debug("Condition: {}", cond);
+                    log.trace("Condition: {}", cond);
                     if (cond.getAnatEntity() != null) {
                         anatEntities.add(cond.getAnatEntity());
                         anatEntityIds.add(cond.getAnatEntityId());

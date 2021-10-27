@@ -1188,6 +1188,10 @@ implements GlobalExpressionCallDAO {
                         meanRanks, callDataTOs, pValues, bestDescendantPValues));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
+            } catch (IllegalArgumentException e) {
+                //necessary to know whether the error is on our side or if, e.g., the parameters
+                //coming from the user could not find, e.g., a gene
+                throw log.throwing(new IllegalStateException(e));
             }
         }
 

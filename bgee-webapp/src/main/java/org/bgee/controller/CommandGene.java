@@ -448,6 +448,7 @@ public class CommandGene extends CommandParent {
             // retrieved using different filters
             return log.traceExit(GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs));
         } catch (IllegalArgumentException | GeneNotFoundException e) {
+            log.catching(e);
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
                     + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
         }
@@ -488,6 +489,7 @@ public class CommandGene extends CommandParent {
             return log.traceExit(new GeneExpressionResponse(calls, condParamAttrs, true, clustering));
             
         } catch (IllegalArgumentException | GeneNotFoundException e) {
+            log.catching(e);
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId
                     + (speciesId != null && speciesId > 0? " in species " + speciesId: "")));
         }
@@ -573,6 +575,7 @@ public class CommandGene extends CommandParent {
                     callList -> ExpressionCall.generateMeanRankScoreClustering(callList, method, 
                             this.prop.getGeneScoreClusteringThreshold()));
         } catch (IllegalArgumentException e) {
+            log.catching(e);
             throw log.throwing(new IllegalStateException("No clustering method corresponding to "
                     + this.prop.getGeneScoreClusteringMethod().trim()));
         }

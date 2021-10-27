@@ -269,6 +269,9 @@ public class ConditionGraphService extends CommonService {
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
+        if (conditions.stream().anyMatch(c -> c == null)) {
+            throw log.throwing(new IllegalArgumentException("No condition can be null."));
+        }
     
         Set<Condition> tempConditions = new HashSet<>(conditions);
         

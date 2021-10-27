@@ -462,6 +462,7 @@ public class CallService extends CommonService {
         // Define condition parameter combination allowing to target a specific data aggregation
         final EnumSet<ConditionDAO.Attribute> condParamCombination =
                 loadConditionParameterCombination(callFilter, clonedAttrs, clonedOrderingAttrs.keySet());
+        log.debug("condParamCombination: {}", condParamCombination);
 
         // Retrieve conditions by condition IDs if condition info requested in Attributes
         // (explicitly, or because clonedAttrs is empty and all attributes are requested),
@@ -470,6 +471,7 @@ public class CallService extends CommonService {
         boolean loadCondMap = clonedAttrs.isEmpty() ||
                 clonedAttrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
                 clonedAttrs.stream().anyMatch(a -> a.isConditionParameter());
+        log.debug("loadCondMap: {}", loadCondMap);
         final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
                 !loadCondMap?
                     new HashMap<>():
@@ -479,6 +481,7 @@ public class CallService extends CommonService {
                             convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
                         this.conditionDAO, this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService));
+        log.trace("condMap: {}", condMap);
 
         // Retrieve min./max ranks per anat. entity if info requested
         // and if the main expression call query will not allow to obtain this information
@@ -541,6 +544,7 @@ public class CallService extends CommonService {
                 attrs,
                 orderBy)
                 .collect(Collectors.toList());
+        log.trace("calls: {}", calls);
         if (calls.isEmpty()) {
             return log.traceExit(calls);
         }
@@ -1994,7 +1998,15 @@ public class CallService extends CommonService {
         // Gene and Condition
         //***********************************
         Condition cond = condMap.get(globalCallTO.getConditionId());
+        if (cond == null && attrs.stream().anyMatch(c -> c.isConditionParameter())) {
+            throw log.throwing(new IllegalStateException("Could not find Condition for globalConditionId: "
+                + globalCallTO.getConditionId() + " for callTO: " + globalCallTO));
+        }
         Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
+        if (gene == null && attrs.contains(Attribute.GENE)) {
+            throw log.throwing(new IllegalStateException("Could not find Gene for bgeeGeneId: "
+                    + globalCallTO.getBgeeGeneId() + " for callTO: " + globalCallTO));
+        }
 
         //***********************************
         // Info needed for expression score
@@ -2443,7 +2455,7 @@ public class CallService extends CommonService {
                 }
             }
         }
-        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
+        log.trace("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
                 dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
                 dataTypesTrustedForAbsentBestDescendantPVal);
         String exceptionMsg = "It should have been possible to infer "

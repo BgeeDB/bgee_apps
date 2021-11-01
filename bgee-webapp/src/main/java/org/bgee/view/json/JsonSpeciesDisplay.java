@@ -75,7 +75,7 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
         // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
         LinkedHashMap<String, Object> jsonHashMap = new LinkedHashMap<String, Object>();
         jsonHashMap.put("species", species);
-        jsonHashMap.put("downloadFiles", speciesDataGroup);
+        jsonHashMap.put("downloadFilesGroups", speciesDataGroup);
 
         this.sendResponse("Details on species " + species.getScientificName(),
                 jsonHashMap);

@@ -22,9 +22,13 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
@@ -46,7 +50,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
@@ -120,6 +126,12 @@ public class JsonHelper {
                 TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseAdapter(gson);
                 return log.traceExit(result);
             }
+            if (MultiGeneExprAnalysis.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisAdapter(gson);
+                return log.traceExit(result);
+            }
+
             //let Gson find somebody else
             return log.traceExit((TypeAdapter<T>) null);
         }
@@ -814,62 +826,118 @@ public class JsonHelper {
             throw log.throwing(new UnsupportedOperationException(
                     "No custom JSON reader for GeneExpressionResponse."));
         }
+    }
 
-        private void writeSimplifiedCondition(JsonWriter out, Condition cond,
-                EnumSet<CallService.Attribute> condParams) throws IOException {
-            log.traceEntry("{}, {}, {}", out, cond, condParams);
+    /**
+     * A {@code TypeAdapter} to read/write {@code MultiGeneExprAnalysis}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class MultiGeneExprAnalysisAdapter extends TypeAdapter<MultiGeneExprAnalysis<?>> {
+        private final Gson gson;
+
+        private MultiGeneExprAnalysisAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, MultiGeneExprAnalysis<?> value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
             out.beginObject();
 
-            // Anat entity ID and Anat entity cells
-            AnatEntity anatEntity = cond.getAnatEntity();
-            out.name("anatEntity");
-            if (anatEntity != null && condParams.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
-                assert condParams.contains(CallService.Attribute.CELL_TYPE_ID):
-                    "Anat. entity and cell type are requested together for the gene page";
-                writeSimplifiedNamedEntity(out, anatEntity);
-            } else {
-                out.nullValue();
-            }
-            
-            AnatEntity cellType = cond.getCellType();
-            out.name("cellType");
-            // post-composition if not the root of cell type
-            if (cellType != null && condParams.contains(CallService.Attribute.CELL_TYPE_ID) &&
-                    !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
-                assert condParams.contains(CallService.Attribute.ANAT_ENTITY_ID):
-                    "Anat. entity and cell type are requested together for the gene page";
-                writeSimplifiedNamedEntity(out, cellType);
-            } else {
-                out.nullValue();
-            }
+            out.name("comparisonResults");
+            out.beginArray();
+            for (Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts:
+                value.getCondToCounts().entrySet()) {
 
-            // Dev stage
-            DevStage stage = cond.getDevStage();
-            out.name("devStage");
-            if (stage != null && condParams.contains(CallService.Attribute.DEV_STAGE_ID)) {
-                writeSimplifiedNamedEntity(out, stage);
-            } else {
-                out.nullValue();
+                writeCondToCounts(out, condToCounts);
             }
+            out.endArray();
 
-            // Sexes
-            Sex sex = cond.getSex();
-            out.name("sex");
-            if (sex != null && condParams.contains(CallService.Attribute.SEX_ID)) {
-                out.value(sex.getName());
-            } else {
-                out.nullValue();
-            }
-
-            // Strains
-            Strain strain = cond.getStrain();
-            out.name("strain");
-            if (strain != null && condParams.contains(CallService.Attribute.STRAIN_ID)) {
-                out.value(strain.getName());
-            } else {
-                out.nullValue();
-            }
             out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public MultiGeneExprAnalysis<?> read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for MultiGeneExprAnalysis."));
+        }
+
+        private static void writeCondToCounts(JsonWriter out,
+                Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts) throws IOException {
+            log.traceEntry("{}, {}", out, condToCounts);
+            out.beginObject();
+
+            //Condition
+            Object cond = condToCounts.getKey();
+            if (cond instanceof MultiSpeciesCondition) {
+                out.name("multiSpeciesCondition");
+                writeSimplifiedMultiSpeciesCondition(out, (MultiSpeciesCondition) cond);
+            } else if (cond instanceof Condition) {
+                out.name("condition");
+                //For now, we only use anat. entity and cell type for comparison
+                writeSimplifiedCondition(out, (Condition) cond, EnumSet.of(
+                        CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
+            } else {
+                throw log.throwing(new IllegalStateException("Unrecognized class: "
+                        + cond.getClass().getSimpleName()));
+            }
+
+            //Conservation score
+            Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
+            Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
+            if (expressedGenes == null) {
+                expressedGenes = new HashSet<>();
+            }
+            Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
+            if (notExpressedGenes == null) {
+                notExpressedGenes = new HashSet<>();
+            }
+            //We need to cast to double explicitly otherwise the result of dividing is incorrect
+            @SuppressWarnings("cast")
+            double score = (double) (expressedGenes.size() - notExpressedGenes.size())
+                    / ((double) expressedGenes.size() + notExpressedGenes.size());
+            out.name("conservationScore");
+            out.value(String.format(Locale.US, "%.2f", score));
+
+            // Max expression score
+            Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToExprLevelInfo().values().stream()
+                    .filter(eli -> eli != null && eli.getExpressionScore() != null)
+                    .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
+                            Comparator.nullsFirst(BigDecimal::compareTo)));
+            out.name("maxExpressionScore");
+            out.value(collect.isPresent()? collect.get().getFormattedExpressionScore(): "NA");
+
+            // Genes
+            out.name("genesExpressionPresent");
+            writeGenes(out, expressedGenes);
+            out.name("genesExpressionAbsent");
+            writeGenes(out, notExpressedGenes);
+            out.name("genesNoData");
+            writeGenes(out, condToCounts.getValue().getGenesWithNoData());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        private static void writeGenes(JsonWriter out, Set<Gene> genes) throws IOException {
+            log.traceEntry("{}, {}", out, genes);
+
+            out.beginArray();
+            if (genes != null) {
+                List<Gene> sortedGenes = genes.stream().sorted(Comparator.comparing(Gene::getGeneId))
+                        .collect(Collectors.toList());
+                for (Gene gene: sortedGenes) {
+                    writeSimplifiedGene(out, gene, false, null);
+                }
+            }
+            out.endArray();
+
             log.traceExit();
         }
     }
@@ -902,6 +970,92 @@ public class JsonHelper {
         }
     }
 
+
+    private static void writeSimplifiedCondition(JsonWriter out, Condition cond,
+            EnumSet<CallService.Attribute> condParams) throws IOException {
+        log.traceEntry("{}, {}, {}", out, cond, condParams);
+        out.beginObject();
+
+        // Anat entity ID and Anat entity cells
+        AnatEntity anatEntity = cond.getAnatEntity();
+        out.name("anatEntity");
+        if (anatEntity != null && condParams.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            assert condParams.contains(CallService.Attribute.CELL_TYPE_ID):
+                "Anat. entity and cell type are requested together for the gene page";
+            writeSimplifiedNamedEntity(out, anatEntity);
+        } else {
+            out.nullValue();
+        }
+
+        AnatEntity cellType = cond.getCellType();
+        out.name("cellType");
+        // post-composition if not the root of cell type
+        if (cellType != null && condParams.contains(CallService.Attribute.CELL_TYPE_ID) &&
+                !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+            assert condParams.contains(CallService.Attribute.ANAT_ENTITY_ID):
+                "Anat. entity and cell type are requested together for the gene page";
+            writeSimplifiedNamedEntity(out, cellType);
+        } else {
+            out.nullValue();
+        }
+
+        // Dev stage
+        DevStage stage = cond.getDevStage();
+        out.name("devStage");
+        if (stage != null && condParams.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            writeSimplifiedNamedEntity(out, stage);
+        } else {
+            out.nullValue();
+        }
+
+        // Sexes
+        Sex sex = cond.getSex();
+        out.name("sex");
+        if (sex != null && condParams.contains(CallService.Attribute.SEX_ID)) {
+            out.value(sex.getName());
+        } else {
+            out.nullValue();
+        }
+
+        // Strains
+        Strain strain = cond.getStrain();
+        out.name("strain");
+        if (strain != null && condParams.contains(CallService.Attribute.STRAIN_ID)) {
+            out.value(strain.getName());
+        } else {
+            out.nullValue();
+        }
+        out.endObject();
+        log.traceExit();
+    }
+
+    private static void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
+            throws IOException {
+        log.traceEntry("{}, {}", out, cond);
+        out.beginObject();
+
+        out.name("anatEntities");
+        out.beginArray();
+        for (AnatEntity ae: cond.getAnatSimilarity().getSourceAnatEntities()) {
+            writeSimplifiedNamedEntity(out, ae);
+        }
+        out.endArray();
+
+        out.name("cellTypes");
+        out.beginArray();
+        for (AnatEntity cellType: cond.getCellTypeSimilarity().getSourceAnatEntities()) {
+            if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                writeSimplifiedNamedEntity(out, cellType);
+            }
+        }
+        out.endArray();
+
+        //TODO: stageSimilarity and Sex
+
+        out.endObject();
+        log.traceExit();
+    }
+
     private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
         out.name("name").value(source.getName());
@@ -932,6 +1086,7 @@ public class JsonHelper {
         out.name("name").value(gene.getSpecies().getName());
         out.name("genus").value(gene.getSpecies().getGenus());
         out.name("speciesName").value(gene.getSpecies().getSpeciesName());
+        out.name("preferredDisplayOrder").value(gene.getSpecies().getPreferredDisplayOrder());
         if (withSpeciesDataSource) {
             out.name("sourcesOfDataPerDataType");
             writeSourcesPerDataType(out, gene.getSpecies().getDataSourcesForDataByDataTypes(),
@@ -979,6 +1134,10 @@ public class JsonHelper {
     private static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
             throws IOException {
         log.traceEntry("{}, {}", out, namedEntity);
+        if (namedEntity == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
         out.beginObject();
         out.name("id").value(namedEntity.getId());
         out.name("name").value(namedEntity.getName());

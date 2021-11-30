@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.model.SearchResult;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
@@ -61,8 +62,7 @@ public class CommandExpressionComparison extends CommandParent {
             log.traceExit(); return;
         }
         if (userGeneList.size() == 1) {
-            display.displayExpressionComparison("At least two IDs should be provided.");
-            log.traceExit(); return;
+            throw log.throwing(new InvalidRequestException("At least two IDs should be provided."));
         }
 
         SearchResult<String, Gene> searchResult = serviceFactory.getGeneService()
@@ -71,8 +71,8 @@ public class CommandExpressionComparison extends CommandParent {
                 .map(Gene::getSpecies).collect(Collectors.toSet());
 
         if (species.isEmpty()) {
-            display.displayExpressionComparison("No gene from species presents in Bgee are detected.");
-            log.traceExit(); return;
+            throw log.throwing(new InvalidRequestException(
+                    "No gene from species presents in Bgee are detected."));
         }
 
         if (species.size() == 1) {

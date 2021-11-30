@@ -278,8 +278,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     /**
      * 
      * @param condToCounts
-     * @param function          A {@code Function} extracting from {@code T} a {@code Map}
-     *                          where keys is an {@code AnatEntity} representing
+     * @param function          A {@code Function} extracting from {@code T} an {@code Entry}
+     *                          where key is an {@code AnatEntity} representing
      *                          a cell type and the associated value an {@code AnatEntity} representing
      *                          an anat. entity (post-composition of terms).
      * 

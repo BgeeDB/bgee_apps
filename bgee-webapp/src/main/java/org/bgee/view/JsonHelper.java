@@ -41,6 +41,7 @@ import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
+import org.bgee.view.json.JsonParentDisplay;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -56,6 +57,7 @@ import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,11 +93,13 @@ public class JsonHelper {
          * The {@code RequestParameters} corresponding to the current request to the webapp.
          */
         private final RequestParameters requestParameters;
+        private final Supplier<RequestParameters> rpSupplier;
 
         public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction,
-                RequestParameters requestParameters) {
+                RequestParameters requestParameters, Supplier<RequestParameters> rpSupplier) {
             this.urlEncodeFunction = urlEncodeFunction;
             this.requestParameters = requestParameters;
+            this.rpSupplier = rpSupplier;
         }
 
         @Override
@@ -119,7 +123,7 @@ public class JsonHelper {
             }
             if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
                 @SuppressWarnings("unchecked")
-                TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsAdapter(gson);
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsAdapter(gson, this.rpSupplier);
                 return log.traceExit(result);
             }
             if (Gene.class.isAssignableFrom(rawClass) ) {
@@ -568,9 +572,11 @@ public class JsonHelper {
                 .thenComparing(x -> x.getGeneId(), Comparator.nullsLast(String::compareTo));
 
         private final Gson gson;
+        private final Supplier<RequestParameters> rpSupplier;
 
-        private GeneHomologsAdapter(Gson gson) {
+        private GeneHomologsAdapter(Gson gson, Supplier<RequestParameters> rpSupplier) {
             this.gson = gson;
+            this.rpSupplier = rpSupplier;
         }
 
         @Override
@@ -586,9 +592,9 @@ public class JsonHelper {
             writeSimplifiedGene(out, value.getGene(), false, null);
 
             out.name("orthologsByTaxon");
-            this.writeHomologsByTaxon(out, value.getOrthologsByTaxon());
+            this.writeHomologsByTaxon(out, value.getGene(), value.getOrthologsByTaxon());
             out.name("paralogsByTaxon");
-            this.writeHomologsByTaxon(out, value.getParalogsByTaxon());
+            this.writeHomologsByTaxon(out, value.getGene(), value.getParalogsByTaxon());
 
             out.name("orthologyXRef");
             this.gson.getAdapter(GeneXRef.class).write(out, value.getOrthologyXRef());
@@ -605,9 +611,9 @@ public class JsonHelper {
             throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
         }
 
-        private void writeHomologsByTaxon(JsonWriter out, LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon)
-                throws IOException {
-            log.traceEntry("{}, {}", out, homologsByTaxon);
+        private void writeHomologsByTaxon(JsonWriter out, Gene targetGene,
+                LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon) throws IOException {
+            log.traceEntry("{}, {}, {}", out, targetGene, homologsByTaxon);
             out.beginArray();
             // all homologs of one taxon
             // We will display to each taxon level all genes from more recent taxon
@@ -629,6 +635,16 @@ public class JsonHelper {
                     writeSimplifiedGene(out, gene, false, null);
                 }
                 out.endArray();
+
+                //provide the parameters to produce a link to an expression comparison
+                RequestParameters rp = this.rpSupplier.get();
+                List<String> genesToCompare = orderedHomologsWithDescendant.stream()
+                        .map(Gene::getGeneId).collect(Collectors.toList());
+                genesToCompare.add(targetGene.getGeneId());
+                rp.setGeneList(genesToCompare);
+                out.name(JsonParentDisplay.STORABLE_PARAMS_INFO);
+                this.gson.getAdapter(LinkedHashMap.class)
+                .write(out, JsonParentDisplay.getStorableParamsInfo(rp));
 
                 out.endObject();
             }
@@ -1211,7 +1227,7 @@ public class JsonHelper {
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
                 .registerTypeAdapter(GeneXRef.class, new GeneXRefAdapter(s -> this.urlEncode(s)))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
-                        this.requestParameters))
+                        this.requestParameters, () -> getNewRequestParameters()))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();
@@ -1260,5 +1276,21 @@ public class JsonHelper {
             log.catching(e);
             return log.traceExit("");
         }
+    }
+    /**
+     * Return a new {@code RequestParameters} object to be used to generate URLs.
+     * This new {@code RequestParameters} will use the same {@code URLParameters}
+     * as those returned by {@link #requestParameters} when calling
+     * {@link RequestParameters#getUrlParametersInstance()},
+     * and the {@code BgeeProperties} {@link #props}.
+     * Also, parameters will be URL encoded, and parameter separator will be {@code &}.
+     *
+     * @return  A newly created RequestParameters object.
+     */
+    private RequestParameters getNewRequestParameters() {
+        log.traceEntry();
+        return log.traceExit(new RequestParameters(
+                this.requestParameters.getUrlParametersInstance(),
+                this.props, true, "&"));
     }
 }

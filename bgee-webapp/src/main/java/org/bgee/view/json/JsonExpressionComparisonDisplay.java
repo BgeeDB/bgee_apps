@@ -66,7 +66,7 @@ public class JsonExpressionComparisonDisplay extends JsonParentDisplay implement
         log.traceEntry("{}", analysis);
         LinkedHashMap<String, Object> results = new LinkedHashMap<>();
         results.put("comparisonResults", analysis);
-        this.sendResponse(HttpServletResponse.SC_OK, "", results, true);
+        this.sendResponse(HttpServletResponse.SC_OK, "Expression comparison results", results, true);
         log.traceExit();
     }
 }

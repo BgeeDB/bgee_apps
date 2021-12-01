@@ -88,6 +88,18 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
             return this.stringRepresentation;
         }
     }
+
+    public static LinkedHashMap<String, String> getStorableParamsInfo(RequestParameters rp) {
+        log.traceEntry("{}", rp);
+        //Clone only with the storable parameters, this is the only thing we want
+        RequestParameters clonedRp = rp.cloneWithStorableParameters();
+        //Calling getRequestURL will trigger the generation of the query string
+        clonedRp.getRequestURL();
+        LinkedHashMap<String, String> storableParamsInfo = new LinkedHashMap<>();
+        storableParamsInfo.put(STORABLE_PARAMS_QUERY_STRING, clonedRp.getParameterQuery());
+        storableParamsInfo.put(STORABLE_PARAMS_HASH, clonedRp.getDataKey());
+        return log.traceExit(storableParamsInfo);
+    }
     
     /**
      * @see #getJsonHelper()
@@ -174,14 +186,7 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
             jsonResponse.put("requestParameters", this.getRequestParameters());
         }
         if (sendStorableParamsQueryString) {
-            //Clone only with the storable parameters, this is the only thing we want
-            RequestParameters clonedRp = this.getRequestParameters().cloneWithStorableParameters();
-            //Calling getRequestURL will trigger the generation of the query string
-            clonedRp.getRequestURL();
-            LinkedHashMap<String, String> storableParamsInfo = new LinkedHashMap<>();
-            storableParamsInfo.put(STORABLE_PARAMS_QUERY_STRING, clonedRp.getParameterQuery());
-            storableParamsInfo.put(STORABLE_PARAMS_HASH, clonedRp.getDataKey());
-            jsonResponse.put(STORABLE_PARAMS_INFO, storableParamsInfo);
+            jsonResponse.put(STORABLE_PARAMS_INFO, getStorableParamsInfo(this.getRequestParameters()));
         }
         if (data != null) {
             jsonResponse.put("data", data);

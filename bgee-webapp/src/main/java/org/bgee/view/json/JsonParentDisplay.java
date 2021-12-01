@@ -25,6 +25,9 @@ import org.bgee.view.JsonHelper;
 public class JsonParentDisplay extends ConcreteDisplayParent {
 
     private final static Logger log = LogManager.getLogger(JsonParentDisplay.class.getName());
+    public final static String STORABLE_PARAMS_INFO = "storableParams";
+    public final static String STORABLE_PARAMS_QUERY_STRING = "queryString";
+    public final static String STORABLE_PARAMS_HASH = "hash";
     
     /**
      * An {@code Enum} representing the values that the "status" property can take 
@@ -151,6 +154,11 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
      */
     protected void sendResponse(int code, String msg, Object data) {
         log.traceEntry("{}, {}, {}", code, msg, data);
+        this.sendResponse(code, msg, data, false);
+        log.traceExit();
+    }
+    protected void sendResponse(int code, String msg, Object data, boolean sendStorableParamsQueryString) {
+        log.traceEntry("{}, {}, {}, {}", code, msg, data, sendStorableParamsQueryString);
         
         //The code will be validated by the calls to the methods sendAppropriateHeaders and 
         //getResponseStatusFromCode. 
@@ -164,6 +172,16 @@ public class JsonParentDisplay extends ConcreteDisplayParent {
         if (Boolean.TRUE.equals(this.getRequestParameters().getFirstValue(
                 this.getRequestParameters().getUrlParametersInstance().getParamDisplayRequestParams()))) {
             jsonResponse.put("requestParameters", this.getRequestParameters());
+        }
+        if (sendStorableParamsQueryString) {
+            //Clone only with the storable parameters, this is the only thing we want
+            RequestParameters clonedRp = this.getRequestParameters().cloneWithStorableParameters();
+            //Calling getRequestURL will trigger the generation of the query string
+            clonedRp.getRequestURL();
+            LinkedHashMap<String, String> storableParamsInfo = new LinkedHashMap<>();
+            storableParamsInfo.put(STORABLE_PARAMS_QUERY_STRING, clonedRp.getParameterQuery());
+            storableParamsInfo.put(STORABLE_PARAMS_HASH, clonedRp.getDataKey());
+            jsonResponse.put(STORABLE_PARAMS_INFO, storableParamsInfo);
         }
         if (data != null) {
             jsonResponse.put("data", data);

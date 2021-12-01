@@ -1,6 +1,7 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -63,7 +64,9 @@ public class JsonExpressionComparisonDisplay extends JsonParentDisplay implement
     }
     private void displayExpressionComparison(MultiGeneExprAnalysis<?> analysis) {
         log.traceEntry("{}", analysis);
-        this.sendResponse("", analysis);
+        LinkedHashMap<String, Object> results = new LinkedHashMap<>();
+        results.put("comparisonResults", analysis);
+        this.sendResponse(HttpServletResponse.SC_OK, "", results, true);
         log.traceExit();
     }
 }

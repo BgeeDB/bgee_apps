@@ -87,9 +87,15 @@ public class JsonHelper {
      */
     private static class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         private final Function<String, String> urlEncodeFunction;
+        /**
+         * The {@code RequestParameters} corresponding to the current request to the webapp.
+         */
+        private final RequestParameters requestParameters;
 
-        public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction) {
+        public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction,
+                RequestParameters requestParameters) {
             this.urlEncodeFunction = urlEncodeFunction;
+            this.requestParameters = requestParameters;
         }
 
         @Override
@@ -315,6 +321,7 @@ public class JsonHelper {
                     log.trace("Allows multiple or separated values, start printing Array.");
                     out.beginArray();
                 }
+                boolean hasValue = false;
                 for (Object value: values) {
                     if (value == null) {
                         log.trace("Skip null value.");
@@ -322,10 +329,13 @@ public class JsonHelper {
                     }
                     log.trace("Printing parameter value {}", value.toString());
                     out.value(value.toString());
+                    hasValue = true;
                 }
                 if (param.allowsMultipleValues() || param.allowsSeparatedValues()) {
                     log.trace("Allows multiple or separated values, end printing Array.");
                     out.endArray();
+                } else if (!hasValue) {
+                    out.nullValue();
                 }
             }
 
@@ -846,9 +856,6 @@ public class JsonHelper {
                 out.nullValue();
                 log.traceExit(); return;
             }
-            out.beginObject();
-
-            out.name("comparisonResults");
             out.beginArray();
             for (Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts:
                 value.getCondToCounts().entrySet()) {
@@ -857,7 +864,6 @@ public class JsonHelper {
             }
             out.endArray();
 
-            out.endObject();
             log.traceExit();
         }
 
@@ -1204,7 +1210,8 @@ public class JsonHelper {
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
                 .registerTypeAdapter(GeneXRef.class, new GeneXRefAdapter(s -> this.urlEncode(s)))
-                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s)))
+                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
+                        this.requestParameters))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();

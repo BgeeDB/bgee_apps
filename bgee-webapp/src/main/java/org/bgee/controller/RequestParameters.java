@@ -3280,4 +3280,8 @@ public class RequestParameters {
     public void setParametersSeparator(String parametersSeparator) {
         this.parametersSeparator = parametersSeparator;
     }
+
+    public String getParameterQuery() {
+        return this.parametersQuery;
+    }
 }

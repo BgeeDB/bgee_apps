@@ -7,8 +7,6 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
-import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
-import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.bgee.view.AnatomicalSimilarityDisplay;
@@ -26,7 +24,8 @@ import java.util.stream.Collectors;
  * This class is the HTML implementation of the {@code AnatomicalSimilarityDisplay}.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, July 2019
+ * @author  Frederic Bastian
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 14, May 2019
  */
 public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay 
@@ -55,28 +54,26 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
 
     @Override
     public void displayAnatSimilarityHomePage(Set<Species> allSpecies) {
-        log.entry(allSpecies);
+        log.traceEntry("{}", allSpecies);
 
-        this.displayAnatSimilarityPage(allSpecies, null, null, null, null);
+        this.displayAnatSimilarityPage(allSpecies, null, null, null);
 
         log.traceExit();
     }
 
     @Override
     public void displayAnatSimilarityResult(Set<Species> allSpecies, List<Integer> userSpeciesList,
-                                            Ontology<Taxon, Integer> taxonOntology,
                                             List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
-        log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
+        log.traceEntry("{}, {}, {}, {}", allSpecies, userSpeciesList, userAnatEntityList, result);
 
-        this.displayAnatSimilarityPage(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
+        this.displayAnatSimilarityPage(allSpecies, userSpeciesList, userAnatEntityList, result);
         
         log.traceExit();
     }
 
     private void displayAnatSimilarityPage(Set<Species> allSpecies, List<Integer> userSpeciesList,
-                                           Ontology<Taxon, Integer> taxonOntology,
                                            List<String> userAnatEntityList, AnatEntitySimilarityAnalysis result) {
-        log.entry(allSpecies, userSpeciesList, taxonOntology, userAnatEntityList, result);
+        log.traceEntry("{}, {}, {}, {}", allSpecies, userSpeciesList, userAnatEntityList, result);
 
         this.startDisplay("Anatomical homology", null, "Bgee Anatomical Homology page.");
 
@@ -96,7 +93,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         this.writeln(getForm(allSpecies, userSpeciesList, userAnatEntityList));
 
         if (result != null) {
-            this.writeln(getResult(result, taxonOntology));
+            this.writeln(getResult(result));
         }
 
         this.endDisplay();
@@ -106,7 +103,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
     
     private String getForm(Set<Species> allSpecies, List<Integer> userSpeciesIds,
                            List<String> userAnatEntityIds) {
-        log.entry(allSpecies, userSpeciesIds, userAnatEntityIds);
+        log.traceEntry("{}, {}, {}", allSpecies, userSpeciesIds, userAnatEntityIds);
 
         String speciesDisplay = allSpecies.stream()
                 .sorted(Comparator.comparing(Species::getPreferredDisplayOrder,
@@ -206,8 +203,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         return log.traceExit(sb.toString());
     }
 
-    private String getResult(AnatEntitySimilarityAnalysis result, Ontology<Taxon, Integer> taxonOntology) {
-        log.entry(result, taxonOntology);
+    private String getResult(AnatEntitySimilarityAnalysis result) {
+        log.traceEntry("{}", result);
         
         StringBuilder sb = new StringBuilder();
         sb.append("<h2>Results</h2>");
@@ -230,7 +227,7 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
             sb.append("        </thead>");
             sb.append("        <tbody>");
             sb.append(result.getAnatEntitySimilarities().stream()
-                    .map(sim -> getSimilarityRow(sim, result, taxonOntology))
+                    .map(sim -> getSimilarityRow(sim, result))
                     .collect(Collectors.joining()));
             sb.append("        </tbody>");
             sb.append("    </table>");
@@ -258,9 +255,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         return log.traceExit(sb.toString());
     }
 
-    private String getSimilarityRow(AnatEntitySimilarity sim, AnatEntitySimilarityAnalysis result,
-                                    Ontology<Taxon, Integer> taxonOntology) {
-        log.entry(sim, result, taxonOntology);
+    private String getSimilarityRow(AnatEntitySimilarity sim, AnatEntitySimilarityAnalysis result) {
+        log.traceEntry("{}, {}", sim, result);
 
         StringBuilder row = new StringBuilder();
         
@@ -273,17 +269,8 @@ public class HtmlAnatomicalSimilarityDisplay extends HtmlParentDisplay
         row.append("    </td>");
 
         row.append("    <td>");
-        Set<Taxon> ancestorsAmongElements = taxonOntology.getAncestorsAmongElements(
-                sim.getAnnotTaxonSummaries().stream()
-                        .map(AnatEntitySimilarityTaxonSummary::getTaxon)
-                        .collect(Collectors.toList()), null);
-        if (ancestorsAmongElements.size() > 1) {
-            log.warn("All taxa should be ancestor or descendant of other taxa.");
-        }
-        row.append(ancestorsAmongElements.stream()
-                .sorted(Comparator.comparing(Taxon::getScientificName))
-                .map(t -> htmlEntities(t.getScientificName() + " (" + t.getId() +")"))
-                .collect(Collectors.joining("; ")));
+        Taxon ancestorTaxon = sim.getTaxonSummaryAncestor();
+        row.append(htmlEntities(ancestorTaxon.getScientificName() + " (" + ancestorTaxon.getId() +")"));
         row.append("    </td>");
         
         row.append("    <td>");

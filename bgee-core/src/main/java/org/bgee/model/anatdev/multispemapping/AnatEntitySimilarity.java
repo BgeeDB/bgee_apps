@@ -263,7 +263,8 @@ public class AnatEntitySimilarity {
                         .map(AnatEntitySimilarityTaxonSummary::getTaxon)
                         .collect(Collectors.toList()), null);
         if (ancestorsAmongElements.size() > 1) {
-            log.throwing(new IllegalStateException("All taxa should be ancestor or descendant of other taxa."));
+            throw log.throwing(new IllegalStateException(
+                    "All taxa should be ancestor or descendant of other taxa."));
         }
         return log.traceExit(ancestorsAmongElements.iterator().next());
     }

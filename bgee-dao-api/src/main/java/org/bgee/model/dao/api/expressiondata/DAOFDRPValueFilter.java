@@ -3,11 +3,11 @@ package org.bgee.model.dao.api.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
 
 /**
  * Class allowing to filter the retrieval of {@link GlobalExpressionCallTO}s
@@ -16,7 +16,7 @@ import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
  * and improving chances of cache hit.
  *
  * @author Frederic Bastian
- * @version Bgee 15.0, Jun. 2021
+ * @version Bgee 15.0, Dec. 2021
  * @see GlobalExpressionCallDAO
  * @since Bgee 15.0, Apr. 2021
  */
@@ -88,16 +88,21 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
     private final Qualifier qualifier;
     private final DAOPropagationState propagationState;
     private final boolean selfObservationRequired;
+    //The following attribute is necessary only if selfObservationRequired is true
+    private final EnumSet<ConditionDAO.Attribute> condParams;
 
     public DAOFDRPValueFilter(BigDecimal fdrPValue, Collection<DAODataType> dataTypes,
-            Qualifier qualifier, DAOPropagationState daoPropagationState, boolean selfObservationRequired) {
-        this(new DAOFDRPValue(fdrPValue, dataTypes), qualifier, daoPropagationState, selfObservationRequired);
+            Qualifier qualifier, DAOPropagationState daoPropagationState, boolean selfObservationRequired,
+            Collection<ConditionDAO.Attribute> condParams) {
+        this(new DAOFDRPValue(fdrPValue, dataTypes), qualifier, daoPropagationState, selfObservationRequired,
+                condParams);
     }
     //dependency injection of DAOFDRPValue rather than inheritance
     public DAOFDRPValueFilter(DAOFDRPValue fdrPValue, Qualifier qualifier,
-            DAOPropagationState propagationState, boolean selfObservationRequired)
-                    throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired);
+            DAOPropagationState propagationState, boolean selfObservationRequired,
+            Collection<ConditionDAO.Attribute> condParams) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}", fdrPValue, qualifier, propagationState, selfObservationRequired,
+                condParams);
 
         if (fdrPValue == null || qualifier == null) {
             throw log.throwing(new IllegalArgumentException("No argument can be null"));
@@ -116,6 +121,8 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
         this.qualifier = qualifier;
         this.propagationState = propagationState;
         this.selfObservationRequired = selfObservationRequired;
+        this.condParams = condParams == null || condParams.isEmpty()?
+                ConditionDAO.Attribute.getCondParams(): EnumSet.copyOf(condParams);
 
         log.traceExit();
     }
@@ -158,6 +165,15 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
         return selfObservationRequired;
     }
 
+    /**
+     * @return  An {@code EnumSet} of {@code ConditionDAO.Attribute} that are condition parameters,
+     *          used when {@link #isSelfObservationRequired()} returns {@code true} to determine
+     *          the condition parameters to consider for the observation.
+     */
+    public EnumSet<ConditionDAO.Attribute> getCondParams() {
+        return condParams;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -168,6 +184,7 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
         result = prime * result + ((qualifier == null) ? 0 : qualifier.hashCode());
         result = prime * result + ((propagationState == null) ? 0 : propagationState.hashCode());
         result = prime * result + (selfObservationRequired ? 1231 : 1237);
+        result = prime * result + ((condParams == null) ? 0 : condParams.hashCode());
         return result;
     }
 
@@ -203,6 +220,13 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
         if (selfObservationRequired != other.selfObservationRequired) {
             return false;
         }
+        if (condParams == null) {
+            if (other.condParams != null) {
+                return false;
+            }
+        } else if (!condParams.equals(other.condParams)) {
+            return false;
+        }
         return true;
     }
 
@@ -213,6 +237,7 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
                .append(", FDRPValue=").append(fdrPValue)
                .append(", propagationState=").append(propagationState)
                .append(", selfObservationRequired=").append(selfObservationRequired)
+               .append(", condParams=").append(condParams)
                .append("]");
         return builder.toString();
     }
@@ -242,6 +267,15 @@ public class DAOFDRPValueFilter implements Comparable<DAOFDRPValueFilter> {
         }
         if (!this.isSelfObservationRequired() && o.isSelfObservationRequired()) {
             return log.traceExit(+1);
+        }
+        if (!this.getCondParams().equals(o.getCondParams())) {
+            for (ConditionDAO.Attribute condParam: ConditionDAO.Attribute.getCondParams()) {
+                if (this.getCondParams().contains(condParam) && !o.getCondParams().contains(condParam)) {
+                    return log.traceExit(-1);
+                } else if (o.getCondParams().contains(condParam) && !this.getCondParams().contains(condParam)) {
+                    return log.traceExit(+1);
+                }
+            }
         }
         throw log.throwing(new AssertionError("Unreachable code: " + this + ", " + o));
     }

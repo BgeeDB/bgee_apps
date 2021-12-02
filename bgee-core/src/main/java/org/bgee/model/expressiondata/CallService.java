@@ -78,7 +78,7 @@ import org.bgee.model.species.Species;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15, Oct 2021
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -1452,7 +1452,8 @@ public class CallService extends CommonService {
         // *********************************
         // P-value filters
         //**********************************
-        Collection<Set<DAOFDRPValueFilter>> pValueFilters = generateExprQualDAOPValFilters(callFilter);
+        Collection<Set<DAOFDRPValueFilter>> pValueFilters = generateExprQualDAOPValFilters(
+                callFilter, condParamCombination);
 
 
         // *********************************
@@ -1565,8 +1566,8 @@ public class CallService extends CommonService {
     }
 
     private static Set<Set<DAOFDRPValueFilter>> generateExprQualDAOPValFilters(
-            ExpressionCallFilter callFilter) {
-        log.traceEntry("{}", callFilter);
+            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParams) {
+        log.traceEntry("{}, {}", callFilter, condParams);
 
         EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
         return log.traceExit(callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
@@ -1585,7 +1586,7 @@ public class CallService extends CommonService {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false)));
+                                    false, condParams)));
                 } else {
                     //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
                     //we'll get calls SILVER or GOLD
@@ -1594,7 +1595,7 @@ public class CallService extends CommonService {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false)));
+                                    false, condParams)));
                     //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
                     //in a descendant condition. We end up with the following conditions:
                     // * FDR-corrected p-value in condition including sub-conditions <= 0.05
@@ -1606,7 +1607,7 @@ public class CallService extends CommonService {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                         DAOPropagationState.DESCENDANT,
-                                        false)));
+                                        false, condParams)));
                     }
                 }
 
@@ -1632,27 +1633,27 @@ public class CallService extends CommonService {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                         DAOPropagationState.SELF_AND_DESCENDANT,
-                                        true));
+                                        true, condParams));
                 } else {
                     if (qual.equals(SummaryQuality.GOLD)) {
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                         //we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                     } else {
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_LOW_GREATER_THAN,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                         //Unless we request BRONZE quality, we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         if (qual.equals(SummaryQuality.SILVER)) {
@@ -1660,7 +1661,7 @@ public class CallService extends CommonService {
                                     daoDataTypesTrustedForNotExpressed,
                                     DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    true));
+                                    true, condParams));
                         }
                     }
                     //in all cases, we don't want PRESENT calls in a sub-condition
@@ -1668,7 +1669,7 @@ public class CallService extends CommonService {
                             daoDataTypes,
                             DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                             DAOPropagationState.DESCENDANT,
-                            false));
+                            false, condParams));
                     //And unless we request BRONZE, we want the same to hold true
                     //with only the data types we trust to produce ABSENT calls
                     if (!qual.equals(SummaryQuality.BRONZE)) {
@@ -1676,7 +1677,7 @@ public class CallService extends CommonService {
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.DESCENDANT,
-                                false));
+                                false, condParams));
                     }
                 }
                 pValFilters.add(absentAndFilters);

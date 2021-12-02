@@ -43,7 +43,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Dec. 2021
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
@@ -521,12 +521,8 @@ implements GlobalExpressionCallDAO {
                           .append(" ?");
 
                         if (pValFilter.isSelfObservationRequired()) {
-                            //XXX: check whether this isSelfObservationRequired should actually
-                            //specify the condition parameters to target
-                            EnumSet<ConditionDAO.Attribute> allCondParams =
-                                    ConditionDAO.Attribute.getCondParams();
                             sb.append(dataTypes.stream()
-                                    .map(d -> getObsCountFieldName(d, allCondParams, true))
+                                    .map(d -> getObsCountFieldName(d, pValFilter.getCondParams(), true))
                                     .collect(Collectors.joining(" + ", " AND (", ") > 0")));
                         }
 

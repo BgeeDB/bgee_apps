@@ -19,6 +19,7 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
@@ -278,10 +279,14 @@ public class URLParameters {
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
             Stream.of(RequestParameters.ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
-                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
+                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation(),
+                    SummaryCallType.ExpressionSummary.EXPRESSED.getStringRepresentation(),
+                    SummaryCallType.ExpressionSummary.NOT_EXPRESSED.getStringRepresentation())
                 .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
             "(?i:" + RequestParameters.ALL_VALUE + "|" 
-                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
+                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED,
+                        SummaryCallType.ExpressionSummary.EXPRESSED,
+                        SummaryCallType.ExpressionSummary.NOT_EXPRESSED)
                     .map(e -> e.getStringRepresentation())
                     .collect(Collectors.joining("|")) + ")", 
              String.class);

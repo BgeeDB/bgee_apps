@@ -23,6 +23,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatchResult;
@@ -173,8 +174,10 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
-    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse) {
-        log.traceEntry("{}", geneExpressionResponse);
+    @Override
+    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse,
+            ExpressionSummary callType) {
+        log.traceEntry("{}, {}", geneExpressionResponse, callType);
         //See notes in CommandGene about retrieving the Gene even if there is no expression result.
         //TODO: refactor with code in HtmlGeneDisplay#displayGeneExpression(GeneExpressionResponse)
         String geneId = null;
@@ -186,7 +189,9 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
             geneId = gene.getGeneId();
             geneName = gene.getName();
         }
-        String msg = "Gene expression for gene: " + geneId + (geneName != null? " - " + geneName: "");
+        String msg = ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                "Reported absence of expression": "Gene expression"
+                + " for gene: " + geneId + (geneName != null? " - " + geneName: "");
         this.sendResponse(msg, geneExpressionResponse);
         log.traceExit();
     }

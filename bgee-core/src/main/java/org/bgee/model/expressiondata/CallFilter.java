@@ -81,6 +81,12 @@ extends DataFilter<ConditionFilter> {
                 Collections.singletonMap(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
         /**
          * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request ABSENT expression calls of at least SILVER quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> SILVER_ABSENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
          * to request PRESENT expression calls of at least BRONZE quality.
          */
         public static final Map<ExpressionSummary, SummaryQuality> BRONZE_PRESENT_ARGUMENT =

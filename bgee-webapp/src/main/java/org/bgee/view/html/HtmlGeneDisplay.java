@@ -35,6 +35,7 @@ import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
@@ -377,7 +378,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div class='gene'>" + getGeneralInfo(gene, geneHomologs) + "</div>");
 
         //Expression data
-        this.displayGeneExpressionSection(geneResponse);
+        this.displayGeneExpressionSection(geneResponse, null);
 
         // Homology info
         this.displayHomologsInfo(geneHomologs);
@@ -947,13 +948,21 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
-    private void displayGeneExpressionSection(GeneExpressionResponse geneExp) {
-        log.traceEntry("{}", geneExp);
+    private void displayGeneExpressionSection(GeneExpressionResponse geneExp, ExpressionSummary callType) {
+        log.traceEntry("{}, {}", geneExp, callType);
 
-        this.writeln("<h2>Expression</h2>");
+        if (ExpressionSummary.NOT_EXPRESSED.equals(callType)) {
+            this.writeln("<h2>Reported absence of expression</h2>");
+        } else {
+            this.writeln("<h2>Expression</h2>");
+        }
 
         if (geneExp.getCalls() == null || geneExp.getCalls().isEmpty()) {
-            this.writeln("No expression data for this gene");
+            if (ExpressionSummary.NOT_EXPRESSED.equals(callType)) {
+                this.writeln("No reported absence of expression for this gene");
+            } else {
+                this.writeln("No expression data for this gene");
+            }
             log.traceExit(); return;
         }
         Gene gene = geneExp.getCalls().iterator().next().getGene();
@@ -1315,8 +1324,9 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse) {
-        log.traceEntry("{}", geneExpressionResponse);
+    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse,
+            ExpressionSummary callType) {
+        log.traceEntry("{}, {}", geneExpressionResponse, callType);
 
         //See notes in CommandGene about retrieving the Gene even if there is no expression result.
         String geneId = null;
@@ -1329,13 +1339,15 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             geneName = gene.getName();
         }
         assert geneId != null;
-        String titleStart = "Gene expression for gene: "
+        String titleStart = ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                                    "Reported absence of expression": "Gene expression"
+                            + " for gene: "
                             + htmlEntities(geneId)
                             + (geneName != null? " - " + htmlEntities(geneName): "");
         String description = titleStart + ".";
 
         this.displayGenePageStart(titleStart, description);
-        this.displayGeneExpressionSection(geneExpressionResponse);
+        this.displayGeneExpressionSection(geneExpressionResponse, callType);
 
         this.endDisplay();
         log.traceExit();

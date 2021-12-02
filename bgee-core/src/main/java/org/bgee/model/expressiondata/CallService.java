@@ -517,8 +517,9 @@ public class CallService extends CommonService {
     }
 
     public List<ExpressionCall> loadSilverCondObservedCalls(GeneFilter geneFilter,
-            Collection<CallService.Attribute> condParams) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneFilter, condParams);
+            Collection<CallService.Attribute> condParams, ExpressionSummary callType)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", geneFilter, condParams, callType);
 
         EnumSet<CallService.Attribute> clonedCondParams = condParams == null || condParams.isEmpty()?
                 CallService.Attribute.getAllConditionParameters(): EnumSet.copyOf(condParams);
@@ -533,10 +534,14 @@ public class CallService extends CommonService {
         attrs.addAll(clonedCondParams);
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderBy =
                 new LinkedHashMap<>();
-        orderBy.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
+        orderBy.put(CallService.OrderingAttribute.MEAN_RANK,
+                ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                        Service.Direction.DESC: Service.Direction.ASC);
 
         List<ExpressionCall> calls = this.loadExpressionCalls(
-                new ExpressionCallFilter(ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
+                new ExpressionCallFilter(ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                        ExpressionCallFilter.SILVER_ABSENT_ARGUMENT:
+                            ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
                         Collections.singleton(geneFilter),
                         Collections.singleton(new ConditionFilter(null, null, null,
                                 null, null, clonedCondParams)),
@@ -552,7 +557,8 @@ public class CallService extends CommonService {
         ConditionGraph conditionGraph = this.getServiceFactory().getConditionGraphService()
                 .loadConditionGraph(calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
         //order by rank and most precise conditions
-        calls = ExpressionCall.filterAndOrderCallsByRank(calls, conditionGraph);
+        calls = ExpressionCall.filterAndOrderCallsByRank(calls, conditionGraph,
+                ExpressionSummary.NOT_EXPRESSED.equals(callType)? true: false);
         //redundant calls
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 calls, conditionGraph);
@@ -801,7 +807,7 @@ public class CallService extends CommonService {
                     .collect(Collectors.toSet()));
         }
         filteredOrderedCondCalls = ExpressionCall.filterAndOrderCallsByRank(filteredOrderedCondCalls,
-                conditionGraph);
+                conditionGraph, false);
         //REDUNDANT COND CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 filteredOrderedCondCalls, conditionGraph);

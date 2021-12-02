@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -19,9 +20,15 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
@@ -40,7 +47,7 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Oct. 2021
+ * @version Bgee 15.0, Dec. 2021
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
@@ -357,13 +364,27 @@ public class CommandGene extends CommandParent {
                 Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam()))
                 .orElseGet(() -> Collections.emptyList()));
 
+        ExpressionSummary callType = null;
+        if (this.requestParameters.getExprType() != null && !this.requestParameters.getExprType().isEmpty()) {
+            if (this.requestParameters.getExprType().size() > 1) {
+                throw log.throwing(new InvalidRequestException("Only one expression type can be provided"));
+            }
+            String requestedCallType = this.requestParameters.getExprType().iterator().next();
+            try {
+                callType = SummaryCallType.ExpressionSummary.convertToExpression(requestedCallType);
+            } catch (IllegalArgumentException e) {
+                log.catching(e);
+                throw log.throwing(new InvalidRequestException("Unkown call type: " + requestedCallType));
+            }
+        }
+
         //Other sanity checks will be performed by the method loadGenes
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        GeneExpressionResponse exprResponse = loadExpression(geneId, speciesId, selectedCondParams,
+        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, selectedCondParams,
                 callService, getClusteringFunction());
-        display.displayGeneExpression(exprResponse);
+        display.displayGeneExpression(exprResponse, callType);
 
         log.traceExit();
     }
@@ -454,11 +475,11 @@ public class CommandGene extends CommandParent {
         }
     }
 
-    private static GeneExpressionResponse loadExpression(String geneId, Integer speciesId,
-            Set<String> condParams, CallService callService,
+    private static GeneExpressionResponse loadExpression(ExpressionSummary callType,
+            String geneId, Integer speciesId, Set<String> condParams, CallService callService,
             Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction)
                     throws PageNotFoundException {
-        log.traceEntry("{}, {}, {}, {}, {}", geneId, speciesId, condParams, callService, clusteringFunction);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", callType, geneId, speciesId, condParams, callService, clusteringFunction);
 
         //retrieve calls with silver quality for the requested condition parameters.
         EnumSet<CallService.Attribute> condParamAttrs = condParams == null || condParams.isEmpty()?
@@ -471,7 +492,7 @@ public class CommandGene extends CommandParent {
 
         try {
             List<ExpressionCall> calls = callService.loadSilverCondObservedCalls(
-                    new GeneFilter(speciesId, geneId), condParamAttrs);
+                    new GeneFilter(speciesId, geneId), condParamAttrs, callType);
             if (calls.isEmpty()) {
                 log.debug("No calls for gene {} in species {}", geneId, speciesId);
                 //XXX: maybe we should retrieve the gene here with the method loadGenes
@@ -509,7 +530,7 @@ public class CommandGene extends CommandParent {
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
 
         List<ExpressionCall> calls = serviceFactory.getCallService().loadSilverCondObservedCalls(
-                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs);
+                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs, null);
         
         // Load homology information.
         GeneHomologs geneHomologs = loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),

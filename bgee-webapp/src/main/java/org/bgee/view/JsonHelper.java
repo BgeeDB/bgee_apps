@@ -18,6 +18,8 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
@@ -68,8 +70,7 @@ import java.util.stream.Stream;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @author  Frederic Bastian
- * @version Bgee 15, Oct. 2021
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelper {
@@ -139,6 +140,11 @@ public class JsonHelper {
             if (MultiGeneExprAnalysis.class.isAssignableFrom(rawClass) ) {
                 @SuppressWarnings("unchecked")
                 TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (AnatEntitySimilarityAnalysis.class.isAssignableFrom(rawClass)) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisAdapter(gson);
                 return log.traceExit(result);
             }
 
@@ -964,6 +970,98 @@ public class JsonHelper {
         }
     }
 
+    /**
+     * A {@code TypeAdapter} to read/write {@code AnatEntitySimilarityAnalysis}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class AnatEntitySimilarityAnalysisAdapter extends TypeAdapter<AnatEntitySimilarityAnalysis> {
+        private final Gson gson;
+
+        private AnatEntitySimilarityAnalysisAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, AnatEntitySimilarityAnalysis value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("leastCommonAncestor");
+            this.gson.getAdapter(Taxon.class).write(out, value.getLeastCommonAncestor());
+
+            out.name("unrecognizedAnatEntityIds");
+            this.gson.getAdapter(List.class).write(out, value.getRequestedAnatEntityIdsNotFound()
+                    .stream().sorted().collect(Collectors.toList()));
+
+            out.name("anatEntitesWithNoSimilarityAnnotation");
+            List<AnatEntity> noSimAnatEntities = value.getAnatEntitiesWithNoSimilarities().stream()
+                    .sorted(Comparator.comparing(AnatEntity::getName))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (AnatEntity anatEntity: noSimAnatEntities) {
+                writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            out.endArray();
+
+            out.name("anatEntitySimilarities");
+            out.beginArray();
+            for (AnatEntitySimilarity sim: value.getAnatEntitySimilarities()) {
+                writeAnatEntitySimilarity(out, sim, value);
+            }
+            out.endArray();
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public AnatEntitySimilarityAnalysis read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for MultiGeneExprAnalysis."));
+        }
+
+        private void writeAnatEntitySimilarity(JsonWriter out, AnatEntitySimilarity sim,
+                AnatEntitySimilarityAnalysis result) throws IOException {
+            log.traceEntry("{}, {}", sim, result);
+            out.beginObject();
+
+            out.name("ancestralTaxon");
+            this.gson.getAdapter(Taxon.class).write(out, sim.getTaxonSummaryAncestor());
+
+            out.name("speciesWithAnatEntityPresence");
+            List<Species> species = sim.getSourceAnatEntities().stream()
+                    .map(ae -> result.getAnatEntitiesExistInSpecies().get(ae))
+                    .flatMap(Set::stream)
+                    .distinct()
+                    .filter(sp -> result.getRequestedSpecies().contains(sp))
+                    .sorted(Comparator.comparing(s -> s.getPreferredDisplayOrder()))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (Species sp: species) {
+                writeSimplifiedSpecies(out, sp, false, null);
+            }
+            out.endArray();
+
+            out.name("anatEntities");
+            List<AnatEntity> anatEntities = sim.getSourceAnatEntities().stream()
+                    .sorted(Comparator.comparing(AnatEntity::getName))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (AnatEntity anatEntity: anatEntities) {
+                writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            out.endArray();
+
+            out.endObject();
+            log.traceExit();
+        }
+    }
+
     private static final class Strategy implements ExclusionStrategy {
         @Override
         public boolean shouldSkipField(FieldAttributes field) {
@@ -1103,23 +1201,29 @@ public class JsonHelper {
 
         //Simplified display of Species
         out.name("species");
-        out.beginObject();
-        out.name("id").value(gene.getSpecies().getId());
-        out.name("name").value(gene.getSpecies().getName());
-        out.name("genus").value(gene.getSpecies().getGenus());
-        out.name("speciesName").value(gene.getSpecies().getSpeciesName());
-        out.name("preferredDisplayOrder").value(gene.getSpecies().getPreferredDisplayOrder());
-        if (withSpeciesDataSource) {
-            out.name("sourcesOfDataPerDataType");
-            writeSourcesPerDataType(out, gene.getSpecies().getDataSourcesForDataByDataTypes(),
-                    allowedDataTypes);
-            out.name("sourcesOfAnnotationsPerDataType");
-            writeSourcesPerDataType(out, gene.getSpecies().getDataSourcesForAnnotationByDataTypes(),
-                    allowedDataTypes);
-        }
-        out.endObject();
+        writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
 
         out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
+        out.endObject();
+        log.traceExit();
+    }
+    private static void writeSimplifiedSpecies(JsonWriter out, Species species,
+            boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, species, withSpeciesDataSource, allowedDataTypes);
+        out.beginObject();
+        out.name("id").value(species.getId());
+        out.name("name").value(species.getName());
+        out.name("genus").value(species.getGenus());
+        out.name("speciesName").value(species.getSpeciesName());
+        out.name("preferredDisplayOrder").value(species.getPreferredDisplayOrder());
+        if (withSpeciesDataSource) {
+            out.name("sourcesOfDataPerDataType");
+            writeSourcesPerDataType(out, species.getDataSourcesForDataByDataTypes(),
+                    allowedDataTypes);
+            out.name("sourcesOfAnnotationsPerDataType");
+            writeSourcesPerDataType(out, species.getDataSourcesForAnnotationByDataTypes(),
+                    allowedDataTypes);
+        }
         out.endObject();
         log.traceExit();
     }

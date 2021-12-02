@@ -15,7 +15,7 @@ import org.bgee.view.*;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, July 2015
  */
 public class JsonFactory extends ViewFactory { 
@@ -170,8 +170,11 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+    public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay()
+            throws IllegalArgumentException, IOException {
+        log.traceEntry();
+        return log.traceExit(new JsonAnatomicalSimilarityDisplay(this.response, this.requestParameters,
+                this.prop, this.jsonHelper, this));
     }
     @Override
     public PublicationDisplay getPublicationDisplay() throws IOException {

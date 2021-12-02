@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Taxon;
 
 /**
@@ -29,7 +30,7 @@ import org.bgee.model.species.Taxon;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14 Mar. 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Apr. 2016
  */
 //XXX: For now, only positive similarity annotations are meant to be used for this class,
@@ -57,6 +58,10 @@ public class AnatEntitySimilarity {
      * @see #getAnnotTaxonSummaries()
      */
     private final List<AnatEntitySimilarityTaxonSummary> annotTaxonSummaries;
+    /**
+     * @see #getTaxonOntology()
+     */
+    private final Ontology<Taxon, Integer> taxonOntology;
 
     /**
      * @param sourceAnatEntities            See {@link #getSourceAnatEntities()}
@@ -65,10 +70,12 @@ public class AnatEntitySimilarity {
      * @param annotTaxonSummaries           A {@code Collection} of {@code AnatEntitySimilarityTaxonSummary}s
      *                                      supporting this {@code AnatEntitySimilarity}
      *                                      for the requested {@code Taxon}.
+     * @param taxonOntology                 See {@link #getTaxonOntology()}
      */
     public AnatEntitySimilarity(Collection<AnatEntity> sourceAnatEntities,
             Collection<AnatEntity> transformationOfAnatEntities, Taxon requestedTaxon,
-            Collection<AnatEntitySimilarityTaxonSummary> annotTaxonSummaries) {
+            Collection<AnatEntitySimilarityTaxonSummary> annotTaxonSummaries,
+            Ontology<Taxon, Integer> taxonOntology) {
         log.traceEntry("{}, {}, {}, {}", sourceAnatEntities, transformationOfAnatEntities,
                 requestedTaxon, annotTaxonSummaries);
         if (sourceAnatEntities == null || sourceAnatEntities.isEmpty()) {
@@ -81,6 +88,9 @@ public class AnatEntitySimilarity {
         }
         if (requestedTaxon == null) {
             throw log.throwing(new IllegalArgumentException("Requested taxon cannot be null"));
+        }
+        if (taxonOntology == null) {
+            throw log.throwing(new IllegalArgumentException("The related taxon ontology cannot be null"));
         }
 
         this.sourceAnatEntities = Collections.unmodifiableSet(new HashSet<>(sourceAnatEntities));
@@ -96,6 +106,7 @@ public class AnatEntitySimilarity {
                 .sorted(Comparator.<AnatEntitySimilarityTaxonSummary>comparingInt(
                         summary -> summary.getTaxon().getLevel()).reversed())
                 .collect(Collectors.toList()));
+        this.taxonOntology = taxonOntology;
     }
 
     /**
@@ -233,6 +244,31 @@ public class AnatEntitySimilarity {
     }
 
     /**
+     * @return  The {@code Taxon} {@code Ontology} including the requested {@code Taxon}
+     *          returned by {@link #getRequestedTaxon()} and its ancestors and descendants.
+     */
+    public Ontology<Taxon, Integer> getTaxonOntology() {
+        return this.taxonOntology;
+    }
+
+    /**
+     * @return  The highest/oldest/most ancestral {@code Taxon} among the {@code Taxon}s
+     *          present in the {@code AnatEntitySimilarityTaxonSummary}s returned by
+     *          {@link #getAnnotTaxonSummaries()}.
+     */
+    public Taxon getTaxonSummaryAncestor() {
+        log.traceEntry();
+        Set<Taxon> ancestorsAmongElements = this.getTaxonOntology().getAncestorsAmongElements(
+                this.getAnnotTaxonSummaries().stream()
+                        .map(AnatEntitySimilarityTaxonSummary::getTaxon)
+                        .collect(Collectors.toList()), null);
+        if (ancestorsAmongElements.size() > 1) {
+            log.throwing(new IllegalStateException("All taxa should be ancestor or descendant of other taxa."));
+        }
+        return log.traceExit(ancestorsAmongElements.iterator().next());
+    }
+
+    /**
      * @return  A {@code boolean} that is {@code true} if the similarity relation have enough support
      *          to be considered reliable, {@code false} otherwise. {@code true} if at least
      *          one of the underlying {@code AnatEntitySimilarityTaxonSummary}s (see {@link 
@@ -256,6 +292,7 @@ public class AnatEntitySimilarity {
         result = prime * result + ((sourceAnatEntities == null) ? 0 : sourceAnatEntities.hashCode());
         result = prime * result
                 + ((transformationOfAnatEntities == null) ? 0 : transformationOfAnatEntities.hashCode());
+        result = prime * result + ((taxonOntology == null) ? 0 : taxonOntology.hashCode());
         return result;
     }
     @Override
@@ -298,6 +335,13 @@ public class AnatEntitySimilarity {
         } else if (!transformationOfAnatEntities.equals(other.transformationOfAnatEntities)) {
             return false;
         }
+        if (taxonOntology == null) {
+            if (other.taxonOntology != null) {
+                return false;
+            }
+        } else if (!taxonOntology.equals(other.taxonOntology)) {
+            return false;
+        }
         return true;
     }
 
@@ -308,6 +352,7 @@ public class AnatEntitySimilarity {
                .append(", transformationOfAnatEntities=").append(transformationOfAnatEntities)
                .append(", requestedTaxon=").append(requestedTaxon)
                .append(", annotTaxonSummaries=").append(annotTaxonSummaries)
+               .append(", taxonOntology=").append(taxonOntology)
                .append("]");
         return builder.toString();
     }

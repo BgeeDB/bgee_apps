@@ -38,7 +38,7 @@ import org.junit.Test;
  * Unit tests for {@link AnatEntitySimilarityService}.
  *
  * @author  Frederic Bastian
- * @version Bgee 14 Mar 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 14 Mar 2019
  */
 public class AnatEntitySimilarityServiceTest extends TestAncestor {
@@ -49,6 +49,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
     }
 
     private List<Taxon> taxa;
+    private Map<Taxon, Ontology<Taxon, Integer>> taxonToOnt;
     private Set<Integer> speciesIdsGnathostomataLCA = new HashSet<>(Arrays.asList(1, 2));
     private String anatEntityWithNoSimilarityId = "id_with_no_similarity";
     private String nonExistingAnatEntityId = "non_existing_id";
@@ -83,6 +84,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                 new TaxonConstraint<>("whatever_precursor", 2),
                 new TaxonConstraint<>(anatEntityWithNoSimilarityId, 1)).stream());
 
+        taxonToOnt = new HashMap<>();
         taxa = Arrays.asList(
                 new Taxon(131567, "cellular organisms", null, "cellular organisms", 1, false),
                 new Taxon(6072, "Eumetazoa", null, "Eumetazoa", 5, false),
@@ -121,8 +123,10 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(10), taxonRelations.get(11), taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
                 serviceFactory, Taxon.class);
-        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(8287), false, true, true))
+        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(5).getId()),
+                false, true, true))
         .thenReturn(taxOnt);
+        taxonToOnt.put(taxa.get(5), taxOnt);
         //Taxon ontology when requested taxon is 7776 Gnathostomata
         taxOnt = new Ontology<>(null,
                 Arrays.asList(taxa.get(0), taxa.get(1), taxa.get(2), taxa.get(4), taxa.get(5),
@@ -134,8 +138,9 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
                 serviceFactory, Taxon.class);
-        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(7776), false, true, true))
+        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(4).getId()), false, true, true))
         .thenReturn(taxOnt);
+        taxonToOnt.put(taxa.get(4), taxOnt);
         //Taxon ontology when requested taxon is 7898 Actinopterygii
         taxOnt = new Ontology<>(null,
                 Arrays.asList(taxa.get(0), taxa.get(1), taxa.get(2), taxa.get(4), taxa.get(6)),
@@ -144,16 +149,18 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(10), taxonRelations.get(11), taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
                 serviceFactory, Taxon.class);
-        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(7898), false, true, true))
+        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(6).getId()), false, true, true))
         .thenReturn(taxOnt);
+        taxonToOnt.put(taxa.get(6), taxOnt);
         //Taxon ontology when requested taxon is 6073 Cnidaria
         taxOnt = new Ontology<>(null,
                 Arrays.asList(taxa.get(0), taxa.get(1), taxa.get(3)),
                 Arrays.asList(taxonRelations.get(13), taxonRelations.get(14)),
                 EnumSet.of(RelationType.ISA_PARTOF),
                 serviceFactory, Taxon.class);
-        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(6073), false, true, true))
+        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(3).getId()), false, true, true))
         .thenReturn(taxOnt);
+        taxonToOnt.put(taxa.get(3), taxOnt);
         //Taxon ontology when requested taxon is 33213 Bilateria
         taxOnt = new Ontology<>(null,
                 Arrays.asList(taxa.get(0), taxa.get(1), taxa.get(2), taxa.get(4), taxa.get(5),
@@ -165,8 +172,9 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
                         taxonRelations.get(12)),
                 EnumSet.of(RelationType.ISA_PARTOF),
                 serviceFactory, Taxon.class);
-        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(33213), false, true, true))
+        when(this.ontService.getTaxonOntologyFromTaxonIds(Collections.singleton(taxa.get(2).getId()), false, true, true))
         .thenReturn(taxOnt);
+        taxonToOnt.put(taxa.get(2), taxOnt);
 
         //Create SummarySimilarityAnnotationTOs.
         //Eumetazoa annot
@@ -447,13 +455,16 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthGnaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(4)));
         AnatEntitySimilarity anusGnaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(4)));
         AnatEntitySimilarity fakeLungSwimBladderWhateverGnaSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever")),
                 Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(4),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(4)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthGnaSim, anusGnaSim,
                 fakeLungSwimBladderWhateverGnaSim));
@@ -468,13 +479,16 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthGnaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(4)));
         AnatEntitySimilarity anusGnaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(4), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(4)));
         AnatEntitySimilarity lungSwimBladderGnaSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder")),
                 Arrays.asList(), taxa.get(4),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(4)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthGnaSim, anusGnaSim,
                 lungSwimBladderGnaSim));
@@ -489,17 +503,21 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthSarcoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(5)));
         AnatEntitySimilarity anusSarcoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(5)));
         AnatEntitySimilarity lungSarcoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung")), Arrays.asList(), taxa.get(5),
                 Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true),
-                              new AnatEntitySimilarityTaxonSummary(taxa.get(5), true, true)));
+                              new AnatEntitySimilarityTaxonSummary(taxa.get(5), true, true)),
+                taxonToOnt.get(taxa.get(5)));
         AnatEntitySimilarity whateverSarcoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("whatever")),
                 Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(5),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(5), false, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(5), false, true)),
+                taxonToOnt.get(taxa.get(5)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthSarcoSim, anusSarcoSim,
                 lungSarcoSim, whateverSarcoSim));
@@ -514,13 +532,16 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthSarcoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(5)));
         AnatEntitySimilarity anusSarcoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(5), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(5)));
         AnatEntitySimilarity lungSarcoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung")), Arrays.asList(), taxa.get(5),
                 Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true),
-                              new AnatEntitySimilarityTaxonSummary(taxa.get(5), true, true)));
+                              new AnatEntitySimilarityTaxonSummary(taxa.get(5), true, true)),
+                taxonToOnt.get(taxa.get(5)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthSarcoSim, anusSarcoSim,
                 lungSarcoSim));
@@ -535,15 +556,19 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(6)));
         AnatEntitySimilarity anusActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(6)));
         AnatEntitySimilarity swimBladderActinoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("swimbladder")), Arrays.asList(), taxa.get(6),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true)),
+                taxonToOnt.get(taxa.get(6)));
         AnatEntitySimilarity lungActinoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung")), Arrays.asList(), taxa.get(6),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(6)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthActinoSim, anusActinoSim,
                 swimBladderActinoSim, lungActinoSim));
@@ -558,7 +583,8 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthCnidariaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(3), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(3), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(3)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthCnidariaSim));
         assertEquals(expectedResults, service.loadPositiveAnatEntitySimilarities(6073, false, null));
@@ -572,9 +598,11 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthBilateriaSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(2)));
         AnatEntitySimilarity anusActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(2), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(2)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(
                 mouthBilateriaSim, anusActinoSim));
@@ -590,12 +618,15 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarityService service = new AnatEntitySimilarityService(this.serviceFactory);
 
         AnatEntitySimilarity mouthActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("mouth")),
-                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)));
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(1), true, true)),
+                taxonToOnt.get(taxa.get(6)));
         AnatEntitySimilarity anusActinoSim = new AnatEntitySimilarity(Arrays.asList(new AnatEntity("anus")),
-                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)));
+                null, taxa.get(6), Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(2), true, true)),
+                taxonToOnt.get(taxa.get(6)));
         AnatEntitySimilarity swimBladderActinoSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("swimbladder")), Arrays.asList(), taxa.get(6),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(6), true, true)),
+                taxonToOnt.get(taxa.get(6)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(mouthActinoSim, anusActinoSim,
                 swimBladderActinoSim));
@@ -609,7 +640,8 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarity fakeLungSwimBladderWhateverGnaSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever")),
                 Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(4),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(4)));
 
         Set<AnatEntitySimilarity> expectedResults = new HashSet<>(Arrays.asList(fakeLungSwimBladderWhateverGnaSim));
         assertEquals(expectedResults, service.loadSimilarAnatEntities(speciesIdsGnathostomataLCA,
@@ -623,7 +655,8 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
         AnatEntitySimilarity fakeLungSwimBladderWhateverGnaSim = new AnatEntitySimilarity(
                 Arrays.asList(new AnatEntity("lung"), new AnatEntity("swimbladder"), new AnatEntity("whatever")),
                 Arrays.asList(new AnatEntity("whatever_precursor")), taxa.get(4),
-                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)));
+                Arrays.asList(new AnatEntitySimilarityTaxonSummary(taxa.get(4), true, true)),
+                taxonToOnt.get(taxa.get(4)));
 
         Collection<String> requestedAnatEntityIds = Arrays.asList("lung", anatEntityWithNoSimilarityId,
                 nonExistingAnatEntityId);
@@ -644,7 +677,7 @@ public class AnatEntitySimilarityServiceTest extends TestAncestor {
 
         AnatEntitySimilarityAnalysis expectedResults = new AnatEntitySimilarityAnalysis(requestedAnatEntityIds,
                 requestedAnatEntityIdsNotFound, requestedSpeciesIds, requestedSpeciesIdsNotFound, requestedSpecies,
-                leastCommonAncestor, anatEntitySimilarities, anatEntitiesWithNoSimilarities, anatEntitiesExistInSpecies);
+                leastCommonAncestor, taxonToOnt.get(leastCommonAncestor), anatEntitySimilarities, anatEntitiesWithNoSimilarities, anatEntitiesExistInSpecies);
         assertEquals(expectedResults, service.loadPositiveAnatEntitySimilarityAnalysis(requestedSpeciesIds,
                 requestedAnatEntityIds, false));
     }

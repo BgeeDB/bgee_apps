@@ -34,7 +34,7 @@ import org.bgee.model.species.Taxon;
  * A {@code Service} for {@code AnatEntitySimilarity}.
  *
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2019
+ * @version Bgee 15, Dec. 2021
  * @since Bgee 14 Mar. 2019
  */
 public class AnatEntitySimilarityService extends Service {
@@ -318,6 +318,7 @@ public class AnatEntitySimilarityService extends Service {
 
         //First, we find the common ancestor of the requested species
         Taxon lca = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(speciesIdsFound);
+
         //Now we query the anat. entity similarities for this common ancestor
         //and existing in at least one of the requested species.
         //Keep only the similarities containing one of the requested anat. entity IDs
@@ -373,7 +374,9 @@ public class AnatEntitySimilarityService extends Service {
 
         return log.traceExit(new AnatEntitySimilarityAnalysis(clonedAnatEntityIds, notFoundAnatEntityIds,
                 clonedSpeIds, speciesIdsNotFound, requestedSpecies,
-                lca, anatEntitySimilarities, anatEntitiesNotInSimilarities,
+                lca, anatEntitySimilarities.isEmpty()? null:
+                    anatEntitySimilarities.iterator().next().getTaxonOntology(),
+                anatEntitySimilarities, anatEntitiesNotInSimilarities,
                 anatEntityToSpecies));
     }
 
@@ -700,7 +703,7 @@ public class AnatEntitySimilarityService extends Service {
                 .collect(Collectors.toSet());
 
         return new AnatEntitySimilarity(anatEntities, transformationOfEntities, requestedTaxon,
-                summaries);
+                summaries, taxonOnt);
     }
     private static AnatEntitySimilarityTaxonSummary mapToAnatEntitySimilarityTaxonSummary(
             SummarySimilarityAnnotationTO annotTO, Map<String, CIOStatementTO> idToCIOStatementTOMap,

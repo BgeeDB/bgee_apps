@@ -767,10 +767,11 @@ public class JsonHelper {
             //Retrieve requested condition parameters
             EnumSet<CallService.Attribute> condParams = value.getCondParams();
 
+            out.name("requestedCallType").value(value.getCallType().getStringRepresentation());
+
             out.name("requestedDataTypes");
             out.beginArray();
-            //For the gene page, for now we always consider all data types
-            for (DataType d: EnumSet.allOf(DataType.class)) {
+            for (DataType d: value.getDataTypes()) {
                 out.value(d.getStringRepresentation());
             }
             out.endArray();
@@ -814,9 +815,7 @@ public class JsonHelper {
                 }
                 out.endObject();
 
-                //For the gene page, for now we always consider all data types, so we retrieve the FDR
-                //computed by taking into account all data types
-                String fdr = call.getPValueWithEqualDataTypes(EnumSet.allOf(DataType.class))
+                String fdr = call.getPValueWithEqualDataTypes(value.getDataTypes())
                         .getFormatedFDRPValue();
                 out.name("fdr").value(fdr);
 

@@ -1,10 +1,12 @@
 package org.bgee.view;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
@@ -70,11 +72,8 @@ public interface GeneDisplay {
      *
      * @param geneExpressionResponse    The {@code GeneExpressionResponse} containing the expression results
      *                                  for the requested gene.
-     * @param callType                  The {@code ExpressionSummary} that is the call type requested
-     *                                  to produce {@code geneExpressionResponse}. If {@code null},
-     *                                  it corresponds to {@code ExpressionSummary.EXPRESSED}.
      */
-    void displayGeneExpression(GeneExpressionResponse geneExpressionResponse, ExpressionSummary callType);
+    void displayGeneExpression(GeneExpressionResponse geneExpressionResponse);
 
     /**
      * Displays a {@code Set} of {@code Gene}s.

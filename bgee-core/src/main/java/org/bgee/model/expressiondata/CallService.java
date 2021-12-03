@@ -517,9 +517,9 @@ public class CallService extends CommonService {
     }
 
     public List<ExpressionCall> loadSilverCondObservedCalls(GeneFilter geneFilter,
-            Collection<CallService.Attribute> condParams, ExpressionSummary callType)
-                    throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}", geneFilter, condParams, callType);
+            Collection<CallService.Attribute> condParams, ExpressionSummary callType,
+            Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}", geneFilter, condParams, callType, dataTypeFilter);
 
         EnumSet<CallService.Attribute> clonedCondParams = condParams == null || condParams.isEmpty()?
                 CallService.Attribute.getAllConditionParameters(): EnumSet.copyOf(condParams);
@@ -545,7 +545,7 @@ public class CallService extends CommonService {
                         Collections.singleton(geneFilter),
                         Collections.singleton(new ConditionFilter(null, null, null,
                                 null, null, clonedCondParams)),
-                        null, null),
+                        dataTypeFilter, null),
                 attrs,
                 orderBy)
                 .collect(Collectors.toList());

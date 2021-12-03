@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -984,7 +985,7 @@ public class CommandTopAnat extends CommandParent {
         // Data quality can be null if there is no filter to be applied
         SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
         // Data types can be null if there is no filter to be applied
-        Set<DataType> dataTypes = this.checkAndGetDataTypes();
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
     
         // Dev. stages can be null if all selected species stages should be used
         final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(

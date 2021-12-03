@@ -378,7 +378,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln("<div class='gene'>" + getGeneralInfo(gene, geneHomologs) + "</div>");
 
         //Expression data
-        this.displayGeneExpressionSection(geneResponse, null);
+        this.displayGeneExpressionSection(geneResponse);
 
         // Homology info
         this.displayHomologsInfo(geneHomologs);
@@ -517,19 +517,21 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /**
      * Generates the HTML code displaying information about expression calls.
      * 
-     * @param calls         A {@code List} of {@code ExpressionCall}s to be displayed,
-     *                      ordered by their global mean rank amd most precise condition for equal ranks. 
-     * @param clustering    A {@code Map} where keys are {@code ExpressionCall}s,
-     *                      the associated value being the index of the group
-     *                      in which they are clustered, based on their global mean rank.
-     * @param condParams    An {@code EnumSet} containing the condition parameters (see
-     *                      {@link CallService.Attribute#isConditionParameter()}) requested
-     *                      to retrieve the calls in {@code calls}.
+     * @param calls                 A {@code List} of {@code ExpressionCall}s to be displayed,
+     *                              ordered by their global mean rank amd most precise condition for equal ranks. 
+     * @param clustering            A {@code Map} where keys are {@code ExpressionCall}s,
+     *                              the associated value being the index of the group
+     *                              in which they are clustered, based on their global mean rank.
+     * @param condParams            An {@code EnumSet} containing the condition parameters (see
+     *                              {@link CallService.Attribute#isConditionParameter()}) requested
+     *                              to retrieve the calls in {@code calls}.
+     * @param requestedDataTypes    An {@code EnumSet} containing the requested {@code DataType}s
+     *                              to produce the calls.
      */
     private String getExpressionHTML(List<ExpressionCall> calls, 
             Map<ExpressionCall, Integer> clustering,
-            EnumSet<CallService.Attribute> condParams) {
-        log.traceEntry("{}, {}, {}", calls, clustering, condParams);
+            EnumSet<CallService.Attribute> condParams, EnumSet<DataType> requestedDataTypes) {
+        log.traceEntry("{}, {}, {}, {}", calls, clustering, condParams, requestedDataTypes);
 
         StringBuilder sb = new StringBuilder();
         sb.append("<table class='expression stripe nowrap compact responsive'>");
@@ -565,7 +567,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 scoreShift = true;
             }
             
-            sb.append(getExpressionRow(call, scoreShift, condParams))
+            sb.append(getExpressionRow(call, scoreShift, condParams, requestedDataTypes))
                  .append("\n");
             previousGroupIndex = currentGroupIndex;
         }
@@ -578,18 +580,20 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     /**
      * Generates the HTML code to display information about an expression call.
      * 
-     * @param call          The {@code ExpressionCall} to display.
-     * @param scoreShift    A {@code boolean} defining whether the global mean rank 
-     *                      for {@code call} is in the same cluster as the global mean rank
-     *                      of the previous call displayed. If {@code true},
-     *                      they are not in the same cluster.
-     * @param condParams    An {@code EnumSet} of {@code CallService.Attribute}s that are
-     *                      the condition parameters requested to retrieve the calls.
-     * @return              A {@code String} that is the generated HTML.
+     * @param call                  The {@code ExpressionCall} to display.
+     * @param scoreShift            A {@code boolean} defining whether the global mean rank 
+     *                              for {@code call} is in the same cluster as the global mean rank
+     *                              of the previous call displayed. If {@code true},
+     *                              they are not in the same cluster.
+     * @param condParams            An {@code EnumSet} of {@code CallService.Attribute}s that are
+     *                              the condition parameters requested to retrieve the calls.
+     * @param requestedDataTypes    An {@code EnumSet} containing the requested {@code DataType}s
+     *                              to produce the calls.
+     * @return                      A {@code String} that is the generated HTML.
      */
     private String getExpressionRow(ExpressionCall call, boolean scoreShift,
-            EnumSet<CallService.Attribute> condParams) {
-        log.traceEntry("{}, {}, {}", call, scoreShift, condParams);
+            EnumSet<CallService.Attribute> condParams, EnumSet<DataType> requestedDataTypes) {
+        log.traceEntry("{}, {}, {}, {}", call, scoreShift, condParams, requestedDataTypes);
 
         StringBuilder sb = new StringBuilder();
         String scoreShiftClassName = "gene-score-shift";
@@ -644,7 +648,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         //Expression score
         sb.append("<td>").append(getExpressionScoreHTML(call)).append("</td>");
         //FDR
-        sb.append("<td>").append(getFdrHTML(call)).append("</td>");
+        sb.append("<td>").append(getFdrHTML(call, requestedDataTypes)).append("</td>");
         // Data types
         sb.append("<td>").append(getDataTypeSpans(call.getCallData())).append("</td>");
         
@@ -948,17 +952,17 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
-    private void displayGeneExpressionSection(GeneExpressionResponse geneExp, ExpressionSummary callType) {
-        log.traceEntry("{}, {}", geneExp, callType);
+    private void displayGeneExpressionSection(GeneExpressionResponse geneExp) {
+        log.traceEntry("{}", geneExp);
 
-        if (ExpressionSummary.NOT_EXPRESSED.equals(callType)) {
+        if (ExpressionSummary.NOT_EXPRESSED.equals(geneExp.getCallType())) {
             this.writeln("<h2>Reported absence of expression</h2>");
         } else {
             this.writeln("<h2>Expression</h2>");
         }
 
         if (geneExp.getCalls() == null || geneExp.getCalls().isEmpty()) {
-            if (ExpressionSummary.NOT_EXPRESSED.equals(callType)) {
+            if (ExpressionSummary.NOT_EXPRESSED.equals(geneExp.getCallType())) {
                 this.writeln("No reported absence of expression for this gene");
             } else {
                 this.writeln("No expression data for this gene");
@@ -978,7 +982,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         this.writeln(getExpressionHTML(
                 geneExp.getCalls(), 
                 geneExp.getClustering(), 
-                geneExp.getCondParams()));
+                geneExp.getCondParams(),
+                geneExp.getDataTypes()));
         
         this.writeln("</div>"); // end table-container
         this.writeln("</div>"); // end class
@@ -1187,12 +1192,14 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
     
     /**
-     * @param call An {@code ExpressionCall} for which we want to display the FDR.
+     * @param call                  An {@code ExpressionCall} for which we want to display the FDR.
+     * @param requestedDataTypes    An {@code EnumSet} containing the requested {@code DataType}s
+     *                              to produce the calls.
      * @return     A {@code String} containing the HTML to display the FDR, 
      *             notably displaying information about confidence in the FDR.
      */
-    private static String getFdrHTML(ExpressionCall call) {
-        log.traceEntry("{}", call);
+    private static String getFdrHTML(ExpressionCall call, EnumSet<DataType> requestedDataTypes) {
+        log.traceEntry("{}, {}", call, requestedDataTypes);
 
         //If the rank is above a threshold and is only supported by ESTs and/or in situ data, 
         //then we consider it of low confidence
@@ -1202,7 +1209,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
 
         //For the gene page, for now we always consider all data types, so we retrieve the FDR
         //computed by taking into account all data types
-        String fdr = htmlEntities(call.getPValueWithEqualDataTypes(EnumSet.allOf(DataType.class))
+        String fdr = htmlEntities(call.getPValueWithEqualDataTypes(requestedDataTypes)
                 .getFormatedFDRPValue());
         //Now, we also want to know which data types have data supporting this call
         EnumSet<DataType> dataTypesWithData = call.getCallData().stream().map(ExpressionCallData::getDataType)
@@ -1324,9 +1331,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse,
-            ExpressionSummary callType) {
-        log.traceEntry("{}, {}", geneExpressionResponse, callType);
+    public void displayGeneExpression(GeneExpressionResponse geneExpressionResponse) {
+        log.traceEntry("{}", geneExpressionResponse);
 
         //See notes in CommandGene about retrieving the Gene even if there is no expression result.
         String geneId = null;
@@ -1339,7 +1345,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             geneName = gene.getName();
         }
         assert geneId != null;
-        String titleStart = ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+        String titleStart = ExpressionSummary.NOT_EXPRESSED.equals(geneExpressionResponse.getCallType())?
                                     "Reported absence of expression": "Gene expression"
                             + " for gene: "
                             + htmlEntities(geneId)
@@ -1347,7 +1353,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         String description = titleStart + ".";
 
         this.displayGenePageStart(titleStart, description);
-        this.displayGeneExpressionSection(geneExpressionResponse, callType);
+        this.displayGeneExpressionSection(geneExpressionResponse);
 
         this.endDisplay();
         log.traceExit();

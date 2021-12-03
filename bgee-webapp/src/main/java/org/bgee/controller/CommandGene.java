@@ -58,7 +58,9 @@ public class CommandGene extends CommandParent {
         //Deactivated as long as we don't retrieve the Gene when there is no expression data
 //        private final Gene gene;
         private final List<ExpressionCall> calls;
+        private final ExpressionSummary callType;
         private final EnumSet<CallService.Attribute> condParams;
+        private final EnumSet<DataType> dataTypes;
         private final boolean includingAllRedundantCalls;
         private final Map<ExpressionCall, Integer> clustering;
         
@@ -68,11 +70,14 @@ public class CommandGene extends CommandParent {
          * @param includingAllRedundantCalls    See {@link #isIncludingAllRedundantCalls()}.
          * @param clustering                    See {@link #getClustering()}.
          */
-        public GeneExpressionResponse(List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
+        public GeneExpressionResponse(List<ExpressionCall> calls, ExpressionSummary callType,
+                EnumSet<CallService.Attribute> condParams, EnumSet<DataType> dataTypes,
                 boolean includingAllRedundantCalls, Map<ExpressionCall, Integer> clustering) {
             this.includingAllRedundantCalls = includingAllRedundantCalls;
             this.calls = calls;
+            this.callType = callType == null? ExpressionSummary.EXPRESSED: callType;
             this.condParams = condParams;
+            this.dataTypes = dataTypes;
             this.clustering = clustering;
         }
 
@@ -88,12 +93,26 @@ public class CommandGene extends CommandParent {
             return calls;
         }
         /**
+         * @return  The {@code ExpressionSummary} that was requested to retrieve
+         *          the calls returned by {@link #getCalls()}.
+         */
+        public ExpressionSummary getCallType() {
+            return this.callType;
+        }
+        /**
          * @return  An {@code EnumSet} containing the condition parameters (see
          *          {@link CallService.Attribute#isConditionParameter()}) requested to retrieve
          *          the calls returned by {@link #getCalls()}.
          */
         public EnumSet<CallService.Attribute> getCondParams() {
             return this.condParams;
+        }
+        /**
+         * @return  An {@code EnumSet} containing the {@code DataType}s requested to retrieve
+         *          the calls returned by {@link #getCalls()}.
+         */
+        public EnumSet<DataType> getDataTypes() {
+            return this.dataTypes;
         }
         /**
          * @return  A {@code boolean} that is {@code true} if the information returned by
@@ -141,7 +160,8 @@ public class CommandGene extends CommandParent {
                 List<ExpressionCall> calls, EnumSet<CallService.Attribute> condParams,
                 Map<ExpressionCall, Integer> clustering,
                 GeneHomologs geneHomologs) {
-            super(calls, condParams, includingAllRedundantCalls, clustering);
+            super(calls, ExpressionSummary.EXPRESSED, condParams, EnumSet.allOf(DataType.class),
+                    includingAllRedundantCalls, clustering);
             this.gene = gene;
             this.geneHomologs = geneHomologs;
         }
@@ -360,10 +380,20 @@ public class CommandGene extends CommandParent {
         String geneId = requestParameters.getGeneId();
         Integer speciesId = requestParameters.getSpeciesId();
         URLParameters urlParameters = requestParameters.getUrlParametersInstance();
+
+        //Condition parameters
         Set<String> selectedCondParams = new HashSet<>(
                 Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam()))
                 .orElseGet(() -> Collections.emptyList()));
+        EnumSet<CallService.Attribute> condParamAttrs = selectedCondParams == null || selectedCondParams.isEmpty()?
+                //default value
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID):
+                //otherwise retrieve condition parameters from request
+                CallService.Attribute.getAllConditionParameters()
+                    .stream().filter(a -> selectedCondParams.contains(a.getCondParamName()))
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
 
+        //Call type
         ExpressionSummary callType = null;
         if (this.requestParameters.getExprType() != null && !this.requestParameters.getExprType().isEmpty()) {
             if (this.requestParameters.getExprType().size() > 1) {
@@ -378,13 +408,16 @@ public class CommandGene extends CommandParent {
             }
         }
 
+        //Data types
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+
         //Other sanity checks will be performed by the method loadGenes
         if (speciesId == null || speciesId < 1) {
             throw log.throwing(new InvalidRequestException("Invalid species ID argument: " + speciesId));
         }
-        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, selectedCondParams,
-                callService, getClusteringFunction());
-        display.displayGeneExpression(exprResponse, callType);
+        GeneExpressionResponse exprResponse = loadExpression(callType, geneId, speciesId, condParamAttrs,
+                dataTypes, callService, getClusteringFunction());
+        display.displayGeneExpression(exprResponse);
 
         log.traceExit();
     }
@@ -476,23 +509,16 @@ public class CommandGene extends CommandParent {
     }
 
     private static GeneExpressionResponse loadExpression(ExpressionSummary callType,
-            String geneId, Integer speciesId, Set<String> condParams, CallService callService,
+            String geneId, Integer speciesId, EnumSet<CallService.Attribute> condParamAttrs,
+            EnumSet<DataType> dataTypes, CallService callService,
             Function<List<ExpressionCall>, Map<ExpressionCall, Integer>> clusteringFunction)
                     throws PageNotFoundException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", callType, geneId, speciesId, condParams, callService, clusteringFunction);
-
-        //retrieve calls with silver quality for the requested condition parameters.
-        EnumSet<CallService.Attribute> condParamAttrs = condParams == null || condParams.isEmpty()?
-                //default value
-                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID):
-                //otherwise retrieve condition parameters from request
-                CallService.Attribute.getAllConditionParameters()
-                    .stream().filter(a -> condParams.contains(a.getCondParamName()))
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", callType, geneId, speciesId, condParamAttrs,
+                dataTypes, callService, clusteringFunction);
 
         try {
             List<ExpressionCall> calls = callService.loadSilverCondObservedCalls(
-                    new GeneFilter(speciesId, geneId), condParamAttrs, callType);
+                    new GeneFilter(speciesId, geneId), condParamAttrs, callType, dataTypes);
             if (calls.isEmpty()) {
                 log.debug("No calls for gene {} in species {}", geneId, speciesId);
                 //XXX: maybe we should retrieve the gene here with the method loadGenes
@@ -501,13 +527,15 @@ public class CommandGene extends CommandParent {
                 //Or CallService should return a Call container, allowing to retrieve the Gene
                 //even in the absence of expression?
                 //In the meantime, I removed the gene attribute from GeneExpressionResponse
-                return log.traceExit(new GeneExpressionResponse(calls, condParamAttrs, true, new HashMap<>()));
+                return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
+                        true, new HashMap<>()));
             }
 
             //Store a clustering of ExpressionCalls
             Map<ExpressionCall, Integer> clustering = clusteringFunction.apply(calls);
 
-            return log.traceExit(new GeneExpressionResponse(calls, condParamAttrs, true, clustering));
+            return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
+                    true, clustering));
             
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             log.catching(e);
@@ -530,7 +558,7 @@ public class CommandGene extends CommandParent {
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class)));
 
         List<ExpressionCall> calls = serviceFactory.getCallService().loadSilverCondObservedCalls(
-                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs, null);
+                new GeneFilter(gene.getSpecies().getId(), gene.getGeneId()), condParamAttrs, null, null);
         
         // Load homology information.
         GeneHomologs geneHomologs = loadHomologs(gene.getGeneId(), gene.getSpecies().getId(),

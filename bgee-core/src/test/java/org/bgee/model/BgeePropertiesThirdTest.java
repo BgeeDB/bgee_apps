@@ -36,6 +36,9 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
 
         System.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "search_url");
         System.setProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "search_port");
+        System.setProperty(BgeeProperties.BGEE_SEARCH_INDEX_GENES_KEY, "gene_index_test");
+        System.setProperty(BgeeProperties.BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY, 
+                "autocomplete_index_test");
         
         //BGEE_ROOT_DIRECTORY_KEY is not set in System properties, it should be retrieve 
         //from the file. 
@@ -59,6 +62,10 @@ public class BgeePropertiesThirdTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerURL());
         assertEquals("Wrong property value retrieved", "search_port",
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved", "gene_index_test",
+                bgeeProp.getSearchGenesIndex());
+        assertEquals("Wrong property value retrieved", "autocomplete_index_test",
+                bgeeProp.getSearchAutocompleteIndex());
         assertEquals("Wrong property value retrieved","/sysrexec",
                 bgeeProp.getTopAnatRScriptExecutable());
         assertEquals("Wrong property value retrieved","/sysrwd",

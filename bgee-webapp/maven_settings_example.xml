@@ -41,6 +41,8 @@
       <!-- Properties for running Sphinx -->
       <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
+      <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
+      <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
@@ -78,6 +80,8 @@
       <!-- Properties for running Sphinx -->
       <filter.org.bgee.search.url>127.0.0.1</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
+      <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
+      <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>

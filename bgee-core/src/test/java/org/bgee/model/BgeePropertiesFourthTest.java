@@ -33,6 +33,8 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         System.clearProperty(BgeeProperties.MINOR_VERSION_KEY);
         System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY);
         System.clearProperty(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_INDEX_GENES_KEY);
+        System.clearProperty(BgeeProperties.BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY);
         System.clearProperty(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY);
         System.clearProperty(BgeeProperties.TOP_ANAT_R_WORKING_DIRECTORY_KEY);
@@ -59,6 +61,12 @@ public class BgeePropertiesFourthTest extends BgeePropertiesParentTest {
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.BGEE_SEARCH_SERVER_PORT_DEFAULT,
                 bgeeProp.getSearchServerPort());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.BGEE_SEARCH_INDEX_GENES_DEFAULT,
+                bgeeProp.getSearchGenesIndex());
+        assertEquals("Wrong property value retrieved",
+                BgeeProperties.BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT,
+                bgeeProp.getSearchAutocompleteIndex());
         assertEquals("Wrong property value retrieved",
                 BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_DEFAULT,
                 bgeeProp.getBioconductorReleaseNumber());

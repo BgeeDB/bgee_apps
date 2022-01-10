@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,13 +35,13 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo.XrefUniprotBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo.XrefUniprotBean;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
-* Unit tests for {@link GenerateUniprotXRefWithExprInfo}.
+* Unit tests for {@link GenerateXRefsFilesWithExprInfo}.
 *
 * @author  Julien Wollbrett
 * @author  Frederic Bastian
@@ -48,10 +49,10 @@ import org.junit.rules.TemporaryFolder;
 * @version Bgee 14 Nov 2018
 */
 
-public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
+public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
 
     private static final String XREF_FILE = "/downloadfile/XRefBgee.tsv";
-    private final static Logger log = LogManager.getLogger(GenerateUniprotXRefWithExprInfoTest.class.getName());
+    private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfoTest.class.getName());
     @Override
     protected Logger getLogger() {
         return log;
@@ -60,7 +61,7 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
     public final TemporaryFolder testFolder = new TemporaryFolder();
     
     /**
-    * Test {@link GenerateUniprotXRefWithExprInfo#loadXrefFileWithoutExprInfo}.
+    * Test {@link GenerateXRefsFilesWithExprInfo#loadXrefFileWithoutExprInfo}.
     * Tested separately because the approach used to load Xref could change
     */
    @Test
@@ -72,14 +73,16 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
                new XrefUniprotBean("Q15615", "ENSG00000141219", 9606),
                new XrefUniprotBean("H9G367", "ENSACAG00000000004", 28377),
                new XrefUniprotBean("G1K846", "ENSACAG00000000006", 28377)));
+       
+       Set<Integer> speciesIds = new HashSet<>(9606,28377);
 
-       Set<XrefUniprotBean> xrefUniprotListLoaded = GenerateUniprotXRefWithExprInfo
-               .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile());
+       Map<Integer,Map<String,Set<String>>> xrefUniprotListLoaded = GenerateXRefsFilesWithExprInfo
+               .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile(), speciesIds);
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
     }
 
     /**
-     * Test {@link GenerateUniprotXRefWithExprInfo#generate}.
+     * Test {@link GenerateXRefsFilesWithExprInfo#generate}.
      */
     @Test
     public void shouldGenerateUniprotXRefFile() throws IOException {
@@ -151,6 +154,8 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         
         LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene4 = new LinkedHashMap<>();
         callsGene4.put(aeCall3, calls1);
+        
+        List<String> xrefsFileType = List.of("UNIPROT");
                       
         // Mock services
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
@@ -180,11 +185,12 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
                 new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
-        
+
         //method to test
-        GenerateUniprotXRefWithExprInfo generateUniproteXrefs = 
-                new GenerateUniprotXRefWithExprInfo(() -> serviceFactory);
-        generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile);
+        GenerateXRefsFilesWithExprInfo generateUniproteXrefs = 
+                new GenerateXRefsFilesWithExprInfo(() -> serviceFactory);
+        generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile,
+        		new HashSet<>(), xrefsFileType);
 
         //check file generation
         log.debug("Checking file {}", outputFile);

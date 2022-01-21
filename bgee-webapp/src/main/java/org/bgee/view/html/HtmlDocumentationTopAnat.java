@@ -78,7 +78,7 @@ public class HtmlDocumentationTopAnat extends HtmlDocumentationDownloadFile {
         // How to use
         this.writeln("<h3>How to use</h3>");
         this.writeln("<ul class='help'>");
-        this.writeln("<li>Enter a list of Ensembl identifiers into the first form field,</li>");
+        this.writeln("<li>Enter a list of gene identifiers into the first form field,</li>");
         this.writeln("<li>Optionally, enter a list of background genes,</li>");
         this.writeln("<li>Optionally, change the program parameters with the dropdown menu.</li>");
         this.writeln("<li>Click the 'Submit your job' button.</li>");

@@ -22,10 +22,10 @@ public abstract class DAOBigDecimalLinkedToDataTypes {
 
     public DAOBigDecimalLinkedToDataTypes(BigDecimal value, Collection<DAODataType> dataTypes) {
         if (value == null) {
-            throw new IllegalArgumentException("A value must be provided");
+            throw new IllegalArgumentException("A value must be provided, data types: " + dataTypes);
         }
         if (dataTypes == null || dataTypes.isEmpty()) {
-            throw new IllegalArgumentException("Some data types must be provided");
+            throw new IllegalArgumentException("Some data types must be provided, value: " + value);
         }
         this.value = value;
         this.dataTypes = EnumSet.copyOf(dataTypes);

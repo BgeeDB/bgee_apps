@@ -196,14 +196,14 @@ public class MultiSpeciesCallService extends CommonService {
 //        orderedTaxonIds.stream().forEach(t -> {
 //        	taxonToGenes.put(t, this.getServiceFactory().getGeneService()
 //                .getOrthologs(t, taxonomyFilter.getSpeciesIds(),
-//                		Collections.singleton(gene.getEnsemblGeneId())));
+//                		Collections.singleton(gene.getGeneId())));
 //        });     
 //        
 //        //from leaf to root
 //        TAXON: for (Integer taxId: orderedTaxonIds) {
 //        	Map<Integer, Set<Gene>> omaNodeIdToGenes = this.getServiceFactory().getGeneService()
 //                    .getOrthologs(taxId, taxonomyFilter.getSpeciesIds(),
-//                    		Collections.singleton(gene.getEnsemblGeneId()));
+//                    		Collections.singleton(gene.getGeneId()));
 //        	OMANODE: for (Integer omaNodeId:omaNodeIdToGenes.keySet()){
 //        		Set<ExpressionCall> calls = this.callService.loadExpressionCalls(
 //                		convertToExprCallFilter(multiSpeciesCallFilter, omaNodeIdToGenes.get(omaNodeId)),
@@ -229,7 +229,7 @@ public class MultiSpeciesCallService extends CommonService {
 //        	Map<Integer, Set<String>> speToGeneIds = orthologousGenes.stream()
 //        			.collect(Collectors.toMap(
 //        					g -> g.getSpecies().getId(),
-//        					g -> new HashSet<>(Arrays.asList(g.getEnsemblGeneId())),
+//        					g -> new HashSet<>(Arrays.asList(g.getGeneId())),
 //        					(s1, s2) -> {s1.addAll(s2); return s1;}));
 //        	
 ////        	if conserved, continue to next taxon; if not, stop iteration of taxon.
@@ -362,18 +362,18 @@ public class MultiSpeciesCallService extends CommonService {
 //        //and return Map<taxonId, Set<Gene>>, using the highest taxon ID
 //        int highestTaxonId = 0;// to implement
 //        Map<Taxon, Set<Gene>> taxonToGenes = this.getServiceFactory().getGeneHomologsService()
-//                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
+//                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
 //                        new HashSet<Integer>(speciesIds),highestTaxonId, true, true, false)
 //                .getOrthologsByTaxon();
 //        for (Integer taxonId : taxonIds) {
 //            log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
 //            // Retrieve homologous organ groups with gene IDs
 //            log.trace("Homologous organ groups with genes: {}", taxonToGenes);
-////            Set<String> orthologousEnsemblGeneIds = omaToGenes.values().stream()
+////            Set<String> orthologousGeneIds = omaToGenes.values().stream()
 ////                    .filter(geneSet -> geneSet.stream()
-////                            .anyMatch(g -> gene.getEnsemblGeneId().equals(g.getEnsemblGeneId())))
+////                            .anyMatch(g -> gene.getGeneId().equals(g.getGeneId())))
 ////                    .flatMap(Set::stream)
-////                    .map(g -> g.getEnsemblGeneId())
+////                    .map(g -> g.getGeneId())
 ////                    .collect(Collectors.toSet());
 //
 //            // Retrieve anat. entity similarities
@@ -403,7 +403,7 @@ public class MultiSpeciesCallService extends CommonService {
 ////                //FIXME: adapt to new API
 //////                ExpressionCallFilter callFilter =
 //////                        new ExpressionCallFilter(
-//////                    new GeneFilter(spId, orthologousEnsemblGeneIds),
+//////                    new GeneFilter(spId, orthologousGeneIds),
 //////                    conditionFilters,
 //////                    null,   // dataTypeFilter
 //////                    ExpressionSummary.EXPRESSED,
@@ -764,7 +764,7 @@ public class MultiSpeciesCallService extends CommonService {
     			.flatMap(ogg -> ogg.getGenes().stream())
     			.collect(Collectors.toMap(
     					g -> g.getSpecies().getId(),
-    					g -> new HashSet<>(Arrays.asList(g.getEnsemblGeneId())),
+    					g -> new HashSet<>(Arrays.asList(g.getGeneId())),
     					(s1, s2) -> {s1.addAll(s2); return s1;}));
     	Set<GeneFilter> geneFilters = new HashSet<>();
     	speToGeneIds.keySet().stream().forEach( s -> {

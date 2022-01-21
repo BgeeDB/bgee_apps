@@ -146,7 +146,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
 
         // Without specified species IDs and gene IDs
         dao.setAttributes(Arrays.asList(GeneDAO.Attribute.ID));
-        List<GeneTO> methGenes = dao.getGenesByEnsemblGeneIds(null).getAllTOs();
+        List<GeneTO> methGenes = dao.getGenesByGeneIds(null).getAllTOs();
         List<GeneTO> expectedGenes = Arrays.asList(
                 new GeneTO(1, "ID1", null, null, null, null, null, null, null), 
                 new GeneTO(2, "ID2", null, null, null, null, null, null, null), 
@@ -157,12 +157,12 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
 
         // With specified gene IDs without species IDs
-        // TODO: should test with several genes mapped to a same Ensembl gene ID
+        // TODO: should test with several genes mapped to a same gene ID
         dao.clearAttributes();
         dao.setAttributes(GeneDAO.Attribute.NAME);
         Set<String> geneIds = new HashSet<String>();
         geneIds.addAll(Arrays.asList("ID1", "ID2", "ID4"));
-        methGenes = dao.getGenesByEnsemblGeneIds(geneIds).getAllTOs();
+        methGenes = dao.getGenesByGeneIds(geneIds).getAllTOs();
         expectedGenes = Arrays.asList(
                 new GeneTO(null, null, "genN1", null, null, null, null, null, null), 
                 new GeneTO(null, null, "genN2", null, null, null, null, null, null), 
@@ -208,7 +208,7 @@ public class MySQLGeneDAOIT extends MySQLITAncestor {
                 TOComparator.areTOCollectionsEqual(methGenes, expectedGenes));
         
         // With specified species IDs AND gene IDs
-        // TODO: should test with several genes mapped to a same Ensembl gene ID
+        // TODO: should test with several genes mapped to a same gene ID
         dao.setAttributes(GeneDAO.Attribute.ID, GeneDAO.Attribute.DESCRIPTION);
         Set<String> geneIds = new HashSet<String>();
         geneIds.addAll(Arrays.asList("ID1"));

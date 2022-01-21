@@ -75,7 +75,7 @@ public class ElementGroupFromListSpliteratorTest extends TestAncestor {
 
         //Check that an exception is thrown if we provide an incorrect comparator
         spliterator = new ElementGroupFromListSpliterator<>(calls.stream(), extractGeneFunc,
-                (g1, g2) -> g2.getEnsemblGeneId().compareTo(g1.getEnsemblGeneId()));
+                (g1, g2) -> g2.getGeneId().compareTo(g1.getGeneId()));
         try {
             StreamSupport.stream(spliterator, false).collect(Collectors.toList());
             //test failed if no exception was thrown

@@ -105,8 +105,8 @@ public class CommandTopAnatTest extends TestAncestor {
         mapBg.put("ID4", new HashSet<>());
         when(geneService.loadGenesByAnyId(new TreeSet<>(bgSubmittedGeneIds), false)).thenReturn(mapBg.entrySet().stream());
 
-        when(geneService.loadGenesByEnsemblIds(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(fgGenes.stream());
-        when(geneService.loadGenesByEnsemblIds(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(bgGenes.stream());
+        when(geneService.loadGenesByIds(new TreeSet<>(fgSubmittedGeneIds))).thenReturn(fgGenes.stream());
+        when(geneService.loadGenesByIds(new TreeSet<>(bgSubmittedGeneIds))).thenReturn(bgGenes.stream());
         TreeSet<String> fgUndeterminedGeneIds = new TreeSet<>();
         TreeSet<String> bgUndeterminedGeneIds = new TreeSet<>(Arrays.asList("ID4"));
 

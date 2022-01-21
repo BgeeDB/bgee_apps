@@ -347,10 +347,10 @@
 //                anyObject())).thenReturn(condTOResultSet);
 //        
 //        GeneTOResultSet geneTOResultSet = getMockResultSet(GeneTOResultSet.class, Arrays.asList(
-//                new GeneTO(1, g1.getEnsemblGeneId(), g1.getName(), g1.getDescription(), g1.getSpecies().getId(), 
+//                new GeneTO(1, g1.getGeneId(), g1.getName(), g1.getDescription(), g1.getSpecies().getId(), 
 //                        1, 1, true, 1)));
 //        Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
-//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
+//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getGeneId()));
 //        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
 //
 //
@@ -475,7 +475,7 @@
 //        List<ExpressionCall> actualResults = service.loadExpressionCalls(
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
 //                        Collections.singleton(
-//                                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId())),
+//                                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId())),
 //                        null, null, callObservedData,
 //                    null, null, null, null, null), 
 //                attrs,
@@ -816,7 +816,7 @@
 //                        1, 1, true, 1)));
 //        Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
 //        speciesIdToGeneIds.put(spe1.getId(), 
-//                new HashSet<>(Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId())));
+//                new HashSet<>(Arrays.asList(g1.getGeneId(), g2.getGeneId())));
 //        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
 //                
 //        Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation = new HashMap<>();
@@ -968,7 +968,7 @@
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
 //                        Collections.singleton(
 //                                new GeneFilter(g1.getSpecies().getId(), 
-//                                        Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId()))),
+//                                        Arrays.asList(g1.getGeneId(), g2.getGeneId()))),
 //                        null, null, callObservedData,
 //                    null, null, null, null, null), 
 //                attrs,
@@ -1130,10 +1130,10 @@
 //        when(this.devStageOnt.getAncestors(devStage1, true)).thenReturn(new HashSet<>());
 //
 //        GeneTOResultSet geneTOResultSet = getMockResultSet(GeneTOResultSet.class, Arrays.asList(
-//                new GeneTO(1, g1.getEnsemblGeneId(), g1.getName(), g1.getDescription(), g1.getSpecies().getId(), 
+//                new GeneTO(1, g1.getGeneId(), g1.getName(), g1.getDescription(), g1.getSpecies().getId(), 
 //                        1, 1, true, 1)));
 //        Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
-//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
+//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getGeneId()));
 //        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenReturn(geneTOResultSet);
 //
 //        ConditionTOResultSet condTOResultSet = 
@@ -1178,7 +1178,7 @@
 //        List<ExpressionCall> actualResults = service.loadExpressionCalls(
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
 //                        Collections.singleton(
-//                                new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
+//                                new GeneFilter(spe1.getId(), g1.getGeneId())),
 //                        Collections.singleton(
 //                                new ConditionFilter(Collections.singleton(anatEntity1.getId()), 
 //                                        Collections.singleton(devStage1.getId()), null, null, null, null)), 
@@ -1322,7 +1322,7 @@
 //        when(this.devStageOnt.getAncestors(devStage1, true)).thenReturn(new HashSet<>());
 //
 //        Map<Integer, Set<String>> speciesIdToGeneIds = new HashMap<>();
-//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getEnsemblGeneId()));
+//        speciesIdToGeneIds.put(spe1.getId(), Collections.singleton(g1.getGeneId()));
 //        when(this.geneDAO.getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)).thenAnswer(
 //                new Answer<GeneTOResultSet>() {
 //                    public GeneTOResultSet answer(InvocationOnMock invocation) {
@@ -1766,7 +1766,7 @@
 //        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
 //        actualResultsOrdered = service.loadExpressionCalls(
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter, 
-//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
+//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getGeneId())),
 //                        Collections.singleton(new ConditionFilter(Collections.singleton(anatEntity1.getId()), 
 //                                null, null, null, null)), 
 //                        null, 
@@ -1792,7 +1792,7 @@
 //        this.configureMocks();
 //        actualResults = service.loadExpressionCalls(
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter,
-//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
+//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getGeneId())),
 //                        null,
 //                        null,
 //                        callObservedData,
@@ -1884,7 +1884,7 @@
 //        callObservedData.put(null, true);
 //        actualResults = service.loadExpressionCalls(
 //                new ExpressionCallFilter(summaryCallTypeQualityFilter,
-//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getEnsemblGeneId())),
+//                        Collections.singleton(new GeneFilter(spe1.getId(), g1.getGeneId())),
 //                        null,
 //                        null,
 //                        callObservedData,
@@ -1920,7 +1920,7 @@
 //        //in each anat. entity without overloading the memory.
 //        orderingAttributes.put(OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
 //        Collection<GeneFilter> geneFilters = Arrays.asList(new GeneFilter(spe1.getId(),
-//                Arrays.asList(g1.getEnsemblGeneId(), g2.getEnsemblGeneId())));
+//                Arrays.asList(g1.getGeneId(), g2.getGeneId())));
 //        ExpressionCallFilter callFilter = new ExpressionCallFilter(
 //                null,                              //we want both present and absent calls, of any quality
 //                geneFilters,                       //requested genes

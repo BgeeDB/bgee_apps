@@ -495,7 +495,7 @@ create table gene (
 -- defines whether the gene ID is present in Ensembl. For some species, they are not
 -- (for instance, bonobo; we use chimp genome)
     ensemblGene boolean not null default 1 COMMENT 'Is the gene in Ensembl (default) (= 1), if not (= 0)',
-    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same Ensembl gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same Ensembl gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the Ensembl gene ID is uniquely used in the Bgee database.'
+    geneMappedToGeneIdCount tinyint unsigned not null default 1 COMMENT 'number of genes in the Bgee database with the same gene ID. In Bgee, for some species with no genome available, we use the genome of a closely-related species, such as chimpanzee genome for analyzing bonobo data. For this reason, a same gene ID can be mapped to several species in Bgee. The value returned here is equal to 1 when the gene ID is uniquely used in the Bgee database.'
 ) engine = innodb;
 
 create table geneNameSynonym (

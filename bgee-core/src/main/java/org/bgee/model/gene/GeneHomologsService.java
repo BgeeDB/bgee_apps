@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO;
 import org.bgee.model.dao.api.gene.GeneHomologsDAO.GeneHomologsTO;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 
@@ -28,17 +29,34 @@ import org.bgee.model.species.Taxon;
  * {@link org.bgee.model.ServiceFactory ServiceFactory} to obtain {@code GeneHomologsService}s.
  * 
  * @author  Julien Wollbrett
- * @version Bgee 14.2, Feb. 2021
+ * @author  Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 14.2, Feb. 2021
 */
 
 //TODO check which services/DAO are used more than once
 
 public class GeneHomologsService extends CommonService{
-    
     private static final Logger log = LogManager.getLogger(GeneHomologsService.class.getName());
-    private GeneHomologsDAO geneHomologsDAO;
-    private GeneDAO geneDAO;
+
+    private final static int OMA_SOURCE_ID = 28;
+    private final static String OMA_SOURCE_NAME = "OMA";
+
+    protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
+        log.traceEntry("{}", toSort);
+        return log.traceExit(toSort.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
+                .collect(Collectors
+                    //Type hint necessary for some compilers
+                    .<Entry<Taxon, Set<Gene>>, Taxon, Set<Gene>, LinkedHashMap<Taxon, Set<Gene>>>toMap(
+                        Entry::getKey, Entry::getValue,
+                        (v1, v2) -> {throw log.throwing(new IllegalStateException(
+                                "Collision impossible"));},
+                        LinkedHashMap::new)));
+    }
+
+    private final GeneHomologsDAO geneHomologsDAO;
+    private final GeneDAO geneDAO;
     
     public GeneHomologsService(ServiceFactory serviceFactory) {
         super(serviceFactory);
@@ -49,7 +67,7 @@ public class GeneHomologsService extends CommonService{
     /**
      * get homolog genes from one gene
      * 
-     * @param ensemblGeneId     A {@code String} corresponding to the Ensembl ID of the gene 
+     * @param geneId     A {@code String} corresponding to the ID of the gene 
      *                          homologs have to be retrieved.
      * @param speciesId         An {@code int} corresponding to the species ID of the gene
      *                          homologs have to be retrieved.
@@ -59,10 +77,10 @@ public class GeneHomologsService extends CommonService{
      *                          retrieved.
      * @return                  A {@code GeneHomologs} object containing requested homologs
      */
-    public GeneHomologs getGeneHomologs(String ensemblGeneId, int speciesId, 
+    public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(ensemblGeneId, speciesId, withOrthologs, withParalogs);
-        GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
+        log.traceEntry("{}, {}, {}, {}", geneId, speciesId, withOrthologs, withParalogs);
+        GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), null, null, 
                 true, withOrthologs, withParalogs).iterator().next());
     }
@@ -70,7 +88,7 @@ public class GeneHomologsService extends CommonService{
     /**
      * get homolog genes from one gene
      * 
-     * @param ensemblGeneId         A {@code String} corresponding to the Ensembl ID of the gene 
+     * @param geneId         A {@code String} corresponding to the ID of the gene 
      *                              homologs have to be retrieved.
      * @param speciesId             An {@code int} corresponding to the species ID of the gene
      *                              homologs have to be retrieved.
@@ -89,12 +107,12 @@ public class GeneHomologsService extends CommonService{
      *                              retrieved.
      * @return                      A {@code GeneHomologs} object containing requested homologs
      */
-    public GeneHomologs getGeneHomologs(String ensemblGeneId, int speciesId, 
+    public GeneHomologs getGeneHomologs(String geneId, int speciesId, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon,
             boolean withOrthologs, boolean withParalogs) {
-        log.entry(ensemblGeneId, speciesId, homologsSpeciesIds, taxonId, withDescendantTaxon,
-                withOrthologs, withParalogs);
-        GeneFilter geneFilter = new GeneFilter(speciesId, ensemblGeneId);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", geneId, speciesId, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
+        GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds, 
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs).iterator().next());
     }
@@ -122,9 +140,8 @@ public class GeneHomologsService extends CommonService{
     public Set<GeneHomologs> getGeneHomologs(GeneFilter geneFilter, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon, 
             boolean withOrthologs, boolean withParalogs) {
-        
-        log.entry(geneFilter, homologsSpeciesIds, taxonId, withDescendantTaxon, withOrthologs, 
-                withParalogs);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneFilter, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
         
         return log.traceExit(getGeneHomologs(Collections.singleton(geneFilter), homologsSpeciesIds,
                 taxonId, withDescendantTaxon, withOrthologs, withParalogs));
@@ -154,51 +171,58 @@ public class GeneHomologsService extends CommonService{
     public Set<GeneHomologs> getGeneHomologs(Collection<GeneFilter> geneFilters, 
             Collection<Integer> homologsSpeciesIds, Integer taxonId, boolean withDescendantTaxon, 
             boolean withOrthologs, boolean withParalogs) {
-        
-        log.entry(geneFilters, homologsSpeciesIds, taxonId, withDescendantTaxon, withOrthologs, 
-                withParalogs);
-        
-        // transform geneFilter to a map of speciesId as key and set of geneId as value
-        Map<Integer, Set<String>> speciesIdToGeneIds = geneFilters.stream()
-                .collect(Collectors.toMap(p -> p.getSpeciesId(), p -> p.getEnsemblGeneIds()));
-        
-        // load geneTOs for which we want homologs
-        Set<GeneTO> geneTOs = this.getDaoManager().getGeneDAO()
-                .getGenesBySpeciesAndGeneIds(speciesIdToGeneIds)
-                .stream().collect(Collectors.toSet());
+        log.traceEntry("{}, {}, {}, {}, {}, {}", geneFilters, homologsSpeciesIds, taxonId,
+                withDescendantTaxon, withOrthologs, withParalogs);
+
+        if (geneFilters == null || geneFilters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("GeneFilters must be provided"));
+        }
+        Set<GeneFilter> clonedGeneFilter = new HashSet<>(geneFilters);
+        // load Species, we need all Species to be able to later load homologs,
+        // this is why we don't use the geneFilters here.
+        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesMap(null, false);
+        // load GeneBioTypes by geneBioTypeId, because we will also need them for homologs later
+        Map<Integer,GeneBioType> geneBioTypeMap = Collections
+                .unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
+        // load Genes by bgeeGeneId
+        Map<Integer, Gene> genesByBgeeGeneId = loadGeneMapFromGeneFilters(clonedGeneFilter,
+                speciesMap, geneBioTypeMap, geneDAO);
+
+        // We will need the source of homology information.
+        // For now, it is always and only OMA
+        Source omaSource = this.getServiceFactory().getSourceService()
+                .loadSourcesByIds(Collections.singleton(OMA_SOURCE_ID))
+                .values().stream().findFirst().orElse(null);
+        //Basic sanity check on OMA source
+        if (omaSource == null || !OMA_SOURCE_NAME.equals(omaSource.getName())) {
+            throw log.throwing(new IllegalStateException("OMA source not found"));
+        }
+        if (!omaSource.getXRefUrl().contains(Source.HOMOLOGY_TYPE_TAG)) {
+            throw log.throwing(new IllegalStateException("Could not find homology type tag in XRefURL. "
+                    + "URL: " + omaSource.getXRefUrl() + "- Tag: " + Source.HOMOLOGY_TYPE_TAG));
+        }
+        //XXX: maybe a better solution would be to have the OMA source twice in the database,
+        //once for orthology with the orthology XRef URL, once for paralogy with the paralogy XRef URL.
+        //But it doesn't change the fact that we currently have no mechanism in database
+        //to link homology info to these sources. So this solution is acceptable as long as
+        //we don't have a way to not hardcode the use of OMA here.
+        Source orthologySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.ORTHOLOGY);
+        Source paralogySource = loadHomologySource(omaSource, GeneHomologs.HomologyType.PARALOGY);
         
         // Retrieve all geneHomologsTO
         Set<GeneHomologsTO> orthologsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
         Set<GeneHomologsTO> paralogsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
-        Set<Integer> bgeeGeneIds = geneTOs.stream().map(gTO -> gTO.getId()).collect(Collectors.toSet());
         if (withOrthologs) {
-            orthologsTOs = new HashSet<>(geneHomologsDAO.getOrthologousGenesAtTaxonLevel(bgeeGeneIds, 
-                    taxonId, withDescendantTaxon, homologsSpeciesIds).getAllTOs());
+            orthologsTOs = new HashSet<>(geneHomologsDAO.getOrthologousGenesAtTaxonLevel(
+                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
+                    .getAllTOs());
         }
         if (withParalogs) {
-            paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(bgeeGeneIds,
-                    taxonId, withDescendantTaxon, homologsSpeciesIds).getAllTOs());
+            paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(
+                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
+                    .getAllTOs());
         }
-        
-        // load GeneBioTypes by geneBioTypeId
-        Map<Integer,GeneBioType> geneBioTypeMap = Collections
-                .unmodifiableMap(loadGeneBioTypeMap(this.geneDAO));
-        
-        // load Species by SpeciesId
-        Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
-                .loadSpeciesMap(null, false);
-        
-        // load Genes by bgeeGeneId
-        Map<Integer, Gene> genesByBgeeGeneId = geneTOs.stream()
-                .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO,
-                      Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
-                      .orElseThrow(() -> new IllegalStateException("Missing species ID " + 
-                              gTO.getSpeciesId() + "for gene " + gTO.getId())),
-                      null, null,
-                      Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
-                      .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID"
-                              + " for gene"))
-              )));
         
         // create Map with Taxon as key and Set of Gene as value and add them as value of a Map
         // where keys are bgeeGeneIds
@@ -208,16 +232,46 @@ public class GeneHomologsService extends CommonService{
                 groupHomologsByBgeeGeneId(paralogsTOs, geneBioTypeMap, speciesMap);
         
         // Create the Set of GeneHomologs
-        Set<GeneHomologs> homologsGeneSet = new HashSet<GeneHomologs>();
-        for (Integer bgeeGeneId : bgeeGeneIds) {
-            homologsGeneSet.add(new GeneHomologs(
-                    genesByBgeeGeneId.get(bgeeGeneId), 
-                    orthologsMap.get(bgeeGeneId), 
-                    paralogsMap.get(bgeeGeneId)
-                ));
-        }
+        Set<GeneHomologs> homologsGeneSet = genesByBgeeGeneId.keySet().stream()
+                .map(bgeeGeneId -> {
+                    Gene gene = genesByBgeeGeneId.get(bgeeGeneId);
+                    return new GeneHomologs(gene, orthologsMap.get(bgeeGeneId), paralogsMap.get(bgeeGeneId),
+                    loadXRef(gene, orthologySource), loadXRef(gene, paralogySource));
+                })
+                .collect(Collectors.toSet());
         
         return log.traceExit(homologsGeneSet);
+    }
+    /**
+     * We recreate separate OMA {@code Source}s for orthology and paralogy (in order to appropriately
+     * replaced the {@link Source#HOMOLOGY_TYPE_TAG}) tag in {@link Source#getXRefUrl()}).
+     * <p>
+     * maybe a better solution would be to have the OMA source twice in the database,
+     * once for orthology with the orthology XRef URL, once for paralogy with the paralogy XRef URL.
+     * But it doesn't change the fact that we currently have no mechanism in database
+     * to link homology info to these sources. So this solution is acceptable as long as
+     * we don't have a way to not hardcode the use of OMA here.
+     *
+     * @param omaSource The original {@code Source} for homology information.
+     * @param type      THe {@code GeneHomologs.HomologyType} that is orthology or paralogy.
+     * @return          The new {@code Source} with correct XRefURL.
+     */
+    private static Source loadHomologySource(Source source, GeneHomologs.HomologyType type) {
+        log.traceEntry("{}, {}", source, type);
+        //This assume that type.getReplacementForHomologyTypeURLTag()
+        //does not need URL encoding. We will not replace the gene ID tag here.
+        String xRefUrl = source.getXRefUrl().replace(Source.HOMOLOGY_TYPE_TAG,
+                type.getReplacementForHomologyTypeURLTag());
+        return log.traceExit(new Source(source.getId(), source.getName(),
+                type.name().toLowerCase() + " information from " + OMA_SOURCE_NAME,
+                xRefUrl, source.getExperimentUrl(), source.getEvidenceUrl(), source.getBaseUrl(),
+                source.getReleaseDate(), source.getReleaseVersion(), source.getToDisplay(),
+                source.getCategory(), source.getDisplayOrder()));
+    }
+    private static GeneXRef loadXRef(Gene gene, Source source) {
+        log.traceEntry("{}, {}", gene, source);
+        return log.traceExit(new GeneXRef(gene.getGeneId(), gene.getName(), source,
+                gene.getGeneId(), gene.getSpecies().getScientificName()));
     }
     /**
      * create a {@code Map} where keys are bgeeGeneIds and value is a second {@code Map} with
@@ -236,7 +290,7 @@ public class GeneHomologsService extends CommonService{
     private Map<Integer, LinkedHashMap<Taxon, Set<Gene>>> groupHomologsByBgeeGeneId(
             Set<GeneHomologsTO> homologsTOs, Map<Integer, GeneBioType> geneBioTypeMap,
             Map<Integer, Species> speciesMap) {
-        log.entry(homologsTOs, geneBioTypeMap, speciesMap);
+        log.traceEntry("{}, {}, {}", homologsTOs, geneBioTypeMap, speciesMap);
         
         // Map with geneId as Key and Map as value having taxonId as key and Set of bgeeGeneId 
         // as value.
@@ -248,8 +302,7 @@ public class GeneHomologsService extends CommonService{
         
         // Create Map with bgeeGeneId as key and the corresponding Gene as value. 
         Map<Integer, Gene> homologousGenesByBgeeGeneId = (homologsTOs != null && !homologsTOs.isEmpty())
-                ? geneDAO
-                        .getGenesByBgeeIds(
+                ? geneDAO.getGenesByBgeeIds(
                                 homologsTOs.stream().map(GeneHomologsTO::getTargetGeneId).collect(Collectors.toSet()))
                         .stream()
                         .collect(Collectors.toMap(GeneTO::getId, gTO -> mapGeneTOToGene(gTO, Optional
@@ -292,18 +345,5 @@ public class GeneHomologsService extends CommonService{
             homologsGeneByTaxonBygeneId.put(entryByGeneId.getKey(), homologsGeneByTaxon);
         }
         return log.traceExit(homologsGeneByTaxonBygeneId);
-    }
-
-    protected static LinkedHashMap<Taxon, Set<Gene>> sortMapByTaxon(LinkedHashMap<Taxon, Set<Gene>> toSort) {
-        log.entry(toSort);
-        return log.traceExit(toSort.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Taxon::getLevel).reversed()))
-                .collect(Collectors
-                    //Type hint necessary for some compilers
-                    .<Entry<Taxon, Set<Gene>>, Taxon, Set<Gene>, LinkedHashMap<Taxon, Set<Gene>>>toMap(
-                        Entry::getKey, Entry::getValue,
-                        (v1, v2) -> {throw log.throwing(new IllegalStateException(
-                                "Collision impossible"));},
-                        LinkedHashMap::new)));
     }
 }

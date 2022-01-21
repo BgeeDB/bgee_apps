@@ -91,16 +91,16 @@ public abstract class BgeeEnum {
      *                          {@code representations} has an element {@code null}.
      * @param <T> The type of {@code BgeeEnumField}
      */
-    public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
+    public static final <T extends Enum<T> & BgeeEnumField> EnumSet<T> 
         convertStringSetToEnumSet(Class<T> enumClass, Collection<String> representations) {
         log.traceEntry("{}", representations);
 
         if (representations == null || representations.isEmpty()) {
-            return log.traceExit((Set<T>) null);
+            return log.traceExit((EnumSet<T>) null);
         }
 
         Set<String> filteredRepresentations = new HashSet<>(representations);
-        Set<T> enumSet = new HashSet<>();
+        EnumSet<T> enumSet = EnumSet.noneOf(enumClass);
         for (String repr: filteredRepresentations) {
             T convertedRep = convert(enumClass, repr);
             enumSet.add(convertedRep);

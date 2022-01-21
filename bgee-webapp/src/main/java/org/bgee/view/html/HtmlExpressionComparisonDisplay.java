@@ -131,7 +131,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
 
         this.writeln("<p>Compare expression of several genes. If genes belong to several species, "
                 + "comparisons will be performed in homologous organs. Please enter one "
-                + "Ensembl ID per line.</p>");
+                + "gene ID per line.</p>");
 
         this.writeln("</div>");
 
@@ -191,7 +191,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
                 .append(this.getRequestParameters().getUrlParametersInstance()
                         .getParamGeneList().getName()).append("'" +
                 "                            form='bgee_expr_comp_form' autofocus rows='10'" +
-                "                            placeholder='Enter a list of Ensembl IDs (one ID per line or separated by a comma)'>")
+                "                            placeholder='Enter a list of gene IDs (one ID per line or separated by a comma)'>")
                 .append(idsText).append("</textarea>");
         sb.append("            </div>");
 
@@ -224,7 +224,7 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         StringBuilder sb = new StringBuilder();
 
         if (searchResult != null && !searchResult.getRequestElementsNotFound().isEmpty()) {
-            sb.append("<p>Unknown Ensembl IDs: ");
+            sb.append("<p>Unknown gene IDs: ");
             sb.append(searchResult.getRequestElementsNotFound().stream()
                     .sorted()
                     .map(gId -> "'" + htmlEntities(gId) + "'")
@@ -278,8 +278,8 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
     /**
      * 
      * @param condToCounts
-     * @param function          A {@code Function} extracting from {@code T} a {@code Map}
-     *                          where keys is an {@code AnatEntity} representing
+     * @param function          A {@code Function} extracting from {@code T} an {@code Entry}
+     *                          where key is an {@code AnatEntity} representing
      *                          a cell type and the associated value an {@code AnatEntity} representing
      *                          an anat. entity (post-composition of terms).
      * 
@@ -407,15 +407,15 @@ public class HtmlExpressionComparisonDisplay extends HtmlParentDisplay
         Function<Gene, String> f = g -> {
             RequestParameters geneUrl = this.getNewRequestParameters();
             geneUrl.setPage(RequestParameters.PAGE_GENE);
-            geneUrl.setGeneId(g.getEnsemblGeneId());
+            geneUrl.setGeneId(g.getGeneId());
             geneUrl.setSpeciesId(g.getSpecies().getId());
-            return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getEnsemblGeneId()) + "</a>" 
+            return "<a href='" + geneUrl.getRequestURL() + "'>" + htmlEntities(g.getGeneId()) + "</a>" 
                     + (StringUtils.isBlank(g.getName())? "": " " + htmlEntities(g.getName()));
         };
 
         //Need a compiler hint of generic type for my Java version
         return log.traceExit(this.<Gene>getCell(genes.stream()
-                        .sorted(Comparator.comparing(Gene::getEnsemblGeneId))
+                        .sorted(Comparator.comparing(Gene::getGeneId))
                         .collect(Collectors.toList()),
                 "gene" + (genes.size() > 1? "s": ""),
                 f));

@@ -79,7 +79,7 @@ public enum DataType implements BgeeEnumField {
      * @throws IllegalArgumentException If a representation does not correspond 
      *                                  to any {@code DataType}.
      */
-    public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
+    public static final EnumSet<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
     }
 

@@ -78,7 +78,7 @@ import org.bgee.model.species.Species;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Oct. 2015
  */
 //******************
@@ -173,13 +173,13 @@ public class CallService extends CommonService {
      */
     public static enum Attribute implements Service.Attribute {
         //TODO: remove the _ID part from condition parameters
-        GENE(false, null), ANAT_ENTITY_ID(true, "anatomicalEntity"),
-        DEV_STAGE_ID(true, "developmentalStage"), CELL_TYPE_ID(true, "cellType"),
-        SEX_ID(true, "sex"), STRAIN_ID(true, "strain"), CALL_TYPE(false, null),
-        DATA_QUALITY(false, null), OBSERVED_DATA(false, null), MEAN_RANK(false, null), 
-        EXPRESSION_SCORE(false, null), DATA_TYPE_RANK_INFO(false, null),
-        P_VALUE_INFO_ALL_DATA_TYPES(false, null), P_VALUE_INFO_EACH_DATA_TYPE(false, null),
-        GENE_QUAL_EXPR_LEVEL(false, null), ANAT_ENTITY_QUAL_EXPR_LEVEL(false, null);
+        GENE(false, null, null), ANAT_ENTITY_ID(true, "anat_entity", "Anat. entity"),
+        DEV_STAGE_ID(true, "dev_stage", "Dev. stage"), CELL_TYPE_ID(true, "cell_type", "Cell type"),
+        SEX_ID(true, "sex", "Sex"), STRAIN_ID(true, "strain", "Strain"), CALL_TYPE(false, null, null),
+        DATA_QUALITY(false, null, null), OBSERVED_DATA(false, null, null), MEAN_RANK(false, null, null), 
+        EXPRESSION_SCORE(false, null, null), DATA_TYPE_RANK_INFO(false, null, null),
+        P_VALUE_INFO_ALL_DATA_TYPES(false, null, null), P_VALUE_INFO_EACH_DATA_TYPE(false, null, null),
+        GENE_QUAL_EXPR_LEVEL(false, null, null), ANAT_ENTITY_QUAL_EXPR_LEVEL(false, null, null);
 
 
         private final static Set<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
@@ -241,14 +241,16 @@ public class CallService extends CommonService {
         }
 
         private final String condParamName;
+        private final String displayName;
         /**
          * @see #isConditionParameter()
          */
         private final boolean conditionParameter;
 
-        private Attribute(boolean conditionParameter, String condParamName) {
+        private Attribute(boolean conditionParameter, String condParamName, String displayName) {
             this.conditionParameter = conditionParameter;
             this.condParamName = condParamName;
+            this.displayName = displayName;
         }
 
         /**
@@ -261,6 +263,9 @@ public class CallService extends CommonService {
         }
         public String getCondParamName() {
             return this.condParamName;
+        }
+        public String getDisplayName() {
+            return this.displayName;
         }
     }
 
@@ -437,8 +442,8 @@ public class CallService extends CommonService {
         }
 
         // Retrieve species, get a map species ID -> Species
-        final Map<Integer, Species> speciesMap = loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(),
-                this.getServiceFactory().getSpeciesService());
+        final Map<Integer, Species> speciesMap = this.getServiceFactory().getSpeciesService()
+                .loadSpeciesMapFromGeneFilters(callFilter.getGeneFilters(), true);
         //If several species were requested, it is necessary to request at least GENE
         //or a condition parameter (ANAT_ENTITY_ID, etc)
         if (speciesMap.size() > 1 && !clonedAttrs.isEmpty() &&
@@ -451,12 +456,13 @@ public class CallService extends CommonService {
         //Retrieve a Map of Bgee gene IDs to Gene. This will throw a GeneNotFoundException
         //if some requested gene IDs were not found in Bgee.
         Map<Integer, Gene> geneMap = loadGeneMapFromGeneFilters(callFilter.getGeneFilters(),
-                speciesMap, this.geneDAO);
+                speciesMap, null, this.geneDAO);
         assert !geneMap.isEmpty();
 
         // Define condition parameter combination allowing to target a specific data aggregation
         final EnumSet<ConditionDAO.Attribute> condParamCombination =
                 loadConditionParameterCombination(callFilter, clonedAttrs, clonedOrderingAttrs.keySet());
+        log.debug("condParamCombination: {}", condParamCombination);
 
         // Retrieve conditions by condition IDs if condition info requested in Attributes
         // (explicitly, or because clonedAttrs is empty and all attributes are requested),
@@ -465,6 +471,7 @@ public class CallService extends CommonService {
         boolean loadCondMap = clonedAttrs.isEmpty() ||
                 clonedAttrs.contains(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) ||
                 clonedAttrs.stream().anyMatch(a -> a.isConditionParameter());
+        log.debug("loadCondMap: {}", loadCondMap);
         final Map<Integer, Condition> condMap = Collections.unmodifiableMap(
                 !loadCondMap?
                     new HashMap<>():
@@ -474,6 +481,7 @@ public class CallService extends CommonService {
                             convertCondParamAttrsToCondDAOAttrs(clonedAttrs),
                         this.conditionDAO, this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService));
+        log.trace("condMap: {}", condMap);
 
         // Retrieve min./max ranks per anat. entity if info requested
         // and if the main expression call query will not allow to obtain this information
@@ -506,6 +514,58 @@ public class CallService extends CommonService {
             DiffExpressionCallFilter callFilter) {
         log.traceEntry("{} {}", speciesId, callFilter);
         throw log.throwing(new UnsupportedOperationException("Load of diff. expression calls not implemented yet"));
+    }
+
+    public List<ExpressionCall> loadSilverCondObservedCalls(GeneFilter geneFilter,
+            Collection<CallService.Attribute> condParams, ExpressionSummary callType,
+            Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}", geneFilter, condParams, callType, dataTypeFilter);
+
+        EnumSet<CallService.Attribute> clonedCondParams = condParams == null || condParams.isEmpty()?
+                CallService.Attribute.getAllConditionParameters(): EnumSet.copyOf(condParams);
+        EnumSet<CallService.Attribute> attrs = EnumSet.of(CallService.Attribute.GENE,
+                CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
+                CallService.Attribute.MEAN_RANK, CallService.Attribute.EXPRESSION_SCORE,
+                //We need the p-value info per data type to know which data types
+                //produced the calls
+                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
+                //We also want to know the global FDR-corrected p-value
+                CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
+        attrs.addAll(clonedCondParams);
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderBy =
+                new LinkedHashMap<>();
+        orderBy.put(CallService.OrderingAttribute.MEAN_RANK,
+                ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                        Service.Direction.DESC: Service.Direction.ASC);
+
+        List<ExpressionCall> calls = this.loadExpressionCalls(
+                new ExpressionCallFilter(ExpressionSummary.NOT_EXPRESSED.equals(callType)?
+                        ExpressionCallFilter.SILVER_ABSENT_ARGUMENT:
+                            ExpressionCallFilter.SILVER_PRESENT_ARGUMENT,
+                        Collections.singleton(geneFilter),
+                        Collections.singleton(new ConditionFilter(null, null, null,
+                                null, null, clonedCondParams)),
+                        dataTypeFilter, null),
+                attrs,
+                orderBy)
+                .collect(Collectors.toList());
+        log.trace("calls: {}", calls);
+        if (calls.isEmpty()) {
+            return log.traceExit(calls);
+        }
+
+        ConditionGraph conditionGraph = this.getServiceFactory().getConditionGraphService()
+                .loadConditionGraph(calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
+        //order by rank and most precise conditions
+        calls = ExpressionCall.filterAndOrderCallsByRank(calls, conditionGraph,
+                ExpressionSummary.NOT_EXPRESSED.equals(callType)? true: false);
+        //redundant calls
+        final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
+                calls, conditionGraph);
+
+        return log.traceExit(calls.stream()
+                .filter(c -> !redundantCalls.contains(c))
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -558,7 +618,7 @@ public class CallService extends CommonService {
         //**************************************************
         // Sanity checks and prepare arguments
         //**************************************************
-        if (geneFilter.getEnsemblGeneIds().size() != 1) {
+        if (geneFilter.getGeneIds().size() != 1) {
             throw log.throwing(new IllegalArgumentException("GeneFilter not targeting only one gene"));
         }
 
@@ -591,7 +651,7 @@ public class CallService extends CommonService {
                         orderByOrgan)
                 .collect(Collectors.toList());
         if (organCalls.isEmpty()) {
-            log.debug("No calls for gene {}", geneFilter.getEnsemblGeneIds().iterator().next());
+            log.debug("No calls for gene {}", geneFilter.getGeneIds().iterator().next());
             return log.traceExit(new LinkedHashMap<>());
         }
 
@@ -747,7 +807,7 @@ public class CallService extends CommonService {
                     .collect(Collectors.toSet()));
         }
         filteredOrderedCondCalls = ExpressionCall.filterAndOrderCallsByRank(filteredOrderedCondCalls,
-                conditionGraph);
+                conditionGraph, false);
         //REDUNDANT COND CALLS
         final Set<ExpressionCall> redundantCalls = ExpressionCall.identifyRedundantCalls(
                 filteredOrderedCondCalls, conditionGraph);
@@ -833,7 +893,8 @@ public class CallService extends CommonService {
         if (callFilter.getGeneFilters().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
         }
-        Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters())
+        Set<Gene> genes = this.getServiceFactory().getGeneService().loadGenes(callFilter.getGeneFilters(),
+                false, false, false)
                 .collect(Collectors.toSet());
         return log.traceExit(this.loadSingleSpeciesExprAnalysis(callFilter, genes));
     }
@@ -1183,13 +1244,13 @@ public class CallService extends CommonService {
 
         //We would also need the results to be retrieved ordered by gene IDs first,
         //unless only one gene is requested
-        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //Will work if the query is done on one species only, otherwise we can have a same gene ID
         //linked to different species, when we use the genome of a closely related species
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
         if ((orderingAttributes.isEmpty() ||
                 !orderingAttributes.keySet().iterator().next().equals(OrderingAttribute.GENE_ID)) &&
                 (callFilter.getGeneFilters().size() != 1 ||
-                callFilter.getGeneFilters().iterator().next().getEnsemblGeneIds().size() != 1)) {
+                callFilter.getGeneFilters().iterator().next().getGeneIds().size() != 1)) {
             return log.traceExit(false);
         }
 
@@ -1236,7 +1297,7 @@ public class CallService extends CommonService {
         //We would need the query to retrieve expression calls in any dev. stage and for any gene,
         //not discarding observed conditions or calls, to compute the expression level categories
         //(part of the checks done in isQueryAllowingToComputeAnyQualExprLevel)
-        if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+        if (callFilter.getGeneFilters().stream().anyMatch(gf -> !gf.getGeneIds().isEmpty())) {
             return log.traceExit(false);
         }
 
@@ -1271,7 +1332,7 @@ public class CallService extends CommonService {
 
         //We would also need the results to be retrieved ordered by gene/anat. entity IDs first,
         //unless one specific gene or one specific anat. entity was requested (checked in the calling methods).
-        //Will work if the query is done on one species only, otherwise we can have a same Ensemble Gene ID
+        //Will work if the query is done on one species only, otherwise we can have a same gene ID
         //(when we use the genome of a closely related species), or same anat. entity ID,
         //linked to different species.
         Set<Integer> requestedSpeciesIds = callFilter.getGeneFilters().stream()
@@ -1360,7 +1421,7 @@ public class CallService extends CommonService {
         // *********************************
         // Gene and species IDs filters
         //**********************************
-        //we map each GeneFilter to Bgee gene IDs rather than Ensembl gene IDs.
+        //we map each GeneFilter to Bgee gene IDs rather than gene IDs.
         Set<Integer> geneIdFilter = null;
         Set<Integer> speciesIds = null;
         if (callFilter != null) {
@@ -1397,7 +1458,8 @@ public class CallService extends CommonService {
         // *********************************
         // P-value filters
         //**********************************
-        Collection<Set<DAOFDRPValueFilter>> pValueFilters = generateExprQualDAOPValFilters(callFilter);
+        Collection<Set<DAOFDRPValueFilter>> pValueFilters = generateExprQualDAOPValFilters(
+                callFilter, condParamCombination);
 
 
         // *********************************
@@ -1510,8 +1572,8 @@ public class CallService extends CommonService {
     }
 
     private static Set<Set<DAOFDRPValueFilter>> generateExprQualDAOPValFilters(
-            ExpressionCallFilter callFilter) {
-        log.traceEntry("{}", callFilter);
+            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParams) {
+        log.traceEntry("{}, {}", callFilter, condParams);
 
         EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(callFilter.getDataTypeFilters());
         return log.traceExit(callFilter.getSummaryCallTypeQualityFilter().entrySet().stream()
@@ -1530,7 +1592,7 @@ public class CallService extends CommonService {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false)));
+                                    false, condParams)));
                 } else {
                     //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
                     //we'll get calls SILVER or GOLD
@@ -1539,7 +1601,7 @@ public class CallService extends CommonService {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false)));
+                                    false, condParams)));
                     //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
                     //in a descendant condition. We end up with the following conditions:
                     // * FDR-corrected p-value in condition including sub-conditions <= 0.05
@@ -1551,7 +1613,7 @@ public class CallService extends CommonService {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                         DAOPropagationState.DESCENDANT,
-                                        false)));
+                                        false, condParams)));
                     }
                 }
 
@@ -1577,27 +1639,27 @@ public class CallService extends CommonService {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                         DAOPropagationState.SELF_AND_DESCENDANT,
-                                        true));
+                                        true, condParams));
                 } else {
                     if (qual.equals(SummaryQuality.GOLD)) {
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                         //we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                     } else {
                         absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_LOW_GREATER_THAN,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true));
+                                true, condParams));
                         //Unless we request BRONZE quality, we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         if (qual.equals(SummaryQuality.SILVER)) {
@@ -1605,7 +1667,7 @@ public class CallService extends CommonService {
                                     daoDataTypesTrustedForNotExpressed,
                                     DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    true));
+                                    true, condParams));
                         }
                     }
                     //in all cases, we don't want PRESENT calls in a sub-condition
@@ -1613,7 +1675,7 @@ public class CallService extends CommonService {
                             daoDataTypes,
                             DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                             DAOPropagationState.DESCENDANT,
-                            false));
+                            false, condParams));
                     //And unless we request BRONZE, we want the same to hold true
                     //with only the data types we trust to produce ABSENT calls
                     if (!qual.equals(SummaryQuality.BRONZE)) {
@@ -1621,7 +1683,7 @@ public class CallService extends CommonService {
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.DESCENDANT,
-                                false));
+                                false, condParams));
                     }
                 }
                 pValFilters.add(absentAndFilters);
@@ -1943,7 +2005,15 @@ public class CallService extends CommonService {
         // Gene and Condition
         //***********************************
         Condition cond = condMap.get(globalCallTO.getConditionId());
+        if (cond == null && attrs.stream().anyMatch(c -> c.isConditionParameter())) {
+            throw log.throwing(new IllegalStateException("Could not find Condition for globalConditionId: "
+                + globalCallTO.getConditionId() + " for callTO: " + globalCallTO));
+        }
         Gene gene = geneMap.get(globalCallTO.getBgeeGeneId());
+        if (gene == null && attrs.contains(Attribute.GENE)) {
+            throw log.throwing(new IllegalStateException("Could not find Gene for bgeeGeneId: "
+                    + globalCallTO.getBgeeGeneId() + " for callTO: " + globalCallTO));
+        }
 
         //***********************************
         // Info needed for expression score
@@ -2392,7 +2462,7 @@ public class CallService extends CommonService {
                 }
             }
         }
-        log.debug("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
+        log.trace("{} - {} - {} - {} - {} - {}", dataTypesPVal, requestedDataTypesTrustedForAbsentCalls,
                 dataTypesTrustedForAbsentPVal, bestDescendantFdrPValues, dataTypesBestDescendantPVal,
                 dataTypesTrustedForAbsentBestDescendantPVal);
         String exceptionMsg = "It should have been possible to infer "

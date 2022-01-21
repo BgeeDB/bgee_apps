@@ -5,19 +5,17 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.gene.GeneMatch;
 import org.bgee.view.SearchDisplay;
 
 /**
  * XML view for the search category display
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Feb. 2016
  */
 //TODO javadoc
@@ -30,65 +28,8 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 		super(response, requestParameters, prop, factory);
 	}
 
-	@Override
-	public void displayGeneCompletionByGeneList(Collection<GeneMatch> geneMatches) {
-		log.entry(geneMatches);
-
-		this.startDisplay();
-		
-		this.writeln("<genes>");
-        
-		if (geneMatches != null) {
-			for (GeneMatch gene : geneMatches) {
-				//find out where the match came from, to display it
-				String label = "";
-				String labelSource = "";
-				switch (gene.getMatchSource()) {
-					case NAME:
-						label = gene.getGene().getName();
-						labelSource = "name";
-						break;
-					case ID:
-						label = gene.getGene().getEnsemblGeneId();
-						labelSource = "id";
-						break;
-					case DESCRIPTION:
-						label = gene.getGene().getDescription();
-						labelSource = "description";
-						break;
-					case SYNONYM:
-						label = gene.getTerm();
-						labelSource = "synonym";
-						break;
-					case XREF:
-						label = gene.getTerm();
-						labelSource = "x-ref";
-						break;
-					default:
-						throw log.throwing(new IllegalStateException("Unrecognized MatchSource: " + gene.getMatchSource()));
-				}
-
-				this.writeln("<gene id='" + XmlParentDisplay.xmlEntities(gene.getGene().getEnsemblGeneId()) + "' " +
-						"name='" + XmlParentDisplay.xmlEntities(gene.getGene().getName()) + "' " +
-						"label='" + XmlParentDisplay.xmlEntities(label) + "' " +
-						"label_source='" + labelSource + "' " +
-						"species_id='" + String.valueOf(gene.getGene().getSpecies().getId()) + "' " +
-						"species_name='" + XmlParentDisplay.xmlEntities(
-						StringUtils.isNotBlank(gene.getGene().getSpecies().getName()) ?
-								gene.getGene().getSpecies().getName() :
-								gene.getGene().getSpecies().getShortName()) + "' " +
-						"/>");
-			}
-		}
-		this.writeln("</genes>");
-		
-		this.endDisplay();
-		
-		log.traceExit();
-	}
-
 	public void displayMatchesForGeneCompletion(Collection<String> matches) {
-		log.entry(matches);
+		log.traceEntry("{}", matches);
 
 		this.startDisplay();
 
@@ -108,7 +49,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 	@Override
 	public void displayExpasyResult(int count, String searchTerm) {
-		log.entry(count, searchTerm);
+		log.traceEntry("{}, {}", count, searchTerm);
 
 		this.startDisplay();
 

@@ -163,7 +163,7 @@ public class CommandRawData extends CommandParent {
         
         
 //        if (geneId != null) {
-//            Set<Gene> genes = serviceFactory.getGeneService().loadGenesByEnsemblId(geneId, true);
+//            Set<Gene> genes = serviceFactory.getGeneService().loadGenesById(geneId, true);
 //            
 //            if (genes.size() == 0) {
 //                throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId));

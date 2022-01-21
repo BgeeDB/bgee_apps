@@ -19,19 +19,17 @@ import org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet
 import org.bgee.model.dao.api.gene.GeneXRefDAO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTO;
 import org.bgee.model.dao.api.gene.GeneXRefDAO.GeneXRefTOResultSet;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTO;
-import org.bgee.model.dao.api.gene.HierarchicalGroupDAO.HierarchicalNodeToGeneTOResultSet;
+import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.source.Source;
 import org.bgee.model.source.SourceService;
-import org.bgee.model.Entity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.TestAncestor;
 
 import static org.junit.Assert.assertEquals;
-import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -46,7 +44,7 @@ import org.mockito.stubbing.Answer;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Julien Wollbrett
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, Nov. 2015
  */
 public class GeneServiceTest extends TestAncestor {
@@ -61,20 +59,21 @@ public class GeneServiceTest extends TestAncestor {
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         when(serviceFactory.getDAOManager()).thenReturn(managerMock);
 
-        // Mock SpeciesService
-        SpeciesService speciesService = mock(SpeciesService.class);
-        when(serviceFactory.getSpeciesService()).thenReturn(speciesService);
-        Set<Species> species = new HashSet<>(Arrays.asList(
-            new Species(11), new Species(22), new Species(44)));
-        Map<Integer, Species> speciesMap = species.stream()
-                .collect(Collectors.toMap(Entity::getId, s -> s));
-        when(speciesService.loadSpeciesMap(speciesMap.keySet(), false)).thenReturn(speciesMap);
-
         Map<Integer, Set<String>> filtersToMap = new HashMap<>();
         filtersToMap.put(11, new HashSet<>(Arrays.asList("ID1")));
         filtersToMap.put(22, new HashSet<>(Arrays.asList("ID2")));
         filtersToMap.put(44, new HashSet<>(Arrays.asList("ID4")));
-        
+
+        // Mock SpeciesDAO
+        SpeciesDAO speciesDAO = mock(SpeciesDAO.class);
+        when(managerMock.getSpeciesDAO()).thenReturn(speciesDAO);
+        SpeciesTOResultSet mockSpeciesRs = getMockResultSet(SpeciesTOResultSet.class,
+                Arrays.asList(
+                        new SpeciesTO(11, null, null, null, null, null, null, null, 1, null),
+                        new SpeciesTO(22, null, null, null, null, null, null, null, 1, null),
+                        new SpeciesTO(44, null, null, null, null, null, null, null, 1, null)));
+        when(speciesDAO.getSpeciesByIds(filtersToMap.keySet(), null)).thenReturn(mockSpeciesRs);
+
         // Mock GeneDAO
         GeneDAO dao = mock(GeneDAO.class);
         when(managerMock.getGeneDAO()).thenReturn(dao);
@@ -86,6 +85,13 @@ public class GeneServiceTest extends TestAncestor {
         GeneBioTypeTOResultSet mockBioTypeRs = getMockResultSet(GeneBioTypeTOResultSet.class,
                 Arrays.asList(new GeneBioTypeTO(1, "type1"), new GeneBioTypeTO(2, "type2")));
         when(dao.getGeneBioTypes()).thenReturn(mockBioTypeRs);
+
+        // Mock SourceService
+        SourceService sourceService = mock(SourceService.class);
+        when(serviceFactory.getSourceService()).thenReturn(sourceService);
+        Map<Integer, Source> sourceMap = new HashMap<>();
+        sourceMap.put(1, new Source(1));
+        when(sourceService.loadSourcesByIds(new HashSet<Integer>(Arrays.asList(1)))).thenReturn(sourceMap);
 
         // Test
         Set<Gene> expectedGenes = new HashSet<>();
@@ -99,7 +105,7 @@ public class GeneServiceTest extends TestAncestor {
         geneFilters.add(new GeneFilter(22, "ID2"));
         geneFilters.add(new GeneFilter(44, "ID4"));
         assertEquals("Incorrect gene to keywords mapping",
-                expectedGenes, service.loadGenes(geneFilters).collect(Collectors.toSet()));
+                expectedGenes, service.loadGenes(geneFilters, false, false, false).collect(Collectors.toSet()));
     }
 
     /**
@@ -150,11 +156,11 @@ public class GeneServiceTest extends TestAncestor {
                         new GeneTO(4, "ID4", "Name4", null, 1, 1, null, null, 1)));
         when(geneDao.getGenesByBgeeIds(bgeeGeneIds)).thenReturn(mockGeneRs1);
 
-        // Mock the GeneDAO response from ensembl ids
+        // Mock the GeneDAO response from IDs
         GeneTOResultSet mockGeneRs2 = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(1, "ID1", "Name1a", null, 1, 1, null, null, 1),
                         new GeneTO(11, "ID1", "Name1b", null, 2, 1, null, null, 1)));
-        when(geneDao.getGenesByEnsemblGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
+        when(geneDao.getGenesByGeneIds(new HashSet<>(Arrays.asList("ID1", "UnknownID"))))
                 .thenReturn(mockGeneRs2);
 
         when(geneDao.getGeneBioTypes()).thenAnswer(
@@ -187,7 +193,7 @@ public class GeneServiceTest extends TestAncestor {
      * Test {@link GeneService#loadGeneById(String)}.
      */
     @Test
-    public void shouldLoadGeneByEnsemblId() {
+    public void shouldLoadGeneById() {
         // Initialize mock
         int bgeeGeneId = 1;
         String geneId = "ID1";
@@ -223,7 +229,7 @@ public class GeneServiceTest extends TestAncestor {
         // Mock gene DAO
         GeneTOResultSet mockGeneRs = getMockResultSet(GeneTOResultSet.class,
                 Arrays.asList(new GeneTO(bgeeGeneId, geneId, "Name1", "", 10090, 1, 1, true, 1)));
-        when(geneDao.getGenesByEnsemblGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
+        when(geneDao.getGenesByGeneIds(new HashSet<String>(Arrays.asList(geneId)))).thenReturn(mockGeneRs);
 
         // Mock species service
         Set<Integer> speciesId = new HashSet<>(Arrays.asList(10090));
@@ -238,7 +244,7 @@ public class GeneServiceTest extends TestAncestor {
         GeneService service = new GeneService(serviceFactory);
 
         assertEquals("Incorrect gene", new HashSet<>(Arrays.asList(expectedGene)),
-                service.loadGenesByEnsemblId(geneId));
+                service.loadGenesById(geneId));
     }
 
 }

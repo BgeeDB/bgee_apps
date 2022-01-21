@@ -39,6 +39,9 @@ public interface GeneNameSynonymDAO extends DAO<GeneNameSynonymDAO.Attribute> {
 	 * @return             A {@code GeneNameSynonymTOResultSet} encapsulating the result.
 	 */
     public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<Integer> bgeeGeneIds);
+
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<String> geneIds,
+            Collection<Integer> speciesIds);
 	
     /**
      * {@code DAOResultSet} specifics to {@code GeneNameSynonymTO}s

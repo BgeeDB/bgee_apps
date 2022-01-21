@@ -30,7 +30,7 @@ import org.junit.Test;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Feb. 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, June 2016
  */
 public class ExpressionCallTest extends TestAncestor {
@@ -84,7 +84,7 @@ public class ExpressionCallTest extends TestAncestor {
         List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
         List<ExpressionCall> expectedOrder = Arrays.asList(call2, call4, call3, call1);
         assertEquals("Incorrect ordering of calls", expectedOrder,
-                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph, false));
     }
     
     @Test
@@ -213,7 +213,7 @@ public class ExpressionCallTest extends TestAncestor {
         List<ExpressionCall> expectedOrder = Arrays.asList(callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, 
                 callAe3devD, callAe3devA, callAe1devA);
         assertEquals("Incorrect ordering of calls", expectedOrder,
-                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph, false));
 
     }
     

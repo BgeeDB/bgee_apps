@@ -176,13 +176,13 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
                 null, allCondParams)).thenReturn(graphSpe2);
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene1);
+                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId()), graphSpe1)).thenReturn(callsGene1);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g2.getSpecies().getId(), g2.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene2);
+                new GeneFilter(g2.getSpecies().getId(), g2.getGeneId()), graphSpe1)).thenReturn(callsGene2);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g3.getSpecies().getId(), g3.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene3);
+                new GeneFilter(g3.getSpecies().getId(), g3.getGeneId()), graphSpe2)).thenReturn(callsGene3);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene4);
+                new GeneFilter(g4.getSpecies().getId(), g4.getGeneId()), graphSpe2)).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
 

@@ -8,7 +8,6 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
-import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
@@ -42,13 +41,11 @@ public class SpeciesDataGroupService extends Service {
     }
 
     /**
-     * Loads all {@code SpeciesDataGroup}s. {@code SpeciesDataGroup}s are returned 
-     * in preferred order for display, and member {@code Species} are ordered 
-     * based on their taxonomic distance to the human lineage (from species closest to human, 
-     * to farthest from human, e.g.: human, chimpanzee, mouse, zebrafish).
+     * Delegates to {@link #loadAllSpeciesDataGroup(boolean, boolean)} with the two {@code boolean}s
+     * set to {@code true}.
      * 
      * @return  A {@code List} containing all {@code SpeciesDataGroup}s, in order of preference, 
-     *          with member {@code Species} ordered based on their taxonomic distance to human. 
+     *          with member {@code Species} in order of preference, with all download files populated. 
      * @throws DAOException                 If an error occurred while accessing a {@code DAO}.
      * @throws QueryInterruptedException    If a query to a {@code DAO} was intentionally interrupted.
      * @throws IllegalStateException        If the {@code DownloadFileService} and {@code SpeciesService} 
@@ -58,9 +55,47 @@ public class SpeciesDataGroupService extends Service {
     public List<SpeciesDataGroup> loadAllSpeciesDataGroup() 
             throws DAOException, QueryInterruptedException, IllegalStateException {
         log.traceEntry();
-        
-        final Map<Integer, Set<DownloadFile>> groupIdToDownloadFilesMap = 
-                buildDownloadFileMap(this.getServiceFactory().getDownloadFileService().getAllDownloadFiles());
+        return log.traceExit(this.loadSpeciesDataGroup(true, true));
+    }
+    /**
+     * Loads all {@code SpeciesDataGroup}s. {@code SpeciesDataGroup}s are returned in preferred order for display,
+     * and member {@code Species} are ordered based on the preferred display order.
+     * {@code withFilesRelatedToExprCalls} and {@code withFilesRelatedToProcessedExprValues}
+     * cannot be both {@code false}, otherwise an {@code IllegalArgumentException} is thrown.
+     *
+     * @param withFilesRelatedToExprCalls              A {@code boolean} defining if information about files
+     *                                                 related to expression calls should be populated in the returned
+     *                                                 {@code SpeciesDataGroup}s.
+     * @param withFilesRelatedToProcessedExprValues    A {@code boolean} defining if information about files
+     *                                                 related to processed expression values should be populated
+     *                                                 in the returned {@code SpeciesDataGroup}s.
+     * @return                                         A {@code List} containing all {@code SpeciesDataGroup}s,
+     *                                                 in order of preference, with member {@code Species}
+     *                                                 in order of preference.
+     * @throws DAOException                    If an error occurred while accessing a {@code DAO}.
+     * @throws IllegalArgumentException        If both {@code withFilesRelatedToExprCalls} and
+     *                                         {@code withFilesRelatedToProcessedExprValues} are {@code false}.
+     * @throws IllegalStateException           If the {@code DownloadFileService} and {@code SpeciesService}
+     *                                         obtained at instantiation do not return consistent information
+     *                                         related to {@code SpeciesDataGroup}s.
+     * @throws QueryInterruptedException       If a query to a {@code DAO} was intentionally interrupted.
+     */
+    //TODO: allow to retrieve either single or multiple species data groups
+    //TODO: allow to provide a species ID list
+    public List<SpeciesDataGroup> loadSpeciesDataGroup(boolean withFilesRelatedToExprCalls,
+            boolean withFilesRelatedToProcessedExprValues) throws DAOException, IllegalArgumentException,
+    IllegalStateException, QueryInterruptedException {
+        log.traceEntry("{}, {}", withFilesRelatedToExprCalls, withFilesRelatedToProcessedExprValues);
+
+        if (!withFilesRelatedToExprCalls && !withFilesRelatedToProcessedExprValues) {
+            throw log.throwing(new IllegalArgumentException("At least one type of download file must be requested"));
+        }
+        final Map<Integer, Set<DownloadFile>> groupIdToDownloadFilesMap = buildDownloadFileMap(
+                this.getServiceFactory().getDownloadFileService().getDownloadFiles(
+                        EnumSet.allOf(DownloadFile.CategoryEnum.class).stream()
+                                .filter(c -> withFilesRelatedToExprCalls && c.isRelatedToExprCallFile() ||
+                                    withFilesRelatedToProcessedExprValues && c.isRelatedToProcessedExprValueFile())
+                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DownloadFile.CategoryEnum.class)))));
         
         LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderAttrs = new LinkedHashMap<>();
         orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, DAO.Direction.ASC);
@@ -97,7 +132,7 @@ public class SpeciesDataGroupService extends Service {
      */
     private static Map<Integer, List<Species>> buildSpeciesMap(
             SpeciesToDataGroupTOResultSet speciesToDataGroupRs, Collection<Species> species) {
-        log.entry(speciesToDataGroupRs, species);
+        log.traceEntry("{}, {}", speciesToDataGroupRs, species);
         
         final Map<Integer, Species> speciesMap = species.stream()
                 .collect(Collectors.toMap(Entity::getId, Function.identity()));
@@ -122,7 +157,7 @@ public class SpeciesDataGroupService extends Service {
      */
     private static Map<Integer, Set<DownloadFile>> buildDownloadFileMap(
             Collection<DownloadFile> downloadFiles) {
-        log.entry(downloadFiles);
+        log.traceEntry("{}", downloadFiles);
         return log.traceExit(downloadFiles.stream()
                 .collect(Collectors.groupingBy(DownloadFile::getSpeciesDataGroupId, Collectors.toSet())));
     }
@@ -137,7 +172,7 @@ public class SpeciesDataGroupService extends Service {
      */
     private static SpeciesDataGroup newSpeciesDataGroup(SpeciesDataGroupDAO.SpeciesDataGroupTO groupTO, 
             List<Species> species, Set<DownloadFile> files) {
-        log.entry(groupTO, species, files);
+        log.traceEntry("{}, {}, {}", groupTO, species, files);
         return log.traceExit(newSpeciesDataGroup(groupTO.getId(), groupTO.getName(), groupTO.getDescription(), 
                 species, files));
     }
@@ -155,7 +190,7 @@ public class SpeciesDataGroupService extends Service {
      */
     private static SpeciesDataGroup newSpeciesDataGroup(Integer id, String name, String description, 
             List<Species> species, Set<DownloadFile> files) {
-        log.entry(id, name, description, species, files);
+        log.traceEntry("{}, {}, {}, {}, {}", id, name, description, species, files);
 //        files = new HashSet<DownloadFile>();
 //        files.add(new DownloadFile("path", "my_name", DownloadFile.CategoryEnum.AFFY_ANNOT, 100L, id));
         return log.traceExit(new SpeciesDataGroup(id, name, description, species, files));

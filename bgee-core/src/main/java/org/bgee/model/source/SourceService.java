@@ -190,6 +190,8 @@ public class SourceService extends CommonService {
                 return log.traceExit(SourceCategory.EST);
             case RNA_SEQ: 
                 return log.traceExit(SourceCategory.RNA_SEQ);
+            case SC_RNA_SEQ:
+                return log.traceExit(SourceCategory.SC_RNA_SEQ);
             case ONTOLOGY: 
                 return log.traceExit(SourceCategory.ONTOLOGY);
         default: 

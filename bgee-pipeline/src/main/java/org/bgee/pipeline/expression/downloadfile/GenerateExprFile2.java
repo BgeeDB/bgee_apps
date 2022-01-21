@@ -1135,7 +1135,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         final AtomicInteger rowCount = new AtomicInteger();
         calls.forEach(c -> {
             for (Entry<SingleSpExprFileType2, ICsvDozerBeanWriter> writerFileType : writersUsed.entrySet()) {
-                String geneId = c.getGene().getEnsemblGeneId();
+                String geneId = c.getGene().getGeneId();
                 String geneName = c.getGene().getName() == null? "": c.getGene().getName();
                 String anatEntityId = c.getCondition().getAnatEntityId();
                 String anatEntityName = c.getCondition().getAnatEntity() == null? null:

@@ -26,17 +26,17 @@ public class GeneFilterTest extends TestAncestor {
         Gene gene = new Gene("gA", new Species(1), new GeneBioType("type1"));
         
         // Test filtering on gene ID only
-        GeneFilter filter = new GeneFilter(1, gene.getEnsemblGeneId());
+        GeneFilter filter = new GeneFilter(1, gene.getGeneId());
         assertTrue("Gene ID should pass filter", filter.test(gene));
         assertFalse("Gene ID should not pass filter", filter.test(new Gene("gB", new Species(1), new GeneBioType("type1"))));
         
         // Test filtering on gene IDs only
-        filter = new GeneFilter(1, Arrays.asList(gene.getEnsemblGeneId(), "g2"));
+        filter = new GeneFilter(1, Arrays.asList(gene.getGeneId(), "g2"));
         assertTrue("Gene ID should pass filter", filter.test(gene));
         assertFalse("Gene ID should not pass filter", filter.test(new Gene("gB", new Species(1), new GeneBioType("type1"))));
         
         // Test filtering on gene and species IDs
-        filter = new GeneFilter(1, Arrays.asList(gene.getEnsemblGeneId(), "g2"));
+        filter = new GeneFilter(1, Arrays.asList(gene.getGeneId(), "g2"));
         assertTrue("Species ID should pass filter", filter.test(gene));
         assertFalse("Species ID should not pass filter", filter.test(new Gene("gA", new Species(2), new GeneBioType("type1"))));
         assertFalse("Gene ID should not pass filter", filter.test(new Gene("gB", new Species(1), new GeneBioType("type1"))));

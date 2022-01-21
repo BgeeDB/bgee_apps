@@ -43,7 +43,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Apr. 2021
+ * @version Bgee 15.0, Dec. 2021
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
  * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
@@ -298,7 +298,7 @@ implements GlobalExpressionCallDAO {
         //Note that there is a clustered index for the globalExpression table that is
         //PRIMAR KEY(bgeeGeneId, globalConditionId). So we try as much as possible to have bgeeGeneIds
         //as filters, in order to use this clustered index.
-        // We filter genes based on the bgeeGeneId rather than the Ensembl geneId,
+        // We filter genes based on the bgeeGeneId rather than the public geneId,
         // to avoid joins to gene table when it is not needed because in reality,
         // at the time of writing, queries take much more time. For instance,
         // to retrieve calls in zebrafish, using gene table it took 22 minutes
@@ -521,12 +521,8 @@ implements GlobalExpressionCallDAO {
                           .append(" ?");
 
                         if (pValFilter.isSelfObservationRequired()) {
-                            //XXX: check whether this isSelfObservationRequired should actually
-                            //specify the condition parameters to target
-                            EnumSet<ConditionDAO.Attribute> allCondParams =
-                                    ConditionDAO.Attribute.getCondParams();
                             sb.append(dataTypes.stream()
-                                    .map(d -> getObsCountFieldName(d, allCondParams, true))
+                                    .map(d -> getObsCountFieldName(d, pValFilter.getCondParams(), true))
                                     .collect(Collectors.joining(" + ", " AND (", ") > 0")));
                         }
 
@@ -1188,6 +1184,10 @@ implements GlobalExpressionCallDAO {
                         meanRanks, callDataTOs, pValues, bestDescendantPValues));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
+            } catch (IllegalArgumentException e) {
+                //necessary to know whether the error is on our side or if, e.g., the parameters
+                //coming from the user could not find, e.g., a gene
+                throw log.throwing(new IllegalStateException(e));
             }
         }
 

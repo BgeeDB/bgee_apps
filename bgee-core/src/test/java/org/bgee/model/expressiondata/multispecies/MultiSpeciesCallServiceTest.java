@@ -22,6 +22,8 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.Taxon;
 import org.junit.Ignore;
@@ -51,7 +53,7 @@ import static org.mockito.Mockito.when;
  * This class holds the unit tests for the {@code MultiSpeciesCallService} class.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 14, Nov. 2016
  */
 public class MultiSpeciesCallServiceTest extends TestAncestor {
@@ -71,6 +73,8 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
 
         int taxonId = 10;
         Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
+            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, Taxon.class);
         
         int speciesId1 = 1;
         int speciesId2 = 2;
@@ -87,7 +91,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Gene gene1 = new Gene("gene1a", species1, new GeneBioType("biotype1"));
         Gene gene2a = new Gene("gene2a", species2, new GeneBioType("biotype1"));
         Gene gene2b = new Gene("gene2b", species2, new GeneBioType("biotype1"));
-        Set<String> sp1GenesIds = Collections.singleton(gene1.getEnsemblGeneId());
+        Set<String> sp1GenesIds = Collections.singleton(gene1.getGeneId());
         GeneFilter geneFilter1 = new GeneFilter(speciesId1, sp1GenesIds);
         Set<GeneFilter> geneFilters = Collections.singleton(geneFilter1);
 
@@ -107,9 +111,9 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Set<AnatEntitySimilarityTaxonSummary> aeSimTaxonSummaries = Collections.singleton(
                 new AnatEntitySimilarityTaxonSummary(taxon, true, true));
         AnatEntitySimilarity aeSim1 = new AnatEntitySimilarity(
-                Arrays.asList(anatEntity1a, anatEntity2a), null, taxon, aeSimTaxonSummaries);
+                Arrays.asList(anatEntity1a, anatEntity2a), null, taxon, aeSimTaxonSummaries, taxOnt);
         AnatEntitySimilarity aeSim2 = new AnatEntitySimilarity(
-                Arrays.asList(anatEntity1b), null, taxon, aeSimTaxonSummaries);
+                Arrays.asList(anatEntity1b), null, taxon, aeSimTaxonSummaries, taxOnt);
         
         boolean onlyTrusted = true;
         when(aeSimService.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted))
@@ -389,27 +393,29 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Gene g1 = new Gene("1", spe1, biotype);
         Gene g2 = new Gene("2", spe2, biotype);
         Taxon lca = new Taxon(1, "tax1", "desc", "scientific name", 1, true);
+        Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(lca),
+            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, Taxon.class);
         when(this.taxonService.loadLeastCommonAncestor(new HashSet<>(Arrays.asList(spe1.getId(), spe2.getId()))))
         .thenReturn(lca);
         Set<GeneFilter> geneFilters = new HashSet<>(Arrays.asList(
-                new GeneFilter(spe1.getId(), Arrays.asList(g1.getEnsemblGeneId())),
-                new GeneFilter(spe2.getId(), Arrays.asList(g2.getEnsemblGeneId()))));
+                new GeneFilter(spe1.getId(), Arrays.asList(g1.getGeneId())),
+                new GeneFilter(spe2.getId(), Arrays.asList(g2.getGeneId()))));
 
         MultiSpeciesCondition cond1 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("1")), null, lca,
-                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true)), taxOnt),
                 null, null, null);
         MultiSpeciesCondition cond2 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("2")), null, lca,
-                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true)), taxOnt),
                 null, null, null);
         MultiSpeciesCondition cond3 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("3")), null, lca,
-                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true)), taxOnt),
                 null, null, null);
         MultiSpeciesCondition cond4 = new MultiSpeciesCondition(
                 new AnatEntitySimilarity(Arrays.asList(new AnatEntity("4")), null, lca,
-                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true))),
+                        Arrays.asList(new AnatEntitySimilarityTaxonSummary(lca, true, true)), taxOnt),
                 null, null, null);
         MultiSpeciesCallService spyCallService = spy(new MultiSpeciesCallService(this.serviceFactory));
 //        Collection<ExpressionCall> sourceCalls1 = Arrays.asList(

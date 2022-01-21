@@ -123,12 +123,12 @@ public class GeneMatchResultServiceTest extends TestAncestor {
         assertEquals(expSpecies.getGenus(), actualSpecies.getGenus());
         assertEquals(expSpecies.getSpeciesName(), actualSpecies.getSpeciesName());
         assertEquals(expSpecies.getPreferredDisplayOrder(), actualSpecies.getPreferredDisplayOrder());
-        assertEquals(expGene.getEnsemblGeneId(), actualGene.getEnsemblGeneId());
+        assertEquals(expGene.getGeneId(), actualGene.getGeneId());
         assertEquals(expGene.getName(), actualGene.getName());
         assertEquals(expGene.getDescription(), actualGene.getDescription());
         assertEquals(expGene.getSynonyms(), actualGene.getSynonyms());
         assertEquals(expGene.getXRefs(), actualGene.getXRefs());
-        assertEquals(expGene.getGeneMappedToSameEnsemblGeneIdCount(), actualGene.getGeneMappedToSameEnsemblGeneIdCount());
+        assertEquals(expGene.getGeneMappedToSameGeneIdCount(), actualGene.getGeneMappedToSameGeneIdCount());
     }
 
     /**

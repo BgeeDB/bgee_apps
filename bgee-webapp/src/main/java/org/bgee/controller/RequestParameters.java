@@ -63,7 +63,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * <p>
  * The idea is: if, through a form, a user submit parameters that can be put in URL, 
  * then so be it. But if the user submit, for instance, a list of thousands of 
- * Ensembl gene IDs, that cannot be passed through URLs because of URLs length
+ * gene IDs, that cannot be passed through URLs because of URLs length
  * limitation, these parameters will be stored on disk: 
  * the query string will be stored in a file, 
  * an ID will be generated to be used as an index to retrieve the file, 
@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -377,6 +377,30 @@ public class RequestParameters {
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.
      */
     public static final String ACTION_RESOURCES_SOURCE_CODE = "source_code";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when general information about a gene
+     * is requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_GENERAL_INFO = "general_info";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when homologs of a gene
+     * are requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_HOMOLOGS = "homologs";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when XRefs information for a gene
+     * is requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_XREFS = "xrefs";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when expression results for a gene
+     * are requested. Value of the parameter page should be {@link #PAGE_GENE}.
+     */
+    public static final String ACTION_GENE_EXPRESSION = "expression";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -3255,5 +3279,9 @@ public class RequestParameters {
      */
     public void setParametersSeparator(String parametersSeparator) {
         this.parametersSeparator = parametersSeparator;
+    }
+
+    public String getParameterQuery() {
+        return this.parametersQuery;
     }
 }

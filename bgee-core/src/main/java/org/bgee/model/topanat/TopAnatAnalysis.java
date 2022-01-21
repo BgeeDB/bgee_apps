@@ -266,7 +266,7 @@ public class TopAnatAnalysis extends CommonService {
         }
         allGeneIds.removeAll(this.geneService.loadGenes(
                     new GeneFilter(this.params.getSpeciesId(), allGeneIds)
-                ).map(Gene::getEnsemblGeneId)
+                ).map(Gene::getGeneId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
             throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
@@ -590,7 +590,7 @@ public class TopAnatAnalysis extends CommonService {
                     null
                 ).forEach(
                     call -> out.println(
-                        call.getGene().getEnsemblGeneId() + '\t' +
+                        call.getGene().getGeneId() + '\t' +
                         COND_ID_GENERATOR.apply(call.getCondition())
                     )
                 );

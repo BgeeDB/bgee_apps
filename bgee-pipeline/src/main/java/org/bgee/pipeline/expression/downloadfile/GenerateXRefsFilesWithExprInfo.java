@@ -203,7 +203,7 @@ public class GenerateXRefsFilesWithExprInfo {
     	Set<String> wikidataUberonClasses = new HashSet<>();
     	try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
     		stream.forEach(ub -> {
-    			wikidataUberonClasses.add(ub);
+    			wikidataUberonClasses.add(ub.replaceAll("\"", ""));
     		});
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -426,11 +426,13 @@ public class GenerateXRefsFilesWithExprInfo {
         while (uberonClassesWritten < 10 && callsIterator.hasNext()) {
         	ExpressionCall call = callsIterator.next();
         	String uberonId = call.getCondition().getAnatEntityId();
-        	
+
         	if(wikidataUberonClasses.contains(uberonId)) {
         		String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
         			uberonId.replace(":", "_");
         		wikidataLines.add("\"" + geneId + "\",\"" + modifiedUberonId + "\",\"" 
+        				+ "http://rdf.ebi.ac.uk/resource/ensembl/" + geneId + "\",\""
+        				+ "http://purl.obolibrary.org/obo/" + uberonId.replace(":", "_") + "\","
         				+ call.getExpressionLevelInfo().getFormattedExpressionScore());
         		uberonClassesWritten++;
         	}

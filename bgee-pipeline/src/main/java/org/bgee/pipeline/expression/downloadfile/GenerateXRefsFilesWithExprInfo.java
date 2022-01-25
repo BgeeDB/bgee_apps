@@ -161,17 +161,37 @@ public class GenerateXRefsFilesWithExprInfo {
         //TODO for now all genes of a species are retrieved even if this species is only used
         // for Uniprot Xrefs. We should filter based on uniprotXrefByGeneIdBySpeciesId for
         // species only used to generate UniPort XRefs
-        Set<GeneFilter> geneFilters = speciesIds.stream().map(sp -> new GeneFilter(sp)).collect(Collectors.toSet());
-        Set<Gene> genes = geneService.loadGenes(geneFilters, false, false, true).collect(Collectors.toSet());
+        
+        // Create geneFilters used to retrieve all required genes
+        Set<GeneFilter> geneFiltersToLoadGenes = speciesIds.stream()
+        		.map(sp -> new GeneFilter(sp))
+        		.collect(Collectors.toSet());
+        
+        // Create one geneFilter per gene used to retrieve the calls
+        Set<GeneFilter> geneFiltersToLoadCalls = geneService
+        		.loadGenes(geneFiltersToLoadGenes, false, false, true)
+        		.map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
+        		.limit(10)
+        		.collect(Collectors.toSet());
+        
+        // We generate the ConditionGraph needed for filtering calls as on the gene page,
+        //for each species present in the xref list. This will avoid creating a new graph for each gene.
+        final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
+        // for now we are only interested to anatomical entities. The condition graph is generated
+        // using only this condition parameter
+        final EnumSet<CallService.Attribute> anatEntityParam = 
+        		EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
+        final Map<Integer, ConditionGraph> condGraphBySpeId = 
+        		Collections.unmodifiableMap(speciesIds.stream()
+                .collect(Collectors.toMap(id -> id,
+                        id -> condGraphService.loadConditionGraphFromSpeciesIds(
+                                Collections.singleton(id), null, anatEntityParam))));
         serviceFactory.close();
-        
-        //retrieve gene expression
-        //Map<String, Set<String>> ensemblIdToXrefLines = this.generateXrefExpressonInfo(xrefList, speciesIds);
-        
+                
         // generate lines with expression info
         Map<XrefsFileType, Map<String, List<String>>> geneIdToXrefLinesbyXrefsFileType = 
-        		this.generateXrefs(genes, speciesIds, requestedXrefFileTypes, uniprotXrefByGeneIdBySpeciesId,
-        				wikidataUberonClasses);
+        		this.generateXrefs(geneFiltersToLoadCalls, condGraphBySpeId, requestedXrefFileTypes, 
+        				uniprotXrefByGeneIdBySpeciesId, wikidataUberonClasses);
 
         // write XRef file
         this.writeXrefWithExpressionInfo(requestedXrefFileTypes, geneIdToXrefLinesbyXrefsFileType, 
@@ -282,35 +302,28 @@ public class GenerateXRefsFilesWithExprInfo {
      * @return          The {@code Map} where keys correspond to gene IDs and each
      *                  value corresponds to one well formatted UniProtKB Xref line.
      */
-    private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<Gene> genes, 
-    		Set<Integer> speciesIds, Set<XrefsFileType> requestedXrefFileTypes, 
+    private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<GeneFilter> geneFilters, 
+    		Map<Integer, ConditionGraph> condGraphBySpeId, Set<XrefsFileType> requestedXrefFileTypes, 
     		Map<Integer, Map<String, Set<String>>> uniprotXrefs, Set<String> wikidataUberonClasses) {
-        log.traceEntry("{}, {}, {}, {}, {}", genes, speciesIds, requestedXrefFileTypes, uniprotXrefs,
-        		wikidataUberonClasses);
+        log.traceEntry("{}, {}, {}, {}, {}", geneFilters, condGraphBySpeId, requestedXrefFileTypes,
+        		uniprotXrefs, wikidataUberonClasses);
         
         Instant start = Instant.now();
 
-        //First, we build the ConditionGraph needed for filtering calls as on the gene page,
-        //for each species present in the xref list.
-        //This will avoid creating a new graph for each gene, to create it only once per required species.
-        final ServiceFactory serviceFactory = serviceFactorySupplier.get();
-        final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
-        final EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
-        final Map<Integer, ConditionGraph> condGraphBySpeId = Collections.unmodifiableMap(speciesIds.stream()
-                .collect(Collectors.toMap(id -> id,
-                        id -> condGraphService.loadConditionGraphFromSpeciesIds(
-                                Collections.singleton(id), null, allCondParams))));
-        //Release resources before launching analyses in several threads
-        serviceFactory.close();
-        
-        // as key and the corresponding xref as value.
+    	// init a Map where the key correspond to the type of xrefs and the value is a Map with a gene ID
+        // as key and the corresponding xrefs as value.
         Map<XrefsFileType, Map<String, List<String>>> xrefsLinesByFileTypeByGene = new HashMap<>();
         
         //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)
-        genes.parallelStream().forEach(g -> {
+        geneFilters.parallelStream().forEach(gf -> {
         	
-        	Integer speciesId = g.getSpecies().getId();
-        	String geneId = g.getGeneId();
+        	Integer speciesId = gf.getSpeciesId();
+        	if(gf.getGeneIds() == null || gf.getGeneIds().size() == 0 || 
+        			gf.getGeneIds().size() > 1) {
+        		throw log.throwing(new IllegalArgumentException("the geneFilter should "
+        				+ "contain exactly one geneId"));
+        	}
+        	String geneId = gf.getGeneIds().iterator().next();
         	
         	// Retrieve expression calls
             ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
@@ -318,12 +331,14 @@ public class GenerateXRefsFilesWithExprInfo {
             
             // keep only the expressionCall at anat entity level. Comming from a LinkedHashMap they
             // are already ordered by expressionlevel.
+            Set<CallService.Attribute> condParams = 
+            		new HashSet<>(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID));
             //XXX If in the future we plan to add more information than just the anat. entity, it will
             // then be mandatory to keep calls at condition level ordered by anat. entity
-            List<ExpressionCall> callsByAnatEntity = new ArrayList<>(
-                    callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                            new GeneFilter(speciesId , geneId),
-                            condGraphBySpeId.get(speciesId)).keySet());
+            List<ExpressionCall> callsByAnatEntity = callService.loadSilverCondObservedCalls(gf, 
+                    		condParams, ExpressionSummary.EXPRESSED,
+                    		null,
+                            condGraphBySpeId.get(speciesId));
             
             // If no expression for this gene in Bgee
             if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
@@ -336,38 +351,38 @@ public class GenerateXRefsFilesWithExprInfo {
             				uniprotXrefs.get(speciesId).get(geneId) : null;
             		if(filteredUniProtIds != null) {
             			xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.UNIPROT, k -> new HashMap<>())
-            			.putAll(generateXrefLineUniProt(g, callsByAnatEntity, filteredUniProtIds));
+            			.putAll(generateXrefLineUniProt(geneId, callsByAnatEntity, filteredUniProtIds));
             		}
             	}
             	if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
             			&& XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId)) {
             		xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> new HashMap<>())
-            		.putAll(generateXrefLineGeneCards(g, callsByAnatEntity));
+            		.putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity));
             	}
             	if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
             			&& XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId)) {
             		xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.WIKIDATA, k -> new HashMap<>())
-            		.putAll(generateXrefLineWikidata(g, callsByAnatEntity, wikidataUberonClasses));
+            		.putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
             	}
             }
         });
         
         Instant end = Instant.now();
-        log.info("Time needed to retrieve expressionSummary of {} genes is {} hours", genes.size(),
+        log.info("Time needed to retrieve expressionSummary of {} genes is {} hours", geneFilters.size(),
                 Duration.between(start, end).toHours());
         
         return log.traceExit(xrefsLinesByFileTypeByGene);
         
     }
     
-    private Map<String, List<String>> generateXrefLineUniProt(Gene gene, 
+    private Map<String, List<String>> generateXrefLineUniProt(String geneId, 
     		List<ExpressionCall> callsByAnatEntity, Set<String> uniprotIds) {
         
     	List<String> XRefLines = uniprotIds.stream().map(uid -> {
 	    	// Create String representation of the XRef with expression information
 	    	StringBuilder sb = new StringBuilder(uid)
 	                .append("   DR   Bgee; ")
-	                .append(gene.getGeneId())
+	                .append(geneId)
 	                .append(";")
 	                .append(" Expressed in ");
 	    	int numberAnatEntityToWrite = XrefsFileType.UNIPROT.getNumberOfAnatEntitiesToWrite();
@@ -386,14 +401,12 @@ public class GenerateXRefsFilesWithExprInfo {
 		    return sb.toString();
 		})
     	.collect(Collectors.toList());
-    	return Map.of(gene.getGeneId(), XRefLines);
+    	return Map.of(geneId, XRefLines);
     }
     
     //TODO: quick and dirty version. Should use SuperCSV
-    private Map<String, List<String>> generateXrefLineGeneCards(Gene gene, 
+    private Map<String, List<String>> generateXrefLineGeneCards(String geneId, 
     		List<ExpressionCall> callsByAnatEntity) {
-        
-    	String geneId = gene.getGeneId();
     	
     	String geneCardsURL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
     	String bgeeURL = "https://bgee.org/?page=gene&gene_id=";
@@ -418,17 +431,20 @@ public class GenerateXRefsFilesWithExprInfo {
     }
     
   //TODO: quick and dirty version. Could use SuperCSV
-    private Map<String, List<String>> generateXrefLineWikidata(Gene gene, 
+    private Map<String, List<String>> generateXrefLineWikidata(String geneId, 
     		List<ExpressionCall> callsByAnatEntity, Set<String> wikidataUberonClasses) {
         int uberonClassesWritten = 0;
         Iterator<ExpressionCall> callsIterator = callsByAnatEntity.iterator();
         List<String> wikidataLines= new ArrayList<>();
         while (uberonClassesWritten < 10 && callsIterator.hasNext()) {
-        	String uberonId = callsIterator.next().getCondition().getAnatEntityId();
+        	ExpressionCall call = callsIterator.next();
+        	String uberonId = call.getCondition().getAnatEntityId();
+        	
         	if(wikidataUberonClasses.contains(uberonId)) {
         		String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
         			uberonId.replace(":", "_");
-        		wikidataLines.add(ensemblId + "\t" + modifiedUberonId);
+        		wikidataLines.add("\"" + geneId + "\",\"" + modifiedUberonId + "\",\"" 
+        				+ call.getExpressionLevelInfo().getFormattedExpressionScore());
         		uberonClassesWritten++;
         	}
         }
@@ -445,7 +461,8 @@ public class GenerateXRefsFilesWithExprInfo {
      */
     private static List<String> sortXrefByGeneId(Map<String, List<String>> geneIdToXrefLines) {
         log.traceEntry("{}",geneIdToXrefLines);
-        return log.traceExit(ensemblIdToXrefLines.entrySet().stream()
+        return log.traceExit(geneIdToXrefLines == null ? null :
+        	geneIdToXrefLines.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 // to remove genes having no uniprot IDs
                 .filter(e -> e.getValue() != null)
@@ -466,7 +483,7 @@ public class GenerateXRefsFilesWithExprInfo {
     		Map<XrefsFileType, Map<String, List<String>>> outputXrefLines, String outputDir) {
     	
         log.traceEntry("{}, {}, {}", requestedXrefFileTypes, outputXrefLines, outputDir);
-        for(XrefsFileType xrefFileType : requestedXrefFileTypes) {
+        for(XrefsFileType xrefFileType : outputXrefLines.keySet()) {
             // sort Xrefs by gene ID
         	List<String> sortedGeneIdToXrefLines = GenerateXRefsFilesWithExprInfo
                   .sortXrefByGeneId(outputXrefLines.get(xrefFileType));

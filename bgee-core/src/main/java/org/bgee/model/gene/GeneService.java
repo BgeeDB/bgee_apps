@@ -358,7 +358,8 @@ public class GeneService extends CommonService {
                     .collect(Collectors.groupingBy(GeneXRefTO::getBgeeGeneId,
                             Collectors.toSet()));
             }
-        } else if (geneIds != null && !geneIds.isEmpty()) {
+        } else if (geneIds != null && !geneIds.isEmpty() ||
+                speciesIds != null && !speciesIds.isEmpty()) {
             if (withSynonymInfo) {
                 synonymMap = this.getDaoManager().getGeneNameSynonymDAO()
                         .getGeneNameSynonyms(geneIds, speciesMap.keySet()).stream()

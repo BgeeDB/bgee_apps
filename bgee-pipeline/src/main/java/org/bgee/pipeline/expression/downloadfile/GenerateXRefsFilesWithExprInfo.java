@@ -252,7 +252,7 @@ public class GenerateXRefsFilesWithExprInfo {
      * 				a gene ID and values are a {@code Set} of uniprot IDs
      * @throws UncheckedIOException If an error occurred while trying to read the {@code file}.
      */
-    private static Map<Integer,Map<String,Set<String>>> loadXrefFileWithoutExprInfo(String file, Set<Integer> speciesIds) {
+    public static Map<Integer,Map<String,Set<String>>> loadXrefFileWithoutExprInfo(String file, Set<Integer> speciesIds) {
         log.traceEntry("{}, {}", file, speciesIds);
 
         Map<Integer, Map<String, Set<String>>> xrefsBySpeciesIdAndGeneId = new HashMap<>();

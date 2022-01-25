@@ -520,6 +520,16 @@ public class CallService extends CommonService {
             Collection<CallService.Attribute> condParams, ExpressionSummary callType,
             Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}", geneFilter, condParams, callType, dataTypeFilter);
+    	return log.traceExit(loadSilverCondObservedCalls(geneFilter, condParams, 
+    			callType, dataTypeFilter, null));
+    }
+
+    public List<ExpressionCall> loadSilverCondObservedCalls(GeneFilter geneFilter,
+            Collection<CallService.Attribute> condParams, ExpressionSummary callType,
+            Collection<DataType> dataTypeFilter, ConditionGraph conditionGraph) 
+            		throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}", geneFilter, condParams, callType, dataTypeFilter,
+        		conditionGraph);
 
         EnumSet<CallService.Attribute> clonedCondParams = condParams == null || condParams.isEmpty()?
                 CallService.Attribute.getAllConditionParameters(): EnumSet.copyOf(condParams);
@@ -554,8 +564,11 @@ public class CallService extends CommonService {
             return log.traceExit(calls);
         }
 
-        ConditionGraph conditionGraph = this.getServiceFactory().getConditionGraphService()
-                .loadConditionGraph(calls.stream().map(c -> c.getCondition()).collect(Collectors.toSet()));
+        if (conditionGraph == null) {
+        	conditionGraph = this.getServiceFactory().getConditionGraphService()
+        			.loadConditionGraph(calls.stream()
+        					.map(c -> c.getCondition()).collect(Collectors.toSet()));
+        }
         //order by rank and most precise conditions
         calls = ExpressionCall.filterAndOrderCallsByRank(calls, conditionGraph,
                 ExpressionSummary.NOT_EXPRESSED.equals(callType)? true: false);

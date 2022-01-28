@@ -60,8 +60,8 @@ public class GenerateXRefsFilesWithExprInfo {
     private enum XrefsFileType {
     	UNIPROT(1, null, "UniprotXRefsBgee.txt"),
     	GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "GeneCardsXRefsBgee.tsv"),
-    	WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)), 
-    			"wikidataBotInput.txt");
+        WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)),
+                "WikidataBotInput.txt");
 
     	private final Integer numberOfAnatEntitiesToWrite;
     	private final Set<Integer> speciesIds;
@@ -434,12 +434,9 @@ public class GenerateXRefsFilesWithExprInfo {
         	if(wikidataUberonClasses.contains(uberonId)) {
         		String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
         			uberonId.replace(":", "_");
-        		wikidataLines.add("\"" + geneId + "\",\"" + modifiedUberonId + "\",\"" 
-        				+ "http://rdf.ebi.ac.uk/resource/ensembl/" + geneId + "\",\""
-        				+ "http://purl.obolibrary.org/obo/" + uberonId.replace(":", "_") + "\","
-        				+ call.getExpressionLevelInfo().getFormattedExpressionScore());
-        		uberonClassesWritten++;
-        	}
+                wikidataLines.add(geneId + "\t"+ modifiedUberonId);
+                uberonClassesWritten++;
+            }
         }
     	return Collections.singletonMap(geneId, wikidataLines);
     }

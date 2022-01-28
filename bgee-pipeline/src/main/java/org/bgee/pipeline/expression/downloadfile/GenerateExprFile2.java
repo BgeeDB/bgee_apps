@@ -1160,7 +1160,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                         c.getFormattedMeanRank();
                 String expressionScore = c.getExpressionScore() == null ? NA_VALUE :
                     c.getFormattedExpressionScore();
-                String fdr = c.getFirstPValue().getFormatedFDRPValue();
+                String fdr = c.getFirstPValue().getFDRPValue().toString();
                 Boolean includingObservedData = true; //c.getCallData().stream()
 //                        .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum) > 0 ? true : false;
 
@@ -1225,7 +1225,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
                     convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
                     callFromDataType.getFirstPValue() == null ? NA_VALUE : callFromDataType.getFirstPValue()
-                            .getFormatedFDRPValue(),
+                            .getFDRPValue().toString(),
                     convertObservedDataToString(true),
                     Long.valueOf(callFromDataType.getDataPropagation()
                             .getSelfObservationCount(condParamCombination)),

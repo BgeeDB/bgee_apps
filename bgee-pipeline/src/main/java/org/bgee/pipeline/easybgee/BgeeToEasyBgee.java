@@ -553,7 +553,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     headerToValue.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
                             call.getDataPropagation(), condParamComb));
                     headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
-                    headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFormatedFDRPValue());
+                    headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFDRPValue().toString());
                     return headerToValue;
                 }).collect(Collectors.toList()),
                 header, processors);

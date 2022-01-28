@@ -763,10 +763,10 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             CellProcessor[] processors) {
         log.traceEntry("{}, {}, {}, {}", file, fileLines, header, processors);
         try {
-        	boolean writeHeader = false;
-        	if (!file.exists()) {
-        		writeHeader = true;
-        	}
+            boolean writeHeader = false;
+            if (!file.exists()) {
+                writeHeader = true;
+            }
             try (ICsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file, true), Utils.TSVCOMMENTED)) {
                 if(writeHeader) {
                     file.createNewFile();
@@ -933,7 +933,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 return log.traceExit("self and descendant");
             }
             if (PropagationState.SELF.equals(propState)) {
-            	return log.traceExit("self");
+                return log.traceExit("self");
             }
             if (PropagationState.DESCENDANT.equals(propState)) {
                 return log.traceExit("descendant");

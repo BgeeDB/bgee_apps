@@ -58,33 +58,33 @@ public class GenerateXRefsFilesWithExprInfo {
     private final Supplier<ServiceFactory> serviceFactorySupplier;
 
     private enum XrefsFileType {
-    	UNIPROT(1, null, "UniprotXRefsBgee.txt"),
-    	GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "GeneCardsXRefsBgee.tsv"),
+        UNIPROT(1, null, "UniprotXRefsBgee.txt"),
+        GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "GeneCardsXRefsBgee.tsv"),
         WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)),
                 "WikidataBotInput.txt");
 
-    	private final Integer numberOfAnatEntitiesToWrite;
-    	private final Set<Integer> speciesIds;
-    	private final String fileName;
+        private final Integer numberOfAnatEntitiesToWrite;
+        private final Set<Integer> speciesIds;
+        private final String fileName;
 
-    	private XrefsFileType(Integer numerOfAnatEntitiesToWrite, Set<Integer> speciesIds,
-    			String fileName) {
-    		this.numberOfAnatEntitiesToWrite = numerOfAnatEntitiesToWrite;
-    		this.speciesIds = speciesIds;
-    		this.fileName = fileName;
-    	}
+        private XrefsFileType(Integer numerOfAnatEntitiesToWrite, Set<Integer> speciesIds,
+                String fileName) {
+            this.numberOfAnatEntitiesToWrite = numerOfAnatEntitiesToWrite;
+            this.speciesIds = speciesIds;
+            this.fileName = fileName;
+        }
 
-    	public Integer getNumberOfAnatEntitiesToWrite () {
-    		return this.numberOfAnatEntitiesToWrite;
-    	}
+        public Integer getNumberOfAnatEntitiesToWrite () {
+            return this.numberOfAnatEntitiesToWrite;
+        }
 
-    	public Set<Integer> getSpeciesIds() {
-    		return this.speciesIds;
-    	}
+        public Set<Integer> getSpeciesIds() {
+            return this.speciesIds;
+        }
 
-    	public String getFileName() {
-    		return this.fileName;
-    	}
+        public String getFileName() {
+            return this.fileName;
+        }
     }
 
     /**
@@ -129,7 +129,7 @@ public class GenerateXRefsFilesWithExprInfo {
         GenerateXRefsFilesWithExprInfo expressionInfoGenerator = new GenerateXRefsFilesWithExprInfo();
         Set<String> wikidataUberonClasses = getWikidataUberonClasses(args[2]);
         expressionInfoGenerator.generate(args[0], args[1], wikidataUberonClasses,
-        		CommandRunner.parseListArgument(args[3]));
+                CommandRunner.parseListArgument(args[3]));
 
         log.traceExit();
     }
@@ -137,16 +137,16 @@ public class GenerateXRefsFilesWithExprInfo {
     /**
      * Generate Xrefs files with expression information from the Bgee database. 
      *
-     * @param inputFileName     		A {@code String} that is the path to the file containing 
-     *                          		XRefs UniProtKB - geneId mapping.
-     * @param outputDir		    		A {@code String} that is the path to the directory where XRefs files
-     * 									will be created.
-     * @param wikidataUberonClasses		A {@code Set} that contains all uberon terms inserted in wikidata.
-     * @param xrefsFileType     		A {@code List} of {@code String} corresponding to string representation of
-     * 									xrefs files to generate
+     * @param inputFileName             A {@code String} that is the path to the file containing 
+     *                                  XRefs UniProtKB - geneId mapping.
+     * @param outputDir                    A {@code String} that is the path to the directory where XRefs files
+     *                                     will be created.
+     * @param wikidataUberonClasses        A {@code Set} that contains all uberon terms inserted in wikidata.
+     * @param xrefsFileType             A {@code List} of {@code String} corresponding to string representation of
+     *                                     xrefs files to generate
      */
     public void generate(String inputFileName, String outputDir, Set<String> wikidataUberonClasses, 
-    		List<String> xrefsFileType) {
+            List<String> xrefsFileType) {
         log.traceEntry("{}, {}, {}, {}",inputFileName, outputDir, wikidataUberonClasses, xrefsFileType);
 
        // detect requested xrefs file types
@@ -157,8 +157,8 @@ public class GenerateXRefsFilesWithExprInfo {
 
         //TODO retrieve UniProt XRefs from the database rather than using a file.
         Map<Integer, Map<String, Set<String>>> uniprotXrefByGeneIdBySpeciesId = 
-        		requestedXrefFileTypes.contains(XrefsFileType.UNIPROT) ? 
-        				loadXrefFileWithoutExprInfo(inputFileName, speciesIds) : null;
+                requestedXrefFileTypes.contains(XrefsFileType.UNIPROT) ? 
+                        loadXrefFileWithoutExprInfo(inputFileName, speciesIds) : null;
         ServiceFactory serviceFactory = serviceFactorySupplier.get();
         GeneService geneService = serviceFactory.getGeneService();
 
@@ -168,14 +168,14 @@ public class GenerateXRefsFilesWithExprInfo {
 
         // Create geneFilters used to retrieve all required genes
         Set<GeneFilter> geneFiltersToLoadGenes = speciesIds.stream()
-        		.map(sp -> new GeneFilter(sp))
-        		.collect(Collectors.toSet());
+                .map(sp -> new GeneFilter(sp))
+                .collect(Collectors.toSet());
 
         // Create one geneFilter per gene used to retrieve the calls
         Set<GeneFilter> geneFiltersToLoadCalls = geneService
-        		.loadGenes(geneFiltersToLoadGenes, false, false, true)
-        		.map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
-        		.collect(Collectors.toSet());
+                .loadGenes(geneFiltersToLoadGenes, false, false, true)
+                .map(g -> new GeneFilter(g.getSpecies().getId(), g.getGeneId()))
+                .collect(Collectors.toSet());
 
         // We generate the ConditionGraph needed for filtering calls as on the gene page,
         //for each species present in the xref list. This will avoid creating a new graph for each gene.
@@ -183,9 +183,9 @@ public class GenerateXRefsFilesWithExprInfo {
         // for now we are only interested to anatomical entities. The condition graph is generated
         // using only this condition parameter
         final EnumSet<CallService.Attribute> anatEntityParam = 
-        		EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
         final Map<Integer, ConditionGraph> condGraphBySpeId = 
-        		Collections.unmodifiableMap(speciesIds.stream()
+                Collections.unmodifiableMap(speciesIds.stream()
                 .collect(Collectors.toMap(id -> id,
                         id -> condGraphService.loadConditionGraphFromSpeciesIds(
                                 Collections.singleton(id), null, anatEntityParam))));
@@ -193,52 +193,52 @@ public class GenerateXRefsFilesWithExprInfo {
 
         // generate lines with expression info
         Map<XrefsFileType, Map<String, List<String>>> geneIdToXrefLinesbyXrefsFileType = 
-        		this.generateXrefs(geneFiltersToLoadCalls, condGraphBySpeId, requestedXrefFileTypes, 
-        				uniprotXrefByGeneIdBySpeciesId, wikidataUberonClasses);
+                this.generateXrefs(geneFiltersToLoadCalls, condGraphBySpeId, requestedXrefFileTypes, 
+                        uniprotXrefByGeneIdBySpeciesId, wikidataUberonClasses);
 
         // write XRef file
         this.writeXrefWithExpressionInfo(requestedXrefFileTypes, geneIdToXrefLinesbyXrefsFileType, 
-        		outputDir);
+                outputDir);
 
         log.traceExit();
     }
 
     private static Set<String> getWikidataUberonClasses(String filePath) {
-    	Set<String> wikidataUberonClasses = new HashSet<>();
-    	try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
-    		stream.forEach(ub -> {
-    			wikidataUberonClasses.add(ub.replaceAll("\"", ""));
-    		});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	return wikidataUberonClasses;
+        Set<String> wikidataUberonClasses = new HashSet<>();
+        try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
+            stream.forEach(ub -> {
+                wikidataUberonClasses.add(ub.replaceAll("\"", ""));
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return wikidataUberonClasses;
     }
 
     private Set<XrefsFileType> getXrefFileType (List<String> wantedXrefsFileTypes) {
-    	log.traceEntry("{}",wantedXrefsFileTypes);
-    	if(!wantedXrefsFileTypes.containsAll(wantedXrefsFileTypes)) {
-    		throw log.throwing(new IllegalArgumentException("some xrefs file types does not exist"));
-    	}
-    	Set<XrefsFileType> xrefsFileTypes = EnumSet.allOf(XrefsFileType.class)
-    	.stream()
-    			.filter(x -> wantedXrefsFileTypes.contains(x.name()))
-    			.collect(Collectors.toSet());
-    	return log.traceExit(xrefsFileTypes);
+        log.traceEntry("{}",wantedXrefsFileTypes);
+        if(!wantedXrefsFileTypes.containsAll(wantedXrefsFileTypes)) {
+            throw log.throwing(new IllegalArgumentException("some xrefs file types does not exist"));
+        }
+        Set<XrefsFileType> xrefsFileTypes = EnumSet.allOf(XrefsFileType.class)
+        .stream()
+                .filter(x -> wantedXrefsFileTypes.contains(x.name()))
+                .collect(Collectors.toSet());
+        return log.traceExit(xrefsFileTypes);
     }
 
     private Set<Integer> retrieveSpeciesIds(Set<XrefsFileType> xrefsFileTypes) {
-    	ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
-    	SpeciesService speService = serviceFactory.getSpeciesService();
-    	log.traceEntry("{}", xrefsFileTypes);
-    	// retrieve Set of species required to generate Xref files. Create an empty Set if all 
-    	// species are necessary
-    	Set<Integer> speciesIds = (xrefsFileTypes.stream().filter(x -> x.speciesIds == null).count() > 0) ?
-    		new HashSet<Integer>() :
-    		xrefsFileTypes.stream().map(XrefsFileType::getSpeciesIds).flatMap(Set::stream)
-    		.collect(Collectors.toSet());
-    	return log.traceExit(speService.loadSpeciesByIds(speciesIds, false).stream().map(s -> s.getId())
-    			.collect(Collectors.toSet()));
+        ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
+        SpeciesService speService = serviceFactory.getSpeciesService();
+        log.traceEntry("{}", xrefsFileTypes);
+        // retrieve Set of species required to generate Xref files. Create an empty Set if all 
+        // species are necessary
+        Set<Integer> speciesIds = (xrefsFileTypes.stream().filter(x -> x.speciesIds == null).count() > 0) ?
+            new HashSet<Integer>() :
+            xrefsFileTypes.stream().map(XrefsFileType::getSpeciesIds).flatMap(Set::stream)
+            .collect(Collectors.toSet());
+        return log.traceExit(speService.loadSpeciesByIds(speciesIds, false).stream().map(s -> s.getId())
+                .collect(Collectors.toSet()));
     }
 
     //XXX Could load uniprot XRefs from the database rather than from a file generated previously.
@@ -249,7 +249,7 @@ public class GenerateXRefsFilesWithExprInfo {
      * @param file  A {@code String} that is the name of the file that contains
      *              all UniProtKB Xrefs without expression information.
      * @return      A {@code Map} where keys are speciesIds and values are a {@code Map} where keys are
-     * 				a gene ID and values are a {@code Set} of uniprot IDs
+     *                 a gene ID and values are a {@code Set} of uniprot IDs
      * @throws UncheckedIOException If an error occurred while trying to read the {@code file}.
      */
     public static Map<Integer,Map<String,Set<String>>> loadXrefFileWithoutExprInfo(String file, Set<Integer> speciesIds) {
@@ -258,7 +258,7 @@ public class GenerateXRefsFilesWithExprInfo {
         Map<Integer, Map<String, Set<String>>> xrefsBySpeciesIdAndGeneId = new HashMap<>();
 
         try (ICsvBeanReader beanReader = new CsvBeanReader(new FileReader(file), 
-        		CsvPreference.TAB_PREFERENCE)) {
+                CsvPreference.TAB_PREFERENCE)) {
             final String[] header = beanReader.getHeader(false);
             final CellProcessor[] processors = new CellProcessor[] { 
                     new NotNull(), // uniprotXrefId
@@ -268,14 +268,14 @@ public class GenerateXRefsFilesWithExprInfo {
 
             XrefUniprotBean xrefBean;
             while ((xrefBean = beanReader.read(XrefUniprotBean.class, header, processors)) != null) {
-            	if(speciesIds.contains(xrefBean.getSpeciesId())) {
+                if(speciesIds.contains(xrefBean.getSpeciesId())) {
 
-            		xrefsBySpeciesIdAndGeneId.computeIfAbsent(xrefBean.getSpeciesId(), k -> new HashMap<>());
-            		xrefsBySpeciesIdAndGeneId.get(xrefBean.getSpeciesId())
-            			.computeIfAbsent(xrefBean.getGeneId(), k -> new HashSet<>());
-            		xrefsBySpeciesIdAndGeneId.get(xrefBean.getSpeciesId()).get(xrefBean.getGeneId())
-            			.add(xrefBean.getUniprotId());
-	            }
+                    xrefsBySpeciesIdAndGeneId.computeIfAbsent(xrefBean.getSpeciesId(), k -> new HashMap<>());
+                    xrefsBySpeciesIdAndGeneId.get(xrefBean.getSpeciesId())
+                        .computeIfAbsent(xrefBean.getGeneId(), k -> new HashSet<>());
+                    xrefsBySpeciesIdAndGeneId.get(xrefBean.getSpeciesId()).get(xrefBean.getGeneId())
+                        .add(xrefBean.getUniprotId());
+                }
             }
 
         } catch (IOException e) {
@@ -295,67 +295,67 @@ public class GenerateXRefsFilesWithExprInfo {
      *                  value corresponds to one well formatted UniProtKB Xref line.
      */
     private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<GeneFilter> geneFilters, 
-    		Map<Integer, ConditionGraph> condGraphBySpeId, Set<XrefsFileType> requestedXrefFileTypes, 
-    		Map<Integer, Map<String, Set<String>>> uniprotXrefs, Set<String> wikidataUberonClasses) {
+            Map<Integer, ConditionGraph> condGraphBySpeId, Set<XrefsFileType> requestedXrefFileTypes, 
+            Map<Integer, Map<String, Set<String>>> uniprotXrefs, Set<String> wikidataUberonClasses) {
         log.traceEntry("{}, {}, {}, {}, {}", geneFilters, condGraphBySpeId, requestedXrefFileTypes,
-        		uniprotXrefs, wikidataUberonClasses);
+                uniprotXrefs, wikidataUberonClasses);
 
         Instant start = Instant.now();
 
-    	// init a Map where the key correspond to the type of xrefs and the value is a Map with a gene ID
+        // init a Map where the key correspond to the type of xrefs and the value is a Map with a gene ID
         // as key and the corresponding xrefs as value.
         Map<XrefsFileType, Map<String, List<String>>> xrefsLinesByFileTypeByGene = new HashMap<>();
 
         //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)
         geneFilters.parallelStream().forEach(gf -> {
 
-        	Integer speciesId = gf.getSpeciesId();
-        	if(gf.getGeneIds() == null || gf.getGeneIds().size() == 0 || 
-        			gf.getGeneIds().size() > 1) {
-        		throw log.throwing(new IllegalArgumentException("the geneFilter should "
-        				+ "contain exactly one geneId"));
-        	}
-        	String geneId = gf.getGeneIds().iterator().next();
+            Integer speciesId = gf.getSpeciesId();
+            if(gf.getGeneIds() == null || gf.getGeneIds().size() == 0 || 
+                    gf.getGeneIds().size() > 1) {
+                throw log.throwing(new IllegalArgumentException("the geneFilter should "
+                        + "contain exactly one geneId"));
+            }
+            String geneId = gf.getGeneIds().iterator().next();
 
-        	// Retrieve expression calls
+            // Retrieve expression calls
             ServiceFactory threadSpeServiceFactory = serviceFactorySupplier.get();
             CallService callService = threadSpeServiceFactory.getCallService();
 
             // keep only the expressionCall at anat entity level. Comming from a LinkedHashMap they
             // are already ordered by expressionlevel.
             Set<CallService.Attribute> condParams = 
-            		new HashSet<>(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID));
+                    new HashSet<>(EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID));
             //XXX If in the future we plan to add more information than just the anat. entity, it will
             // then be mandatory to keep calls at condition level ordered by anat. entity
             List<ExpressionCall> callsByAnatEntity = callService.loadSilverCondObservedCalls(gf, 
-                    		condParams, ExpressionSummary.EXPRESSED,
-                    		null,
+                            condParams, ExpressionSummary.EXPRESSED,
+                            null,
                             condGraphBySpeId.get(speciesId));
 
             // If no expression for this gene in Bgee
             if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
                 log.info("No expression data for gene " + geneId);
             } else {
-            	if(requestedXrefFileTypes.contains(XrefsFileType.UNIPROT)
-            			&& XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId)) {
-            		Set<String> filteredUniProtIds = uniprotXrefs.containsKey(speciesId) && 
-            				uniprotXrefs.get(speciesId).containsKey(geneId) ?
-            				uniprotXrefs.get(speciesId).get(geneId) : null;
-            		if(filteredUniProtIds != null) {
-            			xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.UNIPROT, k -> new HashMap<>())
-            			.putAll(generateXrefLineUniProt(geneId, callsByAnatEntity, filteredUniProtIds));
-            		}
-            	}
-            	if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
-            			&& XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId)) {
-            		xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> new HashMap<>())
-            		.putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity));
-            	}
-            	if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
-            			&& XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId)) {
-            		xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.WIKIDATA, k -> new HashMap<>())
-            		.putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
-            	}
+                if(requestedXrefFileTypes.contains(XrefsFileType.UNIPROT)
+                        && XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId)) {
+                    Set<String> filteredUniProtIds = uniprotXrefs.containsKey(speciesId) && 
+                            uniprotXrefs.get(speciesId).containsKey(geneId) ?
+                            uniprotXrefs.get(speciesId).get(geneId) : null;
+                    if(filteredUniProtIds != null) {
+                        xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.UNIPROT, k -> new HashMap<>())
+                        .putAll(generateXrefLineUniProt(geneId, callsByAnatEntity, filteredUniProtIds));
+                    }
+                }
+                if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
+                        && XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId)) {
+                    xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> new HashMap<>())
+                    .putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity));
+                }
+                if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
+                        && XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId)) {
+                    xrefsLinesByFileTypeByGene.computeIfAbsent(XrefsFileType.WIKIDATA, k -> new HashMap<>())
+                    .putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
+                }
             }
         });
         Instant end = Instant.now();
@@ -367,78 +367,78 @@ public class GenerateXRefsFilesWithExprInfo {
     }
 
     private Map<String, List<String>> generateXrefLineUniProt(String geneId, 
-    		List<ExpressionCall> callsByAnatEntity, Set<String> uniprotIds) {
+            List<ExpressionCall> callsByAnatEntity, Set<String> uniprotIds) {
 
-    	List<String> XRefLines = uniprotIds.stream().map(uid -> {
-	    	// Create String representation of the XRef with expression information
-	    	StringBuilder sb = new StringBuilder(uid)
-	                .append("   DR   Bgee; ")
-	                .append(geneId)
-	                .append(";")
-	                .append(" Expressed in ");
-	    	int numberAnatEntityToWrite = XrefsFileType.UNIPROT.getNumberOfAnatEntitiesToWrite();
+        List<String> XRefLines = uniprotIds.stream().map(uid -> {
+            // Create String representation of the XRef with expression information
+            StringBuilder sb = new StringBuilder(uid)
+                    .append("   DR   Bgee; ")
+                    .append(geneId)
+                    .append(";")
+                    .append(" Expressed in ");
+            int numberAnatEntityToWrite = XrefsFileType.UNIPROT.getNumberOfAnatEntitiesToWrite();
 
-	    	sb.append(String.join(", ", callsByAnatEntity.stream()
-	    			.limit(numberAnatEntityToWrite)
-	    			.map(c -> c.getCondition().getAnatEntity().getName())
-	    			.collect(Collectors.toList())));
+            sb.append(String.join(", ", callsByAnatEntity.stream()
+                    .limit(numberAnatEntityToWrite)
+                    .map(c -> c.getCondition().getAnatEntity().getName())
+                    .collect(Collectors.toList())));
 
-		    if (callsByAnatEntity.size() > numberAnatEntityToWrite ) {
-		        sb.append(" and ")
-		        .append(callsByAnatEntity.size()-numberAnatEntityToWrite)
-		        .append(" other tissue").append(callsByAnatEntity.size() > (numberAnatEntityToWrite + 1)? "s": "");
-		    }
-		    sb.append(".");
-		    return sb.toString();
-		})
-    	.collect(Collectors.toList());
-    	return Map.of(geneId, XRefLines);
+            if (callsByAnatEntity.size() > numberAnatEntityToWrite ) {
+                sb.append(" and ")
+                .append(callsByAnatEntity.size()-numberAnatEntityToWrite)
+                .append(" other tissue").append(callsByAnatEntity.size() > (numberAnatEntityToWrite + 1)? "s": "");
+            }
+            sb.append(".");
+            return sb.toString();
+        })
+        .collect(Collectors.toList());
+        return Map.of(geneId, XRefLines);
     }
 
     //TODO: quick and dirty version. Should use SuperCSV
     private Map<String, List<String>> generateXrefLineGeneCards(String geneId, 
-    		List<ExpressionCall> callsByAnatEntity) {
+            List<ExpressionCall> callsByAnatEntity) {
 
-    	String geneCardsURL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
-    	String bgeeURL = "https://bgee.org/?page=gene&gene_id=";
-    	// Create String representation of the XRef with expression information
-    	StringBuilder sb = new StringBuilder(geneId);
-    	int numberAnatEntityToWrite = XrefsFileType.GENE_CARDS.getNumberOfAnatEntitiesToWrite();
-    	sb.append("\tExpressed in ");
-    	sb.append(String.join(", ", callsByAnatEntity.stream()
-    			.limit(numberAnatEntityToWrite)
-    			.map(c -> c.getCondition().getAnatEntity().getName())
-    			.collect(Collectors.toList())));
+        String geneCardsURL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
+        String bgeeURL = "https://bgee.org/?page=gene&gene_id=";
+        // Create String representation of the XRef with expression information
+        StringBuilder sb = new StringBuilder(geneId);
+        int numberAnatEntityToWrite = XrefsFileType.GENE_CARDS.getNumberOfAnatEntitiesToWrite();
+        sb.append("\tExpressed in ");
+        sb.append(String.join(", ", callsByAnatEntity.stream()
+                .limit(numberAnatEntityToWrite)
+                .map(c -> c.getCondition().getAnatEntity().getName())
+                .collect(Collectors.toList())));
 
-	    if (callsByAnatEntity.size() > numberAnatEntityToWrite ) {
-	        sb.append(" and ")
-	        .append(callsByAnatEntity.size()-numberAnatEntityToWrite)
-	        .append(" other tissue").append(callsByAnatEntity.size() > (numberAnatEntityToWrite + 1)? "s": "");
-	    }
-	    sb.append(".");
-	    sb.append("\t" + geneCardsURL + geneId);
-	    sb.append("\t" + bgeeURL + geneId);
-    	return Map.of(geneId, List.of(sb.toString()));
+        if (callsByAnatEntity.size() > numberAnatEntityToWrite ) {
+            sb.append(" and ")
+            .append(callsByAnatEntity.size()-numberAnatEntityToWrite)
+            .append(" other tissue").append(callsByAnatEntity.size() > (numberAnatEntityToWrite + 1)? "s": "");
+        }
+        sb.append(".");
+        sb.append("\t" + geneCardsURL + geneId);
+        sb.append("\t" + bgeeURL + geneId);
+        return Map.of(geneId, List.of(sb.toString()));
     }
 
   //TODO: quick and dirty version. Could use SuperCSV
     private Map<String, List<String>> generateXrefLineWikidata(String geneId, 
-    		List<ExpressionCall> callsByAnatEntity, Set<String> wikidataUberonClasses) {
+            List<ExpressionCall> callsByAnatEntity, Set<String> wikidataUberonClasses) {
         int uberonClassesWritten = 0;
         Iterator<ExpressionCall> callsIterator = callsByAnatEntity.iterator();
         List<String> wikidataLines= new ArrayList<>();
         while (uberonClassesWritten < 10 && callsIterator.hasNext()) {
-        	ExpressionCall call = callsIterator.next();
-        	String uberonId = call.getCondition().getAnatEntityId();
+            ExpressionCall call = callsIterator.next();
+            String uberonId = call.getCondition().getAnatEntityId();
 
-        	if(wikidataUberonClasses.contains(uberonId)) {
-        		String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
-        			uberonId.replace(":", "_");
+            if(wikidataUberonClasses.contains(uberonId)) {
+                String modifiedUberonId = uberonId.contains("UBERON:") ? uberonId.substring(7) : 
+                    uberonId.replace(":", "_");
                 wikidataLines.add(geneId + "\t"+ modifiedUberonId);
                 uberonClassesWritten++;
             }
         }
-    	return Collections.singletonMap(geneId, wikidataLines);
+        return Collections.singletonMap(geneId, wikidataLines);
     }
 
     /**
@@ -452,7 +452,7 @@ public class GenerateXRefsFilesWithExprInfo {
     private static List<String> sortXrefByGeneId(Map<String, List<String>> geneIdToXrefLines) {
         log.traceEntry("{}",geneIdToXrefLines);
         return log.traceExit(geneIdToXrefLines == null ? null :
-        	geneIdToXrefLines.entrySet().stream()
+            geneIdToXrefLines.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 // to remove genes having no uniprot IDs
                 .filter(e -> e.getValue() != null)
@@ -470,20 +470,20 @@ public class GenerateXRefsFilesWithExprInfo {
      *                          Bgee Xrefs in UniProtKB.
      */
     private void writeXrefWithExpressionInfo(Set<XrefsFileType> requestedXrefFileTypes, 
-    		Map<XrefsFileType, Map<String, List<String>>> outputXrefLines, String outputDir) {
+            Map<XrefsFileType, Map<String, List<String>>> outputXrefLines, String outputDir) {
 
         log.traceEntry("{}, {}, {}", requestedXrefFileTypes, outputXrefLines, outputDir);
         for(XrefsFileType xrefFileType : outputXrefLines.keySet()) {
             // sort Xrefs by gene ID
-        	List<String> sortedGeneIdToXrefLines = GenerateXRefsFilesWithExprInfo
+            List<String> sortedGeneIdToXrefLines = GenerateXRefsFilesWithExprInfo
                   .sortXrefByGeneId(outputXrefLines.get(xrefFileType));
-	    	try {
-	            Files.write(Paths.get(outputDir, xrefFileType.getFileName()), sortedGeneIdToXrefLines, 
-	            		Charset.forName("UTF-8"));
-	        } catch (IOException e) {
-	            throw log.throwing(new UncheckedIOException("Can't write file " + 
-	            		xrefFileType.getFileName(), e));
-	        }
+            try {
+                Files.write(Paths.get(outputDir, xrefFileType.getFileName()), sortedGeneIdToXrefLines, 
+                        Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                throw log.throwing(new UncheckedIOException("Can't write file " + 
+                        xrefFileType.getFileName(), e));
+            }
         }
     }
 
@@ -566,7 +566,7 @@ public class GenerateXRefsFilesWithExprInfo {
         @Override
         public String toString() {
             return "XrefUniprotBean [uniprotId=" + uniprotId + ", geneId=" + geneId 
-            		+ ", speciesId=" + speciesId
+                    + ", speciesId=" + speciesId
                     + "]";
         }
 

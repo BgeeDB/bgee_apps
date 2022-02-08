@@ -426,8 +426,16 @@ public class GeneService extends CommonService {
                     "Species Map does not contain species " + to.getSpeciesId()));
         }
         if (species.getId().equals(species.getGenomeSpeciesId())) {
-            xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(), to.getGeneId(),
-                species.getScientificName()));
+            //FIXME: for now we hardcode the difference for linking to RefSeq,
+            //but for polishing Bgee 15.0, we should insert XRefs to genome sources
+            //into the XRefs table
+            if (species.getGenomeSource().getId().equals(37)) {
+                xrefs.add(new GeneXRef(to.getName(), to.getName(), species.getGenomeSource(),
+                        to.getGeneId(), species.getScientificName()));
+            } else {
+                xrefs.add(new GeneXRef(to.getGeneId(), to.getName(), species.getGenomeSource(),
+                        to.getGeneId(), species.getScientificName()));
+            }
         }
         return log.traceExit(xrefs);
     }

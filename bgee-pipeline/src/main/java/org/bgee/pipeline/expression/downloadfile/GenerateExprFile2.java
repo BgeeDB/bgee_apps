@@ -389,7 +389,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         summaryCallTypeQualityFilter.put(SummaryCallType.ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
 
         // We retrieve calls with all attributes that are not condition parameters.
-        Set<Attribute> clnAttr = Arrays.stream(Attribute.values())
+        Set<Attribute> attributes = Arrays.stream(Attribute.values())
                 .filter(a -> !a.isConditionParameter())
                 //we also don't want the qualitative expression levels
                 .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
@@ -401,44 +401,42 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
         
-        // generate expression call filter
-        EnumSet<CallService.Attribute> observedDataCombination = EnumSet.noneOf(CallService.Attribute.class);
+        // generate condition call filter
+        EnumSet<CallService.Attribute> callsCondParameters = EnumSet.noneOf(CallService.Attribute.class);
         
         // update attributes, ordering attributes and observed data filter to add condition
         // parameters depending on this.param
         if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
-            clnAttr.add(CallService.Attribute.ANAT_ENTITY_ID);
-            clnAttr.add(CallService.Attribute.CELL_TYPE_ID);
-            observedDataCombination.addAll(ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT
+            attributes.add(CallService.Attribute.ANAT_ENTITY_ID);
+            attributes.add(CallService.Attribute.CELL_TYPE_ID);
+            callsCondParameters.addAll(ExpressionCallFilter.ANAT_ENTITY_OBSERVED_DATA_ARGUMENT
                     .keySet().iterator().next());
             serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
             serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
         }
         if (this.params.contains(CallService.Attribute.DEV_STAGE_ID)) {
-            clnAttr.add(CallService.Attribute.DEV_STAGE_ID);
+            attributes.add(CallService.Attribute.DEV_STAGE_ID);
             serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-            observedDataCombination.add(CallService.Attribute.DEV_STAGE_ID);
+            callsCondParameters.add(CallService.Attribute.DEV_STAGE_ID);
         }
         if (this.params.contains(CallService.Attribute.SEX_ID)) {
-            clnAttr.add(CallService.Attribute.SEX_ID);
+            attributes.add(CallService.Attribute.SEX_ID);
             serviceOrdering.put(CallService.OrderingAttribute.SEX_ID, Service.Direction.ASC);
-            observedDataCombination.add(CallService.Attribute.SEX_ID);
+            callsCondParameters.add(CallService.Attribute.SEX_ID);
         }
         if (this.params.contains(CallService.Attribute.STRAIN_ID)) {
-            clnAttr.add(CallService.Attribute.STRAIN_ID);
+            attributes.add(CallService.Attribute.STRAIN_ID);
             serviceOrdering.put(CallService.OrderingAttribute.STRAIN_ID, Service.Direction.ASC);
-            observedDataCombination.add(CallService.Attribute.STRAIN_ID);
+            callsCondParameters.add(CallService.Attribute.STRAIN_ID);
         }
         Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
-        callObservedDataFilter.put(observedDataCombination, true);
+        callObservedDataFilter.put(callsCondParameters, true);
 
-        log.debug(clnAttr);
-        log.debug(callObservedDataFilter);
         ExpressionCallFilter callFilter = new ExpressionCallFilter(summaryCallTypeQualityFilter,
                 Collections.singleton(new GeneFilter(speciesId)), null, null, callObservedDataFilter);
 
         Stream<ExpressionCall> calls = serviceFactory.getCallService().loadExpressionCalls(
-                callFilter, clnAttr, serviceOrdering)
+                callFilter, attributes, serviceOrdering)
                 .filter(c-> !nonInformativeAnatEntities.contains(c.getCondition().getAnatEntityId()));
 
         log.trace("Done retrieving data for expression files for the species {}.", speciesId);
@@ -516,7 +514,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             // ****************************
             // WRITE ROWS
             // ****************************
-            numberOfRows = this.writeRows(writersUsed, processors, headers, observedDataCombination, calls);
+            numberOfRows = this.writeRows(writersUsed, processors, headers, callsCondParameters, calls);
         } catch (Exception e) {
             this.deleteTempFiles(generatedFileNames, tmpExtension);
             throw e;

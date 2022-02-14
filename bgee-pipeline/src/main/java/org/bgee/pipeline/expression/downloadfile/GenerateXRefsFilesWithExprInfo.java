@@ -45,13 +45,13 @@ import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.prefs.CsvPreference;
 
 /**
- * Class used to generate UniProtKB Xrefs file with expression information from
+ * Class used to generate several types of Xrefs file with expression information from
  * the Bgee database.
  * 
  * @author  Julien Wollbrett
  * @author  Frederic Bastian
  * @since Bgee 14 Jul 2017
- * @version Bgee 14 Nov 2018
+ * @version Bgee 15 Feb 2022
  */
 // FIXME: Add unit tests
 public class GenerateXRefsFilesWithExprInfo {
@@ -62,9 +62,9 @@ public class GenerateXRefsFilesWithExprInfo {
     private int numberOfThreads;
 
     private enum XrefsFileType {
-        UNIPROT(1, null, "UniprotXRefsBgee.txt"),
-        GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "GeneCardsXRefsBgee.tsv"),
-        WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)),
+        UNIPROT(1, new HashSet<>(Arrays.asList(7897)), "UniprotXRefsBgee.txt"),
+        GENE_CARDS(3, new HashSet<>(Arrays.asList(7897)), "GeneCardsXRefsBgee.tsv"),
+        WIKIDATA(10, new HashSet<>(Arrays.asList(7897)),
                 "WikidataBotInput.txt");
 
         private final Integer numberOfAnatEntitiesToWrite;
@@ -190,7 +190,7 @@ public class GenerateXRefsFilesWithExprInfo {
         //TODO retrieve UniProt XRefs from the database rather than using a file.
         Map<Integer, Map<String, Set<String>>> uniprotXrefByGeneIdBySpeciesId = 
                 requestedXrefFileTypes.contains(XrefsFileType.UNIPROT) ? 
-                        loadXrefFileWithoutExprInfo(inputFileName, speciesIds) : null;
+                        loadUniprotXrefFileWithoutExprInfo(inputFileName, speciesIds) : null;
         ServiceFactory serviceFactory = serviceFactorySupplier.get();
         GeneService geneService = serviceFactory.getGeneService();
 
@@ -210,20 +210,21 @@ public class GenerateXRefsFilesWithExprInfo {
                 .collect(Collectors.toSet());
 
         // We generate the ConditionGraph needed for filtering calls as on the gene page,
-        //for each species present in the xref list. This will avoid creating a new graph for each gene.
+        // for each species present in the xref list. This will avoid creating a new condition 
+        // graph for each gene.
         final ConditionGraphService condGraphService = serviceFactory.getConditionGraphService();
-        // for now we are only interested to anatomical entities. The condition graph is generated
-        // using only this condition parameter
-        final EnumSet<CallService.Attribute> anatEntityParam = 
+        // for now we are only interested to anatomical entities. The condition graph 
+        // is generated using only this condition parameter
+        final EnumSet<CallService.Attribute> condGraphParam = 
                 EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID);
         final Map<Integer, ConditionGraph> condGraphBySpeId = 
                 Collections.unmodifiableMap(speciesIds.stream()
                 .collect(Collectors.toMap(id -> id,
                         id -> condGraphService.loadConditionGraphFromSpeciesIds(
-                                Collections.singleton(id), null, anatEntityParam))));
+                                Collections.singleton(id), null, condGraphParam))));
         serviceFactory.close();
 
-        // generate lines with expression info
+        // We are now ready to retrieve expression and generate XRefs
         Map<XrefsFileType, Map<String, List<String>>> geneIdToXrefLinesbyXrefsFileType = 
                 this.generateXrefs(geneFiltersToLoadCalls, condGraphBySpeId, requestedXrefFileTypes, 
                         uniprotXrefByGeneIdBySpeciesId, wikidataUberonClasses);
@@ -231,7 +232,6 @@ public class GenerateXRefsFilesWithExprInfo {
         // write XRef file
         this.writeXrefWithExpressionInfo(requestedXrefFileTypes, geneIdToXrefLinesbyXrefsFileType, 
                 outputDir);
-
         log.traceExit();
     }
 
@@ -258,6 +258,15 @@ public class GenerateXRefsFilesWithExprInfo {
                 .collect(Collectors.toSet());
         return log.traceExit(xrefsFileTypes);
     }
+    
+    /**
+     * retrieve species ID of all species that have to be part of at least one
+     * XRef file
+     * @param xrefsFileTypes    A {code Set} of {@code XrefsFileType} corresponding to
+     *                          the XRefs file that will be generated
+     * @return                  A {@code Set} of {@code String} that represent species IDs
+     *                          of all species necessary to generate XRefs files 
+     */
 
     private Set<Integer> retrieveSpeciesIds(Set<XrefsFileType> xrefsFileTypes) {
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
@@ -276,15 +285,18 @@ public class GenerateXRefsFilesWithExprInfo {
     //XXX Could load uniprot XRefs from the database rather than from a file generated previously.
     /**
      * Read the UniProtKB Xref file without expression information and store lines
-     * into a {@code List} of {@code XrefUniprotBean}s.
+     * into a A {@code Map} where keys are speciesIds and values are a {@code Map} where 
+     * keys are a gene ID and values are a {@code Set} of uniprot IDs
      * 
-     * @param file  A {@code String} that is the name of the file that contains
-     *              all UniProtKB Xrefs without expression information.
-     * @return      A {@code Map} where keys are speciesIds and values are a {@code Map} where keys are
-     *                 a gene ID and values are a {@code Set} of uniprot IDs
+     * @param file          A {@code String} that is the name of the file that contains
+     *                      all UniProtKB Xrefs without expression information.
+     * @param speciesIds    speciesIds for which UniProt XRefs have to be generated
+     * 
+     * @return              A {@code Map} where keys are speciesIds and values are a {@code Map} where keys are
+     *                      a gene ID and values are a {@code Set} of uniprot IDs
      * @throws UncheckedIOException If an error occurred while trying to read the {@code file}.
      */
-    public static Map<Integer,Map<String,Set<String>>> loadXrefFileWithoutExprInfo(String file, Set<Integer> speciesIds) {
+    public static Map<Integer,Map<String,Set<String>>> loadUniprotXrefFileWithoutExprInfo(String file, Set<Integer> speciesIds) {
         log.traceEntry("{}, {}", file, speciesIds);
 
         Map<Integer, Map<String, Set<String>>> xrefsBySpeciesIdAndGeneId = new HashMap<>();
@@ -317,14 +329,20 @@ public class GenerateXRefsFilesWithExprInfo {
     }
 
     /**
-     * Generate UniprotKB XRef lines with expression information for one gene. These lines contains:
-     * - number of anatomical entities where this gene is expressed;
-     * - name of the anatomical entity where this gene has the higher expression level.
-     * 
-     * @param xrefList  A {@code List} of {@code XrefUniprotBean}s containing information retrieved 
-     *                  from Bgee database and needed to create uniprot cross-references.
-     * @return          The {@code Map} where keys correspond to gene IDs and each
-     *                  value corresponds to one well formatted UniProtKB Xref line.
+     * Retrieve gene expression information and generate XRefs lines with expression information.
+     *
+     * @param geneFilters               A {@code Set} of {@code GeneFilter}s. Each {@code GeneFilter} corresponds to
+     *                                  a filter of all genes for one species.
+     * @param condGraphBySpeId          Map<Integer, ConditionGraph> condGraphBySpeId
+     * @param requestedXrefFileTypes    A {@code Set} of {@code XrefsFileType}. Each {@code} corresponds to a
+     *                                  type of XRef file to generate
+     * @param uniprotXrefs              A {@code Map} of {@code Integer} representing speciesIds as key and as value
+     *                                  a {@code Map} of {@code String} representing gene IDs as key and a {@code List}
+     *                                  of {@code String} corresponding to UniProt IDs as value.
+     * @param wikidataUberonClasses     A {@code Set} of {@code String} containing all Uberon IDs already inserted in
+     *                                  wikidata
+     * @return                          The {@code Map} where keys correspond to gene IDs and each
+     *                                  value corresponds to one well formatted UniProtKB Xref line.
      */
     private Map<XrefsFileType, Map<String, List<String>>> generateXrefs(Set<GeneFilter> geneFilters, 
             Map<Integer, ConditionGraph> condGraphBySpeId, Set<XrefsFileType> requestedXrefFileTypes, 
@@ -459,6 +477,16 @@ public class GenerateXRefsFilesWithExprInfo {
     }
 
     //TODO: quick and dirty version. Should use SuperCSV
+    /**
+     * generate GeneCards XRefs lines with expression information for one gene
+     * 
+     * @param geneId                A {@code String} that is the ID of the gene for which
+     *                              the XRef line will be created
+     * @param callsByAnatEntity     A {@code List} of {@code ExpressionCall} for the gene
+     * @return                      A {@code Map} of {@code String} that are gene IDs as key and
+     *                              a {@code List} of {@code String} corresponding to associated XRefs
+     *                              text as value
+     */
     private Map<String, List<String>> generateXrefLineGeneCards(String geneId, 
             List<ExpressionCall> callsByAnatEntity) {
 
@@ -481,10 +509,22 @@ public class GenerateXRefsFilesWithExprInfo {
         sb.append(".");
         sb.append("\t" + geneCardsURL + geneId);
         sb.append("\t" + bgeeURL + geneId);
-        return Map.of(geneId, List.of(sb.toString()));
+        return Collections.singletonMap(geneId, List.of(sb.toString()));
     }
 
   //TODO: quick and dirty version. Could use SuperCSV
+    /**
+     * generates text used as input for the wikidata bot
+     * 
+     * @param geneId                A {@code String} that is the ID of the gene for which
+     *                              the XRef line will be created
+     * @param callsByAnatEntity     A {@code List} of {@code ExpressionCall} for the gene
+     * @param wikidataUberonClasses A {@code Set} of {@code String} containing all Uberon IDs already
+     *                              inserted in wikidata
+     * @return                      A {@code Map} of {@code String} that are gene IDs as key and
+     *                              a {@code List} of {@code String} corresponding to associated XRefs
+     *                              text as value
+     */
     private Map<String, List<String>> generateXrefLineWikidata(String geneId, 
             List<ExpressionCall> callsByAnatEntity, Set<String> wikidataUberonClasses) {
         int uberonClassesWritten = 0;
@@ -507,7 +547,7 @@ public class GenerateXRefsFilesWithExprInfo {
     /**
      * Sort Xrefs by gene IDs.
      * 
-     * @param geneIdToXrefLines  A {@code Map} where keys correspond to gene IDs 
+     * @param geneIdToXrefLines     A {@code Map} where keys correspond to gene IDs 
      *                              and each value corresponds to UniProtKB Xref line.
      * @return                      The {@code List} where each element is {@code String} representing one well
      *                              formatted Uniprot XRef
@@ -515,7 +555,7 @@ public class GenerateXRefsFilesWithExprInfo {
     private static List<String> sortXrefByGeneId(Map<String, List<String>> geneIdToXrefLines) {
         log.traceEntry("{}",geneIdToXrefLines);
         return log.traceExit(geneIdToXrefLines == null ? null :
-            geneIdToXrefLines.entrySet().stream()
+                geneIdToXrefLines.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 // to remove genes having no uniprot IDs
                 .filter(e -> e.getValue() != null)
@@ -524,13 +564,16 @@ public class GenerateXRefsFilesWithExprInfo {
     }
 
     /**
-     * Write an XRef file according to Uniprot format. Each line contains: -
-     * Uniprot ID - gene ID used in Bgee - summary of the expression Ex:
-     * H9G366 DR BGEE; ENSACAG00000000002; Expressed in brain and 3 other tissues.
+     * Write all requested XRef files
      * 
-     * @param file              A {@code String} that is the path of the output file.
-     * @param outputXrefLines   A {@code Collection} of {@code String} corresponding to all
-     *                          Bgee Xrefs in UniProtKB.
+     * @param requestedXrefFileTypes    A {@code Set} of {@code XrefsFileType} containing information
+     *                                  about all XRefs files to generate
+     * @param outputXrefLines           A {@code Map} with a {@code XrefsFileType} as key and as value
+     *                                  {@code Map} with {@code String} correpsonding to gene IDs as key
+     *                                  and a {@code List} of {@code String} corresponding to XRefs lines
+     *                                  as value
+     * @param outputDir                 A {@code String} that is the path to the directory where XRefs files
+     *                                  will be created
      */
     private void writeXrefWithExpressionInfo(Set<XrefsFileType> requestedXrefFileTypes, 
             Map<XrefsFileType, Map<String, List<String>>> outputXrefLines, String outputDir) {

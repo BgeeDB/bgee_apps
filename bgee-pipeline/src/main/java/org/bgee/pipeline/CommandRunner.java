@@ -300,7 +300,8 @@ public class CommandRunner {
         case "GenerateEasyBgee":
             BgeeToEasyBgee.main(newArgs);
             break;
-        case "GenerateUniprotXRef":
+        //---------- Generate XRefs Files -----------
+        case "GenerateXRefs":
             GenerateXRefsFilesWithExprInfo.main(newArgs);
             break;
         case "GenerateInsertGeneStats":

@@ -77,7 +77,7 @@ public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
        Set<Integer> speciesIds = new HashSet<>(9606,28377);
 
        Map<Integer,Map<String,Set<String>>> xrefUniprotListLoaded = GenerateXRefsFilesWithExprInfo
-               .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile(), speciesIds);
+               .loadUniprotXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile(), speciesIds);
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
     }
 

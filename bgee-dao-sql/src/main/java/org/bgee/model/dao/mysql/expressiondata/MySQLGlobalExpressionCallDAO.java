@@ -257,10 +257,12 @@ implements GlobalExpressionCallDAO {
                 // ) AS DECIMAL(9,2))))
                 + dataTypes.stream()
                 .map(dataType -> {
+                    String rankSql = globalExprTableName + "."
+                            + dataType.getRankNormFieldName(globalRank);
                     String weightSql = (dataType.isRankWeightRelatedToCondition()?
                             globalCondTableName: globalExprTableName) + "."
                             + dataType.getRankWeightFieldName(globalRank);
-                    return "IF(" + weightSql + " IS NULL, 0, " + weightSql + ")";})
+                    return "IF(" + rankSql + " IS NULL, 0, " + weightSql + ")";})
                 .collect(Collectors.joining(" + ", "/ (", ") AS DECIMAL(9,2))))")));
     }
 

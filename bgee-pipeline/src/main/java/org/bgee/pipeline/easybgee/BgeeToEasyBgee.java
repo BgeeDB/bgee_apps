@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +19,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -31,6 +34,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
@@ -41,7 +45,6 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
-import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -71,15 +74,14 @@ import org.supercsv.io.ICsvMapWriter;
  * Extract data from the Bgee database and generate one TSV file for each
  * extracted table. These TSV files will then be used to populate the Easy Bgee
  * database (initially created for the bioSoda project)
- * 
+ *
  * @author  Julien Wollbrett
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Dec. 2019
  * @since   Bgee 14, July 2018
  */
 // TODO: add tests
-// TODO: add javadoc to all methods
-public class BgeeToEasyBgee extends MySQLDAOUser {
+public class BgeeToEasyBgee extends MySQLDAOUser{
 
     /**
      * Each entry of this enum corresponds to the export of one bgee table that
@@ -219,7 +221,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 put("STAGE_ID", false);
                 put("CELL_TYPE_ID", false);
                 put("SEX_ID", false);
-                put("STRAIN_ID", false);                
+                put("STRAIN_ID", false);
                 put("SPECIES_ID", false);
             }
         }), GLOBALEXPRESSION_OUTPUT_FILE("global_expression_easy_bgee.tsv", "globalExpression",
@@ -294,7 +296,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             return isNullable;
         }
     }
-    
+
     // column to add in Easy Bgee for which no Enum exist in the Bgee API (because
     // information is not stored in the Bgee RDB)
     private static String GLOBAL_EXPRESSION_SUMMARY_QUALITY = "SUMMARY_QUALITY";
@@ -302,13 +304,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     private static String GLOBAL_EXPRESSION_ORIGIN = "ORIGIN";
     private static String GLOBAL_EXPRESSION_FDR_PVALUE = "FDR_PVALUE";
     private static String GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE = "CALL_TYPE";
-    
+
+    private final Function<DAOManager, ServiceFactory> serviceFactoryProvider;
+    private final Supplier<DAOManager> daoManagerSupplier;
+
     private final static Logger log = LogManager.getLogger(BgeeToEasyBgee.class);
-    /**
-     * The {@code ServiceFactory} used to acquire {@code Service}s (from the
-     * {@code bgee-core} module).
-     */
-    protected final ServiceFactory serviceFactory;
 
     /**
      * Several actions can be launched from this main method, depending on the
@@ -339,7 +339,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      * action will be to deletes rows of tables of Easy Bgee database (see
      * {@link #emptyDatabaseTables()}).</li>
      * </ul>
-     * 
+     *
      * @param args
      *            An {@code Array} of {@code String}s containing the requested
      *            parameters.
@@ -377,23 +377,23 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         }
     }
 
-    // XXX: should we use services when it is possible (at least when we don't
-    // need internal IDs)?
     public BgeeToEasyBgee() {
-        this(null, new ServiceFactory());
+        this(DAOManager::getDAOManager, ServiceFactory::new);
     }
 
-    public BgeeToEasyBgee(MySQLDAOManager manager, ServiceFactory serviceFactory) {
-        super(manager);
-        this.serviceFactory = serviceFactory;
+    public BgeeToEasyBgee(final Supplier<DAOManager> daoManagerSupplier,
+            final Function<DAOManager, ServiceFactory> serviceFactoryProvider) {
+        this.daoManagerSupplier = daoManagerSupplier;
+        this.serviceFactoryProvider = serviceFactoryProvider;
+
     }
 
     /**
      * Clean the output directory. If output ".tsv" files exist they are
      * deleted. This Method also create the output directory if it does not
      * already exist.
-     * 
-     * @param directory to the output directory to cleanpath 
+     *
+     * @param directory to the output directory to cleanpath
      */
     private void cleanOutputDir(String directory) {
         log.traceEntry("{}", directory);
@@ -419,7 +419,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
      */
     private void extractBgeeDatabase(Collection<Integer> inputSpeciesIds, String directory) {
         log.traceEntry("{}, {}", inputSpeciesIds, directory);
-        SpeciesTOResultSet speciesTOs = getSpeciesDAO().getSpeciesByIds(new HashSet<>(inputSpeciesIds), null);
+        SpeciesTOResultSet speciesTOs = daoManagerSupplier.get().getSpeciesDAO()
+                .getSpeciesByIds(new HashSet<>(inputSpeciesIds), null);
         // XXX: add check that all provided species IDs are found
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
@@ -440,7 +441,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceEntry("{}, {}, {}, {}",idToBgeeGeneIds, condToConditionId, speciesId, directory);
 
         log.info("Start extracting global expressions for the species {}...", speciesId);
-        
+
         // use TsvFile enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALEXPRESSION_OUTPUT_FILE);
 
@@ -448,7 +449,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), GLOBAL_EXPRESSION_SUMMARY_QUALITY,
                 GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(), GLOBAL_EXPRESSION_MEAN_SCORE, GLOBAL_EXPRESSION_FDR_PVALUE,
                 GLOBAL_EXPRESSION_ORIGIN, GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE };
-        
+
         // init summaryCallTypeQualityFilter
         Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter =
                 new HashMap<>();
@@ -463,10 +464,9 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        
-        // init geneFilter
-        GeneFilter geneFilter = new GeneFilter(speciesId);
-        
+        serviceOrdering.put(CallService.OrderingAttribute.CELL_TYPE_ID, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
+
         // We retrieve calls with all attributes that are not condition parameters.
         EnumSet<CallService.Attribute> attributes = EnumSet.of(CallService.Attribute.GENE,
                 CallService.Attribute.CALL_TYPE, CallService.Attribute.DATA_QUALITY,
@@ -480,31 +480,6 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         attributes.addAll(condFilter);
         orderingAttributes.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         orderingAttributes.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
-         
-         //load calls with presence of expression
-         final Stream<ExpressionCall> expressedCalls = serviceFactory.getCallService()
-                 .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
-                         Collections.singleton(geneFilter),
-                         Collections.singleton(new ConditionFilter(null, null,
-                                 null, null, null, condFilter)),
-                         null, null),
-                         attributes, orderingAttributes);
-
-        writeGlobalExpressionFile(expressedCalls,
-                attributes.stream().filter(a -> a.isConditionParameter())
-                .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
-                idToBgeeGeneIds, condToConditionId, 
-                directory, header, processors);
-
-        log.traceExit();
-    }
-
-    private void writeGlobalExpressionFile(Stream<ExpressionCall> expressionCalls,
-            EnumSet<CallService.Attribute> condParamComb,
-            Map<String, Integer> idToBgeeGeneId, Map<Condition, String> condToConditionId,
-            String directory, String[] header, CellProcessor[] processors) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, idToBgeeGeneId,
-                condToConditionId);
 
         File file = new File(directory, TsvFile.GLOBALEXPRESSION_OUTPUT_FILE.getFileName());
 
@@ -518,46 +493,90 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                     file.createNewFile();
                     mapWriter.writeHeader(header);
                 }
-                expressionCalls.forEach(call -> {
-                    Map<String, String> headerToValue = new HashMap<>();
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(),
-                            String.valueOf(idToBgeeGeneId.get(call.getGene().getGeneId())));
-                    Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
-                            call.getCondition().getDevStageId() == null ? 
-                                    new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) : 
-                                    new DevStage(call.getCondition().getDevStageId()),
-                            call.getCondition().getCellTypeId() == null ? 
-                                    new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) : 
-                                    new AnatEntity(call.getCondition().getCellTypeId()),
-                            call.getCondition().getSex() == null ? 
-                                    new Sex(ConditionDAO.SEX_ROOT_ID) : 
-                                    new Sex(call.getCondition().getSexId()),
-                            call.getCondition().getStrain() == null ? 
-                                    new Strain(ConditionDAO.STRAIN_ROOT_ID) : 
-                                    new Strain(call.getCondition().getStrainId()),
-                            new Species(call.getCondition().getSpeciesId()));
 
-                    String conditionId = condToConditionId.get(updatedCond);
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
-                    headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
-                            call.getSummaryQuality().getStringRepresentation());
-                    headerToValue.put(GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(),
-                            call.getMeanRank().toString());
-                    headerToValue.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
-                    headerToValue.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
-                            call.getDataPropagation(), condParamComb));
-                    headerToValue.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
-                    headerToValue.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFDRPValue().toString());
-                    try {
-                        mapWriter.write(headerToValue, header, processors);
-                    } catch (IOException e) {
-                        throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
-                    }
+                idToBgeeGeneIds.keySet().parallelStream().forEach(geneId -> {
+                    final Stream<ExpressionCall> expressedCalls = serviceFactoryProvider
+                            .apply(this.daoManagerSupplier.get())
+                            .getCallService()
+                            .loadExpressionCalls(new ExpressionCallFilter(summaryCallTypeQualityFilter,
+                                    Collections.singleton(new GeneFilter(speciesId, geneId)),
+                                    //TODO could use Set.of instead of Collections.singleton once Java 9 is installed
+                                    //on all our servers
+                                    Collections.singleton(new ConditionFilter(null, 
+                                            null, 
+                                            Collections.singleton("GO:0005575"), 
+                                            Collections.singleton("any"),  
+                                            Collections.singleton("wild-type"), condFilter)),
+                                    null, null),
+                                    attributes, orderingAttributes);
+
+                    generateGlobalExpressionLines(expressedCalls,
+                            attributes.stream().filter(a -> a.isConditionParameter())
+                            .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))),
+                            idToBgeeGeneIds.get(geneId), condToConditionId, header, processors, mapWriter, file);
                 });
-
             }
         } catch (IOException e) {
             throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+        }
+        log.traceExit();
+    }
+
+    private void generateGlobalExpressionLines(Stream<ExpressionCall> expressionCalls,
+            EnumSet<CallService.Attribute> condParamComb, Integer bgeeGeneId,
+            Map<Condition, String> condToConditionId, String[] header, CellProcessor[] processors,
+            ICsvMapWriter mapWriter, File file) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", expressionCalls, condParamComb, bgeeGeneId,
+                condToConditionId);
+
+        List<Map<String, String>> headerToValuePerGene = new ArrayList<>();
+
+        expressionCalls.forEach(call -> {
+            Map<String, String> headerToValuePerCall = new HashMap<>();
+            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID.name(), String.valueOf(bgeeGeneId));
+            Condition updatedCond = new Condition(new AnatEntity(call.getCondition().getAnatEntityId()),
+                call.getCondition().getDevStageId() == null ?
+                        new DevStage(ConditionDAO.DEV_STAGE_ROOT_ID) :
+                        new DevStage(call.getCondition().getDevStageId()),
+                call.getCondition().getCellTypeId() == null ?
+                        new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID) :
+                        new AnatEntity(call.getCondition().getCellTypeId()),
+                call.getCondition().getSex() == null ?
+                        new Sex(ConditionDAO.SEX_ROOT_ID) :
+                        new Sex(call.getCondition().getSexId()),
+                call.getCondition().getStrain() == null ?
+                        new Strain(ConditionDAO.STRAIN_ROOT_ID) :
+                        new Strain(call.getCondition().getStrainId()),
+                        new Species(call.getCondition().getSpeciesId()));
+
+            String conditionId = condToConditionId.get(updatedCond);
+            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID.name(), conditionId);
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_QUALITY,
+                    call.getSummaryQuality().getStringRepresentation());
+            headerToValuePerCall.put(GlobalExpressionCallDAO.Attribute.MEAN_RANK.name(),
+                    call.getMeanRank().toString());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_MEAN_SCORE, call.getExpressionScore().toString());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
+                    call.getDataPropagation(), condParamComb));
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFDRPValue().toString());
+            headerToValuePerGene.add(headerToValuePerCall);
+        });
+        try {
+            writeExpressionPerGeneToFile(headerToValuePerGene, header, processors, mapWriter);
+        } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException("Can't write file " + file, e));
+        }
+    }
+
+    /** 
+     * Synchronized method taking care of writing in a thread-safe approach the expression information
+     * retrieved from the database into a unique file.
+     */
+    private synchronized void writeExpressionPerGeneToFile(List<Map<String,String>> headerToValuePerGene,
+            String [] header, CellProcessor[] processors, ICsvMapWriter mapWriter) throws IOException {
+        for(Map<String,String> headerToValuePerCall : headerToValuePerGene) {
+            mapWriter.write(headerToValuePerCall, header, processors);
         }
     }
 
@@ -568,7 +587,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 GeneDAO.Attribute.NAME.name(), GeneDAO.Attribute.DESCRIPTION.name(),
                 GeneDAO.Attribute.SPECIES_ID.name() };
 
-        List<GeneDAO.GeneTO> allTOs = getManager().getGeneDAO()
+        List<GeneDAO.GeneTO> allTOs = daoManagerSupplier.get().getGeneDAO()
                 .getGenesBySpeciesIds(Collections.singleton(speciesId)).getAllTOs();
         List<Map<String, String>> allGenesInformation = allTOs.stream().map(gene -> {
             Map<String, String> headerToValue = new HashMap<>();
@@ -591,7 +610,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.info("Start extracting anatomical entities...");
         String[] header = new String[] { AnatEntityDAO.Attribute.ID.name(), AnatEntityDAO.Attribute.NAME.name(),
                 AnatEntityDAO.Attribute.DESCRIPTION.name() };
-        List<Map<String, String>> allAnatEntitiesInformation = getManager().getAnatEntityDAO()
+        List<Map<String, String>> allAnatEntitiesInformation = daoManagerSupplier.get().getAnatEntityDAO()
                 .getAnatEntitiesByIds(null).getAllTOs().stream().map(ae -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(AnatEntityDAO.Attribute.ID.name(), ae.getId());
@@ -611,7 +630,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.info("Start extracting developmental stages");
         String[] header = new String[] { StageDAO.Attribute.ID.name(), StageDAO.Attribute.NAME.name(),
                 StageDAO.Attribute.DESCRIPTION.name() };
-        List<Map<String, String>> allDevStagesInformation = getStageDAO().getStagesByIds(new HashSet<>())
+        List<Map<String, String>> allDevStagesInformation = daoManagerSupplier.get().getStageDAO()
+                .getStagesByIds(new HashSet<>())
                 .getAllTOs().stream().map(stage -> {
                     Map<String, String> headerToValue = new HashMap<>();
                     headerToValue.put(StageDAO.Attribute.ID.name(), String.valueOf(stage.getId()));
@@ -629,20 +649,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
         log.traceEntry("{}, {}", speciesId, directory);
         log.info("Start extracting global conditions for the species {}...", speciesId);
-        
-        //retrieve conditions for anat entity observed and for all cond. parameters observed
-//        DAOConditionFilter condFilterAnatEntity = new DAOConditionFilter(null, null, 
-//                null, null, null, Arrays.asList(ConditionDAO.Attribute.ANAT_ENTITY_ID, 
-//                        ConditionDAO.Attribute.CELL_TYPE_ID));
-//        DAOConditionFilter condFilterAllParams = new DAOConditionFilter(null, null, 
-//                null, null, null, ConditionDAO.Attribute.getCondParams());
+
         List<ConditionDAO.Attribute> attributes = Arrays.asList(ConditionDAO.Attribute.ID,
                 ConditionDAO.Attribute.ANAT_ENTITY_ID, ConditionDAO.Attribute.STAGE_ID,
                 ConditionDAO.Attribute.CELL_TYPE_ID, ConditionDAO.Attribute.SEX_ID,
                 ConditionDAO.Attribute.STRAIN_ID, ConditionDAO.Attribute.SPECIES_ID);
-        String[] header = new String[] { ConditionDAO.Attribute.ID.name(), 
-                ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), ConditionDAO.Attribute.STAGE_ID.name(), 
-                ConditionDAO.Attribute.CELL_TYPE_ID.name(), ConditionDAO.Attribute.SEX_ID.name(), 
+        String[] header = new String[] { ConditionDAO.Attribute.ID.name(),
+                ConditionDAO.Attribute.ANAT_ENTITY_ID.name(), ConditionDAO.Attribute.STAGE_ID.name(),
+                ConditionDAO.Attribute.CELL_TYPE_ID.name(), ConditionDAO.Attribute.SEX_ID.name(),
                 ConditionDAO.Attribute.STRAIN_ID.name(), ConditionDAO.Attribute.SPECIES_ID.name() };
 
         // create condition filter using root of sex and strain
@@ -651,8 +665,8 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 Collections.singleton(ConditionDAO.STRAIN_ROOT_ID), null);
 
         // Retrieve all conditions
-        List<ConditionTO> conditionTOs = getManager().getConditionDAO()
-                .getGlobalConditions(Collections.singleton(speciesId), 
+        List<ConditionTO> conditionTOs = daoManagerSupplier.get().getConditionDAO()
+                .getGlobalConditions(Collections.singleton(speciesId),
                         Collections.singleton(condFilter), attributes).getAllTOs();
 
         //transformation from a List<ConditionTO> to a List<Map<String, String>> in order to easily write conditions in a file
@@ -668,11 +682,11 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             return headerToValue;
         })
         .collect(Collectors.toList());
-        
-        
+
+
         //use TsvFile Enum to generate the CellProcessor
         final CellProcessor[] processors = createCellProcessor(TsvFile.GLOBALCOND_OUTPUT_FILE);
-        
+
         // write global condition tsv file
         File file = new File(directory, TsvFile.GLOBALCOND_OUTPUT_FILE.getFileName());
         writeOutputFile(file, allGlobalCondInformation, header, processors);
@@ -706,7 +720,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
 
     /**
      * Create A table of {@code CellProcessor} used by superCSV
-     * 
+     *
      * @param enumValue
      *            The {@code TsvFile} Enum values specific to
      * @return A table of {@code CellProcessor}
@@ -749,7 +763,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
 
     /**
      * Write a tsv file
-     * 
+     *
      * @param file
      *            The {@code File} where data will be written
      * @param fileLines
@@ -792,14 +806,14 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         log.traceEntry();
         String serverName = "";
         Pattern pattern = Pattern.compile("^.*//(.*?):");
-        Matcher matcher = pattern.matcher(getManager().getJdbcUrl());
+        Matcher matcher = pattern.matcher(this.getManager().getJdbcUrl());
         if (matcher.find()) {
             serverName = matcher.group(1);
         }
         for (TsvFile tsvFile : TsvFile.values()) {
             log.info("delete all data in table {} of Easy Bgee from {}", tsvFile.getTableName(), serverName);
             String sql = "DELETE FROM " + tsvFile.getTableName();
-            try (BgeePreparedStatement stmt = getManager().getConnection().prepareStatement(sql)) {
+            try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 throw log.throwing(new IllegalStateException("Can not connect to the database"));
@@ -826,7 +840,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                 .traceExit(conditionTOs.stream()
                         .collect(
                                 Collectors.toMap(
-                                        
+
                                         p -> new Condition(new AnatEntity(p.getAnatEntityId()),
                                                 p.getStageId() == null ? null : new DevStage(p.getStageId()),
                                                 p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
@@ -839,7 +853,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
     /**
      * Use all tsv files generated in the previous step of Easy Bgee creation and
      * integrate data in the Easy Bgee relational database
-     * 
+     *
      * @param directory
      *            A {@code String} corresponding to the directory where tsv
      *            files are stored
@@ -863,7 +877,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
                         .collect(Collectors.joining(", ", "(", ")"));
                 log.info("SQL query : {}", sql);
 
-                try (BgeePreparedStatement stmt = getManager().getConnection().prepareStatement(sql)) {
+                try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql)) {
                     // save all data contained in a tsv file using the same
                     // transaction
                     startTransaction();
@@ -921,17 +935,16 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
         }
         log.traceExit();
     }
-    
+
     private String dataPropagationToString(DataPropagation dataPropagation,
             EnumSet<CallService.Attribute> condParamComb) {
         log.traceEntry("{}, {}", dataPropagation, condParamComb);
         //TODO: to remove when the API can return all types of propagation
         if(dataPropagation == null) {
-            return log.traceExit("");
+            throw log.throwing(
+                    new IllegalStateException("no data propagation retrieved"));
         }
-        //FIXME: the propagation state can be null or equals to UNKNOWN
         PropagationState propState = dataPropagation.getPropagationState(condParamComb);
-//        if (dataPropagation.isIncludingObservedData()) {
             if (PropagationState.SELF_AND_DESCENDANT.equals(propState)) {
                 return log.traceExit("self and descendant");
             }
@@ -941,17 +954,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser {
             if (PropagationState.DESCENDANT.equals(propState)) {
                 return log.traceExit("descendant");
             }
-//        } else {
-//            else if ( (allPropagationState.contains(PropagationState.ANCESTOR) && 
-//                    allPropagationState.contains(PropagationState.DESCENDANT)) ||
-//                    allPropagationState.contains(PropagationState.ANCESTOR_AND_DESCENDANT)) {
-//                return log.traceExit("ancestor and descendant");
-//            } else if (allPropagationState.contains(PropagationState.ANCESTOR)) {
-//                return log.traceExit("ancestor");
-//            } else if (allPropagationState.contains(PropagationState.DESCENDANT)) {
-//                return log.traceExit("descendant");
-//            }
-//        }
+
         throw log.throwing(new IllegalArgumentException("Unknown data propagation status  "
                 + dataPropagation));
     }

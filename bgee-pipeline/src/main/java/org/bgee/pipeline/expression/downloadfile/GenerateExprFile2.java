@@ -64,9 +64,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * {@code Logger} of the class.
      */
     private final static Logger log = LogManager.getLogger(GenerateExprFile2.class.getName());
-    
+
     private final static Map<Attribute, String> CONDITION_FILE_NAME;
-    
+
     static {
         CONDITION_FILE_NAME =  new LinkedHashMap<Attribute, String>();
         //XXX: what about cell type?
@@ -75,7 +75,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         CONDITION_FILE_NAME.put(Attribute.SEX_ID, "sex");
         CONDITION_FILE_NAME.put(Attribute.STRAIN_ID, "strain");
     }
-           
+
 
     /**
      * An {@code Enum} used to define the possible expression file types to be generated.
@@ -171,7 +171,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         log.traceExit();
     }
-    
+
     private static Set<Attribute> convertToAttributes(List<String> argumentList) {
         log.traceEntry("{}", argumentList);
         Set<Attribute> attrs = EnumSet.noneOf(Attribute.class);
@@ -186,7 +186,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             throw log.throwing(new IllegalArgumentException("\"" + argument + 
                     "\" does not correspond to any element of " + Attribute.class.getName()));
         }
-        
+
         return log.traceExit(attrs);
     }
 
@@ -257,7 +257,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 throws IllegalArgumentException {
         this(manager, speciesIds, fileTypes, directory, attributes, ServiceFactory::new);
     }
-    
+
     /**
      * Constructor providing the {@code MySQLDAOManager} that will be used by this object
      * to perform queries to the database. This is useful for unit testing.
@@ -310,7 +310,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         if (this.fileTypes == null || this.fileTypes.isEmpty()) {
             this.fileTypes = EnumSet.allOf(SingleSpExprFileType2.class);
         }
-        
+
         // If no parameters are given by user, we set all file types
         if (this.params == null || this.params.isEmpty()) {
             this.params = EnumSet.allOf(Attribute.class).stream()
@@ -395,15 +395,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 .filter(a -> !a.equals(Attribute.ANAT_ENTITY_QUAL_EXPR_LEVEL) &&
                         !a.equals(Attribute.GENE_QUAL_EXPR_LEVEL))
                 .collect(Collectors.toSet());
-        
+
         // generate ordering attributes
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
+        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        
+
         // generate condition call filter
         EnumSet<CallService.Attribute> callsCondParameters = EnumSet.noneOf(CallService.Attribute.class);
-        
+
         // update attributes, ordering attributes and observed data filter to add condition
         // parameters depending on this.param
         if (this.params.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
@@ -449,7 +449,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         // Now, we write all requested expression files at once. This way, we will generate the data
         // only once, and we will not have to store them in memory (the memory usage could be huge).
-        
+        // (the memory usage could be huge).
         // OK, first we allow to store file names, writers, etc, associated to a FileType, 
         // for the catch and finally clauses. 
         Map<FileType, String> generatedFileNames = new HashMap<>();
@@ -547,9 +547,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private String convertAttributeToFileName(Set<Attribute> attributes) {
         log.traceEntry("{}", attributes);
-        
+
         assert attributes!= null && !attributes.isEmpty();
-        
+
         List<Attribute> attributeList = new ArrayList<>(attributes);
         Collections.sort(attributeList);
 
@@ -565,7 +565,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                             return Stream.of(CONDITION_FILE_NAME.get(Attribute.SEX_ID));
                         case STRAIN_ID:
                             return Stream.of(CONDITION_FILE_NAME.get(Attribute.STRAIN_ID));
-                        default: 
+                        default:
                             throw new IllegalArgumentException("Attribute not supported: " + a);
                     }})
                 .collect(Collectors.joining("_"));
@@ -576,8 +576,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             return "all_conditions";
         }
         return joinedAttributes;
-        
-        
+
+
     }
 
     /**
@@ -606,12 +606,12 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         qualitySummaries.add(convertSummaryQualityToString(SummaryQuality.SILVER));
         qualitySummaries.add(convertSummaryQualityToString(SummaryQuality.BRONZE));
         qualitySummaries.add(NA_VALUE);
-        
+
         List<Object> originValues = new ArrayList<Object>();
         for (ObservedData data : ObservedData.values()) {
             originValues.add(data.getStringRepresentation());
         }
-        
+
         //Then, we build the CellProcessor
         CellProcessor[] processors = new CellProcessor[header.length];
         for (int i = 0; i < header.length; i++) {
@@ -646,7 +646,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     break;
             }
 
-            // If it was one of the column common to all file types, 
+            // If it was one of the column common to all file types,
             // iterate next column name
             if (processors[i] != null) {
                 continue;
@@ -714,7 +714,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 }
             }
             if (processors[i] == null) {
-                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: "
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
@@ -730,8 +730,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private String[] generateExprFileHeader(SingleSpExprFileType2 fileType) {
         log.traceEntry("{}",fileType);
-        
-        String[] headers = null; 
+
+        String[] headers = null;
         int nbColumns = 7;
         if (!fileType.isSimpleFileType()) {
             nbColumns = 55;
@@ -739,8 +739,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         for (Attribute attr : this.params) {
             switch (attr) {
             // *** attributes common to all file types ***
-            case ANAT_ENTITY_ID: 
-            case DEV_STAGE_ID: 
+            case ANAT_ENTITY_ID:
+            case DEV_STAGE_ID:
                 nbColumns += 2;
                 break;
             case SEX_ID:
@@ -754,7 +754,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         headers = new String[nbColumns];
 
-        // We use an index to avoid to change hard-coded column numbers when we change columns 
+        // We use an index to avoid to change hard-coded column numbers when we change columns
         int idx = 0;
         // *** Headers common to all file types ***
         headers[idx++] = GENE_ID_COLUMN_NAME;
@@ -831,7 +831,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         }
         return log.traceExit(headers);
     }
-    
+
     /**
      * Generate the field mapping for each column of the header of a single-species
      * expression TSV file of type {@code fileType}.
@@ -848,7 +848,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
     private String[] generateFieldMapping(SingleSpExprFileType2 fileType, String[] header)
             throws IllegalArgumentException {
         log.traceEntry("{}, {}", fileType, header);
-        
+
         //to do a sanity check on species columns in simple files
         EnumSet<DataType> dataTypeFound = EnumSet.noneOf(DataType.class);
 
@@ -856,48 +856,48 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         for (int i = 0; i < header.length; i++) {
             switch (header[i]) {
                 // *** attributes common to all file types ***
-                case GENE_ID_COLUMN_NAME: 
+                case GENE_ID_COLUMN_NAME:
                     mapping[i] = "geneId";
                     break;
-                case GENE_NAME_COLUMN_NAME: 
+                case GENE_NAME_COLUMN_NAME:
                     mapping[i] = "geneName";
                     break;
-                case ANAT_ENTITY_ID_COLUMN_NAME: 
+                case ANAT_ENTITY_ID_COLUMN_NAME:
                     mapping[i] = "anatEntityId";
                     break;
-                case ANAT_ENTITY_NAME_COLUMN_NAME: 
+                case ANAT_ENTITY_NAME_COLUMN_NAME:
                     mapping[i] = "anatEntityName";
                     break;
-                case STAGE_ID_COLUMN_NAME: 
+                case STAGE_ID_COLUMN_NAME:
                     mapping[i] = "devStageId";
                     break;
-                case STAGE_NAME_COLUMN_NAME: 
+                case STAGE_NAME_COLUMN_NAME:
                     mapping[i] = "devStageName";
                     break;
-                case SEX_COLUMN_NAME: 
+                case SEX_COLUMN_NAME:
                     mapping[i] = "sex";
                     break;
-                case STRAIN_COLUMN_NAME: 
+                case STRAIN_COLUMN_NAME:
                     mapping[i] = "strain";
                     break;
-                case EXPRESSION_COLUMN_NAME: 
+                case EXPRESSION_COLUMN_NAME:
                     mapping[i] = "expression";
                     break;
-                case QUALITY_COLUMN_NAME: 
+                case QUALITY_COLUMN_NAME:
                     mapping[i] = "callQuality";
                     break;
-                case EXPRESSION_RANK_COLUMN_NAME: 
+                case EXPRESSION_RANK_COLUMN_NAME:
                     mapping[i] = "expressionRank";
                     break;
-                case EXPRESSION_SCORE_COLUMN_NAME: 
+                case EXPRESSION_SCORE_COLUMN_NAME:
                     mapping[i] = "expressionScore";
                     break;
-                case FDR_COLUMN_NAME: 
+                case FDR_COLUMN_NAME:
                     mapping[i] = "fdr";
                     break;
             }
-            
-            //if it was one of the column common to all beans, 
+
+            //if it was one of the column common to all beans,
             //iterate next column name
             if (mapping[i] != null) {
                 continue;
@@ -905,16 +905,16 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
             if (!fileType.isSimpleFileType()) {
                 // *** Attributes specific to complete file ***
-                
-                if (header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) { 
+
+                if (header[i].equals(INCLUDING_OBSERVED_DATA_COLUMN_NAME)) {
                     mapping[i] = "includingObservedData";
                 }
-                
-                if (header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME)) { 
+
+                if (header[i].equals(SELF_OBSERVATION_COUNT_COLUMN_NAME)) {
                     mapping[i] = "selfObservationCount";
                 }
-                
-                if (header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) { 
+
+                if (header[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME)) {
                     mapping[i] = "descendantObservationCOunt";
                 }
 
@@ -922,8 +922,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 if (mapping[i] != null) {
                     continue;
                 }
-                
-                // We need to find the data type contains in the header to be able to 
+
+                // We need to find the data type contains in the header to be able to
                 // assign the good index to DataExprCounts.
                 // For that, we iterate all data types to retrieve the data.
                 int index = -1;
@@ -945,9 +945,9 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     throw log.throwing(new IllegalArgumentException("Column does not correspond to "
                             + "any datatype."));
                 }
-                        
+
                 dataTypeFound.add(dataType);
-                if (header[i].startsWith(OBSERVED_DATA_COLUMN_NAME_PREFIX) 
+                if (header[i].startsWith(OBSERVED_DATA_COLUMN_NAME_PREFIX)
                         && header[i].endsWith(OBSERVED_DATA_COLUMN_NAME_SUFFIX)) {
                     mapping[i] = "dataExprCounts[" + index + "].observedData";
 
@@ -977,15 +977,15 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     mapping[i] = "dataExprCounts[" + index + "].descendantObservationCount";
 
                 } else {
-                    throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
-                            + header[i] + " for file type: " + 
+                    throw log.throwing(new IllegalArgumentException("Unrecognized header: "
+                            + header[i] + " for file type: " +
                             fileType.getStringRepresentation()));
                 }
                 assert(mapping[i] != null);
             }
 
             if (mapping[i] == null) {
-                throw log.throwing(new IllegalArgumentException("Unrecognized header: " 
+                throw log.throwing(new IllegalArgumentException("Unrecognized header: "
                         + header[i] + " for file type: " + fileType.getStringRepresentation()));
             }
         }
@@ -997,7 +997,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
 
         return log.traceExit(mapping);
     }
-    
+
     /**
      * Generate {@code Array} of {@code booleans} (one per CSV column) indicating 
      * whether each column should be quoted or not.
@@ -1008,7 +1008,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      */
     private boolean[] generateQuoteMode(String[] headers) {
         log.traceEntry("{}", (Object[]) headers);
-        
+
         boolean[] quoteMode = new boolean[headers.length];
         for (int i = 0; i < headers.length; i++) {
             if (headers[i].equals(GENE_ID_COLUMN_NAME) ||
@@ -1076,19 +1076,19 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     headers[i].equals(DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME) ||
                     headers[i].equals(FDR_COLUMN_NAME)) {
 
-                quoteMode[i] = false; 
+                quoteMode[i] = false;
             } else if (headers[i].equals(GENE_NAME_COLUMN_NAME) ||
                         headers[i].equals(ANAT_ENTITY_NAME_COLUMN_NAME) ||
                         headers[i].equals(STAGE_NAME_COLUMN_NAME) ||
                         headers[i].equals(CELL_TYPE_NAME_COLUMN_NAME)) {
 
-                quoteMode[i] = true; 
+                quoteMode[i] = true;
             } else {
                     throw log.throwing(new IllegalArgumentException(
                             "Unrecognized header: " + headers[i] + " for OMA TSV file."));
             }
         }
-        
+
         return log.traceExit(quoteMode);
     }
 
@@ -1176,7 +1176,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     List<DataExprCounts> counts = EnumSet.allOf(DataType.class).stream()
                             .map(dt -> getDataExprCountByDataType(c, dt, condParamCombination))
                             .collect(Collectors.toList());
-                    
+
                     Long selfObservationCount = Long.valueOf(c.getDataPropagation()
                             .getSelfObservationCount(condParamCombination));
                     Long descendantObservationCount = Long.valueOf(c.getDataPropagation()
@@ -1213,7 +1213,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         log.traceEntry("{}, {}, {}", call, dataType, condParamCombination);
 
         ExpressionCall callFromDataType = CallService.deriveCallForDataType(call, dataType);
-        
+
         if (callFromDataType != null) {
             assert callFromDataType.getCallData().size() == 1;
             ExpressionCallData data = callFromDataType.getCallData().iterator().next();
@@ -1233,7 +1233,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     callFromDataType.getExpressionScore() == null ? NA_VALUE : callFromDataType.getFormattedExpressionScore(),
                     data.getWeightForMeanRank() == null ? NA_VALUE : data.getWeightForMeanRank().toPlainString()));
         }
-        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, NA_VALUE, 
+        return log.traceExit(new DataExprCounts(dataType, NO_DATA_VALUE, NA_VALUE, NA_VALUE,
                     convertObservedDataToString(false), 0L, 0L, NA_VALUE, NA_VALUE, NA_VALUE));
     }
 
@@ -1274,7 +1274,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String sex, String strain, String expression, 
+                String sex, String strain, String expression,
                 String callQuality, String expressionRank, String expressionScore, String fdr) {
             this.geneId = geneId;
             this.geneName = geneName;
@@ -1467,7 +1467,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 return false;
             return true;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
@@ -1483,7 +1483,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             return builder.toString();
         }
     }
-    
+
     /**
      * A bean representing a row of a single-species simple expression file. 
      * 
@@ -1492,7 +1492,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @since   Bgee 13, Sept. 2016
      */
     public static class SingleSpeciesSimpleExprFileBean extends SingleSpeciesExprFileBean {
-        
+
         /**
          * 0-argument constructor of the bean.
          */
@@ -1506,13 +1506,13 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesSimpleExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String sex, String strain, String expression, String callQuality, 
+                String sex, String strain, String expression, String callQuality,
                 String expressionRank, String expressionScore, String fdr) {
-            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, 
+            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex,
                     strain, expression, callQuality, expressionRank, expressionScore, fdr);
         }
     }
-    
+
     /**
      * A bean representing a row of a single-species complete expression file. 
      *
@@ -1528,8 +1528,8 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         /**
          * See {@link #getDataExprCounts()}.
          */
-        private List<DataExprCounts> dataExprCounts; 
-        
+        private List<DataExprCounts> dataExprCounts;
+
         /**
          * 0-argument constructor of the bean.
          */
@@ -1543,11 +1543,11 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
          */
         protected SingleSpeciesCompleteExprFileBean(String geneId, String geneName,
                 String anatEntityId, String anatEntityName, String devStageId, String devStageName,
-                String sex, String strain, String expression, String callQuality, String expressionRank, 
-                String expressionScore, String fdr, String includingObservedData, 
-                Long selfObservationCount, Long descendantObservationCount, 
+                String sex, String strain, String expression, String callQuality, String expressionRank,
+                String expressionScore, String fdr, String includingObservedData,
+                Long selfObservationCount, Long descendantObservationCount,
                 List<DataExprCounts> dataExprCounts) {
-            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, strain, 
+            super(geneId, geneName, anatEntityId, anatEntityName, devStageId, devStageName, sex, strain,
                     expression, callQuality, expressionRank, expressionScore, fdr);
             this.includingObservedData = includingObservedData;
             this.selfObservationCount = selfObservationCount;
@@ -1655,7 +1655,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
      * @since   Bgee 14, Mar. 2017
      */
     public static class DataExprCounts {
-        
+
         private DataType dataType;
         private String callType;
         private String callQuality;
@@ -1668,7 +1668,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
         private String weight;
 
         public DataExprCounts(DataType dataType, String callType, String callQuality, String fdr,
-                String observedData, Long selfObservationCount, Long descendantObservationCount, 
+                String observedData, Long selfObservationCount, Long descendantObservationCount,
                 String expressionRank, String expressionScore, String weight) {
             this.dataType = dataType;
             this.callType = callType;
@@ -1681,7 +1681,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             this.expressionScore = expressionScore;
             this.weight = weight;
         }
-        
+
         public DataType getDataType() {
             return dataType;
         }
@@ -1750,7 +1750,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
             result = prime * result + ((callType == null) ? 0 : callType.hashCode());
             result = prime * result + ((callQuality == null) ? 0 : callQuality.hashCode());
             result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
-            result = prime * result + ((descendantObservationCount == null) ? 0 : 
+            result = prime * result + ((descendantObservationCount == null) ? 0 :
                 descendantObservationCount.hashCode());
             result = prime * result + ((expressionRank == null) ? 0 : expressionRank.hashCode());
             result = prime * result + ((expressionScore == null) ? 0 : expressionScore.hashCode());

@@ -242,14 +242,12 @@ public class GenerateXRefsFilesWithExprInfo {
         ServiceFactory serviceFactory = this.serviceFactorySupplier.get();
         SpeciesService speService = serviceFactory.getSpeciesService();
         log.traceEntry("{}", xrefsFileTypes);
-        // retrieve Set of species required to generate Xref files. Create an empty Set if all 
-        // species are necessary
-        Set<Integer> speciesIds = (xrefsFileTypes.stream().filter(x -> x.speciesIds == null).count() > 0) ?
-            new HashSet<Integer>() :
-            xrefsFileTypes.stream().map(XrefsFileType::getSpeciesIds).flatMap(Set::stream)
-            .collect(Collectors.toSet());
-        return log.traceExit(speService.loadSpeciesByIds(speciesIds, false).stream().map(s -> s.getId())
-                .collect(Collectors.toSet()));
+        Set<Integer> speciesIds = xrefsFileTypes.stream()
+                .map(x -> speService.loadSpeciesByIds(x.getSpeciesIds(), false)
+                        .stream().map(s -> s.getId()).collect(Collectors.toSet()))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+        return log.traceExit(speciesIds);
     }
 
     //XXX Could load uniprot XRefs from the database rather than from a file generated previously.
@@ -357,8 +355,11 @@ public class GenerateXRefsFilesWithExprInfo {
                 if (callsByAnatEntity == null || callsByAnatEntity.isEmpty()) {
                     log.info("No expression data for gene " + geneId);
                 } else {
+                    
                     if(requestedXrefFileTypes.contains(XrefsFileType.UNIPROT)
-                            && XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId)) {
+                            && (XrefsFileType.UNIPROT.getSpeciesIds().contains(speciesId) ||
+                                    XrefsFileType.UNIPROT.getSpeciesIds() == null || 
+                                    XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
                         Set<String> filteredUniProtIds = uniprotXrefs.containsKey(speciesId) && 
                                 uniprotXrefs.get(speciesId).containsKey(geneId) ?
                                 uniprotXrefs.get(speciesId).get(geneId) : null;
@@ -368,12 +369,16 @@ public class GenerateXRefsFilesWithExprInfo {
                         }
                     }
                     if(requestedXrefFileTypes.contains(XrefsFileType.GENE_CARDS)
-                            && XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId)) {
+                            && (XrefsFileType.GENE_CARDS.getSpeciesIds().contains(speciesId) ||
+                                    XrefsFileType.UNIPROT.getSpeciesIds() == null || 
+                                    XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
                         syncMap.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> createNewSynchronizedSortedMap())
                         .putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity));
                     }
                     if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
-                            && XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId)) {
+                            && (XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId) ||
+                            XrefsFileType.UNIPROT.getSpeciesIds() == null || 
+                            XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
                         syncMap.computeIfAbsent(XrefsFileType.WIKIDATA, k -> createNewSynchronizedSortedMap())
                         .putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
                     }

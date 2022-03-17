@@ -437,10 +437,15 @@ public class GenerateXRefsFilesWithExprInfo {
             return sb.toString();
         })
         .collect(Collectors.toList());
-        return Map.of(geneId, XRefLines);
+        //TODO Use Map.of once Java 9 is installed in all servers....
+//        return Map.of(geneId, XRefLines);
+        return Stream.of(
+                new AbstractMap.SimpleEntry<>(geneId, XRefLines))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    //TODO: quick and dirty version. Should use SuperCSV
+    //TODO: quick and dirty version. Should use SuperCSV and retrieve both genecards and bgee URLs
+    // from outside of the Java code
     /**
      * generate GeneCards XRefs lines with expression information for one gene
      * 
@@ -473,7 +478,7 @@ public class GenerateXRefsFilesWithExprInfo {
         sb.append(".");
         sb.append("\t" + geneCardsURL + geneId);
         sb.append("\t" + bgeeURL + geneId);
-        return Collections.singletonMap(geneId, List.of(sb.toString()));
+        return Collections.singletonMap(geneId, Collections.singletonList(sb.toString()));
     }
 
   //TODO: quick and dirty version. Could use SuperCSV

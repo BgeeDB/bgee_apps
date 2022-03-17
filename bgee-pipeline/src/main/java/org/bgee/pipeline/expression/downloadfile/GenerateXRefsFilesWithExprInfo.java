@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,10 +61,10 @@ public class GenerateXRefsFilesWithExprInfo {
     private final Supplier<ServiceFactory> serviceFactorySupplier;
 
     private enum XrefsFileType {
-        UNIPROT(1, new HashSet<>(Arrays.asList(7897)), "UniprotXRefsBgee.txt"),
-        GENE_CARDS(3, new HashSet<>(Arrays.asList(7897)), "GeneCardsXRefsBgee.tsv"),
-        WIKIDATA(10, new HashSet<>(Arrays.asList(7897)),
-                "WikidataBotInput.txt");
+        UNIPROT(1, new HashSet<>(), "XRefsBgee.txt"),
+        GENE_CARDS(3, new HashSet<>(Arrays.asList(9606)), "geneCards_XRefBgee.tsv"),
+        WIKIDATA(10, new HashSet<>(Arrays.asList(6239,7227,7955,9606,10090,10116)),
+                "WikidataBotInput.tsv");
 
         private final Integer numberOfAnatEntitiesToWrite;
         private final Set<Integer> speciesIds;

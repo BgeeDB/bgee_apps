@@ -455,7 +455,7 @@ public class GenerateXRefsFilesWithExprInfo {
             List<ExpressionCall> callsByAnatEntity) {
 
         String geneCardsURL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
-        String bgeeURL = "https://bgee.org/?page=gene&gene_id=";
+        String bgeeURL = "https://bgee.org/gene/";
         // Create String representation of the XRef with expression information
         StringBuilder sb = new StringBuilder(geneId);
         int numberAnatEntityToWrite = XrefsFileType.GENE_CARDS.getNumberOfAnatEntitiesToWrite();

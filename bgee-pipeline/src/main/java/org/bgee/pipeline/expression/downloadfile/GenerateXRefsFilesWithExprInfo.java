@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,7 +58,6 @@ public class GenerateXRefsFilesWithExprInfo {
     private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfo.class.getName());
 
     private final Supplier<ServiceFactory> serviceFactorySupplier;
-    private int numberOfThreads;
 
     private enum XrefsFileType {
         UNIPROT(1, new HashSet<>(Arrays.asList(7897)), "UniprotXRefsBgee.txt"),
@@ -109,33 +107,6 @@ public class GenerateXRefsFilesWithExprInfo {
         this.serviceFactorySupplier = serviceFactorySupplier;
     }
     
-    /**
-     * Constructor providing the number of threads that will be used by 
-     * this object to perform queries to the database.
-     *
-     * @param numberOfThreads               A {@code int} corresponding to the number of threads
-     *                                      used to retrieve gene expression
-     */
-    public GenerateXRefsFilesWithExprInfo(int numberOfThreads) {
-        this(ServiceFactory::new);
-        this.numberOfThreads = numberOfThreads;
-    }
-    
-    /**
-     * Constructor providing the {@code ServiceFactory} and the number of threads that will 
-     * be used by this object to perform queries to the database. This is useful for unit testing.
-     *
-     * @param numberOfThreads               A {@code int} corresponding to the number of threads
-     *                                      used to retrieve gene expression
-     * @param serviceFactorySupplier        A {@code Supplier} of {@code ServiceFactory}s 
-     *                                      to be able to provide one to each thread.
-     */
-    public GenerateXRefsFilesWithExprInfo(int numberOfThreads, 
-            Supplier<ServiceFactory> serviceFactorySupplier) {
-        this.serviceFactorySupplier = serviceFactorySupplier;
-        this.numberOfThreads = numberOfThreads;
-    }
-
     // XXX: Use service when it will be implemented
     /**
      * Main method to generate Xrefs files with expression information from
@@ -147,18 +118,16 @@ public class GenerateXRefsFilesWithExprInfo {
      * <li>path to the file where to write Xrefs with expression information.
      * <li>path to the file listing all uberon IDs already inserted in wikidata
      * <li>comma separated list of xrefs files to generate (for now UNIPROT, GENE_CARDS and/or WIKIDATA)
-     * <li>number of threads used to retrieve gene expression (number of connections to the database)
      * </ol>
      *
      * @param args  An {@code Array} of {@code String}s containing the requested parameters.
      * @throws IllegalArgumentException     If the files used provided invalid information.
      */
     public static void main(String[] args) throws IllegalArgumentException {
-        if (args.length != 5) {
+        if (args.length != 4) {
             throw log.throwing(new IllegalArgumentException("Incorrect number of arguments."));
         }
-        int numberOfThreads = Integer.parseInt(args[4]); 
-        GenerateXRefsFilesWithExprInfo expressionInfoGenerator = new GenerateXRefsFilesWithExprInfo(numberOfThreads);
+        GenerateXRefsFilesWithExprInfo expressionInfoGenerator = new GenerateXRefsFilesWithExprInfo();
         Set<String> wikidataUberonClasses = getWikidataUberonClasses(args[2]);
         expressionInfoGenerator.generate(args[0], args[1], wikidataUberonClasses,
                 CommandRunner.parseListArgument(args[3]));
@@ -358,11 +327,6 @@ public class GenerateXRefsFilesWithExprInfo {
         SortedMap<XrefsFileType, Map<String, List<String>>> xrefsLinesByFileTypeByGene = new TreeMap<>();
         Map<XrefsFileType, Map<String, List<String>>> syncMap = Collections.synchronizedSortedMap(xrefsLinesByFileTypeByGene);
         //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)
-        ForkJoinPool forkJoinPool = null;
-        
-            forkJoinPool = new ForkJoinPool(4);
-            try {
-            forkJoinPool.submit(() ->
             geneFilters.parallelStream().forEach(gf -> {
     
                 Integer speciesId = gf.getSpeciesId();
@@ -413,14 +377,8 @@ public class GenerateXRefsFilesWithExprInfo {
                         .putAll(generateXrefLineWikidata(geneId, callsByAnatEntity, wikidataUberonClasses));
                     }
                 }
-            })).get();
-        } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
-            throw new RuntimeException(e);
-       } finally {
-            if (forkJoinPool != null) {
-                forkJoinPool.shutdown();
-            }
-        }
+            });
+
 
         Instant end = Instant.now();
         log.info("Time needed to retrieve expressionSummary of {} genes is {} seconds", geneFilters.size(),
@@ -591,14 +549,6 @@ public class GenerateXRefsFilesWithExprInfo {
                         xrefFileType.getFileName(), e));
             }
         }
-    }
-
-    public int getNumberOfThreads() {
-        return numberOfThreads;
-    }
-
-    public void setNumberOfThreads(int numberOfThreads) {
-        this.numberOfThreads = numberOfThreads;
     }
 
     public static class XrefUniprotBean {

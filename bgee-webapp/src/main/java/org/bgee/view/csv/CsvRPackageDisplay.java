@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.CommandRPackage;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
@@ -349,13 +350,13 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         speMap.put(header[columnNumber], e.getDescription());
                         break;
                     case CommandRPackage.PROPAGATION_LEVEL_PARAM:
-                        speMap.put(header[columnNumber], e.getDescription());
+                        speMap.put(header[columnNumber], e.getLevel());
                         break;
                     case CommandRPackage.PROPAGATION_LEFTBOUND_PARAM:
-                        speMap.put(header[columnNumber], e.getDescription());
+                        speMap.put(header[columnNumber], e.getLeftBound());
                         break;
                     case CommandRPackage.PROPAGATION_RIGHTBOUND_PARAM:
-                        speMap.put(header[columnNumber], e.getDescription());
+                        speMap.put(header[columnNumber], e.getRightBound());
                         break;
                     default:
                         throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));

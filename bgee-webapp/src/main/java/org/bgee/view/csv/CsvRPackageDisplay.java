@@ -22,6 +22,7 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.view.RPackageDisplay;
@@ -290,53 +291,15 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
     }
 
     @Override
-    public void displayAnatEntityPropagation(List<String> attrs, Set<AnatEntity> propagatedAnatEntities) {
-        log.traceEntry("{}, {}", attrs, propagatedAnatEntities);
-        String[] header = attrs.toArray(new String[attrs.size()]);
-        final CsvPreference quotes_pref = new CsvPreference.Builder(this.csvPref).useQuoteMode(new AlwaysQuoteMode()).build();
-        try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(), quotes_pref)) {
-            this.startDisplay();
-            mapWriter.writeHeader(header);
-            propagatedAnatEntities.stream().forEach(e -> {
-                final Map<String, Object> speMap = new HashMap<String, Object>();
-                for (int columnNumber = 0; columnNumber < header.length; columnNumber++) {
-                    switch (header[columnNumber]) {
-                    case CommandRPackage.PROPAGATION_ID_PARAM:
-                        speMap.put(header[columnNumber], e.getId());
-                        break;
-                    case CommandRPackage.PROPAGATION_NAME_PARAM:
-                        speMap.put(header[columnNumber], e.getName());
-                        break;
-                    case CommandRPackage.PROPAGATION_DESCRIPTION_PARAM:
-                        speMap.put(header[columnNumber], e.getDescription());
-                        break;
-                    default:
-                        throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));
-                    }
-                }
-                try {
-                    mapWriter.write(speMap, header);
-                } catch (IOException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-            });
-            mapWriter.flush();
-        } catch (IOException e) {
-            log.catching(e);
-            throw log.throwing(new IllegalStateException("Cannot write CSV response", e));
-        }
-    }
-
-    @Override
-    public void displayDevStagePropagation(List<String> attrs, Set<DevStage> propagatedDevStages) {
-        log.traceEntry("{}, {}", attrs, propagatedDevStages);
+    public <T extends NamedEntity<U> & OntologyElement<T, U>,U extends Comparable<U>>
+            void displayPropagation(List<String> attrs, Set<T> propagatedEntities) {
+        log.traceEntry("{}, {}", attrs, propagatedEntities);
         String[] header = attrs.toArray(new String[attrs.size()]);
         final CsvPreference quotes_pref = new CsvPreference.Builder(this.csvPref).useQuoteMode(new AlwaysQuoteMode()).build();
         try (final ICsvMapWriter mapWriter = new CsvMapWriter(this.getOut(),quotes_pref)) {
             this.startDisplay();
             mapWriter.writeHeader(header);
-            propagatedDevStages.stream().sorted().forEach(e -> {
+            propagatedEntities.stream().forEach(e -> {
                 final Map<String, Object> speMap = new HashMap<String, Object>();
                 for (int columnNumber = 0; columnNumber < header.length; columnNumber++) {
                     switch (header[columnNumber]) {
@@ -350,13 +313,34 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         speMap.put(header[columnNumber], e.getDescription());
                         break;
                     case CommandRPackage.PROPAGATION_LEVEL_PARAM:
-                        speMap.put(header[columnNumber], e.getLevel());
+                        if (e instanceof DevStage) {
+                            DevStage stage = (DevStage) e;
+                            speMap.put(header[columnNumber], stage.getLevel());
+                        } else {
+                            throw log.throwing(new IllegalStateException("Attribut " +
+                                    attrs.get(columnNumber) + " can not be used with " +
+                                    e.getClass().getName()));
+                        }
                         break;
                     case CommandRPackage.PROPAGATION_LEFTBOUND_PARAM:
-                        speMap.put(header[columnNumber], e.getLeftBound());
+                        if (e instanceof DevStage) {
+                            DevStage stage = (DevStage) e;
+                            speMap.put(header[columnNumber], stage.getLeftBound());
+                        } else {
+                            throw log.throwing(new IllegalStateException("Attribut " + 
+                                    attrs.get(columnNumber) + " can not be used with " + 
+                                    e.getClass().getName()));
+                        }
                         break;
                     case CommandRPackage.PROPAGATION_RIGHTBOUND_PARAM:
-                        speMap.put(header[columnNumber], e.getRightBound());
+                        if (e instanceof DevStage) {
+                            DevStage stage = (DevStage) e;
+                            speMap.put(header[columnNumber], stage.getRightBound());
+                        } else {
+                            throw log.throwing(new IllegalStateException("Attribut " + 
+                                    attrs.get(columnNumber) + " can not be used with " + 
+                                    e.getClass().getName()));
+                        }
                         break;
                     default:
                         throw log.throwing(new IllegalStateException("Unknow Attribut " + attrs.get(columnNumber)));

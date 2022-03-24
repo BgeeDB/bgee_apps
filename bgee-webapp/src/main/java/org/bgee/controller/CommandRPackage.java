@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.management.InvalidAttributeValueException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,18 +21,15 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
-import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.ConditionService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -42,13 +38,12 @@ import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
-import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
-import org.bgee.view.ErrorDisplay;
 import org.bgee.view.RPackageDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -401,7 +396,6 @@ public class CommandRPackage extends CommandParent {
         log.traceEntry();
 
         OntologyService ontoService = this.serviceFactory.getOntologyService();
-        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
         //****************************************
         // Retrieve and filter request parameters
@@ -438,65 +432,28 @@ public class CommandRPackage extends CommandParent {
         
         try {
             if (conditionParameter.equals(CALLS_ANAT_ENTITY_ID_PARAM)) {
-                retrievePropagatedAnatEntities(ontoService, display, speciesId,
-                        entityIds, propagation, descendant, ancestor, requestedAttrs);
+              Ontology<AnatEntity, String> ontology = ontoService
+                      .getAnatEntityOntology(speciesId, entityIds,
+                      Arrays.asList(RelationType.ISA_PARTOF), ancestor, descendant);
+              retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
             } else if (conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
-            retrievePropagatedStages(ontoService, display, speciesId,
-                    entityIds, propagation, descendant, ancestor, requestedAttrs);
+                Ontology<DevStage, String> ontology = ontoService
+                        .getDevStageOntology(speciesId, entityIds, ancestor, descendant);
+                retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
             }
         } catch (InvalidRequestException e) {
             e.printStackTrace();
         }
     }
 
-    private void retrievePropagatedAnatEntities (OntologyService ontoService,
-            RPackageDisplay display, Integer speciesId, Collection<String> entityIds,
-            String propagation, boolean descendant, boolean ancestor,
-            List<String> requestedAttrs) throws InvalidRequestException {
-        
-        Ontology<AnatEntity, String> ontology = ontoService
-                .getAnatEntityOntology(speciesId, entityIds,
-                        Arrays.asList(RelationType.ISA_PARTOF), ancestor, descendant);
-        Set<AnatEntity> entities = entityIds.stream().map(s -> ontology.getElement(s))
-                .collect(Collectors.toSet());
+    private <T extends NamedEntity<U> & OntologyElement<T, U>,U extends Comparable<U>> void
+    retrievePropagatedEntities (Ontology<T,U> ontology, Collection<U> entityIds,
+            String propagation, List<String> requestedAttrs)
+                    throws InvalidRequestException, IOException {
+        log.traceEntry("{}, {}, {}, {}", ontology, entityIds, propagation, requestedAttrs);
+        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
-        if(entities == null || entities.isEmpty()) {
-            throw log.throwing(new InvalidRequestException(""));
-        }
-
-        Set<AnatEntity> propagatedAnatEntityIds = null;
-
-        //retrieve descendants of provided anatomical entities
-        if (propagation == null || propagation.equals(PropagationParam.DESCENDANTS.toString())) {
-            propagatedAnatEntityIds = entities.stream()
-            .map(s -> ontology.getDescendants(s))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
-
-        //retrieve ancestors of provided anatomical entities
-        } else if (propagation.equals(PropagationParam.ANCESTORS.toString())) {
-            propagatedAnatEntityIds = entities.stream()
-            .map(s -> ontology.getAncestors(s))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
-
-        //retrieve least common ancestor of provided anatomical entities
-        } else if (propagation.equals(PropagationParam.LEAST_COMMON_ANCESTOR.toString())) {
-            propagatedAnatEntityIds = ontology
-                    .getLeastCommonAncestors(entities, null).stream()
-                    .collect(Collectors.toSet());
-        }
-        display.displayAnatEntityPropagation(requestedAttrs, propagatedAnatEntityIds);
-    }
-
-    private void retrievePropagatedStages (OntologyService ontoService,
-            RPackageDisplay display, Integer speciesId, Collection<String> stageIds,
-            String propagation, boolean descendant, boolean ancestor,
-            List<String> requestedAttrs) throws InvalidRequestException {
-
-        MultiSpeciesOntology<DevStage, String> ontology = ontoService
-                .getDevStageOntology(Collections.singleton(speciesId), stageIds, ancestor, descendant);
-        Set<DevStage> entities = stageIds.stream().map(s -> ontology.getElement(s))
+        Set<T> entities = entityIds.stream().map(s -> ontology.getElement(s))
                 .collect(Collectors.toSet());
 
         if(entities == null || entities.isEmpty()) {
@@ -504,29 +461,29 @@ public class CommandRPackage extends CommandParent {
                     + "of the ontology"));
         }
         //retrieve descendants of provided stages
-        Set<DevStage> propagatedStageIds = null;
+        Set<T> propagatedEntityIds = null;
         if (propagation == null || propagation.equals(
                 PropagationParam.DESCENDANTS.toString())) {
-            propagatedStageIds = entities.stream()
+            propagatedEntityIds = entities.stream()
             .map(s -> ontology.getDescendants(s))
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
         //retrieve ancestors of provided stages
         } else if (propagation.equals(PropagationParam.ANCESTORS.toString())) {
-            propagatedStageIds = entities.stream()
+            propagatedEntityIds = entities.stream()
             .map(s -> ontology.getAncestors(s))
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
         //retrieve least common ancestor of provided anatomical entities
         } else if (propagation.equals(PropagationParam.LEAST_COMMON_ANCESTOR.toString())) {
-            propagatedStageIds = ontology
+            propagatedEntityIds = ontology
                     .getLeastCommonAncestors(entities, null).stream()
                     .collect(Collectors.toSet());
         }
 
-        display.displayDevStagePropagation(requestedAttrs, propagatedStageIds);
+        display.displayPropagation(requestedAttrs, propagatedEntityIds);
     }
 
     private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){

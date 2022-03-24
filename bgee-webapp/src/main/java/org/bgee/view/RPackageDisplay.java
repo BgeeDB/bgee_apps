@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.species.Species;
 
 public interface RPackageDisplay{
@@ -16,8 +17,8 @@ public interface RPackageDisplay{
 	void displayAnatEntities (List<String> attrs, Stream<AnatEntity> anatEntitiesStream);
 	void displayAERelations(List<String> attrs, Ontology<AnatEntity, String> anatEntityOnt);
 	void displaySpecies(List<String> attrs, List<Species> SpeciesList);
-	void displayAnatEntityPropagation(List<String> attrs, Set<AnatEntity> descendants);
-	void displayDevStagePropagation(List<String> attrs, Set<DevStage> descendants);
+	<T extends NamedEntity<U> & OntologyElement<T, U>,U extends Comparable<U>>
+	    void displayPropagation(List<String> attrs, Set<T> descendants);
 //	void displayAERelations(List<String> attrs, Ontology<AnatEntity, String> anatEntityRelations);
 
 }

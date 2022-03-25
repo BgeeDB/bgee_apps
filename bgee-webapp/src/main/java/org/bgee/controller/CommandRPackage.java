@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -20,6 +21,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.BgeeEnum;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
@@ -27,7 +31,6 @@ import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -37,7 +40,9 @@ import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyElement;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.RPackageDisplay;
@@ -84,6 +89,46 @@ public class CommandRPackage extends CommandParent {
     public final static String SPECIES_RNA_SEQ_PARAM = "RNA_SEQ";
     public final static String SPECIES_FULL_LENGTH_PARAM = "FULL_LENGTH";
 
+    public final static String PROPAGATION_ID_PARAM = "ID";
+    public final static String PROPAGATION_NAME_PARAM = "NAME";
+    public final static String PROPAGATION_DESCRIPTION_PARAM = "DESCRIPTION";
+    public final static String PROPAGATION_LEVEL_PARAM = "LEVEL";
+    public final static String PROPAGATION_LEFTBOUND_PARAM = "LEFT_BOUND";
+    public final static String PROPAGATION_RIGHTBOUND_PARAM = "RIGHT_BOUND";
+
+    public enum PropagationParam implements BgeeEnumField {
+        DESCENDANTS("descendants", true, false), ANCESTORS("ancestors", false, true),
+        LEAST_COMMON_ANCESTOR("least_common_ancestor", false, true);
+
+        private final String representation;
+        private final boolean requireDescendants;
+        private final boolean requireAncestors;
+
+        private PropagationParam(String representation,
+                boolean requireDescendants, boolean requireAncestors) {
+            this.representation = representation;
+            this.requireDescendants = requireDescendants;
+            this.requireAncestors = requireAncestors;
+        }
+
+        public boolean isRequireDescendants() {
+            return this.requireDescendants;
+        }
+        public boolean isRequireAncestors() {
+            return this.requireAncestors;
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+        public static PropagationParam convertToPropagationParam(String representation) {
+            log.traceEntry("{}", representation);
+            return log.traceExit(BgeeEnum.convert(PropagationParam.class, representation));
+        }
+    }
+
+
           /**
      * Constructor
      * 
@@ -119,17 +164,23 @@ public class CommandRPackage extends CommandParent {
                 this.processGetExpressionCalls();
 
             } else if ("get_anat_entities".equals(
-                    this.requestParameters.getAction())) { 
+                    this.requestParameters.getAction())) {
 
                 this.processGetAnatEntities();
             } else if ("get_anat_entity_relations".equals(
-                    this.requestParameters.getAction())) { 
+                    this.requestParameters.getAction())) {
 
                 this.processGetAnatEntityRelations();
             } else if ("get_all_species".equals(
-                    this.requestParameters.getAction())) { 
+                    this.requestParameters.getAction())) {
 
                 this.processGetAllSpecies();
+            } else if ("get_propagation_anat_entity".equals(
+                    this.requestParameters.getAction())) {
+                this.processPropagation(CallService.Attribute.ANAT_ENTITY_ID);
+            } else if ("get_propagation_dev_stage".equals(
+                    this.requestParameters.getAction())) {
+                this.processPropagation(CallService.Attribute.DEV_STAGE_ID);
             } else {
                 throw log.throwing(new PageNotFoundException("Incorrect " + 
                         this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -369,8 +420,105 @@ public class CommandRPackage extends CommandParent {
         log.traceExit();
     }
     
+    private void processPropagation(CallService.Attribute condParam) throws IOException,
+    InvalidRequestException {
+        log.traceEntry("{}", condParam);
+
+        //****************************************
+        // Retrieve and filter request parameters
+        //****************************************
+
+        final Integer speciesId = this.requestParameters.getSpeciesId();
+        if(speciesId == null) {
+            throw log.throwing(new InvalidRequestException("one species ID must be provided"));
+        }
+
+        //Retrieve requested entities
+        List<String> entityIds = null;
+        if (CallService.Attribute.ANAT_ENTITY_ID.equals(condParam)) {
+            entityIds = this.requestParameters.getAnatEntity();
+        } else if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
+            entityIds = this.requestParameters.getDevStage();
+        } else {
+            throw log.throwing(new InvalidRequestException(condParam + "is not a valid "
+                    + "condition parameter"));
+        }
+        if (entityIds == null || entityIds.isEmpty()) {
+            throw log.throwing(new InvalidRequestException("At least one ID must be provided"));
+        }
+
+        //Retrieve requested propagation
+        PropagationParam propagation = PropagationParam.convertToPropagationParam(
+                this.requestParameters.getPropagation());
+        if (propagation == null) {
+            propagation = PropagationParam.DESCENDANTS;
+        }
+
+        //Create ontologies
+        OntologyService ontoService = this.serviceFactory.getOntologyService();
+        Ontology<?, String> ontology = null;
+        if (CallService.Attribute.ANAT_ENTITY_ID.equals(condParam)) {
+            ontology = ontoService.getAnatEntityOntology(speciesId, entityIds,
+                    Arrays.asList(RelationType.ISA_PARTOF),
+                    propagation.isRequireAncestors(), propagation.isRequireDescendants());
+        } else if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
+            ontology = ontoService.getDevStageOntology(speciesId, entityIds,
+                    propagation.isRequireAncestors(), propagation.isRequireDescendants());
+        }
+
+        // attributes used to generate the tsv file
+        List<String> requestedAttrs = convertPropagatedAttrs(condParam,
+                requestParameters.getValues(this.requestParameters
+                        .getUrlParametersInstance().getParamAttributeList()));
+        retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
+    }
+
+    private <T extends NamedEntity<U> & OntologyElement<T, U>,U extends Comparable<U>> void
+    retrievePropagatedEntities (Ontology<T,U> ontology, Collection<U> entityIds,
+            PropagationParam propagation, List<String> requestedAttrs)
+                    throws InvalidRequestException, IOException {
+        log.traceEntry("{}, {}, {}, {}", ontology, entityIds, propagation, requestedAttrs);
+
+        Set<U> entityIdSet = new HashSet<>(entityIds);
+        Set<T> entities = entityIdSet.stream().map(s -> ontology.getElement(s))
+                .collect(Collectors.toSet());
+        if(entityIdSet.size() != entities.size()) {
+            throw log.throwing(new InvalidRequestException(
+                    "Some queried entities are not part of the ontology"));
+        }
+
+        Set<T> propagatedEntityIds = null;
+        try {
+            //retrieve descendants of provided entities
+            if (propagation.equals(PropagationParam.DESCENDANTS)) {
+                propagatedEntityIds = entities.stream()
+                        .map(s -> ontology.getDescendants(s))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toSet());
+
+            //retrieve ancestors of provided entities
+            } else if (propagation.equals(PropagationParam.ANCESTORS)) {
+                propagatedEntityIds = entities.stream()
+                        .map(s -> ontology.getAncestors(s))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toSet());
+
+            //retrieve least common ancestor of provided entities
+            } else if (propagation.equals(PropagationParam.LEAST_COMMON_ANCESTOR)) {
+                propagatedEntityIds = ontology
+                        .getLeastCommonAncestors(entities, null).stream()
+                        .collect(Collectors.toSet());
+            }
+        } catch (IllegalArgumentException e) {
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
+        }
+
+        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
+        display.displayPropagation(requestedAttrs, propagatedEntityIds);
+    }
+
     private static Set<AnatEntityService.Attribute> convertRqAttrsToAEAttrs(List<String> rqAttrs){
-        log.entry(rqAttrs);
+        log.traceEntry("{}", rqAttrs);
         Set<AnatEntityService.Attribute> attrs = new HashSet<>();
         for(String rqAttr : rqAttrs){
             switch(rqAttr){
@@ -390,9 +538,9 @@ public class CommandRPackage extends CommandParent {
         }
         return log.traceExit(attrs);
     }
-    
+
     private static Set<CallService.Attribute> convertRqAttrsToCallsAttrs(List<String> rqAttrs){
-        log.entry(rqAttrs);
+        log.traceEntry("{}", rqAttrs);
         Set<CallService.Attribute> attrs = new HashSet<>();
         for(String rqAttr : rqAttrs){
             switch(rqAttr){
@@ -415,9 +563,35 @@ public class CommandRPackage extends CommandParent {
         }
         return log.traceExit(attrs);
     }
-    
+
+    private static List<String> convertPropagatedAttrs(CallService.Attribute condParam,
+            List<String> attrs) {
+        log.traceEntry("{}, {}", condParam, attrs);
+
+        List<String> requestedAttrs = new ArrayList<>();
+        Set<String> validAttrs = new HashSet<>(Arrays.asList(PROPAGATION_ID_PARAM,
+                PROPAGATION_NAME_PARAM, PROPAGATION_DESCRIPTION_PARAM,
+                PROPAGATION_LEVEL_PARAM, PROPAGATION_LEFTBOUND_PARAM,
+                PROPAGATION_RIGHTBOUND_PARAM));
+        if (attrs != null) {
+            requestedAttrs = attrs.stream().filter(a -> validAttrs.contains(a))
+                    .collect(Collectors.toList());
+        }
+        if(requestedAttrs.isEmpty()) {
+            requestedAttrs.add(PROPAGATION_ID_PARAM);
+            requestedAttrs.add(PROPAGATION_NAME_PARAM);
+            requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
+            if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
+                requestedAttrs.add(PROPAGATION_LEVEL_PARAM);
+                requestedAttrs.add(PROPAGATION_LEFTBOUND_PARAM);
+                requestedAttrs.add(PROPAGATION_RIGHTBOUND_PARAM);
+            }
+        }
+        return log.traceExit(requestedAttrs);
+    }
+
     private static void checkRelationAttrs(List<String> rqAttrs){
-        log.entry(rqAttrs);
+        log.traceEntry("{}", rqAttrs);
         for(String rqAttr : rqAttrs){
             if (!rqAttr.equals(CommandRPackage.RELATIONS_SOURCE_PARAM)
                     && !rqAttr.equals(CommandRPackage.RELATIONS_TARGET_PARAM)
@@ -428,9 +602,9 @@ public class CommandRPackage extends CommandParent {
             }
         }
     }
-    
+
     private static void checkSpeciesAttrs(List<String> rqAttrs){
-        log.entry(rqAttrs);
+        log.traceEntry("{}", rqAttrs);
         for(String rqAttr : rqAttrs){
             if (!rqAttr.equals(SPECIES_ID_PARAM)
                     && !rqAttr.equals(SPECIES_GENUS_PARAM)
@@ -446,5 +620,4 @@ public class CommandRPackage extends CommandParent {
             }
         }
     }
-    
 }

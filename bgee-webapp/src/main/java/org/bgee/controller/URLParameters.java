@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.CommandRPackage.PropagationParam;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -342,11 +343,20 @@ public class URLParameters {
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the anatomical entities to be used.
-     * Corresponds to the URL parameter "stage_id".
+     * Corresponds to the URL parameter "anat_entity_id".
      */
     private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the propagation to be used.
+     * Corresponds to the URL parameter "propagation".
+     */
+    private static final Parameter<String> PROPAGATION = new Parameter<>("propagation",
+            false, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE,
+            "(?i:" + EnumSet.allOf(PropagationParam.class).stream()
+            .map(e -> e.toString()).collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
      * for TopAnat analysis.
@@ -457,7 +467,8 @@ public class URLParameters {
 
     /**
      * A {@code Parameter<String>} that contains the anatomical entity IDs to be used 
-     * for anatomical similarity analysis.
+     * for anatomical similarity analysis and for retrieval of propagated anatomical entity
+     * IDs.
      * Corresponds to the URL parameter "ae_list".
      */
     private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
@@ -542,6 +553,8 @@ public class URLParameters {
             SPECIES_LIST,
             // Anat. similarity analyze params
             ANAT_ENTITY_LIST,
+            // propagated ontology terms request
+            PROPAGATION,
             // Expression comparison request
             GENE_LIST,
             // TopAnat analyze params
@@ -552,7 +565,9 @@ public class URLParameters {
             //ID to identify a specific analysis
             ANALYSIS_ID, 
             //DAO as webservice
-            ATTRIBUTE_LIST, 
+            ATTRIBUTE_LIST,
+            //RPackage  webservice params
+            ANAT_ENTITY,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -896,6 +911,13 @@ public class URLParameters {
     }
     public Parameter<String> getCondParam() {
         return COND_PARAM;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a propagation.
+     *          Corresponds to the URL parameter "propagation".
+     */
+    public Parameter<String> getParamPropagation() {
+        return PROPAGATION;
     }
     /**
      * This class is designed to wrap all parameters that can be received and sent

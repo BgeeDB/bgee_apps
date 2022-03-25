@@ -177,10 +177,10 @@ public class CommandRPackage extends CommandParent {
                 this.processGetAllSpecies();
             } else if ("get_propagation_anat_entity".equals(
                     this.requestParameters.getAction())) {
-                this.processPropagation(CALLS_ANAT_ENTITY_ID_PARAM);
+                this.processPropagation(CallService.Attribute.ANAT_ENTITY_ID);
             } else if ("get_propagation_dev_stage".equals(
                     this.requestParameters.getAction())) {
-                this.processPropagation(CALLS_DEV_STAGE_PARAM);
+                this.processPropagation(CallService.Attribute.DEV_STAGE_ID);
             } else {
                 throw log.throwing(new PageNotFoundException("Incorrect " + 
                         this.requestParameters.getUrlParametersInstance().getParamAction() + 
@@ -420,9 +420,9 @@ public class CommandRPackage extends CommandParent {
         log.traceExit();
     }
     
-    private void processPropagation(String conditionParameter) throws IOException,
+    private void processPropagation(CallService.Attribute condParam) throws IOException,
     InvalidRequestException {
-        log.traceEntry();
+        log.traceEntry("{}", condParam);
 
         //****************************************
         // Retrieve and filter request parameters
@@ -433,40 +433,43 @@ public class CommandRPackage extends CommandParent {
             throw log.throwing(new InvalidRequestException("one species ID must be provided"));
         }
 
+        //Retrieve requested entities
         List<String> entityIds = null;
-        if(conditionParameter.equals(CALLS_ANAT_ENTITY_ID_PARAM)) {
+        if (CallService.Attribute.ANAT_ENTITY_ID.equals(condParam)) {
             entityIds = this.requestParameters.getAnatEntity();
-        } else if(conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
+        } else if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
             entityIds = this.requestParameters.getDevStage();
         } else {
-            throw log.throwing(new InvalidRequestException(conditionParameter + "is not a valid "
+            throw log.throwing(new InvalidRequestException(condParam + "is not a valid "
                     + "condition parameter"));
         }
         if (entityIds == null || entityIds.isEmpty()) {
             throw log.throwing(new InvalidRequestException("At least one ID must be provided"));
         }
 
+        //Retrieve requested propagation
         PropagationParam propagation = PropagationParam.convertToPropagationParam(
                 this.requestParameters.getPropagation());
         if (propagation == null) {
             propagation = PropagationParam.DESCENDANTS;
         }
 
-        // attributes used to generate the tsv file
-        List<String> requestedAttrs = convertPropagatedAttrs(conditionParameter,
-                requestParameters.getValues(this.requestParameters
-                        .getUrlParametersInstance().getParamAttributeList()));
-
+        //Create ontologies
         OntologyService ontoService = this.serviceFactory.getOntologyService();
         Ontology<?, String> ontology = null;
-        if (conditionParameter.equals(CALLS_ANAT_ENTITY_ID_PARAM)) {
+        if (CallService.Attribute.ANAT_ENTITY_ID.equals(condParam)) {
             ontology = ontoService.getAnatEntityOntology(speciesId, entityIds,
                     Arrays.asList(RelationType.ISA_PARTOF),
                     propagation.isRequireAncestors(), propagation.isRequireDescendants());
-        } else if (conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
+        } else if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
             ontology = ontoService.getDevStageOntology(speciesId, entityIds,
                     propagation.isRequireAncestors(), propagation.isRequireDescendants());
         }
+
+        // attributes used to generate the tsv file
+        List<String> requestedAttrs = convertPropagatedAttrs(condParam,
+                requestParameters.getValues(this.requestParameters
+                        .getUrlParametersInstance().getParamAttributeList()));
         retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
     }
 
@@ -561,42 +564,27 @@ public class CommandRPackage extends CommandParent {
         return log.traceExit(attrs);
     }
 
-    private static List<String> convertPropagatedAttrs(String conditionParameter,
+    private static List<String> convertPropagatedAttrs(CallService.Attribute condParam,
             List<String> attrs) {
-        log.traceEntry("{}", conditionParameter);
+        log.traceEntry("{}, {}", condParam, attrs);
 
         List<String> requestedAttrs = new ArrayList<>();
-        if(attrs == null) {
+        Set<String> validAttrs = new HashSet<>(Arrays.asList(PROPAGATION_ID_PARAM,
+                PROPAGATION_NAME_PARAM, PROPAGATION_DESCRIPTION_PARAM,
+                PROPAGATION_LEVEL_PARAM, PROPAGATION_LEFTBOUND_PARAM,
+                PROPAGATION_RIGHTBOUND_PARAM));
+        if (attrs != null) {
+            requestedAttrs = attrs.stream().filter(a -> validAttrs.contains(a))
+                    .collect(Collectors.toList());
+        }
+        if(requestedAttrs.isEmpty()) {
             requestedAttrs.add(PROPAGATION_ID_PARAM);
             requestedAttrs.add(PROPAGATION_NAME_PARAM);
             requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
-            if(conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
+            if (CallService.Attribute.DEV_STAGE_ID.equals(condParam)) {
                 requestedAttrs.add(PROPAGATION_LEVEL_PARAM);
                 requestedAttrs.add(PROPAGATION_LEFTBOUND_PARAM);
                 requestedAttrs.add(PROPAGATION_RIGHTBOUND_PARAM);
-            }
-        } else {
-            for(String attr : attrs){
-                switch(attr){
-                    case PROPAGATION_ID_PARAM :
-                        requestedAttrs.add(PROPAGATION_ID_PARAM);
-                        break;
-                    case PROPAGATION_NAME_PARAM :
-                        requestedAttrs.add(PROPAGATION_NAME_PARAM);
-                        break;
-                    case PROPAGATION_DESCRIPTION_PARAM :
-                        requestedAttrs.add(PROPAGATION_DESCRIPTION_PARAM);
-                        break;
-                    case PROPAGATION_LEVEL_PARAM :
-                        requestedAttrs.add(PROPAGATION_LEVEL_PARAM);
-                        break;
-                    case PROPAGATION_LEFTBOUND_PARAM :
-                        requestedAttrs.add(PROPAGATION_LEFTBOUND_PARAM);
-                        break;
-                    case PROPAGATION_RIGHTBOUND_PARAM :
-                        requestedAttrs.add(PROPAGATION_RIGHTBOUND_PARAM);
-                        break;
-                }
             }
         }
         return log.traceExit(requestedAttrs);

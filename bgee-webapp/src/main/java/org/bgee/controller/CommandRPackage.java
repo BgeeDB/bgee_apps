@@ -21,11 +21,12 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
@@ -95,8 +96,36 @@ public class CommandRPackage extends CommandParent {
     public final static String PROPAGATION_LEFTBOUND_PARAM = "LEFT_BOUND";
     public final static String PROPAGATION_RIGHTBOUND_PARAM = "RIGHT_BOUND";
 
-    public enum PropagationParam {
-        DESCENDANTS,ANCESTORS,LEAST_COMMON_ANCESTOR;
+    public enum PropagationParam implements BgeeEnumField {
+        DESCENDANTS("descendants", true, false), ANCESTORS("ancestors", false, true),
+        LEAST_COMMON_ANCESTOR("least_common_ancestor", false, true);
+
+        private final String representation;
+        private final boolean requireDescendants;
+        private final boolean requireAncestors;
+
+        private PropagationParam(String representation,
+                boolean requireDescendants, boolean requireAncestors) {
+            this.representation = representation;
+            this.requireDescendants = requireDescendants;
+            this.requireAncestors = requireAncestors;
+        }
+
+        public boolean isRequireDescendants() {
+            return this.requireDescendants;
+        }
+        public boolean isRequireAncestors() {
+            return this.requireAncestors;
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+        public static PropagationParam convertToPropagationParam(String representation) {
+            log.traceEntry("{}", representation);
+            return log.traceExit(BgeeEnum.convert(PropagationParam.class, representation));
+        }
     }
 
 
@@ -395,8 +424,6 @@ public class CommandRPackage extends CommandParent {
     InvalidRequestException {
         log.traceEntry();
 
-        OntologyService ontoService = this.serviceFactory.getOntologyService();
-
         //****************************************
         // Retrieve and filter request parameters
         //****************************************
@@ -415,74 +442,75 @@ public class CommandRPackage extends CommandParent {
             throw log.throwing(new InvalidRequestException(conditionParameter + "is not a valid "
                     + "condition parameter"));
         }
-        String propagation = this.requestParameters.getPropagation();
-
-        Boolean descendant = propagation == null || propagation
-                .equals(PropagationParam.DESCENDANTS.toString()) ? true : false;
-        //only option not to require ancestors is when descendants are required
-        Boolean ancestor = descendant ? false : true;
         if (entityIds == null || entityIds.isEmpty()) {
             throw log.throwing(new InvalidRequestException("At least one ID must be provided"));
+        }
+
+        PropagationParam propagation = PropagationParam.convertToPropagationParam(
+                this.requestParameters.getPropagation());
+        if (propagation == null) {
+            propagation = PropagationParam.DESCENDANTS;
         }
 
         // attributes used to generate the tsv file
         List<String> requestedAttrs = convertPropagatedAttrs(conditionParameter,
                 requestParameters.getValues(this.requestParameters
                         .getUrlParametersInstance().getParamAttributeList()));
-        
-        try {
-            if (conditionParameter.equals(CALLS_ANAT_ENTITY_ID_PARAM)) {
-              Ontology<AnatEntity, String> ontology = ontoService
-                      .getAnatEntityOntology(speciesId, entityIds,
-                      Arrays.asList(RelationType.ISA_PARTOF), ancestor, descendant);
-              retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
-            } else if (conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
-                Ontology<DevStage, String> ontology = ontoService
-                        .getDevStageOntology(speciesId, entityIds, ancestor, descendant);
-                retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
-            }
-        } catch (InvalidRequestException e) {
-            e.printStackTrace();
+
+        OntologyService ontoService = this.serviceFactory.getOntologyService();
+        Ontology<?, String> ontology = null;
+        if (conditionParameter.equals(CALLS_ANAT_ENTITY_ID_PARAM)) {
+            ontology = ontoService.getAnatEntityOntology(speciesId, entityIds,
+                    Arrays.asList(RelationType.ISA_PARTOF),
+                    propagation.isRequireAncestors(), propagation.isRequireDescendants());
+        } else if (conditionParameter.equals(CALLS_DEV_STAGE_PARAM)) {
+            ontology = ontoService.getDevStageOntology(speciesId, entityIds,
+                    propagation.isRequireAncestors(), propagation.isRequireDescendants());
         }
+        retrievePropagatedEntities(ontology, entityIds, propagation, requestedAttrs);
     }
 
     private <T extends NamedEntity<U> & OntologyElement<T, U>,U extends Comparable<U>> void
     retrievePropagatedEntities (Ontology<T,U> ontology, Collection<U> entityIds,
-            String propagation, List<String> requestedAttrs)
+            PropagationParam propagation, List<String> requestedAttrs)
                     throws InvalidRequestException, IOException {
         log.traceEntry("{}, {}, {}, {}", ontology, entityIds, propagation, requestedAttrs);
-        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
 
-        Set<T> entities = entityIds.stream().map(s -> ontology.getElement(s))
+        Set<U> entityIdSet = new HashSet<>(entityIds);
+        Set<T> entities = entityIdSet.stream().map(s -> ontology.getElement(s))
                 .collect(Collectors.toSet());
-
-        if(entities == null || entities.isEmpty()) {
-            throw log.throwing(new InvalidRequestException("No queried stages are part "
-                    + "of the ontology"));
+        if(entityIdSet.size() != entities.size()) {
+            throw log.throwing(new InvalidRequestException(
+                    "Some queried entities are not part of the ontology"));
         }
-        //retrieve descendants of provided stages
+
         Set<T> propagatedEntityIds = null;
-        if (propagation == null || propagation.equals(
-                PropagationParam.DESCENDANTS.toString())) {
-            propagatedEntityIds = entities.stream()
-            .map(s -> ontology.getDescendants(s))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
+        try {
+            //retrieve descendants of provided entities
+            if (propagation.equals(PropagationParam.DESCENDANTS)) {
+                propagatedEntityIds = entities.stream()
+                        .map(s -> ontology.getDescendants(s))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toSet());
 
-        //retrieve ancestors of provided stages
-        } else if (propagation.equals(PropagationParam.ANCESTORS.toString())) {
-            propagatedEntityIds = entities.stream()
-            .map(s -> ontology.getAncestors(s))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
+            //retrieve ancestors of provided entities
+            } else if (propagation.equals(PropagationParam.ANCESTORS)) {
+                propagatedEntityIds = entities.stream()
+                        .map(s -> ontology.getAncestors(s))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toSet());
 
-        //retrieve least common ancestor of provided anatomical entities
-        } else if (propagation.equals(PropagationParam.LEAST_COMMON_ANCESTOR.toString())) {
-            propagatedEntityIds = ontology
-                    .getLeastCommonAncestors(entities, null).stream()
-                    .collect(Collectors.toSet());
+            //retrieve least common ancestor of provided entities
+            } else if (propagation.equals(PropagationParam.LEAST_COMMON_ANCESTOR)) {
+                propagatedEntityIds = ontology
+                        .getLeastCommonAncestors(entities, null).stream()
+                        .collect(Collectors.toSet());
+            }
+        } catch (IllegalArgumentException e) {
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
         }
 
+        RPackageDisplay display = this.viewFactory.getRPackageDisplay();
         display.displayPropagation(requestedAttrs, propagatedEntityIds);
     }
 

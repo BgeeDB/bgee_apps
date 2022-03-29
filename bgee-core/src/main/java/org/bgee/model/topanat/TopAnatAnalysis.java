@@ -72,8 +72,8 @@ public class TopAnatAnalysis extends CommonService {
     
     private final static String TMP_FILE_SUFFIX = ".tmp";
     
-    protected final static AnatEntity FAKE_ANAT_ENTITY_ROOT = new AnatEntity("BGEE:0", "root", 
-            "A root added on top of all orphan terms.");
+    protected final static String FAKE_ROOT_COND_ID = "BGEE:0";
+    protected final static String FAKE_ROOT_COND_NAME = "Added root";
 
     private final static EnumSet<CallService.Attribute> CALL_SERVICE_ATTRIBUTES =
             EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
@@ -553,23 +553,40 @@ public class TopAnatAnalysis extends CommonService {
             conditionGraph.getConditions().stream()
                     .forEach(c -> out.println(COND_ID_GENERATOR.apply(c) + "\t"
                             + COND_NAME_GENERATOR.apply(c).replaceAll("'", "")));
-            //Note: we used to add one single fake root, because TopGO needs one single root.
-            //But since Bgee 15.0 we also need that for our computations and have always one single root
-            //for the anatomy.
+            //We add a fake root, TopAnat doesn't manage multiple root.
+            //Even if we have only one root in Bgee, since we can select only observed calls,
+            //this can lead to have multiple roots.
+            out.println(FAKE_ROOT_COND_ID + "\t" + FAKE_ROOT_COND_NAME);
         }
         
         //relations
-        //Note: we used to add one single fake root, because TopGO needs one single root,
-        //and to map all orphan terms to it.
-        //But since Bgee 15.0 we also need that for our computations and have always one single root
-        //for the anatomy.
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesRelFile)))) {
-            conditionGraph.getConditions().stream()
-                    .forEach(cond -> conditionGraph.getAncestorConditions(cond, true).stream()
-                            .forEach(parentCond -> out.println(
-                                    COND_ID_GENERATOR.apply(cond) + '\t'
-                                    + COND_ID_GENERATOR.apply(parentCond))));
+            //We add a fake root, and we map all orphan terms to it:
+            //TopAnat don't manage multiple roots. Even if we have only one root in Bgee,
+            //since we can select only observed calls, this can lead to have multiple roots.
+            //
+            //Search for terms never seen as child of another term.
+            //We need to examine all terms, not only those present in the relations,
+            //because maybe some terms have no ancestors and no descendants,
+            //and will not be retrieved when retrieving relations.
+            Set<Condition> allConds = new HashSet<>();
+            Set<Condition> childConds = new HashSet<>();
+            for (Condition cond: conditionGraph.getConditions()) {
+                allConds.add(cond);
+                for (Condition parentCond: conditionGraph.getAncestorConditions(cond, true)) {
+                    childConds.add(cond);
+                    out.println(COND_ID_GENERATOR.apply(cond) + '\t'
+                              + COND_ID_GENERATOR.apply(parentCond));
+                }
+            }
+            allConds.removeAll(childConds);
+            log.debug("Root(s) of the graph: {}", allConds);
+            if (allConds.size() > 1) {
+                for (Condition root: allConds) {
+                    out.println(COND_ID_GENERATOR.apply(root) + '\t' + FAKE_ROOT_COND_ID);
+                }
+            }
         }
 
         log.traceExit();

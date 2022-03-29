@@ -183,7 +183,7 @@ public class HtmlAboutDisplay extends HtmlParentDisplay implements AboutDisplay 
                 "<p>" +
                 "    <a href='" + LICENCE_CC0_URL + "' target='_blank' rel='noopener'>" +
                 "        <img src='" + this.prop.getBgeeRootDirectory() +
-                            this.prop.getImagesRootDirectory() + "cc-zero-large.png' alt='CC0' />" +
+                            this.prop.getImagesRootDirectory() + "cc-zero-large.png' alt='CC0 license' />" +
                 "    </a>" +
                 "</p>" +
                 "<p>" +

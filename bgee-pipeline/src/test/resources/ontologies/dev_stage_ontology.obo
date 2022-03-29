@@ -16633,7 +16633,7 @@ is_metadata_tag: true
 id: ambiguous_for_taxon
 name: ambiguous_for_taxon
 namespace: uberon
-def: "S ambiguous_for_taxon T if the class S does not have a clear referent in taxon T. An example would be the class 'manual digit 1', which encompasses a homology hypotheses that is accepted for some species (e.g. human and mouse), but does not have a clear referent in Aves - the referent is dependent on the hypothesis embraced, and also on the ontogenetic stage." [PHENOSCPAE:asilomar_mtg]
+def: "S ambiguous_for_taxon T if the class S does not have a clear referent in taxon T. An example would be the class 'manual digit 1', which encompasses a homology hypotheses that is accepted for some species (e.g. human and mouse), but does not have a clear referent in Aves - the referent is dependent on the hypothesis embraced, and also on the onto genetic stage." [PHENOSCPAE:asilomar_mtg]
 xref: RO:0002173
 is_metadata_tag: true
 is_class_level: true

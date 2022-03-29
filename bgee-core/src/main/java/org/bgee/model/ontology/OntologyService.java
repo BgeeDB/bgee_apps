@@ -22,7 +22,7 @@ import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
-import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -140,7 +140,7 @@ public class OntologyService extends CommonService {
         return log.traceExit(this.getAnatEntityOntologyFromSubGraph(Arrays.asList(speciesId),
                 cellTypeIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false,
-                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)))
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID)))
                 .getAsSingleSpeciesOntology(speciesId);
     }
     public Ontology<AnatEntity, String> getCellTypeOntology(Integer speciesId,
@@ -151,7 +151,7 @@ public class OntologyService extends CommonService {
         return log.traceExit(this.getAnatEntityOntologyFromSubGraph(Arrays.asList(speciesId),
                 cellTypeIds,
                 relationTypes, getAncestors, getDescendants,
-                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)))
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID)))
                 .getAsSingleSpeciesOntology(speciesId);
     }
     public MultiSpeciesOntology<AnatEntity, String> getCellTypeOntology(Collection<Integer> speciesIds, 
@@ -159,7 +159,7 @@ public class OntologyService extends CommonService {
         log.traceEntry("{}, {}", speciesIds, cellTypeIds);
         return log.traceExit(this.getAnatEntityOntologyFromSubGraph(speciesIds, cellTypeIds,
                 EnumSet.of(RelationType.ISA_PARTOF), false, false,
-                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)));
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID)));
     }
     public MultiSpeciesOntology<AnatEntity, String> getCellTypeOntology(Collection<Integer> speciesIds, 
             Collection<String> cellTypeIds, Collection<RelationType> relationTypes, 
@@ -168,7 +168,7 @@ public class OntologyService extends CommonService {
                 getDescendants, relationTypes);
         return log.traceExit(this.getAnatEntityOntologyFromSubGraph(speciesIds, cellTypeIds,
                 relationTypes, getAncestors, getDescendants,
-                Collections.singleton(Condition.CELL_TYPE_ROOT_ID)));
+                Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID)));
     }
 
     /**
@@ -357,7 +357,8 @@ public class OntologyService extends CommonService {
         //FIXME: actually, maybe the taxon constraints are not ncwssary where the is only 1 species,
         //I think the relation query already filter using taxon constraints.
         //To check, same things with anat entity ?
-        Set<TaxonConstraint<Integer>> relationTaxonConstraints = getDaoManager().getTaxonConstraintDAO()
+        Set<TaxonConstraint<Integer>> relationTaxonConstraints = relIds.isEmpty()? new HashSet<>():
+            getDaoManager().getTaxonConstraintDAO()
                 .getAnatEntityRelationTaxonConstraints(speciesIds, relIds, null).stream()
                 .map(CommonService::mapTaxonConstraintTOToTaxonConstraint)
                 .collect(Collectors.toSet());
@@ -365,9 +366,9 @@ public class OntologyService extends CommonService {
 
         MultiSpeciesOntology<AnatEntity, String> ont = new MultiSpeciesOntology<AnatEntity, String>(speciesIds,
                 requestedAnatEntities.values(), rels,
-                this.getServiceFactory().getTaxonConstraintService()
-                        .loadAnatEntityTaxonConstraintBySpeciesIds(speciesIds)
-                        .filter(tc -> requestedAnatEntities.containsKey(tc.getEntityId()))
+                requestedAnatEntities.isEmpty()? new HashSet<>():
+                    this.getServiceFactory().getTaxonConstraintService()
+                        .loadAnatEntityTaxonConstraints(speciesIds, requestedAnatEntities.keySet())
                         .collect(Collectors.toSet()),
                 relationTaxonConstraints, relationTypes,
                 this.getServiceFactory(), AnatEntity.class);
@@ -549,10 +550,10 @@ public class OntologyService extends CommonService {
         
         // retrieve all requested sexIds
         Set<String> requestedSexIds = new HashSet<>(filteredSexIds);
-        if (getAncestors && !filteredSexIds.contains(Condition.SEX_ROOT_ID)) {
-            requestedSexIds.add(Condition.SEX_ROOT_ID);
+        if (getAncestors && !filteredSexIds.contains(ConditionDAO.SEX_ROOT_ID)) {
+            requestedSexIds.add(ConditionDAO.SEX_ROOT_ID);
         }
-        if (getDescendants && filteredSexIds.contains(Condition.SEX_ROOT_ID)) {
+        if (getDescendants && filteredSexIds.contains(ConditionDAO.SEX_ROOT_ID)) {
             requestedSexIds = EnumSet.allOf(SexEnum.class).stream()
                     .map(s -> s.getStringRepresentation()).collect(Collectors.toSet());
         }
@@ -567,9 +568,9 @@ public class OntologyService extends CommonService {
 //                        RelationTO.RelationStatus.REFLEXIVE))
 //                .collect(Collectors.toSet()));
         //Create DIRECT RelationTOs
-        if (requestedSexIds.contains(Condition.SEX_ROOT_ID)) {
-            rels.addAll(requestedSexIds.stream().filter(s -> !s.equals(Condition.SEX_ROOT_ID))
-                    .map(s -> new RelationTO<String>(null, s, Condition.SEX_ROOT_ID, RelationTO.RelationType.ISA_PARTOF,
+        if (requestedSexIds.contains(ConditionDAO.SEX_ROOT_ID)) {
+            rels.addAll(requestedSexIds.stream().filter(s -> !s.equals(ConditionDAO.SEX_ROOT_ID))
+                    .map(s -> new RelationTO<String>(null, s, ConditionDAO.SEX_ROOT_ID, RelationTO.RelationType.ISA_PARTOF,
                             RelationStatus.DIRECT)).collect(Collectors.toSet()));
         }        
         
@@ -634,7 +635,7 @@ public class OntologyService extends CommonService {
 
         Set<String> speciesStrainIds = new HashSet<>();
         if (strainIds == null || strainIds.isEmpty() ||
-                getDescendants && strainIds.contains(Condition.STRAIN_ROOT_ID)) {
+                getDescendants && strainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
             speciesStrainIds = this.getServiceFactory().getDAOManager().getRawDataConditionDAO()
                     .getRawDataConditionsBySpeciesIds(Collections.singleton(speciesId),
                             EnumSet.of(RawDataConditionDAO.Attribute.STRAIN))
@@ -645,10 +646,10 @@ public class OntologyService extends CommonService {
         // retrieve all requested strainIds
         Set<String> requestedStrainIds = new HashSet<>(strainIds == null || strainIds.isEmpty()?
                 speciesStrainIds: strainIds);
-        if (getAncestors && !strainIds.contains(Condition.STRAIN_ROOT_ID)) {
-            requestedStrainIds.add(Condition.STRAIN_ROOT_ID);
+        if (getAncestors && !strainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
+            requestedStrainIds.add(ConditionDAO.STRAIN_ROOT_ID);
         }
-        if (getDescendants && strainIds.contains(Condition.STRAIN_ROOT_ID)) {
+        if (getDescendants && strainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
             requestedStrainIds.addAll(speciesStrainIds);
         }
 
@@ -662,9 +663,9 @@ public class OntologyService extends CommonService {
 //                        RelationTO.RelationStatus.REFLEXIVE))
 //                .collect(Collectors.toSet()));
         //Create DIRECT RelationTOs
-        if (requestedStrainIds.contains(Condition.STRAIN_ROOT_ID)) {
-            rels.addAll(requestedStrainIds.stream().filter(s -> !s.equals(Condition.STRAIN_ROOT_ID))
-                    .map(s -> new RelationTO<String>(null, s, Condition.STRAIN_ROOT_ID, RelationTO.RelationType.ISA_PARTOF,
+        if (requestedStrainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
+            rels.addAll(requestedStrainIds.stream().filter(s -> !s.equals(ConditionDAO.STRAIN_ROOT_ID))
+                    .map(s -> new RelationTO<String>(null, s, ConditionDAO.STRAIN_ROOT_ID, RelationTO.RelationType.ISA_PARTOF,
                             RelationStatus.DIRECT)).collect(Collectors.toSet()));
         }        
         

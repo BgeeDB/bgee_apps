@@ -66,7 +66,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
         this.writeln("<div id='bgee_introduction'>");
 
-        this.writeln("<p>Search for raw data based on Ensembl gene IDs, anatomical entity," +
+        this.writeln("<p>Search for raw data based on gene IDs, anatomical entity," +
                 " and/or developmental stage.<p>");
 
         this.writeln("</div>");
@@ -400,10 +400,10 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
         
         RequestParameters urlGenePage = this.getNewRequestParameters();
         urlGenePage.setPage(RequestParameters.PAGE_GENE);
-        urlGenePage.setGeneId(gene.getEnsemblGeneId());
+        urlGenePage.setGeneId(gene.getGeneId());
         urlGenePage.setSpeciesId(gene.getSpecies().getId());
         
-        return log.traceExit("<a href='" + urlGenePage.getRequestURL() + "'>" + gene.getEnsemblGeneId() + "</a>");
+        return log.traceExit("<a href='" + urlGenePage.getRequestURL() + "'>" + gene.getGeneId() + "</a>");
     }
 
 

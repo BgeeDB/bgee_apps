@@ -30,7 +30,7 @@ import org.junit.Test;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Feb. 2019
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, June 2016
  */
 public class ExpressionCallTest extends TestAncestor {
@@ -50,13 +50,13 @@ public class ExpressionCallTest extends TestAncestor {
         Condition ae2devA = new Condition(new AnatEntity("3"), null, null, null, null, species);
         Condition ae2devB = new Condition(new AnatEntity("4"), null, null, null, null, species);
         Gene gene = new Gene("1", species, bioType);
-        ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null,
+        ExpressionCall call1 = new ExpressionCall(gene, ae1devA, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall call2 = new ExpressionCall(gene, ae1devB, null, null, null, null,
+        ExpressionCall call2 = new ExpressionCall(gene, ae1devB, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall call3 = new ExpressionCall(gene, ae2devA, null, null, null, null,
+        ExpressionCall call3 = new ExpressionCall(gene, ae2devA, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall call4 = new ExpressionCall(gene, ae2devB, null, null, null, null,
+        ExpressionCall call4 = new ExpressionCall(gene, ae2devB, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
         ConditionGraph graph = mock(ConditionGraph.class);
         //           ae1devA
@@ -84,7 +84,7 @@ public class ExpressionCallTest extends TestAncestor {
         List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
         List<ExpressionCall> expectedOrder = Arrays.asList(call2, call4, call3, call1);
         assertEquals("Incorrect ordering of calls", expectedOrder,
-                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph, false));
     }
     
     @Test
@@ -100,21 +100,21 @@ public class ExpressionCallTest extends TestAncestor {
         Condition ae3devC = new Condition(new AnatEntity("AE3"), new DevStage("DevC"), null, null, null, species);
         Condition ae3devD = new Condition(new AnatEntity("AE3"), new DevStage("DevD"), null, null, null, species);
         Gene gene = new Gene("1", species, bioType);
-        ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null,
+        ExpressionCall callAe1devA = new ExpressionCall(gene, ae1devA, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe1devB = new ExpressionCall(gene, ae1devB, null, null, null, null,
+        ExpressionCall callAe1devB = new ExpressionCall(gene, ae1devB, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe2devA = new ExpressionCall(gene, ae2devA, null, null, null, null,
+        ExpressionCall callAe2devA = new ExpressionCall(gene, ae2devA, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe2devB = new ExpressionCall(gene, ae2devB, null, null, null, null,
+        ExpressionCall callAe2devB = new ExpressionCall(gene, ae2devB, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe2devD = new ExpressionCall(gene, ae2devD, null, null, null, null,
+        ExpressionCall callAe2devD = new ExpressionCall(gene, ae2devD, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe3devA = new ExpressionCall(gene, ae3devA, null, null, null, null,
+        ExpressionCall callAe3devA = new ExpressionCall(gene, ae3devA, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe3devC = new ExpressionCall(gene, ae3devC, null, null, null, null,
+        ExpressionCall callAe3devC = new ExpressionCall(gene, ae3devC, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
-        ExpressionCall callAe3devD = new ExpressionCall(gene, ae3devD, null, null, null, null,
+        ExpressionCall callAe3devD = new ExpressionCall(gene, ae3devD, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.0")));
         ConditionGraph graph = mock(ConditionGraph.class);
         when(graph.isConditionMorePrecise(ae1devA, ae1devA)).thenReturn(false);
@@ -213,7 +213,7 @@ public class ExpressionCallTest extends TestAncestor {
         List<ExpressionCall> expectedOrder = Arrays.asList(callAe2devB, callAe3devC, callAe1devB, callAe2devD, callAe2devA, 
                 callAe3devD, callAe3devA, callAe1devA);
         assertEquals("Incorrect ordering of calls", expectedOrder,
-                ExpressionCall.filterAndOrderCallsByRank(calls, graph));
+                ExpressionCall.filterAndOrderCallsByRank(calls, graph, false));
 
     }
     
@@ -243,14 +243,14 @@ public class ExpressionCallTest extends TestAncestor {
 
         //we don't bother to retrieve exact score thresholds etc, we just create calls 
         //very obvious to cluster by Canderra distance
-        ExpressionCall c1 = new ExpressionCall(g1, cond1, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
-        ExpressionCall c2 = new ExpressionCall(g1, cond2, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.27")));
-        ExpressionCall c3 = new ExpressionCall(g1, cond3, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("10000")));
-        ExpressionCall c4 = new ExpressionCall(g1, cond4, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("20000")));
-        ExpressionCall c5 = new ExpressionCall(g1, cond5, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("40000")));
-        ExpressionCall c6 = new ExpressionCall(g1, cond6, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("40010")));
-        ExpressionCall c7 = new ExpressionCall(g1, cond7, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("70000")));
-        ExpressionCall c8 = new ExpressionCall(g1, cond8, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("70010")));
+        ExpressionCall c1 = new ExpressionCall(g1, cond1, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+        ExpressionCall c2 = new ExpressionCall(g1, cond2, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.27")));
+        ExpressionCall c3 = new ExpressionCall(g1, cond3, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("10000")));
+        ExpressionCall c4 = new ExpressionCall(g1, cond4, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("20000")));
+        ExpressionCall c5 = new ExpressionCall(g1, cond5, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("40000")));
+        ExpressionCall c6 = new ExpressionCall(g1, cond6, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("40010")));
+        ExpressionCall c7 = new ExpressionCall(g1, cond7, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("70000")));
+        ExpressionCall c8 = new ExpressionCall(g1, cond8, null, null, null, null, null, null, new ExpressionLevelInfo(new BigDecimal("70010")));
         //we'd like to incorrectly order the calls, but there is a method signature accepting a List...
         Set<ExpressionCall> toCluster = new HashSet<>(Arrays.asList(c5, c1, c7, c3, c6, c8, c4, c2));
         Map<ExpressionCall, Integer> expectedClusters = new HashMap<>();
@@ -317,29 +317,29 @@ public class ExpressionCallTest extends TestAncestor {
         //Nothing too complicated with gene ID1, c3 is redundant
         GeneBioType biotype = new GeneBioType("b");
         ExpressionCall c1 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond3, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25000")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25000")));
         ExpressionCall c2 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond2, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("2.0")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("2.0")));
         ExpressionCall c3 = new ExpressionCall(new Gene("ID1", new Species(1), biotype), cond1, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("3.00")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("3.00")));
         //for gene ID2 we test identification with equal ranks and relations between conditions. 
         //c4 is redundant because less precise condition
         //Note: ranks with different scales are not considered equals
         ExpressionCall c4 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond1, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
         ExpressionCall c5 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond3, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
         ExpressionCall c6 = new ExpressionCall(new Gene("ID2", new Species(1), biotype), cond2, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
         //for gene ID3 we test identification with equal ranks and relations between conditions. 
         //nothing redundant
         //Note: ranks with different scales are not considered equals
         ExpressionCall c7 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond1, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1")));
         ExpressionCall c8 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond3, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
         ExpressionCall c9 = new ExpressionCall(new Gene("ID3", new Species(1), biotype), cond2, null, null,
-            null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
+                null, null, null, null, new ExpressionLevelInfo(new BigDecimal("1.25")));
         
         Set<ExpressionCall> withRedundancy = new HashSet<>(Arrays.asList(c1, c2, c3, c4, c5, c6, c7, c8, c9));
         Set<ExpressionCall> expectedRedundants = new HashSet<>(Arrays.asList(c3, c4));
@@ -352,40 +352,40 @@ public class ExpressionCallTest extends TestAncestor {
      */
     @Test
     public void shouldFormatRankScore() {
-        ExpressionCall c = new ExpressionCall(null, null, null, null, null, null,
+        ExpressionCall c = new ExpressionCall(null, null, null,null, null,  null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2")));
         assertEquals("Incorrect score formatting", "2.00", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null,
+        c = new ExpressionCall(null, null, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("2.23")));
         assertEquals("Incorrect score formatting", "2.23", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null,
+        c = new ExpressionCall(null, null, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("20")));
         assertEquals("Incorrect score formatting", "20.0", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null,
+        c = new ExpressionCall(null, null, null, null, null, null, null, null,
                 new ExpressionLevelInfo(new BigDecimal("20.23")));
         assertEquals("Incorrect score formatting", "20.2", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("200")));
         assertEquals("Incorrect score formatting", "200", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("200.23")));
         assertEquals("Incorrect score formatting", "200", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("1000")));
         assertEquals("Incorrect score formatting", "1.00e3", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("2000")));
         assertEquals("Incorrect score formatting", "2.00e3", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("2000.23")));
         assertEquals("Incorrect score formatting", "2.00e3", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("20000")));
         assertEquals("Incorrect score formatting", "2.00e4", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("20000.23")));
         assertEquals("Incorrect score formatting", "2.00e4", c.getFormattedMeanRank());
-        c = new ExpressionCall(null, null, null, null, null, null, 
+        c = new ExpressionCall(null, null, null, null, null, null, null, null, 
                 new ExpressionLevelInfo(new BigDecimal("20100.23")));
         assertEquals("Incorrect score formatting", "2.01e4", c.getFormattedMeanRank());
     }

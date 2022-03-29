@@ -2,18 +2,21 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.expressiondata.Condition.ConditionEntities;
 
 /**
  * A filter to parameterize queries using expression data {@link Condition}s.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Mar. 2021
+ * @version Bgee 15.0, May 2021
  * @since   Bgee 13, Oct. 2015
  */
 //TODO: be able to EXCLUDE anat. entities/stages. It would be convenient to discard
@@ -30,9 +33,9 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      */
     private final Set<String> strainIds;
     /**
-     * @see #getObservedConditions()
+     * @see #getObservedCondForParams()
      */
-    private final Boolean observedConditions;
+    private final EnumSet<CallService.Attribute> observedCondForParams;
 
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -56,10 +59,10 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexes                 A {@code Collection} of {@code String}s that are the Names 
+     * @param sexes                 A {@code Collection} of {@code String}s that are the names
      *                              of the sexes that this {@code ConditionFilter} will specify 
      *                              to use.
-     * @param strains               A {@code Collection} of {@code String}s that are the Names 
+     * @param strains               A {@code Collection} of {@code String}s that are the names
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs
@@ -69,6 +72,12 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains)
             throws IllegalArgumentException {
         this(anatEntityIds, devStageIds, cellTypeIds, sexes, strains, null);
+    }
+    public ConditionFilter(ConditionEntities condEntities,
+            Collection<CallService.Attribute> observedCondForParams) {
+        this(condEntities.getAnatEntityIds(), condEntities.getDevStageIds(),
+                condEntities.getCellTypeIds(), condEntities.getSexIds(),
+                condEntities.getStrainIds(), observedCondForParams);
     }
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -80,30 +89,43 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @param sexeIds                 A {@code Collection} of {@code String}s that are the Names 
+     * @param sexIds                A {@code Collection} of {@code String}s that are the names
      *                              of the sexes that this {@code ConditionFilter} will specify 
      *                              to use.
-     * @param strainIds               A {@code Collection} of {@code String}s that are the Names 
+     * @param strainIds             A {@code Collection} of {@code String}s that are the names
      *                              of the strains that this {@code ConditionFilter} will 
      *                              specify to use.
-     * @param observedConditions    A {@code Boolean} defining whether the conditions considered
-     *                              should have been observed in expression data in any species.
-     *                              See {@link #getObservedConditions()} for more details.
+     * @param observedCondForParams A {@code Collection} of {@code CallService.Attribute}s specifying
+     *                              that the conditions considered should have been observed
+     *                              in data annotations (not created only from propagation),
+     *                              using the specified condition parameters to perform the check.
+     *                              For instance, if this {@code Collection} contains only the parameter
+     *                              {@code CallService.Attribute.ANAT_ENTITY_ID}, any condition
+     *                              using an anat. entity used in an annotation will be valid
+     *                              (but of course, the other attributes of this {@code ConditionFilter}
+     *                              will also be considered). If this {@code Collection} contains
+     *                              a {@code CallService.Attribute} that is not a condition parameter,
+     *                              (see {@link CallService.Attribute#getAllConditionParameters()}),
+     *                              an {@code IllegalArgumentException} is thrown. If {@code null}
+     *                              or empty, no filtering will be performed on whether
+     *                              the global conditions considered have been observed in annotations.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs
-     *                                  nor observed status are provided. 
+     *                                  nor observed status are provided, or if {@code observedCondForParams}
+     *                                  contains {@code CallService.Attribute}s that are not condition
+     *                                  parameters. 
      */
     //XXX: Should we add two booleans to ask for considering sub-structures and sub-stages?
     //Because it seems it can be managed through query of data propagation in CallFilter
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds, 
-            Boolean observedConditions) throws IllegalArgumentException {
+            Collection<CallService.Attribute> observedCondForParams) throws IllegalArgumentException {
         super(anatEntityIds, devStageIds, cellTypeIds);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) &&
                 (devStageIds == null || devStageIds.isEmpty()) &&
                 (cellTypeIds == null || cellTypeIds.isEmpty()) &&
                 (sexIds == null || sexIds.isEmpty()) &&
                 (strainIds == null || strainIds.isEmpty()) &&
-                observedConditions == null) {
+                (observedCondForParams == null || observedCondForParams.isEmpty())) {
             throw log.throwing(new IllegalArgumentException("Some anatatomical entity IDs, "
                 + "developmental stage IDs, cell type IDs, sexe, strain IDs or observed data "
                 + "status must be provided."));
@@ -112,7 +134,12 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
                 new HashSet<>(): new HashSet<>(sexIds));
         this.strainIds = Collections.unmodifiableSet(strainIds == null? 
                 new HashSet<>(): new HashSet<>(strainIds));
-        this.observedConditions = observedConditions;
+        this.observedCondForParams = observedCondForParams == null || observedCondForParams.isEmpty()?
+                EnumSet.noneOf(CallService.Attribute.class): EnumSet.copyOf(observedCondForParams);
+        if (!CallService.Attribute.getAllConditionParameters().containsAll(this.observedCondForParams)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A CallService.Attribute that is not a condition parameter was provided"));
+        }
     }
 
     /**
@@ -130,16 +157,20 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         return strainIds;
     }
     /**
-     * @return  A {@code Boolean} defining whether the conditions considered should have been
-     *          observed in expression data. If {@code true}, only conditions
-     *          observed in expression data are considered, not resulting
-     *          only from a data propagation; if {@code false}, only conditions resulting
-     *          from data propagation, never observed in expression data,
-     *          are considered; if {@code null}, conditions are considered whatever
-     *          their observed data status.
+     * @return  An {@code EnumSet} of {@code CallService.Attribute}s that are condition parameters,
+     *          (see {@link CallService.Attribute#getAllConditionParameters()}), allowing
+     *          to request that the conditions considered should have been observed
+     *          in data annotations (not created only from propagation),
+     *          using the specified condition parameters to perform the check.
+     *          For instance, if this {@code EnumSet} contains only the parameter
+     *          {@code CallService.Attribute.ANAT_ENTITY_ID}, any condition using an anat. entity
+     *          used in an annotation will be valid (but of course, the other attributes of this
+     *          {@code ConditionFilter} will also be considered). If empty,
+     *          no filtering will be performed on whether the global conditions considered
+     *          have been observed in annotations.
      */
-    public Boolean getObservedConditions() {
-        return observedConditions;
+    public EnumSet<CallService.Attribute> getObservedCondForParams() {
+        return observedCondForParams;
     }
 
     @Override
@@ -148,7 +179,7 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
         int result = super.hashCode();
         result = prime * result + ((sexIds == null) ? 0 : sexIds.hashCode());
         result = prime * result + ((strainIds == null) ? 0 : strainIds.hashCode());
-        result = prime * result + ((observedConditions == null) ? 0 : observedConditions.hashCode());
+        result = prime * result + ((observedCondForParams == null) ? 0 : observedCondForParams.hashCode());
         return result;
     }
     @Override
@@ -170,12 +201,56 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
                 return false;
         } else if (!strainIds.equals(other.strainIds))
             return false;
-        if (observedConditions == null) {
-            if (other.observedConditions != null)
+        if (observedCondForParams == null) {
+            if (other.observedCondForParams != null)
                 return false;
-        } else if (!observedConditions.equals(other.observedConditions))
+        } else if (!observedCondForParams.equals(other.observedCondForParams))
             return false;
         return true;
+    }
+
+    public String toParamString() {
+        log.traceEntry();
+        StringBuilder sb = new StringBuilder();
+        boolean previousParams = false;
+        if (!getAnatEntityIds().isEmpty()) {
+            sb.append(getAnatEntityIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getDevStageIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getDevStageIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getCellTypeIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getCellTypeIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getSexIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getSexIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        if (!getStrainIds().isEmpty()) {
+            if (previousParams) {
+                sb.append("_");
+            }
+            sb.append(getStrainIds().stream().sorted().collect(Collectors.joining("_"))
+                    .replaceAll(" ", "_").replaceAll(":", "_"));
+            previousParams = true;
+        }
+        return log.traceExit(sb.toString());
     }
 
     @Override
@@ -186,7 +261,7 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
                .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", sexIds=").append(getSexIds())
                .append(", strainIds=").append(getStrainIds())
-               .append(", observedConditions=").append(observedConditions).append("]");
+               .append(", observedCondForParams=").append(observedCondForParams).append("]");
         return builder.toString();
     }
 

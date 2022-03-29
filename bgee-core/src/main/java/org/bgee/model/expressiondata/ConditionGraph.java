@@ -25,7 +25,7 @@ import org.bgee.model.ontology.Ontology;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Oct. 2018
+ * @version Bgee 15.0, May 2021
  * @see ConditionGraphService
  * @since   Bgee 13, Dec. 2015
  */
@@ -112,28 +112,29 @@ public class ConditionGraph {
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
         }
-        if (anatEntityOnt == null && devStageOnt == null) {
+
+        Set<Integer> speciesIds = new HashSet<>();
+        if (anatEntityOnt != null) {
+            speciesIds.add(anatEntityOnt.getSpeciesId());
+        }
+        if (cellTypeOnt != null) {
+            speciesIds.add(cellTypeOnt.getSpeciesId());
+        }
+        if (devStageOnt != null) {
+            speciesIds.add(devStageOnt.getSpeciesId());
+        }
+        if (sexOnt != null) {
+            speciesIds.add(sexOnt.getSpeciesId());
+        }
+        if (strainOnt != null) {
+            speciesIds.add(strainOnt.getSpeciesId());
+        }
+        if (speciesIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Ontologies must be provided."));
         }
-        if (anatEntityOnt != null && devStageOnt != null 
-                && anatEntityOnt.getSpeciesId() != devStageOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and dev. stage ontologies "
-                    + "should be in the same species."));
-        }
-        if (anatEntityOnt != null && cellTypeOnt != null 
-                && anatEntityOnt.getSpeciesId() != cellTypeOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and cell type ontologies "
-                    + "should be in the same species."));
-        }
-        if (strainOnt != null && anatEntityOnt != null 
-                && strainOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and strains ontologies "
-                    + "should be in the same species."));
-        }
-        if (sexOnt != null && anatEntityOnt != null 
-                && sexOnt.getSpeciesId() != anatEntityOnt.getSpeciesId()) {
-            throw log.throwing(new IllegalArgumentException("Anat. entities and sexes ontologies "
-                    + "should be in the same species."));
+        if (speciesIds.size() > 1) {
+            throw log.throwing(new IllegalArgumentException(
+                    "All ontologies should be in the same species."));
         }
 
         this.conditions = Collections.unmodifiableSet(new HashSet<>(conditions));
@@ -162,17 +163,19 @@ public class ConditionGraph {
         this.checkEntityExistence(entities.getAnatEntityIds(), anatEntityOnt);
         this.checkEntityExistence(entities.getCellTypeIds(), cellTypeOnt);
         this.checkEntityExistence(entities.getSexIds(), sexOnt);
-        //For strain IDs, there can be some upper/lowercase discrepancies,
-        //the checkEntityExistence method won't work.
-        Set<String> recognizedStrainIdsLowerCase = strainOnt.getElements().stream()
-                .map(e -> e.getId().toLowerCase()).collect(Collectors.toSet());
-        Set<String> strainIdsLowerCase = entities.getStrainIds().stream()
-                .map(s -> s.toLowerCase()).collect(Collectors.toSet());
-        if (!recognizedStrainIdsLowerCase.containsAll(strainIdsLowerCase)) {
-            Set<String> unrecognizedIds = new HashSet<>(strainIdsLowerCase);
-            unrecognizedIds.removeAll(recognizedStrainIdsLowerCase);
-            throw log.throwing(new IllegalArgumentException("Some entities do not exist "
-                    + "in the provided onology: " + unrecognizedIds));
+        if (strainOnt != null) {
+            //For strain IDs, there can be some upper/lowercase discrepancies,
+            //the checkEntityExistence method won't work.
+            Set<String> recognizedStrainIdsLowerCase = strainOnt.getElements().stream()
+                    .map(e -> e.getId().toLowerCase()).collect(Collectors.toSet());
+            Set<String> strainIdsLowerCase = entities.getStrainIds().stream()
+                    .map(s -> s.toLowerCase()).collect(Collectors.toSet());
+            if (!recognizedStrainIdsLowerCase.containsAll(strainIdsLowerCase)) {
+                Set<String> unrecognizedIds = new HashSet<>(strainIdsLowerCase);
+                unrecognizedIds.removeAll(recognizedStrainIdsLowerCase);
+                throw log.throwing(new IllegalArgumentException("Some entities do not exist "
+                        + "in the provided onology: " + unrecognizedIds));
+            }
         }
 
         this.anatEntityOnt = anatEntityOnt;

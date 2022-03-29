@@ -198,6 +198,8 @@ public class MySQLSourceToSpeciesDAO extends MySQLDAO<SourceToSpeciesDAO.Attribu
                     }
                 } catch (SQLException e) {
                     throw log.throwing(new DAOException(e));
+                } catch (IllegalArgumentException e) {
+                    throw log.throwing(new IllegalStateException(e));
                 }
             }
             // Set SourceToSpeciesTO

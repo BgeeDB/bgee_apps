@@ -37,8 +37,8 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix"), EST("EST"), IN_SITU("in situ hybridization"), RNA_SEQ("RNA-Seq"),
-    FULL_LENGTH("full length single cell RNA-Seq");
+    AFFYMETRIX("Affymetrix", true), EST("EST", false), IN_SITU("in situ hybridization", true),
+    RNA_SEQ("RNA-Seq", true), FULL_LENGTH("full length single cell RNA-Seq", false);
 
     private final static Logger log = LogManager.getLogger(DataType.class.getName());
 
@@ -46,14 +46,23 @@ public enum DataType implements BgeeEnumField {
             getAllPossibleDataTypeCombinations(EnumSet.allOf(DataType.class));
     
     private final String representation;
+    private final boolean trustedForAbsentCalls;
     
-    private DataType(String representation) {
+    private DataType(String representation, boolean trustedForAbsentCalls) {
         this.representation = representation;
+        this.trustedForAbsentCalls = trustedForAbsentCalls;
     }
 
     @Override
     public String getStringRepresentation() {
         return this.representation;
+    }
+    /**
+     * @return  A {@code boolean} that is {@code true} if this {@code DataType} can be used
+     *          for generating ABSENT expression calls, {@code false} otherwise.
+     */
+    public boolean isTrustedForAbsentCalls() {
+        return this.trustedForAbsentCalls;
     }
     
     /**
@@ -70,7 +79,7 @@ public enum DataType implements BgeeEnumField {
      * @throws IllegalArgumentException If a representation does not correspond 
      *                                  to any {@code DataType}.
      */
-    public static final Set<DataType> convertToDataTypeSet(Collection<String> representations) {
+    public static final EnumSet<DataType> convertToDataTypeSet(Collection<String> representations) {
         return BgeeEnum.convertStringSetToEnumSet(DataType.class, representations);
     }
 
@@ -87,29 +96,7 @@ public enum DataType implements BgeeEnumField {
         if (dataTypes == null || dataTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some data types must be provided."));
         }
-        EnumSet<DataType> filteredDataTypes = EnumSet.copyOf(dataTypes);
-        Set<EnumSet<DataType>> combinations = new HashSet<>();
-        DataType[] dataTypeArr = filteredDataTypes.toArray(new DataType[filteredDataTypes.size()]);
-        final int n = dataTypeArr.length;
-        
-        for (int i = 0; i < Math.pow(2, n); i++) {
-            String bin = Integer.toBinaryString(i);
-            while (bin.length() < n) {
-                bin = "0" + bin;
-            }
-            EnumSet<DataType> combination = EnumSet.noneOf(DataType.class);
-            char[] chars = bin.toCharArray();
-            for (int j = 0; j < n; j++) {
-                if (chars[j] == '1') {
-                    combination.add(dataTypeArr[j]);
-                }
-            }
-            //We don't want the combination where no data type is considered
-            if (!combination.isEmpty()) {
-                combinations.add(combination);
-            }
-        }
-        return log.traceExit(combinations);
+        return log.traceExit(BgeeEnum.getAllPossibleEnumCombinations(DataType.class, dataTypes));
     }
     public static EnumSet<DataType> findCombinationWithGreatestOverlap(
             Collection<EnumSet<DataType>> dataTypeCombinations, Collection<DataType> dataTypeCombination) {

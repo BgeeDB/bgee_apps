@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.print.attribute.Size2DSyntax;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
@@ -63,7 +65,7 @@ import org.bgee.model.species.TaxonomyFilter;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 15.0, APr. 2021
  * @since   Bgee 13, May 2016
  */
 public class MultiSpeciesCallService extends CommonService {
@@ -72,12 +74,12 @@ public class MultiSpeciesCallService extends CommonService {
     public static enum Attribute implements Service.Attribute {
         GENE, ANAT_ENTITY_ID, DEV_STAGE_ID, CELL_TYPE_ID, SEX_ID, STRAIN_ID, 
         CALL_TYPE, DATA_QUALITY, OBSERVED_DATA, MEAN_RANK,
-        EXPERIMENT_COUNTS, DATA_TYPE_RANK_INFO, OMA_HOG_ID;
+        DATA_TYPE_RANK_INFO, OMA_HOG_ID;
     }
 
     public static enum OrderingAttribute implements Service.OrderingAttribute {
         GENE_ID, ANAT_ENTITY_ID, DEV_STAGE_ID, CELL_TYPE_ID, SEX_ID, STRAIN_ID, 
-        GLOBAL_RANK, OMA_HOG_ID;
+        MEAN_RANK, OMA_HOG_ID;
     }
     
     private final CallService callService;
@@ -140,10 +142,10 @@ public class MultiSpeciesCallService extends CommonService {
     //belonging to a same orthology group before moving to the next group
     //(this should be added to org.bgee.model.expressiondata.CallService.OrderingAttribute then,
     //the Attribute already exists in the DAO).
-    public Stream<Entry<OrthologousGeneGroup, Set<MultiSpeciesCall<ExpressionCall>>>> loadMultiSpeciesCalls(
-    		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, Set<GeneFilter> startingGeneFilters,
-    		Collection<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.traceEntry("{}, {}, {}, {}", multiSpeciesCallFilter, startingGeneFilters, attributes, orderingAttributes);
+//    public Stream<Entry<OrthologousGeneGroup, Set<MultiSpeciesCall<ExpressionCall>>>> loadMultiSpeciesCalls(
+//    		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, Set<GeneFilter> startingGeneFilters,
+//    		Collection<Attribute> attributes, LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+//        log.traceEntry("{}, {}, {}, {}", multiSpeciesCallFilter, startingGeneFilters, attributes, orderingAttributes);
 //        if(multiSpeciesCallFilter == null){
 //        	throw log.throwing(new IllegalArgumentException("Provided multiSpeciesCallFilter should not be null"));
 //        }
@@ -194,14 +196,14 @@ public class MultiSpeciesCallService extends CommonService {
 //        orderedTaxonIds.stream().forEach(t -> {
 //        	taxonToGenes.put(t, this.getServiceFactory().getGeneService()
 //                .getOrthologs(t, taxonomyFilter.getSpeciesIds(),
-//                		Collections.singleton(gene.getEnsemblGeneId())));
+//                		Collections.singleton(gene.getGeneId())));
 //        });     
 //        
 //        //from leaf to root
 //        TAXON: for (Integer taxId: orderedTaxonIds) {
 //        	Map<Integer, Set<Gene>> omaNodeIdToGenes = this.getServiceFactory().getGeneService()
 //                    .getOrthologs(taxId, taxonomyFilter.getSpeciesIds(),
-//                    		Collections.singleton(gene.getEnsemblGeneId()));
+//                    		Collections.singleton(gene.getGeneId()));
 //        	OMANODE: for (Integer omaNodeId:omaNodeIdToGenes.keySet()){
 //        		Set<ExpressionCall> calls = this.callService.loadExpressionCalls(
 //                		convertToExprCallFilter(multiSpeciesCallFilter, omaNodeIdToGenes.get(omaNodeId)),
@@ -227,7 +229,7 @@ public class MultiSpeciesCallService extends CommonService {
 //        	Map<Integer, Set<String>> speToGeneIds = orthologousGenes.stream()
 //        			.collect(Collectors.toMap(
 //        					g -> g.getSpecies().getId(),
-//        					g -> new HashSet<>(Arrays.asList(g.getEnsemblGeneId())),
+//        					g -> new HashSet<>(Arrays.asList(g.getGeneId())),
 //        					(s1, s2) -> {s1.addAll(s2); return s1;}));
 //        	
 ////        	if conserved, continue to next taxon; if not, stop iteration of taxon.
@@ -235,297 +237,297 @@ public class MultiSpeciesCallService extends CommonService {
 //        }
 //        
 //      	}
-        throw new UnsupportedOperationException("Not implemented");
-    }
+//        throw new UnsupportedOperationException("Not implemented");
+//    }
       	
-    /**
-     * 
-     * @param multiSpeciesCallFilter	A {@code MultiSpeciesCallFilter} describing filter used to retrieve the
-     * 									multispecies calls: These filters unclude conditions filters (anatomical
-     * 									entities and developmental stage), taxon and species filter, call quality
-     * 									filter (bronze, silver or gold), and data type filter (in situ, RNAseq, etc.)
-     * @param geneFilter				A {@code GeneFilter} corresponding to starting genes for which orthologs
-     * 									should be retrieved. All these genes must correspond to the same species
-     * @return							A {@code Set} of {@code MultiSpeciesCall} for which conservation score is
-     * 									higher than MultiSpeciesCall.CONSERVATION_SCORE_THRESHOLD.
-     */
-    public Set<MultiSpeciesCall<ExpressionCall>> getConservation(
-    		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, GeneFilter geneFilter){
-    	log.traceEntry("{}, {}", multiSpeciesCallFilter, geneFilter);
-        if(multiSpeciesCallFilter == null){
-        	throw log.throwing(new IllegalArgumentException("Provided multiSpeciesCallFilter should not be null"));
-        }
-        if(geneFilter == null){
-        	throw log.throwing(new IllegalArgumentException("Provided starting genes should not be null"));
-        }
-    	//create taxon ontology containing all wished species (from starting genes and taxon filter)
-        Set<Integer> speciesIds = new HashSet<Integer>(multiSpeciesCallFilter.getTaxonFilter().getSpeciesIds());
-        speciesIds.add(geneFilter.getSpeciesId());
-        Set<Species> species = speciesService.loadSpeciesByIds(speciesIds, false);
-    	Ontology<Taxon, Integer> taxonOntology = ontologyService.getTaxonOntologyLeadingToSpecies(
-    			speciesIds, false, false);
-    	Map<Taxon,Set<Species>> leavesLCA = getLeavesLCA(taxonOntology, species, geneFilter);
-    	Set<AnatEntitySimilarity> anatEntitySims = getAnatSimByTaxonId(leavesLCA);
-    	Set<DevStageSimilarity> devStageSims = getDevStagesSimByTaxonId(leavesLCA);
-    	//TODO need to update to match new GeneHomologs class
-    	Set<OrthologousGeneGroup> orthologousGeneGroups = new HashSet<OrthologousGeneGroup>();
-//    	Set<OrthologousGeneGroup> orthologousGeneGroups = geneService.getOrthologs(
-//    			leavesLCA.keySet().stream().map(t -> t.getId()).collect(Collectors.toSet()),
-//    				speciesIds,geneFilter)
-//    			.collect(Collectors.toSet());
-    	ExpressionCallFilter callFilter = convertToExprCallFilter(multiSpeciesCallFilter,
-    			anatEntitySims, devStageSims, 
-    			orthologousGeneGroups);
-    	Stream<ExpressionCall> calls = callService.loadExpressionCalls(callFilter, 
-    			EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
-                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CELL_TYPE_ID,
-                        CallService.Attribute.SEX_ID, CallService.Attribute.STRAIN_ID, 
-                        CallService.Attribute.DATA_QUALITY),
-    			new LinkedHashMap<>());
-    	Set<MultiSpeciesCall<ExpressionCall>> multiSpeciesCall = groupCalls(
-    			orthologousGeneGroups, anatEntitySims, devStageSims, calls.collect(Collectors.toSet()));
-    	return log.traceExit(computeConservationScore(multiSpeciesCall));
-    	
-    	
-    	
-    }
+//    /**
+//     * 
+//     * @param multiSpeciesCallFilter	A {@code MultiSpeciesCallFilter} describing filter used to retrieve the
+//     * 									multispecies calls: These filters unclude conditions filters (anatomical
+//     * 									entities and developmental stage), taxon and species filter, call quality
+//     * 									filter (bronze, silver or gold), and data type filter (in situ, RNAseq, etc.)
+//     * @param geneFilter				A {@code GeneFilter} corresponding to starting genes for which orthologs
+//     * 									should be retrieved. All these genes must correspond to the same species
+//     * @return							A {@code Set} of {@code MultiSpeciesCall} for which conservation score is
+//     * 									higher than MultiSpeciesCall.CONSERVATION_SCORE_THRESHOLD.
+//     */
+//    public Set<MultiSpeciesCall<ExpressionCall>> getConservation(
+//    		MultiSpeciesExpressionCallFilter multiSpeciesCallFilter, GeneFilter geneFilter){
+//    	log.traceEntry("{}, {}", multiSpeciesCallFilter, geneFilter);
+//        if(multiSpeciesCallFilter == null){
+//        	throw log.throwing(new IllegalArgumentException("Provided multiSpeciesCallFilter should not be null"));
+//        }
+//        if(geneFilter == null){
+//        	throw log.throwing(new IllegalArgumentException("Provided starting genes should not be null"));
+//        }
+//    	//create taxon ontology containing all wished species (from starting genes and taxon filter)
+//        Set<Integer> speciesIds = new HashSet<Integer>(multiSpeciesCallFilter.getTaxonFilter().getSpeciesIds());
+//        speciesIds.add(geneFilter.getSpeciesId());
+//        Set<Species> species = speciesService.loadSpeciesByIds(speciesIds, false);
+//    	Ontology<Taxon, Integer> taxonOntology = ontologyService.getTaxonOntologyLeadingToSpecies(
+//    			speciesIds, false, false);
+//    	Map<Taxon,Set<Species>> leavesLCA = getLeavesLCA(taxonOntology, species, geneFilter);
+//    	Set<AnatEntitySimilarity> anatEntitySims = getAnatSimByTaxonId(leavesLCA);
+//    	Set<DevStageSimilarity> devStageSims = getDevStagesSimByTaxonId(leavesLCA);
+//    	//TODO need to update to match new GeneHomologs class
+//    	Set<OrthologousGeneGroup> orthologousGeneGroups = new HashSet<OrthologousGeneGroup>();
+////    	Set<OrthologousGeneGroup> orthologousGeneGroups = geneService.getOrthologs(
+////    			leavesLCA.keySet().stream().map(t -> t.getId()).collect(Collectors.toSet()),
+////    				speciesIds,geneFilter)
+////    			.collect(Collectors.toSet());
+//    	ExpressionCallFilter callFilter = convertToExprCallFilter(multiSpeciesCallFilter,
+//    			anatEntitySims, devStageSims, 
+//    			orthologousGeneGroups);
+//    	Stream<ExpressionCall> calls = callService.loadExpressionCalls(callFilter, 
+//    			EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID, 
+//                        CallService.Attribute.DEV_STAGE_ID, CallService.Attribute.CELL_TYPE_ID,
+//                        CallService.Attribute.SEX_ID, CallService.Attribute.STRAIN_ID, 
+//                        CallService.Attribute.DATA_QUALITY),
+//    			new LinkedHashMap<>());
+//    	Set<MultiSpeciesCall<ExpressionCall>> multiSpeciesCall = groupCalls(
+//    			orthologousGeneGroups, anatEntitySims, devStageSims, calls.collect(Collectors.toSet()));
+//    	return log.traceExit(computeConservationScore(multiSpeciesCall));
+//    	
+//    	
+//    	
+//    }
 
-    /**
-     * Allows to perform gene expression comparisons for any arbitrary group of genes,
-     * and not only for orthologous genes, as in method {@link #loadMultiSpeciesCalls(TaxonomyFilter, Gene)}.
-     *  
-     * @param genes
-     * @return
-     */
-    public Stream<MultiSpeciesCall<ExpressionCall>> loadMultiSpeciesCalls(TaxonomyFilter taxonomyFilter,
-            Collection<Gene> genes, ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
-            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
-        log.traceEntry("{}, {}, {}, {}, {}",taxonomyFilter, genes, callFilter, attributes, orderingAttributes);
-        throw new UnsupportedOperationException("Not implemented");
-    }
+//    /**
+//     * Allows to perform gene expression comparisons for any arbitrary group of genes,
+//     * and not only for orthologous genes, as in method {@link #loadMultiSpeciesCalls(TaxonomyFilter, Gene)}.
+//     *  
+//     * @param genes
+//     * @return
+//     */
+//    public Stream<MultiSpeciesCall<ExpressionCall>> loadMultiSpeciesCalls(TaxonomyFilter taxonomyFilter,
+//            Collection<Gene> genes, ExpressionCallFilter callFilter, Collection<Attribute> attributes, 
+//            LinkedHashMap<OrderingAttribute, Service.Direction> orderingAttributes) {
+//        log.traceEntry("{}, {}, {}, {}, {}",taxonomyFilter, genes, callFilter, attributes, orderingAttributes);
+//        throw new UnsupportedOperationException("Not implemented");
+//    }
 
-    /**
-     * Retrieve multi-species expression calls for a specific gene in provided species.
-     * 
-     * @param gene          A {@code Gene} that is the gene for which to return multi-species calls.
-     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
-     *                      in which the gene orthologs should be found.
-     * @return              The {@code LinkedHashMap} where keys are {@code Integer}s corresponding
-     *                      to IDs of taxa ordered from closest to farthest of {@code gene},
-     *                      the associated values being {@code Set} of {@code MultiSpeciesCall}s
-     *                      corresponding to multi-species calls.
-     */
-    public LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
-            Gene gene, Collection<Integer> speciesIds) {
-        log.traceEntry("{}, {}", gene, speciesIds);
-        
-        if (gene == null) {
-            throw log.throwing(new IllegalArgumentException("Provided gene should not be null"));
-        }
-        if (gene.getSpecies() == null || gene.getSpecies().getId() == null) {
-            throw log.throwing(new IllegalArgumentException("Expecting species info in provided gene:" + gene));
-        }
-        
-        final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
-                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
-        if (!clonedSpeIds.isEmpty() && !clonedSpeIds.contains(gene.getSpecies().getId())) {
-            throw log.throwing(new IllegalArgumentException("Gene species (" + gene.getSpecies().getId() +
-                    ") is not in provided species (" + speciesIds +")"));
-        }
-        
-        // Get all relevant taxa from the species
-        // FIXME: load all taxonomy ontology, should we filter it?
-        Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
-                .getTaxonOntology();
-        Integer parentTaxonId = gene.getSpecies().getParentTaxonId();
-        if (taxonOnt.getElement(parentTaxonId) == null) {
-            throw log.throwing(new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
-                    "not found in retrieved taxonomy"));
-        }
-        
-        LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
-        
-        LinkedHashMap<CallService.OrderingAttribute, Direction> orderAttrs = new LinkedHashMap<>();
-        orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);
-
-
-        //XXX: the retrieval of the taxon IDs could be moved at the end of this method,
-        //when you start iterating from the more precise taxon and to the root of the taxon ontology
-        List<Integer> taxonIds = taxonOnt.getOrderedAncestors(
-                taxonOnt.getElement(parentTaxonId)).stream()
-            .map(t -> t.getId())
-            .collect(Collectors.toList());
-
-        //FIXME: getOrthologs should take a Gene, a Taxon and a collection of species,
-        //and return Map<taxonId, Set<Gene>>, using the highest taxon ID
-        int highestTaxonId = 0;// to implement
-        Map<Taxon, Set<Gene>> taxonToGenes = this.getServiceFactory().getGeneHomologsService()
-                .getGeneHomologs(gene.getEnsemblGeneId(), gene.getSpecies().getId(), 
-                        new HashSet<Integer>(speciesIds),highestTaxonId, true, true, false)
-                .getOrthologsByTaxon();
-        for (Integer taxonId : taxonIds) {
-            log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
-            // Retrieve homologous organ groups with gene IDs
-            log.trace("Homologous organ groups with genes: {}", taxonToGenes);
-//            Set<String> orthologousEnsemblGeneIds = omaToGenes.values().stream()
-//                    .filter(geneSet -> geneSet.stream()
-//                            .anyMatch(g -> gene.getEnsemblGeneId().equals(g.getEnsemblGeneId())))
-//                    .flatMap(Set::stream)
-//                    .map(g -> g.getEnsemblGeneId())
+//    /**
+//     * Retrieve multi-species expression calls for a specific gene in provided species.
+//     * 
+//     * @param gene          A {@code Gene} that is the gene for which to return multi-species calls.
+//     * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species
+//     *                      in which the gene orthologs should be found.
+//     * @return              The {@code LinkedHashMap} where keys are {@code Integer}s corresponding
+//     *                      to IDs of taxa ordered from closest to farthest of {@code gene},
+//     *                      the associated values being {@code Set} of {@code MultiSpeciesCall}s
+//     *                      corresponding to multi-species calls.
+//     */
+//    public LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> loadMultiSpeciesExpressionCalls(
+//            Gene gene, Collection<Integer> speciesIds) {
+//        log.traceEntry("{}, {}", gene, speciesIds);
+//        
+//        if (gene == null) {
+//            throw log.throwing(new IllegalArgumentException("Provided gene should not be null"));
+//        }
+//        if (gene.getSpecies() == null || gene.getSpecies().getId() == null) {
+//            throw log.throwing(new IllegalArgumentException("Expecting species info in provided gene:" + gene));
+//        }
+//        
+//        final Set<Integer> clonedSpeIds = Collections.unmodifiableSet(
+//                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+//        if (!clonedSpeIds.isEmpty() && !clonedSpeIds.contains(gene.getSpecies().getId())) {
+//            throw log.throwing(new IllegalArgumentException("Gene species (" + gene.getSpecies().getId() +
+//                    ") is not in provided species (" + speciesIds +")"));
+//        }
+//        
+//        // Get all relevant taxa from the species
+//        // FIXME: load all taxonomy ontology, should we filter it?
+//        Ontology<Taxon, Integer> taxonOnt = this.getServiceFactory().getOntologyService()
+//                .getTaxonOntology();
+//        Integer parentTaxonId = gene.getSpecies().getParentTaxonId();
+//        if (taxonOnt.getElement(parentTaxonId) == null) {
+//            throw log.throwing(new IllegalStateException("Taxon ID " + gene.getSpecies().getParentTaxonId() +
+//                    "not found in retrieved taxonomy"));
+//        }
+//        
+//        LinkedHashMap<Integer, Set<MultiSpeciesCall<ExpressionCall>>> taxaToCalls = new LinkedHashMap<>();
+//        
+//        LinkedHashMap<CallService.OrderingAttribute, Direction> orderAttrs = new LinkedHashMap<>();
+//        orderAttrs.put(CallService.OrderingAttribute.GENE_ID, Direction.ASC);
+//
+//
+//        //XXX: the retrieval of the taxon IDs could be moved at the end of this method,
+//        //when you start iterating from the more precise taxon and to the root of the taxon ontology
+//        List<Integer> taxonIds = taxonOnt.getOrderedAncestors(
+//                taxonOnt.getElement(parentTaxonId)).stream()
+//            .map(t -> t.getId())
+//            .collect(Collectors.toList());
+//
+//        //FIXME: getOrthologs should take a Gene, a Taxon and a collection of species,
+//        //and return Map<taxonId, Set<Gene>>, using the highest taxon ID
+//        int highestTaxonId = 0;// to implement
+//        Map<Taxon, Set<Gene>> taxonToGenes = this.getServiceFactory().getGeneHomologsService()
+//                .getGeneHomologs(gene.getGeneId(), gene.getSpecies().getId(), 
+//                        new HashSet<Integer>(speciesIds),highestTaxonId, true, true, false)
+//                .getOrthologsByTaxon();
+//        for (Integer taxonId : taxonIds) {
+//            log.trace("Starting generation of multi-species calls for taxon ID {}", taxonId);
+//            // Retrieve homologous organ groups with gene IDs
+//            log.trace("Homologous organ groups with genes: {}", taxonToGenes);
+////            Set<String> orthologousGeneIds = omaToGenes.values().stream()
+////                    .filter(geneSet -> geneSet.stream()
+////                            .anyMatch(g -> gene.getGeneId().equals(g.getGeneId())))
+////                    .flatMap(Set::stream)
+////                    .map(g -> g.getGeneId())
+////                    .collect(Collectors.toSet());
+//
+//            // Retrieve anat. entity similarities
+//            Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
+//                    .getAnatEntitySimilarityService().loadPositiveAnatEntitySimilarities(taxonId, true);
+//            log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
+//            Set<String> anatEntityIds = anatEntitySimilarities.stream()
+//                    .flatMap(s -> s.getSourceAnatEntities().stream().map(a -> a.getId()))
 //                    .collect(Collectors.toSet());
+//            
+//            // Retrieve dev. stage similarities
+//            Set<DevStageSimilarity> devStageSimilarities = this.getServiceFactory() 
+//                    .getDevStageSimilarityService().loadDevStageSimilarities(taxonId, clonedSpeIds);
+//            log.trace("Dev. stage similarities: {}", devStageSimilarities);
+//            Set<String> devStageIds = devStageSimilarities.stream()
+//                    .map(s -> s.getDevStageIds()).flatMap(Set::stream).collect(Collectors.toSet());
+//
+//            // Build ExpressionCallFilter
+//            Set<ConditionFilter> conditionFilters = new HashSet<>();
+//            
+//            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds, anatEntityIds, null, null, null));
+//            log.warn("Only expressed calls are retrieved");
+//            
+////            // For each species, we load propagated and reconciled calls
+////            Set<ExpressionCall> calls = new HashSet<>();
+////            for (Integer spId: clonedSpeIds) {
+////                //FIXME: adapt to new API
+//////                ExpressionCallFilter callFilter =
+//////                        new ExpressionCallFilter(
+//////                    new GeneFilter(spId, orthologousGeneIds),
+//////                    conditionFilters,
+//////                    null,   // dataTypeFilter
+//////                    ExpressionSummary.EXPRESSED,
+//////                    null,   // SummaryQuality
+//////                    true);
+//////                // FIXME do propagation???
+//////                Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
+//////                    loadExpressionCalls(callFilter, null, orderAttrs).collect(Collectors.toSet());
+//////                calls.addAll(currentCalls);
+////            }
+////            Set<ExpressionCall> calls = null; //to implement
+////            taxaToCalls.put(taxonId, this.groupCalls(taxonId,
+////                    omaToGenes, anatEntitySimilarities, devStageSimilarities, calls));
+//            log.trace("Done generation of multi-species calls for taxon ID {}", taxonId);
+//        }
+//        return taxaToCalls;
+//    }
 
-            // Retrieve anat. entity similarities
-            Set<AnatEntitySimilarity> anatEntitySimilarities = this.getServiceFactory()
-                    .getAnatEntitySimilarityService().loadPositiveAnatEntitySimilarities(taxonId, true);
-            log.trace("Anat. entity similarities: {}", anatEntitySimilarities);
-            Set<String> anatEntityIds = anatEntitySimilarities.stream()
-                    .flatMap(s -> s.getSourceAnatEntities().stream().map(a -> a.getId()))
-                    .collect(Collectors.toSet());
-            
-            // Retrieve dev. stage similarities
-            Set<DevStageSimilarity> devStageSimilarities = this.getServiceFactory() 
-                    .getDevStageSimilarityService().loadDevStageSimilarities(taxonId, clonedSpeIds);
-            log.trace("Dev. stage similarities: {}", devStageSimilarities);
-            Set<String> devStageIds = devStageSimilarities.stream()
-                    .map(s -> s.getDevStageIds()).flatMap(Set::stream).collect(Collectors.toSet());
-
-            // Build ExpressionCallFilter
-            Set<ConditionFilter> conditionFilters = new HashSet<>();
-            
-            conditionFilters.add(new ConditionFilter(anatEntityIds, devStageIds, anatEntityIds, null, null, null));
-            log.warn("Only expressed calls are retrieved");
-            
-//            // For each species, we load propagated and reconciled calls
-//            Set<ExpressionCall> calls = new HashSet<>();
-//            for (Integer spId: clonedSpeIds) {
-//                //FIXME: adapt to new API
-////                ExpressionCallFilter callFilter =
-////                        new ExpressionCallFilter(
-////                    new GeneFilter(spId, orthologousEnsemblGeneIds),
-////                    conditionFilters,
-////                    null,   // dataTypeFilter
-////                    ExpressionSummary.EXPRESSED,
-////                    null,   // SummaryQuality
-////                    true);
-////                // FIXME do propagation???
-////                Set<ExpressionCall> currentCalls = this.getServiceFactory().getCallService().
-////                    loadExpressionCalls(callFilter, null, orderAttrs).collect(Collectors.toSet());
-////                calls.addAll(currentCalls);
+//    /**
+//     * Group {@code ExpressionCall}s into {@code MultiSpeciesCall}s.
+//     * 
+//     * @param orthoGeneGroups            A {@code Set} of {@code OrthologousGeneGroup}s containing
+//     * 									information about orthologous genes for all OMA nodes of
+//     * 									one OMA group
+//     * @param anatEntitySimilarities    A {@code Set} of {@code AnatEntitySimilarity}s thats are 
+//     *                                  similarity groups of anatomical entities to use to build  
+//     *                                  {@code MultiSpeciesCall}s.
+//     * @param devStageSimilarities      A {@code Set} of {@code DevStageSimilarity}s thats are 
+//     *                                  similarity groups of developmental stages to use to build  
+//     *                                  {@code MultiSpeciesCall}s.
+//     * @param calls                     A {@code Set} of {@code ExpressionCall}s thats are 
+//     *                                  expression calls to use to build {@code MultiSpeciesCall}s.
+//     * @return                          The {@code Set} of {@code MultiSpeciesCall}s thats are 
+//     *                                  multi-species calls.
+//     * @throws IllegalArgumentException If an {@code ExpressionCall} has not all necessary data 
+//     *                                  or if similarity groups are incorrect.
+//     */
+//    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
+//    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(Set<OrthologousGeneGroup> orthoGeneGroups, 
+//    		Set<AnatEntitySimilarity> anatEntitySimilarities, 
+//    		Set<DevStageSimilarity> devStageSimilarities, Set<ExpressionCall> calls)
+//                    throws IllegalArgumentException {
+//        log.traceEntry("{}, {}, {}, {}", orthoGeneGroups, anatEntitySimilarities, devStageSimilarities, calls);
+//        Set<AnatEntitySimilarity> unmodifiableAESims = Collections.unmodifiableSet(anatEntitySimilarities);
+//        Set<DevStageSimilarity> unmodifiableDSSims = Collections.unmodifiableSet(devStageSimilarities);
+//        Set<ExpressionCall> unmodifiablecalls = Collections.unmodifiableSet(calls);
+//        Set<OrthologousGeneGroup> unmodifiableOGGroups = Collections.unmodifiableSet(orthoGeneGroups);
+//        Set<MultiSpeciesCall<ExpressionCall>> multiSpCalls = new HashSet<>();
+//        //loop on all calls of one OMA group
+//        unmodifiableOGGroups.stream().forEach(ogg -> {
+//        	multiSpCalls.add(new MultiSpeciesCall<ExpressionCall>(
+//        			new MultiSpeciesCondition(
+//        					unmodifiableAESims.stream()
+//        						.filter(aes -> ogg.getTaxonId().equals(aes.getRequestedTaxon().getId()))
+//        						.findFirst().get(),
+//        					unmodifiableDSSims.stream()
+//        					.filter(dss -> ogg.getTaxonId().equals(dss.getTaxonId()))
+//        					.findFirst().get()
+//        					),
+//        			ogg.getTaxonId(), ogg.getOmaGroupId(),
+//        			ogg.getGenes(), new HashSet<>(), null));
+//        });
+//        for (ExpressionCall call: unmodifiablecalls) {
+//            log.trace("Iteration expr call {}", call);
+//            if (call.getCondition() == null) {
+//                throw log.throwing(new IllegalArgumentException("No condition for " + call));
 //            }
-//            Set<ExpressionCall> calls = null; //to implement
-//            taxaToCalls.put(taxonId, this.groupCalls(taxonId,
-//                    omaToGenes, anatEntitySimilarities, devStageSimilarities, calls));
-            log.trace("Done generation of multi-species calls for taxon ID {}", taxonId);
-        }
-        return taxaToCalls;
-    }
-
-    /**
-     * Group {@code ExpressionCall}s into {@code MultiSpeciesCall}s.
-     * 
-     * @param orthoGeneGroups            A {@code Set} of {@code OrthologousGeneGroup}s containing
-     * 									information about orthologous genes for all OMA nodes of
-     * 									one OMA group
-     * @param anatEntitySimilarities    A {@code Set} of {@code AnatEntitySimilarity}s thats are 
-     *                                  similarity groups of anatomical entities to use to build  
-     *                                  {@code MultiSpeciesCall}s.
-     * @param devStageSimilarities      A {@code Set} of {@code DevStageSimilarity}s thats are 
-     *                                  similarity groups of developmental stages to use to build  
-     *                                  {@code MultiSpeciesCall}s.
-     * @param calls                     A {@code Set} of {@code ExpressionCall}s thats are 
-     *                                  expression calls to use to build {@code MultiSpeciesCall}s.
-     * @return                          The {@code Set} of {@code MultiSpeciesCall}s thats are 
-     *                                  multi-species calls.
-     * @throws IllegalArgumentException If an {@code ExpressionCall} has not all necessary data 
-     *                                  or if similarity groups are incorrect.
-     */
-    // TODO to be added to ExpressionCallUtils see TODOs into ExpressionCall
-    private Set<MultiSpeciesCall<ExpressionCall>> groupCalls(Set<OrthologousGeneGroup> orthoGeneGroups, 
-    		Set<AnatEntitySimilarity> anatEntitySimilarities, 
-    		Set<DevStageSimilarity> devStageSimilarities, Set<ExpressionCall> calls )
-                    throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", orthoGeneGroups, anatEntitySimilarities, devStageSimilarities, calls);
-        Set<AnatEntitySimilarity> unmodifiableAESims = Collections.unmodifiableSet(anatEntitySimilarities);
-        Set<DevStageSimilarity> unmodifiableDSSims = Collections.unmodifiableSet(devStageSimilarities);
-        Set<ExpressionCall> unmodifiablecalls = Collections.unmodifiableSet(calls);
-        Set<OrthologousGeneGroup> unmodifiableOGGroups = Collections.unmodifiableSet(orthoGeneGroups);
-        Set<MultiSpeciesCall<ExpressionCall>> multiSpCalls = new HashSet<>();
-        //loop on all calls of one OMA group
-        unmodifiableOGGroups.stream().forEach(ogg -> {
-        	multiSpCalls.add(new MultiSpeciesCall<ExpressionCall>(
-        			new MultiSpeciesCondition(
-        					unmodifiableAESims.stream()
-        						.filter(aes -> ogg.getTaxonId().equals(aes.getRequestedTaxon().getId()))
-        						.findFirst().get(),
-        					unmodifiableDSSims.stream()
-        					.filter(dss -> ogg.getTaxonId().equals(dss.getTaxonId()))
-        					.findFirst().get()
-        					),
-        			ogg.getTaxonId(), ogg.getOmaGroupId(),
-        			ogg.getGenes(), new HashSet<>(), null));
-        });
-        for (ExpressionCall call: unmodifiablecalls) {
-            log.trace("Iteration expr call {}", call);
-            if (call.getCondition() == null) {
-                throw log.throwing(new IllegalArgumentException("No condition for " + call));
-            }
-            if (call.getGene() == null) {
-                throw log.throwing(new IllegalArgumentException("No gene for " + call));
-            }
-            Set<MultiSpeciesCall<ExpressionCall>> currentMultiSpeCalls = multiSpCalls.stream()
-            		.filter(msc -> msc.getMultiSpeciesCondition()
-            		.getAnatSimilarity().getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
-            		.filter(msc -> msc.getMultiSpeciesCondition()
-            		.getStageSimilarity().getDevStageIds().contains(call.getCondition().getDevStageId()))
-            		.filter(msc -> msc.getOrthologousGenes().contains(call.getGene()))
-            		.collect(Collectors.toSet());
-            currentMultiSpeCalls.stream().forEach(msc -> {
-            	msc.getCalls().add(call);
-            	msc.getSpeciesIds().add(call.getGene().getSpecies().getId());
-            });
-            Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
-                    .filter(s -> s.getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
-                    .collect(Collectors.toSet());
-            if (curAESimilarities.size() == 0) {
-                log.trace(call.getCondition().getAnatEntityId() +
-                        " found in any anat. entity similarity group");
-                continue;
-            }
-        }
-        return log.traceExit(multiSpCalls);
-            
-            
-    }
+//            if (call.getGene() == null) {
+//                throw log.throwing(new IllegalArgumentException("No gene for " + call));
+//            }
+//            Set<MultiSpeciesCall<ExpressionCall>> currentMultiSpeCalls = multiSpCalls.stream()
+//            		.filter(msc -> msc.getMultiSpeciesCondition()
+//            		.getAnatSimilarity().getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
+//            		.filter(msc -> msc.getMultiSpeciesCondition()
+//            		.getStageSimilarity().getDevStageIds().contains(call.getCondition().getDevStageId()))
+//            		.filter(msc -> msc.getOrthologousGenes().contains(call.getGene()))
+//            		.collect(Collectors.toSet());
+//            currentMultiSpeCalls.stream().forEach(msc -> {
+//            	msc.getCalls().add(call);
+//            	msc.getSpeciesIds().add(call.getGene().getSpecies().getId());
+//            });
+//            Set<AnatEntitySimilarity> curAESimilarities = anatEntitySimilarities.stream()
+//                    .filter(s -> s.getSourceAnatEntities().contains(call.getCondition().getAnatEntity()))
+//                    .collect(Collectors.toSet());
+//            if (curAESimilarities.size() == 0) {
+//                log.trace(call.getCondition().getAnatEntityId() +
+//                        " found in any anat. entity similarity group");
+//                continue;
+//            }
+//        }
+//        return log.traceExit(multiSpCalls);
+//            
+//            
+//    }
     
-    /**
-     * Compute conservation score of {@code inputCall}.
-     * The conservation score corresponds to the number of species where genes are expressed, divided by
-     * the total number of species having orthologous genes for one taxon in one OMA group (i.e for one
-     * OMA node)
-     * 
-     * @param inputCall A {@code MultiSpeciesCall} that is the multi-species call expression calls
-     *                  for which to compute conservation score.
-     * @return          The {@code MultiSpeciesCall} that is the multi-species call expression calls
-     *                  with computed conservation score.
-     */
-    public Set<MultiSpeciesCall<ExpressionCall>> computeConservationScore(Set<MultiSpeciesCall<ExpressionCall>> inputCalls) {
-        log.traceEntry("{}", inputCalls);
-        Set<MultiSpeciesCall<ExpressionCall>> outputCalls = new HashSet<>();
-        for(MultiSpeciesCall<ExpressionCall> inputCall:inputCalls){
-	        BigDecimal conservationScore = new BigDecimal(
-	        		inputCall.getCalls().stream().map(a -> a.getGene().getSpecies().getId())
-	        		.collect(Collectors.toSet()).size())
-	        		.divide(
-	        				new BigDecimal(inputCall.getOrthologousGenes().stream().map(g -> g.getSpecies().getId())
-	        						.collect(Collectors.toSet()).size()),
-	        				2, RoundingMode.HALF_UP);
-	        if(conservationScore.compareTo(new BigDecimal(MultiSpeciesCall.CONSERVATION_SCORE_THRESHOLD)) >= 0)
-	        outputCalls.add(new MultiSpeciesCall<>(inputCall.getMultiSpeciesCondition(), inputCall.getTaxonId(),
-	        		inputCall.getOMAGroupId(), inputCall.getOrthologousGenes(), inputCall.getCalls(),
-	        		conservationScore));
-        }
-        return log.traceExit(outputCalls);
-    }
+//    /**
+//     * Compute conservation score of {@code inputCall}.
+//     * The conservation score corresponds to the number of species where genes are expressed, divided by
+//     * the total number of species having orthologous genes for one taxon in one OMA group (i.e for one
+//     * OMA node)
+//     * 
+//     * @param inputCall A {@code MultiSpeciesCall} that is the multi-species call expression calls
+//     *                  for which to compute conservation score.
+//     * @return          The {@code MultiSpeciesCall} that is the multi-species call expression calls
+//     *                  with computed conservation score.
+//     */
+//    public Set<MultiSpeciesCall<ExpressionCall>> computeConservationScore(Set<MultiSpeciesCall<ExpressionCall>> inputCalls) {
+//        log.traceEntry("{}", inputCalls);
+//        Set<MultiSpeciesCall<ExpressionCall>> outputCalls = new HashSet<>();
+//        for(MultiSpeciesCall<ExpressionCall> inputCall:inputCalls){
+//	        BigDecimal conservationScore = new BigDecimal(
+//	        		inputCall.getCalls().stream().map(a -> a.getGene().getSpecies().getId())
+//	        		.collect(Collectors.toSet()).size())
+//	        		.divide(
+//	        				new BigDecimal(inputCall.getOrthologousGenes().stream().map(g -> g.getSpecies().getId())
+//	        						.collect(Collectors.toSet()).size()),
+//	        				2, RoundingMode.HALF_UP);
+//	        if(conservationScore.compareTo(new BigDecimal(MultiSpeciesCall.CONSERVATION_SCORE_THRESHOLD)) >= 0)
+//	        outputCalls.add(new MultiSpeciesCall<>(inputCall.getMultiSpeciesCondition(), inputCall.getTaxonId(),
+//	        		inputCall.getOMAGroupId(), inputCall.getOrthologousGenes(), inputCall.getCalls(),
+//	        		conservationScore));
+//        }
+//        return log.traceExit(outputCalls);
+//    }
     
     
     
@@ -558,8 +560,6 @@ public class MultiSpeciesCallService extends CommonService {
                 	return Stream.of(CallService.Attribute.CALL_TYPE);
                 case DATA_QUALITY:
                     return Stream.of(CallService.Attribute.DATA_QUALITY);
-                case EXPERIMENT_COUNTS:
-                    return Stream.of(CallService.Attribute.EXPERIMENT_COUNTS);
                 case OBSERVED_DATA:
                     return Stream.of(CallService.Attribute.OBSERVED_DATA);
                 case MEAN_RANK:
@@ -603,8 +603,8 @@ public class MultiSpeciesCallService extends CommonService {
                         return CallService.OrderingAttribute.SEX_ID;
                     case STRAIN_ID: 
                         return CallService.OrderingAttribute.STRAIN_ID;
-                    case GLOBAL_RANK:
-                        return CallService.OrderingAttribute.GLOBAL_RANK;
+                    case MEAN_RANK:
+                        return CallService.OrderingAttribute.MEAN_RANK;
                     default: 
                         throw log.throwing(new IllegalStateException(
                                 "Unsupported OrderingAttributes from CallService: " + e.getKey()));
@@ -717,49 +717,67 @@ public class MultiSpeciesCallService extends CommonService {
      *                  		retrieve expression calls.
      */
     private static ExpressionCallFilter convertToExprCallFilter(MultiSpeciesExpressionCallFilter filter,
-    		Set<AnatEntitySimilarity> anatEntSims, 
-    		Set<DevStageSimilarity> devStageSims,
+    		Set<AnatEntitySimilarity> anatEntSims, Set<DevStageSimilarity> devStageSims,
     		Set<OrthologousGeneGroup> orthologousGenes) {
     	log.traceEntry("{}, {}, {}, {}", filter, anatEntSims, devStageSims, orthologousGenes);
+
     	//creates filter on anatEntities by taking into account anat. entity similarities of anat. entities
     	//from the MultiSpeciesConditionFilter
-    	Set<String> expressionCallAEntities = new HashSet<>();
-    	for(String anatEntityId : filter.getMultiSpeciesCondFilter().getAnatEntityIds()){
-    		expressionCallAEntities.addAll(
-    				anatEntSims.stream()
-    				.flatMap(aes -> aes.getSourceAnatEntities().stream().map(a -> a.getId()))
-    				.filter(aes -> aes.contains(anatEntityId))
-    				.collect(Collectors.toSet()));
-    	}
+    	Set<String> expressionCallAEntityIds = anatEntSims.stream()
+                .filter(aes -> {
+                    if (filter.getMultiSpeciesCondFilter().getAnatEntityIds().isEmpty()) {
+                        return true;
+                    }
+                    Set<String> anatEntityIds = aes.getSourceAnatEntities()
+                            .stream().map(ae -> ae.getId())
+                            .collect(Collectors.toSet());
+                    return !Collections.disjoint(anatEntityIds,
+                            filter.getMultiSpeciesCondFilter().getAnatEntityIds());
+                })
+                .flatMap(aes -> aes.getSourceAnatEntities().stream().map(a -> a.getId()))
+                .collect(Collectors.toSet());
     	//creates filter on dev. stages by taking into account dev. stage similarities of dev. stages
     	//from the MultiSpeciesConditionFilter
-    	Set<String> expressionCallDevStage = new HashSet<>();
-    	for(String devStageId : filter.getMultiSpeciesCondFilter().getDevStageIds()){
-    		expressionCallDevStage.addAll(
-    				devStageSims.stream()
-    				.flatMap(aes -> aes.getDevStageIds().stream())
-    				.filter(aes -> aes.contains(devStageId))
-    				.collect(Collectors.toSet()));
-    	}
+    	Set<String> expressionCallDevStageIds = devStageSims.stream()
+                .filter(dss -> filter.getMultiSpeciesCondFilter().getDevStageIds().isEmpty() ||
+                        !Collections.disjoint(dss.getDevStageIds(),
+                            filter.getMultiSpeciesCondFilter().getDevStageIds()))
+                .flatMap(dss -> dss.getDevStageIds().stream())
+                .collect(Collectors.toSet());
+    	//Same for cell type IDs
+        Set<String> expressionCallCellTypeIds = anatEntSims.stream()
+                .filter(aes -> {
+                    if (filter.getMultiSpeciesCondFilter().getCellTypeIds().isEmpty()) {
+                        return true;
+                    }
+                    Set<String> anatEntityIds = aes.getSourceAnatEntities()
+                            .stream().map(ae -> ae.getId())
+                            .collect(Collectors.toSet());
+                    return !Collections.disjoint(anatEntityIds,
+                            filter.getMultiSpeciesCondFilter().getCellTypeIds());
+                })
+                .flatMap(aes -> aes.getSourceAnatEntities().stream().map(a -> a.getId()))
+                .collect(Collectors.toSet());
+
     	//creates geneFilter
     	Map<Integer, Set<String>> speToGeneIds = orthologousGenes.stream()
     			.flatMap(ogg -> ogg.getGenes().stream())
     			.collect(Collectors.toMap(
     					g -> g.getSpecies().getId(),
-    					g -> new HashSet<>(Arrays.asList(g.getEnsemblGeneId())),
+    					g -> new HashSet<>(Arrays.asList(g.getGeneId())),
     					(s1, s2) -> {s1.addAll(s2); return s1;}));
     	Set<GeneFilter> geneFilters = new HashSet<>();
     	speToGeneIds.keySet().stream().forEach( s -> {
     		geneFilters.add(new GeneFilter(s, speToGeneIds.get(s)));
     	});
-    	//Observed data filter
-    	Map<CallType.Expression, Boolean> callObservedData = Arrays.stream(CallType.Expression.values())
-    	        .map(callType -> new SimpleEntry<CallType.Expression, Boolean>(callType, true))
-    	        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
     	return new ExpressionCallFilter(filter.getSummaryCallTypeQualityFilter(), geneFilters, 
-    			Collections.singleton(new ConditionFilter(expressionCallAEntities, expressionCallDevStage,
-    			        expressionCallAEntities, null, null)), 
-    			filter.getDataTypeFilters(), callObservedData, true, true, true, true, true);
+    			Collections.singleton(new ConditionFilter(expressionCallAEntityIds,
+    			        expressionCallDevStageIds, expressionCallCellTypeIds,
+    			        filter.getMultiSpeciesCondFilter().getSexIds(), null)), 
+    			filter.getDataTypeFilters(),
+    			//no filtering on observed data
+    			null);
     }
 
     //TODO: once the method accepting ExpressionCallFilter will be ready, change this method
@@ -768,6 +786,8 @@ public class MultiSpeciesCallService extends CommonService {
     /**
      * Retrieves similar expression calls from the provided {@code geneFilter},
      * {@code conditionFilter}, and {@code onlyTrusted}.
+     * <strong>Warning:</strong> only the anatEntityIds and the cellTypeIds from the provided
+     * {@code conditionFilter} are handled in this method for now.
      *
      * @param taxonId           An {@code int} that is the NCBI ID of the taxon for which 
      * 	                        calls should be retrieved.
@@ -799,30 +819,56 @@ public class MultiSpeciesCallService extends CommonService {
                         .collect(Collectors.toSet()):
                             new HashSet<>(geneFilters));
 
-        // Retrieve AnatEntitySimilarity from the provided taxon
-        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
+        // Retrieve AnatEntitySimilarity from the provided taxon.
+        // Of note, the root of cell types MUST have a similarity annotation, otherwise,
+        // calls in conditions not using cell types would not be retrieved
+        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromAnatFilter = anatEntitySimilarityService
                 .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted);
+        Set<AnatEntitySimilarity> anatEntitySimilaritiesFromCellTypeFilter =
+                new HashSet<>(anatEntitySimilaritiesFromAnatFilter);
         if (conditionFilter != null) {
+            if (!conditionFilter.getAnatEntityIds().isEmpty()) {
                 // we keep anat. entity similarities with at least one anat. entity from condition filters
-            anatEntitySimilarities = anatEntitySimilarities.stream()
+                anatEntitySimilaritiesFromAnatFilter = anatEntitySimilaritiesFromAnatFilter.stream()
                     .filter(s -> s.getSourceAnatEntities().stream()
                             .anyMatch(ae -> conditionFilter.getAnatEntityIds().contains(ae.getId())))
-                .collect(Collectors.toSet());
+                    .collect(Collectors.toSet());
+            }
+            if (!conditionFilter.getCellTypeIds().isEmpty()) {
+                anatEntitySimilaritiesFromCellTypeFilter = anatEntitySimilaritiesFromCellTypeFilter.stream()
+                    .filter(s -> s.getSourceAnatEntities().stream()
+                            .anyMatch(ae -> conditionFilter.getCellTypeIds().contains(ae.getId())))
+                    .collect(Collectors.toSet());
+            }
         }
 
         // Build a new condition filter based on retrieved anat. entity similarities
-        //FIXME: actually, for non-transitive similarity relations, an AnatEntity
-        //could be part of several AnatEntitySimilaritys, so this should be
-        //a Map<AnatEntity, Set<AnatEntitySimilarity>>
-        Map<AnatEntity, AnatEntitySimilarity> similaritiesByAnatEntity =
-                anatEntitySimilarities.stream()
+        // For non-transitive similarity relations, an AnatEntity
+        // could be part of several AnatEntitySimilaritys.
+        // It should not be the case in most cases for transitive similarity relations
+        // (see method AnatEntitySimilarityService.getValidMultipleEntityAnnotations)
+        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromAnatFilter =
+                anatEntitySimilaritiesFromAnatFilter.stream()
                         .flatMap(sim -> sim.getSourceAnatEntities().stream()
                                 .map(ae -> new SimpleEntry<>(ae, sim)))
-                        .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
-        Set<String> allAnatEntityIds = similaritiesByAnatEntity.keySet().stream()
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
+                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
+        Set<String> allAnatEntityIds = similaritiesByAnatEntityFromAnatFilter.keySet().stream()
                 .map(Entity::getId)
                 .collect(Collectors.toSet());
-        ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null, allAnatEntityIds, null, null);
+        Map<AnatEntity, Set<AnatEntitySimilarity>> similaritiesByAnatEntityFromCellTypeFilter =
+                anatEntitySimilaritiesFromCellTypeFilter.stream()
+                        .flatMap(sim -> sim.getSourceAnatEntities().stream()
+                                .map(ae -> new SimpleEntry<>(ae, sim)))
+                        .collect(Collectors.groupingBy(SimpleEntry::getKey,
+                                Collectors.mapping(SimpleEntry::getValue, Collectors.toSet())));
+        Set<String> allCellTypeIds = similaritiesByAnatEntityFromCellTypeFilter.keySet().stream()
+                .map(Entity::getId)
+                .collect(Collectors.toSet());
+        ConditionFilter newConditionFilter = new ConditionFilter(allAnatEntityIds, null,
+                allCellTypeIds, null, null,
+                //filtering on observed conditions
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
 
         Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
         summaryCallTypeQualityFilter.put(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
@@ -831,7 +877,7 @@ public class MultiSpeciesCallService extends CommonService {
         // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
         ExpressionCallFilter expressionCallFilter = new ExpressionCallFilter(
                 summaryCallTypeQualityFilter, clnGeneFilters,
-                Collections.singletonList(newConditionFilter), null, null, null, null, null, null, null);
+                Collections.singleton(newConditionFilter), null, null);
 
         // Define an order to be able to use an ElementGroupFromListSpliterator
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
@@ -842,8 +888,7 @@ public class MultiSpeciesCallService extends CommonService {
         Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
                 expressionCallFilter,
                 EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.SEX_ID,
-                        CallService.Attribute.STRAIN_ID, CallService.Attribute.CALL_TYPE, 
+                        CallService.Attribute.CELL_TYPE_ID, CallService.Attribute.CALL_TYPE, 
                         CallService.Attribute.OBSERVED_DATA, CallService.Attribute.EXPRESSION_SCORE),
                 serviceOrdering);
 
@@ -853,16 +898,25 @@ public class MultiSpeciesCallService extends CommonService {
         // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
         Stream<SimilarityExpressionCall> similarityExpressionCallStream =
                 callsByGene.flatMap(callList -> {
-                    Gene gene = callList.get(0).getGene();
-                    LinkedHashMap<AnatEntitySimilarity, List<ExpressionCall>> callsPerSimilarity = callList.stream()
-                            .collect(Collectors.toMap(
-                                    c -> similaritiesByAnatEntity.get(c.getCondition().getAnatEntity()),
-                                    c -> new ArrayList<>(Arrays.asList(c)),
+                    //As of Bgee 15.0, since we can have post-composition of anat. entity and cell type,
+                    //the key of the Map changes from AnatEntitySimilarity to MultiSpeciesCondition
+                    LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall>> callsPerSimilarity =
+                            callList.stream()
+                            .flatMap(c -> similaritiesByAnatEntityFromAnatFilter
+                                    .get(c.getCondition().getAnatEntity()).stream()
+                                    .flatMap(anatSim -> similaritiesByAnatEntityFromCellTypeFilter
+                                        .get(c.getCondition().getCellType()).stream()
+                                        .map(cellTypeSim -> new AbstractMap.SimpleEntry<>(
+                                            new MultiSpeciesCondition(anatSim, null, cellTypeSim, null),
+                                            new ArrayList<>(Arrays.asList(c))))))
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
                                     (v1, v2) -> {v1.addAll(v2); return v1;},
                                     //Need compiler hint on my Eclipse version
-                                    () -> new LinkedHashMap<AnatEntitySimilarity, List<ExpressionCall>>()));
+                                    () -> new LinkedHashMap<MultiSpeciesCondition, List<ExpressionCall>>()));
+
+                    Gene gene = callList.get(0).getGene();
                     return callsPerSimilarity.entrySet().stream().map(e -> {
-                        MultiSpeciesCondition cond = new MultiSpeciesCondition(e.getKey(), null);
+                        MultiSpeciesCondition cond = e.getKey();
                         boolean hasExpression = e.getValue().stream()
                                 .anyMatch(c -> ExpressionSummary.EXPRESSED.equals(c.getSummaryCallType()));
                         return new SimilarityExpressionCall(gene, cond, e.getValue(),
@@ -873,97 +927,97 @@ public class MultiSpeciesCallService extends CommonService {
 
     }
 
-    /**
-     * Retrieves gene expression calls for any arbitrary group of genes,
-     * and not only for orthologous genes.
-     *
-     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
-     * 	                    calls should be retrieved.
-     * @param callFilter    An {@code ExpressionCallFilter} allowing to filter
-     *                      retrieving of expression calls.
-     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
-     *                      to "trusted" annotations.
-     *                      If {@code true}, only trusted annotations are returned.
-     * @return              The {@code Stream} of {@code MultiSpeciesCall}s that are 
-     *                          the multi-species expression calls for the requested parameters.
-     */
-    public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
-            ExpressionCallFilter callFilter, boolean onlyTrusted) {
-        log.traceEntry("{}, {}, {}", taxonId, callFilter, onlyTrusted);
-
-        if (callFilter.getConditionFilters() == null) {
-            throw log.throwing(new IllegalArgumentException("Provided conditionFilters should not be null"));
-        }
-        if (callFilter.getConditionFilters().stream()
-                .anyMatch(f -> f.getDevStageIds() != null && !f.getDevStageIds().isEmpty())) {
-            throw log.throwing(new UnsupportedOperationException(
-                    "Dev. stages are not managed to retrieve SimilarityExpressionCalls"));
-        }
-        
-        // Retrieve AnatEntitySimilarity from the provided taxon
-        final Set<String> providedAnatEntityIds = callFilter.getConditionFilters().stream()
-                .flatMap(f -> f.getAnatEntityIds().stream())
-                .collect(Collectors.toSet());
-        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
-                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
-                // we keep anat. entity similarities with at least one anat. entity from condition filters
-                .filter(s -> s.getSourceAnatEntities().stream()
-                        .anyMatch(ae -> providedAnatEntityIds.contains(ae.getId())))
-                .collect(Collectors.toSet());
-
-        // Build the condition filter based on the AnatEntitySimilarity
-        Set<String> retrievedAnatEntityIds = anatEntitySimilarities.stream()
-                .map(AnatEntitySimilarity::getSourceAnatEntities)
-                .flatMap(Set::stream)
-                .map(Entity::getId)
-                .collect(Collectors.toSet());
-        // FIXME not sure we can have only one condition filter if there are several ones in provided callFilter
-        // FIXME: We can simply remove from each ConditionFilter any anat. entity ID not present
-        // in the AnatEntitySimilarities.
-        ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null, retrievedAnatEntityIds, null, null);
-
-        // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
-        // XXX: I don't see why we pass to the method an ExpressionCallFilter instead of GeneFilters and ConditionFilter
-        ExpressionCallFilter updatedCallFilter = new ExpressionCallFilter(
-                callFilter.getSummaryCallTypeQualityFilter(),
-                callFilter.getGeneFilters(),
-                Collections.singletonList(newConditionFilter),
-                callFilter.getDataTypeFilters(), callFilter.getCallObservedData(),
-                callFilter.getAnatEntityObservedData(), callFilter.getDevStageObservedData(),
-                callFilter.getCellTypeObservedData(), callFilter.getSexObservedData(),
-                callFilter.getStrainObservedData());
-
-        // XXX from here it's a duplicate of the previous method.
-        // Define an order to be able to use an ElementGroupFromListSpliterator
-        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
-                new LinkedHashMap<>();
-        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-
-        // Retrieve ExpressionCalls
-        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
-                updatedCallFilter,
-                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
-                        CallService.Attribute.CALL_TYPE),
-                serviceOrdering);
-
-        Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
-                new ElementGroupFromListSpliterator<>(callStream, Call::getGene, Gene.COMPARATOR), false);
-
-        // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
-        Stream<SimilarityExpressionCall> similarityExpressionCallStream =
-                callsByGene.flatMap(callList -> {
-                    Gene gene = callList.get(0).getGene();
-                    return anatEntitySimilarities.stream()
-                            .map(anatEntitySimilarity -> {
-                                MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
-                                List<ExpressionCall> filteredCalls = callList.stream()
-                                        .filter(c -> anatEntitySimilarity.getSourceAnatEntities().contains(c.getCondition().getAnatEntity()))
-                                        .collect(Collectors.toList());
-                                return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
-                            }).filter(s -> !s.getCalls().isEmpty());
-                });
-        return log.traceExit(similarityExpressionCallStream);
-    }
+//    /**
+//     * Retrieves gene expression calls for any arbitrary group of genes,
+//     * and not only for orthologous genes.
+//     *
+//     * @param taxonId       An {@code int} that is the NCBI ID of the taxon for which 
+//     * 	                    calls should be retrieved.
+//     * @param callFilter    An {@code ExpressionCallFilter} allowing to filter
+//     *                      retrieving of expression calls.
+//     * @param onlyTrusted   A {@code boolean} defining whether results should be restricted 
+//     *                      to "trusted" annotations.
+//     *                      If {@code true}, only trusted annotations are returned.
+//     * @return              The {@code Stream} of {@code MultiSpeciesCall}s that are 
+//     *                          the multi-species expression calls for the requested parameters.
+//     */
+//    public Stream<SimilarityExpressionCall> loadSimilarityExpressionCalls(int taxonId,
+//            ExpressionCallFilter callFilter, boolean onlyTrusted) {
+//        log.traceEntry("{}, {}, {}", taxonId, callFilter, onlyTrusted);
+//
+//        if (callFilter.getConditionFilters() == null) {
+//            throw log.throwing(new IllegalArgumentException("Provided conditionFilters should not be null"));
+//        }
+//        if (callFilter.getConditionFilters().stream()
+//                .anyMatch(f -> f.getDevStageIds() != null && !f.getDevStageIds().isEmpty())) {
+//            throw log.throwing(new UnsupportedOperationException(
+//                    "Dev. stages are not managed to retrieve SimilarityExpressionCalls"));
+//        }
+//        
+//        // Retrieve AnatEntitySimilarity from the provided taxon
+//        final Set<String> providedAnatEntityIds = callFilter.getConditionFilters().stream()
+//                .flatMap(f -> f.getAnatEntityIds().stream())
+//                .collect(Collectors.toSet());
+//        Set<AnatEntitySimilarity> anatEntitySimilarities = anatEntitySimilarityService
+//                .loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted).stream()
+//                // we keep anat. entity similarities with at least one anat. entity from condition filters
+//                .filter(s -> s.getSourceAnatEntities().stream()
+//                        .anyMatch(ae -> providedAnatEntityIds.contains(ae.getId())))
+//                .collect(Collectors.toSet());
+//
+//        // Build the condition filter based on the AnatEntitySimilarity
+//        Set<String> retrievedAnatEntityIds = anatEntitySimilarities.stream()
+//                .map(AnatEntitySimilarity::getSourceAnatEntities)
+//                .flatMap(Set::stream)
+//                .map(Entity::getId)
+//                .collect(Collectors.toSet());
+//        // FIXME not sure we can have only one condition filter if there are several ones in provided callFilter
+//        // FIXME: We can simply remove from each ConditionFilter any anat. entity ID not present
+//        // in the AnatEntitySimilarities.
+//        ConditionFilter newConditionFilter = new ConditionFilter(retrievedAnatEntityIds, null, retrievedAnatEntityIds, null, null);
+//
+//        // Build a new ExpressionCallFilter to use the ConditionFilter with similar anat. entities
+//        // XXX: I don't see why we pass to the method an ExpressionCallFilter instead of GeneFilters and ConditionFilter
+//        ExpressionCallFilter updatedCallFilter = new ExpressionCallFilter(
+//                callFilter.getSummaryCallTypeQualityFilter(),
+//                callFilter.getGeneFilters(),
+//                Collections.singletonList(newConditionFilter),
+//                callFilter.getDataTypeFilters(), callFilter.getCallObservedData(),
+//                callFilter.getAnatEntityObservedData(), callFilter.getDevStageObservedData(),
+//                callFilter.getCellTypeObservedData(), callFilter.getSexObservedData(),
+//                callFilter.getStrainObservedData());
+//
+//        // XXX from here it's a duplicate of the previous method.
+//        // Define an order to be able to use an ElementGroupFromListSpliterator
+//        LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering =
+//                new LinkedHashMap<>();
+//        serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
+//
+//        // Retrieve ExpressionCalls
+//        Stream<ExpressionCall> callStream = callService.loadExpressionCalls(
+//                updatedCallFilter,
+//                EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+//                        CallService.Attribute.CALL_TYPE),
+//                serviceOrdering);
+//
+//        Stream<List<ExpressionCall>> callsByGene = StreamSupport.stream(
+//                new ElementGroupFromListSpliterator<>(callStream, Call::getGene, Gene.COMPARATOR), false);
+//
+//        // Build SimilarityExpressionCalls for each Gene/AnatEntitySimilarity
+//        Stream<SimilarityExpressionCall> similarityExpressionCallStream =
+//                callsByGene.flatMap(callList -> {
+//                    Gene gene = callList.get(0).getGene();
+//                    return anatEntitySimilarities.stream()
+//                            .map(anatEntitySimilarity -> {
+//                                MultiSpeciesCondition cond = new MultiSpeciesCondition(anatEntitySimilarity, null);
+//                                List<ExpressionCall> filteredCalls = callList.stream()
+//                                        .filter(c -> anatEntitySimilarity.getSourceAnatEntities().contains(c.getCondition().getAnatEntity()))
+//                                        .collect(Collectors.toList());
+//                                return new SimilarityExpressionCall(gene, cond, filteredCalls, null);
+//                            }).filter(s -> !s.getCalls().isEmpty());
+//                });
+//        return log.traceExit(similarityExpressionCallStream);
+//    }
 
     //TODO: equivalent method accepting ExpressionCallFilter
     //XXX: Maybe we need a DataPropagation attribute in SimilarityExpressionCall,
@@ -996,8 +1050,10 @@ public class MultiSpeciesCallService extends CommonService {
                 //streaming Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 .entrySet().stream()
                 //Keep only conditions where at least one gene has observed data in it
-                .filter(e -> e.getValue().stream().anyMatch(sc -> sc.getCalls().stream()
-                        .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData()))))
+                //As of Bgee 15.0, because of the way we manage call propagation along
+                //condition parameters now, we disable this filter
+//                .filter(e -> e.getValue().stream().anyMatch(sc -> sc.getCalls().stream()
+//                        .anyMatch(c -> Boolean.TRUE.equals(c.getDataPropagation().isIncludingObservedData()))))
                 //mapping Entry<MultiSpeciesCondition, List<SimilarityExpressionCall>>
                 //to Entry<MultiSpeciesCondition, MultiGeneExprCounts>
                 .map(e -> {

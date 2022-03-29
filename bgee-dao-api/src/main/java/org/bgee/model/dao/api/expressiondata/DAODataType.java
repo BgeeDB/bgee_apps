@@ -1,12 +1,12 @@
 package org.bgee.model.dao.api.expressiondata;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.TransferObject.EnumDAOField;
 
@@ -27,9 +27,22 @@ import org.bgee.model.dao.api.TransferObject.EnumDAOField;
  */
 public enum DAODataType implements EnumDAOField {
     //The order of these Enum elements is important and is used to generate field names
-    AFFYMETRIX("affymetrix", "affymetrix", "Affy"), EST("est", "est", "Est"),
-    IN_SITU("in situ", "inSitu", "InSitu"), RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq"),
-    FULL_LENGTH("full length single cell RNA-Seq", "scRnaSeqfullLength", "ScRnaSeqFL");
+    AFFYMETRIX("affymetrix", "affymetrix", "Affy", "affymetrixMeanRank", "affymetrixGlobalMeanRank",
+            "affymetrixMeanRankNorm", "affymetrixGlobalMeanRankNorm", "affymetrixDistinctRankSum",
+            "affymetrixGlobalDistinctRankSum", "affymetrixMaxRank", "affymetrixGlobalMaxRank", false),
+    EST("est", "est", "Est", "estRank", "estGlobalRank", "estRankNorm", "estGlobalRankNorm",
+            "estMaxRank", "estGlobalMaxRank", "estMaxRank", "estGlobalMaxRank", true),
+    IN_SITU("in situ", "inSitu", "InSitu", "inSituRank", "inSituGlobalRank", "inSituRankNorm",
+            "inSituGlobalRankNorm", "inSituMaxRank", "inSituGlobalMaxRank",
+            "inSituMaxRank", "inSituGlobalMaxRank", true),
+    RNA_SEQ("rna-seq", "rnaSeq", "RnaSeq", "rnaSeqMeanRank", "rnaSeqGlobalMeanRank",
+            "rnaSeqMeanRankNorm", "rnaSeqGlobalMeanRankNorm", "rnaSeqDistinctRankSum",
+            "rnaSeqGlobalDistinctRankSum", "rnaSeqMaxRank", "rnaSeqGlobalMaxRank", false),
+    FULL_LENGTH("full-length single-cell RNA-Seq", "scRnaSeqFullLength", "ScRnaSeqFL",
+            "scRnaSeqFullLengthMeanRank", "scRnaSeqFullLengthGlobalMeanRank",
+            "scRnaSeqFullLengthMeanRankNorm", "scRnaSeqFullLengthGlobalMeanRankNorm",
+            "scRnaSeqFullLengthDistinctRankSum", "scRnaSeqFullLengthGlobalDistinctRankSum",
+            "scRnaSeqFullLengthMaxRank", "scRnaSeqFullLengthGlobalMaxRank", false);
 
     private final static Logger log = LogManager.getLogger(DAODataType.class.getName());
 
@@ -52,31 +65,18 @@ public enum DAODataType implements EnumDAOField {
         return log.traceExit(TransferObject.convert(DAODataType.class, representation));
     }
 
+    public static class DAODataTypeEnumSetComparator implements Comparator<EnumSet<DAODataType>> {
+        @Override
+        public int compare(EnumSet<DAODataType> e1, EnumSet<DAODataType> e2) {
+            log.traceEntry("{}, {}", e1, e2);
+            return log.traceExit(DAO.compareEnumSets(e1, e2, DAODataType.class));
+        }
+    }
+
     private static final List<EnumSet<DAODataType>> getAllPossibleDAODataTypeCombinations() {
         log.traceEntry();
-        Collection<DAODataType> allDataTypes = EnumSet.allOf(DAODataType.class);
-        List<EnumSet<DAODataType>> combinations = new ArrayList<>();
-        DAODataType[] dataTypeArr = allDataTypes.toArray(new DAODataType[allDataTypes.size()]);
-        final int n = dataTypeArr.length;
-        
-        for (int i = 0; i < Math.pow(2, n); i++) {
-            String bin = Integer.toBinaryString(i);
-            while (bin.length() < n) {
-                bin = "0" + bin;
-            }
-            EnumSet<DAODataType> combination = EnumSet.noneOf(DAODataType.class);
-            char[] chars = bin.toCharArray();
-            for (int j = 0; j < n; j++) {
-                if (chars[j] == '1') {
-                    combination.add(dataTypeArr[j]);
-                }
-            }
-            //We don't want the combination where no data type is considered
-            if (!combination.isEmpty()) {
-                combinations.add(combination);
-            }
-        }
-        return combinations;
+        return log.traceExit(DAO.getAllPossibleEnumCombinations(DAODataType.class,
+                EnumSet.allOf(DAODataType.class)));
     }
 
     /**
@@ -91,6 +91,15 @@ public enum DAODataType implements EnumDAOField {
      * See {@link #getFieldNamePart()}
      */
     private final String fieldNamePart;
+    private final String rankFieldName;
+    private final String globalRankFieldName;
+    private final String rankNormFieldName;
+    private final String globalRankNormFieldName;
+    private final String rankWeightFieldName;
+    private final String globalRankWeightFieldName;
+    private final String condMaxRankFieldName;
+    private final String condGlobalMaxRankFieldName;
+    private final boolean rankWeightRelatedToCondition;
 
     /**
      * Constructor providing the {@code String} representation of this {@code DataType}.
@@ -100,10 +109,23 @@ public enum DAODataType implements EnumDAOField {
      * @param fieldNamePart         A {@code String} that is the substring used in field names
      *                              related to this {@code DataType} when not starting the field name.
      */
-    private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart) {
+    private DAODataType(String stringRepresentation, String fieldNamePrefix, String fieldNamePart,
+            String rankFieldName, String globalRankFieldName, String rankNormFieldName,
+            String globalRankNormFieldName, String rankWeightFieldName,
+            String globalRankWeightFieldName, String condMaxRankFieldName,
+            String condGlobalMaxRankFieldName, boolean rankWeightRelatedToCondition) {
         this.stringRepresentation = stringRepresentation;
         this.fieldNamePrefix = fieldNamePrefix;
         this.fieldNamePart = fieldNamePart;
+        this.rankFieldName = rankFieldName;
+        this.globalRankFieldName = globalRankFieldName;
+        this.rankNormFieldName = rankNormFieldName;
+        this.globalRankNormFieldName = globalRankNormFieldName;
+        this.rankWeightFieldName = rankWeightFieldName;
+        this.globalRankWeightFieldName = globalRankWeightFieldName;
+        this.condMaxRankFieldName = condMaxRankFieldName;
+        this.condGlobalMaxRankFieldName = condGlobalMaxRankFieldName;
+        this.rankWeightRelatedToCondition = rankWeightRelatedToCondition;
     }
     @Override
     public String getStringRepresentation() {
@@ -125,5 +147,37 @@ public enum DAODataType implements EnumDAOField {
      */
     public String getFieldNamePart() {
         return this.fieldNamePart;
+    }
+
+    public String getRankFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankFieldName;
+        }
+        return globalRankFieldName;
+    }
+
+    public String getRankNormFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankNormFieldName;
+        }
+        return globalRankNormFieldName;
+    }
+
+    public String getRankWeightFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return rankWeightFieldName;
+        }
+        return globalRankWeightFieldName;
+    }
+
+    public String getCondMaxRankFieldName(boolean globalRank) {
+        if (!globalRank) {
+            return condMaxRankFieldName;
+        }
+        return condGlobalMaxRankFieldName;
+    }
+
+    public boolean isRankWeightRelatedToCondition() {
+        return rankWeightRelatedToCondition;
     }
 }

@@ -152,17 +152,18 @@
         <listener-class>org.bgee.controller.servletutils.BgeeServletContextListener</listener-class>
     </listener>
 
-    <!-- Filter for topanat-dev, enabling cross-domain queries
-         (will make local development easier) -->
-    <!--
+    <!-- Filter for enabling cross-domain queries, used for development, to disallow
+         when not needed anymore -->
     <filter>
         <filter-name>CORS</filter-name>
-        <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
+        <!-- The default Tomcat org.apache.catalina.filters.CorsFilter does not work properly
+             for POST queries, we had to implement our own Filter -->
+        <filter-class>org.bgee.controller.servletutils.SimpleCORSFilter</filter-class>
     </filter>
     <filter-mapping>
         <filter-name>CORS</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
-    -->
+
 
 </web-app>

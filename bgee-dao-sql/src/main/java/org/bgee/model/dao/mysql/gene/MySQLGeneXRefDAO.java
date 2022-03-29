@@ -2,6 +2,7 @@ package org.bgee.model.dao.mysql.gene;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -49,21 +50,21 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     @Override
     public GeneXRefTOResultSet getAllGeneXRefs(Collection<GeneXRefDAO.Attribute> attributes)
             throws DAOException {
-        log.entry(attributes);
+        log.traceEntry("{}", attributes);
         return log.traceExit(this.getGeneXRefs(null, null, null, attributes));
     }
 
     @Override
     public GeneXRefTOResultSet getGeneXRefsByBgeeGeneIds(Collection<Integer> bgeeGeneIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
-        log.entry(bgeeGeneIds, attributes);
+        log.traceEntry("{}, {}", bgeeGeneIds, attributes);
         return log.traceExit(this.getGeneXRefs(bgeeGeneIds, null, null, attributes));
     }
     
     @Override
     public GeneXRefTOResultSet getGeneXRefsByXRefIds(Collection<String> xRefIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
-        log.entry(xRefIds, attributes);
+        log.traceEntry("{}, {}", xRefIds, attributes);
         return log.traceExit(this.getGeneXRefs(null, xRefIds, null, attributes));
     }
     
@@ -71,46 +72,79 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
     public GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds, 
             Collection<String> xRefIds, Collection<Integer> dataSourceIds,
             Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
-        log.entry(bgeeGeneIds, xRefIds, dataSourceIds, attributes);
+        log.traceEntry("{}, {}, {}, {}", bgeeGeneIds, xRefIds, dataSourceIds, attributes);
+        return log.traceExit(this.getGeneXRefs(bgeeGeneIds, null, null, xRefIds, dataSourceIds, attributes));
+    }
 
+    public GeneXRefTOResultSet getGeneXRefs(Collection<String> geneIds, Collection<Integer> speciesIds,
+            Collection<String> xRefIds, Collection<Integer> dataSourceIds,
+            Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}", geneIds, speciesIds, xRefIds, dataSourceIds, attributes);
+        return log.traceExit(this.getGeneXRefs(null, geneIds, speciesIds, xRefIds, dataSourceIds, attributes));
+    }
+
+    private GeneXRefTOResultSet getGeneXRefs(Collection<Integer> bgeeGeneIds,
+            Collection<String> geneIds, Collection<Integer> speciesIds,
+            Collection<String> xRefIds, Collection<Integer> dataSourceIds,
+            Collection<GeneXRefDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", bgeeGeneIds, geneIds, speciesIds, xRefIds,
+                dataSourceIds, attributes);
         // Filter arguments
-        Set<Integer> clonedGeneIds = Optional.ofNullable(bgeeGeneIds)
-                .map(c -> new HashSet<>(c)).orElse(null);
-        Set<String> clonedXRefIds = Optional.ofNullable(xRefIds)
-                .map(c -> new HashSet<>(c)).orElse(null);
-        Set<Integer> clonedDataSourceIds = Optional.ofNullable(dataSourceIds)
-                .map(c -> new HashSet<>(c)).orElse(null);
-        Set<GeneXRefDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)
-                .map(e -> EnumSet.copyOf(e)).orElse(EnumSet.allOf(GeneXRefDAO.Attribute.class));
+        Set<Integer> clonedBgeeGeneIds = Collections.unmodifiableSet(
+                bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds));
+        Set<String> clonedGeneIds = Collections.unmodifiableSet(
+                geneIds == null? new HashSet<>(): new HashSet<>(geneIds));
+        Set<Integer> clonedSpeciesIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+        Set<String> clonedXRefIds = Collections.unmodifiableSet(
+                xRefIds == null? new HashSet<>(): new HashSet<>(xRefIds));
+        Set<Integer> clonedDataSourceIds = Collections.unmodifiableSet(
+                dataSourceIds == null? new HashSet<>(): new HashSet<>(dataSourceIds));
+        Set<GeneXRefDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(
+                attributes == null? new HashSet<>(): new HashSet<>(attributes));
         
         // Construct sql query
         String sql = this.generateSelectClause(clonedAttrs, GENE_X_REF_TABLE_NAME);
-
         sql += " FROM " + GENE_X_REF_TABLE_NAME;
-        
-        if (clonedGeneIds != null || clonedXRefIds != null || clonedDataSourceIds != null) {
+
+        if (!clonedGeneIds.isEmpty() || !clonedSpeciesIds.isEmpty()) {
+            sql += " INNER JOIN gene AS t2 ON " + GENE_X_REF_TABLE_NAME + ".bgeeGeneId = t2.bgeeGeneId";
+        }
+        if (!clonedGeneIds.isEmpty() || !clonedSpeciesIds.isEmpty() || !clonedBgeeGeneIds.isEmpty() ||
+                !clonedXRefIds.isEmpty() || !clonedDataSourceIds.isEmpty()) {
             sql += " WHERE ";
         }
         
-        if (clonedGeneIds != null) {
+        if (!clonedBgeeGeneIds.isEmpty()) {
             sql += GENE_X_REF_TABLE_NAME + ".bgeeGeneId IN (" +
-                    BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
+                    BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeGeneIds.size()) + ")";
         }
-
-        if (clonedGeneIds != null && (clonedXRefIds != null || clonedDataSourceIds != null)) {
-            sql += " AND ";
+        if (!clonedGeneIds.isEmpty()) {
+            if (!clonedBgeeGeneIds.isEmpty()) {
+                sql += " AND ";
+            }
+            sql += "t2.geneId IN ("
+                    + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
         }
-        
-        if (clonedXRefIds != null) {
+        if (!clonedSpeciesIds.isEmpty()) {
+            if (!clonedBgeeGeneIds.isEmpty() || !clonedGeneIds.isEmpty()) {
+                sql += " AND ";
+            }
+            sql += "t2.speciesId IN ("
+                    + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size()) + ")";
+        }
+        if (!clonedXRefIds.isEmpty()) {
+            if (!clonedBgeeGeneIds.isEmpty() || !clonedGeneIds.isEmpty() || !clonedSpeciesIds.isEmpty()) {
+                sql += " AND ";
+            }
             sql += GENE_X_REF_TABLE_NAME + ".XRefId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(clonedXRefIds.size()) + ")";
         }
-
-        if (clonedXRefIds != null && clonedDataSourceIds != null) {
-            sql += " AND ";
-        }
-        
-        if (clonedDataSourceIds != null) {
+        if (!clonedDataSourceIds.isEmpty()) {
+            if (!clonedBgeeGeneIds.isEmpty() || !clonedGeneIds.isEmpty() || !clonedSpeciesIds.isEmpty() ||
+                    !clonedXRefIds.isEmpty()) {
+                sql += " AND ";
+            }
             sql += GENE_X_REF_TABLE_NAME + ".dataSourceId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(clonedDataSourceIds.size()) + ")";
         }
@@ -119,15 +153,24 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (clonedGeneIds != null) {
-                stmt.setIntegers(1, clonedGeneIds, true);
+            int offsetParamIndex = 1;
+            if (!clonedBgeeGeneIds.isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, clonedBgeeGeneIds, true);
+                offsetParamIndex += clonedBgeeGeneIds.size();
             }
-            int offsetParamIndex = (clonedGeneIds != null? clonedGeneIds.size() + 1: 1);
-            if (clonedXRefIds != null) {
+            if (!clonedGeneIds.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, clonedGeneIds, true);
+                offsetParamIndex += clonedGeneIds.size();
+            }
+            if (!clonedSpeciesIds.isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, clonedSpeciesIds, true);
+                offsetParamIndex += clonedSpeciesIds.size();
+            }
+            if (!clonedXRefIds.isEmpty()) {
                 stmt.setStrings(offsetParamIndex, clonedXRefIds, true);
                 offsetParamIndex += clonedXRefIds.size();
             }
-            if (clonedDataSourceIds != null) {
+            if (!clonedDataSourceIds.isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, clonedDataSourceIds, true);
             }
             return log.traceExit(new MySQLGeneXRefTOResultSet(stmt));
@@ -148,7 +191,7 @@ public class MySQLGeneXRefDAO extends MySQLDAO<GeneXRefDAO.Attribute> implements
      */
     private String generateSelectClause(Set<GeneXRefDAO.Attribute> attributes,
             String geneXRefTableName) {
-        log.entry(attributes, geneXRefTableName);
+        log.traceEntry("{}, {}", attributes, geneXRefTableName);
 
         String sql = "";
         EnumSet<GeneXRefDAO.Attribute> clonedAttrs = Optional.ofNullable(attributes)

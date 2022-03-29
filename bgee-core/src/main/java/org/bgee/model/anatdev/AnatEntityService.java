@@ -1,12 +1,7 @@
 package org.bgee.model.anatdev;
 
-import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,8 +11,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO;
-import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
 /**
  * A {@link Service} to obtain {@link AnatEntity} objects. 
@@ -27,7 +20,7 @@ import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
  * @author  Valentine Rech de Laval
  * @author  Philippe Moret
  * @author  Julien Wollbrett
- * @version Bgee 14, Mar. 2019
+ * @version Bgee 15.0, May 2021
  * @since   Bgee 13, Nov. 2015
 */
 public class AnatEntityService extends Service {
@@ -65,7 +58,7 @@ public class AnatEntityService extends Service {
      * @return                  A {@code Stream} of {@code AnatEntity}s retrieved for the requested IDs.
      */
     public Stream<AnatEntity> loadAnatEntities(Collection<String> anatEntityIds, boolean withDescription) {
-        log.entry(anatEntityIds, withDescription);
+        log.traceEntry("{}, {}", anatEntityIds, withDescription);
         return log.traceExit(this.loadAnatEntities(null, true, anatEntityIds, withDescription));
     }
     /**
@@ -78,7 +71,7 @@ public class AnatEntityService extends Service {
      *                      species IDs, with all descriptions loaded.
      */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         return log.traceExit(this.loadAnatEntities(speciesIds, true, null, true));
     }
     /**
@@ -94,7 +87,7 @@ public class AnatEntityService extends Service {
      */
     public Stream<AnatEntity> loadAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
             boolean withDescription) {
-        log.entry(speciesIds);
+        log.traceEntry("{}, {}", speciesIds, withDescription);
         return log.traceExit(this.loadAnatEntities(speciesIds, true, null, withDescription));
     }
     
@@ -118,7 +111,7 @@ public class AnatEntityService extends Service {
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
             Boolean anySpecies, Collection<String> anatEntityIds, boolean withDescription) {
-        log.entry(speciesIds, anySpecies, anatEntityIds, withDescription);
+        log.traceEntry("{}, {}, {}, {}", speciesIds, anySpecies, anatEntityIds, withDescription);
         return log.traceExit(this.loadAnatEntities(speciesIds, anySpecies, anatEntityIds,
                 withDescription? null: EnumSet.complementOf(EnumSet.of(Attribute.DESCRIPTION))));
     }
@@ -143,7 +136,7 @@ public class AnatEntityService extends Service {
     //TODO: unit test with/without description
     public Stream<AnatEntity> loadAnatEntities(Collection<Integer> speciesIds,
             Boolean anySpecies, Collection<String> anatEntityIds, Collection<Attribute> attrs) {
-        log.entry(speciesIds, anySpecies, anatEntityIds, attrs);
+        log.traceEntry("{}, {}, {}, {}", speciesIds, anySpecies, anatEntityIds, attrs);
         return log.traceExit(this.getDaoManager().getAnatEntityDAO().getAnatEntities(
                     speciesIds, 
                     anySpecies, 
@@ -156,7 +149,9 @@ public class AnatEntityService extends Service {
     /**
      * Retrieves non-informative anatomical entities for the requested species. They
      * correspond to anatomical entities belonging to non-informative subsets in Uberon,
-     * and with no observed data from Bgee (no basic calls of any type in them).
+     * and not used in raw data annotations in Bgee (expression data and similarity annotations).
+     * <p>
+     * Note: only the ID is populated in the returned {@code AnatEntity}s.
      * 
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                      allowing to filter the non-informative anatomical entities to use
@@ -164,34 +159,14 @@ public class AnatEntityService extends Service {
      *                      the requested species IDs.
      */
     public Stream<AnatEntity> loadNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
-        return log.traceExit(this.getDaoManager().getAnatEntityDAO().getNonInformativeAnatEntitiesBySpeciesIds(
-                    speciesIds).stream()
+        return log.traceExit(this.getDaoManager().getAnatEntityDAO()
+                .getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                        EnumSet.of(AnatEntityDAO.Attribute.ID))
+                .stream()
                 .map(AnatEntityService::mapFromTO));
     }
-
-    //TODO: replace all use of this method by use of AnatEntityOntology loaded
-    //with correct relation types and status
-    @Deprecated
-    public Map<String, Set<String>> loadDirectIsAPartOfRelationships(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
-        return log.traceExit(this.getDaoManager().getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds), 
-                    EnumSet.of(RelationTO.RelationType.ISA_PARTOF), 
-                    EnumSet.of(RelationTO.RelationStatus.DIRECT))
-                ).stream()
-                .map(AnatEntityService::mapFromTO)
-                .collect(Collectors.toMap(e -> e.getKey(), 
-                        e -> new HashSet<String>(Arrays.asList(e.getValue())), 
-                        (v1, v2) -> {
-                            Set<String> newSet = new HashSet<>(v1);
-                            newSet.addAll(v2);
-                            return newSet;
-                        }));
-    }
-
-    
     
     /**
      * Maps a {@code AnatEntityTO} to an {@code AnatEntity} instance 
@@ -201,24 +176,13 @@ public class AnatEntityService extends Service {
      * @return the mapped {@code AnatEntity}
      */
     private static AnatEntity mapFromTO(AnatEntityDAO.AnatEntityTO anatEntityTO) {
-        log.entry(anatEntityTO);
+        log.traceEntry("{}", anatEntityTO);
         return log.traceExit(new AnatEntity(anatEntityTO.getId(), anatEntityTO.getName(), 
                 anatEntityTO.getDescription()));
     }
-    /**
-     * Maps a {@code relationTO} to an {@code Entry} where the key is the ID of the parent 
-     * anatomical entity, and the value the ID of the child. 
-     * 
-     * @param relationTO The {@code RelationTO} to be mapped
-     * @return the mapped {@code Entry}
-     */
-    private static Entry<String, String> mapFromTO(RelationDAO.RelationTO<String> relationTO) {
-        log.entry(relationTO);
-        return log.traceExit(new AbstractMap.SimpleEntry<>(relationTO.getTargetId(), relationTO.getSourceId()));
-    }
 
     private static Set<AnatEntityDAO.Attribute> convertAttrsToDAOAttrs(Collection<Attribute> attrs) {
-        log.entry(attrs);
+        log.traceEntry("{}", attrs);
         if (attrs == null || attrs.isEmpty()) {
             return log.traceExit(EnumSet.allOf(AnatEntityDAO.Attribute.class));
         }

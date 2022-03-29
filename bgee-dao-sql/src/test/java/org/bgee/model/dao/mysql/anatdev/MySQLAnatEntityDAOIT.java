@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -356,7 +357,7 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                         "Stage_id9", "Stage_id10", true));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getNonInformativeAnatEntitiesBySpeciesIds(null).getAllTOs(),
+                        dao.getNonInformativeAnatEntitiesBySpeciesIds(null, null).getAllTOs(),
                         expectedAnatEntities));
 
         // Test recovery of all attributes with filter on species IDs
@@ -367,18 +368,19 @@ public class MySQLAnatEntityDAOIT extends MySQLITAncestor {
                         "Stage_id9", "Stage_id10", true));
         assertTrue("AnatEntityTOs incorrectly retrieved",
                 TOComparator.areTOCollectionsEqual(
-                        dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds).getAllTOs(),
+                        dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds, null).getAllTOs(),
                         expectedAnatEntities));
         
         // Test recovery of anatomical entity names with filter on species IDs
-        dao.setAttributes(AnatEntityDAO.Attribute.NAME);
         speciesIds.clear();
         speciesIds.addAll(Arrays.asList(31));
         expectedAnatEntities = Arrays.asList(
                 new AnatEntityTO(null, "hindbrain", null, null, null, null), 
                 new AnatEntityTO(null, "anat13", null, null, null, null));
         List<AnatEntityTO> retrievedAnatEntities = 
-                dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds).getAllTOs();
+                dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                        EnumSet.of(AnatEntityDAO.Attribute.NAME))
+                .getAllTOs();
         assertTrue("AnatEntityTOs incorrectly retrieved, expected: " + expectedAnatEntities + 
                 ", but was: " + retrievedAnatEntities,
                 TOComparator.areTOCollectionsEqual(retrievedAnatEntities, expectedAnatEntities));

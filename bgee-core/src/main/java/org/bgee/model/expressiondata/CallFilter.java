@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -16,10 +16,10 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.Call.DiffExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.GeneFilter;
 
 /**
@@ -27,7 +27,7 @@ import org.bgee.model.gene.GeneFilter;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Sep. 2018
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 13, Oct. 2015
  *
  * @param T The type of {@code CallData} to be used by this {@code CallFilter}. 
@@ -72,32 +72,144 @@ extends DataFilter<ConditionFilter> {
      */
     public static class ExpressionCallFilter
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> implements Predicate<ExpressionCall> {
-        
-        private final Map<CallType.Expression, Boolean> callObservedData;
 
-        private final Boolean anatEntityObservedData;
-        private final Boolean devStageObservedData;
-        private final Boolean cellTypeObservedData;
-        private final Boolean sexObservedData;
-        private final Boolean strainObservedData;
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request PRESENT expression calls of at least SILVER quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> SILVER_PRESENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request ABSENT expression calls of at least SILVER quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> SILVER_ABSENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request PRESENT expression calls of at least BRONZE quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> BRONZE_PRESENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request calls observed in the anatomical entity and cell type.
+         */
+        public static final Map<EnumSet<CallService.Attribute>, Boolean> ANAT_ENTITY_OBSERVED_DATA_ARGUMENT =
+                //XXX: to replace with Java 9 Map.of
+                Optional.of(EnumSet.of(
+                        CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.CELL_TYPE_ID
+                )).map(es -> {
+                    Map<EnumSet<CallService.Attribute>, Boolean> map = new HashMap<>();
+                    map.put(es, true);
+                    return map;
+                }).get();
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request calls observed in conditions considering all condition parameters.
+         */
+        public static final Map<EnumSet<CallService.Attribute>, Boolean> ALL_COND_PARAMS_OBSERVED_DATA_ARGUMENT =
+                //XXX: to replace with Java 9 Map.of
+                Optional.of(CallService.Attribute.getAllConditionParameters())
+                .map(es -> {
+                    Map<EnumSet<CallService.Attribute>, Boolean> map = new HashMap<>();
+                    map.put(es, true);
+                    return map;
+                }).get();
+
+        //XXX: maybe we can only allow to request observed calls (and not as well non-observed calls)
+        //so that this Map would simply be an EnumSet (easier to use to instantiate a CallFilter)
+        private final Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter;
 
         public ExpressionCallFilter(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters, Collection<DataType> dataTypeFilter,
-                Map<CallType.Expression, Boolean> callObservedData,
-                Boolean anatEntityObservedData, Boolean devStageObservedData, Boolean cellTypeObservedData,
-                Boolean sexObservedData, Boolean strainObservedData)
+                Collection<GeneFilter> geneFilters,
+                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter) {
+            this(summaryCallTypeQualityFilter, geneFilters, null, null, callObservedDataFilter);
+        }
+        /**
+         * @param summaryCallTypeQualityFilter  A {@code Map} where keys are
+         *                                      {@code SummaryCallType.ExpressionSummary}
+         *                                      listing the call types requested,
+         *                                      associated to the <strong>minimum</strong>
+         *                                      {@code SummaryQuality} level
+         *                                      requested for this call type.
+         *                                      if {@code null} or empty, all
+         *                                      {@code SummaryCallType.ExpressionSummary}s
+         *                                      will be requested with the first level of
+         *                                      in {@code SummaryQuality} as minimum quality.
+         * @param geneFilters                   A {@code Collection} of {@code GeneFilter}s
+         *                                      allowing to specify the genes or species
+         *                                      to consider. If a same species ID is present
+         *                                      in several {@code GeneFilter}s, or if {@code geneFilters}
+         *                                      contains a {@code null} element, an
+         *                                      {@code IllegalArgumentException} is thrown.
+         *                                      At least one {@code GeneFilter} or one
+         *                                      {@code CoditionFilter} must be provided,
+         *                                      otherwise an {@code IllegalArgumentException} is thrown.
+         * @param conditionFilters              A {@code Collection} of {@code ConditionFilter}s
+         *                                      allowing to specify the requested parameters regarding
+         *                                      conditions related to the expression calls. If several
+         *                                      {@code ConditionFilter}s are provided, they are seen
+         *                                      as "OR" conditions. Can be {@code null} or empty
+         *                                      if some {@code GeneFilter}s are provided.
+         *                                      if contains a {@code null} element, an
+         *                                      {@code IllegalArgumentException} is thrown.
+         *                                      At least one {@code GeneFilter} or one
+         *                                      {@code CoditionFilter} must be provided,
+         *                                      otherwise an {@code IllegalArgumentException} is thrown.
+         * @param dataTypeFilter                A {@code Collection} of {@code DataType}s
+         *                                      allowing to specify the data types to consider
+         *                                      to retrieve expression calls. If {@code null}
+         *                                      or empty, all data types will be considered.
+         * @param callObservedDataFilter        A {@code Map} to specify whether calls retrieved
+         *                                      should have been observed according to combinations
+         *                                      of condition parameters. Keys in the {@code Map} are
+         *                                      {@code EnumSet}s of {@code CallService.Attribute}s
+         *                                      that must be condition parameters (see
+         *                                      {@link CallService.Attribute#isConditionParameter()}),
+         *                                      defining the combination of condition parameters
+         *                                      to target; the associated value being a {@code Boolean}
+         *                                      defining whether the call must have been directly observed
+         *                                      according to the condition parameter combination
+         *                                      (if {@code true}), or not (if {@code false}, calls produced
+         *                                      only from propagation on the related condition parameters).
+         *                                      If a key is {@code null} or empty or contains
+         *                                      {@code CallService.Attribute}s that are not
+         *                                      condition parameters, or a value is {@code null},
+         *                                      an {@code IllegalArgumentException} is thrown.
+         * @throws IllegalArgumentException     If no {@code GeneFilter} is provided in {@code geneFilters}
+         *                                      and no {@code ConditionFilter} in {@code conditionFilters}.
+         *                                      Or if a same species ID is present
+         *                                      in several {@code GeneFilter}s. Or if {@code geneFilters}
+         *                                      or {@code conditionFilters} contains a {@code null} element.
+         *                                      In {@code callObservedDataFilter} if a key is
+         *                                      {@code null} or empty or contains
+         *                                      {@code CallService.Attribute}s that are not
+         *                                      condition parameters, or a value is {@code null}.
+         */
+        public ExpressionCallFilter(
+                Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+                Collection<DataType> dataTypeFilter,
+                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.ExpressionSummary.class);
 
-            this.callObservedData = Collections.unmodifiableMap(
-                    callObservedData == null? new HashMap<>(): new HashMap<>(callObservedData));
-            this.anatEntityObservedData = anatEntityObservedData;
-            this.devStageObservedData = devStageObservedData;
-            this.cellTypeObservedData = cellTypeObservedData;
-            this.sexObservedData = sexObservedData;
-            this.strainObservedData = strainObservedData;
+            if (callObservedDataFilter != null && callObservedDataFilter.entrySet().stream()
+                    .anyMatch(e -> e.getKey() == null || e.getKey().isEmpty() || e.getValue() == null ||
+                                  e.getKey().stream().anyMatch(a -> !a.isConditionParameter()))) {
+                throw log.throwing(new IllegalArgumentException("Only condition parameters, non-null, "
+                        + "and non-null Booleans are accepted in the Map of callObservedDataFilter"));
+            }
+
+            //we will use defensive copying, there is no unmodifiable EnumSet
+            this.callObservedDataFilter = callObservedDataFilter == null? new HashMap<>():
+                callObservedDataFilter.entrySet().stream()
+                .collect(Collectors.toMap(e -> EnumSet.copyOf(e.getKey()), e -> e.getValue()));
+
             try {
                 this.checkEmptyFilters();
             } catch (IllegalStateException e) {
@@ -115,93 +227,23 @@ extends DataFilter<ConditionFilter> {
         }
 
         /**
-         * Provides filtering on observation of data or of specific call types in the condition.
-         * Keys in this {@code Map} defines the call type on which to apply the filtering. If a key is {@code null},
-         * the filtering applies to any call type. The associated value is a {@code Boolean} defining whether
-         * the data or the call type should have been observed in the condition itself. For instance,
-         * if you set a key to {@code EXPRESSED} {@code ExpressionSummary}, and set the associated value to {@code true},
-         * it will allow to retrieve only calls including expression in the condition itself,
-         * and not simply calls with any data observed in the condition itself (such as a reported absence of expression).
-         * If you set a key to {@code null}, and set the associated value to {@code true}, it will allow
-         * to retrieve only calls with observed data in the condition itself, (whether it is presence or absence
-         * of expression).
-         * <p>
-         * <strong>Important:</strong> data quality is not taken into account,
-         * {@code ExpressionSummary}s (if any) will be considered with any quality. <strong>But only considering
-         * the data types requested at instantiation (if any).</strong> Note: this attribute could simply be
-         * a {@code Boolean}, based on the {@code ExpressionSummary}s provided at instantiation (in the same way
-         * it is based on the data types provided at instantiation). But there is more flexibility this way,
-         * as you can request, for instance, to retrieve only {@code EXPRESSED} calls, but having any call type
-         * directly observed in the condition.
-         * <p>
-         * This is independent from {@link #getAnatEntityObservedData()} and {@link #getDevStageObservedData()},
-         * to be able to distinguish between whether data were observed in, for instance, the anatomical entity,
-         * and propagated along the dev. stage ontology. For instance, you might want to retrieve expression calls
-         * at a given dev. stage (using any propagation states), only if observed in the anatomical structure itself.
-         * The "callObservedData" filter does not permit solely to perform such a query.
-         *
-         * @return  A {@code Map} where keys are {@code ExpressionSummary} for which we want a filtering based on data propagation,
-         *          the associated value being a {@code Boolean} defining the requested observed data state.
-         *          If a key is {@code null}, the associated filtering applies to any call type.
-         * @see #getAnatEntityObservedData()
-         * @see #getDevStageObservedData()
+         * @return  A {@code Map} to specify whether calls retrieved should have been observed
+         *          according to combinations of condition parameters. Keys in the {@code Map} are
+         *          {@code EnumSet}s of {@code CallService.Attribute}s that are condition parameters
+         *          (see {@link CallService.Attribute#isConditionParameter()}), defining
+         *          the combination of condition parameters to target; the associated value
+         *          being a {@code Boolean} defining whether the call must have been directly observed
+         *          according to the condition parameter combination (if {@code true}), or not
+         *          (if {@code false}, calls produced only from propagation on the related
+         *          condition parameters).
+         *          The {@code Boolean} values are never {@code null}.
+         *          The filtering used only the data types defined in this {@code ExpressionCallFilter}.
          */
-        public Map<CallType.Expression, Boolean> getCallObservedData() {
-            return callObservedData;
+        public Map<EnumSet<CallService.Attribute>, Boolean> getCallObservedDataFilter() {
+            //defensive copying, there is no unmodifiable EnumSet
+            return callObservedDataFilter.entrySet().stream()
+                    .collect(Collectors.toMap(e -> EnumSet.copyOf(e.getKey()), e -> e.getValue()));
         }
-        /**
-         * Provides filtering based on observation of data in the anatomical entities.
-         * <p>
-         * Note that, as opposed to {@link #getCallObservedData()}, it is not at the moment possible
-         * to add a filter for this information based on different {@code ExpressionSummary}s,
-         * because we do not distinguish source of different call types along every condition parameters,
-         * but only associated to the condition at a whole.
-         *
-         * @return  A {@code Boolean} defining whether the retrieved data should have been observed
-         *          in the anatomical entity itself. This is for any call type, whether {@code EXPRESSED} or
-         *          {@code NOT_EXPRESSED}.
-         * @see #getCallObservedData()
-         * @see #getDevStageObservedData()
-         */
-        public Boolean getAnatEntityObservedData() {
-            return anatEntityObservedData;
-        }
-        /**
-         *
-         * @return
-         * @see #getCallObservedData()
-         * @see #getAnatEntityObservedData()
-         */
-        public Boolean getDevStageObservedData() {
-            return devStageObservedData;
-        }
-        /**
-        *
-        * @return
-        * @see #getCallObservedData()
-        * @see #getAnatEntityObservedData()
-        */
-       public Boolean getCellTypeObservedData() {
-           return cellTypeObservedData;
-       }
-       /**
-       *
-       * @return
-       * @see #getCallObservedData()
-       * @see #getAnatEntityObservedData()
-       */
-      public Boolean getSexObservedData() {
-          return sexObservedData;
-      }
-      /**
-      *
-      * @return
-      * @see #getCallObservedData()
-      * @see #getAnatEntityObservedData()
-      */
-     public Boolean getStrainObservedData() {
-         return strainObservedData;
-     }
 
         @Override
         public boolean test(ExpressionCall call) {
@@ -209,69 +251,68 @@ extends DataFilter<ConditionFilter> {
             if (!super.test(call)) {
                 return log.traceExit(false);
             }
+            //If no filter needed on observed data, that's it.
+            if (callObservedDataFilter.isEmpty()) {
+                return log.traceExit(true);
+            }
             // Filter on observed data
-            //XXX: actually, we can now filter calls based on this information directly in the DAO,
-            //so maybe we should force to retrieve this information in the Call solely to test it.
-            //TODO: there is more work to do to manage callObservedData when non-null keys are provided
-            if (callObservedData != null && callObservedData.keySet().stream().anyMatch(k -> k != null)) {
-                throw log.throwing(new UnsupportedOperationException("Test not implemented for callObservedData non-null keys"));
+            if (call.getDataPropagation() == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The provided Call does not allow to retrieve observedData information"));
             }
-            if (callObservedData != null && callObservedData.containsKey(null) || anatEntityObservedData != null ||
-                    devStageObservedData != null) {
+            //We need to rethink this DataPropagation object
+            throw log.throwing(new UnsupportedOperationException("test of callObservedDataFilter to implement"));
 
-                if (call.getDataPropagation() == null) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The provided Call does not allow to retrieve observedData information"));
-                }
-                //TODO: there is more work to do to manage callObservedData when non-null keys are provided
-                if (callObservedData != null && callObservedData.containsKey(null)) {
-                    if (call.getDataPropagation().isIncludingObservedData() == null) {
-                        throw log.throwing(new IllegalArgumentException(
-                                "The provided Call does not allow to retrieve observedData information"));
-                    }
-                    if (!call.getDataPropagation().isIncludingObservedData().equals(callObservedData.get(null))) {
-                        return log.traceExit(false);
-                    }
-                }
-
-                if (anatEntityObservedData != null &&
-                        (call.getDataPropagation().getAnatEntityPropagationState() == null ||
-                        call.getDataPropagation().getAnatEntityPropagationState()
-                        .isIncludingObservedData() == null)) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The provided Call does not allow to retrieve observedData information"));
-                }
-                if (!anatEntityObservedData.equals(call.getDataPropagation()
-                        .getAnatEntityPropagationState().isIncludingObservedData())) {
-                    return log.traceExit(false);
-                }
-
-                if (devStageObservedData != null &&
-                        (call.getDataPropagation().getDevStagePropagationState() == null ||
-                        call.getDataPropagation().getDevStagePropagationState()
-                        .isIncludingObservedData() == null)) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "The provided Call does not allow to retrieve observedData information"));
-                }
-                if (!devStageObservedData.equals(call.getDataPropagation()
-                        .getDevStagePropagationState().isIncludingObservedData())) {
-                    return log.traceExit(false);
-                }
-            }
-            return log.traceExit(true);
+//            BiFunction<Boolean, PropagationState, Boolean> filterAndStateMatch =
+//                    (observedDataFilter, condParamPropState) -> {
+//                        if (observedDataFilter != null) {
+//                            if (condParamPropState == null || condParamPropState
+//                                    .isIncludingObservedData() == null) {
+//                                throw log.throwing(new IllegalArgumentException(
+//                                        "The provided Call does not allow to retrieve observedData information"));
+//                            }
+//                            if (!observedDataFilter.equals(condParamPropState.isIncludingObservedData())) {
+//                                return log.traceExit(false);
+//                            }
+//                        }
+//                        return log.traceExit(true);
+//                    };
+//            //TODO: probably we need to change DataPropagation to also use a Map
+//            //where keys are condition parameters and the value a propagation state
+//            if (callObservedDataFilter.entrySet().stream().anyMatch(e -> {
+//                switch (e.getKey()) {
+//                case ANAT_ENTITY_ID:
+//                    return !filterAndStateMatch.apply(e.getValue(),
+//                            call.getDataPropagation().getAnatEntityPropagationState());
+//                case DEV_STAGE_ID:
+//                    return !filterAndStateMatch.apply(e.getValue(),
+//                            call.getDataPropagation().getDevStagePropagationState());
+//                case CELL_TYPE_ID:
+//                    return !filterAndStateMatch.apply(e.getValue(),
+//                            call.getDataPropagation().getCellTypePropagationState());
+//                case SEX_ID:
+//                    return !filterAndStateMatch.apply(e.getValue(),
+//                            call.getDataPropagation().getSexPropagationState());
+//                case STRAIN_ID:
+//                    return !filterAndStateMatch.apply(e.getValue(),
+//                            call.getDataPropagation().getStrainPropagationState());
+//                default:
+//                    throw log.throwing(new IllegalStateException("Unsupported condition parameter: "
+//                            + e.getKey()));
+//                }
+//            })) {
+//                return log.traceExit(false);
+//            }
+//
+//            return log.traceExit(true);
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + ((callObservedData == null) ? 0 : callObservedData.hashCode());
             result = prime * result
-                    + ((anatEntityObservedData == null) ? 0 : anatEntityObservedData.hashCode());
-            result = prime * result + ((devStageObservedData == null) ? 0 : devStageObservedData.hashCode());
-            result = prime * result + ((cellTypeObservedData == null) ? 0 : cellTypeObservedData.hashCode());
-            result = prime * result + ((sexObservedData == null) ? 0 : sexObservedData.hashCode());
-            result = prime * result + ((strainObservedData == null) ? 0 : strainObservedData.hashCode());
+                    + ((callObservedDataFilter == null) ? 0 : callObservedDataFilter.hashCode());
             return result;
         }
         @Override
@@ -286,46 +327,11 @@ extends DataFilter<ConditionFilter> {
                 return false;
             }
             ExpressionCallFilter other = (ExpressionCallFilter) obj;
-            if (callObservedData == null) {
-                if (other.callObservedData != null) {
+            if (callObservedDataFilter == null) {
+                if (other.callObservedDataFilter != null) {
                     return false;
                 }
-            } else if (!callObservedData.equals(other.callObservedData)) {
-                return false;
-            }
-            if (anatEntityObservedData == null) {
-                if (other.anatEntityObservedData != null) {
-                    return false;
-                }
-            } else if (!anatEntityObservedData.equals(other.anatEntityObservedData)) {
-                return false;
-            }
-            if (devStageObservedData == null) {
-                if (other.devStageObservedData != null) {
-                    return false;
-                }
-            } else if (!devStageObservedData.equals(other.devStageObservedData)) {
-                return false;
-            }
-            if (cellTypeObservedData == null) {
-                if (other.cellTypeObservedData != null) {
-                    return false;
-                }
-            } else if (!cellTypeObservedData.equals(other.cellTypeObservedData)) {
-                return false;
-            }
-            if (sexObservedData == null) {
-                if (other.sexObservedData != null) {
-                    return false;
-                }
-            } else if (!sexObservedData.equals(other.sexObservedData)) {
-                return false;
-            }
-            if (strainObservedData == null) {
-                if (other.strainObservedData != null) {
-                    return false;
-                }
-            } else if (!strainObservedData.equals(other.strainObservedData)) {
+            } else if (!callObservedDataFilter.equals(other.callObservedDataFilter)) {
                 return false;
             }
             return true;
@@ -334,12 +340,10 @@ extends DataFilter<ConditionFilter> {
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("ExpressionCallFilter [callObservedData=").append(callObservedData)
-                   .append(", anatEntityObservedData=").append(anatEntityObservedData)
-                   .append(", devStageObservedData=").append(devStageObservedData)
-                   .append(", cellTypeObservedData=").append(cellTypeObservedData)
-                   .append(", sexObservedData=").append(sexObservedData)
-                   .append(", strainObservedData=").append(strainObservedData)
+            builder.append("ExpressionCallFilter [")
+                   .append("callObservedDataFilter=").append(callObservedDataFilter.entrySet().stream()
+                           .map(e -> e.getKey() + ": " + e.getValue())
+                           .collect(Collectors.joining(" - ")))
                    .append(", geneFilters=").append(getGeneFilters())
                    .append(", conditionFilters=").append(getConditionFilters())
                    .append(", dataTypeFilters=").append(getDataTypeFilters())
@@ -426,7 +430,7 @@ extends DataFilter<ConditionFilter> {
     /**
      * @see #getDataTypeFilter()
      */
-    private final Set<DataType> dataTypeFilters;
+    private final EnumSet<DataType> dataTypeFilters;
 
     /**
      * @see #getSummaryCallTypeQualityFilter()
@@ -473,8 +477,20 @@ extends DataFilter<ConditionFilter> {
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
 
-        this.dataTypeFilters = Collections.unmodifiableSet(
-            dataTypeFilter == null? new HashSet<>(): new HashSet<>(dataTypeFilter));
+        if (dataTypeFilter != null && dataTypeFilter.contains(null)) {
+            throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
+        }
+        if (summaryCallTypeQualityFilter != null &&
+                summaryCallTypeQualityFilter.keySet().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
+        }
+        if (summaryCallTypeQualityFilter != null &&
+                summaryCallTypeQualityFilter.values().contains(null)) {
+            throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
+        }
+
+        this.dataTypeFilters = dataTypeFilter == null || dataTypeFilter.isEmpty()?
+                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypeFilter);
         this.summaryCallTypeQualityFilter = Collections.unmodifiableMap(
                 summaryCallTypeQualityFilter == null || summaryCallTypeQualityFilter.isEmpty()?
 
@@ -483,7 +499,7 @@ extends DataFilter<ConditionFilter> {
                         .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())):
 
                         new HashMap<>(summaryCallTypeQualityFilter));
-
+        
         if (this.dataTypeFilters.contains(null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
         }
@@ -493,6 +509,7 @@ extends DataFilter<ConditionFilter> {
         if (this.summaryCallTypeQualityFilter.values().contains(null)) {
             throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
         }
+
     }
     
     /** 
@@ -515,12 +532,13 @@ extends DataFilter<ConditionFilter> {
     }
 
     /**
-     * @return  An unmodifiable {@code Set} of {@code DataType}s, allowing to configure 
+     * @return  An {@code EnumSet} of {@code DataType}s, allowing to configure
      *          the filtering of data types with expression data.
-     *          If several {@code DataType}s are configured, they are seen as "OR" conditions.
+     *          This {@code EnumSet} is a copy, modifying it will not be reflected in this class.
      */
-    public Set<DataType> getDataTypeFilters() {
-        return dataTypeFilters;
+    public EnumSet<DataType> getDataTypeFilters() {
+        //defensive copying, no unmodifiableEnumSet
+        return EnumSet.copyOf(dataTypeFilters);
     }
     /**
      * @return  The {@code SummaryCallType} allowing to configure summary call type filtering.
@@ -581,7 +599,7 @@ extends DataFilter<ConditionFilter> {
 
     // TODO add unit test
     public boolean test(Call<?, T> call) {
-        log.entry(call);
+        log.traceEntry("{}", call);
         
         if (call == null) {
             throw log.throwing(new IllegalArgumentException("ExpressionCall could not be null"));

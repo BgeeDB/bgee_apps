@@ -138,7 +138,8 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
         public enum SourceCategory implements EnumDAOField {
             NONE(""), GENOMICS("Genomics database"), PROTEOMICS("Proteomics database"),
             IN_SITU("In situ data source"), AFFYMETRIX("Affymetrix data source"), 
-            EST("EST data source"), RNA_SEQ("RNA-Seq data source"), ONTOLOGY("Ontology");
+            EST("EST data source"), RNA_SEQ("RNA-Seq data source"),
+            SC_RNA_SEQ("Single-cell RNA-Seq data source"), ONTOLOGY("Ontology");
 
             /**
              * Convert the {@code String} representation of a data source category (for instance, 
@@ -152,7 +153,7 @@ public interface SourceDAO extends DAO<SourceDAO.Attribute> {
              *                                  to any {@code Category}.
              */
             public static final SourceCategory convertToSourceCategory(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(SourceCategory.class, representation));
             }
 

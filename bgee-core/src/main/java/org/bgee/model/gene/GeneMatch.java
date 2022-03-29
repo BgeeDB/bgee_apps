@@ -79,7 +79,7 @@ public class GeneMatch implements Comparable<GeneMatch> {
             case NAME:
                 return log.traceExit(this.getGene().getName());
             case ID:
-                return log.traceExit(this.getGene().getEnsemblGeneId());
+                return log.traceExit(this.getGene().getGeneId());
             case DESCRIPTION:
                 return log.traceExit(this.getGene().getDescription());
             case SYNONYM:

@@ -76,7 +76,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("Nucleic Acids Research, Volume 49, "
                         + "Issue D1, 8 January 2021, Pages D831–D847")
-                + "<a href='ftp://ftp.bgee.org/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
+                + "<a href='https://bgee.org/ftp/general/citation_bgee_suite.ris' property='schema:sameAs'>RIS</a>"
                 + "</li>");
         
         this.writeln("</ul>");
@@ -98,7 +98,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                             + "for gene list enrichment tests") 
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("F1000Research") + " 2018, 5:2748. "
-                + "<a href='ftp://ftp.bgee.org/general/citation05.ris' property='schema:sameAs'>RIS</a>"
+                + "<a href='https://bgee.org/ftp/general/citation05.ris' property='schema:sameAs'>RIS</a>"
                 + "</li>");
         
         this.writeln("<li typeof='schema:ScholarlyArticle'>For UBERON: <br>" + this.getAuthors(Arrays.asList("Haendel MA", 
@@ -112,7 +112,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                             + "biology in Uberon")
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("J Biomed Semantics") + " (2014): 5:21. "
-                + "<a href='ftp://ftp.bgee.org/general/citation04.ris'>RIS</a>"
+                + "<a href='https://bgee.org/ftp/general/citation04.ris'>RIS</a>"
                 + "</li>");
         
         this.writeln("</ul>");
@@ -251,7 +251,7 @@ public class HtmlPublicationsDisplay extends HtmlParentDisplay implements Public
                 + "</a>"
                 + "<br><em>in</em> " + this.getPeriodical("DILS: Data Integration in Life Sciences")
                 + " Lecture Notes in Computer Science. " + "5109:124-131."
-                + "<a href='ftp://ftp.bgee.org/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
+                + "<a href='https://bgee.org/ftp/general/citation01.ris' property='schema:sameAs'>RIS</a></li>");
 
         this.writeln("</ul>");
         

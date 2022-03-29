@@ -3,7 +3,7 @@ package org.bgee.model.dao.api.expressiondata;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,16 +25,58 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionC
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14 Mar. 2017
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14 Feb. 2017
  */
 public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Attribute> {
-    
-    public enum Attribute implements DAO.Attribute {
-        ID, BGEE_GENE_ID, GLOBAL_CONDITION_ID, MEAN_RANK,
-        DATA_TYPE_OBSERVED_DATA,
-        DATA_TYPE_EXPERIMENT_TOTAL_COUNTS, DATA_TYPE_EXPERIMENT_SELF_COUNTS,
-        DATA_TYPE_EXPERIMENT_PROPAGATED_COUNTS, DATA_TYPE_RANK_INFO;
+
+    public interface CanBeParamDependent {
+        public boolean isDataTypeDependent();
+        public boolean isCondParamDependent();
+    }
+    public enum Attribute implements DAO.Attribute, CanBeParamDependent {
+//        //As of Bgee 15.0, there is no longer a globalExpressionId field.
+//        ID(false),
+        BGEE_GENE_ID(false, false, false), GLOBAL_CONDITION_ID(false, false, false),
+        MEAN_RANK(true, true, false), DATA_TYPE_RANK_INFO(true, true, false),
+        DATA_TYPE_OBSERVATION_COUNT_INFO(false, true, true),
+        FDR_P_VALUE_COND_INFO(false, true, false), FDR_P_VALUE_DESCENDANT_COND_INFO(false, true, false);
+
+        private final boolean requireExtraGlobalCondInfo;
+        private final boolean dataTypeDependant;
+        private final boolean condParamDependant;
+
+        private Attribute(boolean requireExtraGlobalCondInfo, boolean dataTypeDependant,
+                boolean condParamDependant) {
+            this.requireExtraGlobalCondInfo = requireExtraGlobalCondInfo;
+            this.dataTypeDependant = dataTypeDependant;
+            this.condParamDependant = condParamDependant;
+        }
+        public boolean isRequireExtraGlobalCondInfo() {
+            return requireExtraGlobalCondInfo;
+        }
+        /**
+         * @return  {@code true} if this {@code Attribute} corresponds to different results
+         *          depending on a data type selection, {@code false} otherwise.
+         *          For instance, computation of the mean expression rank, or of the FDR
+         *          from aggregated p-values, is data type dependent.
+         * @see AttributeInfo
+         */
+        @Override
+        public boolean isDataTypeDependent() {
+            return dataTypeDependant;
+        }
+        /**
+         * @return  {@code true} if this {@code Attribute} corresponds to different results
+         *          depending on a condition parameter selection, {@code false} otherwise.
+         *          For instance, the self and descendant observation counts are
+         *          condition parameter dependent.
+         * @see AttributeInfo
+         */
+        @Override
+        public boolean isCondParamDependent() {
+            return condParamDependant;
+        }
     }
     /**
      * The attributes available to order retrieved {@code GlobalExpressionCallTO}s
@@ -57,10 +99,299 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * Only the mean ranks computed from the data types requested in the query are considered. 
      * </ul>
      */
-    enum OrderingAttribute implements DAO.OrderingAttribute {
-        BGEE_GENE_ID, PUBLIC_GENE_ID, GLOBAL_CONDITION_ID, ANAT_ENTITY_ID, STAGE_ID, CELL_TYPE_ID,
-        SEX_ID, STRAIN_ID, OMA_GROUP_ID, MEAN_RANK;
-        
+    enum OrderingAttribute implements DAO.OrderingAttribute, CanBeParamDependent {
+        BGEE_GENE_ID("bgeeGeneId", false, false, false), PUBLIC_GENE_ID("geneId", false, true, false),
+        OMA_GROUP_ID("OMAParentNodeId", false, true, false),
+        GLOBAL_CONDITION_ID("globalConditionId", false, false, false),
+        ANAT_ENTITY_ID("anatEntityId", true, false, false), STAGE_ID("stageId", true, false, false),
+        CELL_TYPE_ID("cellTypeId", true, false, false), SEX_ID("sex", true, false, false),
+        STRAIN_ID("strain", true, false, false), MEAN_RANK("meanRank", true, false, true);
+
+        private final String fieldName;
+        private final boolean requireExtraGlobalCondInfo;
+        private final boolean requireExtraGeneInfo;
+        private final boolean dataTypeDependant;
+
+        private OrderingAttribute(String fieldName, boolean requireExtraGlobalCondInfo,
+                boolean requireExtraGeneInfo, boolean dataTypeDependant) {
+            this.fieldName = fieldName;
+            this.requireExtraGlobalCondInfo = requireExtraGlobalCondInfo;
+            this.requireExtraGeneInfo = requireExtraGeneInfo;
+            this.dataTypeDependant = dataTypeDependant;
+        }
+        public String getFieldName() {
+            return fieldName;
+        }
+        public boolean isRequireExtraGlobalCondInfo() {
+            return requireExtraGlobalCondInfo;
+        }
+        public boolean isRequireExtraGeneInfo() {
+            return requireExtraGeneInfo;
+        }
+        /**
+         * @return  {@code true} if this {@code OrderingAttribute} corresponds to different results
+         *          depending on a data type selection, {@code false} otherwise.
+         *          For instance, ordering based of the mean expression rank, or of the FDR
+         *          from aggregated p-values, is data type dependent.
+         * @see OrderingAttributeInfo
+         */
+        @Override
+        public boolean isDataTypeDependent() {
+            return dataTypeDependant;
+        }
+        //there is not ordering attribute dependent on condition parameter combination for now.
+        @Override
+        public boolean isCondParamDependent() {
+            return false;
+        }
+    }
+
+    /**
+     * A class allowing to associate an {@code Attribute}, specifying the information to retrieve
+     * in an expression query, to the {@code DAODataType}s this {@code Attribute} is requested for.
+     * Specifying {@code DAODataType}s is only needed if the {@code Attribute} is dependent on
+     * a data type selection (see {@link Attribute#isDataTypeDependent()}).
+     *
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class AttributeInfo extends GenericAttributeInfo<Attribute> {
+        /**
+         * To instantiate an {@code AttributeInfo} independent from a data type selection.
+         *
+         * @param attribute An {@code Attribute} for which both
+         *                  {@link Attribute#isDataTypeDependent()} and
+         *                  {@link Attribute#isCondParamDependent()}
+         *                  return {@code false}.
+         * @throws IllegalArgumentException If calling {@link Attribute#isDataTypeDependent()}
+         *                                  or {@link Attribute#isCondParamDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see Attribute#isDataTypeDependent()
+         * @see Attribute#isCondParamDependent()
+         */
+        public AttributeInfo(Attribute attribute) {
+            super(attribute);
+        }
+        /**
+         * To instantiate an {@code AttributeInfo} dependent on parameter selection.
+         *
+         * @param attribute             An {@code Attribute} for which
+         *                              {@link Attribute#isDataTypeDependent()} or
+         *                              {@link Attribute#isCondParamDependent()}
+         *                              returns {@code true}.
+         * @param targetedDataTypes     A {@code Collection} of {@code DAODataType}s specifying
+         *                              the data types for which {@code attribute} is requested.
+         *                              If {@code null} or empty, all {@code DAODataType}s
+         *                              are considered.
+         * @param targetedCondParams    A {@code Collection} of {@code ConditionDAO.Attribute}s
+         *                              specifying the condition parameters for which {@code attribute}
+         *                              is requested. If {@code null} or empty, all
+         *                              {@code ConditionDAO.Attribute}s are considered.
+         * @throws IllegalArgumentException If both {@link Attribute#isDataTypeDependent()}
+         *                                  {@link Attribute#isCondParamDependent()}
+         *                                  on {@code attribute} return {@code false}.
+         * @see Attribute#isDataTypeDependent()
+         * @see Attribute#isCondParamDependent()
+         */
+        public AttributeInfo(Attribute attribute, Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
+            super(attribute, targetedDataTypes, targetedCondParams);
+        }
+    }
+    /**
+     * A class allowing to associate an {@code OrderingAttribute}, specifying how to sort
+     * the results from an expression query, to the {@code DAODataType}s this {@code OrderingAttribute}
+     * is requested for. Specifying {@code DAODataType}s is only needed if the {@code OrderingAttribute}
+     * is dependent on a data type selection (see {@link OrderingAttribute#isDataTypeDependent()}).
+     *
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class OrderingAttributeInfo extends GenericAttributeInfo<OrderingAttribute> {
+        /**
+         * To instantiate an {@code OrderingAttributeInfo} independent from a data type selection.
+         *
+         * @param attribute An {@code OrderingAttribute} for which
+         *                  {@link OrderingAttribute#isDataTypeDependent()} returns {@code false}.
+         * @throws IllegalArgumentException If calling {@link OrderingAttribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see OrderingAttribute#isDataTypeDependent()
+         */
+        public OrderingAttributeInfo(OrderingAttribute attribute) {
+            super(attribute);
+        }
+        /**
+         * To instantiate an {@code OrderingAttributeInfo} dependent on a data type selection.
+         *
+         * @param attribute         An {@code OrderingAttribute} for which
+         *                          {@link OrderingAttribute#isDataTypeDependent()} returns {@code true}.
+         * @param targetedDataTypes A {@code Collection} of {@code DAODataType}s specifying
+         *                          the data types for which {@code attribute} is requested.
+         *                          If {@code null} or empty, all {@code DAODataType}s
+         *                          are considered.
+         * @throws IllegalArgumentException If calling {@link OrderingAttribute#isDataTypeDependent()}
+         *                                  on {@code attribute} returns {@code false}.
+         * @see OrderingAttribute#isDataTypeDependent()
+         */
+        public OrderingAttributeInfo(OrderingAttribute attribute,
+                Collection<DAODataType> targetedDataTypes) {
+            super(attribute, targetedDataTypes, null);
+        }
+    }
+    /**
+     * A class allowing to associate a {@code CanBeDataTypeDependent}, specifying the information
+     * to retrieve in an expression query, to the {@code DAODataType}s this {@code CanBeDataTypeDependent}
+     * is requested for. Specifying {@code DAODataType}s is only needed if
+     * the {@code CanBeDataTypeDependent} is dependent on a data type selection
+     * (see {@link CanBeDataTypeDependent#isDataTypeDependent()}).
+     *
+     * @param <T>   A class that is of types {@code Enum<T>} and {@code CanBeDataTypeDependent}
+     *              ({@code Attribute} or {@code OrderingAttribute}).
+     * @author  Frederic Bastian
+     * @version Bgee 15.0, Apr. 2021
+     * @since   Bgee 15.0, Apr. 2021
+     */
+    public static class GenericAttributeInfo<T extends Enum<T> & CanBeParamDependent>
+    implements Comparable<GenericAttributeInfo<T>> {
+        private final T attribute;
+        private final EnumSet<DAODataType> targetedDataTypes;
+        private final EnumSet<ConditionDAO.Attribute> targetedCondParams;
+
+        /**
+         * To instantiate a {@code GenericAttributeInfo} independent from a data type selection.
+         *
+         * @param attribute A {@code CanBeParamDependent} for which
+         *                  {@link CanBeParamDependent#isDataTypeDependent()} and
+         *                  {@link CanBeParamDependent#isCondParamDependent()}
+         *                  return {@code false}.
+         * @throws IllegalArgumentException If calling {@link
+         *                                  CanBeParamDependent#isDataTypeDependent()} or
+         *                                  {@link CanBeParamDependent#isCondParamDependent()}
+         *                                  on {@code attribute} returns {@code true}.
+         * @see CanBeParamDependent#isDataTypeDependent()
+         * @see CanBeParamDependent#isCondParamDependent()
+         */
+        public GenericAttributeInfo(T attribute) {
+            this(attribute, false, null, null);
+        }
+        /**
+         * To instantiate an {@code GenericAttributeInfo} dependent on a data type selection.
+         *
+         * @param attribute             A {@code CanBeParamDependent} for which
+         *                              {@link CanBeParamDependent#isDataTypeDependent()}
+         *                              and/or {@link
+         *                              CanBeParamDependent#isCondParamDependent()}
+         *                              return {@code true}.
+         * @param targetedDataTypes     A {@code Collection} of {@code DAODataType}s specifying
+         *                              the data types for which {@code attribute} is requested.
+         *                              If {@code null} or empty, all {@code DAODataType}s
+         *                              are considered.
+         * @param targetedCondParams    A {@code Collection} of {@code ConditionDAO.Attribute}s
+         *                              specifying the condition parameters for which {@code attribute}
+         *                              is requested. If {@code null} or empty,
+         *                              all {@code ConditionDAO.Attribute}s are considered.
+         * @throws IllegalArgumentException If both {@link
+         *                                  CanBeDataTypeDependent#isDataTypeDependent()} and
+         *                                  {@link CanBeParamDependent#isCondParamDependent()}
+         *                                  on {@code attribute} return {@code false}.
+         * @see CanBeDataTypeDependent#isDataTypeDependent()
+         * @see CanBeParamDependent#isCondParamDependent()
+         */
+        public GenericAttributeInfo(T attribute, Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
+            this(attribute, true, targetedDataTypes, targetedCondParams);
+        }
+        private GenericAttributeInfo(T attribute, boolean shouldBeParamDependent,
+                Collection<DAODataType> targetedDataTypes,
+                Collection<ConditionDAO.Attribute> targetedCondParams) {
+            if (attribute == null) {
+                throw new IllegalArgumentException("Attribute cannot be null.");
+            }
+            if (shouldBeParamDependent && !attribute.isDataTypeDependent() &&
+                            !attribute.isCondParamDependent() ||
+                !shouldBeParamDependent && (attribute.isDataTypeDependent() || attribute.isCondParamDependent())) {
+                throw new IllegalArgumentException(
+                        "Incorrect definition of parameter selection for Attribute: " + attribute);
+            }
+            this.attribute = attribute;
+            this.targetedDataTypes = targetedDataTypes == null || targetedDataTypes.isEmpty()?
+                    EnumSet.allOf(DAODataType.class): EnumSet.copyOf(targetedDataTypes);
+            this.targetedCondParams = targetedCondParams == null || targetedCondParams.isEmpty()?
+                    EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(targetedCondParams);
+        }
+        public T getAttribute() {
+            return attribute;
+        }
+        public EnumSet<DAODataType> getTargetedDataTypes() {
+            //Defensive copying, no Collections.unmodifiableEnumSet
+            return EnumSet.copyOf(targetedDataTypes);
+        }
+        public EnumSet<ConditionDAO.Attribute> getTargetedCondParams() {
+            //Defensive copying, no Collections.unmodifiableEnumSet
+            return EnumSet.copyOf(targetedCondParams);
+        }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((attribute == null) ? 0 : attribute.hashCode());
+            result = prime * result + ((targetedDataTypes == null) ? 0 : targetedDataTypes.hashCode());
+            result = prime * result + ((targetedCondParams == null) ? 0 : targetedCondParams.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            GenericAttributeInfo<?> other = (GenericAttributeInfo<?>) obj;
+            if (attribute != other.attribute) {
+                return false;
+            }
+            if (targetedDataTypes == null) {
+                if (other.targetedDataTypes != null) {
+                    return false;
+                }
+            } else if (!targetedDataTypes.equals(other.targetedDataTypes)) {
+                return false;
+            }
+            if (targetedCondParams == null) {
+                if (other.targetedCondParams != null) {
+                    return false;
+                }
+            } else if (!targetedCondParams.equals(other.targetedCondParams)) {
+                return false;
+            }
+            return true;
+        }
+        @Override
+        public int compareTo(GenericAttributeInfo<T> o) {
+            if (o == null) {
+                throw new NullPointerException();
+            }
+            if (this.equals(o)) {
+                return 0;
+            }
+            int compareAttr = this.getAttribute().compareTo(o.getAttribute());
+            if (compareAttr != 0) {
+                return compareAttr;
+            }
+            int compareDataTypes = (new DAODataType.DAODataTypeEnumSetComparator())
+                    .compare(this.getTargetedDataTypes(), o.getTargetedDataTypes());
+            if (compareDataTypes != 0) {
+                return compareDataTypes;
+            }
+            return (new ConditionDAO.CondParamEnumSetComparator())
+                    .compare(this.getTargetedCondParams(), o.getTargetedCondParams());
+        }
     }
 
     /** 
@@ -75,20 +406,18 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              allowing to configure this query. If several 
      *                              {@code CallDAOFilter}s are provided, they are seen 
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries, 
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
-     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.Attribute}s 
+     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.AttributeInfo}s
      *                              defining the attributes to populate in the returned 
-     *                              {@code GlobalExpressionCallTO}s. If {@code null} or empty, 
-     *                              all attributes are populated.
+     *                              {@code GlobalExpressionCallTO}s, associated to the requested
+     *                              {@code DAODataType}s if necessary. If {@code null} or empty,
+     *                              all attributes are populated, with all {@code DAODataType}s
+     *                              when applicable.
      * @param orderingAttributes    A {@code LinkedHashMap} where keys are
-     *                              {@code GlobalExpressionCallDAO.OrderingAttribute}s defining
+     *                              {@code GlobalExpressionCallDAO.OrderingAttributeInfo}s defining
      *                              the attributes used to order the returned {@code GlobalExpressionCallTO}s,
      *                              the associated value being a {@code DAO.Direction}
      *                              defining whether the ordering should be ascendant or descendant.
-     *                              If {@code null} or empty, then no ordering is performed.
+     *                              If {@code null} or empty, no ordering is performed.
      * @return                      A {@code GlobalExpressionCallTOResultSet} containing global
      *                              calls from data source according to {@code attributes} and
      *                              {@code conditionParameters}.
@@ -99,9 +428,8 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
-            Collection<CallDAOFilter> callFilters, Collection<ConditionDAO.Attribute> conditionParameters,
-            Collection<Attribute> attributes,
-            LinkedHashMap<OrderingAttribute, DAO.Direction> orderingAttributes)
+            Collection<CallDAOFilter> callFilters, Collection<AttributeInfo> attributes,
+            LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes)
                     throws DAOException, IllegalArgumentException;
 
     /**
@@ -118,14 +446,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * different Bgee gene IDs).
      * </ul>
      *
+     * @param dataTypes             A {@code Collection} of {@code DAODataType}s that are
+     *                              the data types to consider to compute ranks. If {@code null}
+     *                              or empty, all data types are considered.
      * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
      *                              allowing to configure this query. If several
      *                              {@code CallDAOFilter}s are provided, they are seen
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries,
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
      *                              the requested {@code EntityMinMaxRanksTO}s.
      * @throws DAOException             If an error occurred when accessing the data source.
@@ -134,8 +461,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  is not a condition parameter attributes (see
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
-    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    public EntityMinMaxRanksTOResultSet<Integer> getMinMaxRanksPerGene(
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters)
+                    throws DAOException, IllegalArgumentException;
     /**
      * Obtains the min. and max ranks of anatomical entities. For now, to retrieve ranks it should be queried only
      * EXPRESSED calls with min quality BRONZE, in all dev. stages and for all genes,
@@ -148,14 +476,13 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * <li>the species ID is provided ({@link EntityMinMaxRanksTO#getSpeciesId()} returns a non-{@code null} value),
      * since a same anatomical entity ID can be used in several species.
      *
+     * @param dataTypes             A {@code Collection} of {@code DAODataType}s that are
+     *                              the data types to consider to compute ranks. If {@code null}
+     *                              or empty, all data types are considered.
      * @param callFilters           A {@code Collection} of {@code CallDAOFilter}s,
      *                              allowing to configure this query. If several
      *                              {@code CallDAOFilter}s are provided, they are seen
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              combination of condition parameters that were requested for queries,
-     *                              allowing to determine which condition and calls to target
-     *                              (see {@link ConditionDAO.Attribute#isConditionParameter()}).
      * @return                      A {@code EntityMinMaxRanksTOResultSet} allowing to retrieve
      *                              the requested {@code EntityMinMaxRanksTO}s.
      * @throws DAOException             If an error occurred when accessing the data source.
@@ -164,8 +491,9 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                                  is not a condition parameter attributes (see
      *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
      */
-    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(Collection<CallDAOFilter> callFilters,
-            Collection<ConditionDAO.Attribute> conditionParameters) throws DAOException, IllegalArgumentException;
+    public EntityMinMaxRanksTOResultSet<String> getMinMaxRanksPerAnatEntity(
+            Collection<DAODataType> dataTypes, Collection<CallDAOFilter> callFilters)
+                    throws DAOException, IllegalArgumentException;
     /**
      * Retrieve the maximum of global expression IDs.
      *
@@ -214,14 +542,14 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * as compared to {@code RawExpressionCallTO}s).
      * 
      * @author  Frederic Bastian
-     * @version Bgee 14, Jun. 2019
+     * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 14, Feb. 2017
      */
     public static class GlobalExpressionCallTO extends RawExpressionCallTO {
 
         private static final long serialVersionUID = -1057540315343857464L;
         
-        private final BigDecimal meanRank;
+        private final Set<DAOMeanRank> meanRanks;
         
         private final Set<GlobalExpressionCallDataTO> callDataTOs;
         
@@ -230,11 +558,12 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         private final Set<DAOFDRPValue> bestDescendantPValues;
         
         public GlobalExpressionCallTO(Long id, Integer bgeeGeneId, Integer conditionId,
-                BigDecimal meanRank, Collection<GlobalExpressionCallDataTO> callDataTOs,
+                Collection<DAOMeanRank> meanRanks, Collection<GlobalExpressionCallDataTO> callDataTOs,
                 Collection<DAOFDRPValue> pValues, Collection<DAOFDRPValue> bestDescendantPValues) {
             super(id, bgeeGeneId, conditionId);
             
-            this.meanRank = meanRank;
+            this.meanRanks = meanRanks == null? null:
+                Collections.unmodifiableSet(new HashSet<>(meanRanks));
             if (callDataTOs != null) {
                 this.callDataTOs = Collections.unmodifiableSet(new HashSet<>(callDataTOs));
             } else {
@@ -259,14 +588,12 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         }
 
         /**
-         * @return  A {@code BigDecimal} that is the weighted mean rank of the gene in the condition, 
-         *          based on the normalized mean rank of each data type requested in the query. 
-         *          So for instance, if you configured an {@code ExpressionCallDAOFilter} 
-         *          to only retrieved Affymetrix data, then this rank will be equal to the rank 
-         *          returned by {@link #getAffymetrixMeanRank()}.
+         * @return  A {@code Set} of {@code DAOMeanRank}s storing the weighted mean rank
+         *          of a gene in a condition, associated to the {@code DAODataType}s used
+         *          to compute it.
          */
-        public BigDecimal getMeanRank() {
-            return meanRank;
+        public Set<DAOMeanRank> getMeanRanks() {
+            return meanRanks;
         }
         /**
          * @return  An unmodifiable {@code Set} of {@code GlobalExpressionCallDataTO}s
@@ -297,7 +624,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             builder.append("GlobalExpressionCallTO [id=").append(getId())
                    .append(", bgeeGeneId=").append(getBgeeGeneId())
                    .append(", conditionId=").append(getConditionId())
-                   .append(", meanRank=").append(meanRank)
+                   .append(", meanRanks=").append(meanRanks)
                    .append(", callDataTOs=").append(callDataTOs)
                    .append(", pValues=").append(pValues)
                    .append(", bestDescendantPValues=").append(bestDescendantPValues)
@@ -311,7 +638,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      * from a specific {@link org.bgee.model.dao.api.expressiondata.DAODataType DAODataType}.
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Mar. 2017
+     * @version Bgee 15.0, Jul. 2021
      * @see GlobalExpressionCallTO
      * @since Bgee 14 Mar. 2017
      */
@@ -321,40 +648,47 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
 
         private final DAODataType dataType;
 
-        private final Boolean conditionObservedData;
-
-        private final Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation;
-
-        private final Integer selfObservationCount;
-        private final Integer descendantObservationCount;
-        
-        private final Set<DAOExperimentCount> experimentCounts;
-
-        private final Integer propagatedCount;
+        private final Map<EnumSet<ConditionDAO.Attribute>, Integer> selfObservationCount;
+        private final Map<EnumSet<ConditionDAO.Attribute>, Integer> descendantObservationCount;
+        private final BigDecimal fdrPValue;
+        private final BigDecimal bestDescendantFDRPValue;
 
         private final BigDecimal rank;
         private final BigDecimal rankNorm;
         private final BigDecimal weightForMeanRank;
 
-        public GlobalExpressionCallDataTO(DAODataType dataType, Boolean conditionObservedData,
-                Map<ConditionDAO.Attribute, DAOPropagationState> dataPropagation,
-                Integer selfObservationCount, Integer descendantObservationCount,
-                Set<DAOExperimentCount> experimentCounts, Integer propagatedCount,
+        public GlobalExpressionCallDataTO(DAODataType dataType,
+                Map<EnumSet<ConditionDAO.Attribute>, Integer> selfObservationCount,
+                Map<EnumSet<ConditionDAO.Attribute>, Integer> descendantObservationCount,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal rankNorm, BigDecimal weightForMeanRank) {
 
-            if (dataPropagation != null && dataPropagation.keySet().stream().anyMatch(a -> !a.isConditionParameter())) {
-                throw log.throwing(new IllegalArgumentException("Invalid condition parameters: "
-                        + dataPropagation.keySet()));
+            if (selfObservationCount != null && selfObservationCount.entrySet().stream().anyMatch(e ->
+                    e.getKey() == null || e.getValue() == null ||
+                    e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                    e.getValue() < 0)) {
+                throw log.throwing(new IllegalArgumentException("Invalid selfObservationCount"));
+            }
+            if (descendantObservationCount != null && descendantObservationCount.entrySet().stream().anyMatch(e ->
+                    e.getKey() == null || e.getValue() == null ||
+                    e.getKey().stream().anyMatch(a -> !a.isConditionParameter()) ||
+                    e.getValue() < 0)) {
+                throw log.throwing(new IllegalArgumentException("Invalid descendantObservationCount"));
             }
             this.dataType = dataType;
-            this.conditionObservedData = conditionObservedData;
-            this.dataPropagation = dataPropagation == null? null: Collections.unmodifiableMap(new HashMap<>(dataPropagation));
 
-            this.selfObservationCount = selfObservationCount;
-            this.descendantObservationCount = descendantObservationCount;
-
-            this.experimentCounts = experimentCounts == null? null: Collections.unmodifiableSet(new HashSet<>(experimentCounts));
-            this.propagatedCount = propagatedCount;
+            this.selfObservationCount = selfObservationCount == null? null:
+                selfObservationCount.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> EnumSet.copyOf(e.getKey()),
+                        e -> e.getValue()));
+            this.descendantObservationCount = descendantObservationCount == null? null:
+                descendantObservationCount.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> EnumSet.copyOf(e.getKey()),
+                        e -> e.getValue()));
+            this.fdrPValue = fdrPValue;
+            this.bestDescendantFDRPValue = bestDescendantFDRPValue;
 
             this.rank = rank;
             this.rankNorm = rankNorm;
@@ -364,46 +698,45 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public DAODataType getDataType() {
             return dataType;
         }
-        /**
-         * @return  A {@code Boolean} defining whether the call was observed in the condition.
-         *          This is independent from {@link #getDataPropagation()},
-         *          because even if a data aggregation have produced only SELF propagation states,
-         *          we cannot have the guarantee that data were actually observed in the condition
-         *          by looking at these independent propagation states.
-         */
-        public Boolean isConditionObservedData() {
-            return conditionObservedData;
-        }
-        /**
-         * @return  A {@code Map} where keys are {@code ConditionDAO.Attribute}s that are
-         *          condition parameters (see {@link ConditionDAO.Attribute#isConditionParameter()}),
-         *          the associated value being a {@code DAOPropagationState} indicating where the call
-         *          originated from in that condition parameter
-         *          (for instance, data observed in a given anatomical entity).
-         */
-        public Map<ConditionDAO.Attribute, DAOPropagationState> getDataPropagation() {
-            return dataPropagation;
-        }
 
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code ConditionDAO.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
          *          in the condition itself.
          */
-        public Integer getSelfObservationCount() {
-            return selfObservationCount;
+        public Map<EnumSet<ConditionDAO.Attribute>, Integer> getSelfObservationCount() {
+            return selfObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
         /**
-         * @return  An {@code Integer} that is the number of observations producing a p-value
+         * @return  A {@code Map} where keys are {@code EnumSet}s of {@code ConditionDAO.Attribute}s
+         *          representing the combinations of condition parameters considered, the associated
+         *          value being an {@code Integer} that is the number of observations producing a p-value
          *          in the descendant conditions of the requested condition.
          */
-        public Integer getDescendantObservationCount() {
-            return descendantObservationCount;
+        public Map<EnumSet<ConditionDAO.Attribute>, Integer> getDescendantObservationCount() {
+            return descendantObservationCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            e -> EnumSet.copyOf(e.getKey()),
+                            e -> e.getValue()));
         }
-        public Set<DAOExperimentCount> getExperimentCounts() {
-            return experimentCounts;
+        /**
+         * @return  A {@code BigDecimal} that is the FDR corrected p-value computed from
+         *          all the p-values obtained by this data type in a condition
+         *          and all its sub-conditions for a gene.
+         */
+        public BigDecimal getFDRPValue() {
+            return fdrPValue;
         }
-        public Integer getPropagatedCount() {
-            return propagatedCount;
+        /**
+         * @return  A {@code BigDecimal} that is the best FDR corrected p-value obtained by
+         *          this data type among the sub-conditions of the condition of a call for a gene.
+         */
+        public BigDecimal getBestDescendantFDRPValue() {
+            return bestDescendantFDRPValue;
         }
 
         public BigDecimal getRank() {
@@ -420,11 +753,10 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("GlobalExpressionCallDataTO [dataType=").append(dataType)
-                   .append(", dataPropagation=").append(dataPropagation)
                    .append(", selfObservationCount=").append(selfObservationCount)
                    .append(", descendantObservationCount=").append(descendantObservationCount)
-                   .append(", experimentCounts=").append(experimentCounts)
-                   .append(", propagatedCount=").append(propagatedCount)
+                   .append(", fdrPValue=").append(fdrPValue)
+                   .append(", bestDescendantFDRPValue=").append(descendantObservationCount)
                    .append(", rank=").append(rank)
                    .append(", rankNorm=").append(rankNorm)
                    .append(", weightForMeanRank=").append(weightForMeanRank)

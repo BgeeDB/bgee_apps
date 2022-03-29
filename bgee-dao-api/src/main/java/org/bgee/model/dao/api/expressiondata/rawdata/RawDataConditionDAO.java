@@ -1,6 +1,9 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,11 +17,17 @@ import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
  * DAO defining queries using or retrieving {@link RawDataConditionTO}s.
  *
  * @author  Frederic Bastian
- * @version Bgee 15, Mar. 2021
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14, Sep. 2018
  * @see RawDataConditionTO
  */
 public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> {
+
+    public final static Set<String> NO_INFO_STRAINS = new HashSet<>(Arrays.asList(
+            "wild-type", "NA", "not annotated", "confidential_restricted_data",
+            // The following were not standardized as of Bgee 15.0, maybe we can remove them later.
+            "(Missing)", "mix of breed", "mixed-breed", "multiple breeds"));
+
     /**
      * {@code Enum} used to define the attributes to populate in the {@code RawDataConditionTO}s
      * obtained from this {@code RawDataConditionDAO}.
@@ -127,9 +136,10 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
          * @version Bgee 15 Mar. 2021
          */
         public enum DAORawDataSex implements EnumDAOField {
-            NOT_ANNOTATED("not annotated"), HERMAPHRODITE("hermaphrodite"), FEMALE("female"), MALE("male"),
-            MIXED("mixed"), NA("NA");
+            NOT_ANNOTATED("not annotated", false), HERMAPHRODITE("hermaphrodite", true),
+            FEMALE("female", true), MALE("male", true), MIXED("mixed", false), NA("NA", false);
 
+            private final boolean informative;
             /**
              * See {@link #getStringRepresentation()}
              */
@@ -138,9 +148,12 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
              * Constructor providing the {@code String} representation of this {@code DAORawDataSex}.
              *
              * @param stringRepresentation  A {@code String} corresponding to this {@code DAORawDataSex}.
+             * @param informative           A {@code boolean} defining whether this {@code DAORawDataSex}
+             *                              is informative.
              */
-            private DAORawDataSex(String stringRepresentation) {
+            private DAORawDataSex(String stringRepresentation, boolean informative) {
                 this.stringRepresentation = stringRepresentation;
+                this.informative = informative;
             }
 
             /**
@@ -161,6 +174,9 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             @Override
             public String getStringRepresentation() {
                 return this.stringRepresentation;
+            }
+            public boolean isInformative() {
+                return this.informative;
             }
             @Override
             public String toString() {

@@ -47,8 +47,8 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
     }
     
     @Override
-    public void displaySources(Collection<Source> sources) {
-        log.entry(sources);
+    public void displaySources(List<Source> sources) {
+        log.traceEntry("{}", sources);
 
         this.startDisplay("Data sources", "WebPage");
         
@@ -74,8 +74,8 @@ public class HtmlSourceDisplay extends HtmlParentDisplay implements SourceDispla
      * @param sources   A {@code List} of {@code Source}s that are sources to be displayed.
      * @return          The {@code String} that is the HTML code to display sources by category.
      */
-    private String getContent(Collection<Source> sources) {
-        log.entry(sources);
+    private String getContent(List<Source> sources) {
+        log.traceEntry("{}", sources);
         Map<SourceCategory, List<Source>> mapSources = sources.stream()
                 .collect(Collectors.groupingBy(Source::getCategory, TreeMap::new, Collectors.toList()));
 

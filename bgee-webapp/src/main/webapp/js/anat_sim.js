@@ -49,6 +49,9 @@ $( document ).ready( function() {
     $('table.anat-sim-result').DataTable({
         //enable ordering but apply no ordering during initialization
         "order": [],
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         responsive: {
             details: {
                 display: $.fn.dataTable.Responsive.display.childRowImmediate

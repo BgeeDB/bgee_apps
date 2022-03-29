@@ -1,15 +1,15 @@
 /**
  * Main javascript file, entry point for javascripts.
- * 
+ *
  * It contains the main functions that are needed by all pages.
- * For the moment, its only purpose is to call the initializer of all other objects 
+ * For the moment, its only purpose is to call the initializer of all other objects
  * when the page is ready.
- * 
+ *
  * Keep the content of this file as simple as possible to keep it readable :
  * - Place the js functions that are specific to a page or a functionality in a specific file,
  *   for example, download.js for ?page=download functions
  * - Use a separate file to group misc. functions if needed.
- * 
+ *
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @version Bgee 14 Oct 2018
@@ -18,13 +18,13 @@
 
 /**
  * Call the initializer of the js objects loaded for all pages.
- * 
+ *
  * Note : the ready() function can be called a second time by a page specific javascript,
  * for example download.js, for its own initialization. This not a source of problem, ready()
  * can be executed several times without too harmful effects on the perfs. However, be sure that
  * any scripts that uses ready() is loaded after this one, so this function will always be the
  * first piece of javascript code executed.
- * 
+ *
  */
 
 //prototype extensions
@@ -45,10 +45,10 @@ if (!Array.indexOf)
       };
 }
 
-//global vars 
+//global vars
 //create a BgeeProperties object to be accessed by all scripts
 var GLOBAL_PROPS = new bgeeProperties();
-//CURRENT_REQUEST will store a requestParameters object storing 
+//CURRENT_REQUEST will store a requestParameters object storing
 //parameters from the current URL, initialized a document ready
 var CURRENT_REQUEST;
 
@@ -57,26 +57,26 @@ $(document).ready(function() {
     urlParameters.init();
     // Create a requestParameters for the current URL
     CURRENT_REQUEST = new requestParameters(window.location.search + window.location.hash);
-    
+
     // Add a listener in navbar to change caret image when mouse over 'li'
     var $deployLi = $( "#nav ul#bgee_links li" );
     $deployLi.on("mouseover", function() {
-    	// Change img
-    	$("img", this).attr('src', '/img/arrow_down_light.png');
+        // Change img
+        $("img", this).attr('src', '/img/arrow_down_light.png');
     });
     $deployLi.on( "mouseout", function() {
-    	// Change img
-    	$("img", this).attr('src', '/img/arrow_down_dark.png');
+        // Change img
+        $("img", this).attr('src', '/img/arrow_down_dark.png');
     });
-    
+
     // Add external_link class automatically to each 'a[target=_blank]' element without 'img' inside.
     $( "#sib_body a[target=_blank]:not(:has(img))" ).each(function() {
-    	$( this ).addClass("external_link");
+        $( this ).addClass("external_link");
     });
 
     // Check cookie for privacy notice banner
     checkCookie();
-    
+
     // Copy to clipboard
     // Grab any text in the attribute 'data-copy' and pass it to the copy function
     $('.js-tooltip').tooltip();
@@ -90,10 +90,10 @@ var noticeVersion = 1; // Update this integer if privacy notice updated and need
 function checkCookie() {
     var urlPrivacyPolicy = new requestParameters();
     urlPrivacyPolicy.addValue(urlParameters.getParamPage(), urlPrivacyPolicy.PAGE_PRIVACY_POLICY());
-    
-    var cookieName = "bgee-privacy-policy";
+
+    var cookieName = "__Host-bgee-privacy-policy";
     var isPrivacyChecked = getCookie(cookieName);
-    
+
     var toDisplay = true;
     if (isPrivacyChecked === "") {
         // Unseen notice

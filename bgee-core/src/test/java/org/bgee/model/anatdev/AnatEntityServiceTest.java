@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,10 +126,8 @@ public class AnatEntityServiceTest extends TestAncestor {
         AnatEntityDAO dao = mock(AnatEntityDAO.class);
         when(managerMock.getAnatEntityDAO()).thenReturn(dao);
         List<AnatEntityTO> anatEntityTOs = Arrays.asList(
-                new AnatEntityTO("UBERON:0001687", "stapes bone",
-                        "stapes bone description", "Stage_id1", "Stage_id2", false),
-                new AnatEntityTO("UBERON:0011606", "hyomandibular bone", 
-                        "hyomandibular bone description", "Stage_id1", "Stage_id2", false));
+                new AnatEntityTO("UBERON:0001687", null, null, null, null, null),
+                new AnatEntityTO("UBERON:0011606", null, null, null, null, null));
 
         // Filter on species IDs is not tested here (tested in AnatEntityDAO)
         // but we need a variable to mock DAO answer
@@ -137,12 +136,14 @@ public class AnatEntityServiceTest extends TestAncestor {
 
         AnatEntityTOResultSet mockAnatEntRs1 = 
                 getMockResultSet(AnatEntityTOResultSet.class, anatEntityTOs);
-        when(dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds)).thenReturn(mockAnatEntRs1);
+        when(dao.getNonInformativeAnatEntitiesBySpeciesIds(speciesIds,
+                EnumSet.of(AnatEntityDAO.Attribute.ID)))
+        .thenReturn(mockAnatEntRs1);
         
         // Test without defined level
         List<AnatEntity> expectedAnatEntity = Arrays.asList(
-                new AnatEntity("UBERON:0001687",  "stapes bone",  "stapes bone description"), 
-                new AnatEntity("UBERON:0011606", "hyomandibular bone", "hyomandibular bone description"));
+                new AnatEntity("UBERON:0001687",  null, null), 
+                new AnatEntity("UBERON:0011606", null, null));
         AnatEntityService service = new AnatEntityService(serviceFactory);
         assertEquals("Incorrect anat. entities", expectedAnatEntity,
                 service.loadNonInformativeAnatEntitiesBySpeciesIds(speciesIds).collect(Collectors.toList()));

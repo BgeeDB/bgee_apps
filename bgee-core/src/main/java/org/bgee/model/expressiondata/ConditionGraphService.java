@@ -15,6 +15,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.RelationType;
@@ -137,43 +138,84 @@ public class ConditionGraphService extends CommonService {
     }
 
     /**
-     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s existing in a species.
-     * 
-     * @param speciesId             An {@code int} that is the ID of a species for which
-     *                              the {@code ConditionGraph} should be loaded.
-     * @param condParameters        A {@code Collection} of {@code CallService.Attribute}s
-     *                              that are condition parameters (
-     *                              {@link CallService.Attribute#isConditionParameter()} returns {@code true}
-     *                              for all of them), specifying the parameters
-     *                              of the {@code Condition}s that should be loaded.
-     * @return                      A {@code ConditionGraph} for the requested species.
-     * @throws IllegalArgumentException If {@code speciesId} is less than or equal to 0, or if
-     *                                  {@code condParameters} is {@code null}, empty, or contains
+     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s for requested species
+     * and {@code ConditionFilter}s, populated with the requested condition parameter attributes.
+     *
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                          for which the {@code ConditionGraph} should be loaded.
+     *                          Can be {@code null} or empty to request for all species in Bgee.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s allowing
+     *                          to parameterize the retrieval of {@code Condition}s
+     * @param condParameters    A {@code Collection} of {@code CallService.Attribute}s
+     *                          that are condition parameters (
+     *                          {@link CallService.Attribute#isConditionParameter()} returns {@code true}
+     *                          for all of them), specifying the parameters
+     *                          of the {@code Condition}s that should be loaded.
+     * @return                  A {@code ConditionGraph} for the requested species.
+     * @throws IllegalArgumentException If some species IDs are not recognized,
+     *                                  or if {@code condParameters} contains
      *                                  {@code CallService.Attribute}s that are not condition parameters.
+     * @see #loadConditionGraph(Collection, Collection, Collection)
      */
-    public ConditionGraph loadConditionGraph(int speciesId, Collection<CallService.Attribute> condParameters)
-            throws IllegalArgumentException {
-        log.traceEntry("{}, {}", speciesId, condParameters);
-        if (speciesId <= 0) {
-            throw log.throwing(new IllegalArgumentException("A speciesId must be provided."));
-        }
-        if (condParameters == null || condParameters.isEmpty() ||
-                condParameters.stream().anyMatch(a -> !a.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException("Condition parameters must be provided."));
-        }
+    public ConditionGraph loadConditionGraphFromSpeciesIds(Collection<Integer> speciesIds,
+            Collection<ConditionFilter> conditionFilters,
+            Collection<CallService.Attribute> condParameters) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", speciesIds, conditionFilters, condParameters);
 
+        Set<Integer> speciesIdSet = speciesIds != null? new HashSet<>(speciesIds): new HashSet<>();
         Set<Species> species = this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
-                Collections.singleton(speciesId), false);
-        if (species.isEmpty()) {
+                speciesIds, false);
+        if (!speciesIdSet.isEmpty() && speciesIdSet.size() != species.size()) {
+            Set<Integer> foundSpeciesIds = species.stream().map(s -> s.getId()).collect(Collectors.toSet());
+            Set<Integer> unrecognizedSpeciesIds = speciesIdSet.stream()
+                    .filter(id -> !foundSpeciesIds.contains(id))
+                    .collect(Collectors.toSet());
             throw log.throwing(new IllegalArgumentException(
-                    "The provided speciesId does not correspond to any species in the data source: " + speciesId));
+                    "These species IDs does not correspond to any species in the data source: "
+                    + unrecognizedSpeciesIds));
         }
+        return log.traceExit(this.loadConditionGraph(species, conditionFilters, condParameters));
+    }
+    /**
+     * Load a {@code ConditionGraph} by retrieving all {@code Condition}s for requested species
+     * and {@code ConditionFilter}s, populated with the requested condition parameter attributes.
+     *
+     * @param speciesIds        A {@code Collection} of {@code Species} that are the species
+     *                          for which the {@code ConditionGraph} should be loaded.
+     *                          Can be {@code null} or empty to request for all species in Bgee.
+     * @param conditionFilters  A {@code Collection} of {@code ConditionFilter}s allowing
+     *                          to parameterize the retrieval of {@code Condition}s
+     * @param condParameters    A {@code Collection} of {@code CallService.Attribute}s
+     *                          that are condition parameters (
+     *                          {@link CallService.Attribute#isConditionParameter()} returns {@code true}
+     *                          for all of them), specifying the parameters
+     *                          of the {@code Condition}s that should be loaded.
+     * @return                  A {@code ConditionGraph} for the requested species.
+     * @throws IllegalArgumentException If some species IDs are not recognized,
+     *                                  or if {@code condParameters} contains
+     *                                  {@code CallService.Attribute}s that are not condition parameters.
+     * @see #loadConditionGraph(Collection, Collection, Collection)
+     */
+    public ConditionGraph loadConditionGraph(Collection<Species> species,
+            Collection<ConditionFilter> conditionFilters,
+            Collection<CallService.Attribute> condParameters) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", species, conditionFilters, condParameters);
+
+        if (condParameters != null && condParameters.stream().anyMatch(a -> !a.isConditionParameter())) {
+            throw log.throwing(new IllegalArgumentException("Only condition parameters must be provided."));
+        }
+        EnumSet<ConditionDAO.Attribute> daoCondParams = convertCondParamAttrsToCondDAOAttrs(
+                condParameters);
+        Set<Species> speciesSet = species == null || species.isEmpty()?
+                this.getServiceFactory().getSpeciesService().loadSpeciesByIds(
+                        null, false):
+                new HashSet<>(species);
 
         Set<Condition> conditions = new HashSet<>(
                 loadGlobalConditionMap(
-                    species,
-                    convertCondParamAttrsToCondDAOAttrs(condParameters),
-                    null,
+                    speciesSet,
+                    generateDAOConditionFilters(conditionFilters, daoCondParams),
+                    daoCondParams,
                     this.getDaoManager().getConditionDAO(),
                     this.getServiceFactory().getAnatEntityService(),
                     this.getServiceFactory().getDevStageService(),
@@ -181,8 +223,7 @@ public class ConditionGraphService extends CommonService {
                     this.getServiceFactory().getStrainService()
                 ).values());
 
-        return log.traceExit(this.loadConditionGraphFromMultipleArgs(conditions, false, false, null, null, 
-                null, null, null));
+        return log.traceExit(this.loadConditionGraph(conditions));
     }
 
     /**
@@ -227,6 +268,9 @@ public class ConditionGraphService extends CommonService {
         log.debug("Start creation of ConditionGraph");
         if (conditions == null || conditions.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some conditions must be provided."));
+        }
+        if (conditions.stream().anyMatch(c -> c == null)) {
+            throw log.throwing(new IllegalArgumentException("No condition can be null."));
         }
     
         Set<Condition> tempConditions = new HashSet<>(conditions);
@@ -284,6 +328,20 @@ public class ConditionGraphService extends CommonService {
         
         //TODO: test inference of descendant conditions
         if (inferAncestralConds || inferDescendantConds) {
+            //We don't want to propagate to non-informative anat. entities,
+            //except to the root of the anat. entities and the root of the cell types.
+            //Of note, non-informative anat. entities used in annotations are not retrieved
+            //by the method loadNonInformativeAnatEntitiesBySpeciesIds.
+            Set<AnatEntity> nonInformativeAnatEntities = this.getServiceFactory().getAnatEntityService()
+                    .loadNonInformativeAnatEntitiesBySpeciesIds(Collections.singleton(speciesId))
+                    .collect(Collectors.toSet());
+            AnatEntity rootAnatEntity = new AnatEntity(ConditionDAO.ANAT_ENTITY_ROOT_ID);
+            Set<AnatEntity> anatNonInformatives = new HashSet<>(nonInformativeAnatEntities);
+            anatNonInformatives.remove(rootAnatEntity);
+            AnatEntity rootCellType = new AnatEntity(ConditionDAO.CELL_TYPE_ROOT_ID);
+            Set<AnatEntity> cellTypeNonInformatives = new HashSet<>(nonInformativeAnatEntities);
+            cellTypeNonInformatives.remove(rootCellType);
+
             Set<Condition> newPropagatedConditions = tempConditions.stream().flatMap(cond -> {
                 Set<DevStage> propStages = new HashSet<>();
                 propStages.add(cond.getDevStage());
@@ -296,27 +354,34 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
-                Set<AnatEntity> propAnatEntitys = new HashSet<>();
-                propAnatEntitys.add(cond.getAnatEntity());
+                Set<AnatEntity> propAnatEntities = new HashSet<>();
                 if (anatEntityOntToUse != null && cond.getAnatEntityId() != null) {
                     if (inferAncestralConds) {
-                        propAnatEntitys.addAll(anatEntityOntToUse.getAncestors(cond.getAnatEntity()));
+                        propAnatEntities.addAll(anatEntityOntToUse.getAncestors(cond.getAnatEntity()));
                     }
                     if (inferDescendantConds) {
-                        propAnatEntitys.addAll(anatEntityOntToUse.getDescendants(cond.getAnatEntity()));
+                        propAnatEntities.addAll(anatEntityOntToUse.getDescendants(cond.getAnatEntity()));
                     }
+                    //Remove terms we don't want to propagate to
+                    propAnatEntities.removeAll(anatNonInformatives);
                 }
+                //to make sure we don't exclude the annotated term, we add it afterwards
+                propAnatEntities.add(cond.getAnatEntity());
                 
-                Set<AnatEntity> propCellTypes = new HashSet<>();
-                propCellTypes.add(cond.getCellType());
+                Set<AnatEntity> tempPropCellTypes = new HashSet<>();
                 if (cellTypeOntToUse != null && cond.getCellTypeId() != null) {
                     if (inferAncestralConds) {
-                        propCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
+                        tempPropCellTypes.addAll(cellTypeOntToUse.getAncestors(cond.getCellType()));
                     }
                     if (inferDescendantConds) {
-                        propCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
+                        tempPropCellTypes.addAll(cellTypeOntToUse.getDescendants(cond.getCellType()));
                     }
+                    //Remove terms we don't want to propagate to
+                    tempPropCellTypes.removeAll(cellTypeNonInformatives);
                 }
+                //to make sure we don't exclude the annotated term, we add it afterwards
+                tempPropCellTypes.add(cond.getCellType());
+                Set<AnatEntity> propCellTypes = tempPropCellTypes;
                 
                 Set<Sex> propSexes = new HashSet<>();
                 propSexes.add(cond.getSex());
@@ -340,7 +405,7 @@ public class ConditionGraphService extends CommonService {
                     }
                 }
                 
-                return propAnatEntitys.stream()
+                return propAnatEntities.stream()
                         .flatMap(propAnatEntity -> propStages.stream()
                                 .flatMap(propStage -> propCellTypes.stream()
                                         .flatMap( propCellType -> propSexes.stream()

@@ -2,19 +2,22 @@ package org.bgee.model.file;
 
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.TestAncestor;
+import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTOResultSet;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTOResultSet;
+import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToGroupOrderingAttribute;
 import org.bgee.model.file.DownloadFile.CategoryEnum;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +29,8 @@ import static org.mockito.Mockito.when;
  * 
  * @author Philippe Moret
  * @author Valentine Rech de Laval
- * @version Bgee 13, July 2016
+ * @author Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13
  */
 public class SpeciesDataGroupServiceTest extends TestAncestor {
@@ -77,12 +81,18 @@ public class SpeciesDataGroupServiceTest extends TestAncestor {
                 SpeciesDataGroupTOResultSet.class, Arrays.asList(to1,to2));
         SpeciesToDataGroupTOResultSet stdgResultSet = getMockResultSet(
                 SpeciesToDataGroupTOResultSet.class,Arrays.asList(mto1,mto2,mto3));
-        when(dao.getAllSpeciesToDataGroup(Matchers.anyObject())).thenReturn(stdgResultSet);
-        when(dao.getAllSpeciesDataGroup(Matchers.anyCollection(), Matchers.anyObject())).thenReturn(sdgResultSet);
+        LinkedHashMap<SpeciesToGroupOrderingAttribute, DAO.Direction> orderAttrs = new LinkedHashMap<>();
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DATA_GROUP_ID, DAO.Direction.ASC);
+        orderAttrs.put(SpeciesToGroupOrderingAttribute.DISTANCE_TO_SPECIES, DAO.Direction.ASC);
+        when(dao.getAllSpeciesToDataGroup(orderAttrs)).thenReturn(stdgResultSet);
+        LinkedHashMap<SpeciesDataGroupDAO.OrderingAttribute, DAO.Direction> orderAttrs2 = new LinkedHashMap<>();
+        orderAttrs2.put(SpeciesDataGroupDAO.OrderingAttribute.PREFERRED_ORDER, DAO.Direction.ASC);
+        when(dao.getAllSpeciesDataGroup(null, orderAttrs2)).thenReturn(sdgResultSet);
         when(managerMock.getSpeciesDataGroupDAO()).thenReturn(dao);
 
         when(speciesService.loadSpeciesInDataGroups(false)).thenReturn(species);
-        when(downloadFileService.getAllDownloadFiles()).thenReturn(downloadFiles);
+        when(downloadFileService.getDownloadFiles(EnumSet.allOf(DownloadFile.CategoryEnum.class)))
+        .thenReturn(downloadFiles);
 
 		//expected values
         Set<DownloadFile> groupFiles1 = new HashSet<>(Arrays.asList(df1,df2));

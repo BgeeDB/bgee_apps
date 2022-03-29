@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ import org.bgee.model.gene.Gene;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Sept. 2015
  * @param <T> The type of {@code SummaryCallType}.
  * @param <U> The type of {@code CallData}.
@@ -209,15 +210,18 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
          * </ol>
          *
-         * @param calls             A {@code Collection} of {@code ExpressionCall}s to be ordered
-         * @param conditionGraph    A {@code ConditionGraph} allowing to retrieve relations between {@code Condition}s
-         *                          of the {@code ExpressionCall}s. Can be {@code null} if the relations
-         *                          should not be considered for the ordering.
-         * @return                  A correctly sorted {@code List} of {@code ExpressionCall}s.
+         * @param calls                 A {@code Collection} of {@code ExpressionCall}s to be ordered
+         * @param conditionGraph        A {@code ConditionGraph} allowing to retrieve relations between
+         *                              {@code Condition}s of the {@code ExpressionCall}s. Can be {@code null}
+         *                              if the relations should not be considered for the ordering.
+         * @param descendingRankOrder   A {@code boolean} defining, when {@code true}, that the
+         *                              {@code ExpressionCall}s should be ordered in descending order
+         *                              of their rank.
+         * @return                      A correctly sorted {@code List} of {@code ExpressionCall}s.
          */
         public static List<ExpressionCall> filterAndOrderCallsByRank(
-                Collection<ExpressionCall> calls, final ConditionGraph conditionGraph) {
-            log.traceEntry("{}, {}", calls, conditionGraph);
+                Collection<ExpressionCall> calls, final ConditionGraph conditionGraph, boolean descendingRankOrder) {
+            log.traceEntry("{}, {}, {}", calls, conditionGraph, descendingRankOrder);
             if (calls == null) {
                 return log.traceExit((List<ExpressionCall>) null);
             }
@@ -229,6 +233,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             long startOrderingTimeInMs = System.currentTimeMillis();
 
             //First, we order by mean rank and gene IDs and species.
+
+            //In order to compare by rank in ascending or descending order
+            Comparator<Entry<BigDecimal, Gene>> rankComparator = Comparator.comparing(e -> e.getKey(),
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+            if (descendingRankOrder) {
+                rankComparator = rankComparator.reversed();
+            }
 
             //We want to order calls by their global mean rank, then by their gene.
             //For calls with equal rank and gene, we order them based on the relations between Conditions
@@ -249,18 +260,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                             c -> new AbstractMap.SimpleEntry<>(c.getMeanRank(), c.getGene())))
 
                     //Now, we order the grouped Map based on the rank of the calls first, then on their Gene
-                    .entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator
-                            //First, we compare the ranks (that are the keys in the Entry)
-                            //(the JVM cannot infer the generic types at the first call to 'comparing',
-                            //we set them explicitly)
-                            .<Map.Entry<BigDecimal, Gene>, BigDecimal>comparing(e -> e.getKey(),
-                                    Comparator.nullsLast(Comparator.naturalOrder()))
+                    .entrySet().stream().sorted(Map.Entry.comparingByKey(
+                            rankComparator
                             //Now, we compare the Genes (that are values in the Entry).
                             //First, we order by the species ID of the Gene, as in bgee 14, gene IDs are not unique
                             .thenComparing(e -> e.getValue() == null? null : e.getValue().getSpecies().getId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             //Now by their gene ID
-                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getEnsemblGeneId(),
+                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getGeneId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             ))
 
@@ -406,7 +413,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             log.traceEntry("{}, {}", calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using a ConditionGraph
-            return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
+            return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph, false),
                     conditionGraph));
             
         }
@@ -445,7 +452,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             
             Set<ExpressionCall> redundantCalls = new HashSet<>();
             Set<ExpressionCall> validatedCalls = new HashSet<>();
-            ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
                 //We cannot make sure that the List was ordered using a ConditionGraph,
                 //it would be too costly, but we perform a minimal check on ranks and conditions
@@ -457,16 +463,18 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     throw log.throwing(new IllegalArgumentException("Missing Condition for call: "
                             + call));
                 }
-                if (previousCall != null && 
-                        previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
-                    throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
-                }
+                //Actually now it is valid to have a list in descending order of the ranks,
+                //for NOT_EXPRESSED calls
+//                if (previousCall != null &&
+//                        previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
+//                    throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
+//                }
                 
                 //Retrieve the validated conditions for the currently iterated gene
                 Set<Condition> validatedCondition = validatedCalls.stream()
                         .filter(c -> Objects.equals(
-                            c.getGene() == null ? null: c.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId()))
+                            c.getGene() == null ? null: c.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId()))
                         //Filter by species as, in bgee 14, gene IDs are not unique
                         .filter(c -> Objects.equals(
                             c.getGene() == null ? null: c.getGene().getSpecies().getId(),
@@ -486,7 +494,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     log.trace("Redundant call: {}", call);
                     redundantCalls.add(call);
                 }
-                previousCall = call;
             }
             
             log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
@@ -517,7 +524,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
 
             //for the computations, we need a List sorted by rank, but we don't need to take 
             //relations between Conditions into account
-            return log.traceExit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null),
+            return log.traceExit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null, false),
                     method, distanceThreshold));
             
         }
@@ -561,8 +568,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                                 "Provided List incorrectly sorted"));
                     }
                     if (!Objects.equals(
-                            previousCall.getGene() == null ? null: previousCall.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId())) {
+                            previousCall.getGene() == null ? null: previousCall.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId())) {
                         throw log.throwing(new IllegalArgumentException(
                                 "A clustering can only be performed one gene at a time"));
                     }
@@ -874,12 +881,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
         private final ExpressionLevelInfo expressionLevelInfo;
 
-        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo) {
-            this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
-                    expressionLevelInfo, null);
+            this(gene, condition, dataPropagation, pValues, bestDescendantPValues,
+                    summaryCallType, summaryQual, callData, expressionLevelInfo, null);
         }
 
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -820,7 +821,7 @@ public class CommandTopAnat extends CommandParent {
 
         if (!idsMappingMultipleGenes.isEmpty()) {
             throw log.throwing(new InvalidRequestException(
-                    "At least one ID maps to severals Ensembl gene IDs: " + idsMappingMultipleGenes));
+                    "At least one ID maps to several gene IDs: " + idsMappingMultipleGenes));
         }
 
         // Identify IDs not in the selected species
@@ -984,7 +985,7 @@ public class CommandTopAnat extends CommandParent {
         // Data quality can be null if there is no filter to be applied
         SummaryQuality dataQuality = this.checkAndGetSummaryQuality();
         // Data types can be null if there is no filter to be applied
-        Set<DataType> dataTypes = this.checkAndGetDataTypes();
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
     
         // Dev. stages can be null if all selected species stages should be used
         final List<String> subDevStages = Collections.unmodifiableList(Optional.ofNullable(
@@ -1108,7 +1109,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs (Ensembl IDs)
+     * Clean the provided list of IDs converting cross-reference IDs into Bgee gene IDs
      * and removing gene IDs not in the selected species and the undetermined gene IDs.
      *
      * @param geneResponse  A {@code GeneListResponse} that is the gene list response
@@ -1137,7 +1138,7 @@ public class CommandTopAnat extends CommandParent {
     }
 
     /**
-     * Retrieve Bgee gene IDs (Ensembl IDs) from any ID list.
+     * Retrieve Bgee gene IDs from any ID list.
      *
      * @param ids   A {@code Collection} of {@code String}s that are the IDs to be converted in Bgee gene IDs.
      * @return      The {@code Set} of {@code String}s that are the Bgee gene IDs.
@@ -1150,7 +1151,7 @@ public class CommandTopAnat extends CommandParent {
                 serviceFactory.getGeneService().loadGenesByAnyId(
                         Optional.ofNullable(ids).orElse(new HashSet<>()), false)
                         .flatMap(m -> m.getValue().stream())
-                        .map(g -> g.getEnsemblGeneId())
+                        .map(g -> g.getGeneId())
                         .collect(Collectors.toSet())));
     }
 

@@ -1,6 +1,7 @@
 package org.bgee.model;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -28,25 +29,33 @@ import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
+import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO;
+import org.bgee.model.dao.api.source.SourceToSpeciesDAO.SourceToSpeciesTO.InfoType;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTO;
+import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneXRef;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
-import org.bgee.model.species.SpeciesService;
 
 /**
  * Parent class of several {@code Service}s needing to access common methods. 
@@ -189,7 +198,7 @@ public class CommonService extends Service {
         }
         if (geneTO.getGeneMappedToGeneIdCount() == null) {
             throw log.throwing(new IllegalArgumentException(
-                    "The number of genes with the same Ensembl gene ID must be provided."));
+                    "The number of genes with the same gene ID must be provided."));
         }
         if (geneBioType == null) {
             throw log.throwing(new IllegalArgumentException("A GeneBioType must be provided."));
@@ -262,30 +271,100 @@ public class CommonService extends Service {
             throw log.throwing(new IllegalStateException("Unsupported Condition.Sex: " + sex));
         }
     }
-    
+
+    protected Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesSourceInfo,
+            Map<Integer, Source> sourceMap) {
+        log.traceEntry("{}, {}, {}", speciesIds, withSpeciesSourceInfo, sourceMap);
+        return log.traceExit(this.loadSpecies(
+                ids -> this.getDaoManager().getSpeciesDAO().getSpeciesByIds(ids, null),
+                speciesIds, withSpeciesSourceInfo, sourceMap)
+                .stream().collect(Collectors.toMap(s -> s.getId(), s -> s)));
+    }
     /**
-     * Load a {@code Species} {@code Map} from the provided {@code GeneFilter}s, retrieved from the data source.
-     *
-     * @param geneFilters       A {@code Set} of {@code GeneFilter}s containing the IDs of the {@code Species} to load.
-     * @param speciesService    A {@code SpeciesService} to load {@code Species} from their IDs.
-     * @return                  An unmodifiable {@code Map} where keys are species IDs, the associated value being
-     *                          the corresponding {@code Species}.
-     * @throws IllegalArgumentException If a {@code Species} could not be retrieved based on a ID
-     *                                  provided in {@code geneFilter}s.
+     * @param daoCall           A {@code Function} accepting a {@code Set} of {@code Integer}s
+     *                          that are, in our case, IDs of species or of taxa, and returning
+     *                          a {@code SpeciesTOResultSet}, by calling, in our case, a method
+     *                          of {@code SpeciesDAO} to retrieve species either by species IDs
+     *                          or taxon IDs.
+     * @param speOrTaxIds
+     * @param withSpeciesSourceInfo
+     * @return
+     * @throws DAOException
+     * @throws QueryInterruptedException
      */
-    protected static Map<Integer, Species> loadSpeciesMapFromGeneFilters(Set<GeneFilter> geneFilters,
-            SpeciesService speciesService) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", geneFilters, speciesService);
-        // Retrieve species, get a map species ID -> Species
-        final Set<Integer> clnSpeIds =  Collections.unmodifiableSet(
-                geneFilters.stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet()));
-        final Map<Integer, Species> speciesMap = Collections.unmodifiableMap(
-                speciesService.loadSpeciesMap(clnSpeIds, false));
-        if (speciesMap.size() != clnSpeIds.size()) {
-            throw new IllegalArgumentException("Some provided species not found in data source");
+    protected Set<Species> loadSpecies(Function<Set<Integer>, SpeciesTOResultSet> daoCall,
+            Collection<Integer> speOrTaxIds, boolean withSpeciesSourceInfo,
+            Map<Integer, Source> sourceMap) throws DAOException, QueryInterruptedException {
+        log.traceEntry("{}, {}, {}, {}", daoCall, speOrTaxIds, withSpeciesSourceInfo, sourceMap);
+
+        Set<Integer> filteredIds = speOrTaxIds == null? new HashSet<>(): new HashSet<>(speOrTaxIds);
+        Set<SpeciesTO> speciesTOs = daoCall.apply(filteredIds).stream().collect(Collectors.toSet());
+        Set<Integer> sourceIds = new HashSet<>();
+        Set<Integer> speciesIds = new HashSet<>();
+        for (SpeciesTO speciesTO: speciesTOs) {
+            if (withSpeciesSourceInfo) {
+                sourceIds.add(speciesTO.getDataSourceId());
+            }
+            speciesIds.add(speciesTO.getId());
         }
-        return log.traceExit(speciesMap);
+
+        Set<SourceToSpeciesTO> sourceToSpeciesTOs = !withSpeciesSourceInfo? new HashSet<>():
+            getDaoManager().getSourceToSpeciesDAO()
+                .getSourceToSpecies(null, speciesIds, null, null, null)
+                .stream().collect(Collectors.toSet());
+        sourceIds.addAll(sourceToSpeciesTOs.stream()
+                .map(s -> s.getDataSourceId()).collect(Collectors.toSet()));
+
+        Map<Integer, Source> sourceMapToUse = sourceMap != null && !sourceMap.isEmpty()? sourceMap:
+            !sourceIds.isEmpty()? getServiceFactory().getSourceService().loadSourcesByIds(sourceIds):
+                new HashMap<>();
+
+        Set<Species> species = speciesTOs.stream().map(speciesTO -> {
+            Map<Source, Set<DataType>> forData = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sourceMapToUse, speciesTO.getId(), InfoType.DATA);
+            Map<Source, Set<DataType>> forAnnotation = getDataTypesByDataSource(
+                    sourceToSpeciesTOs, sourceMapToUse, speciesTO.getId(), InfoType.ANNOTATION);
+
+            return new Species(speciesTO.getId(), speciesTO.getName(), speciesTO.getDescription(),
+                    speciesTO.getGenus(), speciesTO.getSpeciesName(), speciesTO.getGenomeVersion(),
+                    //Genome source
+                    sourceMapToUse.get(speciesTO.getDataSourceId()),
+                    speciesTO.getGenomeSpeciesId(),
+                    speciesTO.getParentTaxonId(),
+                    forData, forAnnotation, speciesTO.getDisplayOrder());
+        }).collect(Collectors.toSet());
+
+        return log.traceExit(species);
+    }
+    /** 
+     * Retrieve data types by species from {@code SourceToSpeciesTO}.
+     * 
+     * @param sourceToSpeciesTOs    A {@code Collection} of {@code SourceToSpeciesTO}s that are sources 
+     *                              to species to be grouped.
+     * @param sources               A {@code List} of {@code Source}s that are sources to be grouped.
+     * @param infoType              An {@code InfoType} that is the information type for which
+     *                              to return data types by species.
+     * @return                      A {@code Map} where keys are {@code String}s corresponding to 
+     *                              species IDs, the associated values being a {@code Set} of 
+     *                              {@code DataType}s corresponding to data types of {@code infoType}
+     *                              data of the provided {@code sourceId}.
+     */
+    private Map<Source, Set<DataType>> getDataTypesByDataSource(
+            Collection<SourceToSpeciesTO> sourceToSpeciesTOs, Map<Integer, Source> sourceMap, 
+            Integer speciesId, InfoType infoType) {
+        log.traceEntry("{}, {}, {}, {}", sourceToSpeciesTOs, sourceMap, speciesId, infoType);
+
+        Map<Source, Set<DataType>> map = sourceToSpeciesTOs.stream()
+                .filter(to -> to.getInfoType().equals(infoType))
+                .filter(to -> to.getSpeciesId().equals(speciesId))
+                .collect(Collectors.toMap(
+                        to -> Optional.ofNullable(sourceMap.get(to.getDataSourceId()))
+                                      .orElseThrow(() -> new IllegalStateException(
+                                              "Could not find source with ID " + to.getDataSourceId())), 
+                        to -> new HashSet<DataType>(Arrays.asList(convertDaoDataTypeToDataType(
+                                to.getDataType()))), 
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+        return log.traceExit(map);
     }
 
     /**
@@ -302,13 +381,15 @@ public class CommonService extends Service {
      * @see #loadSpeciesMapFromGeneFilters(Set, SpeciesService)
      */
     protected static Map<Integer, Gene> loadGeneMapFromGeneFilters(Set<GeneFilter> geneFilters,
-            Map<Integer, Species> speciesMap, GeneDAO geneDAO) throws GeneNotFoundException {
+            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap, GeneDAO geneDAO)
+                    throws GeneNotFoundException {
         log.traceEntry("{}, {}, {}", geneFilters, speciesMap, geneDAO);
 
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
-        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(loadGeneBioTypeMap(geneDAO));
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getGeneIds())));
+        Map<Integer, GeneBioType> geneBioTypeMapToUse = geneBioTypeMap == null || geneBioTypeMap.isEmpty()?
+                loadGeneBioTypeMap(geneDAO): geneBioTypeMap;
 
         //Make the DAO query and map GeneTOs to Genes. Store them in a Map to keep the bgeeGeneIds.
         final Map<Integer, Gene> geneMap = Collections.unmodifiableMap(geneDAO
@@ -320,16 +401,16 @@ public class CommonService extends Service {
                                 Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing species ID for gene")),
                                 null, null,
-                                Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
+                                Optional.ofNullable(geneBioTypeMapToUse.get(gTO.getGeneBioTypeId()))
                                 .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))
                         )));
 
         //check that we get all specifically requested genes.
-        //First, build a Map Species ID -> Ensembl gene IDs for the retrieved genes.
+        //First, build a Map Species ID -> gene IDs for the retrieved genes.
         final Map<Integer, Set<String>> retrievedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneMap.values().stream()
                 .collect(Collectors.toMap(g -> g.getSpecies().getId(),
-                        g -> Stream.of(g.getEnsemblGeneId()).collect(Collectors.toSet()),
+                        g -> Stream.of(g.getGeneId()).collect(Collectors.toSet()),
                         (s1, s2) -> {s1.addAll(s2); return s1;})));
         //now, check that we found all requested genes.
         Map<Integer, Set<String>> notFoundSpeToGeneIdsMap = requestedSpeToGeneIdsMap.entrySet().stream()
@@ -347,7 +428,11 @@ public class CommonService extends Service {
                     if (e.getValue().equals(retrievedGeneIds)) {
                         return null;
                     }
-                    Set<String> offendingGeneIds = e.getValue().stream()
+                    Set<String> offendingGeneIds =
+                            //Maybe no gene at all were retrieved based on the GeneFilter
+                            retrievedGeneIds == null? new HashSet<>(e.getValue()):
+                            //Otherwise, find the missing genes
+                            e.getValue().stream()
                             .filter(id -> !retrievedGeneIds.contains(id))
                             .collect(Collectors.toSet());
                     return new AbstractMap.SimpleEntry<>(e.getKey(), offendingGeneIds);
@@ -399,16 +484,16 @@ public class CommonService extends Service {
         //from the GeneFilters we create a Map<speciesId, Set<geneId>> for requested genes
         final Map<Integer, Set<String>> requestedSpeToGeneIdsMap = Collections.unmodifiableMap(
                 geneFilters.stream()
-                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getEnsemblGeneIds())));
+                .collect(Collectors.toMap(gf -> gf.getSpeciesId(), gf -> gf.getGeneIds())));
 
         //now we retrieve the appropriate Bgee gene IDs
         Set<Integer> geneIdFilter = null;
-        if (geneFilters.stream().anyMatch(gf -> !gf.getEnsemblGeneIds().isEmpty())) {
+        if (geneFilters.stream().anyMatch(gf -> !gf.getGeneIds().isEmpty())) {
             geneIdFilter = geneMap.entrySet().stream()
                     .filter(entry -> {
                         Set<String> speReqGeneIds = requestedSpeToGeneIdsMap.get(entry.getValue().getSpecies().getId());
                         if (speReqGeneIds == null || speReqGeneIds.isEmpty()) return false;
-                        return speReqGeneIds.contains(entry.getValue().getEnsemblGeneId());
+                        return speReqGeneIds.contains(entry.getValue().getGeneId());
                     })
                     .map(entry -> entry.getKey())
                     .collect(Collectors.toSet());
@@ -417,7 +502,7 @@ public class CommonService extends Service {
         //Identify the species IDs for which no gene IDs were specifically requested.
         //It is needed to provide the species ID only if no specific genes are requested for that species.
         Set<Integer> speciesIds = geneFilters.stream()
-                .filter(gf -> gf.getEnsemblGeneIds().isEmpty())
+                .filter(gf -> gf.getGeneIds().isEmpty())
                 .map(gf -> gf.getSpeciesId())
                 .collect(Collectors.toSet());
 
@@ -430,7 +515,7 @@ public class CommonService extends Service {
         }
         return log.traceExit(genes.stream()
                 .collect(Collectors.groupingBy(g -> g.getSpecies().getId(),
-                        Collectors.mapping(g -> g.getEnsemblGeneId(), Collectors.toSet())))
+                        Collectors.mapping(g -> g.getGeneId(), Collectors.toSet())))
                 .entrySet().stream()
                 .map(e -> new GeneFilter(e.getKey(), e.getValue()))
                 .collect(Collectors.toSet()));
@@ -441,10 +526,8 @@ public class CommonService extends Service {
      * @param species               A {@code Collection} of {@code Species}s that are the species 
      *                              allowing to filter the conditions to retrieve. If {@code null}
      *                              or empty, condition for all species are retrieved.
-     * @param condParamCombination  A {@code Collection} of {@code ConditionDAO.Attribute}s defining
-     *                              the combination of condition parameters that were requested
-     *                              for queries, allowing to determine which condition and expression
-     *                              results to target.
+     * @param conditionFilters      A {@code Collection} of {@code DAOConditionFilter}s defining
+     *                              to determine which conditions to target.
      * @param conditionDAOAttrs     A {@code Collection} of {@code ConditionDAO.Attribute}s defining
      *                              the attributes to populate in the retrieved {@code ConditionTO}s,
      *                              and thus, in the returned {@code Condition}s.
@@ -463,17 +546,17 @@ public class CommonService extends Service {
      *                              the corresponding {@code Condition}.
      */
     protected static Map<Integer, Condition> loadGlobalConditionMap(Collection<Species> species,
-            Collection<ConditionDAO.Attribute> condParamCombination,
+            Collection<DAOConditionFilter> conditionFilters,
             Collection<ConditionDAO.Attribute> conditionDAOAttrs, ConditionDAO conditionDAO,
             AnatEntityService anatEntityService, DevStageService devStageService,
             SexService sexService, StrainService strainService) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", species, condParamCombination, conditionDAOAttrs, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", species, conditionFilters, conditionDAOAttrs, 
                 conditionDAO, anatEntityService, devStageService, sexService, strainService);
 
         return log.traceExit(loadConditionMapFromResultSet(
-                (attrs) -> conditionDAO.getGlobalConditionsBySpeciesIds(
+                (attrs) -> conditionDAO.getGlobalConditions(
                         species.stream().map(s -> s.getId()).collect(Collectors.toSet()),
-                        condParamCombination, attrs),
+                        conditionFilters, attrs),
                 conditionDAOAttrs, species, anatEntityService, devStageService, sexService,
                 strainService));
     }
@@ -599,28 +682,78 @@ public class CommonService extends Service {
                 );
     }
 
-    protected static Set<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
+    protected static EnumSet<ConditionDAO.Attribute> convertCondParamAttrsToCondDAOAttrs(
             Collection<CallService.Attribute> attrs) {
         log.traceEntry("{}", attrs);
         return log.traceExit(attrs.stream()
                 .filter(a -> a.isConditionParameter())
-                .map(a -> {
-                    switch (a) {
-                        case ANAT_ENTITY_ID:
-                            return ConditionDAO.Attribute.ANAT_ENTITY_ID;
-                        case DEV_STAGE_ID: 
-                            return ConditionDAO.Attribute.STAGE_ID;
-                        case CELL_TYPE_ID:
-                            return ConditionDAO.Attribute.CELL_TYPE_ID;
-                        case SEX_ID:
-                            return ConditionDAO.Attribute.SEX_ID;
-                        case STRAIN_ID: 
-                            return ConditionDAO.Attribute.STRAIN_ID; 
-                        default: 
-                            throw log.throwing(new UnsupportedOperationException(
-                                "Condition parameter not supported: " + a));
-                    }
-                }).collect(Collectors.toSet()));
+                .map(a -> convertCondParamAttrToCondDAOAttr(a))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
+    }
+    protected static ConditionDAO.Attribute convertCondParamAttrToCondDAOAttr(
+            CallService.Attribute attr) {
+        log.traceEntry("{}", attr);
+        switch (attr) {
+            case ANAT_ENTITY_ID:
+                return log.traceExit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
+            case DEV_STAGE_ID:
+                return log.traceExit(ConditionDAO.Attribute.STAGE_ID);
+            case CELL_TYPE_ID:
+                return log.traceExit(ConditionDAO.Attribute.CELL_TYPE_ID);
+            case SEX_ID:
+                return log.traceExit(ConditionDAO.Attribute.SEX_ID);
+            case STRAIN_ID:
+                return log.traceExit(ConditionDAO.Attribute.STRAIN_ID);
+            default:
+                throw log.throwing(new UnsupportedOperationException(
+                    "Condition parameter not supported: " + attr));
+        }
+    }
+    protected static Set<DAOConditionFilter> generateDAOConditionFilters(
+            Collection<ConditionFilter> condFilters, EnumSet<ConditionDAO.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}", condFilters, condParamCombination);
+        if (condFilters == null || condFilters.isEmpty()) {
+            DAOConditionFilter filter = generateDAOConditionFilter(null, condParamCombination);
+            if (filter == null) {
+                return log.traceExit(new HashSet<>());
+            }
+            return log.traceExit(new HashSet<>(Collections.singleton(filter)));
+        }
+        return log.traceExit(condFilters.stream()
+                .map(condFilter -> generateDAOConditionFilter(condFilter, condParamCombination))
+                .filter(f -> f != null)
+                .collect(Collectors.toSet()));
+    }
+    protected static DAOConditionFilter generateDAOConditionFilter(ConditionFilter condFilter,
+            EnumSet<ConditionDAO.Attribute> condParamCombination) {
+        log.traceEntry("{}, {}", condFilter, condParamCombination);
+
+        if (condFilter == null && condParamCombination.containsAll(
+                ConditionDAO.Attribute.getCondParams())) {
+            return log.traceExit((DAOConditionFilter) null);
+        }
+
+        DAOConditionFilter daoCondFilter = new DAOConditionFilter(
+                !condParamCombination.contains(ConditionDAO.Attribute.ANAT_ENTITY_ID)?
+                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
+                            condFilter != null? condFilter.getAnatEntityIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.STAGE_ID)?
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
+                            condFilter != null? condFilter.getDevStageIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.CELL_TYPE_ID)?
+                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
+                            condFilter != null? condFilter.getCellTypeIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.SEX_ID)?
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID):
+                            condFilter != null? condFilter.getSexIds(): null,
+                !condParamCombination.contains(ConditionDAO.Attribute.STRAIN_ID)?
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
+                            condFilter != null? condFilter.getStrainIds(): null,
+                condFilter != null?
+                        convertCondParamAttrsToCondDAOAttrs(condFilter.getObservedCondForParams()): null);
+        log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
+                condFilter, condParamCombination, daoCondFilter);
+        return log.traceExit(daoCondFilter);
     }
 
     protected static Strain mapRawDataStrainToStrain(String strain) {
@@ -636,9 +769,9 @@ public class CommonService extends Service {
                 .replace("(", "");
         String simplifiedStrain = replacement.apply(strain);
 
-        if (RawDataCondition.NO_INFO_STRAINS.stream().map(replacement)
+        if (RawDataConditionDAO.NO_INFO_STRAINS.stream().map(replacement)
                 .anyMatch(s -> s.equals(simplifiedStrain))) {
-            return log.traceExit(new Strain(Condition.STRAIN_ROOT_ID));
+            return log.traceExit(new Strain(ConditionDAO.STRAIN_ROOT_ID));
         }
         return log.traceExit(new Strain(strain));
     }

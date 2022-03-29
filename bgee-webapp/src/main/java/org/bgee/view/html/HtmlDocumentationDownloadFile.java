@@ -96,7 +96,7 @@ public abstract class HtmlDocumentationDownloadFile extends HtmlParentDisplay {
      */
     protected static String getGeneIdColDescription() {
         log.traceEntry();
-        return log.traceExit("<p>Unique identifier of gene from Ensembl. </p><p>" 
+        return log.traceExit("<p>Gene identifier. </p><p>" 
                 + HtmlDocumentationDisplay.getGenomeMappingExplanation() + "</p>");
     }
     /**

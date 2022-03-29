@@ -1,9 +1,13 @@
 package org.bgee.model.dao.api.expressiondata;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,6 +33,32 @@ import org.bgee.model.dao.api.exception.DAOException;
 public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
 
     /**
+     * A {@code String} that represents the ID the root of all anat. entities
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String ANAT_ENTITY_ROOT_ID = "BGEE:0000000";
+    /**
+     * A {@code String} that represents the ID the root of all dev. stages
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String DEV_STAGE_ROOT_ID = "UBERON:0000104";
+    /**
+     * A {@code String} that represents the ID the root of all cell types
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String CELL_TYPE_ROOT_ID = "GO:0005575";
+    /**
+     * A {@code String} that represents the root of all sexes
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String SEX_ROOT_ID = "any";
+    /**
+     * A {@code String} that represents the standardized name of the root of all strains
+     * used in {@code Condition}s in Bgee.
+     */
+    public final static String STRAIN_ROOT_ID = "wild-type";
+
+    /**
      * {@code Enum} used to define the attributes to populate in the {@code ConditionTO}s 
      * obtained from this {@code ConditionDAO}.
      * <ul>
@@ -44,28 +74,66 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
     //to be added when needed.
     public enum Attribute implements DAO.Attribute {
-        ID("id", false), 
-        SPECIES_ID("speciesId", false), 
-        ANAT_ENTITY_ID("anatEntityId", true), STAGE_ID("stageId", true),
-        CELL_TYPE_ID("cellTypeId", true), SEX_ID("sex", true), STRAIN_ID("strain", true);
+        ID("id", null, null, false),
+        SPECIES_ID("speciesId", null, null, false),
+        //The order of the condition parameters is important and is used to generate field names
+        ANAT_ENTITY_ID("anatEntityId", "AnatEntity", ANAT_ENTITY_ROOT_ID, true),
+        CELL_TYPE_ID("cellTypeId", "CellType", CELL_TYPE_ROOT_ID, true),
+        STAGE_ID("stageId", "Stage", DEV_STAGE_ROOT_ID, true),
+        SEX_ID("sex", "Sex", SEX_ROOT_ID, true),
+        STRAIN_ID("strain", "Strain", STRAIN_ROOT_ID, true);
 
+        public static final List<EnumSet<Attribute>> ALL_COND_PARAM_COMBINATIONS =
+                getAllPossibleCondParamCombinations();
+
+        private static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations() {
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, getCondParams());
+        }
+        public static final List<EnumSet<Attribute>> getAllPossibleCondParamCombinations(
+                Collection<Attribute> attrs) {
+            return DAO.getAllPossibleEnumCombinations(Attribute.class, attrs);
+        }
+
+        public static EnumSet<Attribute> getCondParams() {
+            return Arrays.stream(Attribute.values()).filter(a -> a.isConditionParameter())
+            .collect(Collectors.toCollection(() -> EnumSet.noneOf(Attribute.class)));
+        }
         /**
          * A {@code String} that is the corresponding field name in {@code ConditionTO} class.
          * @see {@link Attribute#getTOFieldName()}
          */
         private final String fieldName;
+        private final String fieldNamePart;
+        private final String rootId;
         /**
          * @see #isConditionParameter()
          */
         private final boolean conditionParameter;
         
-        private Attribute(String fieldName, boolean conditionParameter) {
+        private Attribute(String fieldName, String fieldNamePart, String rootId,
+                boolean conditionParameter) {
             this.fieldName = fieldName;
+            this.fieldNamePart = fieldNamePart;
+            this.rootId = rootId;
             this.conditionParameter = conditionParameter;
         }
         @Override
         public String getTOFieldName() {
             return this.fieldName;
+        }
+        /**
+         * @return  A {@code String} that is the substring used in field names
+         *          related to this {@code Attribute}.
+         */
+        public String getFieldNamePart() {
+            return this.fieldNamePart;
+        }
+        /**
+         * @return  A {@code String} that is the ID of the root of the ontology for the related
+         *          condition parameter, if {@link #isConditionParameter()} returns {@code true}.
+         */
+        public String getRootId() {
+            return this.rootId;
         }
         /**
          * @return  A {@code boolean} defining whether this attribute corresponds 
@@ -75,6 +143,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
          */
         public boolean isConditionParameter() {
             return this.conditionParameter;
+        }
+    }
+
+    public static class CondParamEnumSetComparator implements Comparator<EnumSet<Attribute>> {
+        @Override
+        public int compare(EnumSet<Attribute> e1, EnumSet<Attribute> e2) {
+            return DAO.compareEnumSets(e1, e2, Attribute.class);
         }
     }
     
@@ -94,14 +169,10 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species 
      *                              allowing to filter the conditions to retrieve. If {@code null}
      *                              or empty, condition for all species are retrieved.
-     * @param conditionParameters   A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                              condition parameters considered for aggregating the expression data
-     *                              (see {@link Attribute#isConditionParameter()}).
-     *                              It is different from {@code attributes}, because you might want 
-     *                              to retrieve, for instance, only anatomical entity IDs, 
-     *                              while your expression query was using a stage ID parameter for filtering, 
-     *                              and thus the data must have been aggregated by taking stages
-     *                              into account.
+     * @param conditionFilters      A {@code Collection} of {@code ConditionFilter}s to configure
+     *                              the filtering of conditions. If several {@code ConditionFilter}s
+     *                              are provided, they are seen as "OR" conditions.
+     *                              Can be {@code null} or empty.
      * @param attributes            A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
      *                              attributes to populate in the returned {@code ConditionTO}s.
      *                              If {@code null} or empty, all attributes are populated. 
@@ -113,8 +184,8 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      *                                  is not a condition parameter attributes (see 
      *                                  {@link Attribute#isConditionParameter()}). 
      */
-    public ConditionTOResultSet getGlobalConditionsBySpeciesIds(Collection<Integer> speciesIds,
-        Collection<Attribute> conditionParameters, Collection<Attribute> attributes) 
+    public ConditionTOResultSet getGlobalConditions(Collection<Integer> speciesIds,
+            Collection<DAOConditionFilter> conditionFilters, Collection<Attribute> attributes) 
             throws DAOException, IllegalArgumentException;
 
     /**
@@ -169,12 +240,6 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @param dataTypes                 A {@code Collection} of {@code DAODataType}s that are the data types
      *                                  to consider when retrieving the max ranks. If {@code null}
      *                                  or empty, all data types are considered.
-     * @param conditionParameters       A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
-     *                                  condition parameters considered for aggregating the expression data
-     *                                  (see {@link Attribute#isConditionParameter()}).
-     *                                  For instance, to retrieve max ranks over conditions considering
-     *                                  anatomical entities and dev. stages, or max ranks over conditions
-     *                                  considering only anatomical entities.
      * @return                          A {@code Map} where keys are {@code Integer}s representing IDs of species,
      *                                  the associated value being a {@code ConditionRankInfoTO} allowing to retrieve
      *                                  the max rank and global max rank over all conditions,
@@ -182,7 +247,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      * @throws DAOException             If an error occurred when accessing the data source.
      */
     public Map<Integer, ConditionRankInfoTO> getMaxRanks(Collection<Integer> speciesIds,
-            Collection<DAODataType> dataTypes, Collection<Attribute> conditionParameters) throws DAOException;
+            Collection<DAODataType> dataTypes) throws DAOException;
 
     /**
      * Insert into the datasource the provided global {@code ConditionTO}s. These global conditions

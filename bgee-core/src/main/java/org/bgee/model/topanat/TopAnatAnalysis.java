@@ -548,15 +548,37 @@ public class TopAnatAnalysis extends CommonService {
                 CALL_SERVICE_ATTRIBUTES.stream().filter(a -> a.isConditionParameter())
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
 
+        Condition realCondRoot = null;
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesNameFile)))) {
-            conditionGraph.getConditions().stream()
-                    .forEach(c -> out.println(COND_ID_GENERATOR.apply(c) + "\t"
-                            + COND_NAME_GENERATOR.apply(c).replaceAll("'", "")));
+            for (Condition c: conditionGraph.getConditions()) {
+                //We try to find the real root of the condition graph
+                //TODO: manage that better in ConditionGraph or Condition, e.g.,
+                //isRootCondition()
+                if ((c.getAnatEntity() == null ||
+                        c.getAnatEntity().getId().equals(ConditionDAO.ANAT_ENTITY_ROOT_ID)) &&
+                    (c.getCellType() == null ||
+                        c.getCellType().getId().equals(ConditionDAO.CELL_TYPE_ROOT_ID)) &&
+                    (c.getDevStage() == null ||
+                        c.getDevStage().getId().equals(ConditionDAO.DEV_STAGE_ROOT_ID)) &&
+                    (c.getSex() == null ||
+                        c.getSex().getId().equals(ConditionDAO.SEX_ROOT_ID)) &&
+                    (c.getStrain() == null ||
+                        c.getStrain().getId().equals(ConditionDAO.STRAIN_ROOT_ID))) {
+                    realCondRoot = c;
+                }
+                out.println(COND_ID_GENERATOR.apply(c) + "\t"
+                        + COND_NAME_GENERATOR.apply(c).replaceAll("'", ""));
+            }
             //We add a fake root, TopAnat doesn't manage multiple root.
             //Even if we have only one root in Bgee, since we can select only observed calls,
             //this can lead to have multiple roots.
-            out.println(FAKE_ROOT_COND_ID + "\t" + FAKE_ROOT_COND_NAME);
+            //We add the fake root if the real root is not present in the conds.
+            //XXX: shouldn't it always be, since we never delete this root condition,
+            //even if not observed?
+            if (realCondRoot == null) {
+                out.println(FAKE_ROOT_COND_ID + "\t" + FAKE_ROOT_COND_NAME);
+            }
         }
         
         //relations
@@ -584,7 +606,12 @@ public class TopAnatAnalysis extends CommonService {
             log.debug("Root(s) of the graph: {}", allConds);
             if (allConds.size() > 1) {
                 for (Condition root: allConds) {
-                    out.println(COND_ID_GENERATOR.apply(root) + '\t' + FAKE_ROOT_COND_ID);
+                    if (realCondRoot == null ||
+                            !COND_ID_GENERATOR.apply(root).equals(
+                                    COND_ID_GENERATOR.apply(realCondRoot))) {
+                        out.println(COND_ID_GENERATOR.apply(root) + '\t'
+                            + (realCondRoot != null? COND_ID_GENERATOR.apply(realCondRoot): FAKE_ROOT_COND_ID));
+                    }
                 }
             }
         }

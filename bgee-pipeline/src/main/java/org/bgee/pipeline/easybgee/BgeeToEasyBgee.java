@@ -42,6 +42,7 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.dao.api.source.SourceDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO.SpeciesTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -190,6 +191,33 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             {
                 put("ID", false);
                 put("NAME", false);
+                put("DESCRIPTION", true);
+            }
+        }), DATASOURCE_OUTPUT_FILE("datasource_easy_bgee.tsv", "dataSource", new LinkedHashMap<String, String>() {
+            {
+                put("ID", "dataSourceId");
+                put("NAME", "dataSourceName");
+                put("XREF_URL", "XRefUrl");
+                put("BASE_URL", "baseUrl");
+                put("RELEASE_VERSION", "releaseVersion");
+                put("DESCRIPTION", "dataSourceDescription");
+            }
+        }, new LinkedHashMap<String, Integer>() {
+            {
+                put("ID", Types.INTEGER);
+                put("NAME", Types.VARCHAR);
+                put("XREF_URL", Types.VARCHAR);
+                put("BASE_URL", Types.VARCHAR);
+                put("RELEASE_VERSION", Types.VARCHAR);
+                put("DESCRIPTION", Types.VARCHAR);
+            }
+        }, new LinkedHashMap<String, Boolean>() {
+            {
+                put("ID", false);
+                put("NAME", false);
+                put("XREF_URL", false);
+                put("BASE_URL", false);
+                put("RELEASE_VERSION", false);
                 put("DESCRIPTION", true);
             }
         }), GLOBALCOND_OUTPUT_FILE("global_cond_easy_bgee.tsv", "globalCond", new LinkedHashMap<String, String>() {
@@ -425,6 +453,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         Set<Integer> speciesIds = extractSpeciesTable(speciesTOs, directory);
         extractAnatEntityTable(directory);
         extractStageTable(directory);
+        extractDataSourceTable(directory);
         for (Integer speciesId : speciesIds) {
             log.info("start to extract genes, conditions and expressions data for species {}", speciesId);
             // Note: we can map ID to one Bgee gene ID because we use
@@ -645,6 +674,33 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
         writeOutputFile(file, allDevStagesInformation, header, processors);
         log.traceExit();
     }
+    
+    private void extractDataSourceTable(String directory) {
+        log.traceEntry("{}", directory);
+        log.info("Start extracting dataSources");
+        String[] header = new String[] { SourceDAO.Attribute.ID.name(), SourceDAO.Attribute.NAME.name(),
+                SourceDAO.Attribute.XREF_URL.name(), SourceDAO.Attribute.BASE_URL.name(),
+                SourceDAO.Attribute.RELEASE_VERSION.name(), SourceDAO.Attribute.DESCRIPTION.name()};
+        List<Map<String, String>> allDataSourcesInformation = daoManagerSupplier.get().getSourceDAO()
+                .getAllDataSources(Set.of(SourceDAO.Attribute.ID, SourceDAO.Attribute.NAME,
+                SourceDAO.Attribute.XREF_URL, SourceDAO.Attribute.BASE_URL,
+                SourceDAO.Attribute.RELEASE_VERSION, SourceDAO.Attribute.DESCRIPTION))
+                .getAllTOs().stream().map(source -> {
+                    Map<String, String> headerToValue = new HashMap<>();
+                    headerToValue.put(SourceDAO.Attribute.ID.name(), String.valueOf(source.getId()));
+                    headerToValue.put(SourceDAO.Attribute.NAME.name(), source.getName());
+                    headerToValue.put(SourceDAO.Attribute.XREF_URL.name(), source.getXRefUrl());
+                    headerToValue.put(SourceDAO.Attribute.BASE_URL.name(), String.valueOf(source.getXRefUrl()));
+                    headerToValue.put(SourceDAO.Attribute.RELEASE_VERSION.name(), source.getReleaseVersion());
+                    headerToValue.put(SourceDAO.Attribute.DESCRIPTION.name(), String.valueOf(source.getDescription()));
+                    return headerToValue;
+                }).collect(Collectors.toList());
+        // use TsvFile Enum to generate the CellProcessor
+        final CellProcessor[] processors = createCellProcessor(TsvFile.DATASOURCE_OUTPUT_FILE);
+        File file = new File(directory, TsvFile.DATASOURCE_OUTPUT_FILE.getFileName());
+        writeOutputFile(file, allDataSourcesInformation, header, processors);
+        log.traceExit();
+    }
 
     private Map<Condition, String> extractGlobalCondTable(Integer speciesId, String directory) {
         log.traceEntry("{}, {}", speciesId, directory);
@@ -837,17 +893,15 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
     private Map<Condition, String> createCondToConditionIdMap(List<ConditionTO> conditionTOs) {
         log.traceEntry("{}", conditionTOs);
         return log
-                .traceExit(conditionTOs.stream()
-                        .collect(
-                                Collectors.toMap(
-
-                                        p -> new Condition(new AnatEntity(p.getAnatEntityId()),
-                                                p.getStageId() == null ? null : new DevStage(p.getStageId()),
-                                                p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
-                                                p.getSex() == null ? null : new Sex(p.getSex().getStringRepresentation()),
-                                                p.getStrainId() == null ? null : new Strain(p.getStrainId()),
-                                                        new Species(p.getSpeciesId())),
-                                        p -> String.valueOf(p.getId()))));
+            .traceExit(conditionTOs.stream()
+                .collect(Collectors.toMap(
+                    p -> new Condition(new AnatEntity(p.getAnatEntityId()),
+                    p.getStageId() == null ? null : new DevStage(p.getStageId()),
+                    p.getCellTypeId() == null ? null : new AnatEntity(p.getCellTypeId()),
+                    p.getSex() == null ? null : new Sex(p.getSex().getStringRepresentation()),
+                    p.getStrainId() == null ? null : new Strain(p.getStrainId()),
+                        new Species(p.getSpeciesId())),
+                    p -> String.valueOf(p.getId()))));
     }
 
     /**

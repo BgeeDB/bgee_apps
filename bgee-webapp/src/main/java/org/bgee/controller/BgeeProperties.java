@@ -109,6 +109,23 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
 
     /**
      * A {@code String} that is the key to access to the System property that is read at the
+     * initialization of {@code BgeeProperties} to set the frontend url (e.g., 'https://bgee.org/').
+     *
+     * @see #FRONTEND_URL_DEFAULT
+     * @see #getFrontendUrl()
+     */
+    public final static String FRONTEND_URL_KEY = "org.bgee.webapp.frontendUrl";
+
+    /**
+     * A {@code String} that is the default value of the bgee url.
+     *
+     * @see #FRONTEND_URL_KEY
+     * @see #getFrontendUrl()
+     */
+    public final static String FRONTEND_URL_DEFAULT = null;
+
+    /**
+     * A {@code String} that is the key to access to the System property that is read at the
      * initialization of {@code BgeeProperties} to set the SPARQL current url (e.g., 'https://bgee.org/sparql').
      *
      * @see #SPARQL_CURRENT_URL_KEY
@@ -766,6 +783,12 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     private final String bgeeStableRootDirectory;
     
     /**
+     * A {@code String} that defines the stable URL of bgee frontend,
+     * for instance, "https://bgee.org/".
+     */
+    private final String frontendUrl;
+
+    /**
      * A {@code String} that defines the current SPARQL endpoint URL,
      * for instance, "http://bgee.org/sparql".
      */
@@ -991,6 +1014,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 BGEE_ROOT_DIRECTORY_KEY, BGEE_ROOT_DIRECTORY_DEFAULT);
         bgeeStableRootDirectory = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_STABLE_ROOT_DIRECTORY_KEY, BGEE_STABLE_ROOT_DIRECTORY_DEFAULT);
+        frontendUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                FRONTEND_URL_KEY, FRONTEND_URL_DEFAULT);
         sparqlCurrentUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 SPARQL_CURRENT_URL_KEY, SPARQL_CURRENT_URL_DEFAULT);
         sparqlStableUrl = getStringOption(prop, SYS_PROPS, FILE_PROPS,
@@ -1122,6 +1147,16 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public String getBgeeStableRootDirectory() {
         return bgeeStableRootDirectory;
+    }
+
+    /**
+     * @return  A {@code String} that is the default value of frontend url.
+     *
+     * @see #FRONTEND_URL_KEY
+     * @see #FRONTEND_URL_DEFAULT
+     */
+    public String getFrontendUrl() {
+        return frontendUrl;
     }
 
     /**

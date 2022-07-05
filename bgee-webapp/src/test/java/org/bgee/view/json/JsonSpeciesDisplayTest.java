@@ -41,9 +41,9 @@ public class JsonSpeciesDisplayTest extends TestAncestor {
     public void shouldSendSpeciesReponse() throws IllegalArgumentException, IOException {
 
         List<Species> species = Arrays.asList(
-                new Species(10090, "mouse", null, "Mus", "musculus", "version1", new Source(1),
+                new Species(10090, "mouse", null, "Mus", "musculus", "version1", "assembly1", new Source(1),
                         null, null, null, null, null),
-                new Species(9606, "human", "human desc", "Homo", "sapiens", "hs1", new Source(1),
+                new Species(9606, "human", "human desc", "Homo", "sapiens", "hs1", "assemblyHs1", new Source(1),
                         null, null, null, null, null));
         
         BgeeProperties props = mock(BgeeProperties.class);

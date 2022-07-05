@@ -83,7 +83,7 @@ public class CommandRawData extends CommandParent {
 //        Stream<AffymetrixProbeset> affymetrixProbesets = rawDataLoader.loadAffymetrixProbesets();
         Stream<AffymetrixProbeset> affymetrixProbesets = null;
         
-        Species sp = new Species(9096, "human", "description", "Homo", "sapiens", null, null,
+        Species sp = new Species(9096, "human", "description", "Homo", "sapiens", null, null, null,
                 null, null, null, null, null);
         Gene gene = new Gene("ENSG00000116062", sp, new GeneBioType("protein_coding"));
 

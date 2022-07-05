@@ -741,9 +741,9 @@ public class OntologyServiceTest extends TestAncestor {
     public void shouldGetTaxonOntologyLeadingToSpecies() {
         OntologyService service = new OntologyService(serviceFactory);
 
-        Species spe1 = new Species(1, "sp1", "sp1Desc", "genus1", "spName1", "version1", new Source(1),
+        Species spe1 = new Species(1, "sp1", "sp1Desc", "genus1", "spName1", "version1", "assembly1", new Source(1),
                 0, TAXA.get(2).getId(), null, null, 1);
-        Species spe2 = new Species(2, "sp2", "sp2Desc", "genus2", "spName2", "version2", new Source(1),
+        Species spe2 = new Species(2, "sp2", "sp2Desc", "genus2", "spName2", "version2", "assembly2", new Source(1),
                 0, TAXA.get(3).getId(), null, null, 2);
         when(speciesService.loadSpeciesByIds(new HashSet<>(Arrays.asList(spe1.getId(), spe2.getId())), false))
         .thenReturn(new HashSet<>(Arrays.asList(spe1, spe2)));

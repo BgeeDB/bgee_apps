@@ -101,27 +101,27 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreSpeciesTOEqual() {
         SpeciesTO to1 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         SpeciesTO to2 = new SpeciesTO(1, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
 
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
 
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new SpeciesTO(2, "name1", "genus1", "species1", 1,
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new SpeciesTO(1, "name1", "genus1", "species1", 2, 
-                1, "path1", "version1", 2, 1);
+                1, "path1", "version1", "assemblyXref", 2, 1);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertFalse(TOComparator.areTOsEqual(to1, to2, false));
     }

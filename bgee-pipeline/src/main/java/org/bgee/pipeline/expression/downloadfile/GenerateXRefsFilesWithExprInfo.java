@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallService;
@@ -167,7 +168,6 @@ public class GenerateXRefsFilesWithExprInfo {
         //TODO for now all genes of a species are retrieved even if this species is only used
         // for Uniprot Xrefs. We should filter based on uniprotXrefByGeneIdBySpeciesId for
         // species only used to generate UniPort XRefs
-
         // Create geneFilters used to retrieve all required genes
         Set<GeneFilter> geneFiltersToLoadGenes = speciesIds.stream()
                 .map(sp -> new GeneFilter(sp))
@@ -325,6 +325,18 @@ public class GenerateXRefsFilesWithExprInfo {
         // Need to make it a synchronized sorted map in order to make it thread safe.
         SortedMap<XrefsFileType, Map<String, List<String>>> xrefsLinesByFileTypeByGene = new TreeMap<>();
         Map<XrefsFileType, Map<String, List<String>>> syncMap = Collections.synchronizedSortedMap(xrefsLinesByFileTypeByGene);
+
+        //generate frontend URL
+        BgeeProperties props = BgeeProperties.getBgeeProperties(System.getProperties());
+        String majorBgeeVersion = props.getMajorVersion();
+        String minorBgeeVersion = props.getMinorVersion();
+        if (minorBgeeVersion == null || majorBgeeVersion == null) {
+            throw log.throwing(new IllegalArgumentException("majorVersion and minorVersion can not be null. Add"
+                    + " VM arguments -Dorg.bgee.core.version.minor and -Dorg.bgee.core.version.major"));
+        }
+        String bgeeURL = new StringBuilder("https://bgee.org/bgee").append(majorBgeeVersion)
+                .append("_").append(minorBgeeVersion).append("/gene/").toString();
+
         //retrieve expression information for each xref (unique geneId, speciesId, uniprotId)
             geneFilters.parallelStream().forEach(gf -> {
     
@@ -373,7 +385,7 @@ public class GenerateXRefsFilesWithExprInfo {
                                     XrefsFileType.UNIPROT.getSpeciesIds() == null || 
                                     XrefsFileType.UNIPROT.getSpeciesIds().isEmpty())) {
                         syncMap.computeIfAbsent(XrefsFileType.GENE_CARDS, k -> createNewSynchronizedSortedMap())
-                        .putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity));
+                        .putAll(generateXrefLineGeneCards(geneId, callsByAnatEntity, bgeeURL));
                     }
                     if(requestedXrefFileTypes.contains(XrefsFileType.WIKIDATA)
                             && (XrefsFileType.WIKIDATA.getSpeciesIds().contains(speciesId) ||
@@ -457,10 +469,10 @@ public class GenerateXRefsFilesWithExprInfo {
      *                              text as value
      */
     private Map<String, List<String>> generateXrefLineGeneCards(String geneId, 
-            List<ExpressionCall> callsByAnatEntity) {
+            List<ExpressionCall> callsByAnatEntity, String bgeeURL) {
 
         String geneCardsURL = "https://www.genecards.org/cgi-bin/carddisp.pl?gene=";
-        String bgeeURL = "https://bgee.org/gene/";
+
         // Create String representation of the XRef with expression information
         StringBuilder sb = new StringBuilder(geneId);
         int numberAnatEntityToWrite = XrefsFileType.GENE_CARDS.getNumberOfAnatEntitiesToWrite();

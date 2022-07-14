@@ -1,6 +1,5 @@
 package org.bgee.controller;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -20,12 +19,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -489,18 +485,10 @@ public class CommandGene extends CommandParent {
         log.traceEntry("{}, {}, {}", geneId, speciesId, homologsService);
 
         // Load homology information. As we decided to only show in species paralogs in the gene
-        // page, we do not use same filters to retrieve orthologs and paralogs. That is why we
-        // first create one GeneHomologs object containing only paralogs and one GeneHomologs
-        // object containing only orthologs.
-        // TODO: improve that, because as a result, the main gene is requested twice,
-        // data sources are requested twice, etc.
+        // page, we do not use same filters to retrieve orthologs and paralogs.
         try {
-            GeneHomologs geneOrthologs = homologsService.getGeneHomologs(geneId, speciesId, true, false);
-            GeneHomologs geneParalogs = homologsService.getGeneHomologs(geneId, speciesId,
-                    Collections.singleton(speciesId), null, true, false, true);
-            // generate one unique GeneHomologs object containing both paralogs and orthologs
-            // retrieved using different filters
-            return log.traceExit(GeneHomologs.mergeGeneHomologs(geneOrthologs, geneParalogs));
+            return log.traceExit(homologsService.getGeneHomologs(geneId, speciesId, null,
+                    Collections.singleton(speciesId), null, null, true, true, true, true));
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             log.catching(e);
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId

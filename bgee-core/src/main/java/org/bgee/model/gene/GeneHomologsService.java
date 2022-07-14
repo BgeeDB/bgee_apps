@@ -173,6 +173,92 @@ public class GeneHomologsService extends CommonService{
             boolean withOrthologs, boolean withParalogs) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", geneFilters, homologsSpeciesIds, taxonId,
                 withDescendantTaxon, withOrthologs, withParalogs);
+        return log.traceExit(getGeneHomologs(geneFilters, homologsSpeciesIds, homologsSpeciesIds, taxonId,
+                taxonId, withDescendantTaxon, withDescendantTaxon, withOrthologs, withParalogs));
+    }
+
+    /**
+     * get homologous genes from one gene
+     * 
+     * @param geneId                        A {@code String} corresponding to the ID of the gene
+     *                                      homologs have to be retrieved.
+     * @param speciesId                     An {@code int} corresponding to the species ID of the gene
+     *                                      homologs have to be retrieved.
+     * @param orthologsSpeciesIds           A {@code Collection} of {@code Integer}s corresponding to the
+     *                                      species IDs for which orthologous genes have to be retrieved.
+     *                                      If null will retrieve orthologs of all species.
+     * @param paralogsSpeciesIds            A {@code Collection} of {@code Integer}s corresponding to the
+     *                                      species IDs for which paralogous genes have to be retrieved.
+     *                                      If null will retrieve paralogs of all species.
+     * @param orthologsTaxonId              An {code Integer} used to filter the taxon for which orthologs
+     *                                      have to be retrieved. If null, orthologs from all taxon will
+     *                                      be retrieved.
+     * @param paralogsTaxonId               An {code Integer} used to filter the taxon for which paralogs
+     *                                      have to be retrieved. If null, paralogs from all taxon will
+     *                                      be retrieved.
+     * @param orthologsWithDescendantTaxon  A {@code boolean} used only when taxonId is not null. Allows
+     *                                      to retrieve orthologs from the specified taxonId and all its
+     *                                      descendants.
+     * @param paralogsWithDescendantTaxon   A {@code boolean} used only when taxonId is not null. Allows
+     *                                      to retrieve paralogs from the specified taxonId and all its
+     *                                      descendants.
+     * @param withOrthologs                 A {@code boolean} defining if orthologous genes have to be
+     *                                      retrieved.
+     * @param withParalogs                  A {@code boolean} defining if paralogous genes have to be
+     *                                      retrieved.
+     * @return                              A {@code GeneHomologs} object containing requested homologs.
+     */
+    public GeneHomologs getGeneHomologs(String geneId, int speciesId,
+            Collection<Integer> orthologsSpeciesIds, Collection<Integer> paralogsSpeciesIds,
+            Integer orthologsTaxonId, Integer paralogsTaxonId, boolean orthologsWithDescendantTaxon,
+            boolean parallogsWithDescendantTaxon,  boolean withOrthologs, boolean withParalogs) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}", geneId, speciesId, orthologsSpeciesIds,
+                paralogsSpeciesIds, orthologsTaxonId, paralogsTaxonId, orthologsWithDescendantTaxon,
+                parallogsWithDescendantTaxon, withOrthologs, withParalogs);
+        GeneFilter geneFilter = new GeneFilter(speciesId, geneId);
+        Set<GeneHomologs> geneHomologs = getGeneHomologs(Collections.singleton(geneFilter), orthologsSpeciesIds,
+                paralogsSpeciesIds, orthologsTaxonId, paralogsTaxonId, orthologsWithDescendantTaxon,
+                parallogsWithDescendantTaxon, withOrthologs, withParalogs);
+        assert geneHomologs.size() == 1;
+        return log.traceExit(geneHomologs.iterator().next());
+    }
+
+    /**
+     * get homologous genes from a set of geneFilters
+     * 
+     * @param geneFilters                   A {@code Collection} of {@code GeneFilter}s used to filter the
+     *                                      {@code Gene}s for which homologs have to be retrieved.
+     * @param orthologsSpeciesIds           A {@code Collection} of {@code Integer}s corresponding to the
+     *                                      species IDs for which orthologous genes have to be retrieved.
+     *                                      If null will retrieve orthologs of all species.
+     * @param paralogsSpeciesIds            A {@code Collection} of {@code Integer}s corresponding to the
+     *                                      species IDs for which paralogous genes have to be retrieved.
+     *                                      If null will retrieve paralogs of all species.
+     * @param orthologsTaxonId              An {code Integer} used to filter the taxon for which orthologs
+     *                                      have to be retrieved. If null, orthologs from all taxon will
+     *                                      be retrieved.
+     * @param paralogsTaxonId               An {code Integer} used to filter the taxon for which paralogs
+     *                                      have to be retrieved. If null, paralogs from all taxon will
+     *                                      be retrieved.
+     * @param orthologsWithDescendantTaxon  A {@code boolean} used only when taxonId is not null. Allows
+     *                                      to retrieve orthologs from the specified taxonId and all its
+     *                                      descendants.
+     * @param paralogsWithDescendantTaxon   A {@code boolean} used only when taxonId is not null. Allows
+     *                                      to retrieve paralogs from the specified taxonId and all its
+     *                                      descendants.
+     * @param withOrthologs                 A {@code boolean} defining if orthologous genes have to be
+     *                                      retrieved.
+     * @param withParalogs                  A {@code boolean} defining if paralogous genes have to be
+     *                                      retrieved.
+     * @return                              A {@code GeneHomologs} object containing requested homologs.
+     */
+    public Set<GeneHomologs> getGeneHomologs(Collection<GeneFilter> geneFilters,
+            Collection<Integer> orthologsSpeciesIds, Collection<Integer> paralogsSpeciesIds,
+            Integer orthologsTaxonId, Integer paralogsTaxonId, boolean orthologsWithDescendantTaxon,
+            boolean parallogsWithDescendantTaxon,  boolean withOrthologs, boolean withParalogs) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", geneFilters, orthologsSpeciesIds,
+                paralogsSpeciesIds, orthologsTaxonId, paralogsTaxonId, orthologsWithDescendantTaxon,
+                parallogsWithDescendantTaxon, withOrthologs, withParalogs);
 
         if (geneFilters == null || geneFilters.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("GeneFilters must be provided"));
@@ -215,13 +301,13 @@ public class GeneHomologsService extends CommonService{
         Set<GeneHomologsTO> paralogsTOs = new HashSet<GeneHomologsDAO.GeneHomologsTO>();
         if (withOrthologs) {
             orthologsTOs = new HashSet<>(geneHomologsDAO.getOrthologousGenesAtTaxonLevel(
-                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
-                    .getAllTOs());
+                    genesByBgeeGeneId.keySet(), orthologsTaxonId, orthologsWithDescendantTaxon,
+                    orthologsSpeciesIds).getAllTOs());
         }
         if (withParalogs) {
             paralogsTOs = new HashSet<>(geneHomologsDAO.getParalogousGenesAtTaxonLevel(
-                    genesByBgeeGeneId.keySet(), taxonId, withDescendantTaxon, homologsSpeciesIds)
-                    .getAllTOs());
+                    genesByBgeeGeneId.keySet(), paralogsTaxonId, parallogsWithDescendantTaxon,
+                    paralogsSpeciesIds).getAllTOs());
         }
         
         // create Map with Taxon as key and Set of Gene as value and add them as value of a Map
@@ -242,6 +328,7 @@ public class GeneHomologsService extends CommonService{
         
         return log.traceExit(homologsGeneSet);
     }
+
     /**
      * We recreate separate OMA {@code Source}s for orthology and paralogy (in order to appropriately
      * replaced the {@link Source#HOMOLOGY_TYPE_TAG}) tag in {@link Source#getXRefUrl()}).

@@ -258,7 +258,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
                         put("BGEE_GENE_ID", "bgeeGeneId");
                         put("GLOBAL_CONDITION_ID", "globalConditionId");
                         put("SUMMARY_QUALITY", "summaryQuality");
-                        put("MEAN_RANK", "rank");
+                        put("MEAN_RANK", "globalRank");
                         put("MEAN_SCORE", "score");
                         put("FDR_PVALUE", "pValue");
                         put("ORIGIN", "propagationOrigin");

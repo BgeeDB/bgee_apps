@@ -26,7 +26,7 @@
  * library {@code log4jdbc-log4j2}, and the {@code PreparedStatement} pooling library 
  * {@code psp4jdbc}. It is maybe not needed to use the query cache {@code easycache4jdbc}. 
  * So the properties to provide should be something like: 
- * {@code java -Dbgee.dao.jdbc.driver.names=com.mysql.cj.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy,org.bgee.psp4jdbc.jdbcapi.Driver -Dbgee.dao.jdbc.url=jdbc:psp4jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_vXX?user=xxx&password=xxx}
+ * {@code java -Dbgee.dao.jdbc.driver.names=com.mysql.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy,org.bgee.psp4jdbc.jdbcapi.Driver -Dbgee.dao.jdbc.url=jdbc:psp4jdbc:log4jdbc:mysql://127.0.0.1:3306/bgee_vXX?user=xxx&password=xxx}
  * (note the "jdbc:psp4jdbc:log4jdbc:" fragment at the beginning of the connection URL, 
  * to properly load {@code psp4jdbc} and {@code log4jdbc-log4j2}).
  * You can also provide them in a property file put in the classpath, named 

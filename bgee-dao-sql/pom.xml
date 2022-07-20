@@ -17,7 +17,7 @@
 
         <!-- Define here the JDBC Driver class name and connection URL for 
             the sql-maven-plugin and for integration test classes. -->
-        <bgee.jdbc.driver.className>com.mysql.cj.jdbc.Driver</bgee.jdbc.driver.className>
+        <bgee.jdbc.driver.className>com.mysql.jdbc.Driver</bgee.jdbc.driver.className>
         <!-- Do not put the database name nor any query string parameters, 
             e.g., jdbc:mysql://[host][,failoverhost...][:port]/ -->
         <bgee.jdbc.connectionURL>jdbc:mysql://127.0.0.1/</bgee.jdbc.connectionURL>
@@ -258,7 +258,7 @@
                    <dependency>
                        <groupId>mysql</groupId>
                        <artifactId>mysql-connector-java</artifactId>
-                       <version>8.0.29</version>
+                       <version>5.1.38</version>
                    </dependency>
                </dependencies>
 

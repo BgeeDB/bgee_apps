@@ -130,7 +130,7 @@ public class MySQLDAOManagerTest extends TestAncestor
         props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         props.setProperty(MySQLDAOManager.RESOURCE_NAME_KEY, MockDataSource.DATASOURCENAME);
         props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
-                MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
+                MockDriver.class.getName() + "," + com.mysql.cj.jdbc.Driver.class.getName());
         props.setProperty(MySQLDAOManager.USER_KEY, "bgee.jdbc.username.test");
         props.setProperty(MySQLDAOManager.PASSWORD_KEY, "bgee.jdbc.password.test");
         props.setProperty(MySQLDAOManager.EXPR_PROPAGATION_GENE_COUNT_KEY, "20");
@@ -142,7 +142,7 @@ public class MySQLDAOManagerTest extends TestAncestor
         assertEquals("Incorrect DataSource name read", MockDataSource.DATASOURCENAME, 
                 manager.getDataSourceResourceName());
         assertEquals("Incorrect JDBC Driver names read", new HashSet<String>(
-                Arrays.asList(MockDriver.class.getName(), com.mysql.jdbc.Driver.class.getName())), 
+                Arrays.asList(MockDriver.class.getName(), com.mysql.cj.jdbc.Driver.class.getName())), 
                 manager.getJdbcDriverNames());
         assertEquals("Incorrect username name read", "bgee.jdbc.username.test", 
                 manager.getUser());
@@ -343,7 +343,7 @@ public class MySQLDAOManagerTest extends TestAncestor
         Properties props = new Properties();
         props.setProperty(MySQLDAOManager.JDBC_URL_KEY, MockDriver.MOCKURL);
         props.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
-                MockDriver.class.getName() + "," + com.mysql.jdbc.Driver.class.getName());
+                MockDriver.class.getName() + "," + com.mysql.cj.jdbc.Driver.class.getName());
         MySQLDAOManager manager = new MySQLDAOManager();
         manager.setParameters(props);
         
@@ -354,7 +354,7 @@ public class MySQLDAOManagerTest extends TestAncestor
             Driver nextDriver = drivers.nextElement();
             log.trace("Driver in DriverManager: {}", nextDriver);
             if (nextDriver.getClass().getName().equals(MockDriver.class.getName()) || 
-               nextDriver.getClass().getName().equals(com.mysql.jdbc.Driver.class.getName())) {
+               nextDriver.getClass().getName().equals(com.mysql.cj.jdbc.Driver.class.getName())) {
                 myDriversFound++;
             }
         }
@@ -368,7 +368,7 @@ public class MySQLDAOManagerTest extends TestAncestor
             Driver nextDriver = drivers.nextElement();
             log.trace("Driver in DriverManager: {}", nextDriver);
             if (nextDriver.getClass().getName().equals(MockDriver.class.getName()) || 
-               nextDriver.getClass().getName().equals(com.mysql.jdbc.Driver.class.getName())) {
+               nextDriver.getClass().getName().equals(com.mysql.cj.jdbc.Driver.class.getName())) {
                 myDriversFound++;
             }
         }

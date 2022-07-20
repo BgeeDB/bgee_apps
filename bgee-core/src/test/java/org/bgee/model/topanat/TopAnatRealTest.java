@@ -33,7 +33,7 @@ public class TopAnatRealTest extends TestAncestor {
         setProps.setProperty(MySQLDAOManager.USER_KEY, "username");
         setProps.setProperty(MySQLDAOManager.PASSWORD_KEY, "password");
         setProps.setProperty(MySQLDAOManager.JDBC_DRIVER_NAMES_KEY, 
-                "com.mysql.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy");
+                "com.mysql.cj.jdbc.Driver,net.sf.log4jdbc.sql.jdbcapi.DriverSpy");
         setProps.setProperty(MySQLDAOManager.JDBC_URL_KEY,
                 "jdbc:log4jdbc:mysql://localhost:3306/bgee_v13");
         

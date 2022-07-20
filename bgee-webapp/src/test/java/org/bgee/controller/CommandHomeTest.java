@@ -42,9 +42,9 @@ public class CommandHomeTest extends TestAncestor {
         SpeciesDataGroupService groupService = mock(SpeciesDataGroupService.class);
         when(serviceFac.getSpeciesDataGroupService()).thenReturn(groupService);
 
-        Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", new Source(1),
+        Species spe1 = new Species(9606, "human", null, "Homo", "sapiens", "hsap1", "assemblyHsap1", new Source(1),
                 0, 1234, null, null, 1);
-        Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", new Source(1),
+        Species spe2 = new Species(10090, "mouse", null, "Mus", "musculus", "mmus1", "assemblyMmus1", new Source(1),
                 0, 2322, null, null, 2);
 
         // We don't care about this set, it's not taken into account but to create a SpeciesDataGroup

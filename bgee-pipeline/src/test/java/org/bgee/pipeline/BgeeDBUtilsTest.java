@@ -138,9 +138,9 @@ public class BgeeDBUtilsTest extends TestAncestor {
         // We need a mock MySQLSpeciesTOResultSet to mock the return of getAllSpecies().
         SpeciesTOResultSet mockSpeciesTORs = this.createMockDAOResultSet(
                 Arrays.asList(
-                        new SpeciesTO(21, null, null, null, null, null, null, null, null, null),
-                        new SpeciesTO(11, null, null, null, null, null, null, null, null, null),
-                        new SpeciesTO(30, null, null, null, null, null, null, null, null, null)),
+                        new SpeciesTO(21, null, null, null, null, null, null, null, null, null, null),
+                        new SpeciesTO(11, null, null, null, null, null, null, null, null, null, null),
+                        new SpeciesTO(30, null, null, null, null, null, null, null, null, null, null)),
                 MySQLSpeciesTOResultSet.class);
         when(mockManager.mockSpeciesDAO.getAllSpecies(EnumSet.of(SpeciesDAO.Attribute.ID)))
         .thenReturn(mockSpeciesTORs);

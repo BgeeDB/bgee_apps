@@ -646,7 +646,7 @@
                                 <jsSourceFile>anat_sim.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_anat_sim.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
 
@@ -710,7 +710,7 @@
                                 <jsSourceFile>expr_comp.js</jsSourceFile>
                             </jsSourceFiles>
                             <jsFinalFile>script_expr_comp.js</jsFinalFile>
-                            <suffix>${filter.org.bgee.webapp.javascript.version.extension}</suffix>
+                            <suffix>.${filter.org.bgee.webapp.javascript.version.extension}</suffix>
                         </configuration>
                     </execution>
                 </executions>

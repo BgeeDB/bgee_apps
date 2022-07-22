@@ -31,6 +31,12 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
      *                                  of the anatomical entities to use.
      * @param devStageIds               A {@code Collection} of {@code String}s that are the IDs 
      *                                  of the developmental stages to use.
+     * @param cellTypeIds               A {@code Collection} of {@code String}s that are the IDs 
+     *                                  of the cell types to use.
+     * @param sexIds                    A {@code Collection} of {@code String}s that are the IDs 
+     *                                  of the sexes to use.
+     * @param strainIds                 A {@code Collection} of {@code String}s that are the IDs 
+     *                                  of the strains to use.
      * @param includeSubConditions      A {@code boolean} defining whether the sub-conditions
      *                                  of the targeted raw conditions, from which calls of presence
      *                                  of expression are propagated, should be retrieved.
@@ -40,12 +46,17 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public DAORawDataConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
+            Collection<String> cellTypeIds, Collection<String>  sexIds, Collection<String> strainIds, 
             boolean includeSubConditions, boolean includeParentConditions) {
-        super(anatEntityIds, devStageIds);
+        super(anatEntityIds, devStageIds, cellTypeIds, sexIds, strainIds);
         if ((anatEntityIds == null || anatEntityIds.isEmpty()) && 
-                (devStageIds == null || devStageIds.isEmpty())) {
+                (devStageIds == null || devStageIds.isEmpty()) &&
+                (cellTypeIds == null || cellTypeIds.isEmpty()) &&
+                (sexIds == null || sexIds.isEmpty()) &&
+                (strainIds == null || strainIds.isEmpty())) {
             throw log.throwing(new IllegalArgumentException(
-                    "Some anatatomical entity IDs or developmental stage IDs must be provided."));
+                    "Some anatatomical entity IDs, developmental stage IDs, cell type IDs, sex IDs "
+                    + "or strain IDs must be provided."));
         }
         this.includeSubConditions = includeSubConditions;
         this.includeParentConditions = includeParentConditions;
@@ -102,6 +113,9 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
         StringBuilder builder = new StringBuilder();
         builder.append("DAORawDataConditionFilter [anatEntityIds=").append(getAnatEntityIds())
                .append(", devStageIds=").append(getDevStageIds())
+               .append(", cellTypeIds=").append(getCellTypeIds())
+               .append(", sexIds=").append(getSexIds())
+               .append(", strainIds=").append(getStrainIds())
                .append(", includeSubConditions=").append(includeSubConditions)
                .append(", includeParentConditions=").append(includeParentConditions)
                .append("]");

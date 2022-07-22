@@ -34,7 +34,7 @@ import org.bgee.model.species.Taxon;
  * A {@code Service} for {@code AnatEntitySimilarity}.
  *
  * @author Frederic Bastian
- * @version Bgee 14 Mar. 2019
+ * @version Bgee 15, Dec. 2021
  * @since Bgee 14 Mar. 2019
  */
 public class AnatEntitySimilarityService extends Service {
@@ -62,7 +62,7 @@ public class AnatEntitySimilarityService extends Service {
      * @see #loadPositiveAnatEntitySimilarities(int, boolean, Collection)
      */
     public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted) {
-        log.entry(taxonId, onlyTrusted);
+        log.traceEntry("{}, {}", taxonId, onlyTrusted);
         return log.traceExit(this.loadPositiveAnatEntitySimilarities(taxonId, onlyTrusted, null));
     }
     /**
@@ -180,7 +180,7 @@ public class AnatEntitySimilarityService extends Service {
      */
     public Set<AnatEntitySimilarity> loadPositiveAnatEntitySimilarities(int taxonId, boolean onlyTrusted,
             Collection<Integer> speciesIdsForFiltering) {
-        log.entry(taxonId, onlyTrusted, speciesIdsForFiltering);
+        log.traceEntry("{}, {}, {}", taxonId, onlyTrusted, speciesIdsForFiltering);
         if (taxonId <= 0) {
             throw log.throwing(new IllegalArgumentException("Taxon ID must be stricly positive."));
         }
@@ -278,7 +278,7 @@ public class AnatEntitySimilarityService extends Service {
      */
     public Set<AnatEntitySimilarity> loadSimilarAnatEntities(Collection<Integer> speciesIds,
             Collection<String> anatEntityIds, boolean onlyTrusted) {
-        log.entry(speciesIds, anatEntityIds, onlyTrusted);
+        log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, onlyTrusted);
 
         Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
         Set<String> clonedAnatEntityIds = anatEntityIds == null? new HashSet<>(): new HashSet<>(anatEntityIds);
@@ -300,7 +300,7 @@ public class AnatEntitySimilarityService extends Service {
 
     public AnatEntitySimilarityAnalysis loadPositiveAnatEntitySimilarityAnalysis(Collection<Integer> speciesIds,
             Collection<String> anatEntityIds, boolean onlyTrusted) {
-        log.entry(speciesIds, anatEntityIds, onlyTrusted);
+        log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, onlyTrusted);
 
         Set<Integer> clonedSpeIds = speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds);
         Set<String> clonedAnatEntityIds = anatEntityIds == null? new HashSet<>(): new HashSet<>(anatEntityIds);
@@ -318,6 +318,7 @@ public class AnatEntitySimilarityService extends Service {
 
         //First, we find the common ancestor of the requested species
         Taxon lca = this.getServiceFactory().getTaxonService().loadLeastCommonAncestor(speciesIdsFound);
+
         //Now we query the anat. entity similarities for this common ancestor
         //and existing in at least one of the requested species.
         //Keep only the similarities containing one of the requested anat. entity IDs
@@ -373,13 +374,15 @@ public class AnatEntitySimilarityService extends Service {
 
         return log.traceExit(new AnatEntitySimilarityAnalysis(clonedAnatEntityIds, notFoundAnatEntityIds,
                 clonedSpeIds, speciesIdsNotFound, requestedSpecies,
-                lca, anatEntitySimilarities, anatEntitiesNotInSimilarities,
+                lca, anatEntitySimilarities.isEmpty()? null:
+                    anatEntitySimilarities.iterator().next().getTaxonOntology(),
+                anatEntitySimilarities, anatEntitiesNotInSimilarities,
                 anatEntityToSpecies));
     }
 
     private Map<SummarySimilarityAnnotationTO, Set<String>> getValidAnnots(int taxonId,
             boolean onlyTrusted, Ontology<Taxon, Integer> taxonOnt) {
-        log.entry(taxonId, onlyTrusted, taxonOnt);
+        log.traceEntry("{}, {}, {}", taxonId, onlyTrusted, taxonOnt);
 
         //*******************************************
         // DATA RETRIEVAL
@@ -438,7 +441,7 @@ public class AnatEntitySimilarityService extends Service {
         //--------------------------------------
         //Get a final list of multiple-entity annotations to keep
         Set<SummarySimilarityAnnotationTO> validMultEntAnnots = this.getValidMultipleEntityAnnotations(
-                validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntityIds);
+                validTaxonIds, taxonOnt, anatEntityIdToSimAnnots, annotToAnatEntityIds);
 
         //-------------------------------------
         // SINGLE-ENTITY ANNOTATION FILTERING
@@ -475,9 +478,10 @@ public class AnatEntitySimilarityService extends Service {
     }
 
     private Set<SummarySimilarityAnnotationTO> getValidMultipleEntityAnnotations(Set<Integer> validTaxonIds,
+            Ontology<Taxon, Integer> taxonOnt,
             Map<String, Set<SummarySimilarityAnnotationTO>> anatEntityIdToSimAnnots,
             Map<SummarySimilarityAnnotationTO, Set<String>> annotToAnatEntityIds) {
-        log.entry(validTaxonIds, anatEntityIdToSimAnnots, annotToAnatEntityIds);
+        log.traceEntry("{}, {}, {}, {}", validTaxonIds, taxonOnt, anatEntityIdToSimAnnots, annotToAnatEntityIds);
 
         //The aim here is to identify when to keep a multiple-entity annotations
         //and discard the corresponding single-entity annotations (see javadoc of method
@@ -582,42 +586,89 @@ public class AnatEntitySimilarityService extends Service {
             }
         }
 
-        //If a multiple-entity annotation have its anat. entities that are all contained
-        //in  the anat. entities of another multiple-entity annotation, then we discard the annotation
-        //with the lowest number of anat. entities.
-        //So, first, we order validAnatEntityIdsToMultipleEntityAnnots by the number of anat. entity IDs
-        //in each Entry in reversed order.
-        List<Entry<Set<String>, Set<SummarySimilarityAnnotationTO>>> orderedMultEntAnnots =
-                validAnatEntityIdsToMultipleEntityAnnots.entrySet().stream()
-                .sorted(Comparator.comparing(e -> e.getKey().size(), Comparator.reverseOrder()))
-                .collect(Collectors.toList());
-        Set<SummarySimilarityAnnotationTO> multEntAnnotsToDiscard = new HashSet<>();
-        for (int i = 0; i < orderedMultEntAnnots.size(); i++) {
-            Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry1 = orderedMultEntAnnots.get(i);
-            Set<SummarySimilarityAnnotationTO> annots1 = entry1.getValue();
-            if (multEntAnnotsToDiscard.contains(annots1.iterator().next())) {
-                //If this annot was already discarded, any other annotation with less anat. entities
-                //and having only anat. entities contained in this annotation would have already
-                //been discarded as well.
-                continue;
-            }
-            for (int j = i + 1; j < orderedMultEntAnnots.size(); j++) {
-                Entry<Set<String>, Set<SummarySimilarityAnnotationTO>> entry2 = orderedMultEntAnnots.get(j);
-                Set<SummarySimilarityAnnotationTO> annots2 = entry2.getValue();
-                Set<String> anatEntityIds1 = entry1.getKey();
-                Set<String> anatEntityIds2 = entry2.getKey();
-                assert anatEntityIds1.size() > 1 && anatEntityIds2.size() > 1 &&
-                        anatEntityIds1.size() >= anatEntityIds2.size();
-                if (anatEntityIds1.size() != anatEntityIds2.size() && anatEntityIds1.containsAll(anatEntityIds2)) {
-                    multEntAnnotsToDiscard.addAll(annots2);
-                }
-            }
-        }
+        //Basically, here, we want an anat. entity to be part of only one similarity annotation if possibl.
+        //For instance, we have the annotations:
+        // UBERON:0000152 pelvic fin | UBERON:0002103 hindlimb - homologous in Vertebrata
+        // UBERON:0000152 pelvic fin | UBERON:0000978 leg - homologous in Sarcopterygii.
+        // (and additionnaly, UBERON:0000152 pelvic fin - homologous in Gnathostomata)
+        //If the two multiple-entity annotations are valid, we want to keep the one annotated
+        //to the oldest taxon (Vertebrata in this example).
+        //
+        //First, we map each anat. entity to the groups of anat. entities it is associated to.
+        Map<String, Set<Set<String>>> anatEntityToGroups = validAnatEntityIdsToMultipleEntityAnnots
+                .keySet().stream()
+                .flatMap(k -> k.stream().map(id -> {
+                    Set<Set<String>> groupSet = new HashSet<>();
+                    groupSet.add(k);
+                    return new AbstractMap.SimpleEntry<>(id, groupSet);
+                }))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {v1.addAll(v2); return v1;}));
+        //Now we identify the groups of anat. entities to discard
+        Set<Set<String>> keysToDiscard = anatEntityToGroups.entrySet().stream()
+                .flatMap(e -> {
+                    Set<Set<String>> toDiscard = new HashSet<>();
+                    if (e.getValue().size() == 1) {
+                        return toDiscard.stream();
+                    }
+                    //In case there is not a taxon of a group older than the taxa of another group
+                    //we'll also discard based on group size if one group completely contains another one,
+                    //this is why we order per Set size here.
+                    List<Set<String>> orderedGroup = e.getValue().stream()
+                            .sorted(Comparator.comparing(s -> s.size(), Comparator.reverseOrder()))
+                            .collect(Collectors.toList());
+                    GROUP1: for (int i = 0; i < orderedGroup.size(); i++) {
+                        Set<String> anatEntityIds1 = orderedGroup.get(i);
+                        if (toDiscard.contains(anatEntityIds1)) {
+                            continue GROUP1;
+                        }
+                        Set<Taxon> taxa1 = validAnatEntityIdsToMultipleEntityAnnots
+                                .get(anatEntityIds1).stream()
+                                .map(annotTO -> taxonOnt.getElement(annotTO.getTaxonId()))
+                                .collect(Collectors.toSet());
+                        assert !taxa1.contains(null);
+                        GROUP2: for (int j = i + 1; j < orderedGroup.size(); j++) {
+                            Set<String> anatEntityIds2 = orderedGroup.get(j);
+                            if (toDiscard.contains(anatEntityIds2)) {
+                                continue GROUP2;
+                            }
+                            Set<Taxon> taxa2 = validAnatEntityIdsToMultipleEntityAnnots
+                                    .get(anatEntityIds2).stream()
+                                    .map(annotTO -> taxonOnt.getElement(annotTO.getTaxonId()))
+                                    .collect(Collectors.toSet());
+                            assert !taxa2.contains(null);
+                            if (taxa1.stream().anyMatch(t1 -> taxa2.stream()
+                                    .anyMatch(t2 -> taxonOnt.getAncestors(t2).contains(t1)))) {
+                                toDiscard.add(anatEntityIds2);
+                                continue GROUP2;
+                            }
+                            if (taxa2.stream().anyMatch(t2 -> taxa1.stream()
+                                    .anyMatch(t1 -> taxonOnt.getAncestors(t1).contains(t2)))) {
+                                toDiscard.add(anatEntityIds1);
+                                continue GROUP1;
+                            }
+                            //In case there is not a more precise taxon,
+                            //if a multiple-entity annotation have its anat. entities
+                            //that are all contained in  the anat. entities of another
+                            //multiple-entity annotation, then we discard the annotation
+                            //with the lowest number of anat. entities.
+                            if (anatEntityIds1.size() != anatEntityIds2.size() &&
+                                    anatEntityIds1.containsAll(anatEntityIds2)) {
+                                toDiscard.add(anatEntityIds2);
+                            }
+                        }
+                    }
+                    assert !toDiscard.equals(e.getValue());
+                    return toDiscard.stream();
+                })
+                .filter(toDiscard -> !toDiscard.isEmpty())
+                .collect(Collectors.toSet());
 
         //Get a final list of multiple-entity annotations to keep
         Set<SummarySimilarityAnnotationTO> validMultEntAnnots = validAnatEntityIdsToMultipleEntityAnnots
-                .values().stream()
-                .flatMap(s -> s.stream().filter(a -> !multEntAnnotsToDiscard.contains(a)))
+                .entrySet().stream()
+                .filter(e -> !keysToDiscard.contains(e .getKey()))
+                .flatMap(e -> e.getValue().stream())
                 .collect(Collectors.toSet());
 
         return log.traceExit(validMultEntAnnots);
@@ -627,8 +678,8 @@ public class AnatEntitySimilarityService extends Service {
             Set<SummarySimilarityAnnotationTO> annotTOs, Taxon requestedTaxon,
             Map<String, CIOStatementTO> idToCIOStatementTOMap, Ontology<Taxon, Integer> taxonOnt,
             MultiSpeciesOntology<AnatEntity, String> anatOnt, Set<String> anatEntityIdsUsedInAnnots) {
-        log.entry(anatEntityIds, annotTOs, requestedTaxon, idToCIOStatementTOMap, taxonOnt, anatOnt,
-                anatEntityIdsUsedInAnnots);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", anatEntityIds, annotTOs, requestedTaxon,
+                idToCIOStatementTOMap, taxonOnt, anatOnt, anatEntityIdsUsedInAnnots);
 
         //Get the AnatEntity objects corresponding to the IDs
         Set<AnatEntity> anatEntities = anatEntityIds.stream()
@@ -652,12 +703,12 @@ public class AnatEntitySimilarityService extends Service {
                 .collect(Collectors.toSet());
 
         return new AnatEntitySimilarity(anatEntities, transformationOfEntities, requestedTaxon,
-                summaries);
+                summaries, taxonOnt);
     }
     private static AnatEntitySimilarityTaxonSummary mapToAnatEntitySimilarityTaxonSummary(
             SummarySimilarityAnnotationTO annotTO, Map<String, CIOStatementTO> idToCIOStatementTOMap,
             Ontology<Taxon, Integer> taxonOnt) {
-        log.entry(annotTO, idToCIOStatementTOMap, taxonOnt);
+        log.traceEntry("{}, {}, {}", annotTO, idToCIOStatementTOMap, taxonOnt);
 
         Taxon taxon = Optional.ofNullable(taxonOnt.getElement(annotTO.getTaxonId()))
                 .orElseThrow(() -> new IllegalStateException(

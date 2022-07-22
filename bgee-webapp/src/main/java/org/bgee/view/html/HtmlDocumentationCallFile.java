@@ -621,8 +621,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "to retrieve data from <a target='_blank' rel='noopener' "
                 + "href='https://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "the OMA browser</a>. They are provided solely to group data "
-                + "from orthologous genes belonging to a same orthology group. "
-                + "Genes member of a OMA gene orthology group can be retrieved "
+                + "from orthologous genes belonging to the same orthology group. "
+                + "Genes member of an OMA gene orthology group can be retrieved "
                 + "through the associated "
                 + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
                 + "' title='Jump to hierarchical orthologous groups "
@@ -782,8 +782,8 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
      */
     private static String getExprRankColDescription() {
         log.traceEntry();
-        return log.traceExit("<p>Rank score associated to the call. "
-                + "Rank scores of expression calls are normalized across genes, conditions and species. </p>"
+        return log.traceExit("<p>Rank score associated with the call. "
+                + "Rank scores of expression calls are normalized across genes, conditions and species.</p>"
                 + "<p>A low score means that the gene is highly expressed in the condition.</p>" );
     }
     /**
@@ -800,7 +800,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     private static String getExprQualColDescription(int exprStateColNumber) {
         log.entry(exprStateColNumber);
         
-        return log.traceExit("<p>Quality associated to the call. Permitted values:</p>"
+        return log.traceExit("<p>Quality associated with the call. Permitted values:</p>"
                 + "<ul class='doc_content'>"
                 + "<li><span class='list_element_title'>high quality</span>: "
                 + "presence or absence of expression reported as high quality "
@@ -811,7 +811,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "<p>From this quality a <code>summary quality</code> is calculated using all calls corresponding "
                 + "to the same gene and condition parameters coming from different experiments "
                 + "and/or data types.</p>"
-                + "<p>Quality associated to the call in column <code>" +  EXPR_STATE_COL_NAME
+                + "<p>Quality associated with the call in column <code>" +  EXPR_STATE_COL_NAME
                 + "</code> (column " + exprStateColNumber + ") is this <code>summary quality</code> and is "
                 + "calculated using following rules:</p>"
                 + "<ul class='doc_content'>"
@@ -1012,7 +1012,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
         }
         if (displayNoData) {
             desc += "<li><span class='list_element_title'>no data</span>: no data associated "
-                    + "to <code>" + diffExprStateColName 
+                    + "with <code>" + diffExprStateColName 
                     + "</code> (column " + diffExprStateColNumber + ").</li>";
         }
         desc += "</ul>";
@@ -1122,7 +1122,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + stageIdColNumber + ")), as compared to the expression levels "
                 + "in other conditions of the analyses. This means that there were no conflicts "
                 + "found between results generated from different data types "
-                + "(result generated either from a single data type, or from "
+                + "(results generated either from a single data type, or from "
                 + "congruent analyses of different data types). Note that there can still "
                 + "be conflicts between different analyses within a same data type, "
                 //TODO: add link to data analyses documentation
@@ -1492,12 +1492,12 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
     }
     /**
      * @return  a {@code String} containing the HTML to create a table containing the header 
-     *          and example lines of a OMA HOG file.
+     *          and example lines of an OMA HOG file.
      */
     public static String getOMAGroupFileExample() {
         log.traceEntry();
         return log.traceExit("<table class='call_download_file_example'>"
-                + "<caption>Example lines for a OMA Hierarchical orthologous groups file</caption>"
+                + "<caption>Example lines for an OMA Hierarchical orthologous groups file</caption>"
                 + "<thead>" 
                 + getOMAGroupFileHeader(false) 
                 + "</thead>"
@@ -1509,11 +1509,11 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "</table>");
     }
     /**
-     * Get the header of a OMA HOG file as a HTML 'tr' element, 
+     * Get the header of an OMA HOG file as a HTML 'tr' element, 
      * with column being either 'td' or 'th' elements depending on argument {@code withTd}.
      * @param withTd    A {@code boolean} defining whether the column type should be 'td' 
      *                  or 'th'. If {@code true}, 'td' is used.
-     * @return          A {@code String} that is the header of a OMA HOG file as a HTML 'tr' element.
+     * @return          A {@code String} that is the header of an OMA HOG file as a HTML 'tr' element.
      */
     private static String getOMAGroupFileHeader(boolean withTd) {
         log.entry(withTd);
@@ -1813,7 +1813,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "orthology between genes are retrieved using <a target='_blank' rel='noopener' "
                 + "href='https://omabrowser.org/oma/hogs/' title='External link to OMA browser'>"
                 + "OMA</a>; when comparing several species, "
-                + "Bgee identifies their Least Common Ancestor (LCA), and retrieve genes "
+                + "Bgee identifies their Least Common Ancestor (LCA), and retrieves genes "
                 + "that have descended from a single common ancestral gene in that LCA. "
                 + "Relations of orthology between genes are provided in Bgee through "
                 + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
@@ -3232,7 +3232,7 @@ public class HtmlDocumentationCallFile extends HtmlDocumentationDownloadFile {
                 + "_col2'>" + GENE_ID_COL_NAME + " (column 2)</h5>");
         this.writeln(getGeneIdColDescription());
         this.writeln("<p>Please note that the list of all genes member of "
-                + "the OMA ortholoogous gene group with ID provided in <code>" 
+                + "the OMA orthologous gene group with ID provided in <code>" 
                 + OMA_ID_COL_NAME + "</code> (column 1) is provided through the "
                 + "<a href='#" + RequestParameters.HASH_DOC_CALL_OMA 
                 + "' title='Jump to hierarchical orthologous groups "

@@ -78,13 +78,13 @@ public class CallFilterTest extends TestAncestor {
     @Test
     public void testSanityChecks() {
         try {
-            new ExpressionCallFilter(null, null, null, null, null, null, null);
+            new ExpressionCallFilter(null, null, null, null, null);
             fail("An exception should be thrown when no CallData Set is provided.");
         } catch (IllegalArgumentException e) {
             //test passed
         }
         try {
-            new ExpressionCallFilter(null, null, new HashSet<>(), null, null, null, null);
+            new ExpressionCallFilter(null, null, new HashSet<>(), null, null);
             fail("An exception should be thrown when the CallData Set is empty.");
         } catch (IllegalArgumentException e) {
             //test passed
@@ -99,14 +99,15 @@ public class CallFilterTest extends TestAncestor {
         //now, test when everything is fine (GeneFilter or ConditionFilter provided)
         Set<GeneFilter> geneFilter = Collections.singleton(new GeneFilter(9606));
         Set<ConditionFilter> conditionFilter = 
-                Collections.singleton(new ConditionFilter(Arrays.asList("ae1", "ae2"), Arrays.asList("devStage1")));
+                Collections.singleton(new ConditionFilter(Arrays.asList("ae1", "ae2"), 
+                        Arrays.asList("devStage1"), null, null, null));
         
 
         //now, test when everything is fine
         //test when GeneFilter and/or ConditionFilter are provided
-        new ExpressionCallFilter(null, geneFilter, null, null, null, null, null);
-        new ExpressionCallFilter(null, null, conditionFilter, null, null, null, null);
-        new ExpressionCallFilter(null, geneFilter, conditionFilter, null, null, null, null);
+        new ExpressionCallFilter(null, geneFilter, null, null, null);
+        new ExpressionCallFilter(null, null, conditionFilter, null, null);
+        new ExpressionCallFilter(null, geneFilter, conditionFilter, null, null);
         Map<SummaryCallType.DiffExpressionSummary, SummaryQuality> callTypeMap = new HashMap<>();
         callTypeMap.put(SummaryCallType.DiffExpressionSummary.OVER_EXPRESSED, SummaryQuality.BRONZE);
         new DiffExpressionCallFilter(null, geneFilter, null, null);

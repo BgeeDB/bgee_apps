@@ -42,7 +42,9 @@ public class GeneMatchResultService extends CommonService {
      */
     private final static Logger log = LogManager.getLogger(GeneMatchResultService.class.getName());
 
-
+    // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
+    private static final int SPHINX_CONNECT_TIMEOUT = 3000;
+    public static final int SPHINX_MAX_RESULTS = 10000;
     private static final String SPHINX_SEPARATOR = "\\|\\|";
     /**
      * @see #getSphinxClient()
@@ -70,6 +72,7 @@ public class GeneMatchResultService extends CommonService {
     public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGenesIndex,
             String sphinxAutocompleteIndex) {
         super(serviceFactory);
+        sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
         this.sphinxGenesIndex = sphinxGenesIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
@@ -106,7 +109,7 @@ public class GeneMatchResultService extends CommonService {
      */
     public GeneMatchResult searchByTerm(final String searchTerm, Collection<Integer> speciesIds,
                                         int limitStart, int resultPerPage) {
-        log.entry(searchTerm, speciesIds, limitStart, resultPerPage);
+        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
 
         if (speciesIds != null && !speciesIds.isEmpty()) {
             throw new UnsupportedOperationException("Search with species parameter is not implemented");
@@ -165,7 +168,7 @@ public class GeneMatchResultService extends CommonService {
      *                      for the gene search autocomplete (ordered).
      */
     public List<String> autocomplete(final String searchTerm, int resultPerPage) {
-        log.entry(searchTerm, resultPerPage);
+        log.traceEntry("{}, {}", searchTerm, resultPerPage);
 
         // The index of the first element is not necessary, as it's for the autocomplete we start at 0.
         // We use the ranker SPH_RANK_SPH04 to get field equals the exact query first.
@@ -204,14 +207,14 @@ public class GeneMatchResultService extends CommonService {
      */
     private SphinxResult getSphinxResult(String searchTerm, int limitStart, int resultPerPage,
                                          String index, Integer ranker) {
-        log.entry(searchTerm, limitStart, resultPerPage, index, ranker);
+        log.traceEntry("{}, {}, {}, {}, {}", searchTerm, limitStart, resultPerPage, index, ranker);
 
         try {
-            sphinxClient.SetLimits(limitStart, resultPerPage);
+            sphinxClient.SetLimits(limitStart, resultPerPage, SPHINX_MAX_RESULTS);
             if (ranker != null) {
                 sphinxClient.SetRankingMode(ranker, null);
             }
-            String queryTerm = "\"" + this.getFormattedTerm(searchTerm) + "\"";
+            String queryTerm = "^" + this.getFormattedTerm(searchTerm) + "$ | \"" + this.getFormattedTerm(searchTerm) + "\"";
             return log.traceExit(sphinxClient.Query(queryTerm, index));
         } catch (SphinxException e) {
             throw log.throwing(new IllegalStateException(
@@ -232,7 +235,7 @@ public class GeneMatchResultService extends CommonService {
     private GeneMatch getGeneMatch(final SphinxMatch match, final String term,
                                    final Map<String, Integer> attrIndexMap,
                                    final Map<Integer, GeneBioType> geneBioTypeMap) {
-        log.entry(match, term, attrIndexMap, geneBioTypeMap);
+        log.traceEntry("{}, {}, {}, {}", match, term, attrIndexMap, geneBioTypeMap);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get("genenamesynonym"));
         String[] split = attrs.split(SPHINX_SEPARATOR);
@@ -261,7 +264,7 @@ public class GeneMatchResultService extends CommonService {
         final String termLowerCase = term.toLowerCase();
         final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
 
-        final String geneIdLowerCase = gene.getEnsemblGeneId().toLowerCase();
+        final String geneIdLowerCase = gene.getGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
             return log.traceExit(new GeneMatch(gene, null, GeneMatch.MatchSource.ID));
         }
@@ -294,7 +297,8 @@ public class GeneMatchResultService extends CommonService {
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
                             String termLowerCase, String termLowerCaseEscaped) {
-        log.entry(match, attribute, attrIndexMap, termLowerCase, termLowerCaseEscaped);
+        log.traceEntry("{}, {}, {}, {}, {}" ,match, attribute, attrIndexMap, termLowerCase, 
+                termLowerCaseEscaped);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get(attribute));
         String[] split = attrs.toLowerCase().split(SPHINX_SEPARATOR);

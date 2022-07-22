@@ -13,7 +13,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.BaseConditionTO.Sex;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -33,6 +32,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
         columnToAttributesMap.put("exprMappedConditionId", RawDataConditionDAO.Attribute.EXPR_MAPPED_CONDITION_ID);
         columnToAttributesMap.put("anatEntityId", RawDataConditionDAO.Attribute.ANAT_ENTITY_ID);
         columnToAttributesMap.put("stageId", RawDataConditionDAO.Attribute.STAGE_ID);
+        columnToAttributesMap.put("cellTypeId", RawDataConditionDAO.Attribute.CELL_TYPE_ID);
         columnToAttributesMap.put("sex", RawDataConditionDAO.Attribute.SEX);
         columnToAttributesMap.put("sexInferred", RawDataConditionDAO.Attribute.SEX_INFERRED);
         columnToAttributesMap.put("strain", RawDataConditionDAO.Attribute.STRAIN);
@@ -46,7 +46,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
     @Override
     public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIds(Collection<Integer> speciesIds,
             Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
-        log.entry(speciesIds, attributes);
+        log.traceEntry("{}, {}", speciesIds, attributes);
 
         final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
         final Set<RawDataConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
@@ -86,8 +86,8 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
      * Implementation of the {@code ConditionTOResultSet}. 
      * 
      * @author Frederic Bastian
-     * @version Bgee 14 Feb. 2017
-     * @since Bgee 14 Feb. 2017
+     * @version Bgee 15, Mar. 2021
+     * @since Bgee 14, Feb. 2017
      */
     class MySQLRawDataConditionTOResultSet extends MySQLDAOResultSet<RawDataConditionDAO.RawDataConditionTO>
             implements RawDataConditionTOResultSet {
@@ -105,8 +105,8 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
                 Integer id = null, exprMappedCondId = null, speciesId = null;
-                String anatEntityId = null, stageId = null, strain = null;
-                Sex sex = null;
+                String anatEntityId = null, stageId = null, cellTypeId = null, strain = null;
+                RawDataConditionDAO.RawDataConditionTO.DAORawDataSex sex = null;
                 Boolean sexInferred = null;
 
                 //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
@@ -132,8 +132,12 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                         case STAGE_ID:
                             stageId = currentResultSet.getString(columnName);
                             break;
+                        case CELL_TYPE_ID:
+                            cellTypeId = currentResultSet.getString(columnName);
+                            break;
                         case SEX:
-                            sex = Sex.convertToSex(currentResultSet.getString(columnName));
+                            sex = RawDataConditionDAO.RawDataConditionTO.DAORawDataSex
+                            .convertToDAORawDataSex(currentResultSet.getString(columnName));
                             break;
                         case STRAIN:
                             strain = currentResultSet.getString(columnName);
@@ -146,7 +150,7 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                     }
                 }
                 return log.traceExit(new RawDataConditionTO(id, exprMappedCondId, anatEntityId, stageId,
-                        sex, sexInferred, strain, speciesId));
+                        cellTypeId, sex, sexInferred, strain, speciesId));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

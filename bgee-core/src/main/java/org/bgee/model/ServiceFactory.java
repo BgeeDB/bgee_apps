@@ -6,6 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.anatdev.SexService;
+import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.anatdev.TaxonConstraintService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
@@ -102,7 +104,7 @@ public class ServiceFactory implements AutoCloseable {
      * @throws IllegalArgumentException If {@code daoManager} is {@code null} or closed.
      */
     public ServiceFactory(DAOManager daoManager) throws IllegalArgumentException {
-        log.entry(daoManager);
+        log.traceEntry("{}", daoManager);
         if (daoManager == null || daoManager.isClosed()) {
             throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
         }
@@ -148,6 +150,22 @@ public class ServiceFactory implements AutoCloseable {
     public DevStageService getDevStageService() {
         log.traceEntry();
         return log.traceExit(new DevStageService(this));
+    }
+    
+    /**
+     * @return  A newly instantiated {@code SexService}
+     */
+    public SexService getSexService() {
+        log.traceEntry();
+        return log.traceExit(new SexService(this));
+    }
+    
+    /**
+     * @return  A newly instantiated {@code StrainService}
+     */
+    public StrainService getStrainService() {
+        log.traceEntry();
+        return log.traceExit(new StrainService(this));
     }
 
     /**
@@ -267,7 +285,7 @@ public class ServiceFactory implements AutoCloseable {
     //If it was mandatory to provide properties at instantiation?
     //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
     public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
-        log.entry(props);
+        log.traceEntry("{}", props);
         return log.traceExit(new GeneMatchResultService(props, this));
     }
 

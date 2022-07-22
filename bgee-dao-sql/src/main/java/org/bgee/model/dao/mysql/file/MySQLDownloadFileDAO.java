@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
+import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO.CategoryEnum;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -15,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +28,7 @@ import java.util.stream.Collectors;
  * @author  Philippe Moret
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, May 2017
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13
  */
 public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> implements DownloadFileDAO {
@@ -59,11 +61,15 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     }
 
     private static ConditionDAO.Attribute convertToConditionParameter(String value) {
-        log.entry(value);
+        log.traceEntry("{}", value);
         if ("anatomicalEntity".equals(value)) {
             return log.traceExit(ConditionDAO.Attribute.ANAT_ENTITY_ID);
         } else if ("developmentalStage".equals(value)) {
             return log.traceExit(ConditionDAO.Attribute.STAGE_ID);
+        } else if ("sex".equals(value)) {
+            return log.traceExit(ConditionDAO.Attribute.SEX_ID);
+        } else if ("strain".equals(value)) {
+            return log.traceExit(ConditionDAO.Attribute.STRAIN_ID);
         } else {
             throw log.throwing(new IllegalArgumentException("Unrecognized value"));
         }
@@ -81,11 +87,22 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     }
 
     @Override
-    public DownloadFileTOResultSet getAllDownloadFiles() throws DAOException {
-        log.traceEntry();
-        final String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, colToAttributesMap, false);
+    public DownloadFileTOResultSet getDownloadFiles(Collection<CategoryEnum> requestedCategories)
+            throws DAOException {
+        log.traceEntry("{}", requestedCategories);
+        EnumSet<CategoryEnum> cats = requestedCategories == null || requestedCategories.isEmpty()?
+                EnumSet.noneOf(CategoryEnum.class): EnumSet.copyOf(requestedCategories);
+        String sql = generateSelectAllStatement(DOWNLOAD_FILE_TABLE, colToAttributesMap, false);
+        if (!cats.isEmpty()) {
+            sql += " WHERE " + DOWNLOAD_FILE_TABLE + "."
+                   + getSelectExprFromAttribute(DownloadFileDAO.Attribute.CATEGORY, colToAttributesMap)
+                   + " IN (" + BgeePreparedStatement.generateParameterizedQueryString(cats.size()) + ")";
+        }
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (!cats.isEmpty()) {
+                stmt.setEnumDAOFields(1, cats, true);
+            }
             return log.traceExit(new MySQLDownloadFileTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -95,7 +112,7 @@ public class MySQLDownloadFileDAO extends MySQLDAO<DownloadFileDAO.Attribute> im
     @Override
     public int insertDownloadFiles(Collection<DownloadFileTO> fileTOs)
             throws DAOException, IllegalArgumentException {
-        log.entry(fileTOs);
+        log.traceEntry("{}", fileTOs);
         
         if (fileTOs == null || fileTOs.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(

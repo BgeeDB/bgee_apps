@@ -28,6 +28,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -46,6 +47,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLExperimentExpressionDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
+import org.bgee.model.dao.mysql.expressiondata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
@@ -1141,5 +1143,11 @@ public class MySQLDAOManager extends DAOManager {
     protected GeneHomologsDAO getNewGeneHomologsDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLGeneHomologsDAO(this));
+    }
+
+    @Override
+    protected SamplePValueDAO getNewSamplePValueDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLSamplePValueDAO(this));
     }
 }

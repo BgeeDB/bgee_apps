@@ -40,8 +40,8 @@ public class HtmlDocumentationDisplay extends HtmlParentDisplay implements Docum
         + "for <i>P. paniscus</i> (bonobo) we use <i>P. troglodytes</i> genome (chimpanzee), "
         + "and that for <i>P. pygmaeus</i> (Bornean orangutan) we use <i>P. abelii</i> genome "
         + "(Sumatran orangutan). Only for those species (bonobo and Bornean orangutan), "
-        + "we modify the Ensembl gene IDs, to ensure that we provide unique gene identifiers "
-        + "over all species. It is therefore necessary, to obtain correct Ensembl gene IDs "
+        + "we modify the gene IDs, to ensure that we provide unique gene identifiers "
+        + "over all species. It is therefore necessary, to obtain correct gene IDs "
         + "for those species, to replace gene ID prefix 'PPAG' with 'ENSPTRG', "
         + "and 'PPYG' prefix with 'ENSPPYG'.");
     }

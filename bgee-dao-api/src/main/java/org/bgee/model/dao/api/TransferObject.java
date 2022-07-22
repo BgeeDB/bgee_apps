@@ -63,7 +63,7 @@ public abstract class TransferObject implements Serializable {
      */
     public static final <T extends Enum<T> & EnumDAOField> T convert(Class<T> enumField,
             String representation) {
-        log.entry(enumField, representation);
+        log.traceEntry("{}, {}", enumField, representation);
         
         if (representation == null) {
             return log.traceExit((T) null);
@@ -91,7 +91,7 @@ public abstract class TransferObject implements Serializable {
      */
     protected static final <T extends Enum<T> & EnumDAOField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
-        log.entry(enums);
+        log.traceEntry("{}", enums);
         Set<String> stringSet = new HashSet<String>();
         for (T enumDAOField: enums) {
             stringSet.add(enumDAOField.getStringRepresentation());

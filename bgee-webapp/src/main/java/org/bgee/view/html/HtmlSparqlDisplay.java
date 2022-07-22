@@ -85,7 +85,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + EASY_BGEE_NAME + " database (<a href='" + easyBgeeDocUrl
                 + "' class='external_link' target='_blank' rel='noopener' title='Link to "
                 + EASY_BGEE_NAME + " documentation'>see documentation on Bgee pipeline github</a>). "
-                + EASY_BGEE_NAME + " is a view of the Bgee database, that contains most useful, "
+                + EASY_BGEE_NAME + " is a view of the Bgee database that contains most useful, "
                 + "and explicit information.</p>");
 
         RequestParameters urlCollabs = this.getNewRequestParameters();
@@ -136,7 +136,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 "}" +
                 "</code></pre>");
 
-        this.writeln("<p>It is possible to download result of this query in <a href='" + sparql_query_json_url + "' "
+        this.writeln("<p>It is possible to download the result of this query in <a href='" + sparql_query_json_url + "' "
                 + "title='SPARQL example query' class='external_link' target='_blank' rel='noopener'>JSON format</a> "
                 + "or in <a href='" + sparql_query_xml_url + "' title='SPARQL example query' "
                 + "class='external_link' target='_blank' rel='noopener'>XML format</a>.</p>");
@@ -185,7 +185,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "class='external_link' title ='Link to GenEx specification' target='_blank' "
                 + "rel='noopener'> GenEx semantic model specification</a> and the OBDA mappings "
                 + "defined in <a href='https://github.com/biosoda/bioquery/tree/master/Bgee_OBDA_mappings'"
-                + "title='Link to OBDA mapping' target='_blank' rel='noopener' "
+                + " title='Link to OBDA mapping' target='_blank' rel='noopener' "
                 + "class='external_link'>OBDA mappings</a>. The mappings are defined using the "
                 + "<a href='https://github.com/ontop/ontop/wiki/ontopOBDAModel' "
                 + "title='Link to Ontop mapping language' target='_blank' rel='noopener' "
@@ -198,7 +198,7 @@ public class HtmlSparqlDisplay extends HtmlParentDisplay implements SparqlDispla
                 + "property assertions defined by a first draft of the life-sciences "
                 + "cross-reference (LSCR) ontology that is available to download at the "
                 + "<a href='https://github.com/qfo/OrthologyOntology' target='_blank' rel='noopener' class='external_link'"
-                + "title='Link to Quest for Orthologs github'> Quest for Orthologs GitHub</a> repository "
+                + " title='Link to Quest for Orthologs github'> Quest for Orthologs GitHub</a> repository "
                 + "<a href='https://github.com/qfo/OrthologyOntology/blob/master/lscr.ttl' "
                 + "target='_blank' rel='noopener' class='external_link' title='link to LSCR ontology'> "
                 + "here</a>.</p>");

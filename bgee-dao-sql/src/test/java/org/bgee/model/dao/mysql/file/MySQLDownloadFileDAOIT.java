@@ -25,6 +25,8 @@ import static org.junit.Assert.fail;
  * 
  * @author Philippe Moret
  * @author Valentine Rech de Laval
+ * @author Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  */
 public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
 
@@ -45,7 +47,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
 
         DownloadFileDAO dao = new MySQLDownloadFileDAO(this.getMySQLDAOManager());
 
-        List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
+        List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getDownloadFiles(null).getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
                 new DownloadFileDAO.DownloadFileTO(1, "file1.zip", "this is file1", "/dir/to/file1", 0L, 
                         DownloadFileDAO.DownloadFileTO.CategoryEnum.EXPR_CALLS_SIMPLE, 1, null),
@@ -70,7 +72,7 @@ public class MySQLDownloadFileDAOIT extends MySQLITAncestor {
         DownloadFileDAO dao = new MySQLDownloadFileDAO(this.getMySQLDAOManager());
         dao.setAttributes(new DownloadFileDAO.Attribute[]{DownloadFileDAO.Attribute.DESCRIPTION, DownloadFileDAO
                 .Attribute.FILE_SIZE, DownloadFileDAO.Attribute.SPECIES_DATA_GROUP_ID});
-        List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getAllDownloadFiles().getAllTOs();
+        List<DownloadFileDAO.DownloadFileTO> allDownloadFiles = dao.getDownloadFiles(null).getAllTOs();
         List<DownloadFileDAO.DownloadFileTO> expectedDownloadFiles = Arrays.asList(
                 new DownloadFileDAO.DownloadFileTO(null, null, "this is file1", null, 0L, null,1, null),
                 new DownloadFileDAO.DownloadFileTO(null, null, "this is file2", null, 0L, null, 2, null),

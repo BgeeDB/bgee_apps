@@ -126,7 +126,7 @@ public class HtmlCollaborationDisplay extends HtmlParentDisplay implements Colla
 
         this.writeln("<p><a href='https://www.oncomx.org/' target='_blank' rel='noopener'>OncoMX</a> is " +
                 "a knowledgebase of unified cancer genomics data from integrated mutation, " +
-                "expression, literature, and biomarker databases, accessible through web portal. " +
+                "expression, literature, and biomarker databases, accessible through their web portal. " +
                 "It is supported by <a href='https://www.cancer.gov/' target='_blank' rel='noopener'>NIH NCI</a>.</p>");
 
         this.writeln("<p>For this project, we generated files containing a subset of calls of " +

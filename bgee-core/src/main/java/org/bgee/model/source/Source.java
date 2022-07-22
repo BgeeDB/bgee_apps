@@ -7,7 +7,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
-import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
@@ -34,7 +33,13 @@ public class Source extends NamedEntity<Integer> {
      * The {@code String} that is the tag to be replaced by a species scientific name
      * in URLs returned by {@link #getXRefUrl()}.
      */
+    //FIXME: check new  tag
     public final static String SPECIES_SCIENTIFIC_NAME_TAG = "[species_ensembl_link]";
+    /**
+     * The {@code String} that is the tag to be replaced by a homology type
+     * in URLs returned by {@link #getXRefUrl()}.
+     */
+    public final static String HOMOLOGY_TYPE_TAG = "[homology_type]";
 
     /**
      * A {@code String} that is the URL for cross-references to data source.
@@ -345,12 +350,23 @@ public class Source extends NamedEntity<Integer> {
 
     @Override
     public String toString() {
-        return super.toString() + " - X-ref URL: " + getXRefUrl() + 
-                " - Experiment URL: " + getExperimentUrl() + " - Evidence URL: " + getEvidenceUrl() + 
-                " - Base URL: " + getBaseUrl() + " - Release date: " + getReleaseDate() + 
-                " - Release version: " + getReleaseVersion() + " - To display: " + getToDisplay() + 
-                " - Category: " + getCategory() + " - Display order: " + getDisplayOrder() +
-                " - Data types by species for data: " + getDataTypesBySpeciesForData()  + 
-                " - Data types by species for annotation: " + getDataTypesBySpeciesForAnnotation();
+        StringBuilder builder = new StringBuilder();
+        builder.append("Source [id=").append(getId())
+               .append(", name=").append(getName())
+               .append(", description=").append(getDescription())
+               .append(", xRefUrl=").append(xRefUrl)
+               .append(", experimentUrl=").append(experimentUrl)
+               .append(", evidenceUrl=").append(evidenceUrl)
+               .append(", baseUrl=").append(baseUrl)
+               .append(", releaseDate=").append(releaseDate)
+               .append(", releaseVersion=").append(releaseVersion)
+               .append(", toDisplay=").append(toDisplay)
+               .append(", category=").append(category)
+               .append(", displayOrder=").append(displayOrder)
+               .append(", dataTypesBySpeciesforData=").append(dataTypesBySpeciesforData)
+               .append(", dataTypesBySpeciesForAnnotations=").append(dataTypesBySpeciesForAnnotations)
+               .append("]");
+        return builder.toString();
     }
+
 }

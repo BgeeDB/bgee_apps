@@ -39,10 +39,10 @@ public class ElementGroupFromListSpliteratorTest extends TestAncestor {
         GeneBioType biotype = new GeneBioType("biotype1");
         Gene gene1 = new Gene("id1", spe1, biotype);
         Gene gene2 = new Gene("id2", spe1, biotype);
-        ExpressionCall call1 = new ExpressionCall(gene1, null, null, ExpressionSummary.EXPRESSED, null, null, null);
-        ExpressionCall call2 = new ExpressionCall(gene1, null, null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
-        ExpressionCall call3 = new ExpressionCall(gene2, null, null, ExpressionSummary.EXPRESSED, null, null, null);
-        ExpressionCall call4 = new ExpressionCall(gene2, null, null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
+        ExpressionCall call1 = new ExpressionCall(gene1, null, null, null, null, ExpressionSummary.EXPRESSED, null, null, null);
+        ExpressionCall call2 = new ExpressionCall(gene1, null, null, null, null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
+        ExpressionCall call3 = new ExpressionCall(gene2, null, null, null, null, ExpressionSummary.EXPRESSED, null, null, null);
+        ExpressionCall call4 = new ExpressionCall(gene2, null, null, null, null, ExpressionSummary.NOT_EXPRESSED, null, null, null);
         List<ExpressionCall> calls = Arrays.asList(call1, call2, call3, call4);
         Function<ExpressionCall, Gene> extractGeneFunc = c1 -> c1.getGene();
 
@@ -75,7 +75,7 @@ public class ElementGroupFromListSpliteratorTest extends TestAncestor {
 
         //Check that an exception is thrown if we provide an incorrect comparator
         spliterator = new ElementGroupFromListSpliterator<>(calls.stream(), extractGeneFunc,
-                (g1, g2) -> g2.getEnsemblGeneId().compareTo(g1.getEnsemblGeneId()));
+                (g1, g2) -> g2.getGeneId().compareTo(g1.getGeneId()));
         try {
             StreamSupport.stream(spliterator, false).collect(Collectors.toList());
             //test failed if no exception was thrown

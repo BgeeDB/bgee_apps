@@ -22,7 +22,8 @@ import org.junit.Test;
 /**
  * This class holds unit tests for {@code DownloadFileService}
  * @author Philippe Moret
- *
+ * @author Frederic Bastian
+ * @version Bgee 15, Oct. 2021
  */
 public class DownloadFileServiceTest extends TestAncestor {
 
@@ -45,7 +46,7 @@ public class DownloadFileServiceTest extends TestAncestor {
 		                                  ConditionDAO.Attribute.STAGE_ID))));
 
 		// mock behavior
-		when(downloadFileDaoMock.getAllDownloadFiles()).thenReturn(resultSetMock);
+		when(downloadFileDaoMock.getDownloadFiles(null)).thenReturn(resultSetMock);
 		when(managerMock.getDownloadFileDAO()).thenReturn(downloadFileDaoMock);
 		
 		//expected values
@@ -58,7 +59,7 @@ public class DownloadFileServiceTest extends TestAncestor {
 		
 		// actual use of the service
 		DownloadFileService service = new DownloadFileService(serviceFactory);
-		List<DownloadFile> files = service.getAllDownloadFiles();
+		List<DownloadFile> files = service.getDownloadFiles(null);
 		
 		assertEquals(expected, files);
 	}
@@ -77,12 +78,12 @@ public class DownloadFileServiceTest extends TestAncestor {
                 DownloadFileTO.CategoryEnum.DIFF_EXPR_ANAT_COMPLETE, null, null)));
 		
 		// mock behavior
-		when(downloadFileDaoMock.getAllDownloadFiles()).thenReturn(resultSetMock);
+		when(downloadFileDaoMock.getDownloadFiles(null)).thenReturn(resultSetMock);
 		when(managerMock.getDownloadFileDAO()).thenReturn(downloadFileDaoMock);
 		
 		// actual use of the service
 		DownloadFileService service = new DownloadFileService(serviceFactory);
-		service.getAllDownloadFiles();
+		service.getDownloadFiles(null);
 		
 		//should never reach this point
 		fail("Should fail on bad data from the DAO");

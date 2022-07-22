@@ -14,9 +14,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -27,11 +27,17 @@ import org.apache.logging.log4j.Logger;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeProperties;
+import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
+import org.bgee.model.expressiondata.CallFilter;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.ConditionGraph;
+import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
@@ -48,10 +54,10 @@ import org.bgee.model.topanat.exception.RAnalysisException;
  * @author Mathieu Seppey
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 15.0, May 2021
  * @since   Bgee 13, Sept. 2015
  */
-public class TopAnatAnalysis {
+public class TopAnatAnalysis extends CommonService {
 
     /**
      * 
@@ -66,8 +72,35 @@ public class TopAnatAnalysis {
     
     private final static String TMP_FILE_SUFFIX = ".tmp";
     
-    protected final static AnatEntity FAKE_ANAT_ENTITY_ROOT = new AnatEntity("BGEE:0", "root", 
-            "A root added on top of all orphan terms.");
+    protected final static String FAKE_ROOT_COND_ID = "BGEE:0";
+    protected final static String FAKE_ROOT_COND_NAME = "Added root";
+
+    private final static EnumSet<CallService.Attribute> CALL_SERVICE_ATTRIBUTES =
+            EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID,
+                    CallService.Attribute.CELL_TYPE_ID);
+    //TODO: actually, these generators should be methods, so that we can know
+    //what were the parameters requested, in order to work on any condition parameters
+    //(work on a real condition graph)
+    private final static Function<Condition, String> COND_ID_GENERATOR =
+            cond -> {
+                StringBuilder sb = new StringBuilder();
+                String cellTypeId = cond.getCellTypeId();
+                if (cellTypeId != null && !cellTypeId.equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
+                    sb.append(cellTypeId).append("-");
+                }
+                sb.append(cond.getAnatEntityId());
+                return sb.toString();
+            };
+    private final static Function<Condition, String> COND_NAME_GENERATOR =
+            cond -> {
+                StringBuilder sb = new StringBuilder();
+                AnatEntity cellType = cond.getCellType();
+                if (cellType != null && !cellType.getId().equals(ConditionDAO.CELL_TYPE_ROOT_ID)) {
+                    sb.append(cellType.getName()).append(" in ");
+                }
+                sb.append(cond.getAnatEntity().getName());
+                return sb.toString();
+            };
 
     /**
      * 
@@ -92,7 +125,7 @@ public class TopAnatAnalysis {
     /**
      * 
      */
-    private final AnatEntityService anatEntityService;
+    private final ConditionGraphService condGraphService;
 
     /**
      * 
@@ -103,6 +136,7 @@ public class TopAnatAnalysis {
      * 
      */
     private final TopAnatController controller;
+    private final CallFilter<?, ?> callFilter;
 
     /**
      * @param params
@@ -112,15 +146,15 @@ public class TopAnatAnalysis {
      */
     public TopAnatAnalysis(TopAnatParams params, BgeeProperties props, 
             ServiceFactory serviceFactory, TopAnatRManager rManager, TopAnatController controller) {
-        log.entry(params, props, serviceFactory, rManager); 
+        super(serviceFactory);
         this.params = params;
-        this.anatEntityService = 
-                serviceFactory.getAnatEntityService(); 
+        this.condGraphService = serviceFactory.getConditionGraphService();
         this.callService = serviceFactory.getCallService();
         this.geneService = serviceFactory.getGeneService();
         this.rManager = rManager;
         this.props = props;
         this.controller = controller;
+        this.callFilter = this.params.convertRawParametersToCallFilter();
     }
 
     /**
@@ -232,7 +266,7 @@ public class TopAnatAnalysis {
         }
         allGeneIds.removeAll(this.geneService.loadGenes(
                     new GeneFilter(this.params.getSpeciesId(), allGeneIds)
-                ).map(Gene::getEnsemblGeneId)
+                ).map(Gene::getGeneId)
                 .collect(Collectors.toSet()));
         if (!allGeneIds.isEmpty()) {
             throw log.throwing(new InvalidSpeciesGenesException("Some gene IDs are unrecognized, "
@@ -299,7 +333,7 @@ public class TopAnatAnalysis {
                 //TODO: unit test a case when the ParseException is launched because of no result, 
                 //and a case when it is for an actual problem (e.g., package not installable)
                 try (ReversedLinesFileReader reverseReader = new ReversedLinesFileReader(
-                        new File(this.getRScriptConsoleFilePath()))) {
+                        new File(this.getRScriptConsoleFilePath()), null)) {
                     String lastLine = reverseReader.readLine();
                     if (lastLine == null || !lastLine.contains(TopAnatRManager.NO_RESULT_MESSAGE_PREFIX)) {
                         throw log.throwing(new RAnalysisException("The R analysis threw "
@@ -390,7 +424,7 @@ public class TopAnatAnalysis {
     /**
      */
     private void writeRcodeFile(String RcodeFile) throws IOException {
-        log.entry(RcodeFile);
+        log.traceEntry("{}", RcodeFile);
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(RcodeFile)))) {
@@ -504,45 +538,82 @@ public class TopAnatAnalysis {
     //with no relation at all (no ancestors nor descendants)
     private void writeAnatEntitiesAndRelationsToFiles(String anatEntitiesNameFile, 
             String anatEntitiesRelFile) throws IOException {
-        log.entry(anatEntitiesNameFile, anatEntitiesRelFile);
+        log.traceEntry("{}, {}", anatEntitiesNameFile, anatEntitiesRelFile);
 
         //we need to get the anat. entities, both for anatEntitiesNameFile, and for 
         //correct generation of the anatEntitiesRelFile
-        Set<AnatEntity> entities = this.anatEntityService.loadAnatEntitiesBySpeciesIds(
-                Collections.singleton(this.params.getSpeciesId())).collect(Collectors.toSet());
+        ConditionGraph conditionGraph = this.condGraphService.loadConditionGraphFromSpeciesIds(
+                Collections.singleton(this.params.getSpeciesId()),
+                this.callFilter.getConditionFilters(),
+                CALL_SERVICE_ATTRIBUTES.stream().filter(a -> a.isConditionParameter())
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(CallService.Attribute.class))));
+
+        Condition realCondRoot = null;
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesNameFile)))) {
-            entities.stream().forEach(entity 
-                    -> out.println(entity.getId() + "\t" + entity.getName().replaceAll("'", "")));
-            //We add a fake root, TopAnat doesn't manage multiple root
-            out.println(FAKE_ANAT_ENTITY_ROOT.getId() + "\t" + FAKE_ANAT_ENTITY_ROOT.getName());
+            for (Condition c: conditionGraph.getConditions()) {
+                //We try to find the real root of the condition graph
+                //TODO: manage that better in ConditionGraph or Condition, e.g.,
+                //isRootCondition()
+                if ((c.getAnatEntity() == null ||
+                        c.getAnatEntity().getId().equals(ConditionDAO.ANAT_ENTITY_ROOT_ID)) &&
+                    (c.getCellType() == null ||
+                        c.getCellType().getId().equals(ConditionDAO.CELL_TYPE_ROOT_ID)) &&
+                    (c.getDevStage() == null ||
+                        c.getDevStage().getId().equals(ConditionDAO.DEV_STAGE_ROOT_ID)) &&
+                    (c.getSex() == null ||
+                        c.getSex().getId().equals(ConditionDAO.SEX_ROOT_ID)) &&
+                    (c.getStrain() == null ||
+                        c.getStrain().getId().equals(ConditionDAO.STRAIN_ROOT_ID))) {
+                    realCondRoot = c;
+                }
+                out.println(COND_ID_GENERATOR.apply(c) + "\t"
+                        + COND_NAME_GENERATOR.apply(c).replaceAll("'", ""));
+            }
+            //We add a fake root, TopAnat doesn't manage multiple root.
+            //Even if we have only one root in Bgee, since we can select only observed calls,
+            //this can lead to have multiple roots.
+            //We add the fake root if the real root is not present in the conds.
+            //XXX: shouldn't it always be, since we never delete this root condition,
+            //even if not observed?
+            if (realCondRoot == null) {
+                out.println(FAKE_ROOT_COND_ID + "\t" + FAKE_ROOT_COND_NAME);
+            }
         }
         
         //relations
-        Map<String, Set<String>> relations = this.anatEntityService.loadDirectIsAPartOfRelationships(
-                Collections.singleton(this.params.getSpeciesId()));
-        
-        //We add a fake root, and we map all orphan terms to it: TopAnat don't manage multiple roots. 
-        //Search for terms never seen as child of another term.
-        Set<String> allChildIds = relations.values().stream()
-                .flatMap(Set::stream).collect(Collectors.toSet());
-        //we need to examine all terms, not only those present in the relation Map, because maybe 
-        //some terms have no ancestors and no descendants, and are not in the Map.
-        Set<String> roots = entities.stream()
-                .map(term -> term.getId())
-                .filter(termId -> !allChildIds.contains(termId))
-                .collect(Collectors.toSet());
-        log.trace("Roots identified in the graph: " + roots);
-        assert roots.size() > 0;
-        if (roots.size() > 1) {
-            relations.put(FAKE_ANAT_ENTITY_ROOT.getId(), roots);
-        }
-        
         try (PrintWriter out = new PrintWriter(new BufferedWriter(
                 new FileWriter(anatEntitiesRelFile)))) {
-            relations.forEach(
-                    (id,descentIds) -> descentIds.forEach(
-                            (descentId) -> out.println(descentId + '\t' + id)));
+            //We add a fake root, and we map all orphan terms to it:
+            //TopAnat don't manage multiple roots. Even if we have only one root in Bgee,
+            //since we can select only observed calls, this can lead to have multiple roots.
+            //
+            //Search for terms never seen as child of another term.
+            //We need to examine all terms, not only those present in the relations,
+            //because maybe some terms have no ancestors and no descendants,
+            //and will not be retrieved when retrieving relations.
+            Set<Condition> allConds = new HashSet<>();
+            Set<Condition> childConds = new HashSet<>();
+            for (Condition cond: conditionGraph.getConditions()) {
+                allConds.add(cond);
+                for (Condition parentCond: conditionGraph.getAncestorConditions(cond, true)) {
+                    childConds.add(cond);
+                    out.println(COND_ID_GENERATOR.apply(cond) + '\t'
+                              + COND_ID_GENERATOR.apply(parentCond));
+                }
+            }
+            allConds.removeAll(childConds);
+            log.debug("Root(s) of the graph: {}", allConds);
+            if (allConds.size() > 1) {
+                for (Condition root: allConds) {
+                    if (realCondRoot == null ||
+                            !COND_ID_GENERATOR.apply(root).equals(
+                                    COND_ID_GENERATOR.apply(realCondRoot))) {
+                        out.println(COND_ID_GENERATOR.apply(root) + '\t'
+                            + (realCondRoot != null? COND_ID_GENERATOR.apply(realCondRoot): FAKE_ROOT_COND_ID));
+                    }
+                }
+            }
         }
 
         log.traceExit();
@@ -553,19 +624,18 @@ public class TopAnatAnalysis {
      */
     private void writeToGeneToAnatEntitiesFile(String geneToAnatEntitiesFile)
             throws IOException {
-
-        log.entry(geneToAnatEntitiesFile); 
+        log.traceEntry("{}", geneToAnatEntitiesFile);
 
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(
                 geneToAnatEntitiesFile)))) {
             this.callService.loadExpressionCalls(
-                    (ExpressionCallFilter) this.params.convertRawParametersToCallFilter(), 
-                    EnumSet.of(CallService.Attribute.GENE, CallService.Attribute.ANAT_ENTITY_ID), 
+                    (ExpressionCallFilter) this.callFilter,
+                    CALL_SERVICE_ATTRIBUTES,
                     null
                 ).forEach(
                     call -> out.println(
-                        call.getGene().getEnsemblGeneId() + '\t' + 
-                        call.getCondition().getAnatEntityId()
+                        call.getGene().getGeneId() + '\t' +
+                        COND_ID_GENERATOR.apply(call.getCondition())
                     )
                 );
         }
@@ -637,7 +707,7 @@ public class TopAnatAnalysis {
      * @throws IOException
      */
     private void writeToTopAnatParamsFile(String topAnatParamsFileName) throws IOException {
-        log.entry(topAnatParamsFileName);
+        log.traceEntry("{}", topAnatParamsFileName);
 
         String nameValueSeparator = ":\t";
         //OS independent line return, in order to serve a file generated on our server
@@ -819,7 +889,7 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getResultFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         String fileName = TopAnatAnalysis.FILE_PREFIX + "results.tsv";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -833,7 +903,7 @@ public class TopAnatAnalysis {
      * @return          A {@code String} that is the path to the result file.
      */
     protected String getResultFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getResultFileName(tmpFile));
     }
 
@@ -852,7 +922,7 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getResultPDFFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         String fileName = TopAnatAnalysis.FILE_PREFIX + "results.pdf";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -860,7 +930,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getResultPDFFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getResultPDFFileName(tmpFile));
     }
 
@@ -869,7 +939,7 @@ public class TopAnatAnalysis {
      */
     //TODO: unit test this logic, of different file names depending on parameters
     protected String getGeneToAnatEntitiesFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         
         String paramsEncoded = "";
         //for the background file, if there is no custom background requested, 
@@ -908,7 +978,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getGeneToAnatEntitiesFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getGeneToAnatEntitiesFileName(tmpFile));
     }
 
@@ -916,8 +986,19 @@ public class TopAnatAnalysis {
      * @return
      */
     protected String getAnatEntitiesNamesFileName(boolean tmpFile){
-        log.entry(tmpFile);
-        String fileName = TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_" + this.params.getSpeciesId() 
+        log.traceEntry("{}", tmpFile);
+        //For now we always have only one ConditionFilter, but if that changed,
+        //we would need to order them for consistent naming.
+        //Also, for now we only have a few condition parameters set,
+        //but if that changed we would need to use a hash rather than all parameters.
+        assert this.callFilter.getConditionFilters().size() <= 1;
+        DAOConditionFilter daoCondFilter = generateDAOConditionFilter(
+                this.callFilter.getConditionFilters().stream().findAny().orElse(null),
+                convertCondParamAttrsToCondDAOAttrs(CALL_SERVICE_ATTRIBUTES));
+
+        String fileName = TopAnatAnalysis.FILE_PREFIX + "AnatEntitiesNames_"
+            + this.params.getSpeciesId()
+            + (daoCondFilter != null? "_" + daoCondFilter.toParamString(): "")
             + ".tsv";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -925,7 +1006,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getAnatEntitiesNamesFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getAnatEntitiesNamesFileName(tmpFile));
     }
 
@@ -933,16 +1014,27 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getAnatEntitiesRelationshipsFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
+        //For now we always have only one ConditionFilter, but if that changed,
+        //we would need to order them for consistent naming.
+        //Also, for now we only have a few condition parameters set,
+        //but if that changed we would need to use a hash rather than all parameters.
+        assert this.callFilter.getConditionFilters().size() <= 1;
+        DAOConditionFilter daoCondFilter = generateDAOConditionFilter(
+                this.callFilter.getConditionFilters().stream().findAny().orElse(null),
+                convertCondParamAttrsToCondDAOAttrs(CALL_SERVICE_ATTRIBUTES));
+
         String fileName = TopAnatAnalysis.FILE_PREFIX 
-                + "AnatEntitiesRelationships_" + this.params.getSpeciesId() + ".tsv";
+                + "AnatEntitiesRelationships_" + this.params.getSpeciesId()
+                + (daoCondFilter != null? "_" + daoCondFilter.toParamString(): "")
+                + ".tsv";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
         }
         return log.traceExit(fileName);
     }
     protected String getAnatEntitiesRelationshipsFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getAnatEntitiesRelationshipsFileName(tmpFile));
     }
 
@@ -950,7 +1042,7 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getRScriptAnalysisFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         String fileName = TopAnatAnalysis.FILE_PREFIX + "script.R";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -958,7 +1050,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getRScriptAnalysisFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getRScriptAnalysisFileName(tmpFile));
     }
 
@@ -966,7 +1058,7 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getParamsOutputFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         String fileName = TopAnatAnalysis.FILE_PREFIX + "Params.txt";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -974,7 +1066,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getParamsOutputFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getParamsOutputFileName(tmpFile));
     }
 
@@ -982,7 +1074,7 @@ public class TopAnatAnalysis {
      * 
      */
     protected String getZipFileName(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         String fileName = TopAnatAnalysis.FILE_PREFIX + "results.zip";
         if (tmpFile) {
             fileName += TMP_FILE_SUFFIX;
@@ -990,7 +1082,7 @@ public class TopAnatAnalysis {
         return log.traceExit(fileName);
     }
     protected String getZipFilePath(boolean tmpFile){
-        log.entry(tmpFile);
+        log.traceEntry("{}", tmpFile);
         return log.traceExit(this.getResultDirectoryPath() + this.getZipFileName(tmpFile));
     }
 

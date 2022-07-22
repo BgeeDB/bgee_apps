@@ -170,9 +170,11 @@ public class BgeeDBUtilsTest extends TestAncestor {
             
             RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    new HashSet<>(Arrays.asList(1, 2)), 
-                    EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+            when(mockManager.getRelationDAO().getAnatEntityRelations(
+                    new HashSet<>(Arrays.asList(1, 2)), true, null, null, null,
+                    EnumSet.of(RelationType.ISA_PARTOF), null,
+                    EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID)))
+            .thenReturn(mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
             expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1", "2", "3", "4")));
@@ -193,9 +195,11 @@ public class BgeeDBUtilsTest extends TestAncestor {
         try (MockDAOManager mockManager = new MockDAOManager()) {
             RelationTOResultSet<String> mockRelationTOResultSet = this.createMockDAOResultSet(
                     returnedRelTOs, MySQLRelationTOResultSet.class);
-            when(mockManager.getRelationDAO().getAnatEntityRelationsBySpeciesIds(
-                    new HashSet<>(Arrays.asList(1, 2)), 
-                    EnumSet.of(RelationType.ISA_PARTOF), null)).thenReturn(mockRelationTOResultSet);
+            when(mockManager.getRelationDAO().getAnatEntityRelations(
+                    new HashSet<>(Arrays.asList(1, 2)), true, null, null, null,
+                    EnumSet.of(RelationType.ISA_PARTOF), null,
+                    EnumSet.of(RelationDAO.Attribute.SOURCE_ID, RelationDAO.Attribute.TARGET_ID)))
+            .thenReturn(mockRelationTOResultSet);
             
             Map<String, Set<String>> expectedReturnedVal = new HashMap<String, Set<String>>();
             expectedReturnedVal.put("1", new HashSet<String>(Arrays.asList("1")));

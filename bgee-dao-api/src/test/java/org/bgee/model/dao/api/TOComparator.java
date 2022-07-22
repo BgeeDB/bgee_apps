@@ -72,7 +72,7 @@ import org.bgee.model.dao.api.species.TaxonDAO.TaxonTO;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Apr. 2019
+ * @version Bgee 15.0, Jul. 2021
  * @since   Bgee 13, July 2014
  */
 public class TOComparator {
@@ -745,8 +745,8 @@ public class TOComparator {
         if (TOComparator.areEntityTOsEqual(to1, to2, compareId) &&
                 StringUtils.equals(to1.getAnatEntityId(), to2.getAnatEntityId()) &&
                 StringUtils.equals(to1.getStageId(), to2.getStageId()) &&
-                Objects.equals(to1.getSex(), to2.getSex()) &&
-                StringUtils.equals(to1.getStrain(), to2.getStrain()) &&
+                Objects.equals(to1.getCellTypeId(), to2.getCellTypeId()) &&
+                StringUtils.equals(to1.getStrainId(), to2.getStrainId()) &&
                 Objects.equals(to1.getSpeciesId(), to2.getSpeciesId())) {
             return log.traceExit(true);
         }
@@ -769,6 +769,8 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+
+                Objects.equals(to1.getSex(), to2.getSex()) &&
 
                 //ConditionRankInfoTO do not implement hashCode/equals
                 (to1.getRankInfoTOs() == null && to2.getRankInfoTOs() == null || 
@@ -797,6 +799,7 @@ public class TOComparator {
         log.entry(to1, to2, compareId);
 
         if (areTOsEqual((BaseConditionTO) to1, (BaseConditionTO) to2, compareId) &&
+                Objects.equals(to1.getSex(), to2.getSex()) &&
                 Objects.equals(to1.getSexInferred(), to2.getSexInferred()) &&
                 Objects.equals(to1.getExprMappedConditionId(), to2.getExprMappedConditionId())) {
             return log.traceExit(true);
@@ -870,7 +873,7 @@ public class TOComparator {
     private static boolean areTOsEqual(RawExpressionCallTO to1, RawExpressionCallTO to2, 
             boolean compareId) {
         log.entry(to1, to2, compareId);
-        if (areEntityTOsEqual(to1, to2, compareId) && 
+        if ((!compareId || Objects.equals(to1.getId(), to2.getId())) &&
                 Objects.equals(to1.getBgeeGeneId(), to2.getBgeeGeneId()) && 
                 Objects.equals(to1.getConditionId(), to2.getConditionId())) {
             return log.traceExit(true);
@@ -897,14 +900,42 @@ public class TOComparator {
             boolean compareId) {
         log.entry(to1, to2, compareId);
         if (areTOsEqual((RawExpressionCallTO) to1, (RawExpressionCallTO) to2, compareId) &&
-                areBigDecimalEquals(to1.getMeanRank(), to2.getMeanRank()) &&
+
+                Objects.equals(to1.getMeanRanks(), to2.getMeanRanks()) &&
+                //DAOMeanRank equals method only take into account DataTypes, not mean rank value
+                (to1.getMeanRanks() == null || to1.getMeanRanks().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getMeanRank(),
+                        to2.getMeanRanks().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getMeanRank()))) &&
 
                 //GlobalExpressionCallDataTOs do not implement hashCode/equals
                 (to1.getCallDataTOs() == null && to2.getCallDataTOs() == null || 
                 to1.getCallDataTOs() != null && to2.getCallDataTOs() != null &&
                 to1.getCallDataTOs().stream()
                     .allMatch(c1 -> to2.getCallDataTOs().stream()
-                            .anyMatch(c2 -> areTOsEqual(c1, c2))))) {
+                            .anyMatch(c2 -> areTOsEqual(c1, c2)))) &&
+
+                Objects.equals(to1.getPValues(), to2.getPValues()) &&
+                //DAOFDRPValue equals method only take into account DataTypes, not FDR value nor conditionId
+                (to1.getPValues() == null || to1.getPValues().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getFdrPValue(),
+                        to2.getPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getFdrPValue())) &&
+                to1.getPValues().stream()
+                .allMatch(r -> Objects.equals(r.getConditionId(),
+                        to2.getPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getConditionId()))) &&
+
+                Objects.equals(to1.getBestDescendantPValues(), to2.getBestDescendantPValues()) &&
+                //DAOFDRPValue equals method only take into account DataTypes, not FDR value nor conditionId
+                (to1.getBestDescendantPValues() == null || to1.getBestDescendantPValues().stream()
+                .allMatch(r -> areBigDecimalEquals(r.getFdrPValue(),
+                        to2.getBestDescendantPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getFdrPValue())) &&
+                to1.getPValues().stream()
+                .allMatch(r -> Objects.equals(r.getConditionId(),
+                        to2.getBestDescendantPValues().stream().filter(r2 -> r.equals(r2))
+                        .findFirst().get().getConditionId())))) {
             return log.traceExit(true);
         }
         return log.traceExit(false);
@@ -923,10 +954,10 @@ public class TOComparator {
     private static boolean areTOsEqual(GlobalExpressionCallDataTO to1, GlobalExpressionCallDataTO to2) {
         log.entry(to1, to2);
         if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
-                Objects.equals(to1.getDataPropagation(), to2.getDataPropagation()) &&
-                Objects.equals(to1.isConditionObservedData(), to2.isConditionObservedData()) &&
-                Objects.equals(to1.getExperimentCounts(), to2.getExperimentCounts()) &&
-                Objects.equals(to1.getPropagatedCount(), to2.getPropagatedCount()) &&
+                Objects.equals(to1.getSelfObservationCount(), to2.getSelfObservationCount()) &&
+                Objects.equals(to1.getDescendantObservationCount(), to2.getDescendantObservationCount()) &&
+                Objects.equals(to1.getFDRPValue(), to2.getFDRPValue()) &&
+                Objects.equals(to1.getBestDescendantFDRPValue(), to2.getBestDescendantFDRPValue()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
                 areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {

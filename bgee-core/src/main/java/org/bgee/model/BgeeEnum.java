@@ -1,5 +1,6 @@
 package org.bgee.model;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -60,7 +61,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> T convert(
             Class<T> enumClass, String representation) {
-        log.entry(enumClass, representation);
+        log.traceEntry("{}, {}", enumClass, representation);
         
         if (representation == null) {
             return log.traceExit((T) null);
@@ -90,16 +91,16 @@ public abstract class BgeeEnum {
      *                          {@code representations} has an element {@code null}.
      * @param <T> The type of {@code BgeeEnumField}
      */
-    public static final <T extends Enum<T> & BgeeEnumField> Set<T> 
+    public static final <T extends Enum<T> & BgeeEnumField> EnumSet<T> 
         convertStringSetToEnumSet(Class<T> enumClass, Collection<String> representations) {
-        log.entry(representations);
+        log.traceEntry("{}", representations);
 
         if (representations == null || representations.isEmpty()) {
-            return log.traceExit((Set<T>) null);
+            return log.traceExit((EnumSet<T>) null);
         }
 
         Set<String> filteredRepresentations = new HashSet<>(representations);
-        Set<T> enumSet = new HashSet<>();
+        EnumSet<T> enumSet = EnumSet.noneOf(enumClass);
         for (String repr: filteredRepresentations) {
             T convertedRep = convert(enumClass, repr);
             enumSet.add(convertedRep);
@@ -122,7 +123,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> Set<String> 
         convertEnumSetToStringSet(Set<T> enums) {
-        log.entry(enums);
+        log.traceEntry("{}", enums);
         
         if (enums == null || enums.isEmpty()) {
             return log.traceExit((Set<String>) null);
@@ -148,7 +149,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean isInEnum(
             Class<T> enumClass, String representation) {
-        log.entry(enumClass, representation);
+        log.traceEntry("{}, {}", enumClass, representation);
         String lowCaseRepresentation = representation.toLowerCase(Locale.ENGLISH);
         for (T bgeeEnum: EnumSet.allOf(enumClass)) {
             if (bgeeEnum.getStringRepresentation().toLowerCase(Locale.ENGLISH).equals(lowCaseRepresentation) || 
@@ -173,7 +174,7 @@ public abstract class BgeeEnum {
      */
     public static final <T extends Enum<T> & BgeeEnumField> boolean areAllInEnum(
             Class<T> enumClass, Collection<String> representations) {
-        log.entry(enumClass, representations);
+        log.traceEntry("{}, {}", enumClass, representations);
         if (representations == null) {
             return log.traceExit(true);
         }
@@ -184,5 +185,38 @@ public abstract class BgeeEnum {
             }
         }
         return log.traceExit(true);
+    }
+
+    public static final <T extends Enum<T>> Set<EnumSet<T>> getAllPossibleEnumCombinations(
+            Class<T> enumClass, Collection<T> enums) {
+        log.traceEntry("{}", enums);
+        if (enums == null || enums.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some values must be provided."));
+        }
+        EnumSet<T> filteredEnums = EnumSet.copyOf(enums);
+        Set<EnumSet<T>> combinations = new HashSet<>();
+        //we provide the class as argument so we're safe for the cast
+        @SuppressWarnings("unchecked")
+        T[] enumArr = filteredEnums.toArray((T[]) Array.newInstance(enumClass, filteredEnums.size()));
+        final int n = enumArr.length;
+
+        for (int i = 0; i < Math.pow(2, n); i++) {
+            String bin = Integer.toBinaryString(i);
+            while (bin.length() < n) {
+                bin = "0" + bin;
+            }
+            EnumSet<T> combination = EnumSet.noneOf(enumClass);
+            char[] chars = bin.toCharArray();
+            for (int j = 0; j < n; j++) {
+                if (chars[j] == '1') {
+                    combination.add(enumArr[j]);
+                }
+            }
+            //We don't want the combination where nothing is considered
+            if (!combination.isEmpty()) {
+                combinations.add(combination);
+            }
+        }
+        return log.traceExit(combinations);
     }
 }

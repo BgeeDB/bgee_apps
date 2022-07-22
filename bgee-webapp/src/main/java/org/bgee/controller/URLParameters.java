@@ -15,9 +15,12 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.CommandRPackage.PropagationParam;
+import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 
 /**
@@ -277,10 +280,14 @@ public class URLParameters {
     private static final Parameter<String> EXPRESSION_TYPE = new Parameter<String>("expr_type",
             true, false, null, true, DEFAULT_IS_SECURE, 
             Stream.of(RequestParameters.ALL_VALUE, CallType.Expression.EXPRESSED.getStringRepresentation(), 
-                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation())
+                    CallType.DiffExpression.DIFF_EXPRESSED.getStringRepresentation(),
+                    SummaryCallType.ExpressionSummary.EXPRESSED.getStringRepresentation(),
+                    SummaryCallType.ExpressionSummary.NOT_EXPRESSED.getStringRepresentation())
                 .map(e -> e.length()).max(Comparator.naturalOrder()).get(), 
             "(?i:" + RequestParameters.ALL_VALUE + "|" 
-                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED)
+                + Stream.of(CallType.Expression.EXPRESSED, CallType.DiffExpression.DIFF_EXPRESSED,
+                        SummaryCallType.ExpressionSummary.EXPRESSED,
+                        SummaryCallType.ExpressionSummary.NOT_EXPRESSED)
                     .map(e -> e.getStringRepresentation())
                     .collect(Collectors.joining("|")) + ")", 
              String.class);
@@ -336,11 +343,20 @@ public class URLParameters {
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the anatomical entities to be used.
-     * Corresponds to the URL parameter "stage_id".
+     * Corresponds to the URL parameter "anat_entity_id".
      */
     private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the propagation to be used.
+     * Corresponds to the URL parameter "propagation".
+     */
+    private static final Parameter<String> PROPAGATION = new Parameter<>("propagation",
+            false, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE,
+            "(?i:" + EnumSet.allOf(PropagationParam.class).stream()
+            .map(e -> e.toString()).collect(Collectors.joining("|")) + ")", 
+            String.class);
     /**
      * A {@code Parameter<String>} that contains the decorrelation type to be used 
      * for TopAnat analysis.
@@ -451,12 +467,33 @@ public class URLParameters {
 
     /**
      * A {@code Parameter<String>} that contains the anatomical entity IDs to be used 
-     * for anatomical similarity analysis.
+     * for anatomical similarity analysis and for retrieval of propagated anatomical entity
+     * IDs.
      * Corresponds to the URL parameter "ae_list".
      */
     private static final Parameter<String> ANAT_ENTITY_LIST = new Parameter<>("ae_list",
             false, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
             1000000, DEFAULT_LIST_FORMAT, String.class);
+
+    /**
+     * A {@code Parameter<String>} that contains the condition parameters to be used 
+     * for pages displaying expression results.
+     * Corresponds to the URL parameter "cond_param".
+     */
+    private static final Parameter<String> COND_PARAM = new Parameter<String>("cond_param",
+            true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            //We don't check precisely the length since we can have several cond. parameters
+            //provided in one query parameter
+            100, 
+            "(?i:" + RequestParameters.ALL_VALUE + "|" 
+                   + CallService.Attribute.getAllConditionParameters().stream()
+                    .map(a -> a.getCondParamName())
+                    .collect(Collectors.joining("|"))
+                   + "|"
+                   + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining("|"))
+                   + ")*", 
+             String.class);
     
 //    /**
 //     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
@@ -511,10 +548,13 @@ public class URLParameters {
             GENE_ID,
             SPECIES_ID,
             QUERY,
+            COND_PARAM,
             // Species request
             SPECIES_LIST,
             // Anat. similarity analyze params
             ANAT_ENTITY_LIST,
+            // propagated ontology terms request
+            PROPAGATION,
             // Expression comparison request
             GENE_LIST,
             // TopAnat analyze params
@@ -525,7 +565,9 @@ public class URLParameters {
             //ID to identify a specific analysis
             ANALYSIS_ID, 
             //DAO as webservice
-            ATTRIBUTE_LIST, 
+            ATTRIBUTE_LIST,
+            //RPackage  webservice params
+            ANAT_ENTITY,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -867,6 +909,16 @@ public class URLParameters {
     public Parameter<String> getParamAnatEntityList() {
         return ANAT_ENTITY_LIST;
     }
+    public Parameter<String> getCondParam() {
+        return COND_PARAM;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a propagation.
+     *          Corresponds to the URL parameter "propagation".
+     */
+    public Parameter<String> getParamPropagation() {
+        return PROPAGATION;
+    }
     /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 
@@ -976,8 +1028,8 @@ public class URLParameters {
         protected Parameter(String name, boolean allowsMultipleValues, boolean allowsSeparatedValues,
                 List<String> separators, boolean isStorable, boolean isSecure, int maxSize,
                 String format, Class<T> type) throws IllegalArgumentException {
-
-            log.entry(name, allowsMultipleValues, isStorable, isSecure, maxSize, format, type);
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}", name, allowsMultipleValues, isStorable,
+                    isSecure, maxSize, format, type);
 
             this.name = name ;
             this.allowsMultipleValues = allowsMultipleValues;

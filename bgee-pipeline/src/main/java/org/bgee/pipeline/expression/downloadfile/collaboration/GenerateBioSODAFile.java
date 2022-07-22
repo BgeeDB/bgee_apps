@@ -165,7 +165,7 @@ public class GenerateBioSODAFile {
                                 c -> c));
 
                 List<Object> toWrite = new ArrayList<>();
-                toWrite.add(gene.getEnsemblGeneId() + " - " + gene.getSpecies().getName());
+                toWrite.add(gene.getGeneId() + " - " + gene.getSpecies().getName());
                 boolean hasData = false;
                 for (AnatEntitySimilarity sim: anatSimilarities) {
                     SimilarityExpressionCall callSim = simToCall.get(sim);
@@ -227,7 +227,7 @@ public class GenerateBioSODAFile {
     protected static String[] getHeader(List<String> anatSimilarityNames) {
         log.entry(anatSimilarityNames);
 
-        List<String> cols = new ArrayList<>(Arrays.asList("Ensembl gene ID"));
+        List<String> cols = new ArrayList<>(Arrays.asList("Gene ID"));
         cols.addAll(anatSimilarityNames);
         return log.traceExit(cols.toArray(new String[0]));
     }

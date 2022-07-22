@@ -5,21 +5,62 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.URLParameters;
+import org.bgee.model.NamedEntity;
+import org.bgee.model.XRef;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
+import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Strain;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.file.DownloadFile;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.gene.GeneHomologs;
+import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
+import org.bgee.model.source.Source;
+import org.bgee.model.species.Species;
+import org.bgee.model.species.Taxon;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.model.topanat.TopAnatResults.TopAnatResultRow;
+import org.bgee.view.json.JsonParentDisplay;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -29,7 +70,7 @@ import java.util.stream.Stream;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2017
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Oct. 2015
  */
 public class JsonHelper {
@@ -37,108 +78,78 @@ public class JsonHelper {
     private static final Logger log = LogManager.getLogger(JsonHelper.class.getName());
     
     /**
-     * A {@code TypeAdapterFactory} made to return {@code StreamTypeAdapter}s, capable 
-     * of correctly dumping a {@code Stream} and its elements. The correct type of the elements 
-     * is determined, to be able to use the appropriate {@code TypeAdapter}. For instance, 
-     * if a custom {@code TypeAdapter} is registered for the elements of a given {@code Stream}, 
-     * then this {@code TypeAdapter} will be correctly used, and not the default 
-     * {@code TypeAdapter} for {@code Object}s. 
-     * <p>
-     * Rational: in order to access the {@code TypeAdapter}s necessary for correctly dumping 
-     * {@code Stream} elements, it is needed to have access to the {@code Gson} object, 
-     * and its {@code getTypeAdapter} methods. So it is needed to register a custom 
-     * {@code TypeAdapterFactory}, because the methods of a custom {@code TypeAdapter} 
-     * wouldn't have access to the {@code Gson} object, while the {@code TypeAdapterFactory} 
-     * method receives a {@code Gson} object. 
-     * <p>
-     * What we would like to do, ideally, is something along the line: 
-     * <pre><code>
-     * public &lt;T&gt; TypeAdapter&lt;T&gt; create(Gson gson, TypeToken&lt;T&gt; typeToken) {
-     *     if (Stream.class.isAssignableFrom(typeToken.getRawType()) && 
-     *             typeToken.getType() instanceof ParameterizedType) {
-     *         //need to manage wildcards, but you get the idea
-     *         TypeAdapter&lt;T&gt; typeAdapter = (TypeAdapter&lt;T&gt;) gson.getAdapter(
-     *             ((ParameterizedType) typeToken.getType()).getActualTypeArguments()[0]);
-     *         
-     *         //Now, our TypeAdapter implementation for Stream class should accept 
-     *         //the underlying TypeAdapter as constructor argument, for correctly dumping 
-     *         //the elements of the Stream: 
-     *         StreamTypeAdapter adapter = new StreamTypeAdapter(typeAdapter);
-     *         //and everything would work fine
-     *         return adapter;
-     *     }
-     *     return null;
-     * }
-     * </code></pre>
-     * The problem is, as the object processed is not really a {@code Stream} under the hood 
-     * (as of matter of {@code Stream}, it's something looking like 
-     * {@code java.util.stream.ReferencePipeline<E_IN, E_OUT>}), and because of type erasure, 
-     * it won't work, the method {@code getActualTypeArguments} will returned non-sense values, 
-     * unless... 
-     * <p>
-     * Unless we always provide the appropriate {@code TypeToken} when processing a {@code Stream}, 
-     * after having registered our {@code StreamTypeAdapterFactory}: 
-     * <pre><code>
-     * //imagine it is a Stream of more complex objects ;)
-     * Stream&lt;String&gt; stream = Stream.of("a", "b");
-     * String dumpStream = gson.toJson(stream, new TypeToken&lt;Stream&lt;String&gt;&gt;(){}.getType());
-     * </code></pre>
-     * But this method does not allow to provide a writer, to immediately write the output, 
-     * and to not store the resulting dump in memory. This is especially problematic 
-     * for {@code Stream}s that can be infinite, or at least, very large. 
-     * <p>
-     * Another possible solution would be to create our own wrapper for {@code Stream}, 
-     * that would be shipped with the appropriate {@code TypeToken}, 
-     * for a {@code TypeAdapterFactory} to easily discover the correct {@code TypeAdapter} to use, e.g.: 
-     * <pre><code>
-     * Stream&lt;String&gt; stream = Stream.of("1", "2");
-     * StreamWrapper&lt;String&gt; streamWrapper = new StreamWrapper&lt;&gt;(stream, 
-     *     new TypeToken&lt;StreamWrapper&lt;String&gt;&gt;(){});
-     * //our custom {@code TypeAdapterFactory} should now be able to detect that the type 
-     * //of the processed object is 'StreamWrapper', and could retrieve the actual value 
-     * //of the generic type from it.
-     * gson.toJson(streamWrapper, ourWriter);
-     * </code></pre>
-     * This solution is acceptable, however, it would make deep-dumping of objects very difficult: 
-     * we would need to make sure we never provide unwrapped {@code Stream}s to {@code Gson} 
-     * unintentionally, in the field of another object for instance.
-     * <p>
-     * The solution adopted, while not ideal, is to directly provide to our custom {@code TypeAdapter} 
-     * the {@code Gson} object, so that it can on-the-fly be provided with the appropriate 
-     * {@code TypeAdapter}, by calling {@code getClass} on the iterated elements. 
-     * Our custom {@code TypeAdapterFactory} is responsible for providing the {@code Gson} object 
-     * to our custom {@code TypeAdapter}. See this class, and {@link StreamTypeAdapter}. 
-     * This has other limitations: for instance, if a {@code Stream} was declared as 
-     * {@code Stream<? extends MyInterface>}, we will always use the {@code TypeAdapter} 
-     * for the concrete implementations, and not a potential {@code TypeAdapter} 
-     * declared for the interface. So, if we needed a custom {@code TypeAdapter}, 
-     * we would need to declare one for each implementation; or to make the custom 
-     * {@code TypeAdapterFactory} to return the same {@code TypeAdapter} for all implementations.
-     * <p>
-     * For now, this factory manages only {@code Stream}s, but we could use it 
-     * for other complex types.
-     * 
+     * A {@code TypeAdapterFactory} notably used when we need to provide the {@code Gson} object
+     * to a custom {@code TypeAdapter}.
+     *
      * @author Frederic Bastian
-     * @version Bgee 13 Nov. 2015
+     * @version Bgee 15 Oct. 2021
      * @since Bgee 13 Nov. 2015
      * @see StreamTypeAdapter
+     * @see GeneMatchAdapter
      *
      */
     private static class BgeeTypeAdapterFactory implements TypeAdapterFactory {
+        private final Function<String, String> urlEncodeFunction;
+        /**
+         * The {@code RequestParameters} corresponding to the current request to the webapp.
+         */
+        private final RequestParameters requestParameters;
+        private final Supplier<RequestParameters> rpSupplier;
+
+        public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction,
+                RequestParameters requestParameters, Supplier<RequestParameters> rpSupplier) {
+            this.urlEncodeFunction = urlEncodeFunction;
+            this.requestParameters = requestParameters;
+            this.rpSupplier = rpSupplier;
+        }
 
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
-            log.entry(gson, typeToken);
-            
-            if (!Stream.class.isAssignableFrom(typeToken.getRawType())) {
-              return log.traceExit((TypeAdapter<T>) null);
+            log.traceEntry("{}, {}", gson, typeToken);
+
+            final Class<? super T> rawClass = typeToken.getRawType();
+
+            if (Stream.class.isAssignableFrom(rawClass)) {
+                //it is mandatory to cast the returned factory, the test isAssignableFrom
+                //is not enough for the warning to disappear. Note that this is also the case
+                //in Gson factory implementations
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
+                return log.traceExit(result);
             }
-            //it is mandatory to cast the returned factory, the test isAssignableFrom 
-            //is not enough for the warning to disappear. Note that this is also the case 
-            //in Gson factory implementations
-            @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
-            return log.traceExit(result);
+            if (GeneMatch.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsAdapter(gson, this.rpSupplier);
+                return log.traceExit(result);
+            }
+            if (Gene.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneAdapter(gson, urlEncodeFunction);
+                return log.traceExit(result);
+            }
+            if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (MultiGeneExprAnalysis.class.isAssignableFrom(rawClass) ) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisAdapter(gson);
+                return log.traceExit(result);
+            }
+            if (AnatEntitySimilarityAnalysis.class.isAssignableFrom(rawClass)) {
+                @SuppressWarnings("unchecked")
+                TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisAdapter(gson);
+                return log.traceExit(result);
+            }
+
+            //let Gson find somebody else
+            return log.traceExit((TypeAdapter<T>) null);
         }
     }
     /**
@@ -168,7 +179,7 @@ public class JsonHelper {
         
         @Override
         public void write(JsonWriter out, Stream<T> stream) throws IOException {
-            log.entry(out, stream);
+            log.traceEntry("{}, {}", out, stream);
             if (stream == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -236,7 +247,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, DownloadFile value) throws IOException {
-            log.entry(out, value);
+            log.traceEntry("{}, {}", out, value);
             if (value == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -255,7 +266,10 @@ public class JsonHelper {
                 value.getCategory().getStringRepresentation());
             out.name("conditionParameters");
             out.beginArray();
-            for (CallService.Attribute condParam: value.getConditionParameters()) {
+            EnumSet<CallService.Attribute> condParams = value.getConditionParameters().isEmpty()?
+                    CallService.Attribute.getAllConditionParameters():
+                        EnumSet.copyOf(value.getConditionParameters());
+            for (CallService.Attribute condParam: condParams) {
                 out.value(condParam.getCondParamName());
             }
             out.endArray();
@@ -286,7 +300,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, RequestParameters rqParams) throws IOException {
-            log.entry(out, rqParams);
+            log.traceEntry("{}, {}", out, rqParams);
             if (rqParams == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -317,6 +331,7 @@ public class JsonHelper {
                     log.trace("Allows multiple or separated values, start printing Array.");
                     out.beginArray();
                 }
+                boolean hasValue = false;
                 for (Object value: values) {
                     if (value == null) {
                         log.trace("Skip null value.");
@@ -324,10 +339,13 @@ public class JsonHelper {
                     }
                     log.trace("Printing parameter value {}", value.toString());
                     out.value(value.toString());
+                    hasValue = true;
                 }
                 if (param.allowsMultipleValues() || param.allowsSeparatedValues()) {
                     log.trace("Allows multiple or separated values, end printing Array.");
                     out.endArray();
+                } else if (!hasValue) {
+                    out.nullValue();
                 }
             }
 
@@ -363,7 +381,7 @@ public class JsonHelper {
         }
         @Override
         public void write(JsonWriter out, TopAnatResults results) throws IOException {
-            log.entry(out, results);
+            log.traceEntry("{}, {}", out, results);
             if (results == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -439,7 +457,7 @@ public class JsonHelper {
         
         @Override
         public void write(JsonWriter out, Job value) throws IOException {
-            log.entry(out, value);
+            log.traceEntry("{}, {}", out, value);
             if (value == null) {
                 out.nullValue();
                 log.traceExit(); return;
@@ -472,6 +490,786 @@ public class JsonHelper {
     }
 
     /**
+     * A {@code TypeAdapter} to read/write {@code GeneMatch}s in JSON. It is needed because
+     * the {@code getTerm()} method of {@code GeneMatch} is not always filled, and this is the attribute
+     * that GSON would use by default. With this {@code TypeAdapter} we can always use the method
+     * {@code getMatch()}.
+     */
+    private static final class GeneMatchAdapter extends TypeAdapter<GeneMatch> {
+        private final Gson gson;
+
+        private GeneMatchAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneMatch value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("gene");
+            this.gson.getAdapter(Gene.class).write(out, value.getGene());
+            out.name("match").value(value.getMatch());
+            out.name("matchSource").value(value.getMatchSource().toString().toLowerCase());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneMatch read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneMatch."));
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneHomologs}s in JSON. It is notably to be able
+     * to call the method {@code getXRefUrl()}.
+     */
+    private static final class GeneXRefAdapter extends TypeAdapter<GeneXRef> {
+
+        private final Function<String, String> urlEncodeFunction;
+        private GeneXRefAdapter(Function<String, String> urlEncodeFunction) {
+            this.urlEncodeFunction = urlEncodeFunction;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneXRef value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            writeSimplifiedXRef(out, value, urlEncodeFunction);
+
+            //Simplified display of Source inside XRefs
+            out.name("source");
+            out.beginObject();
+            writeSimplifiedSource(out, value.getSource());
+            out.endObject();
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneXRef read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneXRef."));
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneHomologs}s in JSON. It is a complex object
+     * notably with {@code Map}s.
+     */
+    private static final class GeneHomologsAdapter extends TypeAdapter<GeneHomologs> {
+        //TODO: refactor with comparator in HtmlGeneDisplay
+        private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
+                .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(),
+                        Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(x -> x.getGeneId(), Comparator.nullsLast(String::compareTo));
+
+        private final Gson gson;
+        private final Supplier<RequestParameters> rpSupplier;
+
+        private GeneHomologsAdapter(Gson gson, Supplier<RequestParameters> rpSupplier) {
+            this.gson = gson;
+            this.rpSupplier = rpSupplier;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneHomologs value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("gene");
+            writeSimplifiedGene(out, value.getGene(), false, null);
+
+            out.name("orthologsByTaxon");
+            this.writeHomologsByTaxon(out, value.getGene(), value.getOrthologsByTaxon());
+            out.name("paralogsByTaxon");
+            this.writeHomologsByTaxon(out, value.getGene(), value.getParalogsByTaxon());
+
+            out.name("orthologyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getOrthologyXRef());
+            out.name("paralogyXRef");
+            this.gson.getAdapter(GeneXRef.class).write(out, value.getParalogyXRef());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneHomologs read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for GeneHomologs."));
+        }
+
+        private void writeHomologsByTaxon(JsonWriter out, Gene targetGene,
+                LinkedHashMap<Taxon, Set<Gene>> homologsByTaxon) throws IOException {
+            log.traceEntry("{}, {}, {}", out, targetGene, homologsByTaxon);
+            out.beginArray();
+            // all homologs of one taxon
+            // We will display to each taxon level all genes from more recent taxon
+            Set<Gene> allGenes = new HashSet<>();
+            for (Entry<Taxon, Set<Gene>> e: homologsByTaxon.entrySet()) {
+                out.beginObject();
+
+                out.name("taxon");
+                this.gson.getAdapter(Taxon.class).write(out, e.getKey());
+
+                allGenes.addAll(e.getValue());
+                // sort genes
+                List<Gene> orderedHomologsWithDescendant = allGenes.stream()
+                        .sorted(GENE_HOMOLOGY_COMPARATOR)
+                        .collect(Collectors.toList());
+                out.name("genes");
+                out.beginArray();
+                for (Gene gene: orderedHomologsWithDescendant) {
+                    writeSimplifiedGene(out, gene, false, null);
+                }
+                out.endArray();
+
+                //provide the parameters to produce a link to an expression comparison
+                RequestParameters rp = this.rpSupplier.get();
+                List<String> genesToCompare = orderedHomologsWithDescendant.stream()
+                        .map(Gene::getGeneId).collect(Collectors.toList());
+                genesToCompare.add(targetGene.getGeneId());
+                rp.setGeneList(genesToCompare);
+                out.name(JsonParentDisplay.STORABLE_PARAMS_INFO);
+                this.gson.getAdapter(LinkedHashMap.class)
+                .write(out, JsonParentDisplay.getStorableParamsInfo(rp));
+
+                out.endObject();
+            }
+            out.endArray();
+            log.traceExit();
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code Gene}s in JSON. It is notably to group XRefs
+     * per data source in the display.
+     */
+    private static final class GeneAdapter extends TypeAdapter<Gene> {
+        //TODO: refactor with comparator in HtmlGeneDisplay
+        private final static Comparator<XRef> X_REF_COMPARATOR = Comparator
+                .<XRef, Integer>comparing(x -> x.getSource().getDisplayOrder(), Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(x -> x.getSource().getName(), Comparator.nullsLast(String::compareTo))
+                .thenComparing((XRef::getXRefId), Comparator.nullsLast(String::compareTo));
+
+        private final Function<String, String> urlEncodeFunction;
+        private final Gson gson;
+
+        private GeneAdapter(Gson gson, Function<String, String> urlEncodeFunction) {
+            this.gson = gson;
+            this.urlEncodeFunction = urlEncodeFunction;
+        }
+
+        @Override
+        public void write(JsonWriter out, Gene value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("geneId").value(value.getGeneId());
+            out.name("name").value(value.getName());
+            out.name("description").value(value.getDescription());
+            out.name("synonyms");
+            this.gson.getAdapter(Set.class).write(out, value.getSynonyms());
+            out.name("xRefs");
+            this.writeXRefsBySource(out, value.getXRefs());
+            out.name("species");
+            this.gson.getAdapter(Species.class).write(out, value.getSpecies());
+            out.name("geneBioType");
+            this.gson.getAdapter(GeneBioType.class).write(out, value.getGeneBioType());
+            out.name("geneMappedToSameGeneIdCount").value(value.getGeneMappedToSameGeneIdCount());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public Gene read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException("No custom JSON reader for Gene."));
+        }
+
+        private void writeXRefsBySource(JsonWriter out, Set<XRef> xRefs)
+                throws IOException {
+            log.traceEntry("{}, {}", out, xRefs);
+            out.beginArray();
+
+            LinkedHashMap<Source, List<XRef>> xRefsBySource = xRefs.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getSource().getXRefUrl()))
+                    .sorted(X_REF_COMPARATOR)
+                    .collect(Collectors.groupingBy(XRef::getSource,
+                            LinkedHashMap::new,
+                            Collectors.toList()));
+            for (Entry<Source, List<XRef>> e: xRefsBySource.entrySet()) {
+                out.beginObject();
+
+                out.name("source");
+                out.beginObject();
+                writeSimplifiedSource(out, e.getKey());
+                out.endObject();
+
+                out.name("xRefs");
+                out.beginArray();
+                for (XRef xRef: e.getValue()) {
+                    out.beginObject();
+                    writeSimplifiedXRef(out, xRef, urlEncodeFunction);
+                    out.endObject();
+                }
+                out.endArray();
+
+                out.endObject();
+            }
+            out.endArray();
+            log.traceExit();
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code GeneExpressionResponse}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class GeneExpressionResponseAdapter extends TypeAdapter<GeneExpressionResponse> {
+        private final Gson gson;
+
+        private GeneExpressionResponseAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, GeneExpressionResponse value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+            //Retrieve requested condition parameters
+            EnumSet<CallService.Attribute> condParams = value.getCondParams();
+
+            out.name("requestedCallType").value(value.getCallType().getStringRepresentation());
+
+            out.name("requestedDataTypes");
+            out.beginArray();
+            for (DataType d: value.getDataTypes()) {
+                out.value(d.getStringRepresentation());
+            }
+            out.endArray();
+
+            out.name("requestedConditionParameters");
+            out.beginArray();
+            for (CallService.Attribute a: condParams) {
+                out.value(a.getDisplayName());
+            }
+            out.endArray();
+
+            EnumSet<DataType> dataTypesWithData = EnumSet.noneOf(DataType.class);
+            out.name("calls");
+            out.beginArray();
+            for (ExpressionCall call: value.getCalls()) {
+                Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData::getDataType)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                dataTypesWithData.addAll(dataTypes);
+                boolean highQualScore = false;
+                if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
+                        (dataTypes.contains(DataType.AFFYMETRIX) ||
+                        dataTypes.contains(DataType.RNA_SEQ) ||
+                        dataTypes.contains(DataType.FULL_LENGTH) ||
+                        call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+                    highQualScore = true;
+                }
+
+                out.beginObject();
+
+                out.name("condition");
+                writeSimplifiedCondition(out, call.getCondition(), condParams);
+
+                out.name("expressionScore");
+                out.beginObject();
+                out.name("expressionScore").value(call.getFormattedExpressionScore());
+                out.name("expressionScoreConfidence");
+                if (highQualScore) {
+                    out.value("high");
+                } else {
+                    out.value("low");
+                }
+                out.endObject();
+
+                String fdr = call.getPValueWithEqualDataTypes(value.getDataTypes())
+                        .getFormatedFDRPValue();
+                out.name("fdr").value(fdr);
+
+                out.name("dataTypesWithData");
+//                EnumSet<DataType> dtWithData = call.getCallData().stream()
+//                        .filter(c -> c.getDataPropagation() != null &&
+//                            c.getDataPropagation().getCondParamCombinations().stream()
+//                            .anyMatch(comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0))
+//                        .map(c -> c.getDataType())
+//                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                out.beginArray();
+                for (DataType d: dataTypes) {
+                    out.value(d.getStringRepresentation());
+                }
+                out.endArray();
+                
+                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
+                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+                out.name("clusterIndex").value(value.getClustering().get(call));
+
+                out.endObject();
+            }
+            out.endArray();
+
+            if (!value.getCalls().isEmpty()) {
+                assert !dataTypesWithData.isEmpty();
+                out.name("gene");
+                writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
+                        true, dataTypesWithData);
+            }
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public GeneExpressionResponse read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for GeneExpressionResponse."));
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code MultiGeneExprAnalysis}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class MultiGeneExprAnalysisAdapter extends TypeAdapter<MultiGeneExprAnalysis<?>> {
+        private final Gson gson;
+
+        private MultiGeneExprAnalysisAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, MultiGeneExprAnalysis<?> value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginArray();
+            for (Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts:
+                value.getCondToCounts().entrySet()) {
+
+                writeCondToCounts(out, condToCounts);
+            }
+            out.endArray();
+
+            log.traceExit();
+        }
+
+        @Override
+        public MultiGeneExprAnalysis<?> read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for MultiGeneExprAnalysis."));
+        }
+
+        private static void writeCondToCounts(JsonWriter out,
+                Entry<?, MultiGeneExprAnalysis.MultiGeneExprCounts> condToCounts) throws IOException {
+            log.traceEntry("{}, {}", out, condToCounts);
+            out.beginObject();
+
+            //Condition
+            Object cond = condToCounts.getKey();
+            if (cond instanceof MultiSpeciesCondition) {
+                out.name("multiSpeciesCondition");
+                writeSimplifiedMultiSpeciesCondition(out, (MultiSpeciesCondition) cond);
+            } else if (cond instanceof Condition) {
+                out.name("condition");
+                //For now, we only use anat. entity and cell type for comparison
+                writeSimplifiedCondition(out, (Condition) cond, EnumSet.of(
+                        CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.CELL_TYPE_ID));
+            } else {
+                throw log.throwing(new IllegalStateException("Unrecognized class: "
+                        + cond.getClass().getSimpleName()));
+            }
+
+            //Conservation score
+            Map<ExpressionSummary, Set<Gene>> callTypeToGenes = condToCounts.getValue().getCallTypeToGenes();
+            Set<Gene> expressedGenes = callTypeToGenes.get(ExpressionSummary.EXPRESSED);
+            if (expressedGenes == null) {
+                expressedGenes = new HashSet<>();
+            }
+            Set<Gene> notExpressedGenes = callTypeToGenes.get(ExpressionSummary.NOT_EXPRESSED);
+            if (notExpressedGenes == null) {
+                notExpressedGenes = new HashSet<>();
+            }
+            //We need to cast to double explicitly otherwise the result of dividing is incorrect
+            @SuppressWarnings("cast")
+            double score = (double) (expressedGenes.size() - notExpressedGenes.size())
+                    / ((double) expressedGenes.size() + notExpressedGenes.size());
+            out.name("conservationScore");
+            out.value(String.format(Locale.US, "%.2f", score));
+
+            // Max expression score
+            Optional<ExpressionLevelInfo> collect = condToCounts.getValue().getGeneToExprLevelInfo().values().stream()
+                    .filter(eli -> eli != null && eli.getExpressionScore() != null)
+                    .max(Comparator.comparing(ExpressionLevelInfo::getExpressionScore,
+                            Comparator.nullsFirst(BigDecimal::compareTo)));
+            out.name("maxExpressionScore");
+            out.value(collect.isPresent()? collect.get().getFormattedExpressionScore(): "NA");
+
+            // Genes
+            out.name("genesExpressionPresent");
+            writeGenes(out, expressedGenes);
+            out.name("genesExpressionAbsent");
+            writeGenes(out, notExpressedGenes);
+            out.name("genesNoData");
+            writeGenes(out, condToCounts.getValue().getGenesWithNoData());
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        private static void writeGenes(JsonWriter out, Set<Gene> genes) throws IOException {
+            log.traceEntry("{}, {}", out, genes);
+
+            out.beginArray();
+            if (genes != null) {
+                List<Gene> sortedGenes = genes.stream().sorted(Comparator.comparing(Gene::getGeneId))
+                        .collect(Collectors.toList());
+                for (Gene gene: sortedGenes) {
+                    writeSimplifiedGene(out, gene, false, null);
+                }
+            }
+            out.endArray();
+
+            log.traceExit();
+        }
+    }
+
+    /**
+     * A {@code TypeAdapter} to read/write {@code AnatEntitySimilarityAnalysis}s in JSON. It is needed because
+     * of the complexity of the object and because we want to fine tune the response.
+     */
+    private static final class AnatEntitySimilarityAnalysisAdapter extends TypeAdapter<AnatEntitySimilarityAnalysis> {
+        private final Gson gson;
+
+        private AnatEntitySimilarityAnalysisAdapter(Gson gson) {
+            this.gson = gson;
+        }
+
+        @Override
+        public void write(JsonWriter out, AnatEntitySimilarityAnalysis value) throws IOException {
+            log.traceEntry("{}, {}", out, value);
+            if (value == null) {
+                out.nullValue();
+                log.traceExit(); return;
+            }
+            out.beginObject();
+
+            out.name("leastCommonAncestor");
+            this.gson.getAdapter(Taxon.class).write(out, value.getLeastCommonAncestor());
+
+            out.name("unrecognizedAnatEntityIds");
+            this.gson.getAdapter(List.class).write(out, value.getRequestedAnatEntityIdsNotFound()
+                    .stream().sorted().collect(Collectors.toList()));
+
+            out.name("anatEntitesWithNoSimilarityAnnotation");
+            List<AnatEntity> noSimAnatEntities = value.getAnatEntitiesWithNoSimilarities().stream()
+                    .sorted(Comparator.comparing(AnatEntity::getName))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (AnatEntity anatEntity: noSimAnatEntities) {
+                writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            out.endArray();
+
+            out.name("anatEntitySimilarities");
+            out.beginArray();
+            for (AnatEntitySimilarity sim: value.getAnatEntitySimilarities()) {
+                writeAnatEntitySimilarity(out, sim, value);
+            }
+            out.endArray();
+
+            out.endObject();
+            log.traceExit();
+        }
+
+        @Override
+        public AnatEntitySimilarityAnalysis read(JsonReader in) throws IOException {
+            //for now, we never read JSON values
+            throw log.throwing(new UnsupportedOperationException(
+                    "No custom JSON reader for MultiGeneExprAnalysis."));
+        }
+
+        private void writeAnatEntitySimilarity(JsonWriter out, AnatEntitySimilarity sim,
+                AnatEntitySimilarityAnalysis result) throws IOException {
+            log.traceEntry("{}, {}", sim, result);
+            out.beginObject();
+
+            out.name("ancestralTaxon");
+            this.gson.getAdapter(Taxon.class).write(out, sim.getTaxonSummaryAncestor());
+
+            out.name("speciesWithAnatEntityPresence");
+            List<Species> species = sim.getSourceAnatEntities().stream()
+                    .map(ae -> result.getAnatEntitiesExistInSpecies().get(ae))
+                    .flatMap(Set::stream)
+                    .distinct()
+                    .filter(sp -> result.getRequestedSpecies().contains(sp))
+                    .sorted(Comparator.comparing(s -> s.getPreferredDisplayOrder()))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (Species sp: species) {
+                writeSimplifiedSpecies(out, sp, false, null);
+            }
+            out.endArray();
+
+            out.name("anatEntities");
+            List<AnatEntity> anatEntities = sim.getSourceAnatEntities().stream()
+                    .sorted(Comparator.comparing(AnatEntity::getName))
+                    .collect(Collectors.toList());
+            out.beginArray();
+            for (AnatEntity anatEntity: anatEntities) {
+                writeSimplifiedNamedEntity(out, anatEntity);
+            }
+            out.endArray();
+
+            out.endObject();
+            log.traceExit();
+        }
+    }
+
+    private static final class Strategy implements ExclusionStrategy {
+        @Override
+        public boolean shouldSkipField(FieldAttributes field) {
+            if (field.getDeclaringClass() == Species.class) {
+                if (field.getName().equals("dataTypesByDataSourcesForData") ||
+                        field.getName().equals("dataTypesByDataSourcesForAnnotation")) {
+                    return true;
+                }
+            }
+            //XXX: we mask the ID because it is not stable between releases. This should go away once
+            //we redefine SpeciesDataGroup for not having an ID. In the interface, for single-species data groups,
+            //we should use the ID of the species.
+            //XXX: When we'll have multi-species files, we will need to define an Adapter for SpeciesDataGroup
+            //in order to provide an ID composed of the IDs of the species members.
+            //XXX: undoing this because it misght still be used by the current HTML Bgee code.
+            //To remove once the new website is ready.
+//            else if (field.getDeclaringClass() == SpeciesDataGroup.class && field.getName().equals("id")) {
+//                return true;
+//            }
+            return false;
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;
+        }
+    }
+
+
+    private static void writeSimplifiedCondition(JsonWriter out, Condition cond,
+            EnumSet<CallService.Attribute> condParams) throws IOException {
+        log.traceEntry("{}, {}, {}", out, cond, condParams);
+        out.beginObject();
+
+        // Anat entity ID and Anat entity cells
+        AnatEntity anatEntity = cond.getAnatEntity();
+        out.name("anatEntity");
+        if (anatEntity != null && condParams.contains(CallService.Attribute.ANAT_ENTITY_ID)) {
+            assert condParams.contains(CallService.Attribute.CELL_TYPE_ID):
+                "Anat. entity and cell type are requested together for the gene page";
+            writeSimplifiedNamedEntity(out, anatEntity);
+        } else {
+            out.nullValue();
+        }
+
+        AnatEntity cellType = cond.getCellType();
+        out.name("cellType");
+        // post-composition if not the root of cell type
+        if (cellType != null && condParams.contains(CallService.Attribute.CELL_TYPE_ID) &&
+                !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+            assert condParams.contains(CallService.Attribute.ANAT_ENTITY_ID):
+                "Anat. entity and cell type are requested together for the gene page";
+            writeSimplifiedNamedEntity(out, cellType);
+        } else {
+            out.nullValue();
+        }
+
+        // Dev stage
+        DevStage stage = cond.getDevStage();
+        out.name("devStage");
+        if (stage != null && condParams.contains(CallService.Attribute.DEV_STAGE_ID)) {
+            writeSimplifiedNamedEntity(out, stage);
+        } else {
+            out.nullValue();
+        }
+
+        // Sexes
+        Sex sex = cond.getSex();
+        out.name("sex");
+        if (sex != null && condParams.contains(CallService.Attribute.SEX_ID)) {
+            out.value(sex.getName());
+        } else {
+            out.nullValue();
+        }
+
+        // Strains
+        Strain strain = cond.getStrain();
+        out.name("strain");
+        if (strain != null && condParams.contains(CallService.Attribute.STRAIN_ID)) {
+            out.value(strain.getName());
+        } else {
+            out.nullValue();
+        }
+        out.endObject();
+        log.traceExit();
+    }
+
+    private static void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
+            throws IOException {
+        log.traceEntry("{}, {}", out, cond);
+        out.beginObject();
+
+        out.name("anatEntities");
+        out.beginArray();
+        for (AnatEntity ae: cond.getAnatSimilarity().getSourceAnatEntities()) {
+            writeSimplifiedNamedEntity(out, ae);
+        }
+        out.endArray();
+
+        out.name("cellTypes");
+        out.beginArray();
+        for (AnatEntity cellType: cond.getCellTypeSimilarity().getSourceAnatEntities()) {
+            if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                writeSimplifiedNamedEntity(out, cellType);
+            }
+        }
+        out.endArray();
+
+        //TODO: stageSimilarity and Sex
+
+        out.endObject();
+        log.traceExit();
+    }
+
+    private static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
+        log.traceEntry("{}, {}", out, source);
+        out.name("name").value(source.getName());
+        out.name("description").value(source.getDescription());
+        out.name("baseUrl").value(source.getBaseUrl());
+        log.traceExit();
+    }
+    private static void writeSimplifiedXRef(JsonWriter out, XRef xRef,
+            Function<String, String> urlEncodeFunction) throws IOException {
+        log.traceEntry("{}, {}", out, xRef, urlEncodeFunction);
+        out.name("xRefId").value(xRef.getXRefId());
+        out.name("xRefName").value(xRef.getXRefName());
+        out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
+        log.traceExit();
+    }
+    private static void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
+            EnumSet<DataType> allowedDataTypes)
+            throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, gene, withSpeciesDataSource, allowedDataTypes);
+        out.beginObject();
+        out.name("geneId").value(gene.getGeneId());
+        out.name("name").value(gene.getName());
+
+        //Simplified display of Species
+        out.name("species");
+        writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
+
+        out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
+        out.endObject();
+        log.traceExit();
+    }
+    private static void writeSimplifiedSpecies(JsonWriter out, Species species,
+            boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, species, withSpeciesDataSource, allowedDataTypes);
+        out.beginObject();
+        out.name("id").value(species.getId());
+        out.name("name").value(species.getName());
+        out.name("genus").value(species.getGenus());
+        out.name("speciesName").value(species.getSpeciesName());
+        out.name("preferredDisplayOrder").value(species.getPreferredDisplayOrder());
+        if (withSpeciesDataSource) {
+            out.name("sourcesOfDataPerDataType");
+            writeSourcesPerDataType(out, species.getDataSourcesForDataByDataTypes(),
+                    allowedDataTypes);
+            out.name("sourcesOfAnnotationsPerDataType");
+            writeSourcesPerDataType(out, species.getDataSourcesForAnnotationByDataTypes(),
+                    allowedDataTypes);
+        }
+        out.endObject();
+        log.traceExit();
+    }
+    private static void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
+            EnumSet<DataType> allowedDataTypes) throws IOException {
+        log.traceEntry("{}, {}, {}", out, map, allowedDataTypes);
+        // We order the Map by DataType and Source alphabetical name order
+        LinkedHashMap<DataType, List<Source>> dsByDataTypes = map.entrySet().stream()
+                .filter(e -> allowedDataTypes == null || allowedDataTypes.contains(e.getKey()))
+                .sorted(Comparator.comparing(e -> e.getKey()))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().stream().sorted(Comparator.comparing(s -> s.getName()))
+                                         .collect(Collectors.toList()),
+                        (v1, v2) -> {throw new AssertionError("Impossible collision");},
+                        LinkedHashMap::new));
+        out.beginArray();
+        for (Entry<DataType, List<Source>> e: dsByDataTypes.entrySet()) {
+            out.beginObject();
+            out.name("dataType").value(e.getKey().getStringRepresentation());
+            out.name("sources");
+            out.beginArray();
+            for (Source s: e.getValue()) {
+                out.beginObject();
+                writeSimplifiedSource(out, s);
+                out.endObject();
+            }
+            out.endArray();  // end List value
+            out.endObject(); // end Entry
+        }
+        out.endArray(); // end Map
+        log.traceExit();
+    }
+    private static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
+            throws IOException {
+        log.traceEntry("{}, {}", out, namedEntity);
+        if (namedEntity == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
+        out.beginObject();
+        out.name("id").value(namedEntity.getId());
+        out.name("name").value(namedEntity.getName());
+        out.endObject();
+        log.traceExit();
+    }
+    /**
      * The {@code Gson} used to dump JSON
      */
     private final Gson gson;
@@ -483,6 +1281,10 @@ public class JsonHelper {
      * A {@code RequestParameters} corresponding to the current request to the webapp.
      */
     private final RequestParameters requestParameters;
+    /**
+     * A {@code String} defining the character encoding for encoding query strings.
+     */
+    private final String charEncoding;
     
     /**
      * Default constructor delegating to {@link #JsonHelper(BgeeProperties)} with null arguments.
@@ -512,18 +1314,23 @@ public class JsonHelper {
         }
         if (requestParameters == null) {
             this.requestParameters = null;
+            this.charEncoding = null;
         } else {
             this.requestParameters = requestParameters.cloneWithAllParameters();
+            this.charEncoding = this.requestParameters.getCharacterEncoding();
         }
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
         this.gson = new GsonBuilder()
+                .addSerializationExclusionStrategy(new Strategy())
                 .registerTypeAdapter(DownloadFile.class, new DownloadFileTypeAdapter(this.props))
                 .registerTypeAdapter(RequestParameters.class, new RequestParametersTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
-                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory())
+                .registerTypeAdapter(GeneXRef.class, new GeneXRefAdapter(s -> this.urlEncode(s)))
+                .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
+                        this.requestParameters, () -> getNewRequestParameters()))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();
@@ -539,7 +1346,7 @@ public class JsonHelper {
      * @see #toJson(LinkedHashMap, Appendable)
      */
     public String toJson(Object object) {
-        log.entry(object);
+        log.traceEntry("{}", object);
         return log.traceExit(gson.toJson(object));
     }
     
@@ -553,8 +1360,40 @@ public class JsonHelper {
      * @param out       An {@code Appendable} used to print the generated JSON.
      */
     public void toJson(LinkedHashMap<String, Object> response, Appendable out) {
-        log.entry(response, out);
+        log.traceEntry("{}, {}", response, out);
         gson.toJson(response, out);
         log.traceExit();
+    }
+
+    /**
+     * URL encode the provided {@code String}, with the character encoding used to generate URLs.
+     *
+     * @param stringToWrite A {@code String} to be encoded.
+     * @return              The encoded {@code String}.
+     */
+    private String urlEncode(String stringToWrite) {
+        log.traceEntry("{}", stringToWrite);
+        try {
+            return log.traceExit(java.net.URLEncoder.encode(stringToWrite, this.charEncoding));
+        } catch (Exception e) {
+            log.catching(e);
+            return log.traceExit("");
+        }
+    }
+    /**
+     * Return a new {@code RequestParameters} object to be used to generate URLs.
+     * This new {@code RequestParameters} will use the same {@code URLParameters}
+     * as those returned by {@link #requestParameters} when calling
+     * {@link RequestParameters#getUrlParametersInstance()},
+     * and the {@code BgeeProperties} {@link #props}.
+     * Also, parameters will be URL encoded, and parameter separator will be {@code &}.
+     *
+     * @return  A newly created RequestParameters object.
+     */
+    private RequestParameters getNewRequestParameters() {
+        log.traceEntry();
+        return log.traceExit(new RequestParameters(
+                this.requestParameters.getUrlParametersInstance(),
+                this.props, true, "&"));
     }
 }

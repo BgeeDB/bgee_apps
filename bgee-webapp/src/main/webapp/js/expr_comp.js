@@ -15,7 +15,7 @@ $( document ).ready( function(){
 
         // Check that something is written in the gene list textarea.
         if ($("#bgee_gene_list").val().replace(' ', '').length === 0) {
-            message += "At least two Ensembl IDs should be provided. ";
+            message += "At least two gene IDs should be provided. ";
         }
         // Check if there is an error.
         if (message !== '') {
@@ -133,6 +133,9 @@ $( document ).ready( function(){
     // If you change any option of this table, take care to also change it for the single-species table
     $('table.expr_comp.multi-sp').DataTable( {
         order: order,
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         dom: dom,
         buttons: getButtons([0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14]),
         responsive: responsive,
@@ -197,6 +200,9 @@ $( document ).ready( function(){
     $('table.expr_comp.single-sp').DataTable( {
         order: order, //  score desc, expressed genes desc, rank asc
         dom: dom,
+        oLanguage: {
+            sSearch: "Filter:"
+        },
         buttons: getButtons([0, 1, 2, 3, 4, 5, 7, 8, 9, 10]),
         responsive: responsive,
         columnDefs: [ // Higher responsivePriority are removed first, target define the order

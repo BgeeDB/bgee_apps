@@ -93,7 +93,7 @@ public class GenerateOncoMXFile {
      * @throws IOException              If an error occurred while reading/writing a file.
      */
     public static void main(String[] args) throws FileNotFoundException, IOException {
-        log.entry((Object[]) args);
+        log.traceEntry("{}", (Object[]) args);
 
         int expectedArgLength = 3;
         if (args.length != expectedArgLength) {
@@ -123,7 +123,7 @@ public class GenerateOncoMXFile {
      */
     private static final Set<String> retrieveRequestedUberonIds(String oncomxUberonTermFile)
             throws FileNotFoundException, IOException {
-        log.entry(oncomxUberonTermFile);
+        log.traceEntry("{}", oncomxUberonTermFile);
 
         Set<String> uberonIds = new HashSet<>();
 
@@ -157,7 +157,7 @@ public class GenerateOncoMXFile {
 
     private final static <T extends NamedEntity<U> & OntologyElement<T, U>, U extends Comparable<U>>
     Set<U> getAllEntityIds(Ontology<T, U> ont, Set<U> seedEntityIds) {
-        log.entry(ont, seedEntityIds);
+        log.traceEntry("{}, {}", ont, seedEntityIds);
         Set<T> entities = seedEntityIds.stream()
                 .map(id -> {
                     T entity = ont.getElement(id);
@@ -178,21 +178,23 @@ public class GenerateOncoMXFile {
 
     protected static ExpressionCallFilter getGeneCallFilter(int speciesId, Collection<String> anatEntityIds,
             Collection<String> devStageIds) {
-        log.entry(speciesId, anatEntityIds, devStageIds);
+        log.traceEntry("{}, {}, {}", speciesId, anatEntityIds, devStageIds);
         //We want observed data only for any call type
         Map<CallType.Expression, Boolean> obsDataFilter = new HashMap<>();
         obsDataFilter.put(null, true);
+        Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter = new HashMap<>();
+        callObservedDataFilter.put(
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID, CallService.Attribute.DEV_STAGE_ID),
+                true);
         return log.traceExit(new ExpressionCallFilter(
                         null, //we want expressed/not-expressed calls of any quality
                         //all genes for the requested species
                         Collections.singleton(new GeneFilter(speciesId)),
                         //calls for the requested anat. entities and dev. stages
-                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds)),
+                        Collections.singleton(new ConditionFilter(anatEntityIds, devStageIds,
+                                null, null, null)),
                         DATA_TYPES, //data requested by OncoMX only
-                        obsDataFilter, //only observed data
-                        //no filter on observed data in anat. entity and stage,
-                        //it will anyway be both from the previous filter
-                        null, null
+                        callObservedDataFilter
                         ));
     }
     protected static Set<CallService.Attribute> getGeneCallAttributes() {
@@ -212,14 +214,14 @@ public class GenerateOncoMXFile {
         LinkedHashMap<CallService.OrderingAttribute, Service.Direction> serviceOrdering = 
                 new LinkedHashMap<>();
         serviceOrdering.put(CallService.OrderingAttribute.GENE_ID, Service.Direction.ASC);
-        serviceOrdering.put(CallService.OrderingAttribute.GLOBAL_RANK, Service.Direction.ASC);
+        serviceOrdering.put(CallService.OrderingAttribute.MEAN_RANK, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.ANAT_ENTITY_ID, Service.Direction.ASC);
         serviceOrdering.put(CallService.OrderingAttribute.DEV_STAGE_ID, Service.Direction.ASC);
         return log.traceExit(serviceOrdering);
     }
     protected static String[] getHeader() {
         log.traceEntry();
-        return log.traceExit(new String[] { "Ensembl gene ID", "Gene name",
+        return log.traceExit(new String[] { "Gene ID", "Gene name",
                     "Anatomical entity ID", "Anatomical entity name",
                     "Developmental stage ID", "Developmental stage name",
                     "Expression level relative to gene",
@@ -245,7 +247,7 @@ public class GenerateOncoMXFile {
 
     public void generateFile(int speciesId, Collection<String> devStageIds,
             String oncomxUberonTermFile, String outputDirectory) throws FileNotFoundException, IOException {
-        log.entry(speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
+        log.traceEntry("{}, {}, {}, {}", speciesId, devStageIds, oncomxUberonTermFile, outputDirectory);
 
         log.info("Generating OncoMX file for species {}", speciesId);
         if (devStageIds == null || devStageIds.isEmpty()) {
@@ -338,7 +340,7 @@ public class GenerateOncoMXFile {
 
                     List<Object> toWrite = new ArrayList<>();
                     try {
-                        toWrite.add(call.getGene().getEnsemblGeneId());
+                        toWrite.add(call.getGene().getGeneId());
                         toWrite.add(call.getGene().getName());
                         toWrite.add(call.getCondition().getAnatEntity().getId());
                         toWrite.add(call.getCondition().getAnatEntity().getName());

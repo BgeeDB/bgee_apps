@@ -62,7 +62,7 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
 
         public InSituSpotTO(String inSituSpotId, String inSituExpressionPatternId, String inSituEvidenceId,
                 Integer conditionId, Integer bgeeGeneId, DetectionFlag detectionFlag,
-                DataState expressionConfidence, ExclusionReason exclusionReason, Integer expressionId) {
+                DataState expressionConfidence, ExclusionReason exclusionReason, Long expressionId) {
             super(inSituSpotId);
             this.inSituEvidenceId = inSituEvidenceId;
             this.inSituExpressionPatternId = inSituExpressionPatternId;

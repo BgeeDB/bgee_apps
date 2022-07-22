@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  * Parent class of classes allowing to filter different types of {@code BaseCondition}s.
  *
  * @author Frederic Bastian
- * @version Bgee 14, Sept 2018
+ * @version Bgee 15, Mar. 2021
  * @since Bgee 14, Sept 2018
  *
  * @param <T>   The type of {@code BaseCondition} that will be treated by the subclasses.
@@ -29,6 +29,10 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @see #getDevStageIds()
      */
     private final Set<String> devStageIds;
+    /**
+     * @see #getCellTypeIds()
+     */
+    private final Set<String> cellTypeIds;
 
     /**
      * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
@@ -37,14 +41,20 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @param devStageIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the developmental stages that this {@code ConditionFilter} 
      *                              will specify to use.
+     * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
+     *                              of the anatomical entities describing cell types that this 
+     *                              {@code ConditionFilter} will specify to use.
      * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
-    public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds)
+    public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 
+            Collection<String> cellTypeIds)
             throws IllegalArgumentException {
         this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
                 new HashSet<>(): new HashSet<>(anatEntityIds));
         this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
                 new HashSet<>(): new HashSet<>(devStageIds));
+        this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? 
+                new HashSet<>(): new HashSet<>(cellTypeIds));
     }
 
 
@@ -62,7 +72,13 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
     public Set<String> getDevStageIds() {
         return devStageIds;
     }
-
+    /**
+     * @return  An unmodifiable {@code Set} of {@code String}s that are the IDs 
+     *          of the cell types that this {@code ConditionFilter} will specify to use.
+     */
+    public Set<String> getCellTypeIds() {
+        return cellTypeIds;
+    }
 
     @Override
     public int hashCode() {
@@ -70,36 +86,38 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         int result = 1;
         result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
         result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
+        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
         return result;
     }
+
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (!(obj instanceof BaseConditionFilter)) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;
         if (anatEntityIds == null) {
-            if (other.anatEntityIds != null) {
+            if (other.anatEntityIds != null)
                 return false;
-            }
-        } else if (!anatEntityIds.equals(other.anatEntityIds)) {
+        } else if (!anatEntityIds.equals(other.anatEntityIds))
             return false;
-        }
         if (devStageIds == null) {
-            if (other.devStageIds != null) {
+            if (other.devStageIds != null)
                 return false;
-            }
-        } else if (!devStageIds.equals(other.devStageIds)) {
+        } else if (!devStageIds.equals(other.devStageIds))
             return false;
-        }
+        if (cellTypeIds == null) {
+            if (other.cellTypeIds != null)
+                return false;
+        } else if (!cellTypeIds.equals(other.cellTypeIds))
+            return false;
         return true;
     }
+
 
     /**
      * Evaluates this {@code BaseConditionFilter} on the given {@code BaseCondition}.
@@ -109,9 +127,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      */
     @Override
     public boolean test(T condition) {
-        log.entry(condition);
-
-        boolean isValid = true;
+        log.traceEntry("{}", condition);
         
         // Check dev. stage ID 
         if (condition.getDevStageId() != null 
@@ -119,7 +135,7 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getDevStageIds().contains(condition.getDevStageId())) {
             log.debug("Dev. stage {} not validated: not in {}",
                 condition.getDevStageId(), this.getDevStageIds());
-            isValid = false;
+            return log.traceExit(false);
         }
     
         // Check anat. entity ID 
@@ -128,9 +144,18 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
             && !this.getAnatEntityIds().contains(condition.getAnatEntityId())) {
             log.debug("Anat. entity {} not validated: not in {}",
                 condition.getAnatEntityId(), this.getAnatEntityIds());
-            isValid = false;
+            return log.traceExit(false);
         }
         
-        return log.traceExit(isValid);
+        // Check cell type ID 
+        if (condition.getCellTypeId() != null 
+            && this.getCellTypeIds() != null && !this.getCellTypeIds().isEmpty()
+            && !this.getCellTypeIds().contains(condition.getCellTypeId())) {
+            log.debug("Cell type {} not validated: not in {}",
+                condition.getCellTypeId(), this.getCellTypeIds());
+            return log.traceExit(false);
+        }
+        
+        return log.traceExit(true);
     }
 }

@@ -60,6 +60,81 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
         COL_NAMES_TO_ATTRS = Collections.unmodifiableMap(tempMap);
     }
 
+    @Override
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<Integer> bgeeGeneIds) {
+        log.traceEntry("{}", bgeeGeneIds);
+        Set<Integer> clonedIds = Collections.unmodifiableSet(
+                bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds));
+
+        // Construct sql query
+        String sql = this.generateSelectClause(GENE_NAME_SYNONYM_TABLE, COL_NAMES_TO_ATTRS, true);
+        sql += " FROM " + GENE_NAME_SYNONYM_TABLE;
+        if (!clonedIds.isEmpty()) {
+            sql += " WHERE bgeeGeneId IN ("
+                   + BgeePreparedStatement.generateParameterizedQueryString(clonedIds.size()) + ")";
+        }
+
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            if (!clonedIds.isEmpty()) {
+                stmt.setIntegers(1, bgeeGeneIds, true);
+            }
+            // we don't use a try-with-resource, because we return a pointer to the
+            // results,
+            // not the actual results, so we should not close this
+            // BgeePreparedStatement.
+            return log.traceExit(new MySQLGeneNameSynonymTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<String> geneIds,
+            Collection<Integer> speciesIds) {
+        log.traceEntry("{}, {}", geneIds, speciesIds);
+        Set<String> clonedGeneIds = Collections.unmodifiableSet(
+                geneIds == null? new HashSet<>(): new HashSet<>(geneIds));
+        Set<Integer> clonedSpeciesIds = Collections.unmodifiableSet(
+                speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+
+        // Construct sql query
+        String sql = this.generateSelectClause("t1", COL_NAMES_TO_ATTRS, true);
+        sql += " FROM " + GENE_NAME_SYNONYM_TABLE + " AS t1";
+        if (!clonedGeneIds.isEmpty() || !clonedSpeciesIds.isEmpty()) {
+            sql += " INNER JOIN gene AS t2 ON t1.bgeeGeneId = t2.bgeeGeneId WHERE ";
+            if (!clonedGeneIds.isEmpty()) {
+                sql += "t2.geneId IN ("
+                        + BgeePreparedStatement.generateParameterizedQueryString(clonedGeneIds.size()) + ")";
+            }
+            if (!clonedSpeciesIds.isEmpty()) {
+                if (!clonedGeneIds.isEmpty()) {
+                    sql += " AND ";
+                }
+                sql += "t2.speciesId IN ("
+                        + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size()) + ")";
+            }
+        }
+
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
+            int index = 1;
+            if (!clonedGeneIds.isEmpty()) {
+                stmt.setStrings(index, clonedGeneIds, true);
+                index += clonedGeneIds.size();
+            }
+            if (!clonedSpeciesIds.isEmpty()) {
+                stmt.setIntegers(index, clonedSpeciesIds, true);
+            }
+            // we don't use a try-with-resource, because we return a pointer to the
+            // results,
+            // not the actual results, so we should not close this
+            // BgeePreparedStatement.
+            return log.traceExit(new MySQLGeneNameSynonymTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     /**
      * The MySQL implementation of {@link org.bgee.model.dao.api.gene.GeneNameSynonymDAO.GeneNameSynonymTOResultSet}
      * 
@@ -103,34 +178,5 @@ public class MySQLGeneNameSynonymDAO extends MySQLDAO<GeneNameSynonymDAO.Attribu
             }
         }
 
-    }
-
-    @Override
-    public GeneNameSynonymTOResultSet getGeneNameSynonyms(Collection<Integer> bgeeGeneIds) {
-        log.entry(bgeeGeneIds);
-        Set<Integer> clonedIds = Collections.unmodifiableSet(
-                bgeeGeneIds == null? new HashSet<>(): new HashSet<>(bgeeGeneIds));
-
-        // Construct sql query
-        String sql = this.generateSelectClause(GENE_NAME_SYNONYM_TABLE, COL_NAMES_TO_ATTRS, true);
-        sql += " FROM " + GENE_NAME_SYNONYM_TABLE;
-        if (!clonedIds.isEmpty()) {
-            sql += " WHERE bgeeGeneId IN ("
-                   + BgeePreparedStatement.generateParameterizedQueryString(clonedIds.size()) + ")";
-        }
-        
-        try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (!clonedIds.isEmpty()) {
-                stmt.setIntegers(1, bgeeGeneIds, true);
-            }
-            // we don't use a try-with-resource, because we return a pointer to the
-            // results,
-            // not the actual results, so we should not close this
-            // BgeePreparedStatement.
-            return log.traceExit(new MySQLGeneNameSynonymTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
     }
 }

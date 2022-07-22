@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,8 +28,11 @@ import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
+import org.bgee.model.expressiondata.baseelements.FDRPValue;
+import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -39,7 +44,7 @@ import org.bgee.model.gene.Gene;
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Feb. 2017
+ * @version Bgee 15, Dec. 2021
  * @since   Bgee 13, Sept. 2015
  * @param <T> The type of {@code SummaryCallType}.
  * @param <U> The type of {@code CallData}.
@@ -205,15 +210,18 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * (see {@link ExpressionCall#getCondition()} and {@link Condition#compareTo(Condition)}.
          * </ol>
          *
-         * @param calls             A {@code Collection} of {@code ExpressionCall}s to be ordered
-         * @param conditionGraph    A {@code ConditionGraph} allowing to retrieve relations between {@code Condition}s
-         *                          of the {@code ExpressionCall}s. Can be {@code null} if the relations
-         *                          should not be considered for the ordering.
-         * @return                  A correctly sorted {@code List} of {@code ExpressionCall}s.
+         * @param calls                 A {@code Collection} of {@code ExpressionCall}s to be ordered
+         * @param conditionGraph        A {@code ConditionGraph} allowing to retrieve relations between
+         *                              {@code Condition}s of the {@code ExpressionCall}s. Can be {@code null}
+         *                              if the relations should not be considered for the ordering.
+         * @param descendingRankOrder   A {@code boolean} defining, when {@code true}, that the
+         *                              {@code ExpressionCall}s should be ordered in descending order
+         *                              of their rank.
+         * @return                      A correctly sorted {@code List} of {@code ExpressionCall}s.
          */
         public static List<ExpressionCall> filterAndOrderCallsByRank(
-                Collection<ExpressionCall> calls, final ConditionGraph conditionGraph) {
-            log.entry(calls, conditionGraph);
+                Collection<ExpressionCall> calls, final ConditionGraph conditionGraph, boolean descendingRankOrder) {
+            log.traceEntry("{}, {}, {}", calls, conditionGraph, descendingRankOrder);
             if (calls == null) {
                 return log.traceExit((List<ExpressionCall>) null);
             }
@@ -225,6 +233,13 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             long startOrderingTimeInMs = System.currentTimeMillis();
 
             //First, we order by mean rank and gene IDs and species.
+
+            //In order to compare by rank in ascending or descending order
+            Comparator<Entry<BigDecimal, Gene>> rankComparator = Comparator.comparing(e -> e.getKey(),
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+            if (descendingRankOrder) {
+                rankComparator = rankComparator.reversed();
+            }
 
             //We want to order calls by their global mean rank, then by their gene.
             //For calls with equal rank and gene, we order them based on the relations between Conditions
@@ -245,18 +260,14 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                             c -> new AbstractMap.SimpleEntry<>(c.getMeanRank(), c.getGene())))
 
                     //Now, we order the grouped Map based on the rank of the calls first, then on their Gene
-                    .entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator
-                            //First, we compare the ranks (that are the keys in the Entry)
-                            //(the JVM cannot infer the generic types at the first call to 'comparing',
-                            //we set them explicitly)
-                            .<Map.Entry<BigDecimal, Gene>, BigDecimal>comparing(e -> e.getKey(),
-                                    Comparator.nullsLast(Comparator.naturalOrder()))
+                    .entrySet().stream().sorted(Map.Entry.comparingByKey(
+                            rankComparator
                             //Now, we compare the Genes (that are values in the Entry).
                             //First, we order by the species ID of the Gene, as in bgee 14, gene IDs are not unique
                             .thenComparing(e -> e.getValue() == null? null : e.getValue().getSpecies().getId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             //Now by their gene ID
-                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getEnsemblGeneId(),
+                            .thenComparing(e -> e.getValue() == null? null : e.getValue().getGeneId(),
                                     Comparator.nullsLast(Comparator.naturalOrder()))
                             ))
 
@@ -298,7 +309,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static List<ExpressionCall> sortEqualRankGeneCalls(List<ExpressionCall> equalRankCallsToOrder,
                 ConditionGraph graph) {
-            log.entry(equalRankCallsToOrder, graph);
+            log.traceEntry("{}, {}", equalRankCallsToOrder, graph);
 
             //We recreate a new List to avoid side-effects.
             List<ExpressionCall> equalRankCalls = new ArrayList<>(equalRankCallsToOrder);
@@ -399,10 +410,10 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static Set<ExpressionCall> identifyRedundantCalls(Collection<ExpressionCall> calls, 
                 ConditionGraph conditionGraph) throws IllegalArgumentException {
-            log.entry(calls, conditionGraph);
+            log.traceEntry("{}, {}", calls, conditionGraph);
             
             //for the computations, we absolutely need to order the calls using a ConditionGraph
-            return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph),
+            return log.traceExit(identifyRedundantCalls(filterAndOrderCallsByRank(calls, conditionGraph, false),
                     conditionGraph));
             
         }
@@ -435,13 +446,12 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         public static Set<ExpressionCall> identifyRedundantCalls(List<ExpressionCall> calls, 
                 ConditionGraph conditionGraph) throws IllegalArgumentException {
-            log.entry(calls, conditionGraph);
+            log.traceEntry("{}, {}", calls, conditionGraph);
         
             long startFilteringTimeInMs = System.currentTimeMillis();
             
             Set<ExpressionCall> redundantCalls = new HashSet<>();
             Set<ExpressionCall> validatedCalls = new HashSet<>();
-            ExpressionCall previousCall = null;
             for (ExpressionCall call: calls) {
                 //We cannot make sure that the List was ordered using a ConditionGraph,
                 //it would be too costly, but we perform a minimal check on ranks and conditions
@@ -453,16 +463,18 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     throw log.throwing(new IllegalArgumentException("Missing Condition for call: "
                             + call));
                 }
-                if (previousCall != null && 
-                        previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
-                    throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
-                }
+                //Actually now it is valid to have a list in descending order of the ranks,
+                //for NOT_EXPRESSED calls
+//                if (previousCall != null &&
+//                        previousCall.getMeanRank().compareTo(call.getMeanRank()) > 0) {
+//                    throw log.throwing(new IllegalArgumentException("Provided List incorrectly sorted"));
+//                }
                 
                 //Retrieve the validated conditions for the currently iterated gene
                 Set<Condition> validatedCondition = validatedCalls.stream()
                         .filter(c -> Objects.equals(
-                            c.getGene() == null ? null: c.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId()))
+                            c.getGene() == null ? null: c.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId()))
                         //Filter by species as, in bgee 14, gene IDs are not unique
                         .filter(c -> Objects.equals(
                             c.getGene() == null ? null: c.getGene().getSpecies().getId(),
@@ -482,7 +494,6 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     log.trace("Redundant call: {}", call);
                     redundantCalls.add(call);
                 }
-                previousCall = call;
             }
             
             log.debug("Redundant calls filtered in {} ms", System.currentTimeMillis() - startFilteringTimeInMs);
@@ -509,11 +520,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
                 Collection<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
                         throws IllegalArgumentException {
-            log.entry(calls, method, distanceThreshold);
+            log.traceEntry("{}, {}, {}", calls, method, distanceThreshold);
 
             //for the computations, we need a List sorted by rank, but we don't need to take 
             //relations between Conditions into account
-            return log.traceExit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null),
+            return log.traceExit(generateMeanRankScoreClustering(filterAndOrderCallsByRank(calls, null, false),
                     method, distanceThreshold));
             
         }
@@ -545,7 +556,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         public static Map<ExpressionCall, Integer> generateMeanRankScoreClustering(
                 List<ExpressionCall> calls, ClusteringMethod method, double distanceThreshold) 
                         throws IllegalArgumentException {
-            log.entry(calls, method, distanceThreshold);
+            log.traceEntry("{}, {}, {}", calls, method, distanceThreshold);
             long startFilteringTimeInMs = System.currentTimeMillis();
             
             //sanity check
@@ -557,8 +568,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                                 "Provided List incorrectly sorted"));
                     }
                     if (!Objects.equals(
-                            previousCall.getGene() == null ? null: previousCall.getGene().getEnsemblGeneId(),
-                            call.getGene() == null ? null: call.getGene().getEnsemblGeneId())) {
+                            previousCall.getGene() == null ? null: previousCall.getGene().getGeneId(),
+                            call.getGene() == null ? null: call.getGene().getGeneId())) {
                         throw log.throwing(new IllegalArgumentException(
                                 "A clustering can only be performed one gene at a time"));
                     }
@@ -620,7 +631,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static Map<ExpressionCall, Integer> generateDBScanClustering(
                 List<ExpressionCall> calls, double epislon, int minSize, DistanceMeasure measure) {
-            log.entry(calls, epislon, minSize, measure);
+            log.traceEntry("{}, {}, {}, {}", calls, epislon, minSize, measure);
 
             /**
              * A wrapper for {@code ExpressionCall} to implement the {@code Clusterable} interface.
@@ -701,7 +712,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         private static Map<ExpressionCall, Integer> generateDistBasedClustering(
                 List<ExpressionCall> calls, double distanceThreshold, 
                 DistanceMeasure measure, DistanceReference ref) {
-            log.entry(calls, distanceThreshold, measure, ref);
+            log.traceEntry("{}, {}, {}, {}", calls, distanceThreshold, measure, ref);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
@@ -795,7 +806,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          */
         private static Map<ExpressionCall, Integer> generateFixedCanberraDistToMaxClustering(
                 List<ExpressionCall> calls, double distanceThreshold) {
-            log.entry(calls, distanceThreshold);
+            log.traceEntry("{}, {}", calls, distanceThreshold);
             
             Map<ExpressionCall, Integer> callsToGroup = new HashMap<>();
             int groupIndex = -1;
@@ -841,7 +852,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
          * @return      A {@code double} that is the median mean rank. 
          */
         private static double getMedianMeanRankScore(List<ExpressionCall> calls) {
-            log.entry(calls);
+            log.traceEntry("{}", calls);
             int size = calls.size();
             if (size == 0) {
                 throw log.throwing(new IllegalArgumentException("Can't compute mediam of empty list"));
@@ -862,20 +873,33 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         //*******************************************
 
         private final DataPropagation dataPropagation;
+        private final Set<FDRPValue> pValues;
+        private final Set<FDRPValueCondition> bestDescendantPValues;
         /**
          * See {@link #getExpressionLevelInfo()}
          */
         //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
         private final ExpressionLevelInfo expressionLevelInfo;
 
-        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo) {
-            this(gene, condition, dataPropagation, summaryCallType, summaryQual, callData,
-                    expressionLevelInfo, null);
+            this(gene, condition, dataPropagation, pValues, bestDescendantPValues,
+                    summaryCallType, summaryQual, callData, expressionLevelInfo, null);
         }
+
         public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData> callData,
+                ExpressionLevelInfo expressionLevelInfo,
+                Collection<ExpressionCall> sourceCalls) {
+            this(gene, condition, dataPropagation, null, null, summaryCallType, summaryQual, callData,
+                    expressionLevelInfo, sourceCalls);
+        }
+        public ExpressionCall(Gene gene, Condition condition, DataPropagation dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition> bestDescendantPValues,
                 ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
                 Collection<ExpressionCallData> callData,
                 ExpressionLevelInfo expressionLevelInfo,
@@ -886,11 +910,147 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                     .collect(Collectors.toSet()));
             this.expressionLevelInfo = expressionLevelInfo;
             this.dataPropagation = dataPropagation;
+            this.pValues = Collections.unmodifiableSet(pValues == null?
+                    new HashSet<>(): pValues.stream().filter(p -> p != null).collect(Collectors.toSet()));
+            this.bestDescendantPValues = Collections.unmodifiableSet(bestDescendantPValues == null?
+                    new HashSet<>(): bestDescendantPValues.stream().filter(p -> p != null)
+                    .collect(Collectors.toSet()));
         }
 
         public DataPropagation getDataPropagation() {
             return dataPropagation;
         }
+        /**
+         * @return  A {@code Set} of {@code FDRPValue}s storing FDR-corrected p-values
+         *          for different combination of {@code DataType}s. These FDR-corrected p-values
+         *          are produced by correcting all p-values resulting from tests to detect
+         *          active signal of expression of a gene in a condition and its descendant conditions,
+         *          using the {@code DataType}s stored in the {@code FDRPValue} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValue> getPValues() {
+            return pValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValue} from the {@code Set} returned by {@link #getPValues()}.
+         *          Useful when we know that only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getPValues()} is empty.
+         */
+        public FDRPValue getFirstPValue() {
+            return pValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. {@code null} if no FDR-corrected p-value
+         *                  was produced using this exact combination of {@code DataType}s.
+         * @see #getPValues()
+         */
+        public FDRPValue getPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(pValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValue}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getPValues()
+         */
+        public Set<FDRPValue> getPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(pValues, dataTypes);
+        }
+
+        /**
+         * @return  A {@code Set} of {@code FDRPValueCondition}s storing the best FDR-corrected p-value
+         *          over all descendant conditions of the condition considered
+         *          in this {@code ExpressionCall}, for different combination of {@code DataType}s.
+         *          It means that depending on the combination of {@code DataType}s,
+         *          maybe the best FDR-corrected p-values could come from different descendant conditions.
+         *          The {@code Condition} where the p-value comes from can be retrieved from
+         *          the returned {@code FDRPValueCondition}s.
+         *          These FDR-corrected p-values are produced by correcting all p-values
+         *          resulting from tests to detect active signal of expression of a gene
+         *          in a condition and its descendant conditions, using the {@code DataType}s
+         *          stored in the {@code FDRPValueCondition} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValueCondition> getBestDescendantPValues() {
+            return bestDescendantPValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValueCondition} from the {@code Set} returned by
+         *          {@link #getBestDescendantPValues()}. Useful when we know that
+         *          only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getBestDescendantPValues()}
+         *          is empty.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValueCondition getFirstBestDescendantPValue() {
+            return bestDescendantPValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
+         *                  {@link #getBestDescendantPValues()}. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
+         *                  {@link #getBestDescendantPValues()}. {@code null}
+         *                  if no FDR-corrected p-value was produced using
+         *                  this exact combination of {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValueCondition getBestDescendantPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(bestDescendantPValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValueCondition}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s,
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValueCondition}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s,
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public Set<FDRPValueCondition> getBestDescendantPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(bestDescendantPValues, dataTypes);
+        }
+
+        private static <F extends FDRPValue> F getPValueWithEqualDataTypes(
+                Set<F> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().equals(EnumSet.copyOf(dataTypes)))
+                    .findFirst().orElse(null));
+        }
+        private static <F extends FDRPValue> Set<F> getPValuesContainingAllDataTypes(
+                Collection<F> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().containsAll(dataTypes))
+                    .collect(Collectors.toSet()));
+        }
+
         /**
          * @return  An {@code ExpressionLevelInfo} providing information
          *          about the expression level of this {@code ExpressionCall}.
@@ -985,6 +1145,8 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                    .append(", condition=").append(getCondition())
                    .append(", summaryCallType=").append(getSummaryCallType())
                    .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", pValues=").append(getPValues())
+                   .append(", bestDescendantPValues=").append(getBestDescendantPValues())
                    .append(", expressionLevelInfo=").append(expressionLevelInfo)
                    .append(", dataPropagation=").append(getDataPropagation())
                    .append(", callData=").append(getCallData())

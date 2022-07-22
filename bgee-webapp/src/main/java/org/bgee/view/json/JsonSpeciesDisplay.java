@@ -3,9 +3,7 @@ package org.bgee.view.json;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
-
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
@@ -20,7 +18,7 @@ import org.bgee.view.SpeciesDisplay;
  *
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 14, July 2019
+ * @version Bgee 15, Oct. 2021
  * @since   Bgee 13, June 2015
  */
 public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisplay {
@@ -51,14 +49,18 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
 
     @Override
     public void displaySpeciesHomePage(List<Species> speciesList) {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+        
+        LinkedHashMap<String, Object> resultSpeciesHome = new LinkedHashMap<String, Object>();
+        resultSpeciesHome.put("species", speciesList);
+        this.sendResponse("List of species in Bgee", resultSpeciesHome);
     }
+    
 
     @Override
     public void sendSpeciesResponse(List<Species> species) {
-        log.entry(species);
+        log.traceEntry("{}", species);
         
-        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
         data.put(this.getRequestParameters().getUrlParametersInstance()
                 .getParamSpeciesList().getName(), species);
         
@@ -69,6 +71,13 @@ public class JsonSpeciesDisplay extends JsonParentDisplay implements SpeciesDisp
 
     @Override
     public void displaySpecies(Species species, SpeciesDataGroup speciesDataGroup) {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+        
+        // create LinkedHashMap that we will pass to Gson in order to generate the JSON 
+        LinkedHashMap<String, Object> jsonHashMap = new LinkedHashMap<String, Object>();
+        jsonHashMap.put("species", species);
+        jsonHashMap.put("downloadFilesGroups", speciesDataGroup);
+
+        this.sendResponse("Details on species " + species.getScientificName(),
+                jsonHashMap);
     }
 }

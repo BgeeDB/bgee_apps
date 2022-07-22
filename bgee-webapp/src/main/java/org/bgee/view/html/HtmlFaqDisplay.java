@@ -62,7 +62,7 @@ public class HtmlFaqDisplay extends HtmlParentDisplay implements FaqDisplay {
                         "or less details. Only tissues with detected active expression are displayed " +
                         "in the gene page on our website. If you use the files available for  " +
                         "download (from here <a href='" + urlCallPage.getRequestURL() + "'>" + 
-                        GENE_EXPR_CALLS_PAGE_NAME + "</a>), you can see report of tissues " +
+                        GENE_EXPR_CALLS_PAGE_NAME + "</a>), you can see a report of tissues " +
                         "with absence of expression. This will give you a definitive " +
                         "answer about which, e.g., mouse/rat tissues were studied.",
                 "TissuesTested"));

@@ -10,10 +10,12 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionGraph;
 import org.bgee.model.expressiondata.ConditionGraphService;
 import org.bgee.model.gene.Gene;
@@ -32,13 +35,13 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.pipeline.TestAncestor;
-import org.bgee.pipeline.expression.downloadfile.GenerateUniprotXRefWithExprInfo.XrefUniprotBean;
+import org.bgee.pipeline.expression.downloadfile.GenerateXRefsFilesWithExprInfo.XrefUniprotBean;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
-* Unit tests for {@link GenerateUniprotXRefWithExprInfo}.
+* Unit tests for {@link GenerateXRefsFilesWithExprInfo}.
 *
 * @author  Julien Wollbrett
 * @author  Frederic Bastian
@@ -46,10 +49,10 @@ import org.junit.rules.TemporaryFolder;
 * @version Bgee 14 Nov 2018
 */
 
-public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
+public class GenerateXRefsFilesWithExprInfoTest extends TestAncestor {
 
     private static final String XREF_FILE = "/downloadfile/XRefBgee.tsv";
-    private final static Logger log = LogManager.getLogger(GenerateUniprotXRefWithExprInfoTest.class.getName());
+    private final static Logger log = LogManager.getLogger(GenerateXRefsFilesWithExprInfoTest.class.getName());
     @Override
     protected Logger getLogger() {
         return log;
@@ -58,7 +61,7 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
     public final TemporaryFolder testFolder = new TemporaryFolder();
     
     /**
-    * Test {@link GenerateUniprotXRefWithExprInfo#loadXrefFileWithoutExprInfo}.
+    * Test {@link GenerateXRefsFilesWithExprInfo#loadXrefFileWithoutExprInfo}.
     * Tested separately because the approach used to load Xref could change
     */
    @Test
@@ -70,14 +73,16 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
                new XrefUniprotBean("Q15615", "ENSG00000141219", 9606),
                new XrefUniprotBean("H9G367", "ENSACAG00000000004", 28377),
                new XrefUniprotBean("G1K846", "ENSACAG00000000006", 28377)));
+       
+       Set<Integer> speciesIds = new HashSet<>(9606,28377);
 
-       Set<XrefUniprotBean> xrefUniprotListLoaded = GenerateUniprotXRefWithExprInfo
-               .loadXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile());
+       Map<Integer,Map<String,Set<String>>> xrefUniprotListLoaded = GenerateXRefsFilesWithExprInfo
+               .loadUniprotXrefFileWithoutExprInfo(this.getClass().getResource(XREF_FILE).getFile(), speciesIds);
        assertTrue(xrefUniprotListLoaded.equals(xrefUniprotListWanted));
     }
 
     /**
-     * Test {@link GenerateUniprotXRefWithExprInfo#generate}.
+     * Test {@link GenerateXRefsFilesWithExprInfo#generate}.
      */
     @Test
     public void shouldGenerateUniprotXRefFile() throws IOException {
@@ -98,36 +103,60 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         AnatEntity ae5 = new AnatEntity("anat5", "anat5Name", "anat5Desc");
         
         ExpressionCall call1 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("2.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
         ExpressionCall call2 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("4.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("4.0")), null);
         ExpressionCall call3 = new ExpressionCall(null, null, null, null, null, 
-                null, new ExpressionLevelInfo(new BigDecimal("6.0")));
+                null, new ExpressionLevelInfo(new BigDecimal("6.0")), null);
 
+        ExpressionCall aeCall1 = new ExpressionCall(null, 
+                new Condition(ae1, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall2 = new ExpressionCall(null, 
+                new Condition(ae2, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall3 = new ExpressionCall(null, 
+                new Condition(ae3, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall4 = new ExpressionCall(null, 
+                new Condition(ae4, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        ExpressionCall aeCall5 = new ExpressionCall(null, 
+                new Condition(ae5, null, null, null, null, sp1), 
+                null, null, null, 
+                null, new ExpressionLevelInfo(new BigDecimal("2.0")), null);
+        
         List<ExpressionCall> calls1 = Arrays.asList(call1, call2, call3);
         List<ExpressionCall> calls2 = Arrays.asList(call3, call1);
         List<ExpressionCall> calls3 = Arrays.asList(call3, call2);
         List<ExpressionCall> calls4 = Arrays.asList(call2, call1);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene1 = new LinkedHashMap<>();
-        callsGene1.put(ae1, calls1);
-        callsGene1.put(ae2, calls3);
-        callsGene1.put(ae3, calls3);
-        callsGene1.put(ae4, calls3);
-        callsGene1.put(ae5, calls3);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene1 = new LinkedHashMap<>();
+        callsGene1.put(aeCall1, calls1);
+        callsGene1.put(aeCall2, calls3);
+        callsGene1.put(aeCall3, calls3);
+        callsGene1.put(aeCall4, calls3);
+        callsGene1.put(aeCall5, calls3);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene2 = new LinkedHashMap<>();
-        callsGene2.put(ae5, calls2);
-        callsGene2.put(ae2, calls4);
-        callsGene2.put(ae3, calls4);
-        callsGene2.put(ae4, calls4);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene2 = new LinkedHashMap<>();
+        callsGene2.put(aeCall5, calls2);
+        callsGene2.put(aeCall2, calls4);
+        callsGene2.put(aeCall3, calls4);
+        callsGene2.put(aeCall4, calls4);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene3 = new LinkedHashMap<>();
-        callsGene3.put(ae3, calls4);
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene3 = new LinkedHashMap<>();
+        callsGene3.put(aeCall3, calls4);
+        callsGene3.put(aeCall1, calls1);
         
-        LinkedHashMap<AnatEntity, List<ExpressionCall>> callsGene4 = null;
+        LinkedHashMap<ExpressionCall, List<ExpressionCall>> callsGene4 = new LinkedHashMap<>();
+        callsGene4.put(aeCall3, calls1);
         
-               
+        List<String> xrefsFileType = List.of("UNIPROT");
+                      
         // Mock services
         ServiceFactory serviceFactory = mock(ServiceFactory.class);
         SpeciesService speciesService = mock(SpeciesService.class);
@@ -141,34 +170,38 @@ public class GenerateUniprotXRefWithExprInfoTest extends TestAncestor {
         EnumSet<CallService.Attribute> allCondParams = CallService.Attribute.getAllConditionParameters();
         ConditionGraph graphSpe1 = mock(ConditionGraph.class);
         ConditionGraph graphSpe2 = mock(ConditionGraph.class);
-        when(condGraphService.loadConditionGraph(sp1.getId(), allCondParams)).thenReturn(graphSpe1);
-        when(condGraphService.loadConditionGraph(sp2.getId(), allCondParams)).thenReturn(graphSpe2);
+        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp1.getId()),
+                null, allCondParams)).thenReturn(graphSpe1);
+        when(condGraphService.loadConditionGraphFromSpeciesIds(Collections.singleton(sp2.getId()),
+                null, allCondParams)).thenReturn(graphSpe2);
         when(speciesService.loadSpeciesByIds(null, false)).thenReturn(new HashSet<>(Arrays.asList(sp1, sp2)));
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g1.getSpecies().getId(), g1.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene1);
+                new GeneFilter(g1.getSpecies().getId(), g1.getGeneId()), graphSpe1)).thenReturn(callsGene1);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g2.getSpecies().getId(), g2.getEnsemblGeneId()), graphSpe1)).thenReturn(callsGene2);
+                new GeneFilter(g2.getSpecies().getId(), g2.getGeneId()), graphSpe1)).thenReturn(callsGene2);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g3.getSpecies().getId(), g3.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene3);
+                new GeneFilter(g3.getSpecies().getId(), g3.getGeneId()), graphSpe2)).thenReturn(callsGene3);
         when(callService.loadCondCallsWithSilverAnatEntityCallsByAnatEntity(
-                new GeneFilter(g4.getSpecies().getId(), g4.getEnsemblGeneId()), graphSpe2)).thenReturn(callsGene4);
+                new GeneFilter(g4.getSpecies().getId(), g4.getGeneId()), graphSpe2)).thenReturn(callsGene4);
         
         String outputFile = testFolder.newFile("XRefBgee.tsv").getPath();
-        
+
         //method to test
-        GenerateUniprotXRefWithExprInfo generateUniproteXrefs = 
-                new GenerateUniprotXRefWithExprInfo(() -> serviceFactory);
-        generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile);
+        GenerateXRefsFilesWithExprInfo generateUniproteXrefs = 
+                new GenerateXRefsFilesWithExprInfo(() -> serviceFactory);
+        generateUniproteXrefs.generate(this.getClass().getResource(XREF_FILE).getFile(), outputFile,
+        		new HashSet<>(), xrefsFileType);
 
         //check file generation
         log.debug("Checking file {}", outputFile);
         assertTrue("File not created: " + outputFile, new File(outputFile).exists());
         
         List <String> fileLinesExpected = Arrays.asList(
-                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in 1 organ, highest expression level in anat3Name",
-                "I3L367   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
-                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in 5 organs, highest expression level in anat1Name",
-                "Q15615   DR   Bgee; ENSG00000141219; Expressed in 4 organs, highest expression level in anat5Name");
+                "H9G367   DR   Bgee; ENSACAG00000000004; Expressed in anat3Name and 1 other tissue.",
+                "G1K846   DR   Bgee; ENSACAG00000000006; Expressed in anat3Name.",
+                "I3L1T2   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
+                "I3L367   DR   Bgee; ENSG00000141198; Expressed in anat1Name and 4 other tissues.",
+                "Q15615   DR   Bgee; ENSG00000141219; Expressed in anat5Name and 3 other tissues.");
         
         List <String> fileLines = Files.lines(Paths.get(outputFile)).collect(Collectors.toList());
         assertTrue("The file does not contains expected lines, expected:" + System.lineSeparator()

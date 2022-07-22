@@ -15,8 +15,9 @@ public enum SourceCategory implements BgeeEnumField {
     //to the less important. This is because the compareTo implementation 
     //of the Enum class will be used.
     GENOMICS("Genomics databases"), PROTEOMICS("Proteomics databases"),
-    RNA_SEQ("RNA-Seq data sources"), AFFYMETRIX("Affymetrix data sources"),
-    IN_SITU("In situ data sources"), EST("EST data sources"), ONTOLOGY("Ontologies"), 
+    SC_RNA_SEQ("Single-cell RNA-Seq data sources"), RNA_SEQ("RNA-Seq data sources"),
+    AFFYMETRIX("Affymetrix data sources"), IN_SITU("In situ data sources"),
+    EST("EST data sources"), ONTOLOGY("Ontologies"),
     NONE("Other sources");
 
     /**

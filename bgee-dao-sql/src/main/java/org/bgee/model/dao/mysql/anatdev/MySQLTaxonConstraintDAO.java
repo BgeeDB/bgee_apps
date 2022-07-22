@@ -51,10 +51,21 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     public TaxonConstraintTOResultSet<String> getAnatEntityTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
-        log.entry(speciesIds, attributes);
+        log.traceEntry("{}, {}", speciesIds, attributes);
 
         return log.traceExit(this.getTaxonConstraints(
-                speciesIds, attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
+                speciesIds, null, attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
+    }
+    @Override
+    public TaxonConstraintTOResultSet<String> getAnatEntityTaxonConstraints(
+            Collection<Integer> speciesIds, Collection<String> anatEntityIds,
+            Collection<TaxonConstraintDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}", speciesIds, anatEntityIds, attributes);
+
+        return log.traceExit(this.getTaxonConstraints(
+                speciesIds != null? new HashSet<>(speciesIds): null,
+                anatEntityIds != null? new HashSet<>(anatEntityIds): null,
+                attributes, "anatEntityTaxonConstraint", "anatEntityId", String.class));
     }
 
     @Override
@@ -67,7 +78,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
-        log.entry(speciesIds, attributes);
+        log.traceEntry("{}, {}", speciesIds, attributes);
         return log.traceExit(this.getAnatEntityRelationTaxonConstraints(speciesIds, null, attributes));
     }
     @Override
@@ -80,7 +91,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     public TaxonConstraintTOResultSet<Integer> getAnatEntityRelationTaxonConstraints(
             Collection<Integer> speciesIds, Collection<Integer> relIds,
             Collection<TaxonConstraintDAO.Attribute> attributes) throws DAOException {
-        log.entry(speciesIds, relIds, attributes);
+        log.traceEntry("{}, {}, {}", speciesIds, relIds, attributes);
 
         Set<TaxonConstraintDAO.Attribute> clonedAttrs = attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(TaxonConstraintDAO.Attribute.class): EnumSet.copyOf(attributes);
@@ -147,9 +158,9 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
     public TaxonConstraintTOResultSet<String> getStageTaxonConstraints(
             Collection<Integer> speciesIds, Collection<TaxonConstraintDAO.Attribute> attributes)
             throws DAOException {
-        log.entry(speciesIds, attributes);
+        log.traceEntry("{}, {}", speciesIds, attributes);
         return log.traceExit(this.getTaxonConstraints(
-                speciesIds, attributes, "stageTaxonConstraint", "stageId", String.class));
+                speciesIds, null, attributes, "stageTaxonConstraint", "stageId", String.class));
     }
 
     /** 
@@ -161,6 +172,8 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * once results are retrieved.
      * 
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species 
+     *                          to retrieve taxon constrains for.
+     * @param entityIds         A {@code Collection} of {@code T}s that are the IDs of the entities 
      *                          to retrieve taxon constrains for.
      * @param attributes        A {@code Collection} of {@code TaxonConstraintDAO.Attribute}s defining  
      *                          the attributes to populate in the returned {@code TaxonConstraintTO}s.
@@ -175,11 +188,13 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      * @param <T> the type of ID of the related entity.
      */
     private <T> TaxonConstraintTOResultSet<T> getTaxonConstraints(Collection<Integer> speciesIds,
-            Collection<TaxonConstraintDAO.Attribute> attributes, String tableName,
-            String entityColumnName, Class<T> cls) throws DAOException {
-        log.entry(speciesIds, attributes, tableName, entityColumnName, cls);
+            Collection<T> entityIds, Collection<TaxonConstraintDAO.Attribute> attributes,
+            String tableName, String entityColumnName, Class<T> cls) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesIds, entityIds, attributes, tableName,
+                entityColumnName, cls);
         
-        boolean filterBySpeciesIDs = speciesIds != null && !speciesIds.isEmpty();
+        boolean filterBySpeciesIds = speciesIds != null && !speciesIds.isEmpty();
+        boolean filterByEntityIds = entityIds != null && !entityIds.isEmpty();
 
         String sql = "";
         if (attributes == null || attributes.isEmpty()) {
@@ -203,18 +218,34 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
         }
 
         sql += " FROM " + tableName;
+        if (filterBySpeciesIds || filterByEntityIds) {
+            sql += " WHERE ";
+        }
         
-        if (filterBySpeciesIDs) {
-            sql += " WHERE (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
+        if (filterBySpeciesIds) {
+            sql += " (" + tableName + ".speciesId IS NULL OR " + tableName + ".speciesId IN (" + 
                     BgeePreparedStatement.generateParameterizedQueryString(speciesIds.size()) + "))";            
+        }
+        if (filterByEntityIds) {
+            if (filterBySpeciesIds) {
+                sql += " AND ";
+            }
+            sql += tableName + "." + entityColumnName + " IN ("
+                + BgeePreparedStatement.generateParameterizedQueryString(entityIds.size()) + ")";
         }
 
         // we don't use a try-with-resource, because we return a pointer to the results,
         // not the actual results, so we should not close this BgeePreparedStatement.
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sql);
-            if (filterBySpeciesIDs) {
-                stmt.setIntegers(1, speciesIds, true);
+            int paramIndex = 1;
+            if (filterBySpeciesIds) {
+                stmt.setIntegers(paramIndex, speciesIds, true);
+                paramIndex += speciesIds.size();
+            }
+            if (filterByEntityIds) {
+                stmt.setObjects(paramIndex, entityIds, true, cls);
+                paramIndex += entityIds.size();
             }
             return log.traceExit(new MySQLTaxonConstraintTOResultSet<>(stmt, cls));
         } catch (SQLException e) {
@@ -231,7 +262,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      */
     public int insertAnatEntityRelationTaxonConstraints(Collection<TaxonConstraintTO<Integer>> contraints)
                     throws DAOException, IllegalArgumentException {
-        log.entry(contraints);
+        log.traceEntry("{}", contraints);
 
         if (contraints == null || contraints.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -273,7 +304,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      */
     public int insertAnatEntityTaxonConstraints(Collection<TaxonConstraintTO<String>> contraints)
             throws DAOException, IllegalArgumentException {
-        log.entry(contraints);
+        log.traceEntry("{}", contraints);
 
         if (contraints == null || contraints.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -315,7 +346,7 @@ public class MySQLTaxonConstraintDAO extends MySQLDAO<TaxonConstraintDAO.Attribu
      */
     public int insertStageTaxonConstraints(Collection<TaxonConstraintTO<String>> contraints)
             throws DAOException, IllegalArgumentException {
-        log.entry(contraints);
+        log.traceEntry("{}", contraints);
 
         if (contraints == null || contraints.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(

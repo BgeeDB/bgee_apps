@@ -12,21 +12,21 @@ import org.bgee.model.species.Species;
  * Parent class of classes describing conditions in Bgee.
  *
  * @author Frederic Bastian
- * @version Bgee 14, Sept 2018
+ * @version Bgee 15, Mar. 2021
  * @since Bgee 14, Sept 2018
  *
  * @param <T>   The precise type of the class that will extend this {@code BaseCondition} class.
  */
-public abstract class BaseCondition<T extends BaseCondition<?>> implements Comparable<T> {
+public abstract class BaseCondition<T extends BaseCondition<?>> {
     private final static Logger log = LogManager.getLogger(BaseCondition.class.getName());
 
     /**
-     * A {@code Comparator} of {@code Condition}s used for {@link #compareTo(Condition)}.
+     * A {@code Comparator} of {@code BaseCondition}s used for {@link #compareTo(BaseCondition)}.
      */
-    private static final Comparator<BaseCondition<?>> COND_COMPARATOR = Comparator
+    protected static final Comparator<BaseCondition<?>> COND_COMPARATOR = Comparator
             .<BaseCondition<?>, String>comparing(BaseCondition::getAnatEntityId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(BaseCondition::getDevStageId, Comparator.nullsLast(String::compareTo))
-            .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
+            .thenComparing(BaseCondition::getCellTypeId, Comparator.nullsLast(String::compareTo))
+            .thenComparing(BaseCondition::getDevStageId, Comparator.nullsLast(String::compareTo));
     
 
     //*********************************
@@ -40,6 +40,10 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      * @see #getDevStage()
      */
     private final DevStage devStage;
+    /**
+     * @see #getCellType()
+     */
+    private final AnatEntity cellType;
     /**
      * @see #getSpecies()
      */
@@ -57,16 +61,14 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
      * @throws IllegalArgumentException If both {@code anatEntity} and {@code devStage} are {@code null}, 
      *                                  or if {@code speciesId} is less than 1.
      */
-    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, Species species) throws IllegalArgumentException {
-        if (anatEntity == null && devStage == null) {
-            throw log.throwing(new IllegalArgumentException(
-                    "The anat. entity and the dev. stage cannot be both null."));
-        }
+    protected BaseCondition(AnatEntity anatEntity, DevStage devStage, AnatEntity cellType,
+            Species species) throws IllegalArgumentException {
         if (species == null) {
             throw log.throwing(new IllegalArgumentException("The species cannot be null."));
         }
         this.anatEntity         = anatEntity;
         this.devStage           = devStage;
+        this.cellType           = cellType;
         this.species            = species;
     }
 
@@ -106,6 +108,23 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
         return devStage == null? null: devStage.getId();
     }
     /**
+     * @return  The {@code AnatEntity} corresponding to a cell type used in 
+     *          this gene expression condition, without the descriptions 
+     *          loaded for lower memory usage.
+     *          Can be {@code null}.
+     */
+    public AnatEntity getCellType() {
+        return cellType;
+    }
+    /**
+     * @return  A {@code String} that is the ID of the cell type 
+     *          used in this gene expression condition.
+     *          Can be {@code null}.
+     */
+    public String getCellTypeId() {
+        return cellType == null? null: cellType.getId();
+    }
+    /**
      * @return  The {@code Species} considered in this gene expression condition.
      */
     public Species getSpecies() {
@@ -122,62 +141,45 @@ public abstract class BaseCondition<T extends BaseCondition<?>> implements Compa
     //*********************************
     //  COMPARETO/HASHCODE/EQUALS/TOSTRING
     //*********************************
-    /**
-     * Performs a simple comparison based on the attributes of this class. For an ordering based 
-     * on the relations between {@code Condition}s, see {@link ConditionGraph#compare(Condition, Condition)}.
-     * 
-     * @param other A {@code Condition} to be compared to this one.
-     * @return      a negative {@code int}, zero, or a positive {@code int} 
-     *              as the first argument is less than, equal to, or greater than the second.
-     * @see ConditionGraph#compare(Condition, Condition)
-     */
-    @Override
-    public int compareTo(T other) {
-        return COND_COMPARATOR.compare(this, other);
-    }
-    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((anatEntity == null) ? 0 : anatEntity.hashCode());
+        result = prime * result + ((cellType == null) ? 0 : cellType.hashCode());
         result = prime * result + ((devStage == null) ? 0 : devStage.hashCode());
         result = prime * result + ((species == null) ? 0 : species.hashCode());
         return result;
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (!(obj instanceof BaseCondition)) {
+        if (!(obj instanceof BaseCondition))
             return false;
-        }
         BaseCondition<?> other = (BaseCondition<?>) obj;
         if (anatEntity == null) {
-            if (other.anatEntity != null) {
+            if (other.anatEntity != null)
                 return false;
-            }
-        } else if (!anatEntity.equals(other.anatEntity)) {
+        } else if (!anatEntity.equals(other.anatEntity))
             return false;
-        }
+        if (cellType == null) {
+            if (other.cellType != null)
+                return false;
+        } else if (!cellType.equals(other.cellType))
+            return false;
         if (devStage == null) {
-            if (other.devStage != null) {
+            if (other.devStage != null)
                 return false;
-            }
-        } else if (!devStage.equals(other.devStage)) {
+        } else if (!devStage.equals(other.devStage))
             return false;
-        }
         if (species == null) {
-            if (other.species != null) {
+            if (other.species != null)
                 return false;
-            }
-        } else if (!species.equals(other.species)) {
+        } else if (!species.equals(other.species))
             return false;
-        }
         return true;
     }
 }

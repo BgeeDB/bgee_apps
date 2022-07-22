@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
-import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 
 /**
@@ -41,10 +40,28 @@ public class TaxonConstraintService extends CommonService {
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
     public Stream<TaxonConstraint<String>> loadAnatEntityTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
+        return log.traceExit(this.loadAnatEntityTaxonConstraints(speciesIds, null));
+    }
+    /**
+     * Retrieve anatomical entity taxon constraints for a given set of species IDs.
+     *
+     * @param speciesIds    A {@code Collection} of {@code Integer}s that are IDs of species
+     *                      for which to return the {@code TaxonConstraint}s. Can be {@code null} or empty
+     *                      to target all species.
+     * @param anatEntityIds A {@code Collection} of {@code String}s that are IDs of anat. entities
+     *                      for which to return the {@code TaxonConstraint}s. Can be {@code null} or empty
+     *                      to target all anat. entities.
+     * @return              A {@code Stream} of {@code TaxonConstraint}s that are
+     *                      the {@code TaxonConstraint}s for the given set of species IDs.
+     */
+    public Stream<TaxonConstraint<String>> loadAnatEntityTaxonConstraints(Collection<Integer> speciesIds,
+            Collection<String> anatEntityIds) {
+        log.traceEntry("{}, {}", speciesIds, anatEntityIds);
+
         return log.traceExit(getDaoManager().getTaxonConstraintDAO()
-                    .getAnatEntityTaxonConstraints(speciesIds, null).stream()
+                    .getAnatEntityTaxonConstraints(speciesIds, anatEntityIds, null).stream()
                     .map(CommonService::mapTaxonConstraintTOToTaxonConstraint));
     }
     
@@ -58,7 +75,7 @@ public class TaxonConstraintService extends CommonService {
      */
     public Stream<TaxonConstraint<Integer>> loadAnatEntityRelationTaxonConstraintBySpeciesIds(
             Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
         return log.traceExit(getDaoManager().getTaxonConstraintDAO()
                     .getAnatEntityRelationTaxonConstraints(speciesIds, null).stream()
@@ -74,7 +91,7 @@ public class TaxonConstraintService extends CommonService {
      *                      the {@code TaxonConstraint}s for the given set of species IDs.
      */
     public Stream<TaxonConstraint<String>> loadDevStageTaxonConstraintBySpeciesIds(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
         return log.traceExit(getDaoManager().getTaxonConstraintDAO()
                     .getStageTaxonConstraints(speciesIds, null).stream()

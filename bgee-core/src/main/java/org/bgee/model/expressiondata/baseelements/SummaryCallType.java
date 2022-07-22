@@ -63,25 +63,35 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
-            
-            try {
-                switch (this) {
-                case EXPRESSED:
-                    CallType.Expression.EXPRESSED.checkPropagationState(propState);
-                    break;
-                case NOT_EXPRESSED:
-                    CallType.Expression.NOT_EXPRESSED.checkPropagationState(propState);
-                    break;
-                default:
-                    throw log.throwing(new IllegalStateException("CallType not supported: " 
-                            + this));
+            log.traceEntry("{}", propState);
+
+            boolean incorrectPropagation = false;
+            switch (this) {
+            case EXPRESSED:
+                //no propagation from parents allowed for expressed calls,
+                //all other propagations allowed.
+                if (PropagationState.ANCESTOR.equals(propState)) {
+                    incorrectPropagation = true;
                 }
-            } catch (IllegalArgumentException e) {
+                break;
+            case NOT_EXPRESSED:
+                //no propagation from parents allowed for absent calls,
+                //no propagation only from descendant allowed
+                if (PropagationState.DESCENDANT.equals(propState) ||
+                        PropagationState.ANCESTOR.equals(propState)) {
+                    incorrectPropagation = true;
+                }
+                break;
+            default:
+                throw log.throwing(new IllegalStateException("CallType not supported: "
+                        + this));
+            }
+
+            if (incorrectPropagation) {
                 //log in TRACE level, since this method can simply be used to check validity
                 //of a propagation state
                 throw log.throwing(Level.TRACE, new IllegalArgumentException("The following propagation "
-                        + "is incorrect for the CallType " + this + ": " + propState));
+                        + "is incorrect for the ExpressionSummary " + this + ": " + propState));
             }
             log.traceExit();
         }
@@ -173,7 +183,7 @@ public interface SummaryCallType extends CallType {
 
         @Override
         public void checkPropagationState(PropagationState propState) throws IllegalArgumentException {
-            log.entry(propState);
+            log.traceEntry("{}", propState);
             //no propagation allowed for any diff. expression call type
             if (!PropagationState.SELF.equals(propState)) {
                 throw log.throwing(new IllegalArgumentException("The following propagation "

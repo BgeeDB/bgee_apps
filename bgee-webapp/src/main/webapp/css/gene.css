@@ -141,10 +141,16 @@ th.anat-entity {
 	width: 29% !important;
 }
 th.dev-stages {
-	width: 33% !important;
+	width: 20% !important;
+}
+th.sexes {
+	width: 8% !important;
+}
+th.strains {
+	width: 11% !important;
 }
 th.score {
-	width: 7% !important;
+	width: 5% !important;
 }
 th.quality {
 	width: 10% !important;
@@ -182,6 +188,14 @@ td > ul {
 }
 
 ul.dev-stage-list {
+	padding-left: 1.1em;
+}
+
+ul.sex-list {
+	padding-left: 1.1em;
+}
+
+ul.strain-list {
 	padding-left: 1.1em;
 }
 

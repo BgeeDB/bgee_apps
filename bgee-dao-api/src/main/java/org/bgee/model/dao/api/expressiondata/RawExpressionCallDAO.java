@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
-import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 
 /**
@@ -12,7 +12,7 @@ import org.bgee.model.dao.api.exception.DAOException;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, Mar. 2017
+ * @version Bgee 15.0, Apr. 2021
  * @since   Bgee 14, Feb. 2017
  * @see RawExpressionCallTO
  */
@@ -74,13 +74,14 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
      * 
      * @author  Valentine Rech de Laval
      * @author  Frederic Bastian
-     * @version Bgee 14, Feb. 2017
+     * @version Bgee 15.0, Apr. 2021
      * @since   Bgee 14, Feb. 2017
      */
-    public class RawExpressionCallTO extends EntityTO<Integer> {
+    public class RawExpressionCallTO extends TransferObject {
         
         private static final long serialVersionUID = -1057540315343857464L;
-        
+
+        private final Long id;
         /**
          * An {@code Integer} representing the ID of the gene associated to this call.
          */
@@ -90,12 +91,15 @@ public interface RawExpressionCallDAO extends DAO<RawExpressionCallDAO.Attribute
          */
         private final Integer conditionId;
         
-        public RawExpressionCallTO(Integer id, Integer bgeeGeneId, Integer conditionId) {
-            super(id);
+        public RawExpressionCallTO(Long id, Integer bgeeGeneId, Integer conditionId) {
+            this.id = id;
             this.bgeeGeneId = bgeeGeneId;
             this.conditionId = conditionId;
         }
-        
+
+        public Long getId() {
+            return this.id;
+        }
         public Integer getBgeeGeneId() {
             return this.bgeeGeneId;
         }

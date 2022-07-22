@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -50,21 +51,21 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     
     @Override
     public AnatEntityTOResultSet getAnatEntitiesByIds(Collection<String> anatEntitiesIds) {
-        log.entry(anatEntitiesIds);
+        log.traceEntry("{}", anatEntitiesIds);
         return log.traceExit(this.getAnatEntities(null, anatEntitiesIds));
     }
 
     @Override
     public AnatEntityTOResultSet getAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
             throws DAOException {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         return log.traceExit(this.getAnatEntities(speciesIds, null));
     }
     
     @Override
     public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Collection<String> anatEntitiesIds)
             throws DAOException {
-        log.entry(speciesIds, anatEntitiesIds);
+        log.traceEntry("{}, {}", speciesIds, anatEntitiesIds);
         return log.traceExit(this.getAnatEntities(speciesIds, true, anatEntitiesIds, this.getAttributes()));
     }
     
@@ -72,7 +73,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     public AnatEntityTOResultSet getAnatEntities(Collection<Integer> speciesIds, Boolean anySpecies, 
             Collection<String> anatEntitiesIds, Collection<AnatEntityDAO.Attribute> attributes) 
                     throws DAOException {
-        log.entry(speciesIds, anySpecies, anatEntitiesIds, attributes);
+        log.traceEntry("{}, {}, {}, {}", speciesIds, anySpecies, anatEntitiesIds, attributes);
         
         String tableName = "anatEntity";
         
@@ -105,7 +106,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 } else {
                     sql += ", ";
                 }
-                sql += tableName + "." + this.attributeToString(attribute);
+                sql += tableName + "." + attributeToString(attribute);
             }
         }
         
@@ -170,50 +171,41 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     }
     
     @Override
-    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds) 
-            throws DAOException {
-        log.entry(speciesIds);      
+    public AnatEntityTOResultSet getNonInformativeAnatEntitiesBySpeciesIds(Collection<Integer> speciesIds,
+            Collection<AnatEntityDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}", speciesIds, attributes);
 
         Set<Integer> clonedSpeIds = Optional.ofNullable(speciesIds)
                 .map(c -> new HashSet<>(c)).orElse(null);
+        EnumSet<AnatEntityDAO.Attribute> clonedAttrs = attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(AnatEntityDAO.Attribute.class): EnumSet.copyOf(attributes);
         boolean isSpeciesFilter = clonedSpeIds != null && clonedSpeIds.size() > 0;
         String tableName = "anatEntity";
         
-        String sql = new String(); 
-        Collection<AnatEntityDAO.Attribute> attributes = this.getAttributes();
-        if (attributes == null || attributes.size() == 0) {
-            sql += "SELECT DISTINCT " + tableName + ".*";
-        } else {
-            for (AnatEntityDAO.Attribute attribute: attributes) {
-                if (StringUtils.isEmpty(sql)) {
-                    sql += "SELECT DISTINCT ";
-                } else {
-                    sql += ", ";
-                }
-                sql += tableName + "." + this.attributeToString(attribute);
-            }
-        }
-        
-        String exprTabName = "expression";
+        String sql = clonedAttrs.stream()
+                .map(a -> tableName + "." + attributeToString(a))
+                .collect(Collectors.joining(", ", "SELECT DISTINCT ", " FROM " + tableName));
+
         String condTabName = "cond";
         String anatEntTaxConstTabName = "anatEntityTaxonConstraint";
-
-        sql += " FROM " + tableName;
+        String similarityTabName = "similarityAnnotationToAnatEntityId";
 
         if (isSpeciesFilter) {
             sql += " INNER JOIN " + anatEntTaxConstTabName + " ON " +
                     anatEntTaxConstTabName + ".anatEntityId = " + tableName + ".anatEntityId";
         }
-        sql += " WHERE " + tableName + ".nonInformative = true ";
+        sql += " WHERE " + tableName + ".nonInformative = 1 ";
         if (isSpeciesFilter) {
             sql += " AND (" + anatEntTaxConstTabName + ".speciesId IS NULL" +
                    " OR " + anatEntTaxConstTabName + ".speciesId IN (" +
                    BgeePreparedStatement.generateParameterizedQueryString(clonedSpeIds.size()) + 
                    "))";
         }
-        sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName + " INNER JOIN " + exprTabName
-                        + " ON " + condTabName + ".exprMappedConditionId = " + exprTabName + ".conditionId "
-                        + "WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
+        sql += " AND NOT EXISTS (SELECT 1 FROM " + condTabName
+                        + " WHERE " + condTabName + ".anatEntityId = " + tableName + ".anatEntityId "
+                        + "OR " + condTabName + ".cellTypeId = " + tableName + ".anatEntityId)"
+             + " AND NOT EXISTS (SELECT 1 FROM " + similarityTabName
+                        + " WHERE " + similarityTabName + ".anatEntityId = " + tableName + ".anatEntityId)";
         
         //we don't use a try-with-resource, because we return a pointer to the results, 
         //not the actual results, so we should not close this BgeePreparedStatement.
@@ -238,9 +230,9 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
      *                      {@code AnatEntityDAO.Attribute}
      * @throws IllegalArgumentException If the {@code attribute} is unknown.
      */
-    private String attributeToString(AnatEntityDAO.Attribute attribute) 
+    private static String attributeToString(AnatEntityDAO.Attribute attribute)
             throws IllegalArgumentException {
-        log.entry(attribute);
+        log.traceEntry("{}", attribute);
         
         switch (attribute) {
             case ID: 
@@ -264,7 +256,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
     @Override
     public int insertAnatEntities(Collection<AnatEntityTO> anatEntities) 
             throws DAOException, IllegalArgumentException{
-        log.entry(anatEntities);
+        log.traceEntry("{}", anatEntities);
 
         if (anatEntities == null || anatEntities.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
@@ -284,7 +276,11 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 this.getManager().getConnection().prepareStatement(sqlExpression)) {
             for (AnatEntityTO anatEntity: anatEntities) {
                 stmt.setString(1, anatEntity.getId());
-                stmt.setString(2, anatEntity.getName());
+                if (StringUtils.isNotBlank(anatEntity.getName())) {
+                    stmt.setString(2, anatEntity.getName());
+                } else {
+                    stmt.setString(2, "");
+                }
                 stmt.setString(3, anatEntity.getDescription());
                 stmt.setString(4, anatEntity.getStartStageId());
                 stmt.setString(5, anatEntity.getEndStageId());

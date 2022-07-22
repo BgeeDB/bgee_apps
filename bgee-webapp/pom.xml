@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.bgee</groupId>
         <artifactId>bgee-applications</artifactId>
-        <version>14</version>
+        <version>15</version>
     </parent>
 
     <artifactId>bgee-webapp</artifactId>
@@ -40,9 +40,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.9.0</version>
         </dependency>
-
 
         <!-- To send Mails -->
         <dependency>
@@ -146,8 +144,8 @@
         <!-- WARNING: never removes these properties, otherwise your files will be named, e.g.,
              *${filter.org.bgee.webapp.css.version.extension}.css. If you want to disable
              versioning of CSS and JS files, just leave these properties empty. -->
-        <filter.org.bgee.webapp.css.version.extension>min${project.version}k</filter.org.bgee.webapp.css.version.extension>
-        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}k</filter.org.bgee.webapp.javascript.version.extension>
+        <filter.org.bgee.webapp.css.version.extension>min${project.version}b</filter.org.bgee.webapp.css.version.extension>
+        <filter.org.bgee.webapp.javascript.version.extension>min${project.version}b</filter.org.bgee.webapp.javascript.version.extension>
         <!-- This property defines where the minified CSS and JS files will be stored.
              This is useful to be able to change this setting when running the webapp from within Eclipse
              (Eclipse acquires its resources before any plugin can process them, so we modify

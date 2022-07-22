@@ -3,8 +3,8 @@ angular.module('services.config', [])
     	    //XXX: maybe we should stop using this mockUrl everywhere it is used
         mockupUrl: GLOBAL_PROPS.getWebAppURLStart(),
         expr_type: 'EXPRESSED',
-        data_type: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
-        selectedDataTypes: ['RNA-Seq', 'Affymetrix data', 'In situ hybridization', 'EST'],
+        data_type: ['RNA-Seq', 'scRNA-Seq full-length', 'Affymetrix', 'In situ hybridization', 'EST'],
+        selectedDataTypes: ['RNA-Seq', 'scRNA-Seq full-length', 'Affymetrix', 'In situ hybridization', 'EST'],
         data_qualities: [{"id":"all", "name":"All"},{"id":"gold", "name":"Gold confidence"}],
         decorrelation_types: [{"id":"classic", "name":"No decorrelation"},{"id":"elim", "name":"Elim"}, {"id":"weight", "name":"Weight"},{"id":"parentchild", "name":"Parent-child"}],
         data_qual: 'all',

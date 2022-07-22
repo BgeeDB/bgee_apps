@@ -65,7 +65,7 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
         private final CallSourceDataTO callSourceDataTO;
 
         public ESTTO(String estId, String estId2, String estLibraryId, String uniGeneClusterId, Integer bgeeGeneId,
-                DataState expressionConfidence, Integer expressionId) {
+                DataState expressionConfidence, Long expressionId) {
             super(estId);
             this.estId2 = estId2;
             this.uniGeneClusterId = uniGeneClusterId;

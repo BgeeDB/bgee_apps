@@ -765,14 +765,7 @@ public class CommandTopAnat extends CommandParent {
         // Load mapping cross-reference IDs to genes
         final Map<String, Set<Gene>> mappingIdsToGenes =
                 serviceFactory.getGeneService().loadGenesByAnyId(geneSet, false)
-                .collect(Collectors.toMap(e->e.getKey(),
-                        // FIXME: Remove filter on bonobo data, we should give the possibility
-                        // to the user to choose a species. In same time, remove info
-                        // under gene list textarea in TopAnat HTML file.
-                        e -> e.getValue().stream()
-                        .filter(g -> g.getSpecies() == null || g.getSpecies().getId() == null ||
-                        g.getSpecies().getId() != 9597)
-                        .collect(Collectors.toSet())));
+                .collect(Collectors.toMap(e->e.getKey(),e -> e.getValue()));
 
         // Identify undetermined gene IDs
         final Set<String> undeterminedGeneIds = mappingIdsToGenes.entrySet().stream()

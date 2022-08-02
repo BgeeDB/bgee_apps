@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.job.Job;
 
 /**
  * Fake view used for tests related to topAnat display. 

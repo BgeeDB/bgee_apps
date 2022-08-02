@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
  * @since   Bgee 14, Mar. 2018
  */
 public class CommandSearchTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(CommandAboutTest.class.getName());
+    private final static Logger log = LogManager.getLogger(CommandSearchTest.class.getName());
 
     @Override
     protected Logger getLogger() {
@@ -48,7 +48,7 @@ public class CommandSearchTest extends TestAncestor {
     @Test
     //FIXME: no idea how up-to-date this test is
     @Ignore
-    public void shouldProcessRequest() throws IOException, PageNotFoundException, InvalidRequestException {
+    public void shouldProcessRequest() throws IOException, InvalidRequestException {
 
         //mock Services
         ServiceFactory serviceFac = mock(ServiceFactory.class);

@@ -39,36 +39,11 @@ public class CsvFactory extends ViewFactory {
 	    throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
 
-	@Override
-	public GeneralDisplay getGeneralDisplay() {
-	    throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-	}
-
     @Override
     public ErrorDisplay getErrorDisplay() throws IllegalArgumentException, IOException {
         log.traceEntry();
         return log.traceExit(new CsvErrorDisplay(this.response, this.requestParameters, this.prop, this, 
                 this.delimiter));
-    }
-
-    @Override
-    public DocumentationDisplay getDocumentationDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
-    public AboutDisplay getAboutDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
-    public PrivacyPolicyDisplay getPrivacyPolicyDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
-    public CollaborationDisplay getCollaborationDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 
     @Override
@@ -102,12 +77,7 @@ public class CsvFactory extends ViewFactory {
 	public SearchDisplay getSearchDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
 	}
-	
-	@Override
-    public SparqlDisplay getSparqlDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-	
+
 	@Override
     public SourceDisplay getSourceDisplay() {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
@@ -135,22 +105,7 @@ public class CsvFactory extends ViewFactory {
     }
 
     @Override
-    public FaqDisplay getFaqDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
-    public ResourcesDisplay getResourceDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
     public AnatomicalSimilarityDisplay getAnatomicalSimilarityDisplay() {
-        throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
-    }
-
-    @Override
-    public PublicationDisplay getPublicationDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for TSV/CSV display"));
     }
 }

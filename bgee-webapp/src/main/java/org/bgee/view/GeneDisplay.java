@@ -22,11 +22,6 @@ import org.bgee.model.gene.GeneMatchResult;
  * @since   Bgee 13, Nov. 2015
  */
 public interface GeneDisplay {
-
-    /**
-     * Displays the default gene page (when no argument is given).
-     */
-    void displayGeneHomePage();
     
     /**
      * Displays the result of a gene search. 

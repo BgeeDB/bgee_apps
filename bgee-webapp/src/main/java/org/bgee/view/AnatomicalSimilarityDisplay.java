@@ -17,13 +17,6 @@ import java.util.Set;
 public interface AnatomicalSimilarityDisplay {
 
     /**
-     * Displays the default anatomical similarity page (when no arguments are given).
-     * 
-     * @param allSpecies            A {@code List} of {@code Species} that are species that can be selected. 
-     */
-    void displayAnatSimilarityHomePage(Set<Species> allSpecies);
-
-    /**
      * Displays the result of a anatomical similarity analysis. 
      *
      * @param allSpecies                    A {@code List} of {@code Species} that are species

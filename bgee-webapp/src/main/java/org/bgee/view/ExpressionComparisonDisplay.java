@@ -15,11 +15,6 @@ import org.bgee.model.gene.Gene;
 public interface ExpressionComparisonDisplay {
 
     /**
-     * Displays the default expression comparison page (when no arguments are given)
-     */
-    public void displayExpressionComparisonHomePage();
-
-    /**
      * Displays information about a search of expression comparison with an error.
      *
      * @param erroMsg       A {@code String} that is the error message to be displayed.

@@ -139,7 +139,7 @@ public class FrontController extends HttpServlet {
             JobService jobService, UserService userService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, jobService, userService, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}",prop, urlParameters, jobService, userService, 
                 serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
@@ -192,10 +192,10 @@ public class FrontController extends HttpServlet {
      */
     public void doRequest(final HttpServletRequest request, final HttpServletResponse response,
             final boolean postData) {
-        log.entry(request, response, postData);
+        log.traceEntry("{}, {}, {}", request, response, postData);
         
         //default display type in case of error before we can do anything.
-        DisplayType displayType = DisplayType.HTML;
+        DisplayType displayType = DisplayType.JSON;
         //default RequestParameters in case of errors
         RequestParameters requestParameters = new RequestParameters(this.urlParameters,
                 this.prop, true, "&");
@@ -374,14 +374,14 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, false);
         log.traceExit();
     }
 
     @Override
     public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, true);
         log.traceExit();
     }
@@ -398,7 +398,7 @@ public class FrontController extends HttpServlet {
      * @throws InvalidRequestException  If several display types were requested. 
      */
     private DisplayType getRequestedDisplayType(HttpServletRequest request) throws InvalidRequestException {
-        log.entry(request);
+        log.traceEntry("{}", request);
         
         String[] paramValues = request.getParameterValues(
                 this.urlParameters.getParamDisplayType().getName());

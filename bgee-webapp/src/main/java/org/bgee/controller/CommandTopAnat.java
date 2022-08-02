@@ -553,8 +553,7 @@ public class CommandTopAnat extends CommandParent {
 
         // Home page, empty
         } else if (this.requestParameters.getAction() == null) {
-            display.displayTopAnatHomePage();
-            
+            throw log.throwing(new InvalidRequestException("an action should be provided"));            
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " 
                 + this.requestParameters.getUrlParametersInstance().getParamAction() 

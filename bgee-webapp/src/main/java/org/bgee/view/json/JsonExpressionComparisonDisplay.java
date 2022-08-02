@@ -35,11 +35,6 @@ public class JsonExpressionComparisonDisplay extends JsonParentDisplay implement
     }
 
     @Override
-    public void displayExpressionComparisonHomePage() {
-        throw log.throwing(new UnsupportedOperationException("Not implemented for JSON answers"));
-    }
-
-    @Override
     public void displayExpressionComparison(String erroMsg) {
         throw log.throwing(new UnsupportedOperationException("Not implemented for JSON answers"));
     }

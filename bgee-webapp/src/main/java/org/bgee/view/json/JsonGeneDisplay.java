@@ -53,12 +53,6 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneHomePage() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-
-    }
-
-    @Override
     public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
         log.traceEntry("{}. {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();

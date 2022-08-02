@@ -24,17 +24,17 @@ public class ViewFactoryProvider {
     private final static Logger log = LogManager.getLogger(ViewFactoryProvider.class.getName());
     
     /**
-     * An {@code enum} of the different display types: {@code HTML}, {@code XML}, 
-     * {@code JSON}, {@code CSV}, {@code TSV}.
+     * An {@code enum} of the different display types: {@code JSON}, {@code HTML}, {@code XML}, 
+     * {@code CSV}, {@code TSV}.
      */
     public static enum DisplayType {
-        HTML, XML, JSON, CSV, TSV;
+        JSON, HTML, XML, CSV, TSV;
     }
     
     /**
      * The {@code DisplayType} used as default
      */
-    public static final DisplayType DEFAULT = DisplayType.HTML;
+    public static final DisplayType DEFAULT = DisplayType.JSON;
     
     /**
      * An instance of {@code BgeeProperties} to provide the all 

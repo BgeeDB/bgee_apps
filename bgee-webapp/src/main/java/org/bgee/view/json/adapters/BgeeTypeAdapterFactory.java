@@ -1,0 +1,97 @@
+package org.bgee.view.json.adapters;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.controller.RequestParameters;
+import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
+import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneHomologs;
+import org.bgee.model.gene.GeneMatch;
+
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+
+/**
+ * A {@code TypeAdapterFactory} notably used when we need to provide the {@code Gson} object
+ * to a custom {@code TypeAdapter}.
+ *
+ * @author Frederic Bastian
+ * @version Bgee 15 Oct. 2021
+ * @since Bgee 13 Nov. 2015
+ * @see StreamTypeAdapter
+ * @see GeneMatchAdapter
+ *
+ */
+public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
+    private final Function<String, String> urlEncodeFunction;
+    private static final Logger log = LogManager.getLogger(BgeeTypeAdapterFactory.class.getName());
+    /**
+     * The {@code RequestParameters} corresponding to the current request to the webapp.
+     */
+//    private final RequestParameters requestParameters;
+    private final Supplier<RequestParameters> rpSupplier;
+
+    public BgeeTypeAdapterFactory(Function<String, String> urlEncodeFunction,
+            Supplier<RequestParameters> rpSupplier) {
+        this.urlEncodeFunction = urlEncodeFunction;
+//        this.requestParameters = requestParameters;
+        this.rpSupplier = rpSupplier;
+    }
+
+    @Override
+    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        log.traceEntry("{}, {}", gson, typeToken);
+
+        final Class<? super T> rawClass = typeToken.getRawType();
+
+        if (Stream.class.isAssignableFrom(rawClass)) {
+            //it is mandatory to cast the returned factory, the test isAssignableFrom
+            //is not enough for the warning to disappear. Note that this is also the case
+            //in Gson factory implementations
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
+            return log.traceExit(result);
+        }
+        if (GeneMatch.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+        if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsTypeAdapter(gson, this.rpSupplier);
+            return log.traceExit(result);
+        }
+        if (Gene.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneTypeAdapter(gson, urlEncodeFunction);
+            return log.traceExit(result);
+        }
+        if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseTypeAdapter();
+            return log.traceExit(result);
+        }
+        if (MultiGeneExprAnalysis.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new MultiGeneExprAnalysisTypeAdapter();
+            return log.traceExit(result);
+        }
+        if (AnatEntitySimilarityAnalysis.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+
+        //let Gson find somebody else
+        return log.traceExit((TypeAdapter<T>) null);
+    }
+}

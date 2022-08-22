@@ -29,7 +29,24 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID, NAME, DESCRIPTION, DATA_SOURCE_ID;
+        ID("microarrayExperimentId"), NAME("microarrayExperimentName"),
+        DESCRIPTION("microarrayExperimentDescription"), DATA_SOURCE_ID("dataSourceId");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code MicroarrayExperimentTO}
+         * class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
 	/**
@@ -37,35 +54,34 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
 	 * an Affymetrix experiment with the ID {@code expId}, or {@code null} 
 	 * if no corresponding experiment could be found.  
 	 * 
-	 * @param expId            A {@code String} representing the ID of the Affymetrix experiment to retrieve
-	 *                         from the data source.
+	 * @param expIds           A {@code Collection} of {code String} representing the IDs of
+	 *                         the Affymetrix experiments to retrieve from the data source.
      * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
      *                         to retrieve from the data source.
 	 * @return	               A {@code AffymetrixExpTO}, encapsulating all the data related to
 	 *                         the Affymetrix experiment, {@code null} if none could be found.
      * @throws DAOException    If an error occurred when accessing the data source. 
 	 */
-	public MicroarrayExperimentTO getExperimentById(String expId, Collection<Attribute> attributes)
-	        throws DAOException;
+	public MicroarrayExperimentTOResultSet getExperimentFromIds(Collection<String> expId,
+	        Collection<Attribute> attributes) throws DAOException;
 
-	/**
-	 * Allows to retrieve {@code MicroarrayExperimentTO}s according to the provided filters,
-	 * ordered by microarray experiment ID.
-     * <p>
-     * The {@code MicroarrayExperimentTO}s are retrieved and returned as a {@code MicroarrayExperimentTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
-     * are retrieved.
-	 *
-	 * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
-	 *                         which experiments to retrieve.
-	 * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-	 *                         from the data source.
-	 * @return                 A {@code MicroarrayExperimentTOResultSet} allowing to retrieve the targeted
-	 *                         {@code MicroarrayExperimentTO}s.
-	 * @throws DAOException    If an error occurred while accessing the data source.
-	 */
-    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> filters,
-            Collection<Attribute> attributes) throws DAOException;
+	   /**
+     * Retrieve from a data source a {@code MicroarrayExperimentTO}, corresponding to
+     * an Affymetrix experiment with the ID {@code expId}, or {@code null}
+     * if no corresponding experiment could be found.
+     * 
+     * @param expIds            A {@code Collection} of {code String} representing the IDs of
+     *                          the Affymetrix experiments to retrieve from the data source.
+     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code AffymetrixExpTO}, encapsulating all the data related to
+     *                          the Affymetrix experiment, {@code null} if none could be found.
+     * @throws DAOException     If an error occurred when accessing the data source.
+     */
+    public MicroarrayExperimentTOResultSet getExperiments(Collection<String> expId,
+            DAORawDataFilter rawDataFilter, Collection<Attribute> attributes) throws DAOException;
 
 	/**
      * {@code DAOResultSet} for {@code MicroarrayExperimentTO}s
@@ -91,7 +107,8 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
         /**
 	     * Default constructor. 
 	     */
-	    public MicroarrayExperimentTO(String id, String name, String description, Integer dataSourceId) {
+	    public MicroarrayExperimentTO(String id, String name, String description,
+	            Integer dataSourceId) {
 	        super(id, name, description, dataSourceId);
 	    }
 	}

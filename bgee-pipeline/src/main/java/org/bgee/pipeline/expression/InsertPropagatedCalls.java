@@ -2129,7 +2129,7 @@ public class InsertPropagatedCalls extends CallService {
         }
 
         RawDataConditionTOResultSet rs = this.getDaoManager().getRawDataConditionDAO()
-                .getRawDataConditionsBySpeciesIds(speMap.keySet(), null);
+                .getRawDataConditionsFromSpeciesIds(speMap.keySet(), null);
 
         while (rs.next()) {
             RawDataConditionTO condTO = rs.getTO();

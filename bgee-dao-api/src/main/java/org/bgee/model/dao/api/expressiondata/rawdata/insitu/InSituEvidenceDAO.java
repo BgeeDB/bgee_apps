@@ -1,7 +1,11 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
 
 /**
@@ -26,8 +30,77 @@ public interface InSituEvidenceDAO extends DAO<InSituEvidenceDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        IN_SITU_EVIDENCE_ID, EXPERIMENT_ID, EVIDENCE_DISTINGUISHABLE, EVIDENCE_URL_PART;
+        IN_SITU_EVIDENCE_ID("inSItuEvidenceId"), EXPERIMENT_ID("inSituExperimentId"),
+        EVIDENCE_DISTINGUISHABLE("evidenceDistinguishable"),
+        EVIDENCE_URL_PART("inSituEvidenceUrlPart");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code ESTTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
+
+    /**
+     * retrieve insitu evidences filtered on evidence IDs
+     * 
+     * @param evidenceIds       A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ evidences to retrieve.
+     * 
+     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     */
+    public InSituEvidenceTOResultSet getInSituEvidenceFromIds(
+            Collection<String> evidenceIds, Collection<InSituEvidenceDAO.Attribute> attrs);
+
+    /**
+     * retrieve insitu evidences filtered on experiment IDs
+     * 
+     * @param experimentIds     A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ experiments of the evidences to retrieve.
+     * 
+     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     */
+    public InSituEvidenceTOResultSet getInSituEvidenceFromExperimentIds(
+            Collection<String> experimentIds, Collection<InSituEvidenceDAO.Attribute> attrs);
+
+    /**
+     * retrieve insitu evidences filtered on condition parameters
+     * 
+     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * 
+     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     */
+    public InSituEvidenceTOResultSet getInSituEvidenceFromRawDataFilter(
+            DAORawDataFilter rawDataFiler, Collection<InSituEvidenceDAO.Attribute> attrs);
+
+    /**
+     * retrieve insitu evidences filtered on evidence IDs, species IDs, gene IDs and condition
+     * parameters
+     * 
+     * @param evidenceIds       A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ evidences to retrieve.
+     * @param experimentIds     A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ experiments of the evidences to retrieve.
+     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * 
+     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     */
+    public InSituEvidenceTOResultSet getInSituEvidences(
+            Collection<String> evidenceIds, Collection<String> experimentIds,
+            DAORawDataFilter rawDataFiler, Collection<InSituEvidenceDAO.Attribute> attrs);
+
+    public interface InSituEvidenceTOResultSet extends DAOResultSet<InSituEvidenceTO> {}
 
     /**
      * {@code TransferObject} in situ hybridization evidence.
@@ -37,7 +110,9 @@ public interface InSituEvidenceDAO extends DAO<InSituEvidenceDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 11
      */
-    public final class InSituEvidenceTO extends EntityTO<String> implements AssayPartOfExpTO<String, String> {
+    public final class InSituEvidenceTO extends EntityTO<String>
+            implements AssayPartOfExpTO<String, String> {
+
         private static final long serialVersionUID = 6885005045158337747L;
 
         private final String inSituExperimentId;

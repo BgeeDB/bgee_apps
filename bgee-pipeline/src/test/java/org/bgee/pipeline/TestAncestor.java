@@ -24,7 +24,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.MySQLDiffExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -106,7 +106,7 @@ public abstract class TestAncestor
 	 */
 	protected <T extends TransferObject, V extends DAOResultSet<T>> 
 	                V createMockDAOResultSet(List<T> resultSetContent, Class<V> type) {
-	    this.getLogger().entry(resultSetContent, type);
+	    this.getLogger().traceEntry("{},{}", resultSetContent, type);
 	    
         V mockResultSet = Mockito.mock(type);
         
@@ -115,9 +115,9 @@ public abstract class TestAncestor
         when(mockResultSet.next()).thenAnswer(new Answer<Boolean>() {
             int counter = 0;
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
-                getLogger().entry(invocationOnMock);
+                getLogger().traceEntry("{}", invocationOnMock);
                 // Return true while there is a result to return 
-                return getLogger().exit(counter++ < resultSetSize);
+                return getLogger().traceExit(counter++ < resultSetSize);
             }
         });
   
@@ -126,9 +126,9 @@ public abstract class TestAncestor
         when(mockResultSet.getTO()).thenAnswer(new Answer<T>() {
             int counter = 0;
             public T answer(InvocationOnMock invocationOnMock) throws Throwable {
-                getLogger().entry(invocationOnMock);
+                getLogger().traceEntry("{}", invocationOnMock);
                 // Return true while there is a listTO to return 
-                return getLogger().exit(listTO.get(counter++));
+                return getLogger().traceExit(listTO.get(counter++));
             }
         });
   
@@ -141,7 +141,7 @@ public abstract class TestAncestor
         // Determine the behavior of call to close().
         doNothing().when(mockResultSet).close();
         
-        return this.getLogger().exit(mockResultSet);
+        return this.getLogger().traceExit(mockResultSet);
 	}
 	
 	/**
@@ -173,7 +173,8 @@ public abstract class TestAncestor
         public final MySQLAffymetrixProbesetDAO mockAffymetrixProbesetDAO = 
                 mock(MySQLAffymetrixProbesetDAO.class);
         public final MySQLInSituSpotDAO mockInSituSpotDAO = mock(MySQLInSituSpotDAO.class);
-        public final MySQLRNASeqResultDAO mockRNASeqResultDAO = mock(MySQLRNASeqResultDAO.class);
+        public final MySQLRNASeqResultAnnotatedSampleDAO mockRNASeqResultDAO =
+                mock(MySQLRNASeqResultAnnotatedSampleDAO.class);
         public final MySQLCIOStatementDAO mockCIOStatementDAO = mock(MySQLCIOStatementDAO.class);
         public final MySQLEvidenceOntologyDAO mockEvidenceOntologyDAO = 
                 mock(MySQLEvidenceOntologyDAO.class);
@@ -279,7 +280,7 @@ public abstract class TestAncestor
             return this.mockInSituSpotDAO;
         }
         @Override
-        protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
+        protected MySQLRNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO() {
             return this.mockRNASeqResultDAO;
         }
         @Override

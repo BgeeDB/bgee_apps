@@ -1,13 +1,17 @@
 package org.bgee.model.dao.api.expressiondata.rawdata.insitu;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+
 import org.bgee.model.dao.api.DAO;
+import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
 /**
  * DAO defining queries using or retrieving {@link InSituSpotTO}s. 
@@ -25,20 +29,41 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      * obtained from this {@code InSituSpotDAO}.
      * <ul>
      * <li>{@code ID}: corresponds to {@link InSituSpotTO#getId()}.
-     * <li>{@code IN_SITU_EXPRESSION_PATTERN_ID}: corresponds to {@link InSituSpotTO#getInSituExpressionPatternId()}.
      * <li>{@code IN_SITU_EVIDENCE_ID}: corresponds to {@link InSituSpotTO#getAssayId()}.
+     * <li>{@code IN_SITU_EXPRESSION_PATTERN_ID}: corresponds to {@link InSituSpotTO#getInSituExpressionPatternId()}.
      * <li>{@code CONDITION_ID}: corresponds to {@link InSituSpotTO#getConditionId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link InSituSpotTO#getBgeeGeneId()}.
-     * <li>{@code DETECTION_FLAG}: corresponds to {@link InSituSpotTO#getDetectionFlag()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link InSituSpotTO#getExpressionId()}.
+     * <li>{@code PVALUE}: corresponds to {@link InSituSpotTO#getPValue()}.
      * <li>{@code IN_SITU_DATA}: corresponds to {@link InSituSpotTO#getExpressionConfidence()}.
      * <li>{@code REASON_FOR_EXCLUSION}: corresponds to {@link InSituSpotTO#getExclusionReason()}.
-     * <li>{@code EXPRESSION_ID}: corresponds to {@link InSituSpotTO#getExpressionId()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID, IN_SITU_EXPRESSION_PATTERN_ID, IN_SITU_EVIDENCE_ID, CONDITION_ID,
-        BGEE_GENE_ID, DETECTION_FLAG, IN_SITU_DATA, REASON_FOR_EXCLUSION, EXPRESSION_ID;
+        ID, IN_SITU_EVIDENCE_ID, IN_SITU_EXPRESSION_PATTERN_ID, CONDITION_ID,
+        BGEE_GENE_ID, EXPRESSION_ID, PVALUE, IN_SITU_DATA, REASON_FOR_EXCLUSION;
     }
+
+    /**
+     * retrieve insitu evidences filtered on evidence IDs, species IDs, gene IDs and condition
+     * parameters
+     * 
+     * @param spotIds           A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ spots to retrieve.
+     * @param evidenceIds       A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ evidence of the spots to retrieve.
+     * @param experimentIds     A {@code Collection} of {@code String} corresponding to the
+     *                          IDs of the In Situ experiments of the spots to retrieve.
+     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * 
+     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     */
+    public InSituSpotTOResultSet getInSituSpots(Collection<String> spotIds,
+            Collection<String> evidenceIds, Collection<String> experimentIds,
+            DAORawDataFilter rawDataFilter, Collection<InSituSpotDAO.Attribute> attrs);
+
+    public interface InSituSpotTOResultSet extends DAOResultSet<InSituSpotTO> {}
 
     /**
      * {@code EntityTO} for in situ hybridization spots.
@@ -48,7 +73,8 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      * @version Bgee 14
      * @since Bgee 11
      */
-    public class InSituSpotTO extends EntityTO<String> implements CallSourceTO<String>, RawDataAnnotatedTO {
+    public class InSituSpotTO extends EntityTO<String> implements CallSourceTO<String>,
+            RawDataAnnotatedTO {
         private static final long serialVersionUID = 163982006869900096L;
 
         private final String inSituEvidenceId;
@@ -60,14 +86,15 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
          */
         private final CallSourceDataTO callSourceDataTO;
 
-        public InSituSpotTO(String inSituSpotId, String inSituExpressionPatternId, String inSituEvidenceId,
-                Integer conditionId, Integer bgeeGeneId, DetectionFlag detectionFlag,
-                DataState expressionConfidence, ExclusionReason exclusionReason, Long expressionId) {
+        public InSituSpotTO(String inSituSpotId, String inSituEvidenceId,
+                String inSituExpressionPatternId, Integer conditionId, Integer bgeeGeneId,
+                Long expressionId, BigDecimal pValue, DataState expressionConfidence,
+                ExclusionReason exclusionReason) {
             super(inSituSpotId);
             this.inSituEvidenceId = inSituEvidenceId;
             this.inSituExpressionPatternId = inSituExpressionPatternId;
             this.conditionId = conditionId;
-            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, detectionFlag,
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, pValue,
                     expressionConfidence, exclusionReason, expressionId);
         }
 

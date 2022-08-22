@@ -43,44 +43,93 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        BGEE_AFFYMETRIX_CHIP_ID, AFFYMETRIX_CHIP_ID, EXPERIMENT_ID, CONDITION_ID, SCAN_DATE, CHIP_TYPE_ID, 
-        NORMALIZATION_TYPE, DETECTION_TYPE, QUALITY_SCORE, PERCENT_PRESENT, MAX_RANK, DISTINCT_RANK_COUNT;
+        BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"), AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"),
+        EXPERIMENT_ID("microarrayExperimentId"), CHIP_TYPE_ID("chipTypeId"), SCAN_DATE("scanDate"),
+        NORMALIZATION_TYPE("normalizationType"), DETECTION_TYPE("detectionType"),
+        CONDITION_ID("conditionId"), QUALITY_SCORE("qualityScore"),
+        PERCENT_PRESENT("percentPresent"), MAX_RANK("chipMaxRank"),
+        DISTINCT_RANK_COUNT("chipDistinctRankCount");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code AffymetrixChipTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
     /**
-     * Retrieve from a data source a {@code AffymetrixChipTO}, corresponding to 
-     * the Affymetrix chip, with the Bgee chip ID {@code bgeeAffymetrixChipId}, 
+     * Retrieve from a data source {@code AffymetrixChipTO}s, corresponding to
+     * the Affymetrix chips, with the Bgee chip IDs {@code bgeeAffymetrixChipId}s,
      * {@code null} if no corresponding chip was found.  
      * 
-     * @param bgeeAffymetrixChipId	 	A {@code String} representing the ID in the Bgee database of the Affymetrix chip 
-     * 									that needs to be retrieved from the data source. 
-     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-     *                                  from the data source.
-     * @return	                        An {@code AffymetrixChipTO}, encapsulating all the data 
-     * 			                        related to the Affymetrix chip, {@code null} if none could be found. 
+     * @param bgeeAffymetrixChipIds	 	A {@code Collection} of {@code String} representing the IDs
+     *                                  in the Bgee database of the Affymetrix chips that needs to
+     *                                  be retrieved from the data source.
+     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the
+     *                                  information to retrieve from the data source.
+     * @return	                        An {@code AffymetrixChipTOResultSet}, encapsulating all the
+     *                                  data related to the Affymetrix chips, {@code null} if none
+     *                                  could be found. 
      * @throws DAOException 	        If an error occurred when accessing the data source.
      */
-    public AffymetrixChipTO getAffymetrixChipById(String bgeeAffymetrixChipId, Collection<Attribute> attributes) 
+    public AffymetrixChipTOResultSet getAffymetrixChipFromIds(Collection<String> bgeeAffymetrixChipIds,
+            Collection<Attribute> attributes)
             throws DAOException;
 
     /**
      * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,
      * ordered by microarray experiment IDs and bgee Affymetrix chip IDs.
      * <p>
-     * The {@code AffymetrixChipTO}s are retrieved and returned as a {@code AffymetrixChipTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
-     * are retrieved.
+     * The {@code AffymetrixChipTO}s are retrieved and returned as a
+     * {@code AffymetrixChipTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
      *
-     * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
-     *                         which chips to retrieve.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-     *                         from the data source.
+     * @param rawDatafilter    A {@code DAORawDataFilter} allowing to specify which chips to retrieve.
+     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
+     *                         to retrieve from the data source.
      * @return                 A {@code AffymetrixChipTOResultSet} allowing to retrieve the targeted
      *                         {@code AffymetrixChipTO}s.
      * @throws DAOException    If an error occurred while accessing the data source.
      */
-    public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> filters,
+    public AffymetrixChipTOResultSet getAffymetrixChipsFromRawDataFilter(
+            DAORawDataFilter filter,
             Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,
+     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs.
+     * <p>
+     * The {@code AffymetrixChipTO}s are retrieved and returned as a
+     * {@code AffymetrixChipTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param experimentIds             A {@code Collection} of {@code String} representing the IDs
+     *                                  in the Bgee database of the microarray experiments for which
+     *                                  affymetrix chips have to be retrieved from the data source.
+     * @param bgeeAffymetrixChipIds     A {@code Collection} of {@code String} representing the IDs
+     *                                  in the Bgee database of the Affymetrix chips that needs to
+     *                                  be retrieved from the data source.
+     * @param rawDataFilter             A {@code DAORawDataFilter} allowing to specify which chips
+     *                                  to retrieve.
+     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the
+     *                                  information to retrieve from the data source.
+     * @return                          A {@code AffymetrixChipTOResultSet} allowing to retrieve
+     *                                  the targeted {@code AffymetrixChipTO}s.
+     * @throws DAOException             If an error occurred while accessing the data source.
+     */
+    public AffymetrixChipTOResultSet getAffymetrixChips(Collection<String> experimentIds,
+            Collection<String> bgeeAffymetrixChipIds, DAORawDataFilter condFilter,
+            Collection<Attribute> attributes)
+                    throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code AffymetrixChipTO}s
@@ -99,7 +148,9 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * @version Bgee 14 Sept. 2018
      * @since Bgee 11
      */
-    public final class AffymetrixChipTO extends EntityTO<Integer> implements AssayPartOfExpTO<Integer, String>, RawDataAnnotatedTO {
+    public final class AffymetrixChipTO extends EntityTO<Integer>
+            implements AssayPartOfExpTO<Integer, String>, RawDataAnnotatedTO {
+
         private static final long serialVersionUID = 7479060565564264352L;
         private final static Logger log = LogManager.getLogger(AffymetrixChipTO.class.getName());
 
@@ -134,10 +185,11 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
              *
              * @param representation    A {@code String} representing a normalization type.
              * @return                  A {@code NormalizationType} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code NormalizationType}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to
+             * any {@code NormalizationType}.
              */
             public static final NormalizationType convertToNormalizationType(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(NormalizationType.class, representation));
             }
 
@@ -191,7 +243,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
              * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code DetectionType}.
              */
             public static final DetectionType convertToDetectionType(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}", representation);
                 return log.traceExit(TransferObject.convert(DetectionType.class, representation));
             }
 
@@ -221,10 +273,10 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
         /**
          * Default constructor. 
          */
-        public AffymetrixChipTO(Integer bgeeAffymetrixChipId, String microarrayExperimentId, String affymetrixChipId,
-                Integer conditionId, String scanDate, String chipTypeId, NormalizationType normalizationType,
-                DetectionType detectionType, BigDecimal qualityScore, BigDecimal percentPresent, BigDecimal maxRank,
-                Integer distinctRankCount) {
+        public AffymetrixChipTO(Integer bgeeAffymetrixChipId, String affymetrixChipId, String microarrayExperimentId,
+                String chipTypeId, String scanDate, NormalizationType normalizationType,
+                DetectionType detectionType, Integer conditionId, BigDecimal qualityScore, BigDecimal percentPresent,
+                BigDecimal maxRank, Integer distinctRankCount) {
             super(bgeeAffymetrixChipId);
             this.microarrayExperimentId = microarrayExperimentId;
             this.affymetrixChipId = affymetrixChipId;

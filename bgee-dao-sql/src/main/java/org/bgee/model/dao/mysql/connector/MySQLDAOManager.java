@@ -51,7 +51,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.file.MySQLDownloadFileDAO;
 import org.bgee.model.dao.mysql.file.MySQLSpeciesDataGroupDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
@@ -1079,9 +1079,9 @@ public class MySQLDAOManager extends DAOManager {
         return log.traceExit(new MySQLInSituSpotDAO(this));
     }
     @Override
-    protected MySQLRNASeqResultDAO getNewRNASeqResultDAO() {
+    protected MySQLRNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO() {
         log.traceEntry();
-        return log.traceExit(new MySQLRNASeqResultDAO(this));
+        return log.traceExit(new MySQLRNASeqResultAnnotatedSampleDAO(this));
     }
     @Override
     protected MySQLCIOStatementDAO getNewCIOStatementDAO() {

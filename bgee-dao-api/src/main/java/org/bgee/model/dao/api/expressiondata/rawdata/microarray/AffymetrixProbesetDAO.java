@@ -10,7 +10,6 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.DetectionFlag;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceWithRankTO;
@@ -34,35 +33,85 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      * <li>{@code BGEE_AFFYMETRIX_CHIP_ID}: corresponds to {@link AffymetrixProbesetTO#getAssayId()}.
      * <li>{@code BGEE_GENE_ID}: corresponds to {@link AffymetrixProbesetTO#getBgeeGeneId()}.
      * <li>{@code NORMALIZED_SIGNAL_INTENSITY}: corresponds to {@link AffymetrixProbesetTO#getNormalizedSignalIntensity()}.
-     * <li>{@code DETECTION_FLAG}: corresponds to {@link AffymetrixProbesetTO#getDetectionFlag()}.
+     * <li>{@code PVALUE}: corresponds to {@link AffymetrixProbesetTO#getPValue()}.
+     * <li>{@code QVALUE}: corresponds to {@link AffymetrixProbesetTO#getQValue()}.
+     * <li>{@code EXPRESSION_ID}: corresponds to {@link AffymetrixProbesetTO#getExpressionId()}.
+     * <li>{@code RANK}: corresponds to {@link AffymetrixProbesetTO#getRank()}.
      * <li>{@code AFFYMETRIX_DATA}: corresponds to {@link AffymetrixProbesetTO#getExpressionConfidence()}.
      * <li>{@code REASON_FOR_EXCLUSION}: corresponds to {@link AffymetrixProbesetTO#getExclusionReason()}.
-     * <li>{@code RANK}: corresponds to {@link AffymetrixProbesetTO#getRank()}.
-     * <li>{@code EXPRESSION_ID}: corresponds to {@link AffymetrixProbesetTO#getExpressionId()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID, BGEE_AFFYMETRIX_CHIP_ID, BGEE_GENE_ID, NORMALIZED_SIGNAL_INTENSITY, DETECTION_FLAG, 
-        AFFYMETRIX_DATA, REASON_FOR_EXCLUSION, RANK, EXPRESSION_ID;
+        ID("affymetrixProbesetId"), BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"),
+        BGEE_GENE_ID("bgeeGeneId"), NORMALIZED_SIGNAL_INTENSITY("normalizedSignalIntensity"),
+        PVALUE("pValue"), QVALUE("qValue"), EXPRESSION_ID("expressionId"),
+        RANK("rank"),AFFYMETRIX_DATA("affymetrixData"),
+        REASON_FOR_EXCLUSION("reasonForExclusion");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code AffymetrixChipTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
     /**
      * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters,
-     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and probeset IDs.
+     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and
+     * probeset IDs.
      * <p>
-     * The {@code AffymetrixProbesetTO}s are retrieved and returned as a {@code AffymetrixProbesetTOResultSet}. 
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results 
-     * are retrieved.
+     * The {@code AffymetrixProbesetTO}s are retrieved and returned as a
+     * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
      *
-     * @param filters          A {@code Collection} of {@code DAORawDataFilter}s allowing to specify
-     *                         which probesets to retrieve.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information to retrieve
-     *                         from the data source.
-     * @return                 A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the targeted
-     *                         {@code AffymetrixProbesetTO}s.
-     * @throws DAOException    If an error occurred while accessing the data source.
+     * @param filter           A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the
+     *                          information to retrieve
+     *                          from the data source.
+     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
+     *                          targeted
+     *                          {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<DAORawDataFilter> filters,
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesetsFromRawDataFilter(
+            DAORawDataFilter filter,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters,
+     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and
+     * probeset IDs.
+     * <p>
+     * The {@code AffymetrixProbesetTO}s are retrieved and returned as a
+     * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param probesetIds       A {@code Collection} of {@code String} to specify IDs of probesets
+     *                          to retrieve.
+     * @param bgeeChipIds       A {@code Collection} of {@code String} to specify bgee chip IDs
+     *                          of probesets to retrieve.
+     * @param filter            A {@code DAORawDataFilter} allowing to specify which probesets to
+     *                          retrieve.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the
+     *                          information to retrieve
+     *                          from the data source.
+     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
+     *                          targeted
+     *                          {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<String> probesetIds,
+            Collection<String> bgeeChipIds, DAORawDataFilter filter,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
@@ -102,6 +151,7 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          * the produced call of presence/absence of expression.
          */
         private final CallSourceDataTO callSourceDataTO;
+        private final BigDecimal qValue;
 
         /**
          * All of these parameters are optional, so they can be {@code null} when not used.
@@ -124,13 +174,14 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          *                                  associated to this probeset.
          */
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, Integer bgeeAffymetrixChipId, Integer bgeeGeneId,
-	            DetectionFlag detectionFlag, DataState expressionConfidence, ExclusionReason exclusionReason,
-	            BigDecimal normalizedSignalIntensity, BigDecimal rank, Long expressionId) {
+	            BigDecimal normalizedSignalIntensity, BigDecimal pValue, BigDecimal qValue, Long expressionId,
+	            BigDecimal rank, DataState expressionConfidence, ExclusionReason exclusionReason) {
             super(affymetrixProbesetId);
 	        this.bgeeAffymetrixChipId = bgeeAffymetrixChipId;
 	        this.normalizedSignalIntensity = normalizedSignalIntensity;
 	        this.rank = rank;
-            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, detectionFlag,
+	        this.qValue = qValue;
+            this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, pValue,
                     expressionConfidence, exclusionReason, expressionId);
 	    }
 
@@ -154,16 +205,19 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
         public BigDecimal getRank() {
             return this.rank;
         }
+        /**
+         * @return  A {@code BigDecimal} that is the qvalue of this call source raw data.
+         */
+        public BigDecimal getqValue() {
+            return qValue;
+        }
 
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("AffymetrixProbesetTO [id=").append(this.getId())
-                    .append(", bgeeAffymetrixChipId=").append(bgeeAffymetrixChipId)
-                    .append(", normalizedSignalIntensity=").append(normalizedSignalIntensity)
-                    .append(", callSourceDataTO=").append(this.callSourceDataTO)
-                    .append(", rank=").append(rank).append("]");
-            return builder.toString();
+            return "AffymetrixProbesetTO [bgeeAffymetrixChipId=" + bgeeAffymetrixChipId + ", normalizedSignalIntensity="
+                    + normalizedSignalIntensity + ", rank=" + rank + ", callSourceDataTO=" + callSourceDataTO
+                    + ", qValue=" + qValue + "]";
         }
+
 	}
 }

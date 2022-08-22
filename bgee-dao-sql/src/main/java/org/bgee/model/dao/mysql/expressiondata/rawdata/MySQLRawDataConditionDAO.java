@@ -5,81 +5,96 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 
-public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attribute> implements RawDataConditionDAO {
+public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
+implements RawDataConditionDAO {
     private final static Logger log = LogManager.getLogger(MySQLRawDataConditionDAO.class.getName());
-
-    private static final Map<String, RawDataConditionDAO.Attribute> columnToAttributesMap;
-
-    static {
-        columnToAttributesMap = new HashMap<>();
-        columnToAttributesMap.put("conditionId", RawDataConditionDAO.Attribute.ID);
-        columnToAttributesMap.put("exprMappedConditionId", RawDataConditionDAO.Attribute.EXPR_MAPPED_CONDITION_ID);
-        columnToAttributesMap.put("anatEntityId", RawDataConditionDAO.Attribute.ANAT_ENTITY_ID);
-        columnToAttributesMap.put("stageId", RawDataConditionDAO.Attribute.STAGE_ID);
-        columnToAttributesMap.put("cellTypeId", RawDataConditionDAO.Attribute.CELL_TYPE_ID);
-        columnToAttributesMap.put("sex", RawDataConditionDAO.Attribute.SEX);
-        columnToAttributesMap.put("sexInferred", RawDataConditionDAO.Attribute.SEX_INFERRED);
-        columnToAttributesMap.put("strain", RawDataConditionDAO.Attribute.STRAIN);
-        columnToAttributesMap.put("speciesId", RawDataConditionDAO.Attribute.SPECIES_ID);
-    }
+    private final static String TABLE_NAME = "cond";
 
     public MySQLRawDataConditionDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
 
     @Override
-    public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIds(Collection<Integer> speciesIds,
+    public RawDataConditionTOResultSet getRawDataConditionsFromSpeciesIds(Collection<Integer> speciesIds,
             Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}", speciesIds, attributes);
+        return log.traceExit(getRawDataConditions(speciesIds, null, attributes));
+    }
 
-        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>(): new HashSet<>(speciesIds));
+    @Override
+    public RawDataConditionTOResultSet getRawDataConditionsFromRawConditionFilters(
+            Collection<DAORawDataConditionFilter> rawCondFilters,
+            Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}", rawCondFilters, attributes);
+        return log.traceExit(getRawDataConditions(null, rawCondFilters, attributes));
+    }
+
+    @Override
+    public RawDataConditionTOResultSet getRawDataConditions(Collection<Integer> speciesIds,
+            Collection<DAORawDataConditionFilter> conditionFilters,
+            Collection<RawDataConditionDAO.Attribute> attributes)
+            throws DAOException {
+        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
+            new HashSet<>(speciesIds));
+        final Set<DAORawDataConditionFilter> condFilters = Collections.unmodifiableSet(
+                conditionFilters == null?
+                new HashSet<>(): new HashSet<>(conditionFilters));
         final Set<RawDataConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
 
+        // generate SELECT
         StringBuilder sb = new StringBuilder();
-        String tableName = "cond";
-        sb.append(generateSelectClause(tableName, columnToAttributesMap, true, attrs))
-          .append(" FROM ").append(tableName);
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
+                .Attribute.class), true, attrs))
+        .append(" FROM ").append(TABLE_NAME);
+
+        // generate WHERE CLAUSE
+        if (!speIds.isEmpty() || !condFilters.isEmpty()) {
+          sb.append(" WHERE ");
+        }
+        // FITER ON SPECIES IDS
         if (!speIds.isEmpty()) {
-            sb.append(" WHERE ")
-              .append(tableName).append(".").append("speciesId").append(" IN (")
-              .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
-              .append(")");
+            sb.append(TABLE_NAME).append(".")
+            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
+            .append(")");
+            if (!condFilters.isEmpty()) {
+                sb.append(" AND ");
+            }
+        }
+        // FILTER ON CONDITION PARAMETERS
+        if (!condFilters.isEmpty()) {
+            sb.append(condFilters.stream().map(cf -> {
+                return generateOneConditionFilter(cf);
+            }).collect(Collectors.joining(" OR ", "(", ")")));
         }
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            int paramIndex = 1;
             if (!speIds.isEmpty()) {
-                stmt.setIntegers(1, speIds, true);
+                stmt.setIntegers(paramIndex, speIds, true);
+                paramIndex += speIds.size();
             }
+            configureRawDataConditionFiltersStmt(stmt, condFilters, paramIndex);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    @Override
-    public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIdsAndConditionFilters(Collection<Integer> arg0,
-            Collection<DAORawDataConditionFilter> arg1,
-            Collection<org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.Attribute> arg2)
-            throws DAOException {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     /**
@@ -89,9 +104,10 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
      * @version Bgee 15, Mar. 2021
      * @since Bgee 14, Feb. 2017
      */
-    class MySQLRawDataConditionTOResultSet extends MySQLDAOResultSet<RawDataConditionDAO.RawDataConditionTO>
+    class MySQLRawDataConditionTOResultSet
+    extends MySQLDAOResultSet<RawDataConditionDAO.RawDataConditionTO>
             implements RawDataConditionTOResultSet {
-        
+
         /**
          * @param statement The {@code BgeePreparedStatement}
          */
@@ -109,10 +125,9 @@ public class MySQLRawDataConditionDAO extends MySQLDAO<RawDataConditionDAO.Attri
                 RawDataConditionDAO.RawDataConditionTO.DAORawDataSex sex = null;
                 Boolean sexInferred = null;
 
-                //don't use MySQLDAO.getAttributeFromColName because we don't cover all columns
-                //with ConditionDAO.Attributes (max rank columns)
                 COL: for (String columnName : this.getColumnLabels().values()) {
-                    RawDataConditionDAO.Attribute attr = columnToAttributesMap.get(columnName);
+                    RawDataConditionDAO.Attribute attr = getColToAttributesMap(RawDataConditionDAO
+                            .Attribute.class).get(columnName);
                     if (attr == null) {
                         continue COL;
                     }

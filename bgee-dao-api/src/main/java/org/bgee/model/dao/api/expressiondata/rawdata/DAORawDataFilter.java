@@ -12,11 +12,16 @@ public class DAORawDataFilter extends DAODataFilter<DAORawDataConditionFilter> {
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds,
             Collection<DAORawDataConditionFilter> conditionFilters) {
         super(geneIds, speciesIds, conditionFilters);
-        
+
         if (this.getGeneIds().isEmpty() && this.getSpeciesIds().isEmpty() &&
                 this.getConditionFilters().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("No filters provided"));
         }
+    }
+
+    public DAORawDataFilter(DAORawDataFilter rawDataFilter) {
+        this(rawDataFilter.getGeneIds(), rawDataFilter.getSpeciesIds(),
+                rawDataFilter.getConditionFilters());
     }
 
     //since we have no attributes but the one in DAODataFilter, we do not implement equals/hashCode for now.
@@ -28,5 +33,10 @@ public class DAORawDataFilter extends DAODataFilter<DAORawDataConditionFilter> {
                .append(", speciesIds()=").append(getSpeciesIds())
                .append(", conditionFilters()=").append(getConditionFilters()).append("]");
         return builder.toString();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

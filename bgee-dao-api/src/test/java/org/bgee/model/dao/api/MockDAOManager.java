@@ -18,7 +18,7 @@ import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -175,8 +175,8 @@ public class MockDAOManager extends DAOManager {
         return this.instanceMockManager.getInSituSpotDAO();
     }
     @Override
-    protected RNASeqResultDAO getNewRNASeqResultDAO() {
-        return this.instanceMockManager.getNewRNASeqResultDAO();
+    protected RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO() {
+        return this.instanceMockManager.getNewRNASeqResultAnnotatedSampleDAO();
     }
     @Override
     protected CIOStatementDAO getNewCIOStatementDAO() {

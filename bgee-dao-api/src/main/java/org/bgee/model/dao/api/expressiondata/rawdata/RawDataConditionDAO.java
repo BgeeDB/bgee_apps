@@ -44,7 +44,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID("id"), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId"),
+        ID("conditionId"), EXPR_MAPPED_CONDITION_ID("exprMappedConditionId"),
         ANAT_ENTITY_ID("anatEntityId"), STAGE_ID("stageId"), CELL_TYPE_ID("cellTypeId"), SEX("sex"), 
         SEX_INFERRED("sexInferred"), STRAIN("strain"), SPECIES_ID("speciesId");
 
@@ -79,7 +79,31 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                              raw data conditions retrieved from the data source.
      * @throws DAOException         If an error occurred while accessing the data source.
      */
-    public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIds(Collection<Integer> speciesIds,
+    public RawDataConditionTOResultSet getRawDataConditionsFromSpeciesIds(Collection<Integer> speciesIds,
+            Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * Retrieves raw conditions used in data annotations for requested species and condition filters.
+     * The condition filters allow to target <strong>raw</strong> conditions used in the
+     * <strong>raw</strong> expression table, to return their associated source raw conditions.
+     * <p>
+     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
+     * are retrieved.
+     *
+     * @param condFilters       A {@code Collection} of {@code DAORawDataConditionFilter}s
+     *                          allowing to specify the <strong>global</strong> conditions
+     *                          that should be considered to retrieve the associated <strong>raw</strong>
+     *                          conditions.
+     * @param attributes        A {@code Collection} of {@code RawDataConditionDAO.Attribute}s defining
+     *                          the attributes to populate in the returned {@code RawDataConditionTO}s.
+     *                          If {@code null} or empty, all attributes are populated.
+     * @return                  A {@code RawDataConditionTOResultSet} containing the requested
+     *                          raw data conditions retrieved from the data source.
+     * @throws DAOException     If an error occurred while accessing the data source.
+     */
+    public RawDataConditionTOResultSet getRawDataConditionsFromRawConditionFilters(
+            Collection<DAORawDataConditionFilter> condFilters,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
@@ -104,7 +128,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                          raw data conditions retrieved from the data source.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public RawDataConditionTOResultSet getRawDataConditionsBySpeciesIdsAndConditionFilters(
+    public RawDataConditionTOResultSet getRawDataConditions(
             Collection<Integer> speciesIds, Collection<DAORawDataConditionFilter> condFilters,
             Collection<Attribute> attributes) throws DAOException;
 

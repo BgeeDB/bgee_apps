@@ -34,7 +34,7 @@ import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
@@ -1155,18 +1155,18 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO
      * RNASeqResultDAO}, unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code RNASeqResultDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO 
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO 
      * RNASeqResultDAO
      */
-    public RNASeqResultDAO getRNASeqResultDAO() {
+    public RNASeqResultAnnotatedSampleDAO getRNASeqResultAnnotatedSampleDAO() {
         log.traceEntry();
         this.checkClosed();
-        return log.traceExit(this.getNewRNASeqResultDAO());
+        return log.traceExit(this.getNewRNASeqResultAnnotatedSampleDAO());
     }
 
     /**
@@ -1582,12 +1582,12 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract InSituSpotDAO getNewInSituSpotDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultDAO RNASeqResultDAO}
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO RNASeqResultDAO}
      * instance when this method is called. 
      * 
      * @return  A new {@code RNASeqResultDAO}
      */
-    protected abstract RNASeqResultDAO getNewRNASeqResultDAO();
+    protected abstract RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}

@@ -121,7 +121,7 @@ public interface CallDAO<T extends Enum<T> & CallDAO.Attribute> extends DAO<T> {
              *                                  to any {@code DataState}.
              */
             public static final DataState convertToDataState(String representation) {
-                log.entry(representation);
+                log.traceEntry("{}",representation);
                 return log.traceExit(TransferObject.convert(DataState.class, representation));
             }
             

@@ -30,8 +30,8 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         implements AffymetrixChipDAO{
 
     private static final Logger log = LogManager.getLogger(MySQLAffymetrixChipDAO.class.getName());
-    private static final String TABLE_NAME = "affymetrixChip";
-    private static final String PROBESET_TABLE_NAME = "affymetrixProbeset";
+    public static final String TABLE_NAME = "affymetrixChip";
+    private static final String PROBESET_TABLE_NAME = MySQLAffymetrixProbesetDAO.TABLE_NAME;
 
     public MySQLAffymetrixChipDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -39,14 +39,14 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
 
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<String> experimentIds, 
-            Collection<String> bgeeChipIds, DAORawDataFilter filter, 
+            Collection<String> chipIds, DAORawDataFilter filter, 
             Collection<AffymetrixChipDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", experimentIds, bgeeChipIds, filter, attrs);
+        log.traceEntry("{}, {}, {}, {}", experimentIds, chipIds, filter, attrs);
         final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
                 new HashSet<>(): new HashSet<>(experimentIds));
-        final Set<String> clonedBgeeChipIds = Collections.unmodifiableSet(bgeeChipIds == null?
-                new HashSet<>(): new HashSet<>(bgeeChipIds));
+        final Set<String> clonedChipIds = Collections.unmodifiableSet(chipIds == null?
+                new HashSet<>(): new HashSet<>(chipIds));
         final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
         final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null? 
                 EnumSet.noneOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));
@@ -59,7 +59,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         .append(generateFromClause(clonedFilter));
 
         // generate WHERE CLAUSE
-        if (!clonedExpIds.isEmpty() || !clonedBgeeChipIds.isEmpty() 
+        if (!clonedExpIds.isEmpty() || !clonedChipIds.isEmpty() 
                 || !clonedFilter.getSpeciesIds().isEmpty() || !clonedFilter.getGeneIds().isEmpty()
                 || !clonedFilter.getConditionFilters().isEmpty()) {
           sb.append(" WHERE ");
@@ -73,15 +73,15 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             .append(")");
             filterFound = true;
         }
-        // FITER ON LIBRARY IDS
-        if (!clonedBgeeChipIds.isEmpty()) {
+        // FITER ON Chip IDS
+        if (!clonedChipIds.isEmpty()) {
             if(filterFound) {
                 sb.append(" AND ");
             }
             sb.append(TABLE_NAME).append(".")
-            .append(AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
             .append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeChipIds.size()))
+            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedChipIds.size()))
             .append(")");
             filterFound = true;
         }
@@ -127,9 +127,9 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
                 stmt.setStrings(paramIndex, clonedExpIds, true);
                 paramIndex += clonedExpIds.size();
             }
-            if (!clonedBgeeChipIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedBgeeChipIds, true);
-                paramIndex += clonedBgeeChipIds.size();
+            if (!clonedChipIds.isEmpty()) {
+                stmt.setStrings(paramIndex, clonedChipIds, true);
+                paramIndex += clonedChipIds.size();
             }
             if (!clonedFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);

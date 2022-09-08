@@ -32,8 +32,8 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(MySQLESTDAO.class.getName());
-    private final static String TABLE_NAME = "ExpressedSequenceTag";
-    private final static String EST_LIBRARY_TABLE_NAME = "estLibrary";
+    public final static String TABLE_NAME = "ExpressedSequenceTag";
+    private final static String EST_LIBRARY_TABLE_NAME = MySQLESTLibraryDAO.TABLE_NAME;
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 

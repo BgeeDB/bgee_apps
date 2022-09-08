@@ -1,5 +1,7 @@
 package org.bgee.model.expressiondata.rawdata;
 
+import java.util.Objects;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.source.Source;
@@ -46,4 +48,31 @@ public class RawDataAnnotation {
     public String getAnnotationDate() {
         return annotationDate;
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(annotationDate, annotationSource, curator, rawDataCondition);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RawDataAnnotation other = (RawDataAnnotation) obj;
+        return Objects.equals(annotationDate, other.annotationDate)
+                && Objects.equals(annotationSource, other.annotationSource) && Objects.equals(curator, other.curator)
+                && Objects.equals(rawDataCondition, other.rawDataCondition);
+    }
+
+    @Override
+    public String toString() {
+        return "RawDataAnnotation [rawDataCondition=" + rawDataCondition + ", curator=" + curator
+                + ", annotationSource=" + annotationSource + ", annotationDate=" + annotationDate + "]";
+    }
+
+    
 }

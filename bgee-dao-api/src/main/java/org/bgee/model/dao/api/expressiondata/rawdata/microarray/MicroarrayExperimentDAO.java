@@ -72,6 +72,9 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * 
      * @param expIds            A {@code Collection} of {code String} representing the IDs of
      *                          the Affymetrix experiments to retrieve from the data source.
+     * @param chipIds           A {@code Collection} of {code String} representing the IDs of
+     *                          the Affymetrix chips for which Affymetrix Experiments have to 
+     *                          be retrieved.
      * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
      *                          retrieve.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
@@ -81,7 +84,8 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public MicroarrayExperimentTOResultSet getExperiments(Collection<String> expId,
-            DAORawDataFilter rawDataFilter, Collection<Attribute> attributes) throws DAOException;
+            Collection<String> chipIds, DAORawDataFilter rawDataFilter, 
+            Collection<Attribute> attributes) throws DAOException;
 
 	/**
      * {@code DAOResultSet} for {@code MicroarrayExperimentTO}s

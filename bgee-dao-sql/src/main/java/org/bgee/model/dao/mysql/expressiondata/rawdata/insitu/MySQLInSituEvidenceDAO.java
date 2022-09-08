@@ -26,8 +26,8 @@ public class MySQLInSituEvidenceDAO extends MySQLRawDataDAO<InSituEvidenceDAO.At
 implements InSituEvidenceDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLInSituEvidenceDAO.class.getName());
-    private final static String TABLE_NAME = "inSituEvidence";
-    private final static String INSITU_SPOT_TABLE_NAME = "inSituSpot";
+    public final static String TABLE_NAME = "inSituEvidence";
+    private final static String INSITU_SPOT_TABLE_NAME = MySQLInSituSpotDAO.TABLE_NAME;
 
     public MySQLInSituEvidenceDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

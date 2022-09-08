@@ -15,6 +15,10 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.CellCompartment;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.SequencedTrancriptPart;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.StrandSelection;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -28,8 +32,9 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         implements RNASeqLibraryDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqLibraryDAO.class.getName());
-    private final static String TABLE_NAME = "rnaSeqLibrary";
-    private final static String LIBRARY_ANNOTATED_TABLE_NAME = "rnaSeqLibraryAnnotatedSample";
+    public final static String TABLE_NAME = "rnaSeqLibraryDev";
+    private final static String LIBRARY_ANNOTATED_TABLE_NAME = 
+            MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME;
 
     public MySQLRNASeqLibraryDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -60,9 +65,9 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
     }
 
     @Override
-    public RNASeqLibraryTOResultSet getRnaSeqLibraries(Collection<String> libraryIds,
-            Collection<String> experimentIds, DAORawDataFilter filter,
-            Collection<RNASeqLibraryDAO.Attribute> attrs)
+    public RNASeqLibraryTOResultSet getRnaSeqLibraries(
+            Collection<String> experimentIds, Collection<String> libraryIds,
+            DAORawDataFilter filter, Collection<RNASeqLibraryDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}", libraryIds, experimentIds, filter, attrs);
         final Set<String> clonedLibraryIds = Collections.unmodifiableSet(libraryIds == null?
@@ -188,8 +193,15 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Boolean sampleMultiplexing = null, libraryMultiplexing = null;
+                Boolean sampleMultiplexing = null, libraryMultiplexing = null,
+                        multipleLibraryAnnotatedSamples = null;
                 String id = null, experimentId = null, platformId= null;
+                StrandSelection strandSelection = null;
+                CellCompartment cellCompartment = null;
+                SequencedTrancriptPart seqTranscriptPart = null;
+                LibraryType libType = null;
+                Integer fragmentation = null,
+                        populationCaptureId = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqLibraryDAO.Attribute.ID.getTOFieldName())) {
@@ -200,18 +212,48 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute.PLATFORM_ID
                             .getTOFieldName())) {
                         platformId = currentResultSet.getString(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .CELL_COMPARTMENT.getTOFieldName())) {
+                        cellCompartment = CellCompartment
+                                .convertToCellCompartment(currentResultSet
+                                        .getString(column.getKey()));
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .FRAGMENTATION.getTOFieldName())) {
+                        fragmentation = currentResultSet.getInt(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute.SAMPLE_MULTIPLEXING
                             .getTOFieldName())) {
                         sampleMultiplexing = currentResultSet.getBoolean(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute.LIBRARY_MULTIPLEXING
                             .getTOFieldName())) {
                         libraryMultiplexing = currentResultSet.getBoolean(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute.MULTIPLE_ANNOTATED_SAMPLES
+                            .getTOFieldName())) {
+                        multipleLibraryAnnotatedSamples = currentResultSet.getBoolean(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .POPULATION_CAPTURE_ID.getTOFieldName())) {
+                        populationCaptureId = currentResultSet.getInt(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .SEQUENCED_TRANSCRIPT_PART.getTOFieldName())) {
+                        seqTranscriptPart = SequencedTrancriptPart
+                                .convertToSequencedTranscriptPart(currentResultSet
+                                        .getString(column.getKey()));
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .STRAND_SELECTION.getTOFieldName())) {
+                        strandSelection = StrandSelection
+                                .convertToStrandSelection(currentResultSet
+                                        .getString(column.getKey()));
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .LIBRARY_TYPE.getTOFieldName())) {
+                        libType = LibraryType.convertToLibraryType(currentResultSet
+                                .getString(column.getKey()));
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
                 return log.traceExit(new RNASeqLibraryTO(id, experimentId, platformId, 
-                        sampleMultiplexing, libraryMultiplexing));
+                        sampleMultiplexing, libraryMultiplexing, multipleLibraryAnnotatedSamples,
+                        strandSelection, cellCompartment, seqTranscriptPart,
+                        fragmentation, populationCaptureId, libType));
             } catch (SQLException e) {
                 throw log.throwing(new DAOException(e));
             }

@@ -43,7 +43,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"), AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"),
+        BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"), AFFYMETRIX_CHIP_ID("affymetrixChipId"),
         EXPERIMENT_ID("microarrayExperimentId"), CHIP_TYPE_ID("chipTypeId"), SCAN_DATE("scanDate"),
         NORMALIZATION_TYPE("normalizationType"), DETECTION_TYPE("detectionType"),
         CONDITION_ID("conditionId"), QUALITY_SCORE("qualityScore"),
@@ -68,11 +68,11 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
 
     /**
      * Retrieve from a data source {@code AffymetrixChipTO}s, corresponding to
-     * the Affymetrix chips, with the Bgee chip IDs {@code bgeeAffymetrixChipId}s,
+     * the Affymetrix chips, with the chip IDs {@code affymetrixChipId}s,
      * {@code null} if no corresponding chip was found.  
      * 
-     * @param bgeeAffymetrixChipIds	 	A {@code Collection} of {@code String} representing the IDs
-     *                                  in the Bgee database of the Affymetrix chips that needs to
+     * @param affymetrixChipIds	 	A {@code Collection} of {@code String} representing the IDs
+     *                                  of the Affymetrix chips that needs to
      *                                  be retrieved from the data source.
      * @param attributes                A {@code Collection} of {@code Attribute}s to specify the
      *                                  information to retrieve from the data source.
@@ -81,7 +81,7 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      *                                  could be found. 
      * @throws DAOException 	        If an error occurred when accessing the data source.
      */
-    public AffymetrixChipTOResultSet getAffymetrixChipFromIds(Collection<String> bgeeAffymetrixChipIds,
+    public AffymetrixChipTOResultSet getAffymetrixChipFromIds(Collection<String> affymetrixChipIds,
             Collection<Attribute> attributes)
             throws DAOException;
 

@@ -87,10 +87,10 @@ public class CommandRawData extends CommandParent {
                 null, null, null, null, null);
         Gene gene = new Gene("ENSG00000116062", sp, new GeneBioType("protein_coding"));
 
-        RawCall rawCall1 = new RawCall(gene, RawCall.DetectionFlag.PRESENT,
-                CallDAO.CallTO.DataState.HIGHQUALITY, RawCall.ExclusionReason.NOT_EXCLUDED);
-        RawCall rawCall2 = new RawCall(gene, RawCall.DetectionFlag.ABSENT,
-                CallDAO.CallTO.DataState.LOWQUALITY, RawCall.ExclusionReason.PRE_FILTERING);
+//        RawCall rawCall1 = new RawCall(gene,
+//                CallDAO.CallTO.DataState.HIGHQUALITY, RawCall.ExclusionReason.NOT_EXCLUDED);
+//        RawCall rawCall2 = new RawCall(gene,
+//                CallDAO.CallTO.DataState.LOWQUALITY, RawCall.ExclusionReason.PRE_FILTERING);
 
         Source source = new Source(4, "GEO", "GEO desc",
                 "https://www.ncbi.nlm.nih.gov/geo/[xref_id]",
@@ -116,50 +116,50 @@ public class CommandRawData extends CommandParent {
                         "evidence_URL/[evidence_id]",
                         "home:url/", null, null, null, null, null), null);
 
-        affymetrixProbesets = Stream.of(
-                new AffymetrixProbeset("153461", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153462", new AffymetrixChip("GSM245144", affExp1, annot), rawCall2),
-                new AffymetrixProbeset("153466", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153468", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153471", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153472", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153475", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153473", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153478", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153479", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153480", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153482", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153485", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153486", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153487", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153463", new AffymetrixChip("GSM245150", affExp1, annot), rawCall2),
-                new AffymetrixProbeset("153464", new AffymetrixChip("GSM245150", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153467", new AffymetrixChip("GSM245150", affExp1, annot), rawCall1),
-                new AffymetrixProbeset("153469", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153470", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153474", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153476", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153477", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153481", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153483", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153484", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153488", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
-                new AffymetrixProbeset("153465", new AffymetrixChip("GSM245150", affExp2, annot), rawCall1));
-
-
-        InSituExperiment inSituExp = new InSituExperiment("exp-id", "exp-name", "exp-descrip", source);
-        Stream<InSituSpot> inSituSpots = Stream.of(
-                new InSituSpot("spot-id1", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id2", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id3", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id4", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id5", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id6", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id7", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id8", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
-                new InSituSpot("spot-id9", new InSituEvidence("ev-id3", inSituExp), annot, rawCall1));
+//        affymetrixProbesets = Stream.of(
+//                new AffymetrixProbeset("153461", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153462", new AffymetrixChip("GSM245144", affExp1, annot), rawCall2),
+//                new AffymetrixProbeset("153466", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153468", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153471", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153472", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153475", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153473", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153478", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153479", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153480", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153482", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153485", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153486", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153487", new AffymetrixChip("GSM245144", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153463", new AffymetrixChip("GSM245150", affExp1, annot), rawCall2),
+//                new AffymetrixProbeset("153464", new AffymetrixChip("GSM245150", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153467", new AffymetrixChip("GSM245150", affExp1, annot), rawCall1),
+//                new AffymetrixProbeset("153469", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153470", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153474", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153476", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153477", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153481", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153483", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153484", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153488", new AffymetrixChip("GSM245144", affExp2, annot), rawCall1),
+//                new AffymetrixProbeset("153465", new AffymetrixChip("GSM245150", affExp2, annot), rawCall1));
+//
+//
+//        InSituExperiment inSituExp = new InSituExperiment("exp-id", "exp-name", "exp-descrip", source);
+//        Stream<InSituSpot> inSituSpots = Stream.of(
+//                new InSituSpot("spot-id1", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id2", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id3", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id4", new InSituEvidence("ev-id1", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id5", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id6", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id7", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id8", new InSituEvidence("ev-id2", inSituExp), annot, rawCall1),
+//                new InSituSpot("spot-id9", new InSituEvidence("ev-id3", inSituExp), annot, rawCall1));
         
-        display.displayRawCallPage(affymetrixProbesets, inSituSpots);
+        display.displayRawCallPage(affymetrixProbesets, null);//inSituSpots);
         
         
 //        if (geneId != null) {

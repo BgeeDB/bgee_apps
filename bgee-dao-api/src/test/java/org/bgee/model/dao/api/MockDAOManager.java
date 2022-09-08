@@ -17,7 +17,12 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -237,6 +242,31 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected SamplePValueDAO getNewSamplePValueDAO() {
         return this.instanceMockManager.getNewSamplePValueDAO();
+    }
+
+    @Override
+    protected AffymetrixChipDAO getNewAffymetrixChipDAO() {
+        return this.instanceMockManager.getNewAffymetrixChipDAO();
+    }
+
+    @Override
+    protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
+        return this.instanceMockManager.getNewMicroarrayExperimentDAO();
+    }
+
+    @Override
+    protected RNASeqExperimentDAO getNewRnaSeqExperimentDAO() {
+        return this.instanceMockManager.getNewRnaSeqExperimentDAO();
+    }
+
+    @Override
+    protected RNASeqLibraryAnnotatedSampleDAO getNewRnaSeqLibraryAnnotatedSampleDAO() {
+        return this.instanceMockManager.getNewRnaSeqLibraryAnnotatedSampleDAO();
+    }
+
+    @Override
+    protected RNASeqLibraryDAO getNewRnaSeqLibraryDAO() {
+        return this.instanceMockManager.getNewRnaSeqLibraryDAO();
     }
 	
 }

@@ -77,4 +77,10 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "AffymetrixChip [id=" + id + ", experiment=" + experiment + ", annotation=" + annotation + "]";
+    }
+
 }

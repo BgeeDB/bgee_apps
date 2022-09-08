@@ -9,6 +9,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataFilter;
 public class DAORawDataFilter extends DAODataFilter<DAORawDataConditionFilter> {
     private final static Logger log = LogManager.getLogger(DAORawDataFilter.class.getName());
 
+    //TODO remove speciesIds, it has to 
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds,
             Collection<DAORawDataConditionFilter> conditionFilters) {
         super(geneIds, speciesIds, conditionFilters);

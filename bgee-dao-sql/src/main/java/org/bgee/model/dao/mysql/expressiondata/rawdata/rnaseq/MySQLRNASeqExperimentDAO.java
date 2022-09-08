@@ -14,25 +14,24 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
-import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
 
-public final class MySQLRNASeqExperimentDAO extends MySQLDAO<RNASeqExperimentDAO.Attribute> 
+public final class MySQLRNASeqExperimentDAO extends MySQLRawDataDAO<RNASeqExperimentDAO.Attribute> 
 implements RNASeqExperimentDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLRNASeqExperimentDAO.class.getName());
-    private final static String TABLE_NAME = "RNASeqExperiment";
+    public final static String TABLE_NAME = "rnaSeqExperiment";
     private final static String CONDITION_TABLE_NAME = "cond";
-    private final static String LIB_TABLE_NAME = "RNASeqLibrary";
-    private final static String ANNOTATED_LIB_TABLE_NAME = "RNASeqLibraryAnnotatedSample";
+    private final static String LIB_TABLE_NAME = MySQLRNASeqLibraryDAO.TABLE_NAME;
+    private final static String ANNOTATED_LIB_TABLE_NAME = MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME;
 
     public MySQLRNASeqExperimentDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -42,7 +41,7 @@ implements RNASeqExperimentDAO{
     public RNASeqExperimentTOResultSet getExperimentsFromIds(Collection<String> experimentIds,
             Collection<RNASeqExperimentDAO.Attribute> attrs) {
         log.traceEntry("{}, {}", experimentIds, attrs);
-        return log.traceExit(getExperiments(experimentIds, null, attrs));
+        return log.traceExit(getExperiments(experimentIds, null, null, attrs));
     }
 
     @Override
@@ -50,19 +49,22 @@ implements RNASeqExperimentDAO{
             Collection<RNASeqExperimentDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}", filter, attrs);
-        return log.traceExit(getExperiments(null, filter, attrs));
+        return log.traceExit(getExperiments(null, null, filter, attrs));
     }
 
-    //XXX For RNASeq experiments we do not filter on gene as all genes could potentially
+    // For RNASeq experiments we do not filter on gene as all genes could potentially
     // have presence of expression in the experiment. So even if raw data filter contains
     // some genes we do not use them in the query. It avoids a JOIN on table
     // rnaSeqLibraryAnnotatedSampleResult
     @Override
     public RNASeqExperimentTOResultSet getExperiments(Collection<String> experimentIds,
-            DAORawDataFilter filter, Collection<RNASeqExperimentDAO.Attribute> attrs) {
-        log.traceEntry("{}", experimentIds);
+            Collection<String> libraryIds, DAORawDataFilter filter,
+            Collection<RNASeqExperimentDAO.Attribute> attrs) {
+        log.traceEntry("{}, {}, {}, {}", experimentIds, libraryIds, filter, attrs);
         final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
                 new HashSet<String>(): new HashSet<String>(experimentIds));
+        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
+                new HashSet<String>(): new HashSet<String>(libraryIds));
         final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
         final Set<RNASeqExperimentDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
                 new HashSet<RNASeqExperimentDAO.Attribute>():
@@ -72,16 +74,32 @@ implements RNASeqExperimentDAO{
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
         // generate FROM
-        .append(generateFromClause(clonedFilter));
+        .append(generateFromClause(clonedFilter, clonedLibIds));
 
         boolean filterFound = false;
         // generate WHERE
+        if (!clonedExpIds.isEmpty() || !clonedLibIds.isEmpty() 
+                || !clonedFilter.getSpeciesIds().isEmpty() || !clonedFilter.getConditionFilters().isEmpty()) {
+          sb.append(" WHERE ");
+        }
         // FILTER on RNASeqExperimentId
-        if (clonedExpIds.isEmpty()) {
-            sb.append(" WHERE " + TABLE_NAME + ".")
+        if (!clonedExpIds.isEmpty()) {
+            sb.append(TABLE_NAME + ".")
             .append(RNASeqExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement
                     .generateParameterizedQueryString(clonedExpIds.size()))
+            .append(")");
+            filterFound = true;
+        }
+        // filter on library IDS
+        if (!clonedLibIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(LIB_TABLE_NAME).append(".")
+            .append(RNASeqLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    clonedFilter.getSpeciesIds().size()))
             .append(")");
             filterFound = true;
         }
@@ -107,7 +125,7 @@ implements RNASeqExperimentDAO{
                     .collect(Collectors.joining(" OR ", "(", ")")));
         }
 
-      //add values to parameterized queries
+        //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
@@ -115,6 +133,10 @@ implements RNASeqExperimentDAO{
             if (!clonedExpIds.isEmpty()) {
                 stmt.setStrings(paramIndex, clonedExpIds, true);
                 paramIndex += clonedExpIds.size();
+            }
+            if (!clonedLibIds.isEmpty()) {
+                stmt.setStrings(paramIndex, clonedLibIds, true);
+                paramIndex += clonedLibIds.size();
             }
             if (!clonedFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
@@ -127,89 +149,6 @@ implements RNASeqExperimentDAO{
             throw log.throwing(new DAOException(e));
         }
     }
-    
-    private static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
-            Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
-                    throws SQLException {
-        log.traceEntry("{}, {}, {}", stmt, conditionFilters, paramIndex);
-
-        int offsetParamIndex = paramIndex;
-        for (DAORawDataConditionFilter condFilter: conditionFilters) {
-
-            if (!condFilter.getAnatEntityIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
-                offsetParamIndex += condFilter.getAnatEntityIds().size();
-            }
-            if (!condFilter.getDevStageIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
-                offsetParamIndex += condFilter.getDevStageIds().size();
-            }
-            if (!condFilter.getCellTypeIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
-                offsetParamIndex += condFilter.getCellTypeIds().size();
-            }
-            if (!condFilter.getSexIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
-                offsetParamIndex += condFilter.getSexIds().size();
-            }
-            if (!condFilter.getStrainIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
-                offsetParamIndex += condFilter.getStrainIds().size();
-            }
-        }
-        return log.traceExit(offsetParamIndex);
-    }
-
-    private String generateOneConditionFilter(DAORawDataConditionFilter condFilter) {
-        log.traceEntry("{}", condFilter);
-        StringBuilder sb = new StringBuilder();
-        boolean previousCond = false;
-        if (!condFilter.getAnatEntityIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    condFilter.getAnatEntityIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getDevStageIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.STAGE_ID,
-                    condFilter.getDevStageIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getCellTypeIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    condFilter.getCellTypeIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getSexIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.SEX,
-                    condFilter.getSexIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getStrainIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.STRAIN,
-                    condFilter.getStrainIds(), previousCond));
-        }
-        return log.traceExit(sb.toString());
-    }
-    
-    private String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
-            Set<String> condValues, boolean previousFilter) {
-        log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
-        StringBuffer sb = new StringBuffer();
-        if(previousFilter) {
-            sb.append(" AND ");
-        }
-        sb.append(CONDITION_TABLE_NAME).append(".")
-        .append(attr.getTOFieldName()).append(" IN (")
-        .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
-        .append(")");
-        return log.traceExit(sb.toString());
-        
-    }
 
     //TODO update classes of Attributes used for column names. It is not yet possible to use them as
     // we changed the schema of RNASeq tables to fit all RNASeq protocols. The question behind is
@@ -217,12 +156,13 @@ implements RNASeqExperimentDAO{
     // query both rnaSeqLibrary and rnaSeqLibraryAnnotatedSample tables in the same class using the same
     // TO and containing Attribute for all fields of both tables.
     // Attributes 
-    private String generateFromClause(DAORawDataFilter rawDataFilter) {
-        log.traceEntry("{}", rawDataFilter);
+    private String generateFromClause(DAORawDataFilter rawDataFilter, Collection<String> libIds) {
+        log.traceEntry("{}, {}", rawDataFilter, libIds);
         StringBuilder sb = new StringBuilder();
         sb.append(" FROM " + TABLE_NAME + " ");
         if(!rawDataFilter.getSpeciesIds().isEmpty() 
-                || !rawDataFilter.getConditionFilters().isEmpty() ) {
+                || !rawDataFilter.getConditionFilters().isEmpty()
+                || !libIds.isEmpty()) {
             //join on rnaSeqLibrary table
             sb.append("INNER JOIN " + LIB_TABLE_NAME + " ON ")
             .append(TABLE_NAME + "." + RNASeqExperimentDAO.Attribute.ID.getTOFieldName())

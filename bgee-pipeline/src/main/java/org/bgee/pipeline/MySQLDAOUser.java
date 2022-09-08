@@ -232,7 +232,7 @@ public abstract class MySQLDAOUser {
      */
     protected MySQLRNASeqResultAnnotatedSampleDAO getRNASeqResultAnnotatedSampleDAO() {
         return (MySQLRNASeqResultAnnotatedSampleDAO) this.manager
-                .getRNASeqResultAnnotatedSampleDAO();
+                .getRnaSeqResultAnnotatedSampleDAO();
     }
     /**
      * @return  A {@code MySQLCIOStatementDAO}.

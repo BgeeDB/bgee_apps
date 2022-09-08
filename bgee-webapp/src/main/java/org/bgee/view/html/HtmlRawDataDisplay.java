@@ -188,7 +188,6 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
 
             this.writeln("  <td>" + probeset.getId() + "</td>");
             this.writeln("  <td>" + this.getGeneLink(rawCall.getGene()) + "</td>");
-            this.writeln("  <td>" + rawCall.getDetectionFlag() + "</td>");
             this.writeln("  <td>" + rawCall.getExpressionConfidence() + "</td>");
             this.writeln("  <td>");
             if (!RawCall.ExclusionReason.NOT_EXCLUDED.equals(rawCall.getExclusionReason())) {

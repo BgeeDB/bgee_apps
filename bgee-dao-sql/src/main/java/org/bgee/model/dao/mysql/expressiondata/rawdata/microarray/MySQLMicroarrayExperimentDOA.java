@@ -27,9 +27,9 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         implements MicroarrayExperimentDAO {
 
     private static final Logger log = LogManager.getLogger(MySQLMicroarrayExperimentDOA.class.getName());
-    private static final String TABLE_NAME = "microarrayExperiment";
-    private static final String CHIP_TABLE_NAME = "affymetrixChip";
-    private static final String PROBESET_TABLE_NAME = "affymetrixProbeset";
+    public static final String TABLE_NAME = "microarrayExperiment";
+    private static final String CHIP_TABLE_NAME = MySQLAffymetrixChipDAO.TABLE_NAME;
+    private static final String PROBESET_TABLE_NAME = MySQLAffymetrixProbesetDAO.TABLE_NAME;
 
     public MySQLMicroarrayExperimentDOA(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
@@ -40,16 +40,19 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
             Collection<MicroarrayExperimentDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}", experimentIds, attrs);
-        return log.traceExit(getExperiments(experimentIds, null, attrs));
+        return log.traceExit(getExperiments(experimentIds, null, null, attrs));
     }
 
     @Override
     public MicroarrayExperimentTOResultSet getExperiments(Collection<String> experimentIds,
-            DAORawDataFilter filter ,Collection<MicroarrayExperimentDAO.Attribute> attrs)
+            Collection<String> chipIds, DAORawDataFilter filter,
+            Collection<MicroarrayExperimentDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}", experimentIds, attrs);
+        log.traceEntry("{}, {}, {}, {}", experimentIds, chipIds, filter, attrs);
         final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
                 new HashSet<String>(): new HashSet<String>(experimentIds));
+        final Set<String> clonedChipIds = Collections.unmodifiableSet(chipIds == null?
+                new HashSet<String>(): new HashSet<String>(chipIds));
         final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
         final Set<MicroarrayExperimentDAO.Attribute> clonedAttrs = 
                 Collections.unmodifiableSet(attrs == null?
@@ -61,7 +64,7 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(MicroarrayExperimentDAO
                 .Attribute.class), true, clonedAttrs))
         // generate FROM
-        .append(generateFromClause(filter));
+        .append(generateFromClause(clonedFilter, clonedChipIds));
 
         // generate WHERE
         if(!clonedExpIds.isEmpty() || !clonedFilter.getSpeciesIds().isEmpty()
@@ -71,20 +74,32 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         }
         boolean alreadyFiltered = false;
         // FILTER on microarray experiment Ids
-        if (clonedExpIds.isEmpty()) {
-            sb.append(" WHERE " + TABLE_NAME + ".")
+        if (!clonedExpIds.isEmpty()) {
+            sb.append(TABLE_NAME + ".")
             .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement
                     .generateParameterizedQueryString(clonedExpIds.size()))
             .append(")");
             alreadyFiltered = true;
         }
-        // FILTER on species Ids
-        if (clonedFilter.getSpeciesIds().isEmpty()) {
+        // FILTER on microarray Chip Ids
+        if (!clonedChipIds.isEmpty()) {
             if (alreadyFiltered) {
                 sb.append(" AND ");
             }
-            sb.append(" WHERE " + CONDITION_TABLE_NAME + ".")
+            sb.append(CHIP_TABLE_NAME + ".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement
+                    .generateParameterizedQueryString(clonedChipIds.size()))
+            .append(")");
+            alreadyFiltered = true;
+        }
+        // FILTER on species Ids
+        if (!clonedFilter.getSpeciesIds().isEmpty()) {
+            if (alreadyFiltered) {
+                sb.append(" AND ");
+            }
+            sb.append(CONDITION_TABLE_NAME + ".")
             .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement
                     .generateParameterizedQueryString(clonedFilter.getSpeciesIds().size()))
@@ -92,11 +107,11 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
             alreadyFiltered = true;
         }
         // FILTER on species Ids
-        if (clonedFilter.getGeneIds().isEmpty()) {
+        if (!clonedFilter.getGeneIds().isEmpty()) {
             if (alreadyFiltered) {
                 sb.append(" AND ");
             }
-            sb.append(" WHERE " + PROBESET_TABLE_NAME + ".")
+            sb.append(PROBESET_TABLE_NAME + ".")
             .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement
                     .generateParameterizedQueryString(clonedFilter.getGeneIds().size()))
@@ -123,6 +138,10 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
                 stmt.setStrings(paramIndex, clonedExpIds, true);
                 paramIndex += clonedExpIds.size();
             }
+            if (!clonedChipIds.isEmpty()) {
+                stmt.setStrings(paramIndex, clonedChipIds, true);
+                paramIndex += clonedChipIds.size();
+            }
             if (!clonedFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
                 paramIndex += clonedFilter.getSpeciesIds().size();
@@ -139,13 +158,13 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         }
     }
 
-    private String generateFromClause(DAORawDataFilter filter) {
-        log.traceEntry("{}", filter);
+    private String generateFromClause(DAORawDataFilter filter, Collection<String> chipIds) {
+        log.traceEntry("{}, {}", filter, chipIds);
         StringBuilder sb = new StringBuilder();
         sb.append(" FROM " + TABLE_NAME);
         // join affymetrixChip table
         if(!filter.getGeneIds() .isEmpty() || !filter.getSpeciesIds().isEmpty()
-                || !filter.getConditionFilters().isEmpty()) {
+                || !filter.getConditionFilters().isEmpty() || !chipIds.isEmpty()) {
             sb.append(" INNER JOIN " + CHIP_TABLE_NAME + " ON ")
             .append(TABLE_NAME + "." + MicroarrayExperimentDAO.Attribute.ID
                     .getTOFieldName())
@@ -211,6 +230,5 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
             }
         }
     }
-    
 
 }

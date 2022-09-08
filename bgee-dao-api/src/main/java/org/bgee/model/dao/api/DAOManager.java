@@ -33,7 +33,12 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
@@ -366,7 +371,7 @@ public abstract class DAOManager implements AutoCloseable
 	 */
 	public static DAOManager getDAOManager(Properties props) 
 	    throws IllegalStateException, ServiceConfigurationError {
-		log.entry(props);
+		log.traceEntry("{}", props);
 
         if (DAOManager.allClosed.get()) {
             throw log.throwing(
@@ -610,7 +615,7 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill()
      */
     public static void kill(long managerId) throws DAOException {
-    	log.entry(managerId);
+    	log.traceEntry("{}", managerId);
     	DAOManager manager = managers.get(managerId);
         if (manager != null) {
         	manager.kill();
@@ -635,7 +640,7 @@ public abstract class DAOManager implements AutoCloseable
     //of the running Thread, from another Thread. And we could have a "DAOManagerService" or "pool" 
     //allowing to retrieve the DAOManager of a Thread from another Thread (as in org.bgee.model.job.JobService)
     public static void kill(Thread thread) throws DAOException {
-    	log.entry(thread);
+    	log.traceEntry("{}", thread);
     	DAOManager.kill(thread.getId());
         log.traceExit();
     }
@@ -827,7 +832,7 @@ public abstract class DAOManager implements AutoCloseable
      * 					{@code DAOManager} was already closed. 
      */
     private final boolean atomicCloseAndRemoveFromPool(boolean killed) {
-    	log.entry(killed);
+    	log.traceEntry("{}", killed);
     	synchronized(this.closed) {
     		if (!this.isClosed()) {
     			this.setClosed(true);
@@ -1141,6 +1146,88 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code AffymetrixChipDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO 
+     */
+    public AffymetrixChipDAO getAffymetrixChipDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewAffymetrixChipDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code MicroarrayExperimentDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO
+     */
+    public MicroarrayExperimentDAO getMicroarrayExperimentDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewMicroarrayExperimentDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RnaSeqExperimentDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqExperimentDAO
+     */
+    public RNASeqExperimentDAO getRnaSeqExperimentDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRnaSeqExperimentDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RnaSeqResultAnnotatedSampleDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSampleDAO
+     */
+    public RNASeqResultAnnotatedSampleDAO getRnaSeqResultAnnotatedSampleDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRNASeqResultAnnotatedSampleDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RnaSeqLibraryAnnotatedSampleDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSampleDAO
+     */
+    public RNASeqLibraryAnnotatedSampleDAO getRnaSeqLibraryAnnotatedSampleDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRnaSeqLibraryAnnotatedSampleDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code RnaSeqLibraryDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqLibraryDAO
+     */
+    public RNASeqLibraryDAO getRnaSeqLibraryDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRnaSeqLibraryDAO());
+    }
+
+    /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO 
      * InSituSpotDAO}, unless this {@code DAOManager} is already closed. 
      * 
@@ -1152,21 +1239,6 @@ public abstract class DAOManager implements AutoCloseable
         log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewInSituSpotDAO());
-    }
-
-    /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO
-     * RNASeqResultDAO}, unless this {@code DAOManager} is already closed. 
-     * 
-     * @return  a new {@code RNASeqResultDAO}.
-     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO 
-     * RNASeqResultDAO
-     */
-    public RNASeqResultAnnotatedSampleDAO getRNASeqResultAnnotatedSampleDAO() {
-        log.traceEntry();
-        this.checkClosed();
-        return log.traceExit(this.getNewRNASeqResultAnnotatedSampleDAO());
     }
 
     /**
@@ -1390,7 +1462,7 @@ public abstract class DAOManager implements AutoCloseable
      * 										{@code props}. 
      */
     public void setParameters(Properties props) throws IllegalArgumentException {
-        log.entry(props);
+        log.traceEntry("{}", props);
         //enforce immutable properties
         this.parameters = props;
         log.traceExit();
@@ -1574,12 +1646,44 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract AffymetrixProbesetDAO getNewAffymetrixProbesetDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO} 
-     * instance when this method is called. 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO 
+     * AffymetrixChipDAO} instance when this method is called. 
      * 
-     * @return  A new {@code InSituSpotDAO}
+     * @return  A new {@code AffymetrixChipDAO}
      */
-    protected abstract InSituSpotDAO getNewInSituSpotDAO();
+    protected abstract AffymetrixChipDAO getNewAffymetrixChipDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO 
+     * MicroarrayExperimentDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code MicroarrayExperimentDAO}
+     */
+    protected abstract MicroarrayExperimentDAO getNewMicroarrayExperimentDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqExperimentDAO 
+     * RnaSeqExperimentDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code RnaSeqExperimentDAO}
+     */
+    protected abstract RNASeqExperimentDAO getNewRnaSeqExperimentDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSampleDAO 
+     * RnaSeqLibraryAnnotatedSampleDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code RnaSeqLibraryAnnotatedSampleDAO}
+     */
+    protected abstract RNASeqLibraryAnnotatedSampleDAO getNewRnaSeqLibraryAnnotatedSampleDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RnaSeqLibraryDAO 
+     * RnaSeqLibraryDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code RnaSeqLibraryDAO}
+     */
+    protected abstract RNASeqLibraryDAO getNewRnaSeqLibraryDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO RNASeqResultDAO}
@@ -1588,6 +1692,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RNASeqResultDAO}
      */
     protected abstract RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code InSituSpotDAO}
+     */
+    protected abstract InSituSpotDAO getNewInSituSpotDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}

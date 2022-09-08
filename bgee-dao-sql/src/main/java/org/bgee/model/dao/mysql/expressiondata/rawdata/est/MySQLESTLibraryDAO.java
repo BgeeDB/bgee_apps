@@ -27,8 +27,8 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
         implements ESTLibraryDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLESTLibraryDAO.class.getName());
-    private final static String TABLE_NAME = "estLibrary";
-    private final static String EST_TABLE_NAME = "expressedSequenceTag";
+    public final static String TABLE_NAME = "estLibrary";
+    private final static String EST_TABLE_NAME = MySQLESTDAO.TABLE_NAME;
 
     public MySQLESTLibraryDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

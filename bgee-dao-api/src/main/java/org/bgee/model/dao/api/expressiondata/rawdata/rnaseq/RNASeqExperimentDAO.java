@@ -87,6 +87,8 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      * 
      * @param expIds            A {@code Collection} of {code String} representing the IDs of
      *                          the RNA-Seq experiments to retrieve from the data source.
+     * @param libraryIds        A {@code Collection} of {code String} representing the IDs of
+     *                          the RNA-Seq libraries to retrieve from the data source.
      * @param rawDataFilter     a {@code DAORawDataFilter} allowing to specify which probesets to
      *                          retrieve.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
@@ -95,8 +97,9 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      *                          related to the RNA-Seq experiments, {@code null} if none could be found.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
-    public RNASeqExperimentTOResultSet getExperiments(Collection<String> expIds,
-            DAORawDataFilter filter, Collection<Attribute> attributes) throws DAOException;
+    public RNASeqExperimentTOResultSet getExperiments(Collection<String> expIds, 
+            Collection<String> explibraryIds, DAORawDataFilter filter,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s

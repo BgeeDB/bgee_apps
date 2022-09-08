@@ -637,7 +637,7 @@ public class OntologyService extends CommonService {
         if (strainIds == null || strainIds.isEmpty() ||
                 getDescendants && strainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
             speciesStrainIds = this.getServiceFactory().getDAOManager().getRawDataConditionDAO()
-                    .getRawDataConditionsBySpeciesIds(Collections.singleton(speciesId),
+                    .getRawDataConditionsFromSpeciesIds(Collections.singleton(speciesId),
                             EnumSet.of(RawDataConditionDAO.Attribute.STRAIN))
                             .stream()
                             .map(rawCondTO -> mapRawDataStrainToStrain(rawCondTO.getStrainId()).getId())

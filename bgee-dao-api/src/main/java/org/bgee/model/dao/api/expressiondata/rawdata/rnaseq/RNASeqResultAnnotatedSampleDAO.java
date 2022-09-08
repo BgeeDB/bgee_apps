@@ -110,6 +110,9 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * corresponding to the annotated RNA-Seq results with selected library IDs, gene IDs,
      * species IDs, and raw condition parameters or {@code null} if none could be found.
      * 
+     * @param experimentIds     A {@code {@link Collection} of {@code String} representing the IDs
+     *                          of the RNA-Seq experiment of the annotated sample results to retrieve from
+     *                          the data source.
      * @param libraryIds        A {@code {@link Collection} of {@code String} representing the IDs
      *                          of the RNA-Seq library of the annotated sample results to retrieve from
      *                          the data source.
@@ -124,8 +127,8 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public RNASeqResultAnnotatedSampleTOResultSet getRNASeqResultAnnotatedSamples(
-            Collection<String> libraryIds, DAORawDataFilter rawDataFilter,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attrs);
+            Collection<String> experimentIds, Collection<String> libraryIds,
+            DAORawDataFilter rawDataFilter, Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attrs);
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
      * 

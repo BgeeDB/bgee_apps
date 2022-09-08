@@ -34,8 +34,8 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
      */
     private final static Logger log = 
             LogManager.getLogger(MySQLInSituSpotDAO.class.getName());
-    private final static String TABLE_NAME = "inSituSpot";
-    private final static String EVIDENCE_TABLE_NAME = "inSituEvidence";
+    public final static String TABLE_NAME = "inSituSpot";
+    private final static String EVIDENCE_TABLE_NAME = MySQLInSituEvidenceDAO.TABLE_NAME;
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 

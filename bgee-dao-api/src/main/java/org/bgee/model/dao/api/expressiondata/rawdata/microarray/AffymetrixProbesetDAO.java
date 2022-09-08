@@ -42,10 +42,10 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID("affymetrixProbesetId"), BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"),
+        ID("affymetrixProbesetId"), BGEE_AFFYMETRIX_CHIP_ID("bgeeAffymetrixChipId"), RAW_DETECTION_FLAG("rawDetectionFlag"),
         BGEE_GENE_ID("bgeeGeneId"), NORMALIZED_SIGNAL_INTENSITY("normalizedSignalIntensity"),
         PVALUE("pValue"), QVALUE("qValue"), EXPRESSION_ID("expressionId"),
-        RANK("rank"),AFFYMETRIX_DATA("affymetrixData"),
+        RANK("rawRank"),AFFYMETRIX_DATA("affymetrixData"),
         REASON_FOR_EXCLUSION("reasonForExclusion");
 
         /**
@@ -96,10 +96,12 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
+     * @param experimentIds     A {@code Collection} of {@code String} to specify experiment IDs
+     *                          of probesets to retrieve.
+     * @param chipIds       A {@code Collection} of {@code String} to specify chip IDs
+     *                          of probesets to retrieve.
      * @param probesetIds       A {@code Collection} of {@code String} to specify IDs of probesets
      *                          to retrieve.
-     * @param bgeeChipIds       A {@code Collection} of {@code String} to specify bgee chip IDs
-     *                          of probesets to retrieve.
      * @param filter            A {@code DAORawDataFilter} allowing to specify which probesets to
      *                          retrieve.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the
@@ -110,8 +112,8 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      *                          {@code AffymetrixProbesetTO}s.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<String> probesetIds,
-            Collection<String> bgeeChipIds, DAORawDataFilter filter,
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<String> experimentIds,
+            Collection<String> chipIds, Collection<String> probesetIds, DAORawDataFilter filter,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
@@ -161,21 +163,22 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
          *                                  associated to this probeset.
          * @param bgeeGeneId                An {@code Integer} that is the internal Bgee gene ID of the gene associated
          *                                  to this probeset.
-         * @param detectionFlag             A {@code DetectionFlag} that is the detection flag of
-         *                                  this probeset.
+         * @param normalizedSignalIntensity A {@code BigDecimal} defining the normalized signal intensity
+         *                                  of this probeset.
+         * @param pValue                    A {@code BigDecimal} representing the pValue used to define presence/absence
+         *                                  of expression
+         * @param qValue                    A {@code BigDecimal} representing the qValue of the call
+         * @param expressionId              A {@code String} that is the ID of the expression
+         *                                  associated to this probeset.
+         * @param rank                      A {@code BigDecimal} that is the rank associated to this probeset on this chip.
          * @param expressionConfidence      A {@code DataState} that is the expression confidence
          *                                  of this probeset.
          * @param reasonForExclusion        An {@code ExclusionReason} that is the reason of
          *                                  exclusion of this probeset.
-         * @param normalizedSignalIntensity A {@code BigDecimal} defining the normalized signal intensity
-         *                                  of this probeset.
-         * @param rank                      A {@code BigDecimal} that is the rank associated to this probeset on this chip.
-         * @param expressionId              A {@code String} that is the ID of the expression
-         *                                  associated to this probeset.
          */
 	    public AffymetrixProbesetTO(String affymetrixProbesetId, Integer bgeeAffymetrixChipId, Integer bgeeGeneId,
-	            BigDecimal normalizedSignalIntensity, BigDecimal pValue, BigDecimal qValue, Long expressionId,
-	            BigDecimal rank, DataState expressionConfidence, ExclusionReason exclusionReason) {
+	            BigDecimal normalizedSignalIntensity, BigDecimal pValue, BigDecimal qValue,
+	            Long expressionId, BigDecimal rank, DataState expressionConfidence, ExclusionReason exclusionReason) {
             super(affymetrixProbesetId);
 	        this.bgeeAffymetrixChipId = bgeeAffymetrixChipId;
 	        this.normalizedSignalIntensity = normalizedSignalIntensity;

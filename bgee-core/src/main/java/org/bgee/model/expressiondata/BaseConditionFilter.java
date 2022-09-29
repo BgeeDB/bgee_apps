@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,17 +46,16 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
      * @param cellTypeIds           A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities describing cell types that this 
      *                              {@code ConditionFilter} will specify to use.
-     * @throws IllegalArgumentException If no anatomical entity IDs nor developmental stage IDs are provided. 
      */
     public BaseConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds, 
             Collection<String> cellTypeIds)
             throws IllegalArgumentException {
-        this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null ? 
-                new HashSet<>(): new HashSet<>(anatEntityIds));
-        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? 
-                new HashSet<>(): new HashSet<>(devStageIds));
-        this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? 
-                new HashSet<>(): new HashSet<>(cellTypeIds));
+        this.anatEntityIds = Collections.unmodifiableSet(anatEntityIds == null? new HashSet<>():
+            anatEntityIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
+        this.cellTypeIds = Collections.unmodifiableSet(cellTypeIds == null? new HashSet<>():
+            cellTypeIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
+        this.devStageIds = Collections.unmodifiableSet(devStageIds == null? new HashSet<>():
+            devStageIds.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
     }
 
 

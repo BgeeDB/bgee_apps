@@ -41,17 +41,11 @@ public abstract class DataFilter<T extends BaseConditionFilter<?>> {
     private final Set<T> conditionFilters;
 
     protected DataFilter(Collection<GeneFilter> geneFilters, Collection<T> conditionFilters) {
-        this.geneFilters = Collections.unmodifiableSet(
-                geneFilters == null? new HashSet<>(): new HashSet<>(geneFilters));
-        this.conditionFilters = Collections.unmodifiableSet(
-            conditionFilters == null? new HashSet<>(): new HashSet<>(conditionFilters));
+        this.geneFilters = Collections.unmodifiableSet(geneFilters == null? new HashSet<>():
+            geneFilters.stream().filter(f -> f != null).collect(Collectors.toSet()));
+        this.conditionFilters = Collections.unmodifiableSet(conditionFilters == null? new HashSet<>():
+            conditionFilters.stream().filter(f -> f != null).collect(Collectors.toSet()));
 
-        if (this.conditionFilters.contains(null)) {
-            throw log.throwing(new IllegalStateException("No ConditionFilter can be null."));
-        }
-        if (this.geneFilters.contains(null)) {
-            throw log.throwing(new IllegalStateException("No GeneFilter can be null."));
-        }
         //make sure we don't have a same species in different GeneFilters
         if (this.geneFilters.stream().collect(Collectors.groupingBy(gf -> gf.getSpeciesId()))
                 .values().stream().anyMatch(l -> l.size() > 1)) {

@@ -3,9 +3,9 @@ package org.bgee.model.expressiondata.rawdata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,25 +29,47 @@ import org.bgee.model.gene.GeneFilter;
 public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     private final static Logger log = LogManager.getLogger(RawDataFilter.class.getName());
 
-    private final Set<DataType> dataTypes;
+    private final EnumSet<DataType> dataTypes;
 
     public RawDataFilter(GeneFilter geneFilter, RawDataConditionFilter condFilter, DataType dataTypeFilter) {
         this(Collections.singleton(geneFilter), Collections.singleton(condFilter), EnumSet.of(dataTypeFilter));
     }
 
-    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters, Collection<DataType> dataTypes) {
+    /**
+     * At least one {@code GeneFilter} or one {@code RawDataConditionFilter} must be provided. The {speciesId}s
+     * returned by their method {@link GeneFilter#getSpeciesId()} and {@link RawDataConditionFilter#getSpeciesId()}
+     * must match.
+     *
+     * @param geneFilters
+     * @param conditionFilters
+     * @param dataTypes                 If {@code null} or empty, all data types are considered.
+     * @throws IllegalArgumentException If the Set of species IDs requested in {@code geneFilters} in the one hand,
+     *                                  and {@code conditionFilters} in the other hand, don't match;
+     *                                  or if no {@code {@code GeneFilter} and no {@code RawDataConditionFilter} is provided.
+     */
+    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
+            Collection<DataType> dataTypes) throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
         if (dataTypes == null || dataTypes.isEmpty()) {
             this.dataTypes = EnumSet.allOf(DataType.class);
         } else {
-            this.dataTypes = new HashSet<DataType>(dataTypes);
+            this.dataTypes = EnumSet.copyOf(dataTypes);
         }
-        if (geneFilters == null) {
-            throw log.throwing(new IllegalArgumentException("A GeneFilter must be provided"));
+        if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("A GeneFilter or a RawDataConditionFilter must be provided"));
+        }
+        Set<Integer> geneFilterSpeciesIds = this.getGeneFilters().stream().map(f -> f.getSpeciesId())
+                .collect(Collectors.toSet());
+        Set<Integer> condFilterSpeciesIds = this.getConditionFilters().stream().map(f -> f.getSpeciesId())
+                .collect(Collectors.toSet());
+        if (!geneFilterSpeciesIds.isEmpty() && !condFilterSpeciesIds.isEmpty() &&
+                !geneFilterSpeciesIds.equals(condFilterSpeciesIds)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Species IDs in GeneFilters and in RawDataConditionFilters do not match"));
         }
     }
 
-    public Set<DataType> getDataTypes() {
+    public EnumSet<DataType> getDataTypes() {
         return dataTypes;
     }
 
@@ -76,6 +98,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         StringBuilder builder = new StringBuilder();
         builder.append("RawDataFilter [geneFilters=").append(getGeneFilters())
                .append(", conditionFilters=").append(getConditionFilters())
+               .append(", dataTypes=").append(getDataTypes())
                .append("]");
         return builder.toString();
     }

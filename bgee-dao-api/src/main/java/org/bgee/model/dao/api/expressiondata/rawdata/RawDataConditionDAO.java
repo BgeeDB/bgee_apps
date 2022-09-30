@@ -128,6 +128,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                          raw data conditions retrieved from the data source.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
+    //XXX FB: probably to delete now that speciesIds are integrated in the DAORawDataConditionFilters?
     public RawDataConditionTOResultSet getRawDataConditions(
             Collection<Integer> speciesIds, Collection<DAORawDataConditionFilter> condFilters,
             Collection<Attribute> attributes) throws DAOException;

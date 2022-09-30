@@ -155,6 +155,15 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         return this.includeSubDevStages;
     }
 
+    public boolean areAllFiltersEmptyWithoutConsideringSpeciesIds() {
+        log.traceEntry();
+        return log.traceExit(this.getAnatEntityIds().isEmpty() &&
+                this.getCellTypeIds().isEmpty() &&
+                this.getDevStageIds().isEmpty() &&
+                this.getSexes().isEmpty() &&
+                this.getStrains().isEmpty());
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

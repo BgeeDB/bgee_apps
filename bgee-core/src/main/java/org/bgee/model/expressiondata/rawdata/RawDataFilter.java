@@ -3,6 +3,8 @@ package org.bgee.model.expressiondata.rawdata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,6 +60,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
             throw log.throwing(new IllegalArgumentException("A GeneFilter or a RawDataConditionFilter must be provided"));
         }
+
         Set<Integer> geneFilterSpeciesIds = this.getGeneFilters().stream().map(f -> f.getSpeciesId())
                 .collect(Collectors.toSet());
         Set<Integer> condFilterSpeciesIds = this.getConditionFilters().stream().map(f -> f.getSpeciesId())
@@ -66,6 +69,26 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                 !geneFilterSpeciesIds.equals(condFilterSpeciesIds)) {
             throw log.throwing(new IllegalArgumentException(
                     "Species IDs in GeneFilters and in RawDataConditionFilters do not match"));
+        }
+
+        Map<Integer, List<RawDataConditionFilter>> condFiltersPerSpecies = this.getConditionFilters().stream()
+                .collect(Collectors.groupingBy(f -> f.getSpeciesId()));
+        if (condFiltersPerSpecies.values().stream().anyMatch(l -> {
+            boolean noFilter = false;
+            boolean filter = false;
+            for (RawDataConditionFilter f: l) {
+                if (f.areAllFiltersEmptyWithoutConsideringSpeciesIds()) {
+                    noFilter = true;
+                } else {
+                    filter = true;
+                }
+            }
+            return noFilter && filter;
+        })) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A RawDataConditionFilter queries all conditions in a species,"
+                    + "while another RawDataConditionFilter queries some more specific conditions "
+                    + "in that species"));
         }
     }
 

@@ -212,7 +212,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         return this.includeSubStrains;
     }
 
-    public boolean areAllFiltersEmptyWithoutConsideringSpeciesIds() {
+    public boolean areAllCondParamFiltersEmpty() {
         log.traceEntry();
         return log.traceExit(this.getAnatEntityIds().isEmpty() &&
                 this.getDevStageIds().isEmpty() &&

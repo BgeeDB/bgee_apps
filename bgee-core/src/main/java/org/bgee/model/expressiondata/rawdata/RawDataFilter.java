@@ -77,7 +77,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             boolean noFilter = false;
             boolean filter = false;
             for (RawDataConditionFilter f: l) {
-                if (f.areAllFiltersEmptyWithoutConsideringSpeciesIds()) {
+                if (f.areAllCondParamFiltersEmpty()) {
                     noFilter = true;
                 } else {
                     filter = true;

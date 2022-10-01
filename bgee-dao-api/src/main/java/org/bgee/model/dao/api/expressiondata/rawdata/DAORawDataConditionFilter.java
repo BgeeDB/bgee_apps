@@ -47,7 +47,7 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
             speciesIds.stream().filter(id -> {return (id != null && id >= 1);}).collect(Collectors.toSet()));
 
         if (this.getSpeciesIds().isEmpty() &&
-                this.areAllFiltersEmptyWithoutConsideringSpeciesIds()) {
+                this.areAllCondParamFiltersEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "Some speciesIds, anatatomical entity IDs, developmental stage IDs, cell type IDs, sex IDs "
                     + "or strain IDs must be provided."));
@@ -58,7 +58,7 @@ public class DAORawDataConditionFilter extends DAOBaseConditionFilter {
         return speciesIds;
     }
 
-    public boolean areAllFiltersEmptyWithoutConsideringSpeciesIds() {
+    public boolean areAllCondParamFiltersEmpty() {
         log.traceEntry();
         return log.traceExit(this.getAnatEntityIds().isEmpty() &&
                 this.getCellTypeIds().isEmpty() &&

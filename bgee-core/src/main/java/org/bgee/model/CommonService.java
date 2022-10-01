@@ -31,13 +31,17 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO.TaxonConstraintTO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTO.DAOSex;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO.ConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -49,6 +53,8 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -100,6 +106,56 @@ public class CommonService extends Service {
 //        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
 //    }
     /**
+     * Check validity of a {@code BaseConditionTO} with the provided arguments.
+     * 
+     * @param condTO        A {@code BaseConditionTO} that is the condition from db
+     *                      to check.
+     * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link BaseConditionTO#getAnatEntityId()}.
+     * @param devStage      The {@code DevStage} corresponding to the ID returned by
+     *                      {@link BaseConditionTO#getStageId()}.
+     * @param cellType      The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link BaseConditionTO#getCellTypeId()}.
+     * @param species       A {@code Species} that is the species for which the {@code BaseConditionTO}s 
+     *                      were retrieved.
+     * @throws IllegalArgumentException If the arguments are inconsistent.
+     */
+    protected static <T extends BaseConditionTO> void checkBaseConditionTO(T condTO,
+            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, Species species)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}", condTO, anatEntity, devStage, cellType, species);
+        if (condTO == null) {
+            log.traceExit(); return;
+        }
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("The Species must be provided."));
+        }
+        if (condTO.getSpeciesId() != null && !condTO.getSpeciesId().equals(species.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect species ID in BaseConditionTO, expected " + species.getId() + " but was "
+                    + condTO.getSpeciesId()));
+        }
+        if (condTO.getAnatEntityId() != null && anatEntity != null &&
+                !condTO.getAnatEntityId().equals(anatEntity.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect anat. entity ID in BaseConditionTO, expected " + anatEntity.getId() + " but was "
+                    + condTO.getAnatEntityId()));
+        }
+        if (condTO.getStageId() != null && devStage != null &&
+                !condTO.getStageId().equals(devStage.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect dev. stage ID in BaseConditionTO, expected " + devStage.getId() + " but was "
+                    + condTO.getStageId()));
+        }
+        if (condTO.getCellTypeId() != null && cellType != null &&
+                !condTO.getCellTypeId().equals(cellType.getId())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Incorrect cell type ID in BaseConditionTO, expected " + cellType.getId() + " but was "
+                    + condTO.getCellTypeId()));
+        }
+        log.traceExit(); return;
+    }
+    /**
      * Map {@code ConditionTO} to a {@code Condition}.
      * 
      * @param condTO        A {@code ConditionTO} that is the condition from db
@@ -127,32 +183,8 @@ public class CommonService extends Service {
         if (condTO == null) {
             return log.traceExit((Condition) null);
         }
-        if (species == null) {
-            throw log.throwing(new IllegalArgumentException("The Species must be provided."));
-        }
-        if (condTO.getSpeciesId() != null && !condTO.getSpeciesId().equals(species.getId())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect species ID in ConditionTO, expected " + species.getId() + " but was "
-                    + condTO.getSpeciesId()));
-        }
-        if (condTO.getAnatEntityId() != null && anatEntity != null &&
-                !condTO.getAnatEntityId().equals(anatEntity.getId())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect anat. entity ID in ConditionTO, expected " + anatEntity.getId() + " but was "
-                    + condTO.getAnatEntityId()));
-        }
-        if (condTO.getStageId() != null && devStage != null &&
-                !condTO.getStageId().equals(devStage.getId())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect dev. stage ID in ConditionTO, expected " + devStage.getId() + " but was "
-                    + condTO.getStageId()));
-        }
-        if (condTO.getCellTypeId() != null && cellType != null &&
-                !condTO.getCellTypeId().equals(cellType.getId())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Incorrect cell type ID in ConditionTO, expected " + cellType.getId() + " but was "
-                    + condTO.getCellTypeId()));
-        }
+        checkBaseConditionTO(condTO, anatEntity, devStage, cellType, species);
+
         if (condTO.getSex() != null && sex != null &&
                 !condTO.getSex().equals(convertSexToDAOSex(sex))) {
             throw log.throwing(new IllegalArgumentException(
@@ -166,6 +198,39 @@ public class CommonService extends Service {
                     + condTO.getStrainId()));
         }
         return log.traceExit(new Condition(anatEntity, devStage, cellType, sex,
+                strain, species));
+    }
+    /**
+     * Map {@code ConditionTO} to a {@code Condition}.
+     * 
+     * @param condTO        A {@code ConditionTO} that is the condition from db
+     *                      to map into {@code Condition}.
+     * @param anatEntity    The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link ConditionTO#getAnatEntityId()}.
+     * @param devStage      The {@code DevStage} corresponding to the ID returned by
+     *                      {@link ConditionTO#getStageId()}.
+     * @param cellType      The {@code AnatEntity} corresponding to the ID returned by
+     *                      {@link ConditionTO#getCellTypeId()}.
+     * @param sex           The {@code Sex} corresponding to the ID returned by
+     *                      {@link ConditionTO#getSexId()}.
+     * @param strain        The {@code Strain} corresponding to the ID returned by
+     *                      {@link ConditionTO#getStrainId()}.
+     * @param species       A {@code Species} that is the species for which the {@code ConditionTO}s 
+     *                      were retrieved. Allows to avoid requesting this attribute 
+     *                      from the {@code ConditionDAO} if only one species was requested.
+     * @return              The mapped {@code Condition}.
+     */
+    protected static RawDataCondition mapRawDataConditionTOToRawDataCondition(RawDataConditionTO condTO,
+            AnatEntity anatEntity, DevStage devStage, AnatEntity cellType, RawDataSex sex,
+            String strain, Species species) {
+        log.traceEntry("{}, {}, {}, {}, {}, {},{}", condTO, anatEntity, devStage, cellType, 
+                sex, strain, species);
+        if (condTO == null) {
+            return log.traceExit((RawDataCondition) null);
+        }
+        checkBaseConditionTO(condTO, anatEntity, devStage, cellType, species);
+
+        return log.traceExit(new RawDataCondition(anatEntity, devStage, cellType, sex,
                 strain, species));
     }
     
@@ -576,6 +641,7 @@ public class CommonService extends Service {
 
         Map<Integer, Species> speMap = species.stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
+        Set<Integer> usedSpeciesIds = new HashSet<>();
         Set<String> anatEntityIds = new HashSet<>();
         Set<String> stageIds = new HashSet<>();
         Set<String> cellTypeIds = new HashSet<>();
@@ -596,6 +662,9 @@ public class CommonService extends Service {
                         "The retrieved ConditionTOs do not match the provided Species."));
             }
             conditionTOs.add(condTO);
+
+            usedSpeciesIds.add(condTO.getSpeciesId());
+
             if (condTO.getAnatEntityId() != null) {
                 anatEntityIds.add(condTO.getAnatEntityId());
             }
@@ -619,22 +688,22 @@ public class CommonService extends Service {
 
         final Map<String, AnatEntity> anatAndCellMap = anatAndCellIds.isEmpty()? new HashMap<>():
             anatEntityService.loadAnatEntities(
-                    speMap.keySet(), true, anatAndCellIds, false)
+                    usedSpeciesIds, true, anatAndCellIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
         if (!anatAndCellIds.isEmpty() && anatAndCellMap.size() != anatAndCellIds.size()) {
             anatAndCellIds.removeAll(anatAndCellMap.keySet());
             throw log.throwing(new IllegalStateException("Some anat. entities or cell type used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + "are not supposed to exist in the related species. Species: " + usedSpeciesIds
                     + " - anat. entities: " + anatAndCellIds));
         }
         final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
             devStageService.loadDevStages(
-                    speMap.keySet(), true, stageIds, false)
+                    usedSpeciesIds, true, stageIds, false)
             .collect(Collectors.toMap(s -> s.getId(), s -> s));
         if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
             stageIds.removeAll(stageMap.keySet());
             throw log.throwing(new IllegalStateException("Some stages used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + "are not supposed to exist in the related species. Species: " + usedSpeciesIds
                     + " - stages: " + stageIds));
         }
         final Map<String, Sex> sexMap = sexIds.isEmpty()? new HashMap<>():
@@ -649,7 +718,7 @@ public class CommonService extends Service {
         if (!strainIds.isEmpty() && strainMap.size() != strainIds.size()) {
             strainIds.removeAll(strainMap.keySet());
             throw log.throwing(new IllegalStateException("Some strains used in a condition "
-                    + "are not supposed to exist in the related species. Species: " + speMap.keySet()
+                    + "are not supposed to exist in the related species. Species: " + usedSpeciesIds
                     + " - strains: " + strainIds));
         }
         
@@ -676,6 +745,127 @@ public class CommonService extends Service {
                                     Optional.ofNullable(strainMap.get(cTO.getStrainId()))
                                     .orElseThrow(() -> new IllegalStateException("strain not found: "
                                                 + cTO.getStrainId())),
+                                Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
+                                        () -> new IllegalStateException("Species not found: "
+                                                + cTO.getSpeciesId())))
+                        ))
+                );
+    }
+
+    protected static Map<Integer, RawDataCondition> loadRawDataConditionMap(Collection<Species> species,
+            Collection<DAORawDataConditionFilter> rawDataConditionFilters,
+            Collection<RawDataConditionDAO.Attribute> rawDataConditionDAOAttrs,
+            RawDataConditionDAO rawDataConditionDAO,
+            AnatEntityService anatEntityService, DevStageService devStageService) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}", species, rawDataConditionFilters,
+                rawDataConditionDAOAttrs, rawDataConditionDAO, anatEntityService, devStageService);
+
+        return log.traceExit(loadRawDataConditionMapFromResultSet(
+                (attrs) -> rawDataConditionDAO.getRawDataConditionsFromRawConditionFilters(
+                        rawDataConditionFilters, attrs),
+                rawDataConditionDAOAttrs, species, anatEntityService, devStageService));
+    }
+    //TODO: probably to refactor with loadConditionMapFromResultSet,
+    //but it's actually not straightforward.
+    protected static Map<Integer, RawDataCondition> loadRawDataConditionMapFromResultSet(
+            Function<Collection<RawDataConditionDAO.Attribute>, RawDataConditionTOResultSet> rsFunc,
+            Collection<RawDataConditionDAO.Attribute> rawDataConditionDAOAttrs, Collection<Species> species,
+            AnatEntityService anatEntityService, DevStageService devStageService) {
+        log.traceEntry("{}, {}, {}, {}, {}", rsFunc, rawDataConditionDAOAttrs, species, 
+                anatEntityService, devStageService);
+
+        if (species == null || species.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some species must be provided"));
+        }
+
+        Map<Integer, Species> speMap = species.stream()
+                .collect(Collectors.toMap(s -> s.getId(), s -> s, (s1, s2) -> s1));
+        Set<Integer> usedSpeciesIds = new HashSet<>();
+        Set<String> anatEntityIds = new HashSet<>();
+        Set<String> stageIds = new HashSet<>();
+        Set<String> cellTypeIds = new HashSet<>();
+        Set<String> sexIds = new HashSet<>();
+        Set<RawDataConditionTO> rawDataConditionTOs = new HashSet<>();
+
+        //we need to retrieve the attributes requested, plus the condition ID and species ID in all cases.
+        Set<RawDataConditionDAO.Attribute> clonedAttrs = rawDataConditionDAOAttrs == null || rawDataConditionDAOAttrs.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(rawDataConditionDAOAttrs);
+        clonedAttrs.addAll(EnumSet.of(RawDataConditionDAO.Attribute.ID, RawDataConditionDAO.Attribute.SPECIES_ID));
+        RawDataConditionTOResultSet rs = rsFunc.apply(clonedAttrs);
+
+        while (rs.next()) {
+            RawDataConditionTO rawDataCondTO = rs.getTO();
+            if (!speMap.keySet().contains(rawDataCondTO.getSpeciesId())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The retrieved ConditionTOs do not match the provided Species."));
+            }
+            rawDataConditionTOs.add(rawDataCondTO);
+
+            usedSpeciesIds.add(rawDataCondTO.getSpeciesId());
+
+            if (rawDataCondTO.getAnatEntityId() != null) {
+                anatEntityIds.add(rawDataCondTO.getAnatEntityId());
+            }
+            if (rawDataCondTO.getStageId() != null) {
+                stageIds.add(rawDataCondTO.getStageId());
+            }
+            if (rawDataCondTO.getCellTypeId() != null) {
+                cellTypeIds.add(rawDataCondTO.getCellTypeId());
+            }
+            if (rawDataCondTO.getSex() != null) {
+                sexIds.add(rawDataCondTO.getSex().getStringRepresentation());
+            }
+        }
+        
+        //merge anat entities and cell types to call only once loadAnatEntities
+        Set<String> anatAndCellIds = new HashSet<String>(anatEntityIds);
+        anatAndCellIds.addAll(cellTypeIds);
+
+        final Map<String, AnatEntity> anatAndCellMap = anatAndCellIds.isEmpty()? new HashMap<>():
+            anatEntityService.loadAnatEntities(
+                    usedSpeciesIds, true, anatAndCellIds, false)
+            .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        if (!anatAndCellIds.isEmpty() && anatAndCellMap.size() != anatAndCellIds.size()) {
+            anatAndCellIds.removeAll(anatAndCellMap.keySet());
+            throw log.throwing(new IllegalStateException("Some anat. entities or cell type used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + usedSpeciesIds
+                    + " - anat. entities: " + anatAndCellIds));
+        }
+        final Map<String, DevStage> stageMap = stageIds.isEmpty()? new HashMap<>():
+            devStageService.loadDevStages(
+                    usedSpeciesIds, true, stageIds, false)
+            .collect(Collectors.toMap(s -> s.getId(), s -> s));
+        if (!stageIds.isEmpty() && stageMap.size() != stageIds.size()) {
+            stageIds.removeAll(stageMap.keySet());
+            throw log.throwing(new IllegalStateException("Some stages used in a condition "
+                    + "are not supposed to exist in the related species. Species: " + usedSpeciesIds
+                    + " - stages: " + stageIds));
+        }
+        final Map<String, RawDataSex> sexMap = sexIds.isEmpty()? new HashMap<>():
+            //if a sex is not supported, an exception will be immediately thrown
+            sexIds.stream().map(s -> new AbstractMap.SimpleEntry<>(s, BgeeEnum.convert(RawDataSex.class, s)))
+            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        
+        return log.traceExit(rawDataConditionTOs.stream()
+                .collect(Collectors.toMap(cTO -> cTO.getId(), 
+                        cTO -> mapRawDataConditionTOToRawDataCondition(cTO,
+                                cTO.getAnatEntityId() == null? null:
+                                    Optional.ofNullable(anatAndCellMap.get(cTO.getAnatEntityId())).orElseThrow(
+                                        () -> new IllegalStateException("Anat. entity not found: "
+                                                + cTO.getAnatEntityId())),
+                                cTO.getStageId() == null? null:
+                                    Optional.ofNullable(stageMap.get(cTO.getStageId())).orElseThrow(
+                                        () -> new IllegalStateException("Stage not found: "
+                                                + cTO.getStageId())),
+                                cTO.getCellTypeId() == null? null:
+                                    Optional.ofNullable(anatAndCellMap.get(cTO.getCellTypeId())).orElseThrow(
+                                        () -> new IllegalStateException("Cell type not found: "
+                                                + cTO.getCellTypeId())),
+                                cTO.getSex() == null? null:
+                                    Optional.ofNullable(sexMap.get(cTO.getSex().getStringRepresentation()))
+                                    .orElseThrow(() -> new IllegalStateException("sex not found: "
+                                                + cTO.getSex().getStringRepresentation())),
+                                cTO.getStrainId(),
                                 Optional.ofNullable(speMap.get(cTO.getSpeciesId())).orElseThrow(
                                         () -> new IllegalStateException("Species not found: "
                                                 + cTO.getSpeciesId())))

@@ -407,6 +407,25 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         return log.traceExit(this.getDescendants(element, null, directRelOnly));
     }
 
+    /**
+     * Return the IDs of the descendants of elements represented with ID {@code parentId}.
+     * If no element in this ontology corresponds to {@code parentId}, or the corresponding element
+     * has no descendant according to other arguments of this method, the returned {@code Set} is empty.
+     *
+     * @param parentId      A {@code U} that is the ID of an element for which we want to retrieve descendant IDs.
+     * @param directRelOnly A {@code boolean} defining whether only direct children
+     *                      of the parent element should be returned.
+     * @return              A {@code Set} of {@code U}s that are the IDs of the descendant for the requested element ID.
+     */
+    public Set<U> getDescendantIds(U parentId, boolean directRelOnly) {
+        log.traceEntry("{}, {}", parentId, directRelOnly);
+        T element = this.getElement(parentId);
+        if (element == null) {
+            return new HashSet<>();
+        }
+        return log.traceExit(this.getDescendants(element, directRelOnly)
+                .stream().map(e -> e.getId()).collect(Collectors.toSet()));
+    }
 
     /**
      * Get descendants of {@code element} in this ontology based on relations of types {@code relationTypes}.

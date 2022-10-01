@@ -60,13 +60,13 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      *                                  For instance, only terms valid in the requested species will be considered,
      *                                  and if an {@code includeXXX} {@code boolean} is {@code true}, only the relations
      *                                  valid in that species will be considered for retrieving children terms.
-     * @param anatEntityIds             A {@code Collection} of {@code String}s that are the IDs 
+     * @param anatEntityIds             A {@code Collection} of {@code String}s that are the IDs
      *                                  of the anatomical entities to use.
-     * @param cellTypeIds               A {@code Collection} of {@code String}s that are the IDs 
+     * @param devStageIds               A {@code Collection} of {@code String}s that are the IDs
+     *                                  of the developmental stages to use.
+     * @param cellTypeIds               A {@code Collection} of {@code String}s that are the IDs
      *                                  of the anatomical entities describing cell types that this 
      *                                  {@code RawDataConditionFilter} will specify to use.
-     * @param devStageIds               A {@code Collection} of {@code String}s that are the IDs 
-     *                                  of the developmental stages to use.
      * @param sexes                     A {@code Collection} of {@code String}s that are the Names 
      *                                  of the sexes that this {@code RawDataConditionFilter} will specify 
      *                                  to use.
@@ -86,8 +86,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      *                                  or if all provided {@code Collection}s are empty or {@code null}
      *                                  or contains only blank elements.
      */
-    public RawDataConditionFilter(int speciesId, Collection<String> anatEntityIds, Collection<String> cellTypeIds,
-            Collection<String> devStageIds, Collection<String> sexes, Collection<String> strains,
+    public RawDataConditionFilter(int speciesId, Collection<String> anatEntityIds, Collection<String> devStageIds,
+            Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains,
             boolean includeSubAnatEntities, boolean includeSubCellTypes, boolean includeSubDevStages)
             throws IllegalArgumentException {
         super(anatEntityIds, devStageIds, cellTypeIds);
@@ -103,8 +103,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
             strains.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
 
         this.includeSubAnatEntities = includeSubAnatEntities;
-        this.includeSubCellTypes = includeSubCellTypes;
         this.includeSubDevStages = includeSubDevStages;
+        this.includeSubCellTypes = includeSubCellTypes;
     }
 
     /**
@@ -139,14 +139,6 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         return this.includeSubAnatEntities;
     }
     /**
-     * @return  A {@code boolean} defining whether the child cell types
-     *          of the selected cell types (see {@link #getCellTypeIds()}) must be retrieved.
-     *          Applicable only if {@link #getCellTypeIds()} return a {@code Set} not null nor empty.
-     */
-    public boolean isIncludeSubCellTypes() {
-        return this.includeSubCellTypes;
-    }
-    /**
      * @return  A {@code boolean} defining whether the child dev. stages
      *          of the selected dev. stages (see {@link #getDevStageIds()}) must be retrieved.
      *          Applicable only if {@link #getDevStageIds()} return a {@code Set} not null nor empty.
@@ -154,12 +146,20 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
     public boolean isIncludeSubDevStages() {
         return this.includeSubDevStages;
     }
+    /**
+     * @return  A {@code boolean} defining whether the child cell types
+     *          of the selected cell types (see {@link #getCellTypeIds()}) must be retrieved.
+     *          Applicable only if {@link #getCellTypeIds()} return a {@code Set} not null nor empty.
+     */
+    public boolean isIncludeSubCellTypes() {
+        return this.includeSubCellTypes;
+    }
 
     public boolean areAllFiltersEmptyWithoutConsideringSpeciesIds() {
         log.traceEntry();
         return log.traceExit(this.getAnatEntityIds().isEmpty() &&
-                this.getCellTypeIds().isEmpty() &&
                 this.getDevStageIds().isEmpty() &&
+                this.getCellTypeIds().isEmpty() &&
                 this.getSexes().isEmpty() &&
                 this.getStrains().isEmpty());
     }
@@ -168,8 +168,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(includeSubAnatEntities, includeSubCellTypes, includeSubDevStages, sexes,
-                speciesId, strains);
+        result = prime * result + Objects.hash(includeSubAnatEntities, includeSubDevStages,
+                includeSubCellTypes, sexes, speciesId, strains);
         return result;
     }
     @Override
@@ -182,7 +182,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
             return false;
         RawDataConditionFilter other = (RawDataConditionFilter) obj;
         return includeSubAnatEntities == other.includeSubAnatEntities
-                && includeSubCellTypes == other.includeSubCellTypes && includeSubDevStages == other.includeSubDevStages
+                && includeSubDevStages == other.includeSubDevStages
+                && includeSubCellTypes == other.includeSubCellTypes
                 && Objects.equals(sexes, other.sexes) && speciesId == other.speciesId
                 && Objects.equals(strains, other.strains);
     }
@@ -192,8 +193,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         StringBuilder builder = new StringBuilder();
         builder.append("RawDataConditionFilter [speciesId=").append(speciesId)
                .append(", anatEntityIds=").append(getAnatEntityIds())
-               .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", devStageIds=").append(getDevStageIds())
+               .append(", cellTypeIds=").append(getCellTypeIds())
                .append(", sexes=").append(sexes)
                .append(", strains=").append(strains)
                .append(", includeSubAnatEntities=").append(includeSubAnatEntities)

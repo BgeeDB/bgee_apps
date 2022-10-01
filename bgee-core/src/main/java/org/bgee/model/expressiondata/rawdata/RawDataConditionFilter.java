@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter;
 
 /**
@@ -90,7 +91,19 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains,
             boolean includeSubAnatEntities, boolean includeSubCellTypes, boolean includeSubDevStages)
             throws IllegalArgumentException {
-        super(anatEntityIds, devStageIds, cellTypeIds);
+        super(//Requesting the anatomy root + includeSubAnatEntities is equivalent to
+              //requesting any anat. entity
+              anatEntityIds != null &&
+              anatEntityIds.contains(ConditionDAO.ANAT_ENTITY_ROOT_ID) &&
+              includeSubAnatEntities? null: anatEntityIds,
+              //same for dev. stages
+              devStageIds != null &&
+              devStageIds.contains(ConditionDAO.DEV_STAGE_ROOT_ID) &&
+              includeSubDevStages? null: devStageIds,
+              //same for cell types
+              cellTypeIds != null &&
+              cellTypeIds.contains(ConditionDAO.CELL_TYPE_ROOT_ID) &&
+              includeSubCellTypes? null: cellTypeIds);
 
         if (speciesId < 1) {
             throw log.throwing(new IllegalArgumentException("speciesId must be greater than 0"));

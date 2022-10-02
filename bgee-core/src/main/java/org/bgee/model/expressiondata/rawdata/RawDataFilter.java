@@ -61,16 +61,6 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             throw log.throwing(new IllegalArgumentException("A GeneFilter or a RawDataConditionFilter must be provided"));
         }
 
-        Set<Integer> geneFilterSpeciesIds = this.getGeneFilters().stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet());
-        Set<Integer> condFilterSpeciesIds = this.getConditionFilters().stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet());
-        if (!geneFilterSpeciesIds.isEmpty() && !condFilterSpeciesIds.isEmpty() &&
-                !geneFilterSpeciesIds.equals(condFilterSpeciesIds)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Species IDs in GeneFilters and in RawDataConditionFilters do not match"));
-        }
-
         Map<Integer, List<RawDataConditionFilter>> condFiltersPerSpecies = this.getConditionFilters().stream()
                 .collect(Collectors.groupingBy(f -> f.getSpeciesId()));
         if (condFiltersPerSpecies.values().stream().anyMatch(l -> {

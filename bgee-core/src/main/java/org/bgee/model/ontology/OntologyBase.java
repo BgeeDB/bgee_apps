@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO.RelationStatus;
@@ -66,11 +65,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      * Not needed to be used in equals/hashCode methods, this attribute is derived from others.
      */
     private final Map<T, Set<RelationTO<U>>> relationsByTargetElement;
-    
-    /**
-     * The {@code ServiceFactory} to obtain {@code Service} objects.
-     */
-    private final ServiceFactory serviceFactory;
 
     /**
      * @see #getType()
@@ -91,7 +85,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                          the relations between elements of the ontology.
      * @param relationTypes     A {@code Collection} of {@code RelationType}s that were
      *                          considered to build this ontology or sub-graph.
-     * @param serviceFactory    A {@code ServiceFactory} to acquire {@code Service}s from.
      * @param type              A {@code Class<T>} that is the type of {@code elements} 
      *                          to be store by this {@code OntologyBase}.
      */
@@ -99,8 +92,8 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     //to retrieve direct parents or children of terms. See method 'getRelatives' 
     //already capable of considering only direct relations.
     protected OntologyBase(Collection<T> elements, Collection<RelationTO<U>> relations,
-            Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
-        log.entry(elements, relations, relationTypes, serviceFactory, type);
+            Collection<RelationType> relationTypes, Class<T> type) {
+        log.entry(elements, relations, relationTypes, type);
 
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of OntologyBase");
@@ -111,9 +104,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         if (relationTypes == null || relationTypes.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some relation types must be considered."));
         }
-        if (serviceFactory == null) {
-            throw log.throwing(new IllegalArgumentException("A ServiceFactory must be provided."));
-        }
         
         //it is acceptable to have no relations provided: maybe there is no valid relations 
         //for the requested parameters.
@@ -122,7 +112,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         this.relations = Collections.unmodifiableSet(
                 relations == null? new HashSet<>(): new HashSet<>(relations));
         this.relationTypes = Collections.unmodifiableSet(new HashSet<>(relationTypes));
-        this.serviceFactory = serviceFactory;
         this.type = type;
 
         //check for null elements after filtering redundancy thanks to Sets
@@ -193,13 +182,6 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<RelationType> getRelationTypes() {
         return relationTypes;
-    }
-    
-    /**
-     * @return  The {@code ServiceFactory} to acquire {@code Service}s from.
-     */
-    protected ServiceFactory getServiceFactory() {
-        return serviceFactory;
     }
 
     /**

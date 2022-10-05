@@ -9,13 +9,9 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
 import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.baseelements.DataPropagation;
-import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
-import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -29,7 +25,6 @@ import org.bgee.model.species.Taxon;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +39,6 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -74,7 +68,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         int taxonId = 10;
         Taxon taxon = new Taxon(taxonId, null, null, "scientificName", 1, true);
         Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(taxon),
-            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, Taxon.class);
+            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
         
         int speciesId1 = 1;
         int speciesId2 = 2;
@@ -394,7 +388,7 @@ public class MultiSpeciesCallServiceTest extends TestAncestor {
         Gene g2 = new Gene("2", spe2, biotype);
         Taxon lca = new Taxon(1, "tax1", "desc", "scientific name", 1, true);
         Ontology<Taxon, Integer> taxOnt = new Ontology<>(null, Arrays.asList(lca),
-            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), serviceFactory, Taxon.class);
+            new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), Taxon.class);
         when(this.taxonService.loadLeastCommonAncestor(new HashSet<>(Arrays.asList(spe1.getId(), spe2.getId()))))
         .thenReturn(lca);
         Set<GeneFilter> geneFilters = new HashSet<>(Arrays.asList(

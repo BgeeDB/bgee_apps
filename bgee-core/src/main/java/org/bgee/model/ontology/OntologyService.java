@@ -370,8 +370,7 @@ public class OntologyService extends CommonService {
                     this.getServiceFactory().getTaxonConstraintService()
                         .loadAnatEntityTaxonConstraints(speciesIds, requestedAnatEntities.keySet())
                         .collect(Collectors.toSet()),
-                relationTaxonConstraints, relationTypes,
-                this.getServiceFactory(), AnatEntity.class);
+                relationTaxonConstraints, relationTypes, AnatEntity.class);
 
         log.debug("AnatEntityOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
         return log.traceExit(ont);
@@ -493,8 +492,7 @@ public class OntologyService extends CommonService {
                 getServiceFactory().getTaxonConstraintService().loadDevStageTaxonConstraintBySpeciesIds(speciesIds)
                         .filter(tc -> requestedDevStages.containsKey(tc.getEntityId()))
                         .collect(Collectors.toSet()),
-                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF),
-                this.getServiceFactory(), DevStage.class);
+                new HashSet<>(), EnumSet.of(RelationType.ISA_PARTOF), DevStage.class);
 
         log.debug("DevStageOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
         return log.traceExit(ont);
@@ -578,7 +576,7 @@ public class OntologyService extends CommonService {
         log.debug("Requested sex IDs: {}", requestedSexes);
         Ontology<Sex, String> ont = new Ontology<Sex, String>(speciesId,
                 requestedSexes, rels, EnumSet.of(RelationType.ISA_PARTOF),
-                this.getServiceFactory(), Sex.class);
+                Sex.class);
 
 
         log.debug("SexOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
@@ -674,8 +672,7 @@ public class OntologyService extends CommonService {
         log.debug("Requested strains : {}", requestedStrains);
         Ontology<Strain, String> ont = new StrainOntology(speciesId,
                 requestedStrains, rels,
-                EnumSet.of(RelationType.ISA_PARTOF),
-                this.getServiceFactory(), Strain.class);
+                EnumSet.of(RelationType.ISA_PARTOF), Strain.class);
 
 
         log.debug("StrainOntology created in {} ms", System.currentTimeMillis() - startTimeInMs);
@@ -764,7 +761,7 @@ public class OntologyService extends CommonService {
                 .filter(r -> validTaxIds.contains(r.getSourceId()) &&
                         validTaxIds.contains(r.getTargetId()))
                 .collect(Collectors.toSet()),
-                EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), Taxon.class));
+                EnumSet.of(RelationType.ISA_PARTOF), Taxon.class));
     }
     /**
      * Returns the {@code Taxon} {@code Ontology} for the taxa that is the least common ancestor
@@ -850,7 +847,7 @@ public class OntologyService extends CommonService {
                 //and we filer afterwards
                 .filter(t -> !lcaBgeeSpecies || t.isLca() || clonedTaxIds.contains(t.getId()))
                 .collect(Collectors.toSet()),
-            rels, EnumSet.of(RelationType.ISA_PARTOF), this.getServiceFactory(), Taxon.class));
+            rels, EnumSet.of(RelationType.ISA_PARTOF), Taxon.class));
     }
 
     private Set<RelationTO<String>> getAnatEntityRelationTOs(Collection<Integer> speciesIds,

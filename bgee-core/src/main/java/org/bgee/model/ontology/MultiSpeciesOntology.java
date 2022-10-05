@@ -98,18 +98,16 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  of this ontology.
      * @param relationTypes             A {@code Collection} of {@code RelationType}s that were
      *                                  considered to build this ontology or sub-graph.
-     * @param serviceFactory            A {@code ServiceFactory} to acquire {@code Service}s from.
      * @param type                      A {@code Class<T>} that is the type of {@code elements} 
      *                                  to be store by this {@code MultiSpeciesOntology}.
      */
     public MultiSpeciesOntology(Collection<Integer> speciesIds, Collection<T> elements, 
             Collection<RelationTO<U>> relations, Collection<TaxonConstraint<U>> taxonConstraints, 
             Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
-            Collection<RelationType> relationTypes,
-            ServiceFactory serviceFactory, Class<T> type) {
-        super(elements, relations, relationTypes, serviceFactory, type);
+            Collection<RelationType> relationTypes, Class<T> type) {
+        super(elements, relations, relationTypes, type);
         log.entry(speciesIds, elements, relations, taxonConstraints, relationTaxonConstraints, 
-                relationTypes, serviceFactory, type);
+                relationTypes, type);
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of MultiSpeciesOntology");
 
@@ -516,7 +514,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
        
         return log.traceExit(new Ontology<>(speciesId, this.getElements(Arrays.asList(speciesId)),
                 this.getRelations(Arrays.asList(speciesId)), this.getRelationTypes(),
-                this.getServiceFactory(), this.getType()));
+                this.getType()));
     }
 
     @Override

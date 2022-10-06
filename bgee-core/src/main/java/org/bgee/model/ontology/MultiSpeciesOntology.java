@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
-import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 
@@ -106,8 +105,8 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
             Collection<TaxonConstraint<Integer>> relationTaxonConstraints, 
             Collection<RelationType> relationTypes, Class<T> type) {
         super(elements, relations, relationTypes, type);
-        log.entry(speciesIds, elements, relations, taxonConstraints, relationTaxonConstraints, 
-                relationTypes, type);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", speciesIds, elements, relations,
+                taxonConstraints, relationTaxonConstraints, relationTypes, type);
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of MultiSpeciesOntology");
 
@@ -284,7 +283,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                  it means that {@code element} is valid in all Bgee species.
      */
     public Set<Integer> getSpeciesIdsWithElementValidIn(T element) {
-        log.entry(element);
+        log.traceEntry("{}", element);
         if (element == null) {
             throw log.throwing(new IllegalArgumentException("Element cannot be null"));
         }
@@ -306,7 +305,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                      to build this ontology or sub-graph, filtered by {@code speciesId}.
      */
     public  Set<T> getElements(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
         if (speciesIds == null || speciesIds.isEmpty()) {
             //copy the Set so that it becomes modifiable, to be consistent with use of Streams
@@ -343,7 +342,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                      considered to build this ontology or sub-graph, filtered by {@code speciesId}.
      */
     private  Set<RelationTO<U>> getRelations(Collection<Integer> speciesIds) {
-        log.entry(speciesIds);
+        log.traceEntry("{}", speciesIds);
         
         if (speciesIds == null || speciesIds.isEmpty()) {
             //copy the Set so that it becomes modifiable, to be consistent with use of Streams below
@@ -388,7 +387,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getAncestors(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
-        log.entry(element, directRelOnly, speciesIds);
+        log.traceEntry("{}, {}, {}", element, directRelOnly, speciesIds);
         return log.traceExit(this.getAncestors(element, null, directRelOnly, speciesIds));
     }
 
@@ -414,7 +413,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
-        log.entry(element, relationTypes, directRelOnly, speciesIds);
+        log.traceEntry("{}, {}, {}, {}", element, relationTypes, directRelOnly, speciesIds);
         return log.traceExit(this.getRelatives(element, this.getElements(speciesIds), 
                 true, relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
@@ -438,7 +437,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  in this {@code MultiSpeciesOntology}.
      */
     public Set<T> getDescendants(T element, boolean directRelOnly, Collection<Integer> speciesIds) {
-        log.entry(element, directRelOnly, speciesIds);
+        log.traceEntry("{}, {}, {}", element, directRelOnly, speciesIds);
         return log.traceExit(this.getDescendants(element, null, directRelOnly, speciesIds));
     }
     
@@ -464,7 +463,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, 
             boolean directRelOnly, Collection<Integer> speciesIds) {
-        log.entry(element, relationTypes, directRelOnly, speciesIds);
+        log.traceEntry("{}, {}, {}, {}", element, relationTypes, directRelOnly, speciesIds);
         return log.traceExit(this.getRelatives(element, this.getElements(speciesIds), false, 
                 relationTypes, directRelOnly, this.getRelations(speciesIds)));
     }
@@ -502,7 +501,7 @@ public class MultiSpeciesOntology<T extends NamedEntity<U> & OntologyElement<T, 
      *                                  the {@code speciesId} is not in this {@code MultiSpeciesOntology}.
      */
     public Ontology<T, U> getAsSingleSpeciesOntology(Integer speciesId) {
-        log.entry(speciesId);
+        log.traceEntry("{}", speciesId);
         if (speciesId == null || speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("A species ID should be provided"));
         }

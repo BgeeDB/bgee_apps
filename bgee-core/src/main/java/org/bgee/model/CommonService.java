@@ -74,6 +74,16 @@ import org.bgee.model.species.Species;
  * @since   Bgee 14, Feb. 2017
  *
  */
+//TODO: lots of these methods would be easier to test if it was not in the parent class of Services,
+//but in a "ServiceUtils" class that would be injected into Services.
+//The methods should also not be static, again for easier testing.
+//=> We could test independently these methods, and then inject a mock to the Services,
+//we would have less mock of DAOs and Services to do.
+//Why did we inject all the dependencies in these static methods? Why didn't we use the ServiceFactory
+//provided at instantiation? I think it was for allowing for multi-threaded code,
+//using a different database connection? But then couldn't we not have a separate instance of ServiceUtils?
+//=> investigate how we use these static methods with injection
+
 public class CommonService extends Service {
     private final static Logger log = LogManager.getLogger(CommonService.class.getName());
 
@@ -337,6 +347,8 @@ public class CommonService extends Service {
         }
     }
 
+    //FIXME: should be static method, we provide the SpeciesDAO to the method,
+    //so that we now clearly which services and DAOs are used by a class
     protected Map<Integer, Species> loadSpeciesMap(Set<Integer> speciesIds, boolean withSpeciesSourceInfo,
             Map<Integer, Source> sourceMap) {
         log.traceEntry("{}, {}, {}", speciesIds, withSpeciesSourceInfo, sourceMap);
@@ -825,6 +837,8 @@ public class CommonService extends Service {
             anatEntityService.loadAnatEntities(
                     usedSpeciesIds, true, anatAndCellIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
+        log.debug("usedSpeciesIds: {} - anatAndCellIds: {} - anatAndCellMap: {}",
+                usedSpeciesIds, anatAndCellIds, anatAndCellMap);
         if (!anatAndCellIds.isEmpty() && anatAndCellMap.size() != anatAndCellIds.size()) {
             anatAndCellIds.removeAll(anatAndCellMap.keySet());
             throw log.throwing(new IllegalStateException("Some anat. entities or cell type used in a condition "

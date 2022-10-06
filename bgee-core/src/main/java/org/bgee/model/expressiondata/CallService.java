@@ -171,6 +171,8 @@ public class CallService extends CommonService {
      * will be thrown by the methods.
      * </ul>
      */
+    //XXX FB: I think we should separate the condition parameters from the other parameters,
+    //to avoid constantly checking everywhere we need CondParams if there are indeed CondParams among these attributes.
     public static enum Attribute implements Service.Attribute {
         //TODO: remove the _ID part from condition parameters
         GENE(false, null, null), ANAT_ENTITY_ID(true, "anat_entity", "Anat. entity"),

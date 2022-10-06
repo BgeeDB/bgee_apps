@@ -29,12 +29,15 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.CommonService;
+import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
@@ -57,534 +60,615 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
 import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
-public class RawDataLoader {
+/**
+ * This class allows for retrieving different types of raw data information,
+ * while storing the query parameters common to these different types of information.
+ * This avoids to unnecessarily regenerate several times the query parameters.
+ * <p>
+ * Indeed, the query parameters can take some resources to be generated, for instance,
+ * to retrieve the IDs of raw data conditions corresponding to a specific organ
+ * plus all its substructures.
+ *
+ * @implNote    The following three attributes store all the necessary query parameters,
+ *              that will be reused when calling the different methods in this class:
+ *              {@link #anyGeneAnyCondRequestedSpeciesIds}, {@link #requestedGenesMap},
+ *              and {@link #requestedRawDataConditionsMap}.
+ * @author Frederic Bastian
+ * @author Julien Wollbrett
+ * @version Bgee 15 Sep. 2022
+ * @since Bgee 15 Sep. 2022
+ */
+public class RawDataLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(RawDataLoader.class.getName());
 
-    //XXX Do we really need a Set of rawDataFilters?
-    private final Set<RawDataFilter> rawDataFilters;
-
-    //attributes needed for making the necessary queries
-    private final RawDataService rawDataService;
     /**
-     * A {@code Set} of {@code DAORawDataFilter}s corresponding to the conversion
-     * of the {@code RawDataFilter}s in {@link #rawDataFilters};
+     * The {@code RawDataFilter} originally used to create this {@code RawDataLoader}.
+     * <strong>This attribute is not considered in equals/hashCode methods</strong>
+     * (in case different {@code RawDataFilter}s lead to have the exact same
+     * {@link #anyGeneAnyCondRequestedSpeciesIds}, {@link #requestedGenesMap},
+     * and {@link #requestedRawDataConditionsMap}; only those 3 attributes will be used
+     * to perform queries to DAOs).
      */
-    private final Set<DAORawDataFilter> daoRawDataFilters;
+    private final RawDataFilter rawDataFilter;
+
+    /**
+     * A {@code Set} of {@code Integer}s that are IDs of species for which data were requested,
+     * with no other filtering requested on genes nor on conditions for that species. It means
+     * that data were requested for that species for any gene and in any condition.
+     * <p>
+     * When a species is present in this {@code Set}, there are no genes
+     * belonging to that species in {@link #requestedGenesMap}, and no conditions belonging to
+     * that species in {@link #requestedRawDataConditionsMap}.
+     * <p>
+     * It is to avoid sending large lists of gene or condition IDs to DAOs to perform the queries,
+     * in that case it is probably better to perform a JOIN in the query to filter on species ID.
+     */
+    Set<Integer> anyGeneAnyCondRequestedSpeciesIds;
     /**
      * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal gene IDs,
-     * the associated value being the corresponding {@code Gene}.
+     * the associated value being the corresponding {@code Gene}s, that were requested to retrieve raw data.
+     * When a gene is present in this {@code Map}, the species it belongs to is not present in
+     * {@link #anyGeneAnyCondRequestedSpeciesIds}.
+     * <p>
+     * The keys in this {@code Map} are used to perform queries to DAOs, the associated {@code Gene}s
+     * to instantiate the result objects. But depending on the query, other {@code Gene}s might need
+     * to be retrieved to instantiate result objects.
      */
-    private final Map<Integer, Gene> geneMap;
-    
-    private final Map<Integer, RawDataCondition> rawDataConditionMap;
+    private final Map<Integer, Gene> requestedGenesMap;
+    /**
+     * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal
+     * raw data condition IDs, the associated value being the corresponding {@code RawDataCondition}s,
+     * that were requested to retrieve raw data. When a {@code RawDataCondition} is present
+     * in this {@code Map}, the species it belongs to is not present in
+     * {@link #anyGeneAnyCondRequestedSpeciesIds}.
+     * <p>
+     * The keys in this {@code Map} are used to perform queries to DAOs,
+     * the associated {@code RawDataCondition}s to instantiate the result objects.
+     * But depending on the query, other {@code RawDataCondition}s might need to be retrieved
+     * to instantiate result objects.
+     */
+    private final Map<Integer, RawDataCondition> requestedRawDataConditionsMap;
 
-    RawDataLoader(Set<RawDataFilter> rawDataFilters, RawDataService rawDataService,
-            Map<Integer, Gene> geneMap, Set<DAORawDataFilter> daoRawDataFilters) {
-        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("At least one RawDataFilter must be provided"));
+    /**
+     * A {@code Map} where keys are species IDs, the associated value being
+     * the corresponding {@code Species}. It is stored in order to more efficiently create
+     * new {@code Gene}s and {@code RawDataCondition}s. Only {@code Species} that can
+     * potentially be queried are stored in this {@code Map}.
+     */
+    private final Map<Integer, Species> speciesMap;
+    /**
+     * A {@code Map} where keys are gene biotype IDs, the associated value being
+     * the corresponding {@code GeneBioType}. It is stored in order to more efficiently create
+     * new {@code Gene}s.
+     */
+    private final Map<Integer, GeneBioType> geneBioTypeMap;
+
+
+    RawDataLoader(ServiceFactory serviceFactory, RawDataFilter rawDataFilter,
+            Collection<Integer> anyGeneAnyCondRequestedSpeciesIds,
+            Map<Integer, Gene> requestedGenesMap,
+            Map<Integer, RawDataCondition> requestedRawDataConditionsMap,
+            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap) {
+        super(serviceFactory);
+
+        //Can be null if no parameters at all were provided
+        //(to retrieve any raw data)
+        this.rawDataFilter = rawDataFilter;
+
+        this.anyGeneAnyCondRequestedSpeciesIds = Collections.unmodifiableSet(
+                anyGeneAnyCondRequestedSpeciesIds == null? new HashSet<>():
+                    new HashSet<>(anyGeneAnyCondRequestedSpeciesIds));
+        if (this.anyGeneAnyCondRequestedSpeciesIds.stream().anyMatch(id -> id == null || id < 1)) {
+            throw log.throwing(new IllegalArgumentException("Invalid species ID in: "
+                    + this.anyGeneAnyCondRequestedSpeciesIds));
         }
-        if (rawDataFilters.contains(null)) {
-            throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
+        this.requestedGenesMap = Collections.unmodifiableMap(requestedGenesMap == null?
+                new HashMap<>(): new HashMap<>(requestedGenesMap));
+        if (this.requestedGenesMap.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getKey() < 1 || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid gene Map: "
+                    + this.requestedGenesMap));
         }
-        if (rawDataService == null) {
-            throw log.throwing(new IllegalArgumentException("A RawDataService must be provided"));
+        this.requestedRawDataConditionsMap = Collections.unmodifiableMap(
+                requestedRawDataConditionsMap == null? new HashMap<>():
+                    new HashMap<>(requestedRawDataConditionsMap));
+        if (this.requestedRawDataConditionsMap.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getKey() < 1 || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid raw data condition Map: "
+                    + this.requestedRawDataConditionsMap));
         }
-        this.rawDataFilters = Collections.unmodifiableSet(
-                rawDataFilters == null? new HashSet<>(): new HashSet<>(rawDataFilters));
-        this.rawDataService = rawDataService;
-        this.geneMap = geneMap;
-        this.rawDataConditionMap = loadRawDataConditionMap(rawDataFilters);
-        this.daoRawDataFilters = daoRawDataFilters;
+
+        if (speciesMap == null || speciesMap.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException(
+                    "All Species that can potentially be queried must be provided"));
+        }
+        this.speciesMap = Collections.unmodifiableMap(new HashMap<>(speciesMap));
+        if (this.speciesMap.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getKey() < 1 || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid species Map: "
+                    + this.speciesMap));
+        }
+        if (geneBioTypeMap == null || geneBioTypeMap.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Gene biotypes must be provided"));
+        }
+        this.geneBioTypeMap = Collections.unmodifiableMap(new HashMap<>(geneBioTypeMap));
+        if (this.geneBioTypeMap.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getKey() < 1 || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid gene biotype Map: "
+                    + this.geneBioTypeMap));
+        }
     }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// METHODS LOADING AFFYMETRIX RAW DATA ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    /**
+//     * Load affymetrix experiments from the database
+//     * 
+//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix experiment IDs
+//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix chip IDs
+//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
+//     *                                  defining information to retrieve in the 
+//     *                                  {@code MicroarrayExperiment}s.
+//     * @return  A {@code Stream} of {@code AffymetrixExperiment}s.
+//     *          If the {@code Stream} contains no element, it means that there were no data
+//     *          of this type for the requested parameters.
+//     */
+//    public Stream<AffymetrixExperiment> loadAffymetrixExperiments(Collection<String> affymetrixExperimentIds,
+//            Collection<String> affymetrixChipIds, Collection<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
+//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
+//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
+//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
+//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
+//
+//        MicroarrayExperimentDAO expDAO = this.rawDataService.getServiceFactory()
+//                .getDAOManager().getMicroarrayExperimentDAO();
+//
+//        // return all datasources if required
+//        final Map<Integer,Source> dataSourceIdToDataSource = 
+//                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
+//                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
+//                    new HashMap<>();
+//
+//        // transform RawDataService Attributes to DAO attributes
+//        Set<MicroarrayExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(MicroarrayExperimentDAO
+//                .Attribute.class);
+//        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
+//            daoAttrs.remove(MicroarrayExperimentDAO.Attribute.DATA_SOURCE_ID);
+//        }
+//
+//        //generate AffymetrixExperiment objects and retrieve them
+//        //XXX FB: this should be managed through one single query to the DAO
+//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
+//            return expDAO.getExperiments(clonedExpIds, clonedChipIds, filter, 
+//                    daoAttrs).stream()
+//                    .map(to -> new AffymetrixExperiment( to.getId(), to.getName(), 
+//                            to.getDescription(), to.getDataSourceId() == null ? null: 
+//                                dataSourceIdToDataSource.get(to.getDataSourceId())))
+//                    .collect(Collectors.toSet());
+//            }).flatMap(e -> e.stream()));
+//    }
+//
+//    /**
+//     * Load affymetrix chips from the database
+//     * 
+//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix experiment IDs
+//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix chip IDs
+//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
+//     *                                  defining information to retrieve in the 
+//     *                                  {@code MicroarrayExperiment}s.
+//     * @return  A {@code Stream} of {@code AffymetrixChip}s.
+//     *          If the {@code Stream} contains no element, it means that there were no data
+//     *          of this type for the requested parameters.
+//     */
+//    public Stream<AffymetrixChip> loadAffymetrixChips(Collection<String> affymetrixExperimentIds, 
+//            Collection<String> affymetrixChipIds, Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
+//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
+//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
+//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
+//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
+//
+//        // load Experiments
+//        final Map <String, AffymetrixExperiment> expIdToExperiments = 
+//                loadAffymetrixExperiments(clonedExpIds, clonedChipIds, clonedAttrs)
+//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
+//
+//        // load conditions based on rawDataFilters if required
+//        Map<Integer, RawDataCondition> condIdToCond = 
+//                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION) == true?
+//                        rawDataConditionMap:
+//                    null;
+//
+//      //create dao affymetrix chip attributes from service attributes
+//        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(clonedAttrs);
+//
+//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
+//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
+//                    .getAffymetrixChips(clonedExpIds, clonedChipIds, filter, daoAttrs)
+//            .stream().map(to -> {
+//                return new AffymetrixChip( to.getAffymetrixChipId(), expIdToExperiments.get(to.getExperimentId()), 
+//                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null));
+//            }).collect(Collectors.toSet());
+//        }).flatMap(c -> c.stream()));
+//    }
+//
+//    private Map<Integer, AffymetrixChip> loadAffymetrixChipsByBgeeChipIds(Collection<String> affyExpIds,
+//            Collection<String> affyChipIds, Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}", affyExpIds, affyChipIds, attrs);
+//
+//        // load Experiments
+//        final Map <String, AffymetrixExperiment> expIdToExperiments = 
+//                loadAffymetrixExperiments(affyExpIds, affyChipIds, attrs)
+//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
+//
+//        // load conditions based on rawDataFilters if required
+//        final Map<Integer, RawDataCondition> condIdToCond = 
+//                attrs.contains(RawDataService.Attribute.ANNOTATION) == true?
+//                        rawDataConditionMap:
+//                    null;
+//
+//        //create dao affymetrix chip attributes from service attributes
+//        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(attrs);
+//
+//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
+//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
+//                    .getAffymetrixChips(affyExpIds, affyChipIds, filter, daoAttrs)
+//                    .stream().collect(Collectors.toMap(to -> {Integer id = to.getId(); 
+//                    return id;
+//                    }, to -> {
+//                        RawDataAnnotation annotation = null;
+//                        if (to.getConditionId() != null) {
+//                            annotation = new RawDataAnnotation(condIdToCond.get(to.getConditionId()),
+//                                    null, null, null);
+//                        }
+//                        AffymetrixChip chip = new AffymetrixChip(to.getAffymetrixChipId(),
+//                                expIdToExperiments.containsKey(to.getExperimentId())? expIdToExperiments.get(to.getExperimentId()):null, 
+//                                        annotation);
+//                        return chip;
+//                    }));
+//        }).flatMap(a -> a.entrySet().stream())
+//                .collect(Collectors.toMap(q -> q.getKey(), q -> q.getValue())));
+//    }
+//
+//    /**
+//     * Load affymetrix probesets from the database
+//     * 
+//     * @param affymetrixProbesetIds     A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix probeset IDs
+//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix chip IDs
+//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix experiment IDs
+//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
+//     *                                  defining information to retrieve in the 
+//     *                                  {@code MicroarrayExperiment}s.
+//     * @return  A {@code Stream} of {@code AffymetrixProbeset}s.
+//     *          If the {@code Stream} contains no element, it means that there were no data
+//     *          of this type for the requested parameters.
+//     */
+//    public Stream<AffymetrixProbeset> loadAffymetrixProbesets(Collection<String> affymetrixExperimentIds,
+//            Collection<String> affymetrixChipIds, Collection<String> affymetrixProbesetIds,
+//            Collection<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds,
+//                affymetrixProbesetIds, attrs);
+//        final Set<String> clonedProbesetIds =  Collections.unmodifiableSet(affymetrixProbesetIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixProbesetIds));
+//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
+//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
+//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
+//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
+//
+//        // return all Assays by bgee chip ids
+//        final Map <Integer, AffymetrixChip> bgeeChipIdToAssay = 
+//            this.loadAffymetrixChipsByBgeeChipIds(clonedExpIds, clonedChipIds,clonedAttrs);
+//
+//        //from service attributes to dao attributes
+//        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = fromAttrsToAffyProbesetDAOAttrs(clonedAttrs);
+//        
+//        return this.daoRawDataFilters.stream().map( filter -> {
+//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixProbesetDAO()
+//                    .getAffymetrixProbesets(clonedExpIds, clonedChipIds, clonedProbesetIds, filter, daoAttrs)
+//            .stream().map(to -> {
+//                return new AffymetrixProbeset(to.getId(), 
+//                        bgeeChipIdToAssay.get(to.getAssayId()),
+//                            new RawCall(geneMap.get(to.getBgeeGeneId()), to.getPValue(),
+//                                    to.getExpressionConfidence(),
+//                                    ExclusionReason.convertToExclusionReason(to.getExclusionReason()
+//                                            .getStringRepresentation())),
+//                            to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank());
+//            }).collect(Collectors.toSet());
+//        }).flatMap(c -> c.stream());
+//    }
+//    
+//    private Map<Integer, RawDataCondition> loadRawDataConditionMap(
+//            Collection<RawDataFilter> dataFilters) {
+//        log.traceEntry("{}, {}", dataFilters);
+//        // combine condition filters coming from all dataFilters and retrieve corresponding 
+//        // dao condition filters
+//        AnatEntityService aeService = rawDataService.getServiceFactory().getAnatEntityService();
+//        DevStageService dsService = rawDataService.getServiceFactory().getDevStageService();
+//        Set<DAORawDataConditionFilter> condFiltersDAO = 
+//                convertRawDataConditionFiltersToDAORawDataConditionFilters(
+//                        dataFilters.stream().map(df -> df.getConditionFilters())
+//                        .flatMap(df -> df.stream()).collect(Collectors.toSet()));
+//        // combine geneFilters coming from all dataFilters and retrieve corresponding speciesMap
+//        final Map<Integer, Species> speciesMap = rawDataService.getServiceFactory()
+//                .getSpeciesService().loadSpeciesMapFromGeneFilters(dataFilters.stream()
+//                        .map(df -> df.getGeneFilters())
+//                        .flatMap(gf -> gf.stream()).collect(Collectors.toSet()), false);
+//
+//        final Map<String, AnatEntity> anatEntitiesMap = aeService.loadAnatEntities(
+//                speciesMap.keySet(), true, condFiltersDAO.stream()
+//                    .map(cf -> cf.getAnatEntityIds()).flatMap(aes -> aes.stream())
+//                    .collect(Collectors.toSet()), false)
+//                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
+//        final Map<String, AnatEntity> cellTypesMap = aeService.loadAnatEntities(
+//                speciesMap.keySet(), true, condFiltersDAO.stream()
+//                    .map(cf -> cf.getCellTypeIds()).flatMap(aes -> aes.stream())
+//                    .collect(Collectors.toSet()), false)
+//                .collect(Collectors.toMap(ct -> ct.getId(), ct -> ct));
+//        final Map<String,DevStage> devStagesMap = dsService.loadDevStages(
+//                speciesMap.keySet(), true, condFiltersDAO.stream()
+//                    .map(cf -> cf.getDevStageIds()).flatMap(aes -> aes.stream())
+//                    .collect(Collectors.toSet()), false)
+//                .collect(Collectors.toMap(ds -> ds.getId(), ds -> ds));
+//        final Map<String,RawDataSex> sexesMap = EnumSet.allOf(RawDataSex.class)
+//                .stream().collect(Collectors.toMap(s -> s.getStringRepresentation(), s -> s));
+//        //load raw data conditions
+//        RawDataConditionTOResultSet rawDataCondTOs = rawDataService.getServiceFactory().getDAOManager()
+//                .getRawDataConditionDAO().getRawDataConditions(speciesMap.keySet(),
+//                        condFiltersDAO, null);
+//        //create Map with condition ID as key and RawDataCondition as value
+//        return log.traceExit(rawDataCondTOs.stream().collect(Collectors
+//                .toMap(condTO -> condTO.getId(),
+//                        condTO -> 
+//                new RawDataCondition( anatEntitiesMap.get(condTO.getAnatEntityId()),
+//                        devStagesMap.get(condTO.getStageId()),
+//                        cellTypesMap.get(condTO.getCellTypeId()),
+//                        sexesMap.get(condTO.getSex().getStringRepresentation()),
+//                        condTO.getStrainId(), null)
+//                )));
+//    }
+//    
+//    private static Set<DAORawDataConditionFilter> 
+//    convertRawDataConditionFiltersToDAORawDataConditionFilters(
+//            Collection<RawDataConditionFilter> condFilters) {
+//        log.traceEntry("{}", condFilters);
+//        if (condFilters == null || condFilters.isEmpty()) {
+//            return log.traceExit(Set.of());
+//        }
+//        if (condFilters.contains(null)) {
+//            throw log.throwing(new IllegalArgumentException("no condition filter can be null"));
+//        }
+//        return log.traceExit(condFilters.stream().map(cf -> new DAORawDataConditionFilter(
+//                cf.getAnatEntityIds(),cf.getCellTypeIds(), cf.getDevStageIds(),
+//                cf.getSexes(), cf.getStrains(),
+//                cf.getIncludeSubConditions(), cf.getIncludeParentConditions()))
+//        .collect(Collectors.toSet()));
+//    }
+//
+//    // generate dao attributes from service Attribute
+//    private static Set<AffymetrixChipDAO.Attribute> fromAttrsToAffyChipDAOAttrs(Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}", attrs);
+//        Set<AffymetrixChipDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixChipDAO.Attribute.class);
+//        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
+//            daoAttrs.remove(AffymetrixChipDAO.Attribute.CONDITION_ID);
+//        }
+//        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
+//            daoAttrs.removeAll(Set.of(AffymetrixChipDAO.Attribute.DISTINCT_RANK_COUNT,
+//                    AffymetrixChipDAO.Attribute.MAX_RANK, 
+//                    AffymetrixChipDAO.Attribute.PERCENT_PRESENT));
+//        }
+//        return log.traceExit(daoAttrs);
+//    }
+//    
+//    // generate dao attributes from service Attribute
+//    private static Set<AffymetrixProbesetDAO.Attribute> fromAttrsToAffyProbesetDAOAttrs(Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}", attrs);
+//        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class);
+//        if (!attrs.contains(RawDataService.Attribute.RAWCALL_PIPELINE_SUMMARY)) {
+//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.NORMALIZED_SIGNAL_INTENSITY);
+//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.QVALUE);
+//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.RANK);
+//        }
+//        return log.traceExit(daoAttrs);
+//    }
+//        
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// METHODS LOADING RNA-SEQ RAW DATA ////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    /**
+//     * Load rna-seq experiments from the database
+//     * 
+//     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
+//     *                                  on RNA-Seq experiment IDs
+//     * @param rnaSeqLibraryIds          A {@code Collection} of {@code String} allowing to filter
+//     *                                  on RNA-Seq library IDs
+//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
+//     *                                  defining information to retrieve in the 
+//     *                                  {@code RnaSeqExperiment}s. 
+//     * @return  A {@code Stream} of {@code RnaSeqExperiment}s.
+//     *          If the {@code Stream} contains no element, it means that there were no data
+//     *          of this type for the requested parameters.
+//     */
+//    public Stream<RnaSeqExperiment> loadRnaSeqExperiments(Collection<String> rnaSeqExperimentIds,
+//            Collection<String> rnaSeqLibraryIds, Collection<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
+//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
+//        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
+//                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
+//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
+//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
+//
+//        RNASeqExperimentDAO expDAO = this.rawDataService.getServiceFactory()
+//                .getDAOManager().getRnaSeqExperimentDAO();
+//
+//        // return all datasources if required
+//        final Map<Integer,Source> dataSourceIdToDataSource = 
+//                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
+//                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
+//                    new HashMap<>();
+//
+//        // transform RnaSeqService Attributes to DAO attributes
+//        Set<RNASeqExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(RNASeqExperimentDAO
+//                .Attribute.class);
+//        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
+//            daoAttrs.remove(RNASeqExperimentDAO.Attribute.DATA_SOURCE_ID);
+//        }
+//
+//        // load experiments
+//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
+//            return expDAO.getExperiments(clonedExpIds, clonedLibIds, filter, 
+//                    daoAttrs).stream()
+//                    .map(to -> new RnaSeqExperiment( to.getId(), to.getName(), 
+//                            to.getDescription(), to.getDataSourceId() == null ? null: 
+//                                dataSourceIdToDataSource.get(to.getDataSourceId())))
+//                    .collect(Collectors.toSet());
+//            }).flatMap(e -> e.stream()));
+//    }
+//
+//    /**
+//     * Load Annotated libraries from the database.
+//     * 
+//     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
+//     *                                  on rna-seq experiment IDs
+//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
+//     *                                  on affymetrix chip IDs
+//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
+//     *                                  defining information to retrieve in the 
+//     *                                  {@code MicroarrayExperiment}s.
+//     * @return  A {@code Stream} of {@code AffymetrixChip}s.
+//     *          If the {@code Stream} contains no element, it means that there were no data
+//     *          of this type for the requested parameters.
+//     */
+//    public Stream<RnaSeqLibraryAnnotatedSample> loadRnaSeqLibraryAnnotatedSample(
+//            Collection<String> rnaSeqExperimentIds, Collection<String> rnaSeqLibraryIds,
+//            Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
+//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
+//        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
+//                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
+//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
+//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
+//
+//        // load Experiments if required
+//        final Map <String, RnaSeqExperiment> expIdToExperiments = 
+//                loadRnaSeqExperiments(clonedExpIds, clonedLibIds, clonedAttrs)
+//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
+//
+//        // load conditions based on rawDataFilters if required
+//        Map<Integer, RawDataCondition> condIdToCond = 
+//                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
+//                        rawDataConditionMap: null;
+//
+//        //generate dao attributes based on RawDataServiceAttributes
+//        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
+//                fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(clonedAttrs);
+//        
+//        // load libraries 
+//        Map<String, RNASeqLibraryTO> libIdToLibTO = daoRawDataFilters.stream()
+//                .map(filter -> {
+//                    return rawDataService.getServiceFactory().getDAOManager().getRnaSeqLibraryDAO()
+//                            .getRnaSeqLibraries( clonedExpIds, clonedLibIds, filter, null)
+//                            .stream().collect(Collectors.toMap(l -> l.getId(), l -> l));
+//                }).flatMap(l -> l.entrySet().stream())
+//                .collect(Collectors.toMap(l -> l.getKey(), l -> l.getValue()));
+//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
+//            return this.rawDataService.getServiceFactory().getDAOManager()
+//                    .getRnaSeqLibraryAnnotatedSampleDAO()
+//                    .getRnaSeqLibraryAnnotatedSamples(clonedExpIds, clonedLibIds, filter, daoAttrs)
+//            .stream().map(to -> {
+//                //TODO: To continue. 
+//                
+//                RawDataAnnotation annotation = clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
+//                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null):
+//                            null;
+//                RnaSeqLibraryPipelineSummary pipelineSummary = clonedAttrs.contains(RawDataService
+//                        .Attribute.ASSAY_PIPELINE_SUMMARY)?
+//                        new RnaSeqLibraryPipelineSummary( to.getMeanAbundanceRefIntergenicDistribution(),
+//                                to.getSdAbundanceRefIntergenicDistribution(), to.getpValueThreshold(),
+//                                to.getAllReadCount(), to.getAllUMIsCount(), to.getMappedReadCount(),
+//                                to.getMappedUMIsCount(), to.getMinReadLength(), to.getMaxReadLength(),
+//                                to.getMaxRank(), to.getDistinctRankCount()):
+//                            null;
+//                return new RnaSeqLibraryAnnotatedSample( to.getLibraryId(),
+//                        expIdToExperiments.get(libIdToLibTO.get(to.getLibraryId()).getExperimentId()),
+//                        annotation, pipelineSummary, to.getBarcode(), to.getGenotype());
+//            }).collect(Collectors.toSet());
+//        }).flatMap(c -> c.stream()));
+//    }
+//
+//    // generate dao attributes from service Attribute
+//    private static Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(
+//            Set<RawDataService.Attribute> attrs) {
+//        log.traceEntry("{}", attrs);
+//        Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
+//                EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class);
+//        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_THRESHOLD);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_UNIT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_GENES_PERCENT_PRESENT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_READ_COUNT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_UMIS_COUNT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.DISTINCT_RANK_COUNT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.INTERGENIC_REGION_PERCENT_PRESENT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_READ_COUNT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_UMIS_COUNT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_RANK);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_READ_LENGTH);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MIN_READ_LENGTH);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PROTEIN_CODING_GENES_PERCENT_PRESENT);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PVALUE_THRESHOLD);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.TMM_FACTOR);
+//        }
+//        
+//        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
+//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID);
+//        }
+//        return log.traceExit(daoAttrs);
+//    }
 
-    /**
-     * Load affymetrix experiments from the database
-     * 
-     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix experiment IDs
-     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix chip IDs
-     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-     *                                  defining information to retrieve in the 
-     *                                  {@code MicroarrayExperiment}s.
-     * @return  A {@code Stream} of {@code AffymetrixExperiment}s.
-     *          If the {@code Stream} contains no element, it means that there were no data
-     *          of this type for the requested parameters.
-     */
-    public Stream<AffymetrixExperiment> loadAffymetrixExperiments(Collection<String> affymetrixExperimentIds,
-            Collection<String> affymetrixChipIds, Collection<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
-        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-
-        MicroarrayExperimentDAO expDAO = this.rawDataService.getServiceFactory()
-                .getDAOManager().getMicroarrayExperimentDAO();
-
-        // return all datasources if required
-        final Map<Integer,Source> dataSourceIdToDataSource = 
-                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
-                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
-                    new HashMap<>();
-
-        // transform RnaSeqService Attributes to DAO attributes
-        Set<MicroarrayExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(MicroarrayExperimentDAO
-                .Attribute.class);
-        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
-            daoAttrs.remove(MicroarrayExperimentDAO.Attribute.DATA_SOURCE_ID);
-        }
-        //generate AffymetrixExperiment objects and retrieve them
-        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-            return expDAO.getExperiments(clonedExpIds, clonedChipIds, filter, 
-                    daoAttrs).stream()
-                    .map(to -> new AffymetrixExperiment( to.getId(), to.getName(), 
-                            to.getDescription(), to.getDataSourceId() == null ? null: 
-                                dataSourceIdToDataSource.get(to.getDataSourceId())))
-                    .collect(Collectors.toSet());
-            }).flatMap(e -> e.stream()));
+    public RawDataFilter getRawDataFilter() {
+        return this.rawDataFilter;
     }
 
-    /**
-     * Load affymetrix chips from the database
-     * 
-     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix experiment IDs
-     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix chip IDs
-     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-     *                                  defining information to retrieve in the 
-     *                                  {@code MicroarrayExperiment}s.
-     * @return  A {@code Stream} of {@code AffymetrixChip}s.
-     *          If the {@code Stream} contains no element, it means that there were no data
-     *          of this type for the requested parameters.
-     */
-    public Stream<AffymetrixChip> loadAffymetrixChips(Collection<String> affymetrixExperimentIds, 
-            Collection<String> affymetrixChipIds, Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
-        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-
-        // load Experiments
-        final Map <String, AffymetrixExperiment> expIdToExperiments = 
-                loadAffymetrixExperiments(clonedExpIds, clonedChipIds, clonedAttrs)
-                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-
-        // load conditions based on rawDataFilters if required
-        Map<Integer, RawDataCondition> condIdToCond = 
-                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION) == true?
-                        rawDataConditionMap:
-                    null;
-
-      //create dao affymetrix chip attributes from service attributes
-        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(clonedAttrs);
-
-        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
-                    .getAffymetrixChips(clonedExpIds, clonedChipIds, filter, daoAttrs)
-            .stream().map(to -> {
-                return new AffymetrixChip( to.getAffymetrixChipId(), expIdToExperiments.get(to.getExperimentId()), 
-                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null));
-            }).collect(Collectors.toSet());
-        }).flatMap(c -> c.stream()));
-    }
-
-    private Map<Integer, AffymetrixChip> loadAffymetrixChipsByBgeeChipIds(Collection<String> affyExpIds,
-            Collection<String> affyChipIds, Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}", affyExpIds, affyChipIds, attrs);
-
-        // load Experiments
-        final Map <String, AffymetrixExperiment> expIdToExperiments = 
-                loadAffymetrixExperiments(affyExpIds, affyChipIds, attrs)
-                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-
-        // load conditions based on rawDataFilters if required
-        final Map<Integer, RawDataCondition> condIdToCond = 
-                attrs.contains(RawDataService.Attribute.ANNOTATION) == true?
-                        rawDataConditionMap:
-                    null;
-
-        //create dao affymetrix chip attributes from service attributes
-        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(attrs);
-
-        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
-                    .getAffymetrixChips(affyExpIds, affyChipIds, filter, daoAttrs)
-                    .stream().collect(Collectors.toMap(to -> {Integer id = to.getId(); 
-                    return id;
-                    }, to -> {
-                        RawDataAnnotation annotation = null;
-                        if (to.getConditionId() != null) {
-                            annotation = new RawDataAnnotation(condIdToCond.get(to.getConditionId()),
-                                    null, null, null);
-                        }
-                        AffymetrixChip chip = new AffymetrixChip(to.getAffymetrixChipId(),
-                                expIdToExperiments.containsKey(to.getExperimentId())? expIdToExperiments.get(to.getExperimentId()):null, 
-                                        annotation);
-                        return chip;
-                    }));
-        }).flatMap(a -> a.entrySet().stream())
-                .collect(Collectors.toMap(q -> q.getKey(), q -> q.getValue())));
-    }
-
-    /**
-     * Load affymetrix probesets from the database
-     * 
-     * @param affymetrixProbesetIds     A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix probeset IDs
-     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix chip IDs
-     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix experiment IDs
-     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-     *                                  defining information to retrieve in the 
-     *                                  {@code MicroarrayExperiment}s.
-     * @return  A {@code Stream} of {@code AffymetrixProbeset}s.
-     *          If the {@code Stream} contains no element, it means that there were no data
-     *          of this type for the requested parameters.
-     */
-    public Stream<AffymetrixProbeset> loadAffymetrixProbesets(Collection<String> affymetrixExperimentIds,
-            Collection<String> affymetrixChipIds, Collection<String> affymetrixProbesetIds,
-            Collection<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds,
-                affymetrixProbesetIds, attrs);
-        final Set<String> clonedProbesetIds =  Collections.unmodifiableSet(affymetrixProbesetIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixProbesetIds));
-        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-
-        // return all Assays by bgee chip ids
-        final Map <Integer, AffymetrixChip> bgeeChipIdToAssay = 
-            this.loadAffymetrixChipsByBgeeChipIds(clonedExpIds, clonedChipIds,clonedAttrs);
-
-        //from service attributes to dao attributes
-        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = fromAttrsToAffyProbesetDAOAttrs(clonedAttrs);
-        
-        return this.daoRawDataFilters.stream().map( filter -> {
-            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixProbesetDAO()
-                    .getAffymetrixProbesets(clonedExpIds, clonedChipIds, clonedProbesetIds, filter, daoAttrs)
-            .stream().map(to -> {
-                return new AffymetrixProbeset(to.getId(), 
-                        bgeeChipIdToAssay.get(to.getAssayId()),
-                            new RawCall(geneMap.get(to.getBgeeGeneId()), to.getPValue(),
-                                    to.getExpressionConfidence(),
-                                    ExclusionReason.convertToExclusionReason(to.getExclusionReason()
-                                            .getStringRepresentation())),
-                            to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank());
-            }).collect(Collectors.toSet());
-        }).flatMap(c -> c.stream());
-    }
-    
-    private Map<Integer, RawDataCondition> loadRawDataConditionMap(
-            Collection<RawDataFilter> dataFilters) {
-        log.traceEntry("{}, {}", dataFilters);
-        // combine condition filters coming from all dataFilters and retrieve corresponding 
-        // dao condition filters
-        AnatEntityService aeService = rawDataService.getServiceFactory().getAnatEntityService();
-        DevStageService dsService = rawDataService.getServiceFactory().getDevStageService();
-        Set<DAORawDataConditionFilter> condFiltersDAO = 
-                convertRawDataConditionFiltersToDAORawDataConditionFilters(
-                        dataFilters.stream().map(df -> df.getConditionFilters())
-                        .flatMap(df -> df.stream()).collect(Collectors.toSet()));
-        // combine geneFilters coming from all dataFilters and retrieve corresponding speciesMap
-        final Map<Integer, Species> speciesMap = rawDataService.getServiceFactory()
-                .getSpeciesService().loadSpeciesMapFromGeneFilters(dataFilters.stream()
-                        .map(df -> df.getGeneFilters())
-                        .flatMap(gf -> gf.stream()).collect(Collectors.toSet()), false);
-
-        final Map<String, AnatEntity> anatEntitiesMap = aeService.loadAnatEntities(
-                speciesMap.keySet(), true, condFiltersDAO.stream()
-                    .map(cf -> cf.getAnatEntityIds()).flatMap(aes -> aes.stream())
-                    .collect(Collectors.toSet()), false)
-                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
-        final Map<String, AnatEntity> cellTypesMap = aeService.loadAnatEntities(
-                speciesMap.keySet(), true, condFiltersDAO.stream()
-                    .map(cf -> cf.getCellTypeIds()).flatMap(aes -> aes.stream())
-                    .collect(Collectors.toSet()), false)
-                .collect(Collectors.toMap(ct -> ct.getId(), ct -> ct));
-        final Map<String,DevStage> devStagesMap = dsService.loadDevStages(
-                speciesMap.keySet(), true, condFiltersDAO.stream()
-                    .map(cf -> cf.getDevStageIds()).flatMap(aes -> aes.stream())
-                    .collect(Collectors.toSet()), false)
-                .collect(Collectors.toMap(ds -> ds.getId(), ds -> ds));
-        final Map<String,RawDataSex> sexesMap = EnumSet.allOf(RawDataSex.class)
-                .stream().collect(Collectors.toMap(s -> s.getStringRepresentation(), s -> s));
-        //load raw data conditions
-        RawDataConditionTOResultSet rawDataCondTOs = rawDataService.getServiceFactory().getDAOManager()
-                .getRawDataConditionDAO().getRawDataConditions(speciesMap.keySet(),
-                        condFiltersDAO, null);
-        //create Map with condition ID as key and RawDataCondition as value
-        return log.traceExit(rawDataCondTOs.stream().collect(Collectors
-                .toMap(condTO -> condTO.getId(),
-                        condTO -> 
-                new RawDataCondition( anatEntitiesMap.get(condTO.getAnatEntityId()),
-                        devStagesMap.get(condTO.getStageId()),
-                        cellTypesMap.get(condTO.getCellTypeId()),
-                        sexesMap.get(condTO.getSex().getStringRepresentation()),
-                        condTO.getStrainId(), null)
-                )));
-    }
-    
-    private static Set<DAORawDataConditionFilter> 
-    convertRawDataConditionFiltersToDAORawDataConditionFilters(
-            Collection<RawDataConditionFilter> condFilters) {
-        log.traceEntry("{}", condFilters);
-        if (condFilters == null || condFilters.isEmpty()) {
-            return log.traceExit(Set.of());
-        }
-        if (condFilters.contains(null)) {
-            throw log.throwing(new IllegalArgumentException("no condition filter can be null"));
-        }
-        return log.traceExit(condFilters.stream().map(cf -> new DAORawDataConditionFilter(
-                cf.getAnatEntityIds(),cf.getDevStageIds(),
-                cf.getCellTypeIds(), cf.getSexes(), cf.getStrains(),
-                cf.getIncludeSubConditions(), cf.getIncludeParentConditions()))
-        .collect(Collectors.toSet()));
-    }
-
-    // generate dao attributes from service Attribute
-    private static Set<AffymetrixChipDAO.Attribute> fromAttrsToAffyChipDAOAttrs(Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}", attrs);
-        Set<AffymetrixChipDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixChipDAO.Attribute.class);
-        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
-            daoAttrs.remove(AffymetrixChipDAO.Attribute.CONDITION_ID);
-        }
-        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
-            daoAttrs.removeAll(Set.of(AffymetrixChipDAO.Attribute.DISTINCT_RANK_COUNT,
-                    AffymetrixChipDAO.Attribute.MAX_RANK, 
-                    AffymetrixChipDAO.Attribute.PERCENT_PRESENT));
-        }
-        return log.traceExit(daoAttrs);
-    }
-    
-    // generate dao attributes from service Attribute
-    private static Set<AffymetrixProbesetDAO.Attribute> fromAttrsToAffyProbesetDAOAttrs(Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}", attrs);
-        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class);
-        if (!attrs.contains(RawDataService.Attribute.RAWCALL_PIPELINE_SUMMARY)) {
-            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.NORMALIZED_SIGNAL_INTENSITY);
-            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.QVALUE);
-            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.RANK);
-        }
-        return log.traceExit(daoAttrs);
-    }
-        
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// METHODS LOADING RNA-SEQ RAW DATA ////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Load rna-seq experiments from the database
-     * 
-     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
-     *                                  on RNA-Seq experiment IDs
-     * @param rnaSeqLibraryIds          A {@code Collection} of {@code String} allowing to filter
-     *                                  on RNA-Seq library IDs
-     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-     *                                  defining information to retrieve in the 
-     *                                  {@code RnaSeqExperiment}s. 
-     * @return  A {@code Stream} of {@code RnaSeqExperiment}s.
-     *          If the {@code Stream} contains no element, it means that there were no data
-     *          of this type for the requested parameters.
-     */
-    public Stream<RnaSeqExperiment> loadRnaSeqExperiments(Collection<String> rnaSeqExperimentIds,
-            Collection<String> rnaSeqLibraryIds, Collection<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
-        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
-                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
-        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
-                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
-        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-
-        RNASeqExperimentDAO expDAO = this.rawDataService.getServiceFactory()
-                .getDAOManager().getRnaSeqExperimentDAO();
-
-        // return all datasources if required
-        final Map<Integer,Source> dataSourceIdToDataSource = 
-                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
-                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
-                    new HashMap<>();
-
-        // transform RnaSeqService Attributes to DAO attributes
-        Set<RNASeqExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(RNASeqExperimentDAO
-                .Attribute.class);
-        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
-            daoAttrs.remove(RNASeqExperimentDAO.Attribute.DATA_SOURCE_ID);
-        }
-
-        // load experiments
-        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-            return expDAO.getExperiments(clonedExpIds, clonedLibIds, filter, 
-                    daoAttrs).stream()
-                    .map(to -> new RnaSeqExperiment( to.getId(), to.getName(), 
-                            to.getDescription(), to.getDataSourceId() == null ? null: 
-                                dataSourceIdToDataSource.get(to.getDataSourceId())))
-                    .collect(Collectors.toSet());
-            }).flatMap(e -> e.stream()));
-    }
-
-    /**
-     * Load Annotated libraries from the database.
-     * 
-     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
-     *                                  on rna-seq experiment IDs
-     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-     *                                  on affymetrix chip IDs
-     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-     *                                  defining information to retrieve in the 
-     *                                  {@code MicroarrayExperiment}s.
-     * @return  A {@code Stream} of {@code AffymetrixChip}s.
-     *          If the {@code Stream} contains no element, it means that there were no data
-     *          of this type for the requested parameters.
-     */
-    public Stream<RnaSeqLibraryAnnotatedSample> loadRnaSeqLibraryAnnotatedSample(
-            Collection<String> rnaSeqExperimentIds, Collection<String> rnaSeqLibraryIds,
-            Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
-        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
-                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
-        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
-                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
-        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-
-        // load Experiments if required
-        final Map <String, RnaSeqExperiment> expIdToExperiments = 
-                loadRnaSeqExperiments(clonedExpIds, clonedLibIds, clonedAttrs)
-                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-
-        // load conditions based on rawDataFilters if required
-        Map<Integer, RawDataCondition> condIdToCond = 
-                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
-                        rawDataConditionMap: null;
-
-        //generate dao attributes based on RawDataServiceAttributes
-        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
-                fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(clonedAttrs);
-        
-        // load libraries 
-        Map<String, RNASeqLibraryTO> libIdToLibTO = daoRawDataFilters.stream()
-                .map(filter -> {
-                    return rawDataService.getServiceFactory().getDAOManager().getRnaSeqLibraryDAO()
-                            .getRnaSeqLibraries( clonedExpIds, clonedLibIds, filter, null)
-                            .stream().collect(Collectors.toMap(l -> l.getId(), l -> l));
-                }).flatMap(l -> l.entrySet().stream())
-                .collect(Collectors.toMap(l -> l.getKey(), l -> l.getValue()));
-        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-            return this.rawDataService.getServiceFactory().getDAOManager()
-                    .getRnaSeqLibraryAnnotatedSampleDAO()
-                    .getRnaSeqLibraryAnnotatedSamples(clonedExpIds, clonedLibIds, filter, daoAttrs)
-            .stream().map(to -> {
-                //TODO: To continue. 
-                
-                RawDataAnnotation annotation = clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
-                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null):
-                            null;
-                RnaSeqLibraryPipelineSummary pipelineSummary = clonedAttrs.contains(RawDataService
-                        .Attribute.ASSAY_PIPELINE_SUMMARY)?
-                        new RnaSeqLibraryPipelineSummary( to.getMeanAbundanceRefIntergenicDistribution(),
-                                to.getSdAbundanceRefIntergenicDistribution(), to.getpValueThreshold(),
-                                to.getAllReadCount(), to.getAllUMIsCount(), to.getMappedReadCount(),
-                                to.getMappedUMIsCount(), to.getMinReadLength(), to.getMaxReadLength(),
-                                to.getMaxRank(), to.getDistinctRankCount()):
-                            null;
-                return new RnaSeqLibraryAnnotatedSample( to.getLibraryId(),
-                        expIdToExperiments.get(libIdToLibTO.get(to.getLibraryId()).getExperimentId()),
-                        annotation, pipelineSummary, to.getBarcode(), to.getGenotype());
-            }).collect(Collectors.toSet());
-        }).flatMap(c -> c.stream()));
-    }
-
-    // generate dao attributes from service Attribute
-    private static Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(
-            Set<RawDataService.Attribute> attrs) {
-        log.traceEntry("{}", attrs);
-        Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
-                EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class);
-        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_THRESHOLD);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_UNIT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_GENES_PERCENT_PRESENT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_READ_COUNT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_UMIS_COUNT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.DISTINCT_RANK_COUNT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.INTERGENIC_REGION_PERCENT_PRESENT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_READ_COUNT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_UMIS_COUNT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_RANK);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_READ_LENGTH);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MIN_READ_LENGTH);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PROTEIN_CODING_GENES_PERCENT_PRESENT);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PVALUE_THRESHOLD);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.TMM_FACTOR);
-        }
-        
-        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
-            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID);
-        }
-        return log.traceExit(daoAttrs);
-    }
-
-    public Set<RawDataFilter> getRawDataFilters() {
-        return this.rawDataFilters;
-    }
-
-    //hashCode/equals do not use the RawDataService
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((rawDataFilters == null) ? 0 : rawDataFilters.hashCode());
-        return result;
+        return Objects.hash(anyGeneAnyCondRequestedSpeciesIds, requestedGenesMap, requestedRawDataConditionsMap);
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         RawDataLoader other = (RawDataLoader) obj;
-        if (rawDataFilters == null) {
-            if (other.rawDataFilters != null) {
-                return false;
-            }
-        } else if (!rawDataFilters.equals(other.rawDataFilters)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(anyGeneAnyCondRequestedSpeciesIds, other.anyGeneAnyCondRequestedSpeciesIds)
+                && Objects.equals(requestedGenesMap, other.requestedGenesMap)
+                && Objects.equals(requestedRawDataConditionsMap, other.requestedRawDataConditionsMap);
     }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("RawDataLoader [rawDataFilters=").append(rawDataFilters)
-               .append("]");
-        return builder.toString();
-    }
-
 }

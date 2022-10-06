@@ -512,12 +512,15 @@ public class RawDataService extends CommonService {
                 );
             }
 
-            daoCondFilters.add(new DAORawDataConditionFilter(Collections.singleton(filter.getSpeciesId()),
+            DAORawDataConditionFilter daoFilter = new DAORawDataConditionFilter(
+                    Collections.singleton(filter.getSpeciesId()),
                     anatEntityIds, devStageIds, cellTypeIds,
                     //If simply the sex or strain root was requested including children terms,
                     //it simply means any sex or any strain, and the RawDataConditionFilter would return
                     //empty Sets in that case.
-                    filter.getSexes(), filter.getStrains()));
+                    filter.getSexes(), filter.getStrains());
+            log.debug("DAORawDataConditionFilter: {}", daoFilter);
+            daoCondFilters.add(daoFilter);
         }
     
         //Now we filter the daoCondFilters: if one of them target a species with no additional parameters,

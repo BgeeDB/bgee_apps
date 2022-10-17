@@ -1,8 +1,11 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.stream.Stream;
 
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.est.EST;
 import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;
@@ -18,10 +21,11 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
 
 public class RawDataContainer {
     
-    private final Collection<RawDataDataType> datatypes;
-    private final Stream<AffymetrixExperiment> affymetrixExperiments;
-    private final Stream<AffymetrixChip> affymetrixAssays;
-    private final Stream<AffymetrixProbeset> affymetrixCalls;
+    private final EnumSet<DataType> datatypes;
+    private final LinkedHashSet<AffymetrixExperiment> affymetrixExperiments;
+    private final LinkedHashSet<AffymetrixChip> affymetrixAssays;
+    private final LinkedHashSet<AffymetrixProbeset> affymetrixCalls;
+
     private final Stream<RnaSeqExperiment> rnaSeqExperiments;
     private final Stream<RnaSeqLibrary> rnaSeqLibraries;
     private final Stream<RnaSeqLibraryAnnotatedSample> rnaSeqAssays;
@@ -32,14 +36,18 @@ public class RawDataContainer {
     private final Stream<ESTLibrary> estAssays;
     private final Stream<EST> estCalls;
 
-    public RawDataContainer(Collection<RawDataDataType> datatypes,
+    public RawDataContainer(Collection<DataType> datatypes,
             Stream<AffymetrixExperiment> affymetrixExperiments, Stream<AffymetrixChip> affymetrixAssays,
             Stream<AffymetrixProbeset> affymetrixCalls, Stream<RnaSeqExperiment> rnaSeqExperiments,
             Stream<RnaSeqLibrary> rnaSeqLibraries, Stream<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
             Stream<RnaSeqResultAnnotatedSample> rnaSeqCalls, Stream<InSituExperiment> inSituExperiments,
             Stream<InSituEvidence> inSituAssays, Stream<InSituSpot> inSituCalls,
             Stream<ESTLibrary> estAssays, Stream<EST> estCalls) {
-        this.datatypes = datatypes;
+        if (datatypes == null || datatypes.isEmpty()) {
+            this.datatypes = EnumSet.allOf(DataType.class);
+        } else {
+            this.datatypes = EnumSet.copyOf(datatypes);
+        }
         this.affymetrixExperiments = affymetrixExperiments;
         this.affymetrixAssays = affymetrixAssays;
         this.affymetrixCalls = affymetrixCalls;

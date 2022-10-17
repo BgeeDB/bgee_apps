@@ -1,28 +1,48 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataFilter;
 
-public class DAORawDataFilter extends DAODataFilter<DAORawDataConditionFilter> {
+public class DAORawDataFilter {
     private final static Logger log = LogManager.getLogger(DAORawDataFilter.class.getName());
 
-    //TODO remove speciesIds, it has to 
-    public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> speciesIds,
-            Collection<DAORawDataConditionFilter> conditionFilters) {
-        super(geneIds, speciesIds, conditionFilters);
+    // Here there is a speciesId only if there is no other filtering
+    // on Bgee gene IDs or raw data condition IDs
+    private final Integer speciesId;
+    private final Set<Integer> geneIds;
+    private final Set<Integer> rawDataCondIds;
 
-        if (this.getGeneIds().isEmpty() && this.getSpeciesIds().isEmpty() &&
-                this.getConditionFilters().isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("No filters provided"));
-        }
+    private final Set<String> experimentIds;
+    private final Set<String> assayIds;
+    //TODO: clear javadoc in constructor and getter
+    private final boolean exprIdsAssayIdsIntersect;
+
+    public DAORawDataFilter(int speciesId) {
+
     }
+    public DAORawDataFilter(int speciesId, Collection<String> experimentIds,
+            Collection<String> assayIds, boolean exprIdsAssayIdsIntersect) {
 
-    public DAORawDataFilter(DAORawDataFilter rawDataFilter) {
-        this(rawDataFilter.getGeneIds(), rawDataFilter.getSpeciesIds(),
-                rawDataFilter.getConditionFilters());
+    }
+    public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds) {
+
+    }
+    public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
+            Collection<String> experimentIds, Collection<String> assayIds,
+            boolean exprIdsAssayIdsIntersect) {
+
+    }
+    private DAORawDataFilter(int speciesId, Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
+            Collection<String> experimentIds, Collection<String> assayIds,
+            boolean exprIdsAssayIdsIntersect) {
+        //TODO: sanity check speciesId > 0
+        // OR
+        // TODO: sanity check collections not both null or empty,
+        // and that they contains no null elements
     }
 
     //since we have no attributes but the one in DAODataFilter, we do not implement equals/hashCode for now.

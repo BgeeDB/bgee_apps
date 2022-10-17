@@ -95,19 +95,8 @@ public class RawDataLoader extends CommonService {
      */
     private final RawDataFilter rawDataFilter;
 
-    /**
-     * A {@code Set} of {@code Integer}s that are IDs of species for which data were requested,
-     * with no other filtering requested on genes nor on conditions for that species. It means
-     * that data were requested for that species for any gene and in any condition.
-     * <p>
-     * When a species is present in this {@code Set}, there are no genes
-     * belonging to that species in {@link #requestedGenesMap}, and no conditions belonging to
-     * that species in {@link #requestedRawDataConditionsMap}.
-     * <p>
-     * It is to avoid sending large lists of gene or condition IDs to DAOs to perform the queries,
-     * in that case it is probably better to perform a JOIN in the query to filter on species ID.
-     */
-    Set<Integer> anyGeneAnyCondRequestedSpeciesIds;
+    //TODO javadoc
+    private final Set<DAORawDataFilter> daoRawDataFilters;
     /**
      * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal gene IDs,
      * the associated value being the corresponding {@code Gene}s, that were requested to retrieve raw data.
@@ -149,9 +138,16 @@ public class RawDataLoader extends CommonService {
 
 
     RawDataLoader(ServiceFactory serviceFactory, RawDataFilter rawDataFilter,
-            Collection<Integer> anyGeneAnyCondRequestedSpeciesIds,
+            //1 filter per species
+            //allowed to have several filter for a species
+            Collection<DAORawDataFilter> daoFilters,
+            //these Maps are only useful to instantiate returned objects,
+            //in the case some specific gene or condition filtering was requested.
+            //These Maps might be null or empty if no filtering other than the species ID
+            //or experiment/assay ID.
             Map<Integer, Gene> requestedGenesMap,
             Map<Integer, RawDataCondition> requestedRawDataConditionsMap,
+            //These two Maps are always used to instantiate the returned objects
             Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap) {
         super(serviceFactory);
 

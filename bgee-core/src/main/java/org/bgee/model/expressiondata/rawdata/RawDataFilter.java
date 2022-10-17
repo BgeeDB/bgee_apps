@@ -33,6 +33,11 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
 
     private final EnumSet<DataType> dataTypes;
 
+    private final Set<String> experimentIds;
+    private final Set<String> assayIds;
+    //TODO: clear javadoc in constructor and getter
+    private final boolean exprIdsAssayIdsIntersect;
+
     public RawDataFilter(GeneFilter geneFilter, RawDataConditionFilter condFilter, DataType dataTypeFilter) {
         this(Collections.singleton(geneFilter), Collections.singleton(condFilter), EnumSet.of(dataTypeFilter));
     }

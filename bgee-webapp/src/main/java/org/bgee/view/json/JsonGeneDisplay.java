@@ -26,7 +26,8 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 
@@ -59,7 +60,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
+    public void displayGeneSearchResult(String searchTerm, SearchMatchResult<GeneMatch> result) {
         log.traceEntry("{}. {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
@@ -197,9 +198,7 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
 
     @Override
     public void displayGeneChoice(Set<Gene> genes) {
-        // TODO Auto-generated method stub
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-
     }
 
     private static List<Boolean> getDataTypeSpans(Collection<ExpressionCallData> callData) {

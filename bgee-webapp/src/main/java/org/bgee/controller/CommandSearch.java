@@ -2,6 +2,7 @@ package org.bgee.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -10,9 +11,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.gene.GeneMatchResultService;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.NamedEntityMatch;
+import org.bgee.model.gene.SearchMatchResult;
+import org.bgee.model.gene.SearchMatchResultService;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -53,20 +58,41 @@ public class CommandSearch extends CommandParent {
         log.traceEntry();
         
         SearchDisplay display = this.viewFactory.getSearchDisplay();
-        GeneMatchResultService geneMatchService = serviceFactory.getGeneMatchResultService(this.prop);
+        SearchMatchResultService searchMatchService = serviceFactory.getSearchMatchResultService(this.prop);
         
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             String searchTerm = this.getSearchTerm();
-            List<String> result = geneMatchService.autocomplete(searchTerm, 20);
+            List<String> result = searchMatchService.autocomplete(searchTerm, 20);
             display.displayMatchesForGeneCompletion(result);
             
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_EXPASY_RESULT)) {
             String searchTerm = this.getSearchTerm();
-            GeneMatchResult result = geneMatchService.searchByTerm(searchTerm, null, 0, 1);
+            SearchMatchResult<GeneMatch> result = searchMatchService.searchGenesByTerm(searchTerm, null, 0, 1);
             display.displayExpasyResult(result.getTotalMatchCount(), searchTerm);
 
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_ANAT_ENTITIES)) {
+            String searchTerm = this.getSearchTerm();
+            Integer speciesId = this.requestParameters.getSpeciesId();
+            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result = serviceFactory
+                    .getSearchMatchResultService(this.prop)
+                    .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
+                            true, false, 0,
+                            SearchMatchResultService.SPHINX_MAX_RESULTS);
+            display.displayAnatEntitySearchResult(searchTerm, result);
+
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_CELL_TYPES)) {
+            String searchTerm = this.getSearchTerm();
+            Integer speciesId = this.requestParameters.getSpeciesId();
+            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result = serviceFactory
+                    .getSearchMatchResultService(this.prop)
+                    .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
+                            false, true, 0,
+                            SearchMatchResultService.SPHINX_MAX_RESULTS);
+            display.displayAnatEntitySearchResult(searchTerm, result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

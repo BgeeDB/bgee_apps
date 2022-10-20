@@ -39,11 +39,12 @@ import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSumm
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
+
 
 /**
  * This class is the HTML implementation of the {@code GeneDisplay}.
@@ -94,13 +95,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
+    public void displayGeneSearchResult(String searchTerm, SearchMatchResult<GeneMatch> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         this.displayGeneSearchPage(searchTerm, result);
         log.traceExit();
     }
 
-    private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
+    private void displayGeneSearchPage(String searchTerm, SearchMatchResult<GeneMatch> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         String geneSearchDescription = null;
         if(searchTerm != null) {
@@ -121,7 +122,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             if  (result == null || result.getTotalMatchCount() == 0) {
                 this.writeln("No gene found for '" + htmlEntities(searchTerm) + "'");
             } else {
-                int matchCount = result.getGeneMatches() == null ? 0 : result.getGeneMatches().size();
+                int matchCount = result.getSearchMatches() == null ? 0 : result.getSearchMatches().size();
                 boolean estimation = result.getTotalMatchCount() > matchCount;
                 String counterText = "";
                 if (estimation) {
@@ -137,7 +138,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 this.writeln("</div>"); // close gene-count
                 
                 this.writeln("<div class='table-container'>");
-                this.writeln(this.getSearchResultTable(result.getGeneMatches(), searchTerm));
+                this.writeln(this.getSearchResultTable(result.getSearchMatches(), searchTerm));
                 this.writeln("</div>"); // close table-container
             }
         }

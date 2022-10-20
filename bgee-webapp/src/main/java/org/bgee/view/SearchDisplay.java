@@ -2,6 +2,11 @@ package org.bgee.view;
 
 import java.util.Collection;
 
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.NamedEntityMatch;
+import org.bgee.model.gene.SearchMatchResult;
+
 /**
  * Interface defining methods to be implemented by views related to {@code Search}s.
  * 
@@ -17,6 +22,8 @@ public interface SearchDisplay {
      * @param searchTerm    A {code String} that is the search term.
      */
     void displayExpasyResult(int count, String searchTerm);
+
+    void displayAnatEntitySearchResult(String searchTerm, SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result);
 
     void displayMatchesForGeneCompletion(Collection<String> matches);
 }

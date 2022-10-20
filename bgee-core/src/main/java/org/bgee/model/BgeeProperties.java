@@ -130,13 +130,25 @@ public class BgeeProperties {
      * @see #BGEE_SEARCH_INDEX_GENES_DEFAULT
      */
     public final static String BGEE_SEARCH_INDEX_GENES_KEY = "org.bgee.search.genes";
-
     /**
      * A {@code String} that is the default value of the genes index used to query a search.
      *
      * @see #BGEE_SEARCH_INDEX_GENES_KEY
      */
     public final static String BGEE_SEARCH_INDEX_GENES_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the sphinx anat. entities index used to query a search.
+     *
+     * @see #BGEE_SEARCH_INDEX_ANAT_ENTITIES_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_ANAT_ENTITIES_KEY = "org.bgee.search.anat.entities";
+    /**
+     * A {@code String} that is the default value of the anat. entities index used to query a search.
+     *
+     * @see #BGEE_SEARCH_INDEX_ANAT_ENTITIES_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_ANAT_ENTITIES_DEFAULT = null;
     /**
      * A {@code String} that is the key to access to the System property that contains the value
      * of the sphinx autocomplete index used to query a search.
@@ -734,6 +746,9 @@ public class BgeeProperties {
         searchGenesIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_INDEX_GENES_KEY,
                 BGEE_SEARCH_INDEX_GENES_DEFAULT);
+        searchAnatEntitiesIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_ANAT_ENTITIES_KEY,
+                BGEE_SEARCH_INDEX_ANAT_ENTITIES_DEFAULT);
         searchAutocompleteIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT);
@@ -780,11 +795,16 @@ public class BgeeProperties {
      * A {@code String} that is the server port which is used to query a search.
      */
     private final String searchUrlPort;
-    
+
     /**
      * A {@code String} that is the name of the genes index which is used to query a search.
      */
     private final String searchGenesIndex;
+    
+    /**
+     * A {@code String} that is the name of the anat. entities index which is used to query a search.
+     */
+    private final String searchAnatEntitiesIndex;
     
     /**
      * A {@code String} that is the name of the autocomplete index which is used to query a search.
@@ -907,11 +927,18 @@ public class BgeeProperties {
         return searchUrlPort;
     }
     /**
-     * @return A {@code String} that is the name of the genes index which is used to 
+     * @return A {@code String} that is the name of the genes index which is used to
      * query a search.
      */
     public String getSearchGenesIndex() {
         return searchGenesIndex;
+    }
+    /**
+     * @return A {@code String} that is the name of the anat. entities index which is used to 
+     * query a search.
+     */
+    public String getSearchAnatEntitiesIndex() {
+        return searchAnatEntitiesIndex;
     }
     /**
      * @return A {@code String} that is the name of the autocomplete index which is used 

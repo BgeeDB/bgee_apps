@@ -5,12 +5,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This class encapsulates a result to a gene search.
+ * This class encapsulates a result of a search.
  * 
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Mar. 2019
+ * @author  Julien Wollbrett
+ * @version Bgee 15, Oct. 2022
  * @since   Bgee 14, Jan. 2019
- * @see GeneMatch
+ * @see SearchMatch
  */
 public class SearchMatchResult<T extends SearchMatch> {
 
@@ -37,28 +38,32 @@ public class SearchMatchResult<T extends SearchMatch> {
     }
 
     /**
-     * @return A {@code List} of {@code GeneMatch}es that are the ordered found genes.
+     * @return A {@code List} of {@code T} that are the ordered found matches.
      */
     public List<T> getSearchMatches() {
         return searchMatches;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SearchMatchResult<T> that = (SearchMatchResult<T>) o;
-        return totalMatchCount == that.totalMatchCount && Objects.equals(searchMatches, that.searchMatches);
+    public int hashCode() {
+        return Objects.hash(searchMatches, totalMatchCount);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(totalMatchCount, searchMatches);
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SearchMatchResult other = (SearchMatchResult) obj;
+        return Objects.equals(searchMatches, other.searchMatches) && totalMatchCount == other.totalMatchCount;
     }
 
     @Override
     public String toString() {
-        return "GeneMatchResult{matchCount=" + totalMatchCount 
-                + ", geneMatches=" + searchMatches + "}";
+        return "SearchMatchResult{matchCount=" + totalMatchCount
+                + ", searchMatches=" + searchMatches + "}";
     }
 }

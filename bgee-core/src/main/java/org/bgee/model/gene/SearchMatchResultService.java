@@ -1,38 +1,38 @@
 package org.bgee.model.gene;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bgee.model.BgeeProperties;
-import org.bgee.model.CommonService;
-import org.bgee.model.ServiceFactory;
-import org.bgee.model.species.Species;
-import org.sphx.api.SphinxClient;
-import org.sphx.api.SphinxException;
-import org.sphx.api.SphinxMatch;
-import org.sphx.api.SphinxResult;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import static org.bgee.model.gene.GeneMatch.MatchSource.DESCRIPTION;
-import static org.bgee.model.gene.GeneMatch.MatchSource.MULTIPLE;
-import static org.bgee.model.gene.GeneMatch.MatchSource.SYNONYM;
-import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeProperties;
+import org.bgee.model.CommonService;
+import org.bgee.model.ServiceFactory;
+import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.species.Species;
+import org.sphx.api.SphinxClient;
+import org.sphx.api.SphinxException;
+import org.sphx.api.SphinxMatch;
+import org.sphx.api.SphinxResult;
 
 /**
  * Class allowing to manage and retrieve {@code GeneMatchResult}s.
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, May 2019
- * @see     GeneMatchResult
+ * @author  Julien Wollbrett
+ * @version Bgee 15, Oct 2022
+ * @see     SearchMatchResult
  * @since   Bgee 14, Apr. 2019
  */
 public class SearchMatchResultService extends CommonService {
@@ -46,6 +46,9 @@ public class SearchMatchResultService extends CommonService {
     private static final int SPHINX_CONNECT_TIMEOUT = 3000;
     public static final int SPHINX_MAX_RESULTS = 10000;
     private static final String SPHINX_SEPARATOR = "\\|\\|";
+    private static final Integer SPHINX_SEARCH_ANAT_ENTITIES = 1;
+    private static final Integer SPHINX_SEARCH_CELL_TYPES = 2;
+
     /**
      * @see #getSphinxClient()
      */
@@ -53,33 +56,39 @@ public class SearchMatchResultService extends CommonService {
     /**
      * @see #getSphinxGenesIndex()
      */
-    private final String sphinxSearchIndex;
+    private final String sphinxGeneSearchIndex;
+    /**
+     * @see #getSphinxAnatEntitiesIndex()
+     */
+    private final String sphinxAnatEntitySearchIndex;
     /**
      * @see #getSphinxAutocompleteIndex()
      */
     private final String sphinxAutocompleteIndex;
 
     /**
-     * Construct a new {@code GeneMatchResultService} using the provided {@code BgeeProperties}. 
+     * Construct a new {@code SearchMatchResultService} using the provided {@code BgeeProperties}.
      */
     public SearchMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
-                serviceFactory, props.getSearchGenesIndex(), props.getSearchAutocompleteIndex());
+                serviceFactory, props.getSearchGenesIndex(), props.getSearchAnatEntitiesIndex(),
+                props.getSearchAutocompleteIndex());
     }
     /**
-     * Construct a new {@code GeneMatchResultService} using the provided {@code SphinxClient}. 
+     * Construct a new {@code SearchMatchResultService} using the provided {@code SphinxClient}.
      */
-    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxSearchIndex,
-            String sphinxAutocompleteIndex) {
+    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGeneSearchIndex,
+            String sphinxAnatEntitySearchIndex, String sphinxAutocompleteIndex) {
         super(serviceFactory);
         sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
-        this.sphinxSearchIndex = sphinxSearchIndex;
+        this.sphinxGeneSearchIndex = sphinxGeneSearchIndex;
+        this.sphinxAnatEntitySearchIndex = sphinxAnatEntitySearchIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
     }
 
     /**
-     * @return  The {@code SphinxClient} used by this {@code GeneMatchResultService}.
+     * @return  The {@code SphinxClient} used by this {@code SearchMatchResultService}.
      */
     public SphinxClient getSphinxClient() {
         return sphinxClient;
@@ -87,8 +96,14 @@ public class SearchMatchResultService extends CommonService {
     /**
      * @return  The {@code String} used as name for genes index
      */
-    public String getSphinxSearchIndex() {
-        return sphinxSearchIndex;
+    public String getSphinxGeneSearchIndex() {
+        return sphinxGeneSearchIndex;
+    }
+    /**
+     * @return  The {@code String} used as name for anat. entities index
+     */
+    public String getSphinxAnatEntitySearchIndex() {
+        return sphinxAnatEntitySearchIndex;
     }
     /**
      * @return  The {@code String} used as name for autocomplete index
@@ -112,14 +127,19 @@ public class SearchMatchResultService extends CommonService {
         log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
 
         if (speciesIds != null && !speciesIds.isEmpty()) {
-            throw new UnsupportedOperationException("Search with species parameter is not implemented");
+            try {
+                sphinxClient.SetFilter("speciesId", speciesIds.stream().mapToInt(x -> x).toArray(), false);
+            } catch (SphinxException e) {
+                throw log.throwing(new IllegalStateException(
+                        "Sphinx search has generated an exception", e));
+            }
         }
 
         // We need to get the formatted term here, even if the term is formatted 
         // in the method getSphinxResult(), to set correctly GeneMatches.
         String formattedTerm = this.getFormattedTerm(searchTerm);
 
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxSearchIndex(), null);
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxGeneSearchIndex(), null);
 
         if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
             throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
@@ -147,6 +167,100 @@ public class SearchMatchResultService extends CommonService {
                 .collect(Collectors.toList());
 
         return log.traceExit(new SearchMatchResult<GeneMatch>(result.totalFound, geneMatches));
+    }
+
+    /**
+     * Search anat. entities and/or cell types
+     *
+     * @param searchTerm        A {@code String} containing the query
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are species Ids
+     *                          (may be empty to search on all species).
+     * @param withAnatEntities  A {@code boolean} defining   whether anatomical entities have to be
+     *                          retrieved or not. if <code>true</code> then anatomical entities are
+     *                          retrieved. Not both withAnatEntities and withCellTypes can be false
+     *                          at the same time.
+     * @param withCellTypes     A {@code boolean} defining   whether cell types have to be
+     *                          retrieved or not. if <code>true</code> then cell types are
+     *                          retrieved. Not both withAnatEntities and withCellTypes can be false
+     *                          at the same time.
+     * @param limitStart        An {@code int} representing the index of the first element to return.
+     * @param resultPerPage     An {@code int} representing the number of elements to return
+     * @return                  A {@code GeneMatchResult} of results (ordered).
+     */
+    public SearchMatchResult<NamedEntityMatch<AnatEntity, String>> searchAnatEntitiesByTerm(final String searchTerm,
+            Collection<Integer> speciesIds, boolean withAnatEntities, boolean withCellTypes, int limitStart,
+            int resultPerPage) {
+        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, withAnatEntities, withCellTypes,
+                limitStart, resultPerPage);
+
+        if (speciesIds != null && !speciesIds.isEmpty()) {
+            try {
+                //in the index a speciesId = 0 means that the anat. entity exists for all species. If the speciesId
+                // Collection does not yet contains 0 we have to add it.
+                Set<Integer> hackedSpeciesIds = new HashSet<Integer>(speciesIds);
+                if (!hackedSpeciesIds.contains(0)) {
+                    hackedSpeciesIds.add(0);
+                }
+                sphinxClient.SetFilter("speciesId", hackedSpeciesIds.stream().mapToInt(x -> x).toArray(), false);
+            } catch (SphinxException e) {
+                throw log.throwing(new IllegalStateException(
+                        "Sphinx search has generated an exception", e));
+            }
+        }
+        if (!withAnatEntities && !withCellTypes) {
+            throw log.throwing(new IllegalStateException("At least one of withAnatEntities or withCellTypes"
+                    + " has to be true"));
+        // filtering done only if not both withAnatEntities and withCellType are true.
+        //TODO: update the filtering once the new index is available
+        } else if (!(withAnatEntities && withCellTypes)) {
+            try {
+                if(withAnatEntities) {
+                    sphinxClient.SetFilter("type", SPHINX_SEARCH_ANAT_ENTITIES, false);
+                }
+                if(withCellTypes) {
+                    sphinxClient.SetFilter("type", SPHINX_SEARCH_CELL_TYPES, false);
+                }
+            } catch (SphinxException e) {
+                throw log.throwing(new IllegalStateException(
+                        "Sphinx search has generated an exception", e));
+            }
+        }
+
+        // We need to get the formatted term here, even if the term is formatted
+        // in the method getSphinxResult(), to set correctly NamedEntityMatch.
+        String formattedTerm = this.getFormattedTerm(searchTerm);
+
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage,
+                this.getSphinxAnatEntitySearchIndex(), null);
+
+        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
+            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
+                    + result.error));
+        }
+
+        // if result is empty, return an empty list
+        if (result == null || result.totalFound == 0) {
+            return log.traceExit(new SearchMatchResult<NamedEntityMatch<AnatEntity,String>>(0, null));
+        }
+
+        // get mapping between attributes names and their index
+        Map<String, Integer> attrNameToIdx = new HashMap<>();
+        for (int idx = 0; idx < result.attrNames.length; idx++) {
+            attrNameToIdx.put(result.attrNames[idx], idx);
+        }
+
+        // build list of GeneMatch
+        List<NamedEntityMatch<AnatEntity, String>> anatEntityMatches = Arrays.stream(result.matches)
+                .map(m -> getAnatEntityMatch(m, formattedTerm, attrNameToIdx))
+                .sorted()
+                // collector removing duplicates. Duplicates can be present if more than one species is
+                // selected or if both anat. entities and cell types are queried.
+                .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
+                        new TreeSet<NamedEntityMatch<AnatEntity, String>>(Comparator.comparing(m -> m))),
+                        ArrayList::new));
+
+        return log.traceExit(new SearchMatchResult<NamedEntityMatch<AnatEntity, String>>(anatEntityMatches.size(),
+                anatEntityMatches));
     }
 
     /**
@@ -275,7 +389,7 @@ public class SearchMatchResultService extends CommonService {
         }
         final String descriptionLowerCase = gene.getDescription().toLowerCase();
         if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new GeneMatch(gene, null, DESCRIPTION));
+            return log.traceExit(new GeneMatch(gene, null, GeneMatch.MatchSource.DESCRIPTION));
         }
 
         // otherwise we fetch term and find the first match
@@ -283,16 +397,53 @@ public class SearchMatchResultService extends CommonService {
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
-            return log.traceExit(new GeneMatch(gene, geneNameSynonym, SYNONYM));
+            return log.traceExit(new GeneMatch(gene, geneNameSynonym, GeneMatch.MatchSource.SYNONYM));
         }
 
         final String geneXRef = this.getMatch(match, "genexref", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneXRef != null) {
-            return log.traceExit(new GeneMatch(gene, geneXRef, XREF));
+            return log.traceExit(new GeneMatch(gene, geneXRef, GeneMatch.MatchSource.XREF));
         }
-        
-        return log.traceExit(new GeneMatch(gene, geneXRef, MULTIPLE));
+        return log.traceExit(new GeneMatch(gene, geneXRef, GeneMatch.MatchSource.MULTIPLE));
+    }
+
+    /**
+     * Convert a {@code SphinxMatch} into a {@code NamedEntityMatch}.
+     *
+     * @param match         A {@code SphinxMatch} that is the match to be converted.
+     * @param term          A {@code String} that is the query used to retrieve the {@code match}.
+     * @param attrIndexMap  A {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                      the associated values being {@code Integer}s corresponding
+     *                      to index of the attribute.
+     * @return              The {@code GeneMatch} that is the converted {@code SphinxMatch}.
+     */
+    private NamedEntityMatch<AnatEntity,String> getAnatEntityMatch(final SphinxMatch match, final String term,
+                                   final Map<String, Integer> attrIndexMap) {
+        log.traceEntry("{}, {}, {}, {}", match, term, attrIndexMap);
+        AnatEntity anatEntity = new AnatEntity(String.valueOf(match.attrValues
+                .get(attrIndexMap.get("anatentityid"))),
+                String.valueOf(match.attrValues.get(attrIndexMap.get("anatentityname"))), null);
+
+        // If the gene name, id or description match there is no term
+        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+        //and returns terms, that are then not matched here
+        final String termLowerCase = term.toLowerCase();
+        final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
+
+        final String idLowerCase = anatEntity.getId().toLowerCase();
+        if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new NamedEntityMatch<AnatEntity,String>(anatEntity, null,
+                    NamedEntityMatch.MatchSource.ID));
+        }
+
+        final String nameLowerCase = anatEntity.getName().toLowerCase();
+        if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new NamedEntityMatch<AnatEntity,String>(anatEntity, null,
+                    NamedEntityMatch.MatchSource.NAME));
+        }
+        return log.traceExit(new NamedEntityMatch<AnatEntity,String>(anatEntity, null,
+                NamedEntityMatch.MatchSource.MULTIPLE));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
@@ -305,8 +456,8 @@ public class SearchMatchResultService extends CommonService {
 
         List<String> terms = Arrays.stream(split)
                 .filter(s ->  s.contains(termLowerCase) ||
-                        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
-                        //and returns terms, that are then not matched here
+                        //Fix issue with term search such as "upk\3a". MySQL does not consider
+                        //the backslash and returns terms, that are then not matched here
                         s.contains(termLowerCaseEscaped))
                 .collect(Collectors.toList());
         if (terms.size() > 0) {

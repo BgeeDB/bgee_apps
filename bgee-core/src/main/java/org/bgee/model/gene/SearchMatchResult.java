@@ -13,12 +13,12 @@ import java.util.Objects;
  * @since   Bgee 14, Jan. 2019
  * @see SearchMatch
  */
-public class SearchMatchResult<T extends SearchMatch> {
+public class SearchMatchResult<T> {
 
     private final int totalMatchCount;
-    private final List<T> searchMatches;
+    private final List<SearchMatch<T>> searchMatches;
 
-	public SearchMatchResult(int totalMatchCount, List<T> searchMatches) {
+	public SearchMatchResult(int totalMatchCount, List<SearchMatch<T>> searchMatches) {
         if (totalMatchCount < 0) {
 	        throw new IllegalArgumentException("The count of matches must be provided.");
 	    }
@@ -40,7 +40,7 @@ public class SearchMatchResult<T extends SearchMatch> {
     /**
      * @return A {@code List} of {@code T} that are the ordered found matches.
      */
-    public List<T> getSearchMatches() {
+    public List<SearchMatch<T>> getSearchMatches() {
         return searchMatches;
     }
 
@@ -57,7 +57,7 @@ public class SearchMatchResult<T extends SearchMatch> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SearchMatchResult other = (SearchMatchResult) obj;
+        SearchMatchResult<T> other = (SearchMatchResult<T>) obj;
         return Objects.equals(searchMatches, other.searchMatches) && totalMatchCount == other.totalMatchCount;
     }
 

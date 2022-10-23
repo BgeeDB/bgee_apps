@@ -14,8 +14,7 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.NamedEntityMatch;
+import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.model.gene.SearchMatchResultService;
 import org.bgee.view.SearchDisplay;
@@ -69,14 +68,14 @@ public class CommandSearch extends CommandParent {
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_EXPASY_RESULT)) {
             String searchTerm = this.getSearchTerm();
-            SearchMatchResult<GeneMatch> result = searchMatchService.searchGenesByTerm(searchTerm, null, 0, 1);
+            SearchMatchResult<Gene> result = searchMatchService.searchGenesByTerm(searchTerm, null, 0, 1);
             display.displayExpasyResult(result.getTotalMatchCount(), searchTerm);
 
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_ANAT_ENTITIES)) {
             String searchTerm = this.getSearchTerm();
             Integer speciesId = this.requestParameters.getSpeciesId();
-            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result = serviceFactory
+            SearchMatchResult<NamedEntity<String>> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             true, false, 0,
@@ -87,7 +86,7 @@ public class CommandSearch extends CommandParent {
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_CELL_TYPES)) {
             String searchTerm = this.getSearchTerm();
             Integer speciesId = this.requestParameters.getSpeciesId();
-            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result = serviceFactory
+            SearchMatchResult<NamedEntity<String>> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             false, true, 0,

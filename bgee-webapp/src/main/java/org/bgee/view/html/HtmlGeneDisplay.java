@@ -38,7 +38,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.SearchMatch;
 import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Taxon;
@@ -95,13 +95,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneSearchResult(String searchTerm, SearchMatchResult<GeneMatch> result) {
+    public void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         this.displayGeneSearchPage(searchTerm, result);
         log.traceExit();
     }
 
-    private void displayGeneSearchPage(String searchTerm, SearchMatchResult<GeneMatch> result) {
+    private void displayGeneSearchPage(String searchTerm, SearchMatchResult<Gene> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         String geneSearchDescription = null;
         if(searchTerm != null) {
@@ -148,7 +148,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
-    private String getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
+    private String getSearchResultTable(List<SearchMatch<Gene>> geneMatches, String searchTerm) {
         log.traceEntry("{}, {}", geneMatches, searchTerm);
         
         StringBuilder sb = new StringBuilder();
@@ -162,8 +162,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append("</tr></thead>");
 
         sb.append("<tbody>");
-        for (GeneMatch geneMatch: geneMatches) {
-            Gene gene = geneMatch.getGene();
+        for (SearchMatch<Gene> geneMatch: geneMatches) {
+            Gene gene = geneMatch.getSearchedObject();
 
             sb.append("<tr>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getGeneId())).append("</td>");
@@ -186,10 +186,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param searchTerm    A {@code String} that is term of the search.
      * @return              The {@code String} representing the match.
      */
-    private String getMatch(GeneMatch geneMatch, String searchTerm) {
+    private String getMatch(SearchMatch<Gene> geneMatch, String searchTerm) {
         log.traceEntry("{}, {}", geneMatch, searchTerm);
         
-        if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
+        if (SearchMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
             return log.traceExit("no exact match");
         }
 

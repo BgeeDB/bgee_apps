@@ -1,5 +1,7 @@
 package org.bgee.view.json.adapters;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -12,7 +14,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.gene.SearchMatch;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -60,10 +62,16 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
             return log.traceExit(result);
         }
-        if (GeneMatch.class.isAssignableFrom(rawClass) ) {
-            @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
-            return log.traceExit(result);
+        if (SearchMatch.class.isAssignableFrom(rawClass) ) {
+            Type type = typeToken.getType();
+            if (type instanceof ParameterizedType) {
+                Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
+                if(typeArguments.length == 1 && typeArguments[0] instanceof Gene) {
+                    @SuppressWarnings("unchecked")
+                    TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
+                    return log.traceExit(result);
+                }
+            }
         }
         if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
@@ -77,6 +85,7 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         }
         if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
+            
             TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseTypeAdapter();
             return log.traceExit(result);
         }

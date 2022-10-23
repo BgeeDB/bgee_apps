@@ -108,7 +108,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<GeneMatch> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
+        SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 
         assertEquals(1, geneMatchResult.getTotalMatchCount());
         assertNotNull(geneMatchResult.getSearchMatches());
@@ -118,9 +118,9 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
                 new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"), 1);
 
-        assertEquals(new GeneMatch(expGene, "syn2", GeneMatch.MatchSource.SYNONYM),
+        assertEquals(new SearchMatch<Gene>(expGene, "syn2", SearchMatch.MatchSource.SYNONYM),
                 geneMatchResult.getSearchMatches().get(0));
-        Gene actualGene = geneMatchResult.getSearchMatches().get(0).getGene();
+        Gene actualGene = geneMatchResult.getSearchMatches().get(0).getSearchedObject();
         Species actualSpecies = actualGene.getSpecies();
         assertEquals(expSpecies.getId(), actualSpecies.getId());
         assertEquals(expSpecies.getName(), actualSpecies.getName());
@@ -173,7 +173,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<NamedEntityMatch<AnatEntity, String>> anatMatchResult =
+        SearchMatchResult<NamedEntity<String>> anatMatchResult =
                 service.searchAnatEntitiesByTerm(term, null, true, true, 0, 100);
 
         assertEquals(3, anatMatchResult.getTotalMatchCount());
@@ -182,9 +182,9 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         AnatEntity expAE = new AnatEntity("ID:0001", "anat1", null);
 
-        assertEquals(new NamedEntityMatch<AnatEntity, String>(expAE, "anat", NamedEntityMatch.MatchSource.NAME),
+        assertEquals(new SearchMatch<AnatEntity>(expAE, "anat", SearchMatch.MatchSource.NAME),
                 anatMatchResult.getSearchMatches().get(0));
-        NamedEntity<String> actualAE = anatMatchResult.getSearchMatches().get(0).getNamedEntity();
+        NamedEntity<String> actualAE = anatMatchResult.getSearchMatches().get(0).getSearchedObject();
         assertEquals(expAE.getId(), actualAE.getId());
         assertEquals(expAE.getName(), actualAE.getName());
         assertEquals(expAE.getDescription(), actualAE.getDescription());
@@ -204,7 +204,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<GeneMatch> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
+        SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 
         assertEquals(0, geneMatchResult.getTotalMatchCount());
         assertNull(geneMatchResult.getSearchMatches());

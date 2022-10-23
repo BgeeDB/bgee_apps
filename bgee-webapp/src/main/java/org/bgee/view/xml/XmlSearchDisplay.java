@@ -1,8 +1,6 @@
 package org.bgee.view.xml;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
@@ -11,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.NamedEntityMatch;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.view.SearchDisplay;
 
@@ -81,7 +77,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
     @Override
     public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result) {
+            SearchMatchResult<NamedEntity<String>> result) {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 

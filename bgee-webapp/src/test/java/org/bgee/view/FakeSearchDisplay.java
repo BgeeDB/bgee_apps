@@ -7,9 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.NamedEntityMatch;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.gene.SearchMatchResult;
 
 public class FakeSearchDisplay extends FakeParentDisplay implements SearchDisplay {
@@ -32,7 +30,7 @@ public class FakeSearchDisplay extends FakeParentDisplay implements SearchDispla
 
     @Override
     public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<NamedEntityMatch<AnatEntity, String>> result) {
+            SearchMatchResult<NamedEntity<String>> result) {
         this.out.println("Test search anat. entity result");
     }
 

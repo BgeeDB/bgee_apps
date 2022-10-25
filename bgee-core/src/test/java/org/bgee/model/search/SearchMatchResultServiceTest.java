@@ -1,10 +1,15 @@
-package org.bgee.model.gene;
+package org.bgee.model.search;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
 import org.junit.Before;
 import org.junit.Test;
@@ -118,7 +123,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
                 new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"), 1);
 
-        assertEquals(new SearchMatch<Gene>(expGene, "syn2", SearchMatch.MatchSource.SYNONYM),
+        assertEquals(new SearchMatch<Gene>(expGene, "syn2", SearchMatch.MatchSource.SYNONYM, Gene.class),
                 geneMatchResult.getSearchMatches().get(0));
         Gene actualGene = geneMatchResult.getSearchMatches().get(0).getSearchedObject();
         Species actualSpecies = actualGene.getSpecies();
@@ -173,7 +178,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<NamedEntity<String>> anatMatchResult =
+        SearchMatchResult<AnatEntity> anatMatchResult =
                 service.searchAnatEntitiesByTerm(term, null, true, true, 0, 100);
 
         assertEquals(3, anatMatchResult.getTotalMatchCount());
@@ -182,7 +187,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         AnatEntity expAE = new AnatEntity("ID:0001", "anat1", null);
 
-        assertEquals(new SearchMatch<AnatEntity>(expAE, "anat", SearchMatch.MatchSource.NAME),
+        assertEquals(new SearchMatch<AnatEntity>(expAE, "anat", SearchMatch.MatchSource.NAME, AnatEntity.class),
                 anatMatchResult.getSearchMatches().get(0));
         NamedEntity<String> actualAE = anatMatchResult.getSearchMatches().get(0).getSearchedObject();
         assertEquals(expAE.getId(), actualAE.getId());

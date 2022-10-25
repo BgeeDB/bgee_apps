@@ -8,10 +8,10 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.gene.SearchMatch;
-import org.bgee.model.gene.SearchMatch.MatchSource;
-import org.bgee.model.gene.SearchMatchResult;
-import org.bgee.model.gene.SearchMatchResultService;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatch.MatchSource;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;
@@ -57,8 +57,8 @@ public class CommandSearchTest extends TestAncestor {
 
         List<SearchMatch<Gene>> geneMatches = Collections.singletonList(new SearchMatch<Gene>(
                 new Gene("geneId", "name", "description", null, null, new Species(1), new GeneBioType("b"), 1),
-                "synonym", MatchSource.ID));
-        SearchMatchResult<Gene> result = new SearchMatchResult<Gene>(10000, geneMatches);
+                "synonym", MatchSource.ID, Gene.class));
+        SearchMatchResult<Gene> result = new SearchMatchResult<Gene>(10000, geneMatches, Gene.class);
         when(searchMatchService.searchGenesByTerm("gene", null, 0, 1)).thenReturn(result);
 
         //mock view

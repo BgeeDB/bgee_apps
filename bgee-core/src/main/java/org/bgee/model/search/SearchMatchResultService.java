@@ -1,4 +1,4 @@
-package org.bgee.model.gene;
+package org.bgee.model.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +18,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.gene.Gene;
+import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
 import org.sphx.api.SphinxClient;
 import org.sphx.api.SphinxException;
@@ -149,7 +150,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<Gene>(0, null));
+            return log.traceExit(new SearchMatchResult<Gene>(0, null, Gene.class));
         }
 
         // get mapping between attributes names and their index
@@ -167,7 +168,7 @@ public class SearchMatchResultService extends CommonService {
                 .sorted()
                 .collect(Collectors.toList());
 
-        return log.traceExit(new SearchMatchResult<Gene>(result.totalFound, geneMatches));
+        return log.traceExit(new SearchMatchResult<Gene>(result.totalFound, geneMatches, Gene.class));
     }
 
     /**
@@ -188,7 +189,7 @@ public class SearchMatchResultService extends CommonService {
      * @param resultPerPage     An {@code int} representing the number of elements to return
      * @return                  A {@code SearchMatchResult} of results (ordered).
      */
-    public SearchMatchResult<NamedEntity<String>> searchAnatEntitiesByTerm(final String searchTerm,
+    public SearchMatchResult<AnatEntity> searchAnatEntitiesByTerm(final String searchTerm,
             Collection<Integer> speciesIds, boolean withAnatEntities, boolean withCellTypes, int limitStart,
             int resultPerPage) {
         log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, withAnatEntities, withCellTypes,
@@ -241,7 +242,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<NamedEntity<String>>(0, null));
+            return log.traceExit(new SearchMatchResult<AnatEntity>(0, null, AnatEntity.class));
         }
 
         // get mapping between attributes names and their index
@@ -251,17 +252,17 @@ public class SearchMatchResultService extends CommonService {
         }
 
         // build list of SearchMatch
-        List<SearchMatch<NamedEntity<String>>> anatEntityMatches = Arrays.stream(result.matches)
+        List<SearchMatch<AnatEntity>> anatEntityMatches = Arrays.stream(result.matches)
                 .map(m -> getAnatEntityMatch(m, formattedTerm, attrNameToIdx))
                 .sorted()
                 // collector removing duplicates. Duplicates can be present if more than one species is
                 // selected or if both anat. entities and cell types are queried.
                 .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<SearchMatch<NamedEntity<String>>>(Comparator.comparing(m -> m))),
+                        new TreeSet<SearchMatch<AnatEntity>>(Comparator.comparing(m -> m))),
                         ArrayList::new));
 
-        return log.traceExit(new SearchMatchResult<NamedEntity<String>>(anatEntityMatches.size(),
-                anatEntityMatches));
+        return log.traceExit(new SearchMatchResult<AnatEntity>(anatEntityMatches.size(),
+                anatEntityMatches, AnatEntity.class));
     }
 
     /**
@@ -381,16 +382,16 @@ public class SearchMatchResultService extends CommonService {
 
         final String geneIdLowerCase = gene.getGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.ID));
+            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.ID, Gene.class));
         }
 
         final String geneNameLowerCase = gene.getName().toLowerCase();
         if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.NAME));
+            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.NAME, Gene.class));
         }
         final String descriptionLowerCase = gene.getDescription().toLowerCase();
         if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.DESCRIPTION));
+            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.DESCRIPTION, Gene.class));
         }
 
         // otherwise we fetch term and find the first match
@@ -398,15 +399,15 @@ public class SearchMatchResultService extends CommonService {
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
-            return log.traceExit(new SearchMatch<Gene>(gene, geneNameSynonym, SearchMatch.MatchSource.SYNONYM));
+            return log.traceExit(new SearchMatch<Gene>(gene, geneNameSynonym, SearchMatch.MatchSource.SYNONYM, Gene.class));
         }
 
         final String geneXRef = this.getMatch(match, "genexref", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneXRef != null) {
-            return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.XREF));
+            return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.XREF, Gene.class));
         }
-        return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.MULTIPLE));
+        return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.MULTIPLE, Gene.class));
     }
 
     /**
@@ -419,7 +420,7 @@ public class SearchMatchResultService extends CommonService {
      *                      to index of the attribute.
      * @return              The {@code SearchMatch} that is the converted {@code SphinxMatch}.
      */
-    private SearchMatch<NamedEntity<String>> getAnatEntityMatch(final SphinxMatch match, final String term,
+    private SearchMatch<AnatEntity> getAnatEntityMatch(final SphinxMatch match, final String term,
                                    final Map<String, Integer> attrIndexMap) {
         log.traceEntry("{}, {}, {}, {}", match, term, attrIndexMap);
         AnatEntity anatEntity = new AnatEntity(String.valueOf(match.attrValues
@@ -434,17 +435,17 @@ public class SearchMatchResultService extends CommonService {
 
         final String idLowerCase = anatEntity.getId().toLowerCase();
         if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<NamedEntity<String>>(anatEntity, null,
-                    SearchMatch.MatchSource.ID));
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
+                    SearchMatch.MatchSource.ID, AnatEntity.class));
         }
 
         final String nameLowerCase = anatEntity.getName().toLowerCase();
         if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<NamedEntity<String>>(anatEntity, null,
-                    SearchMatch.MatchSource.NAME));
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
+                    SearchMatch.MatchSource.NAME, AnatEntity.class));
         }
-        return log.traceExit(new SearchMatch<NamedEntity<String>>(anatEntity, null,
-                SearchMatch.MatchSource.MULTIPLE));
+        return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
+                SearchMatch.MatchSource.MULTIPLE, AnatEntity.class));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,

@@ -1,4 +1,4 @@
-package org.bgee.model.gene;
+package org.bgee.model.search;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.gene.Gene;
 
 /**
  * This class encapsulates a result to a named entity search. A match can either be on id,
@@ -52,7 +53,9 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
     
     private final String term;
 
-    public SearchMatch(T searchedObject, String term, MatchSource matchSource) {
+    private final Class<T> type;
+
+    public SearchMatch(T searchedObject, String term, MatchSource matchSource, Class<T> type) {
         this.term = term;
         if (searchedObject == null) {
             throw new IllegalArgumentException("A searched object must be provided.");
@@ -63,6 +66,7 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
         }
         this.searchedObject = searchedObject;
         this.matchSource = matchSource;
+        this.type = type;
     }
 
     /**
@@ -86,6 +90,13 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
      */
     public String getTerm() {
         return term;
+    }
+
+    /**
+     * @return  A {@code Class} representing the type of T.
+     */
+    public Class<T> getType() {
+        return type;
     }
 
     /**
@@ -160,7 +171,7 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(matchSource, searchedObject, term);
+        return Objects.hash(matchSource, searchedObject, term, type);
     }
 
     @Override
@@ -173,7 +184,7 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
             return false;
         SearchMatch<T> other = (SearchMatch<T>) obj;
         return matchSource == other.matchSource && Objects.equals(searchedObject, other.searchedObject)
-                && Objects.equals(term, other.term);
+                && Objects.equals(term, other.term) && Objects.equals(type, other.type);
     }
 
 

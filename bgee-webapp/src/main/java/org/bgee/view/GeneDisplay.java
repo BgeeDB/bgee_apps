@@ -7,7 +7,7 @@ import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResult;
 
 /**
  * Interface defining methods to be implemented by views related to {@code Gene}s.

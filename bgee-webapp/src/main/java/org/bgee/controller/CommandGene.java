@@ -31,8 +31,8 @@ import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneHomologsService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
-import org.bgee.model.gene.SearchMatchResult;
-import org.bgee.model.gene.SearchMatchResultService;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 

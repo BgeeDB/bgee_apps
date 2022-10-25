@@ -1,4 +1,4 @@
-package org.bgee.model.gene;
+package org.bgee.model.search;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,8 +17,9 @@ public class SearchMatchResult<T> {
 
     private final int totalMatchCount;
     private final List<SearchMatch<T>> searchMatches;
+    private final Class<T> type;
 
-	public SearchMatchResult(int totalMatchCount, List<SearchMatch<T>> searchMatches) {
+	public SearchMatchResult(int totalMatchCount, List<SearchMatch<T>> searchMatches, Class<T> type) {
         if (totalMatchCount < 0) {
 	        throw new IllegalArgumentException("The count of matches must be provided.");
 	    }
@@ -28,6 +29,7 @@ public class SearchMatchResult<T> {
         }
         this.totalMatchCount = totalMatchCount;
         this.searchMatches = searchMatches == null? null : Collections.unmodifiableList(searchMatches);
+        this.type = type;
 	}
 
     /**
@@ -44,9 +46,13 @@ public class SearchMatchResult<T> {
         return searchMatches;
     }
 
+    public Class<T> getType() {
+        return type;
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash(searchMatches, totalMatchCount);
+        return Objects.hash(searchMatches, totalMatchCount, type);
     }
 
     @Override
@@ -58,12 +64,13 @@ public class SearchMatchResult<T> {
         if (getClass() != obj.getClass())
             return false;
         SearchMatchResult<T> other = (SearchMatchResult<T>) obj;
-        return Objects.equals(searchMatches, other.searchMatches) && totalMatchCount == other.totalMatchCount;
+        return Objects.equals(searchMatches, other.searchMatches) && totalMatchCount == other.totalMatchCount
+                && type == other.type;
     }
 
     @Override
     public String toString() {
-        return "SearchMatchResult{matchCount=" + totalMatchCount
-                + ", searchMatches=" + searchMatches + "}";
+        return "SearchMatchResult [totalMatchCount=" + totalMatchCount + ", searchMatches=" + searchMatches + ", type="
+                + type + "]";
     }
 }

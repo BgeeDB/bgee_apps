@@ -14,9 +14,10 @@ import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.gene.Gene;
-import org.bgee.model.gene.SearchMatchResult;
-import org.bgee.model.gene.SearchMatchResultService;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.view.SearchDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -75,7 +76,7 @@ public class CommandSearch extends CommandParent {
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_ANAT_ENTITIES)) {
             String searchTerm = this.getSearchTerm();
             Integer speciesId = this.requestParameters.getSpeciesId();
-            SearchMatchResult<NamedEntity<String>> result = serviceFactory
+            SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             true, false, 0,
@@ -86,12 +87,19 @@ public class CommandSearch extends CommandParent {
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_CELL_TYPES)) {
             String searchTerm = this.getSearchTerm();
             Integer speciesId = this.requestParameters.getSpeciesId();
-            SearchMatchResult<NamedEntity<String>> result = serviceFactory
+            SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             false, true, 0,
                             SearchMatchResultService.SPHINX_MAX_RESULTS);
             display.displayAnatEntitySearchResult(searchTerm, result);
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_DEV_STAGE)) {
+            String searchTerm = this.getSearchTerm();
+            Integer speciesId = this.requestParameters.getSpeciesId();
+            Set<DevStage> result = serviceFactory.getDevStageService()
+                    .loadGroupingDevStages(Set.of(speciesId), null);
+            display.displayDevStageSearchResult(result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

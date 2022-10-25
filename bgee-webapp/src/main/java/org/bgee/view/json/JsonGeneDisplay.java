@@ -26,7 +26,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
 

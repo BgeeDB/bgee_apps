@@ -151,6 +151,19 @@ public class BgeeProperties {
     public final static String BGEE_SEARCH_INDEX_ANAT_ENTITIES_DEFAULT = null;
     /**
      * A {@code String} that is the key to access to the System property that contains the value
+     * of the sphinx strain index used to query a search.
+     *
+     * @see #BGEE_SEARCH_INDEX_STRAINS_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_STRAINS_KEY = "org.bgee.search.strains";
+    /**
+     * A {@code String} that is the default value of the strain index used to query a search.
+     *
+     * @see #BGEE_SEARCH_INDEX_STRAINS_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_STRAINS_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
      * of the sphinx autocomplete index used to query a search.
      * 
      * @see #BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT
@@ -749,6 +762,9 @@ public class BgeeProperties {
         searchAnatEntitiesIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_INDEX_ANAT_ENTITIES_KEY,
                 BGEE_SEARCH_INDEX_ANAT_ENTITIES_DEFAULT);
+        searchStrainsIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_STRAINS_KEY,
+                BGEE_SEARCH_INDEX_STRAINS_DEFAULT);
         searchAutocompleteIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT);
@@ -805,7 +821,12 @@ public class BgeeProperties {
      * A {@code String} that is the name of the anat. entities index which is used to query a search.
      */
     private final String searchAnatEntitiesIndex;
-    
+
+    /**
+     * A {@code String} that is the name of the strain index which is used to query a search.
+     */
+    private final String searchStrainsIndex;
+
     /**
      * A {@code String} that is the name of the autocomplete index which is used to query a search.
      */
@@ -939,6 +960,13 @@ public class BgeeProperties {
      */
     public String getSearchAnatEntitiesIndex() {
         return searchAnatEntitiesIndex;
+    }
+    /**
+     * @return A {@code String} that is the name of the strain index which is used to 
+     * query a search.
+     */
+    public String getSearchStrainsIndex() {
+        return searchStrainsIndex;
     }
     /**
      * @return A {@code String} that is the name of the autocomplete index which is used 

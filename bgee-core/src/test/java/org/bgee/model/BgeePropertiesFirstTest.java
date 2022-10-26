@@ -43,6 +43,7 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_URL_KEY, "/injectedsphinxurl");
         prop.put(BgeeProperties.BGEE_SEARCH_SERVER_PORT_KEY, "/injectedsphinxport");
         prop.put(BgeeProperties.BGEE_SEARCH_INDEX_GENES_KEY, "/injectedsphinxGenesIndex");
+        prop.put(BgeeProperties.BGEE_SEARCH_INDEX_STRAINS_KEY, "/injectedsphinxStrainsIndex");
         prop.put(BgeeProperties.BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY, "/injectedsphinxAutocompleteIndex");
         prop.put(BgeeProperties.BIOCONDUCTOR_RELEASE_NUMBER_KEY, "injectedbioconductor");
         prop.put(BgeeProperties.TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY, "/injectedrexec");
@@ -63,6 +64,8 @@ public class BgeePropertiesFirstTest extends BgeePropertiesParentTest {
                 bgeeProp.getSearchServerPort());
         assertEquals("Wrong property value retrieved","/injectedsphinxGenesIndex",
                 bgeeProp.getSearchGenesIndex());
+        assertEquals("Wrong property value retrieved","/injectedsphinxStrainsIndex",
+                bgeeProp.getSearchStrainsIndex());
         assertEquals("Wrong property value retrieved","/injectedsphinxAutocompleteIndex",
                 bgeeProp.getSearchAutocompleteIndex());
         assertEquals("Wrong property value retrieved","injectedbioconductor",

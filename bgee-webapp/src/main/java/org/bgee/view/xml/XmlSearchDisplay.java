@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.SearchDisplay;
@@ -78,8 +77,8 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 	}
 
     @Override
-    public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<AnatEntity> result) {
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
 

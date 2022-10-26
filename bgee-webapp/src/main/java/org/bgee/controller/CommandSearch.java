@@ -81,7 +81,17 @@ public class CommandSearch extends CommandParent {
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             true, false, 0,
                             SearchMatchResultService.SPHINX_MAX_RESULTS);
-            display.displayAnatEntitySearchResult(searchTerm, result);
+            display.displayDefaultSphinxSearchResult(searchTerm, result);
+
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_STRAINS)) {
+            String searchTerm = this.getSearchTerm();
+            Integer speciesId = this.requestParameters.getSpeciesId();
+            SearchMatchResult<String> result = serviceFactory
+                    .getSearchMatchResultService(this.prop)
+                    .searchStrainsByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
+                            0, SearchMatchResultService.SPHINX_MAX_RESULTS);
+            display.displayDefaultSphinxSearchResult(searchTerm, result);
 
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_CELL_TYPES)) {
@@ -92,7 +102,7 @@ public class CommandSearch extends CommandParent {
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             false, true, 0,
                             SearchMatchResultService.SPHINX_MAX_RESULTS);
-            display.displayAnatEntitySearchResult(searchTerm, result);
+            display.displayDefaultSphinxSearchResult(searchTerm, result);
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_DEV_STAGE)) {
             String searchTerm = this.getSearchTerm();

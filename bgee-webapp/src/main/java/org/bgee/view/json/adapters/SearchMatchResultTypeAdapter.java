@@ -40,7 +40,7 @@ public class SearchMatchResultTypeAdapter extends TypeAdapter<SearchMatchResult<
         if(value.getType() == Gene.class) {
             out.name("geneMatches");
             this.gson.getAdapter(List.class).write(out, value.getSearchMatches());
-        } else if (value.getType() == AnatEntity.class) {
+        } else {
             out.name("searchMatches");
             this.gson.getAdapter(List.class).write(out, value.getSearchMatches());
         }

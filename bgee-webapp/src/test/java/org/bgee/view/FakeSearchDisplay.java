@@ -8,8 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.NamedEntity;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 
@@ -32,8 +30,8 @@ public class FakeSearchDisplay extends FakeParentDisplay implements SearchDispla
     }
 
     @Override
-    public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<AnatEntity> result) {
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
         this.out.println("Test search anat. entity result");
     }
 

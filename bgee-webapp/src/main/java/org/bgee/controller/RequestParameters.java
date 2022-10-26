@@ -363,6 +363,13 @@ public class RequestParameters {
     public static final String ACTION_SEARCH_ANAT_ENTITIES = "anat_entity";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when search of strains
+     * result is requested.
+     * Value of the parameter page should be {@link #PAGE_SEARCH}.
+     */
+    public static final String ACTION_SEARCH_STRAINS = "strain";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
      * (see {@link URLParameters#getParamAction()}) when search of cell types
      * result is requested.
      * Value of the parameter page should be {@link #PAGE_SEARCH}.

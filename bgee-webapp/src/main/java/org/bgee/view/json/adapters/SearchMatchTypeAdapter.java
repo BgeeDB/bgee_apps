@@ -42,6 +42,9 @@ public final class SearchMatchTypeAdapter extends TypeAdapter<SearchMatch<?>> {
         } else if (value.getType() == AnatEntity.class) {
             out.name("namedEntity");
             this.gson.getAdapter(AnatEntity.class).write(out, (AnatEntity)value.getSearchedObject());
+        } else if (value.getType() == String.class) {
+            out.name("strain");
+            this.gson.getAdapter(String.class).write(out, (String)value.getSearchedObject());
         }
         out.name("match").value(value.getMatch());
         out.name("matchSource").value(value.getMatchSource().toString().toLowerCase());

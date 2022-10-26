@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.JsonHelper;
@@ -55,8 +54,8 @@ public class JsonSearchDisplay extends JsonParentDisplay implements SearchDispla
     }
 
     @Override
-    public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<AnatEntity> result) {
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
         log.traceEntry("{}. {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
@@ -76,5 +75,4 @@ public class JsonSearchDisplay extends JsonParentDisplay implements SearchDispla
                 resultHashMap);
         log.traceExit();
     }
-
 }

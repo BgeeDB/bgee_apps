@@ -64,6 +64,10 @@ public class SearchMatchResultService extends CommonService {
      */
     private final String sphinxAnatEntitySearchIndex;
     /**
+     * @see #getSphinxStrainIndex()
+     */
+    private final String sphinxStrainSearchIndex;
+    /**
      * @see #getSphinxAutocompleteIndex()
      */
     private final String sphinxAutocompleteIndex;
@@ -74,19 +78,20 @@ public class SearchMatchResultService extends CommonService {
     public SearchMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
                 serviceFactory, props.getSearchGenesIndex(), props.getSearchAnatEntitiesIndex(),
-                props.getSearchAutocompleteIndex());
+                props.getSearchStrainsIndex(), props.getSearchAutocompleteIndex());
     }
     /**
      * Construct a new {@code SearchMatchResultService} using the provided {@code SphinxClient}.
      */
     public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGeneSearchIndex,
-            String sphinxAnatEntitySearchIndex, String sphinxAutocompleteIndex) {
+            String sphinxAnatEntitySearchIndex, String sphinxStrainSearchIndex, String sphinxAutocompleteIndex) {
         super(serviceFactory);
         sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
         this.sphinxGeneSearchIndex = sphinxGeneSearchIndex;
         this.sphinxAnatEntitySearchIndex = sphinxAnatEntitySearchIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
+        this.sphinxStrainSearchIndex = sphinxStrainSearchIndex;
     }
 
     /**
@@ -106,6 +111,12 @@ public class SearchMatchResultService extends CommonService {
      */
     public String getSphinxAnatEntitySearchIndex() {
         return sphinxAnatEntitySearchIndex;
+    }
+    /**
+     * @return  The {@code String} used as name for anat. entities index
+     */
+    public String getSphinxStrainSearchIndex() {
+        return sphinxStrainSearchIndex;
     }
     /**
      * @return  The {@code String} used as name for autocomplete index
@@ -263,6 +274,65 @@ public class SearchMatchResultService extends CommonService {
 
         return log.traceExit(new SearchMatchResult<AnatEntity>(anatEntityMatches.size(),
                 anatEntityMatches, AnatEntity.class));
+    }
+
+    /**
+     * Search strains in sphinx index
+     *
+     * @param searchTerm        A {@code String} containing the query
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are species Ids
+     *                          (may be empty to search on all species).
+     * @param limitStart        An {@code int} representing the index of the first element to return.
+     * @param resultPerPage     An {@code int} representing the number of elements to return
+     * @return                  A {@code SearchMatchResult} of results (ordered).
+     */
+    public SearchMatchResult<String> searchStrainsByTerm(final String searchTerm,
+            Collection<Integer> speciesIds, int limitStart, int resultPerPage) {
+        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
+
+        if (speciesIds != null && !speciesIds.isEmpty()) {
+            try {
+                sphinxClient.SetFilter("speciesId", speciesIds.stream().mapToInt(x -> x).toArray(), false);
+            } catch (SphinxException e) {
+                throw log.throwing(new IllegalStateException(
+                        "Sphinx search has generated an exception", e));
+            }
+        }
+        // We need to get the formatted term here, even if the term is formatted
+        // in the method getSphinxResult(), to set correctly SearchMatch.
+        String formattedTerm = this.getFormattedTerm(searchTerm);
+
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage,
+                this.getSphinxStrainSearchIndex(), null);
+
+        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
+            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
+                    + result.error));
+        }
+
+        // if result is empty, return an empty list
+        if (result == null || result.totalFound == 0) {
+            return log.traceExit(new SearchMatchResult<String>(0, null, String.class));
+        }
+
+        // get mapping between attributes names and their index
+        Map<String, Integer> attrNameToIdx = new HashMap<>();
+        for (int idx = 0; idx < result.attrNames.length; idx++) {
+            attrNameToIdx.put(result.attrNames[idx], idx);
+        }
+
+        // build list of SearchMatch
+        List<SearchMatch<String>> strainMatches = Arrays.stream(result.matches)
+                .map(m -> getStrainMatch(m, formattedTerm, attrNameToIdx))
+                .sorted()
+                // collector removing duplicates. Duplicates can be present if more than one species is
+                // selected.
+                .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
+                        new TreeSet<SearchMatch<String>>(Comparator.comparing(m -> m))),
+                        ArrayList::new));
+
+        return log.traceExit(new SearchMatchResult<String>(strainMatches.size(),
+                strainMatches, String.class));
     }
 
     /**
@@ -446,6 +516,26 @@ public class SearchMatchResultService extends CommonService {
         }
         return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
                 SearchMatch.MatchSource.MULTIPLE, AnatEntity.class));
+    }
+
+    /**
+     * Convert a {@code SphinxMatch} into a {@code SearchMatch<String>}.
+     *
+     * @param match         A {@code SphinxMatch} that is the match to be converted.
+     * @param term          A {@code String} that is the query used to retrieve the {@code match}.
+     * @param attrIndexMap  A {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                      the associated values being {@code Integer}s corresponding
+     *                      to index of the attribute.
+     * @return              The {@code SearchMatch} that is the converted {@code SphinxMatch}.
+     */
+    private SearchMatch<String> getStrainMatch(final SphinxMatch match, final String term,
+                                   final Map<String, Integer> attrIndexMap) {
+        log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
+        String strain = String.valueOf(match.attrValues.get(attrIndexMap.get("strainname")));
+        //for now the only match can be the name
+        return log.traceExit(new SearchMatch<String>(strain, null,
+                    SearchMatch.MatchSource.NAME, String.class));
+
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,

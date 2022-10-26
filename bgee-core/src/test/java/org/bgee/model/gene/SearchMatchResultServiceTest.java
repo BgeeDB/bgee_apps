@@ -1,8 +1,6 @@
 package org.bgee.model.gene;
 
-import org.bgee.model.NamedEntity;
 import org.bgee.model.TestAncestor;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTOResultSet;
 import org.bgee.model.species.Species;
@@ -32,7 +30,7 @@ import static org.mockito.Mockito.when;
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
-public class SearchMatchResultServiceTest extends TestAncestor {
+public class GeneMatchResultServiceTest extends TestAncestor {
 
     @Before
     public void loadCommonMocks() {
@@ -64,8 +62,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         String term = "ENSG";
         when(sphinxClient.Query("\"" + term + "\"", "autocomplete_index")).thenReturn(sphinxResult);
 
-        SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entity_index", "autocomplete_index");
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "genes_index", "autocomplete_index");
         List<String> autocompleteResult = service.autocomplete(term, 100);
 
         assertNotNull(autocompleteResult);
@@ -73,10 +70,10 @@ public class SearchMatchResultServiceTest extends TestAncestor {
     }
 
     /**
-     * Test {@link SearchMatchResultService#searchGenesByTerm(String, Collection, int, int)}.
+     * Test {@link GeneMatchResultService#searchByTerm(String, Collection, int, int)}.
      */
     @Test
-    public void shouldFindGeneByTerm() throws SphinxException {
+    public void shouldFindByTerm() throws SphinxException {
         SphinxClient sphinxClient = mock(SphinxClient.class);
 
         SphinxResult sphinxResult = new SphinxResult();
@@ -106,21 +103,20 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         String term = "Syn2";
         when(sphinxClient.Query("\"" + term + "\"", "genes_index")).thenReturn(sphinxResult);
 
-        SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<GeneMatch> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "genes_index", "autocomplete_index");
+        GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(1, geneMatchResult.getTotalMatchCount());
-        assertNotNull(geneMatchResult.getSearchMatches());
-        assertEquals(1, geneMatchResult.getSearchMatches().size());
+        assertNotNull(geneMatchResult.getGeneMatches());
+        assertEquals(1, geneMatchResult.getGeneMatches().size());
         
         Species expSpecies = new Species(11, "human", null, "Homo", "sapiens", null, null, null, null, null, null, null, 1);
         Gene expGene = new Gene("ENSG0086", "Name1", "Desc1", 
                 new HashSet<>(Arrays.asList("Syn1", "Syn2", "Syn3")), null, expSpecies, new GeneBioType("type1"), 1);
 
         assertEquals(new GeneMatch(expGene, "syn2", GeneMatch.MatchSource.SYNONYM),
-                geneMatchResult.getSearchMatches().get(0));
-        Gene actualGene = geneMatchResult.getSearchMatches().get(0).getGene();
+                geneMatchResult.getGeneMatches().get(0));
+        Gene actualGene = geneMatchResult.getGeneMatches().get(0).getGene();
         Species actualSpecies = actualGene.getSpecies();
         assertEquals(expSpecies.getId(), actualSpecies.getId());
         assertEquals(expSpecies.getName(), actualSpecies.getName());
@@ -135,78 +131,22 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         assertEquals(expGene.getGeneMappedToSameGeneIdCount(), actualGene.getGeneMappedToSameGeneIdCount());
     }
 
-    @Test
-    public void shouldFindAnatEntityByTerm() throws SphinxException {
-        SphinxClient sphinxClient = mock(SphinxClient.class);
-
-        SphinxResult sphinxResult = new SphinxResult();
-        sphinxResult.totalFound = 1;
-        sphinxResult.attrNames = new String[]{
-                "anatentityid", "anatentityname", "speciesid", "type"};
-        SphinxMatch sphinxMatch1 = new SphinxMatch(1, 1);
-        sphinxMatch1.attrValues = new ArrayList();
-        sphinxMatch1.attrValues.add("ID:0001");  //anatEntityId
-        sphinxMatch1.attrValues.add("anat1");    //anatEntityName
-        sphinxMatch1.attrValues.add("9606");     //speciesId
-        sphinxMatch1.attrValues.add(1);          //type
-        SphinxMatch sphinxMatch2 = new SphinxMatch(1, 1);
-        sphinxMatch2.attrValues.add("ID:0001");  //anatEntityId
-        sphinxMatch2.attrValues.add("anat1");    //anatEntityName
-        sphinxMatch2.attrValues.add("9606");     //speciesId
-        sphinxMatch2.attrValues.add(2);          //type
-        SphinxMatch sphinxMatch3 = new SphinxMatch(1, 1);
-        sphinxMatch3.attrValues.add("ID:0001");  //anatEntityId
-        sphinxMatch3.attrValues.add("anat1");    //anatEntityName
-        sphinxMatch3.attrValues.add("10090");    //speciesId
-        sphinxMatch3.attrValues.add(2);          //type
-        SphinxMatch sphinxMatch4 = new SphinxMatch(1, 1);
-        sphinxMatch4.attrValues.add("ID:0002");  //anatEntityId
-        sphinxMatch4.attrValues.add("an1");    //anatEntityName
-        sphinxMatch4.attrValues.add("9606");    //speciesId
-        sphinxMatch4.attrValues.add(2);          //type
-
-        sphinxResult.matches = new SphinxMatch[] {sphinxMatch1, sphinxMatch2,
-                sphinxMatch3};
-
-        String term = "anat";
-        when(sphinxClient.Query("\"" + term + "\"", "anat_entities_index")).thenReturn(sphinxResult);
-
-        SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<NamedEntityMatch<AnatEntity, String>> anatMatchResult =
-                service.searchAnatEntitiesByTerm(term, null, true, true, 0, 100);
-
-        assertEquals(3, anatMatchResult.getTotalMatchCount());
-        assertNotNull(anatMatchResult.getSearchMatches());
-        assertEquals(3, anatMatchResult.getSearchMatches().size());
-
-        AnatEntity expAE = new AnatEntity("ID:0001", "anat1", null);
-
-        assertEquals(new NamedEntityMatch<AnatEntity, String>(expAE, "anat", NamedEntityMatch.MatchSource.NAME),
-                anatMatchResult.getSearchMatches().get(0));
-        NamedEntity<String> actualAE = anatMatchResult.getSearchMatches().get(0).getNamedEntity();
-        assertEquals(expAE.getId(), actualAE.getId());
-        assertEquals(expAE.getName(), actualAE.getName());
-        assertEquals(expAE.getDescription(), actualAE.getDescription());
-    }
-
     /**
      * Test {@link GeneMatchResultService#searchByTerm(String, Collection, int, int)} 
      * of a search returning no result.
      */
     @Test
-    public void shouldFindGeneByTerm_noResult() throws SphinxException {
+    public void shouldFindByTerm_noResult() throws SphinxException {
         SphinxClient sphinxClient = mock(SphinxClient.class);
 
         String term = "XXX";
 
         when(sphinxClient.Query(term, "prefix_genes")).thenReturn(null);
 
-        SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "autocomplete_index");
-        SearchMatchResult<GeneMatch> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
+        GeneMatchResultService service = new GeneMatchResultService(sphinxClient, this.serviceFactory, "genes_index", "autocomplete_index");
+        GeneMatchResult geneMatchResult = service.searchByTerm(term, null, 0, 100);
 
         assertEquals(0, geneMatchResult.getTotalMatchCount());
-        assertNull(geneMatchResult.getSearchMatches());
+        assertNull(geneMatchResult.getGeneMatches());
     }
 }

@@ -35,12 +35,12 @@ import static org.bgee.model.gene.GeneMatch.MatchSource.XREF;
  * @see     GeneMatchResult
  * @since   Bgee 14, Apr. 2019
  */
-public class SearchMatchResultService extends CommonService {
+public class GeneMatchResultService extends CommonService {
     
     /**
      * {@code Logger} of the class.
      */
-    private final static Logger log = LogManager.getLogger(SearchMatchResultService.class.getName());
+    private final static Logger log = LogManager.getLogger(GeneMatchResultService.class.getName());
 
     // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
     private static final int SPHINX_CONNECT_TIMEOUT = 3000;
@@ -53,7 +53,7 @@ public class SearchMatchResultService extends CommonService {
     /**
      * @see #getSphinxGenesIndex()
      */
-    private final String sphinxSearchIndex;
+    private final String sphinxGenesIndex;
     /**
      * @see #getSphinxAutocompleteIndex()
      */
@@ -62,19 +62,19 @@ public class SearchMatchResultService extends CommonService {
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code BgeeProperties}. 
      */
-    public SearchMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
+    public GeneMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
                 serviceFactory, props.getSearchGenesIndex(), props.getSearchAutocompleteIndex());
     }
     /**
      * Construct a new {@code GeneMatchResultService} using the provided {@code SphinxClient}. 
      */
-    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxSearchIndex,
+    public GeneMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGenesIndex,
             String sphinxAutocompleteIndex) {
         super(serviceFactory);
         sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
-        this.sphinxSearchIndex = sphinxSearchIndex;
+        this.sphinxGenesIndex = sphinxGenesIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
     }
 
@@ -87,8 +87,8 @@ public class SearchMatchResultService extends CommonService {
     /**
      * @return  The {@code String} used as name for genes index
      */
-    public String getSphinxSearchIndex() {
-        return sphinxSearchIndex;
+    public String getSphinxGenesIndex() {
+        return sphinxGenesIndex;
     }
     /**
      * @return  The {@code String} used as name for autocomplete index
@@ -107,7 +107,7 @@ public class SearchMatchResultService extends CommonService {
      * @param resultPerPage An {@code int} representing the number of elements to return
      * @return              A {@code GeneMatchResult} of results (ordered).
      */
-    public SearchMatchResult<GeneMatch> searchGenesByTerm(final String searchTerm, Collection<Integer> speciesIds,
+    public GeneMatchResult searchByTerm(final String searchTerm, Collection<Integer> speciesIds,
                                         int limitStart, int resultPerPage) {
         log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
 
@@ -119,7 +119,7 @@ public class SearchMatchResultService extends CommonService {
         // in the method getSphinxResult(), to set correctly GeneMatches.
         String formattedTerm = this.getFormattedTerm(searchTerm);
 
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxSearchIndex(), null);
+        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxGenesIndex(), null);
 
         if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
             throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
@@ -128,7 +128,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<GeneMatch>(0, null));
+            return log.traceExit(new GeneMatchResult(0, null));
         }
 
         // get mapping between attributes names and their index
@@ -146,7 +146,7 @@ public class SearchMatchResultService extends CommonService {
                 .sorted()
                 .collect(Collectors.toList());
 
-        return log.traceExit(new SearchMatchResult<GeneMatch>(result.totalFound, geneMatches));
+        return log.traceExit(new GeneMatchResult(result.totalFound, geneMatches));
     }
 
     /**

@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Comparator;
-import java.util.Objects;
 
 /**
  * This class encapsulates a result to a gene search. A match can either be on gene id,
@@ -17,12 +16,11 @@ import java.util.Objects;
  * @author  Philippe Moret
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @author  Julien Wollbrett
- * @version Bgee 15, Oct. 2022
+ * @version Bgee 14, May 2019
  * @since   Bgee 13, July 2016
  * @see GeneMatchResult
  */
-public class GeneMatch extends SearchMatch implements Comparable<GeneMatch> {
+public class GeneMatch implements Comparable<GeneMatch> {
 
     /**
      * {@code Logger} of the class.
@@ -40,16 +38,16 @@ public class GeneMatch extends SearchMatch implements Comparable<GeneMatch> {
     }
 
     private final Gene gene;
-
+    private final String term;
     private final MatchSource matchSource;
 
 	public GeneMatch(Gene gene, String term, MatchSource matchSource) {
-	    super(term);
 	    if (gene == null || matchSource == null) {
-            throw new IllegalArgumentException("A MatchSource and a Gene must be provided.");
-        }
+	        throw new IllegalArgumentException("A Gene and a MatchSource must be provided.");
+	    }
 		this.gene = gene;
-        this.matchSource = matchSource;
+		this.term = term;
+		this.matchSource = matchSource;
 	}
 
 	/**
@@ -58,13 +56,19 @@ public class GeneMatch extends SearchMatch implements Comparable<GeneMatch> {
 	public Gene getGene() {
 		return gene;
 	}
-
-    /**
-     * @return A {@code MatchSource} representing how the gene was identified from the search term.
-     */
-    public MatchSource getMatchSource() {
-        return matchSource;
-    }
+	/**
+	 * @return A {@code MatchSource} representing how the gene was identified from the search term.
+	 */
+	public MatchSource getMatchSource() {
+	    return matchSource;
+	}
+	/**
+	 * @return  A {@code String} representing the matched synonym or x-ref.
+     *          It is null when there is no synonym or x-ref match.
+	 */
+	public String getTerm() {
+		return term;
+	}
 
     /**
      * @return  A {@code String} representing the match.
@@ -103,21 +107,39 @@ public class GeneMatch extends SearchMatch implements Comparable<GeneMatch> {
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + Objects.hash(gene, matchSource);
+        int result = 1;
+        result = prime * result + gene.hashCode();
+        result = prime * result + ((term == null) ? 0 : term.hashCode());
+        result = prime * result + matchSource.hashCode();
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!super.equals(obj))
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         GeneMatch other = (GeneMatch) obj;
-        return Objects.equals(gene, other.gene) && matchSource == other.matchSource;
+        if (!gene.equals(other.gene)) {
+            return false;
+        }
+        if (term == null) {
+            if (other.term != null) {
+                return false;
+            }
+        } else if (!term.equals(other.term)) {
+            return false;
+        }
+        if (!matchSource.equals(other.matchSource)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -128,9 +150,9 @@ public class GeneMatch extends SearchMatch implements Comparable<GeneMatch> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("GeneMatch [").append(super.toString()).append(", gene=").append(gene)
-                .append(", matchSource=").append(matchSource).append("]");
+        builder.append("GeneMatch [gene=").append(gene).append(", term=").append(term)
+        .append(", matchSource=").append(matchSource)
+        .append("]");
         return builder.toString();
     }
-
 }

@@ -353,21 +353,6 @@ public class RequestParameters {
      * Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_EXPASY_RESULT = "expasy_result";
-
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter
-     * (see {@link URLParameters#getParamAction()}) when search of anat. entities
-     * result is requested.
-     * Value of the parameter page should be {@link #PAGE_SEARCH}.
-     */
-    public static final String ACTION_SEARCH_ANAT_ENTITIES = "anat_entity";
-    /**
-     * A {@code String} that is the value taken by the {@code action} parameter
-     * (see {@link URLParameters#getParamAction()}) when search of cell types
-     * result is requested.
-     * Value of the parameter page should be {@link #PAGE_SEARCH}.
-     */
-    public static final String ACTION_SEARCH_CELL_TYPES = "cell_type";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when resources page about R packages
@@ -2571,8 +2556,7 @@ public class RequestParameters {
      */
     public boolean isJsonDisplayType() {
         log.traceEntry();
-        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) == null ||
-                this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
+        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_JSON)){
             return log.traceExit(true);

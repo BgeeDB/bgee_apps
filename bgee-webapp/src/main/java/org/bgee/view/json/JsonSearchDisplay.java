@@ -10,10 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.NamedEntityMatch;
-import org.bgee.model.gene.SearchMatchResult;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
 
@@ -51,18 +47,6 @@ public class JsonSearchDisplay extends JsonParentDisplay implements SearchDispla
         }
         this.sendResponse("Gene autocompletion request", resultHashMap);
 
-        log.traceExit();
-    }
-
-    @Override
-    public void displayAnatEntitySearchResult(String searchTerm,
-            SearchMatchResult<NamedEntityMatch<AnatEntity,String>> result) {
-        log.traceEntry("{}. {}", searchTerm, result);
-        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
-        resultHashMap.put("query", searchTerm);
-        resultHashMap.put("result", result);
-        this.sendResponse("Search result",
-                resultHashMap);
         log.traceExit();
     }
 }

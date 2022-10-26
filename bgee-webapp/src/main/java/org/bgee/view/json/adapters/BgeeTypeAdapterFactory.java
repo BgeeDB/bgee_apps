@@ -67,22 +67,10 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             return log.traceExit(result);
         }
         if (SearchMatch.class.isAssignableFrom(rawClass) ) {
-//            Type type = typeToken.getRawType().getClass().getGenericSuperclass();
-//            if (type instanceof ParameterizedType) {
-//                Type[] typeArguments = ((ParameterizedType) type).getActualTypeArguments();
-//                if(typeArguments.length == 1 && typeArguments[0] instanceof Gene) {
-                    @SuppressWarnings("unchecked")
-                    TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter(gson);
-                    return log.traceExit(result);
-                }
-//            }
-//        }
-
-//        if (SearchMatch.class.isAssignableFrom(rawClass) ) {
-//            @SuppressWarnings("unchecked")
-//            TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
-//            return log.traceExit(result);
-//        }
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter(gson);
+            return log.traceExit(result);
+        }
         if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new GeneHomologsTypeAdapter(gson, this.rpSupplier);

@@ -12,6 +12,7 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
+import org.bgee.model.ontology.Ontology;
 import org.bgee.model.search.SearchMatch;
 import org.bgee.model.search.SearchMatchResult;
 
@@ -59,6 +60,11 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             //in Gson factory implementations
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
+            return log.traceExit(result);
+        }
+        if (Ontology.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new OntologyTypeAdapter<>(gson);
             return log.traceExit(result);
         }
         if (SearchMatchResult.class.isAssignableFrom(rawClass) ) {

@@ -117,7 +117,7 @@ public class JsonFactory extends ViewFactory {
     }
 
     @Override
-    public RawDataDisplay getRawCallDisplay() throws IOException {
+    public DataDisplay getDataDisplay() throws IOException {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
     }
 

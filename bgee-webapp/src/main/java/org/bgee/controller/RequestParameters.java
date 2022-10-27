@@ -215,7 +215,7 @@ public class RequestParameters {
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
      */
-    public static final String PAGE_RAW_DATA = "raw_data";
+    public static final String PAGE_DATA = "data";
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -3024,10 +3024,10 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      *          category "raw_data"
      */
-    public boolean isARawDataPageCategory() {
+    public boolean isADataPageCategory() {
         log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DATA)) {
             return log.traceExit(true);
         }
         return log.traceExit(false);

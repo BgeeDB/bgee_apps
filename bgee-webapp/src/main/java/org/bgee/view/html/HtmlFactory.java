@@ -133,9 +133,9 @@ public class HtmlFactory extends ViewFactory {
     }
 
     @Override
-    public RawDataDisplay getRawCallDisplay() throws IOException {
+    public DataDisplay getDataDisplay() throws IOException {
         log.traceEntry();
-        return log.traceExit(new HtmlRawDataDisplay(response, requestParameters, prop, jsonHelper, this));
+        return log.traceExit(new HtmlDataDisplay(response, requestParameters, prop, jsonHelper, this));
     }
 
     @Override

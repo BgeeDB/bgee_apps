@@ -122,7 +122,7 @@ public class FakeFactory extends ViewFactory {
     }
 
     @Override
-    public RawDataDisplay getRawCallDisplay() throws IOException {
+    public DataDisplay getDataDisplay() throws IOException {
         return null;
     }
 

@@ -100,7 +100,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     //already capable of considering only direct relations.
     protected OntologyBase(Collection<T> elements, Collection<RelationTO<U>> relations,
             Collection<RelationType> relationTypes, ServiceFactory serviceFactory, Class<T> type) {
-        log.entry(elements, relations, relationTypes, serviceFactory, type);
+        log.traceEntry("{}, {}, {}, {}, {}", elements, relations, relationTypes, serviceFactory, type);
 
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of OntologyBase");
@@ -235,7 +235,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getAncestors(T element) {
-        log.entry(element);
+        log.traceEntry("{}", element);
         return log.traceExit(this.getAncestors(element, false));
     }
 
@@ -255,7 +255,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public List<T> getOrderedAncestors(T element) {
-        log.entry(element);
+        log.traceEntry("{}", element);
         return log.traceExit(this.getOrderedAncestors(element, null));
     }
 
@@ -272,7 +272,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes) {
-        log.entry(element, relationTypes);
+        log.traceEntry("{}, {}", element, relationTypes);
         return log.traceExit(this.getAncestors(element, relationTypes, false));
     }
     
@@ -295,7 +295,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public List<T> getOrderedAncestors(T element, Collection<RelationType> relationTypes) {
-        log.entry(element, relationTypes);
+        log.traceEntry("{}, {}", element, relationTypes);
         if (element == null) {
             throw new IllegalArgumentException("Provided element is null");
         }
@@ -326,7 +326,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getAncestors(T element, boolean directRelOnly) {
-        log.entry(element, directRelOnly);
+        log.traceEntry("{}, {}", element, directRelOnly);
         return log.traceExit(this.getAncestors(element, null, directRelOnly));
     }
     
@@ -348,7 +348,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getAncestors(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
-        log.entry(element, relationTypes, directRelOnly);
+        log.traceEntry("{}, {}, {}", element, relationTypes, directRelOnly);
         return log.traceExit(this.getRelatives(element, this.getElements(), true, relationTypes, directRelOnly, 
                 this.getRelations()));
     }
@@ -365,7 +365,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getDescendants(T element) {
-        log.entry(element);
+        log.traceEntry("{}", element);
         return log.traceExit(this.getDescendants(element, false));
     }
 
@@ -382,7 +382,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes) {
-        log.entry(element, relationTypes);
+        log.traceEntry("{}, {}", element, relationTypes);
         return log.traceExit(this.getDescendants(element, relationTypes, false));
     }
 
@@ -403,7 +403,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getDescendants(T element, boolean directRelOnly) {
-        log.entry(element, directRelOnly);
+        log.traceEntry("{}, {}", element, directRelOnly);
         return log.traceExit(this.getDescendants(element, null, directRelOnly));
     }
 
@@ -426,7 +426,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                                  in this ontology.
      */
     public Set<T> getDescendants(T element, Collection<RelationType> relationTypes, boolean directRelOnly) {
-        log.entry(element, relationTypes, directRelOnly);
+        log.traceEntry("{}, {}, {}", element, relationTypes, directRelOnly);
         return log.traceExit(this.getRelatives(element, this.getElements(), false, relationTypes, directRelOnly, 
                 this.getRelations()));
     }
@@ -441,7 +441,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                      of the given {@code element}
      */
     public Set<T> getDescendantsUntilSubLevel(T element, int subLevelMax) {
-        log.entry(element, subLevelMax);
+        log.traceEntry("{}, {}", element, subLevelMax);
         if (subLevelMax < 1) {
             throw log.throwing(new IllegalArgumentException("Sub-level should be stricly greater than 0"));
         }
@@ -499,8 +499,8 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     protected Set<T> getRelatives(T element, Set<T> elementsToConsider, boolean isAncestor, 
             Collection<RelationType> relationTypes, boolean directRelOnly, 
             Set<RelationTO<U>> relationsToConsider) {
-        log.entry(element, elementsToConsider, isAncestor, relationTypes, directRelOnly, 
-                relationsToConsider);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", element, elementsToConsider, isAncestor,
+                relationTypes, directRelOnly, relationsToConsider);
         log.trace("Start retrieving relatives for {}", element);
         
         if (elementsToConsider == null) {
@@ -514,11 +514,8 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         }
         assert element != null;
 
-        final Set<RelationTO.RelationType> usedRelationTypes = (relationTypes == null? 
-                EnumSet.noneOf(RelationType.class): relationTypes)
-                .stream()
-                .map(OntologyBase::convertRelationType)
-                .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class)));
+        final EnumSet<RelationTO.RelationType> usedRelationTypes = relationTypes == null?
+                EnumSet.noneOf(RelationTO.RelationType.class): convertRelationTypes(relationTypes);
         log.trace("Used relation types: {}", usedRelationTypes);
         
         Set<RelationTO<U>> toKeep = null;
@@ -569,7 +566,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      * @return          The {@code List} of ordered {@code RelationTO}s of this ontology.
      */
     protected List<RelationTO<U>> getOrderedRelations(T element) {
-        log.entry(element);
+        log.traceEntry("{}", element);
         
         if (!this.type.equals(DevStage.class) && !this.type.equals(Taxon.class)) {
             //XXX: Each element of taxonomy and dev. stage ontology have only one parent
@@ -616,7 +613,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      */
     public Set<T> getLeastCommonAncestors(Collection<T> elements, Collection<RelationType> relationTypes)
             throws IllegalArgumentException {
-        log.entry(elements, relationTypes);
+        log.traceEntry("{}, {}", elements, relationTypes);
         if (elements == null || elements.size() < 2) {
             throw log.throwing(new IllegalArgumentException(
                     "At least 2 elements must be provided to retrieve least common ancestors"));
@@ -677,7 +674,7 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      *                      of other elements in {@code elements}.
      */
     public Set<T> getAncestorsAmongElements(Collection<T> elements, Collection<RelationType> relationTypes) {
-        log.entry(elements, relationTypes);
+        log.traceEntry("{}, {}", elements, relationTypes);
         if (elements == null || elements.isEmpty()) {
             return log.traceExit(new HashSet<>());
         }
@@ -688,6 +685,54 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
     }
 
     /**
+     * Returns the elements that have no ancestor by any relation of any type
+     * (ontology roots).
+     *
+     * @return  A {@code Set} of {@code T}s that are the roots of this {@code Ontology}.
+     * @see #getRootElements(Collection)
+     */
+    public Set<T> getRootElements() {
+        log.traceEntry();
+        return log.traceExit(this.getRootElements(null));
+    }
+    /**
+     * Returns the elements that have no ancestor by any relation of the specified types
+     * (ontology roots). It means that the returned ontology roots could have ancestors
+     * through other types of relations.
+     *
+     * @param relationTypes A {@code Collection} providing the {@code RelationType}s
+     *                      to consider to check for absence of any ancestor for the root terms.
+     *                      Can be {@code null} or empty to consider all relation types.
+     * @return              A {@code Set} of {@code T}s that are the roots of this {@code Ontology}
+     *                      considering the requested {@code relationTypes}.
+     */
+    public Set<T> getRootElements(Collection<RelationType> relationTypes) {
+        log.traceEntry("{}", relationTypes);
+
+        //If any relation type is requested, no need to filter the relations, we can directly retrieve
+        //any term that is the source of a relation
+        Set<T> elementsWithAncestors = null;
+        if (relationTypes == null || relationTypes.isEmpty()) {
+            elementsWithAncestors = new HashSet<>(relationsBySourceElement.keySet());
+
+        } else {
+            //otherwise we filter the relations to consider
+            EnumSet<RelationTO.RelationType> convertedRelTypes = convertRelationTypes(relationTypes);
+            elementsWithAncestors = relationsBySourceElement.entrySet().stream()
+                    .filter(e -> e.getValue().stream()
+                            .anyMatch(relTO -> convertedRelTypes.contains(relTO.getRelationType())))
+                    .map(e -> e.getKey())
+                    .collect(Collectors.toSet());
+        }
+
+        //Now we identify the roots
+        Set<T> roots = new HashSet<>(elements.values());
+        roots.removeAll(elementsWithAncestors);
+
+        return log.traceExit(roots);
+    }
+
+    /**
      * Convert a {@code RelationType} from {@code OntologyBase} to a {@code RelationType} 
      * from {@code RelationTO}.
      * 
@@ -695,8 +740,9 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
      * @return          The converted {@code RelationTO.RelationType}.
      * @throws IllegalStateException    If {@code relType} is not supported.
      */
-    protected static RelationTO.RelationType convertRelationType(RelationType relType) throws IllegalStateException{
-        log.entry(relType);
+    protected static RelationTO.RelationType convertRelationType(RelationType relType)
+            throws IllegalStateException {
+        log.traceEntry("{}", relType);
         switch (relType) {
         case ISA_PARTOF: 
             return log.traceExit(RelationTO.RelationType.ISA_PARTOF);
@@ -707,6 +753,28 @@ public abstract class OntologyBase<T extends NamedEntity<U> & OntologyElement<T,
         default: 
             throw log.throwing(new IllegalStateException("Unsupported TO relation type: " + relType));
         }
+    }
+    /**
+     * Convert a {@code Collection} of {@code RelationType}s from {@code OntologyBase}
+     * to an {@code EnumSet} of {@code RelationType}s from {@code RelationTO}.
+     * <p>
+     * If the provided {@code Collection} is {@code null}, this method returns {@code null} as well.
+     * If the provided {@code Collection} is empty, this method returns an empty {@code EnumSet} as well.
+     *
+     * @param relTypes  A {@code Collection} of {@code OntologyBase.RelationType}s to convert.
+     * @return          A converted {@code EnumSet} of {@code RelationTO.RelationType}s.
+     * @throws IllegalStateException    If a {@code RelationTO.RelationType} is not supported for conversion.
+     */
+    protected static EnumSet<RelationTO.RelationType> convertRelationTypes(Collection<RelationType> relTypes)
+            throws IllegalStateException {
+        log.traceEntry("{}", relTypes);
+        if (relTypes == null) {
+            return log.traceExit((EnumSet<RelationTO.RelationType>) null);
+        }
+
+        return log.traceExit(relTypes.stream()
+                .map(OntologyBase::convertRelationType)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationTO.RelationType.class))));
     }
 
     @Override

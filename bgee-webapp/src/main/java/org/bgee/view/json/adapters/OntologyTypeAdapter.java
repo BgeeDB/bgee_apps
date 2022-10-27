@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -56,7 +55,6 @@ public class OntologyTypeAdapter<T extends NamedEntity<U> & OntologyElement<T, U
             }
         }
         JsonElement jsonElement = gson.toJsonTree(arrayOfDesc);
-        Map.entry("Ontology", jsonElement);
         gson.toJson(jsonElement, out);
     }
 

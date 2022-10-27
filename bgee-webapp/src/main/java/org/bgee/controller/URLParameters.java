@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandRPackage.PropagationParam;
+import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -52,10 +53,10 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 14, May 2019
+ * @version Bgee 15.0, Oct. 2022
  * @since   Bgee 13, Nov. 2014
- * @see URLParameters.Parameter
- * @see	RequestParameters
+ * @see     URLParameters.Parameter
+ * @see     RequestParameters
  */
 //XXX: I think we should add support for Enum types, e.g., for expression type
 public class URLParameters {
@@ -64,7 +65,7 @@ public class URLParameters {
 
     // ********************************************************
     //
-    //	Constants to provide URLParameter's default values 
+    //    Constants to provide URLParameter's default values
     //
     // ********************************************************
 
@@ -113,14 +114,8 @@ public class URLParameters {
     // *************************************
     //
     // Parameters declaration
-    //
-    // Reminder : parameters are declared in alphabetic order in the class but added to 
-    // the list according to there desired order in the URL.
-    //	
-    //
     // !!!! DON'T FORGET TO ADD ANY NEW PARAMS TO List<Parameter<?>> list !!!!
     //
-    // 
     // *************************************
 
     /**
@@ -184,6 +179,14 @@ public class URLParameters {
     private static final Parameter<Boolean> DISPLAY_REQUEST_PARAMS = 
             new Parameter<Boolean>("display_rp",
             false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} defining whether to display detailed information
+     * about the {@code RequestParameters} corresponding to a request as part of its response.
+     * Corresponds to the URL parameter "detailed_rp".
+     */
+    private static final Parameter<Boolean> DETAILED_REQUEST_PARAMS =
+            new Parameter<Boolean>("detailed_rp",
+            false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     
     
     /**
@@ -192,7 +195,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "gene_id".
      */
     private static final Parameter<String> GENE_ID = 
-    		new Parameter<String>("gene_id", false,false, null, false, false, 50, DEFAULT_FORMAT, String.class);
+            new Parameter<String>("gene_id", true, false, null, true, false, 50, DEFAULT_FORMAT, String.class);
 
     /**
      * A {@code Parameter<String>} that contains the gene IDs to be used.
@@ -208,7 +211,7 @@ public class URLParameters {
      * Corresponds to the URL parameter "species_id".
      */
     private static final Parameter<Integer> SPECIES_ID = 
-            new Parameter<Integer>("species_id", false,false, null, false, false, 10,
+            new Parameter<Integer>("species_id", false, false, null, true, false, 10,
                     DEFAULT_FORMAT, Integer.class);
     
     /**
@@ -217,8 +220,8 @@ public class URLParameters {
      * Corresponds to the URL parameter "query".
      */
     private static final Parameter<String> QUERY = 
-    		new Parameter<>("query", false,false, null, false, false, 
-    				DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+            new Parameter<>("query", false, false, null, false, false,
+                    DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
     /**
      * A {@code Parameter<String>} that contains the species IDs used 
@@ -348,6 +351,89 @@ public class URLParameters {
     private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the cell type IDs to be used.
+     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
+     * and can be requested as such, but it is sometimes important to make the distinction.
+     * Corresponds to the URL parameter "cell_type_id".
+     */
+    private static final Parameter<String> CELL_TYPE = new Parameter<>("cell_type_id",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the sexes requested.
+     * Corresponds to the URL parameter "sex".
+     */
+    private static final Parameter<String> SEX = new Parameter<String>("sex",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SexEnum.class).stream()
+                    .map(e -> e.name().length())
+                    .max(Comparator.naturalOrder()).get()),
+            "(?i:" + RequestParameters.ALL_VALUE + "|" + EnumSet.allOf(SexEnum.class).stream()
+                .map(e -> e.name())
+                .collect(Collectors.joining("|")) + ")",
+            String.class);
+    /**
+     * A {@code Parameter<String>} that contains the strains requested.
+     * Corresponds to the URL parameter "strain".
+     */
+    private static final Parameter<String> STRAIN = new Parameter<>("strain",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+
+//    /**
+//     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of
+//     * an ontology should be displayed. (and not only structures with the parent manually
+//     * expanded by the user). Category of the parameter: ontology display parameter.
+//     * Corresponds to the URL parameter "all_organs".
+//     */
+//    private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
+//            "all_organs",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE,
+//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
+//
+//    /**
+//    * A {@code Parameter<Integer>} defining for which data types
+//    * (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed.
+//    * It is used when we need to focus on a specific data types (e.g.,
+//    * when following a link to display only EST raw data),
+//    * without modifying the data type originally requested by the user.
+//    * Basically, it allows to override model.data.expressionData.DataTypeTO#dataType,
+//    * without needing to eventually regenerate a key because it is a storable parameter.
+//    * Values correspond to values defined for
+//    * {@code model.data.expressionData.DataTypeTO#dataType}
+//    * Category of the parameter: query engines parameters.
+//    * Corresponds to the URL parameter "chosen_data_type".
+//    */
+//    private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
+//            "chosen_data_type",
+//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE,
+//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+//
+
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to include substages
+     * of developmental stages. Corresponds to the URL parameter "stage_descendant".
+     */
+    private static final Parameter<Boolean> STAGE_DESCENDANT = new Parameter<Boolean>(
+            "stage_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to include descendants
+     * of anatomical entities. Corresponds to the URL parameter "anat_entity_descendant".
+     */
+    private static final Parameter<Boolean> ANAT_ENTITY_DESCENDANT = new Parameter<Boolean>(
+            "anat_entity_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to include descendants
+     * of cell types. Cell types are also anatomical entities (see {@link #ANAT_ENTITY_DESCENDANT},
+     * and can be requested as such, but in some cases it is important to make the distinction.
+     * Corresponds to the URL parameter "cell_type_descendant".
+     */
+    private static final Parameter<Boolean> CELL_TYPE_DESCENDANT = new Parameter<Boolean>(
+            "cell_type_descendant", false, false, null, true, false, 5, DEFAULT_FORMAT, Boolean.class);
+
     /**
      * A {@code Parameter<String>} that contains the propagation to be used.
      * Corresponds to the URL parameter "propagation".
@@ -495,48 +581,52 @@ public class URLParameters {
                    + ")*", 
              String.class);
     
-//    /**
-//     * A {@code Parameter<Boolean>} to determine whether all anatomical structures of 
-//     * an ontology should be displayed. (and not only structures with the parent manually
-//     * expanded by the user). Category of the parameter: ontology display parameter.
-//     * Corresponds to the URL parameter "all_organs".
-//     */
-//    private static final Parameter<Boolean> ALL_ORGANS = new Parameter<Boolean>(
-//            "all_organs",
-//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Boolean.class);
-//
-//    /**
-//    * A {@code Parameter<Integer>} defining for which data types 
-//    * (i.e., EST, Affy, in situ, RNA-Seq) expression data should be computed. 
-//    * It is used when we need to focus on a specific data types (e.g., 
-//    * when following a link to display only EST raw data), 
-//    * without modifying the data type originally requested by the user. 
-//    * Basically, it allows to override model.data.expressionData.DataTypeTO#dataType, 
-//    * without needing to eventually regenerate a key because it is a storable parameter.
-//    * Values correspond to values defined for 
-//    * {@code model.data.expressionData.DataTypeTO#dataType}
-//    * Category of the parameter: query engines parameters. 
-//    * Corresponds to the URL parameter "chosen_data_type".
-//    */
-//    private static final Parameter<Integer> CHOSEN_DATA_TYPE = new Parameter<Integer>(
-//            "chosen_data_type",
-//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
-//
-//
-//
-//    /**
-//     * A {@code Parameter<Boolean>} most of the time used to define whether algorithms
-//     * should include substages of a developmental stage, when computing its 
-//     * expression data. Used for ontology display, but also for expression search engines.
-//     * Category of the parameter: ontology display parameter and query engines parameters. 
-//     * Corresponds to the URL parameter "stage_children".
-//     */
-//    private static final Parameter<Boolean> STAGE_CHILDREN = new Parameter<Boolean>(
-//            "stage_children",
-//            DEFAULT_ALLOWS_MULTIPLE_VALUES, DEFAULT_IS_STORABLE, DEFAULT_IS_SECURE, 
-//            DEFAULT_MAX_SIZE, DEFAULT_FORMAT,Boolean.class);
+    /**
+     * A {@code Parameter<String>} defining the requested experiment or assay IDs.
+     * Corresponds to the URL parameter "exp_assay_id".
+     */
+    private static final Parameter<String> EXP_ASSAY_ID = new Parameter<String>("exp_assay_id",
+            true, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE, DEFAULT_FORMAT,
+            String.class);
+
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to obtain data results.
+     * Corresponds to the URL parameter "get_results".
+     */
+    private static final Parameter<Boolean> GET_RESULTS = new Parameter<Boolean>(
+            "get_results", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to obtain total data result count.
+     * Corresponds to the URL parameter "get_result_count".
+     */
+    private static final Parameter<Boolean> GET_RESULT_COUNT = new Parameter<Boolean>(
+            "get_result_count", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to obtain definition of data columns.
+     * Corresponds to the URL parameter "get_column_definition".
+     */
+    private static final Parameter<Boolean> GET_COLUMN_DEFINITION = new Parameter<Boolean>(
+            "get_column_definition", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Boolean>} used to define whether to obtain definition of data filters.
+     * Corresponds to the URL parameter "get_filters".
+     */
+    private static final Parameter<Boolean> GET_FILTERS = new Parameter<Boolean>(
+            "get_filters", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
+     * A {@code Parameter<Integer>} used to define offset to retrieve data results.
+     * Corresponds to the URL parameter "offset".
+     */
+    private static final Parameter<Integer> OFFSET = new Parameter<Integer>("offset",
+            false, false, null, false, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+    /**
+     * A {@code Parameter<Integer>} used to define the limit on number of data results retrieved.
+     * Corresponds to the URL parameter "limit".
+     */
+    private static final Parameter<Integer> LIMIT = new Parameter<Integer>("limit",
+            false, false, null, false, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
 
     /**
      * An {@code List<Parameter<T>>} to list all declared {@code Parameter<T>}
@@ -559,15 +649,29 @@ public class URLParameters {
             GENE_LIST,
             // TopAnat analyze params
             FOREGROUND_LIST, FOREGROUND_FILE, BACKGROUND_LIST, BACKGROUND_FILE,
-            EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DEV_STAGE, DECORRELATION_TYPE,
+            EXPRESSION_TYPE, SUMMARY_QUALITY, DATA_TYPE, DECORRELATION_TYPE,
             NODE_SIZE, FDR_THRESHOLD, P_VALUE_THRESHOLD, NB_NODE, 
             GENE_INFO, 
             //ID to identify a specific analysis
             ANALYSIS_ID, 
             //DAO as webservice
             ATTRIBUTE_LIST,
-            //RPackage  webservice params
+
             ANAT_ENTITY,
+            CELL_TYPE,
+            DEV_STAGE,
+            SEX,
+            STRAIN,
+            ANAT_ENTITY_DESCENDANT,
+            CELL_TYPE_DESCENDANT,
+            STAGE_DESCENDANT,
+            EXP_ASSAY_ID,
+            GET_RESULTS,
+            GET_RESULT_COUNT,
+            GET_COLUMN_DEFINITION,
+            GET_FILTERS,
+            OFFSET,
+            LIMIT,
 //            ALL_ORGANS,
 //            CHOSEN_DATA_TYPE,
 //            EMAIL,
@@ -578,7 +682,8 @@ public class URLParameters {
             DATA, 
             //webservice parameter
             API_KEY, 
-            DISPLAY_REQUEST_PARAMS, 
+            DISPLAY_REQUEST_PARAMS,
+            DETAILED_REQUEST_PARAMS,
             AJAX,
             POST_FORM_SUBMIT
     );
@@ -650,30 +755,7 @@ public class URLParameters {
         return DISPLAY_TYPE;
     }
 
-//    /**
-//     * @return  A {@code Parameter<String>} defining the email of a user, 
-//     *          used at registration time.
-//     *          Category of the parameter: user registration.
-//     *          Corresponds to the URL parameter "email".
-//     */
-//    public Parameter<String> getParamEmail(){
-//        return EMAIL;
-//    }
-
-    
-
-//    /**
-//     * @return  A {@code Parameter<Boolean>} most of the time used to define whether algorithms
-//     *          should include substages of a developmental stage, when computing its 
-//     *          expression data. Used for ontology display, but also for expression search engines.
-//     *          Category of the parameter: ontology display parameter and query engines parameters. 
-//     *          Corresponds to the URL parameter "stage_children".
-//     */
-//    public Parameter<Boolean> getParamStageChildren(){
-//        return STAGE_CHILDREN;
-//    }
-
-    /**
+/**
      * @return  A {@code Parameter<String>} that contains the value used
      *          as key to store parameters on the disk. It does not allow multiple value
      *          and has to be reset before adding a value.
@@ -686,7 +768,7 @@ public class URLParameters {
     * @return  A {@code Parameter<String>} that contains the gene id.
     */
     public Parameter<String> getParamGeneId() {
-    	return GENE_ID;
+        return GENE_ID;
     }
    
     /**
@@ -708,7 +790,7 @@ public class URLParameters {
      * @return  A {@code Parameter<String>} that contains the search text.
      */
      public Parameter<String> getParamQuery() {
-     	return QUERY;
+         return QUERY;
      }    
 
     /**
@@ -718,6 +800,14 @@ public class URLParameters {
      */
     public Parameter<Boolean> getParamDisplayRequestParams(){
         return DISPLAY_REQUEST_PARAMS;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} defining whether to display detailed information
+     *          about the {@code RequestParameters} corresponding to a request as part of its response.
+     *          Corresponds to the URL parameter "detailed_rp".
+     */
+    public Parameter<Boolean> getParamDetailedRequestParams(){
+        return DETAILED_REQUEST_PARAMS;
     }
     /**
      * @return  A {@code Parameter<Boolean>} appended to all AJAX queries to detect them.
@@ -797,12 +887,61 @@ public class URLParameters {
         return DEV_STAGE;
     }
     /**
-     * @return  A {@code Parameter<String>} defining an anatomical entity.
-     *          Corresponds to the URL parameter "anat_entity".
+     * @return  A {@code Parameter<String>} defining an anatomical entity ID.
+     * Corresponds to the URL parameter "anat_entity_id".
      */
     public Parameter<String> getParamAnatEntity() {
         return ANAT_ENTITY;
     }
+    /**
+     * @return  A {@code Parameter<String>} defining a cell type ID.
+     * Corresponds to the URL parameter "cell_type_id".
+     */
+    public Parameter<String> getParamCellType() {
+        return CELL_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} that contains the sexes requested.
+     *          Corresponds to the URL parameter "sex".
+     */
+    public Parameter<String> getParamSex() {
+        return SEX;
+    }
+    /**
+     * @return  A {@code Parameter<String>} that contains the strains requested.
+     *          Corresponds to the URL parameter "strain".
+     */
+    public Parameter<String> getParamStrain() {
+        return STRAIN;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to include substages
+     *          of developmental stages. Corresponds to the URL parameter "stage_descendant".
+     */
+    public Parameter<Boolean> getParamStageDescendant(){
+        return STAGE_DESCENDANT;
+    }
+
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to include descendants
+     *          of anatomical entities. Corresponds to the URL parameter "anat_entity_descendant".
+     */
+    public Parameter<Boolean> getParamAnatEntityDescendant(){
+        return ANAT_ENTITY_DESCENDANT;
+    }
+
+    /**
+     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY_DESCENDANT},
+     * and can be requested as such, but in some cases it is important to make the distinction.
+     *
+     * @return  A {@code Parameter<Boolean>} used to define whether to include descendants
+     *          of cell types. Corresponds to the URL parameter "cell_type_descendant".
+     */
+    public Parameter<Boolean> getParamCellTypeDescendant(){
+        return CELL_TYPE_DESCENDANT;
+    }
+
     /**
      * @return  A {@code Parameter<String>} defining a decorrelation type.
      *          Corresponds to the URL parameter "decorr_type".
@@ -920,6 +1059,56 @@ public class URLParameters {
         return PROPAGATION;
     }
     /**
+     * @return  A {@code Parameter<String>} defining the requested experiment or assay IDs.
+     *          Corresponds to the URL parameter "exp_assay_id".
+     */
+    public Parameter<String> getParamExpAssayId(){
+        return EXP_ASSAY_ID;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to obtain data results.
+     *          Corresponds to the URL parameter "get_results".
+     */
+    public Parameter<Boolean> getParamGetResults(){
+        return GET_RESULTS;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to obtain total data result count.
+     *          Corresponds to the URL parameter "get_result_count".
+     */
+    public Parameter<Boolean> getParamGetResultCount(){
+        return GET_RESULT_COUNT;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to obtain definition of data columns.
+     *          Corresponds to the URL parameter "get_column_definition".
+     */
+    public Parameter<Boolean> getParamGetColumnDefinition(){
+        return GET_COLUMN_DEFINITION;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to obtain definition of data filters.
+     *          Corresponds to the URL parameter "get_filters".
+     */
+    public Parameter<Boolean> getParamGetFilters(){
+        return GET_FILTERS;
+    }
+    /**
+     * @return  A {@code Parameter<Integer>} used to define offset to retrieve data results.
+     *          Corresponds to the URL parameter "offset".
+     */
+    public Parameter<Integer> getParamOffset(){
+        return OFFSET;
+    }
+    /**
+     * @return  A {@code Parameter<Integer>} used to define the limit on number of data results retrieved.
+     *          Corresponds to the URL parameter "limit".
+     */
+    public Parameter<Integer> getParamLimit(){
+        return LIMIT;
+    }
+
+    /**
      * This class is designed to wrap all parameters that can be received and sent
      * through an HTTP request within the Bgee webapp. 
      * It contains several properties related to the parameter and its usage.
@@ -992,7 +1181,7 @@ public class URLParameters {
          * Is {@code null} when the parameter is either a {@code String} without
          * content restrictions or a different data type.
          */
-        private final String format;		
+        private final String format;
 
         /**
          * Protected constructor to allow only {@link URLParameters} to create instances 
@@ -1011,7 +1200,7 @@ public class URLParameters {
          *                                separate values ordered by preference of use.
          * @param isStorable              A {@code boolean} defining whether the parameter
          *                                is storable.
-         * @param isSecure		          A {@code boolean} defining whether the parameter 
+         * @param isSecure                A {@code boolean} defining whether the parameter
          *                                is secure.
          * @param maxSize                 An {@code int} that represents the maximum number 
          *                                of characters allowed for this {@code Parameter}.
@@ -1057,7 +1246,7 @@ public class URLParameters {
         }
 
         /**
-         * @return	A {@code String} that is the name of the parameter as seen in an URL
+         * @return    A {@code String} that is the name of the parameter as seen in an URL
          */
         public String getName() {
             return name;
@@ -1086,14 +1275,14 @@ public class URLParameters {
         }
 
         /**
-         * @return	A {@code boolean} defining whether the parameter is storable or not
+         * @return    A {@code boolean} defining whether the parameter is storable or not
          */
         public boolean isStorable() {
             return isStorable;
         }
 
         /**
-         * @return	A {@code boolean} defining whether the parameter is secure or not
+         * @return    A {@code boolean} defining whether the parameter is secure or not
          */
         public boolean isSecure() {
             return isSecure;
@@ -1108,17 +1297,17 @@ public class URLParameters {
         }
 
         /**
-         * @return	A {@code String} that contains the regular expression that this parameter
-         * 			has to fit to
+         * @return    A {@code String} that contains the regular expression that this parameter
+         *             has to fit to
          */
         public String getFormat() {
             return format;
         }
 
         /**
-         * @return	A {@code Class<T>} that is the data type of the value to be store 
-         * 			by this parameter.
-         */	
+         * @return    A {@code Class<T>} that is the data type of the value to be store
+         *             by this parameter.
+         */
         public Class<T> getType() {
             return type;
         }

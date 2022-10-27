@@ -11,10 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.model.search.SearchMatchResultService;
@@ -103,13 +101,6 @@ public class CommandSearch extends CommandParent {
                             false, true, 0,
                             SearchMatchResultService.SPHINX_MAX_RESULTS);
             display.displayDefaultSphinxSearchResult(searchTerm, result);
-        } else if (this.requestParameters.getAction() != null &&
-                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_DEV_STAGE)) {
-            String searchTerm = this.getSearchTerm();
-            Integer speciesId = this.requestParameters.getSpeciesId();
-            Set<DevStage> result = serviceFactory.getDevStageService()
-                    .loadGroupingDevStages(Set.of(speciesId), null);
-            display.displayDevStageSearchResult(result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 
                 this.requestParameters.getUrlParametersInstance().getParamAction() + 

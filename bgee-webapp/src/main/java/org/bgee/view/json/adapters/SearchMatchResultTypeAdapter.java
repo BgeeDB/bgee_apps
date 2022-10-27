@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.search.SearchMatchResult;
 

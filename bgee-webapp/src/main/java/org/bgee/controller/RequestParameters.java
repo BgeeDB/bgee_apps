@@ -376,13 +376,6 @@ public class RequestParameters {
      */
     public static final String ACTION_SEARCH_CELL_TYPES = "cell_type";
     /**
-     * A {@code String} that is the value taken by the {@code action} parameter
-     * (see {@link URLParameters#getParamAction()}) when search of dev. stages
-     * result is requested.
-     * Value of the parameter page should be {@link #PAGE_SEARCH}.
-     */
-    public static final String ACTION_SEARCH_DEV_STAGE = "dev_stage";
-    /**
      * A {@code String} that is the value taken by the {@code action} parameter 
      * (see {@link URLParameters#getParamAction()}) when resources page about R packages
      * is requested. Value of the parameter page should be {@link #PAGE_RESOURCES}.

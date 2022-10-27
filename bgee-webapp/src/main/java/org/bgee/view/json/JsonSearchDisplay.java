@@ -3,7 +3,6 @@ package org.bgee.view.json;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.JsonHelper;
 import org.bgee.view.SearchDisplay;
@@ -59,17 +57,6 @@ public class JsonSearchDisplay extends JsonParentDisplay implements SearchDispla
         log.traceEntry("{}. {}", searchTerm, result);
         LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("query", searchTerm);
-        resultHashMap.put("result", result);
-        this.sendResponse("Search result",
-                resultHashMap);
-        log.traceExit();
-    }
-
-
-    @Override
-    public void displayDevStageSearchResult(Set<DevStage> result) {
-        log.traceEntry("{}. {}", result);
-        LinkedHashMap<String, Object> resultHashMap = new LinkedHashMap<String, Object>();
         resultHashMap.put("result", result);
         this.sendResponse("Search result",
                 resultHashMap);

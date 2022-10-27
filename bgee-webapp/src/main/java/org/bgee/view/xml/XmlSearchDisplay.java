@@ -2,7 +2,6 @@ package org.bgee.view.xml;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -10,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.view.SearchDisplay;
 
@@ -81,10 +79,4 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
             SearchMatchResult<?> result) {
         throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
     }
-
-    @Override
-    public void displayDevStageSearchResult(Set<DevStage> result) {
-        throw log.throwing(new UnsupportedOperationException("Not available for XML display"));
-    }
-
 }

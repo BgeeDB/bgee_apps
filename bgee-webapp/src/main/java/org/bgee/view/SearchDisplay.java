@@ -1,9 +1,7 @@
 package org.bgee.view;
 
 import java.util.Collection;
-import java.util.Set;
 
-import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.search.SearchMatchResult;
 
 /**
@@ -23,8 +21,6 @@ public interface SearchDisplay {
     void displayExpasyResult(int count, String searchTerm);
 
     void displayDefaultSphinxSearchResult(String searchTerm, SearchMatchResult<?> result);
-
-    void displayDevStageSearchResult(Set<DevStage> result);
 
     void displayMatchesForGeneCompletion(Collection<String> matches);
 }

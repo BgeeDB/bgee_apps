@@ -473,17 +473,75 @@ public class OntologyService extends CommonService {
     public MultiSpeciesOntology<DevStage, String> getDevStageOntology(Collection<Integer> speciesIds, 
             Collection<String> devStageIds, boolean getAncestors, boolean getDescendants) {
         log.traceEntry("{}, {}, {}, {}", speciesIds, devStageIds, getAncestors, getDescendants);
+        Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds,
+                getAncestors, getDescendants);
+        Collection<DevStage> requestedDevStages = this.getServiceFactory().getDevStageService()
+                .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
+                .collect(Collectors.toSet());
+        return this.getDevStageOntology(speciesIds, requestedDevStages, rels);
+    }
 
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code DevStage}s for the requested species ids, dev. stages,
+     * and relation status.
+     * <p>
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively.
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false},
+     * then only relations between provided developmental stages are considered.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species
+     *                          which to retrieve dev. stages for. If several IDs are provided,
+     *                          dev. stages existing in any of them will be retrieved.
+     *                          Can be {@code null} or empty.
+     * @param devStages       A {@code Collection} of {@code DevStage}s that are dev. stages
+     *                          of the {@code MultiSpeciesOntology} to retrieve. Can be {@code null} or empty.
+     * @param getAncestors      A {@code boolean} defining whether the ancestors of the selected
+     *                          dev. stages, and the relations leading to them, should be retrieved.
+     * @param getDescendants    A {@code boolean} defining whether the descendants of the selected
+     *                          dev. stages, and the relations leading to them, should be retrieved.
+     * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species,
+     *                          dev. stages, and relation status.
+     */
+    public MultiSpeciesOntology<DevStage, String> getDevStageOntologyFromDevStages(Collection<Integer> speciesIds,
+            Collection<DevStage> devStages, boolean getAncestors, boolean getDescendants) {
+        log.traceEntry("{}, {}, {}, {}", speciesIds, devStages, getAncestors, getDescendants);
+        Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds,
+                devStages.stream().map(s -> s.getId()).collect(Collectors.toSet()),
+                getAncestors, getDescendants);
+        return log.traceExit(this.getDevStageOntology(speciesIds, devStages, rels));
+    }
+
+    /**
+     * Retrieve the {@code MultiSpeciesOntology} of {@code DevStage}s for the requested species ids, dev. stages,
+     * and relation status.
+     * <p>
+     * The returned {@code MultiSpeciesOntology} contains ancestors and/or descendants according to
+     * {@code getAncestors} and {@code getDescendants}, respectively.
+     * If both {@code getAncestors} and {@code getDescendants} are {@code false},
+     * then only relations between provided developmental stages are considered.
+     * 
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are IDs of species
+     *                          which to retrieve dev. stages for. If several IDs are provided,
+     *                          dev. stages existing in any of them will be retrieved.
+     *                          Can be {@code null} or empty.
+     * @param devStages         A {@code Collection} of {@code DevStage}s that are dev. stages
+     *                          of the {@code MultiSpeciesOntology} to retrieve. Can be {@code null} or empty.
+     * @param rels              A {@code Collection} of {@code RelationTO}s of {@code String} that are the relations
+     *                          to use to create the ontology
+     * @return                  The {@code MultiSpeciesOntology} of the {@code DevStage}s for the requested species,
+     *                          dev. stages, and relation status.
+     */
+    private MultiSpeciesOntology<DevStage, String> getDevStageOntology(Collection<Integer> speciesIds,
+            Collection<DevStage> devStages, Collection<RelationTO<String>> rels) {
+        log.traceEntry("{}, {}, {}", speciesIds, devStages, rels);
         long startTimeInMs = System.currentTimeMillis();
         log.debug("Start creation of DevStageOntology");
 
-        Set<RelationTO<String>> rels = this.getDevStageRelationTOs(speciesIds, devStageIds, 
-                getAncestors, getDescendants);
         //We use a Map notably in order to filter the taxon constraints for only the retrieved stages
         //XXX: should we allow the method loadDevStageTaxonConstraintBySpeciesIds to accept requested
         //dev stage IDs as arguments?
-        Map<String, DevStage> requestedDevStages = this.getServiceFactory().getDevStageService()
-                .loadDevStages(speciesIds, true, this.getRequestedEntityIds(devStageIds, rels))
+        Map<String, DevStage> requestedDevStages = devStages.stream()
                 .collect(Collectors.toMap(s -> s.getId(), s -> s));
         //there is no relation IDs for nested set models, so no TaxonConstraints. 
         //Relations simply exist if both the source and target of the relations 

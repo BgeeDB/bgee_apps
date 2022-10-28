@@ -1,5 +1,6 @@
 package org.bgee.model.dao.mysql.connector;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAOManager;
+import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
@@ -42,6 +44,7 @@ import org.bgee.model.dao.api.gene.GeneNameSynonymDAO;
 import org.bgee.model.dao.api.keyword.KeywordDAO;
 import org.bgee.model.dao.api.source.SourceToSpeciesDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLAnatEntityDAO;
+import org.bgee.model.dao.mysql.anatdev.MySQLSexDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLStageDAO;
 import org.bgee.model.dao.mysql.anatdev.MySQLTaxonConstraintDAO;
 import org.bgee.model.dao.mysql.anatdev.mapping.MySQLRawSimilarityAnnotationDAO;
@@ -446,7 +449,7 @@ public class MySQLDAOManager extends DAOManager {
                     //shutdown.
                     log.debug("Trying to register JDBC Driver with class name {}", 
                             driverName);
-                    Driver driver = (Driver) Class.forName(driverName).newInstance();
+                    Driver driver = (Driver) Class.forName(driverName).getDeclaredConstructor().newInstance();
                     DriverManager.registerDriver(driver);
 
                     if (registeredDrivers.putIfAbsent(driverName, driver) != null) {
@@ -466,7 +469,8 @@ public class MySQLDAOManager extends DAOManager {
                     }
 
                 } catch (InstantiationException | IllegalAccessException
-                        | ClassNotFoundException | SQLException e) {
+                        | ClassNotFoundException | SQLException
+                        | InvocationTargetException | NoSuchMethodException e) {
                     log.catching(e);
                     throw log.throwing(new IllegalStateException("The JDBC Driver name " +
                             "provided (" + driverName + ") did not allow " +
@@ -1189,5 +1193,11 @@ public class MySQLDAOManager extends DAOManager {
     protected RNASeqLibraryDAO getNewRnaSeqLibraryDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLRNASeqLibraryDAO(this));
+    }
+
+    @Override
+    protected SexDAO getNewSexDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLSexDAO(this));
     }
 }

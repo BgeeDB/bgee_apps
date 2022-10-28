@@ -2,6 +2,7 @@ package org.bgee.model.dao.api;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
@@ -118,10 +120,10 @@ import org.bgee.model.dao.api.species.TaxonDAO;
  */
 public abstract class DAOManager implements AutoCloseable
 {
-	//*****************************************
+    //*****************************************
     //  CLASS ATTRIBUTES AND METHODS
     //*****************************************
-	/**
+    /**
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(DAOManager.class.getName());
@@ -237,149 +239,149 @@ public abstract class DAOManager implements AutoCloseable
      * or when the method {@link #closeAll()} is called. 
      * All {@code DAOManager}s are removed when {@link #closeAll()} is called.
      */
-	private static final ConcurrentMap<Long, DAOManager> managers = 
-			new ConcurrentHashMap<Long, DAOManager>(); 
-	/**
-	 * This {@code ConcurrentMap} stores one instance of {@code DAOManager} for each 
-	 * service provider used (so for each class name among the {@code DAOManager}s 
-	 * used). They are still stored even after having called {@code close} on 
-	 * a {@code DAOManager} that is a representative. This is to be able  
-	 * to call {@link #shutdown()} on them, when {@link #closeAll()} is called, 
-	 * to bypass the limitation of Java of not allowing abstract static methods.
-	 */
-	private static final ConcurrentMap<String, DAOManager> representativeManagers = 
+    private static final ConcurrentMap<Long, DAOManager> managers = 
+            new ConcurrentHashMap<Long, DAOManager>(); 
+    /**
+     * This {@code ConcurrentMap} stores one instance of {@code DAOManager} for each 
+     * service provider used (so for each class name among the {@code DAOManager}s 
+     * used). They are still stored even after having called {@code close} on 
+     * a {@code DAOManager} that is a representative. This is to be able  
+     * to call {@link #shutdown()} on them, when {@link #closeAll()} is called, 
+     * to bypass the limitation of Java of not allowing abstract static methods.
+     */
+    private static final ConcurrentMap<String, DAOManager> representativeManagers = 
             new ConcurrentHashMap<String, DAOManager>(); 
-	
-	/**
-	 * A unmodifiable {@code List} containing all available providers of 
-	 * the {@code DAOManager} service, in the order they were obtained 
-	 * from the {@code ServiceLoader}. This is needed because we want 
-	 * to load services from the {@code ServiceLoader} only once 
-	 * by {@code ClassLoader}. So we could have used as attribute  
-	 * a {@code static final ServiceLoader}, but {@code ServiceLoader} 
-	 * lazyly instantiate service providers and is not thread-safe, so we would 
-	 * have troubles in a multi-threading context. So we load all providers 
-	 * at once, we don't except this pre-loading to require too much memory 
-	 * (very few service providers available, used in very few libraries). 
-	 * <p>
-	 * As this {@code List} is unmodifiable and declared {@code final}, 
-	 * and the stored {@code DAOManager}s will always be copied before use, 
-	 * this attribute can safely be accessed in a multi-threading context. 
-	 */
-	private static final List<DAOManager> serviceProviders = 
-			DAOManager.getServiceProviders();
-	/**
-	 * Get all available providers of the {@code DAOManager} service 
-	 * from the {@code ServiceLoader}, as an unmodifiable {@code List}. 
-	 * Empty {@code List} if no service providers could be found. 
-	 * 
-	 * @return 	An unmodifiable {@code List} of {@code DAOManager}s, 
-	 * 			in the same order they were obtained from the {@code ServiceLoader}. 
-	 * 			Empty {@code List} if no service providers could be found.
-	 */
-	private final static List<DAOManager> getServiceProviders() {
-		log.traceEntry();
-		log.debug("Loading DAOManager service providers");
+    
+    /**
+     * A unmodifiable {@code List} containing all available providers of 
+     * the {@code DAOManager} service, in the order they were obtained 
+     * from the {@code ServiceLoader}. This is needed because we want 
+     * to load services from the {@code ServiceLoader} only once 
+     * by {@code ClassLoader}. So we could have used as attribute  
+     * a {@code static final ServiceLoader}, but {@code ServiceLoader} 
+     * lazyly instantiate service providers and is not thread-safe, so we would 
+     * have troubles in a multi-threading context. So we load all providers 
+     * at once, we don't except this pre-loading to require too much memory 
+     * (very few service providers available, used in very few libraries). 
+     * <p>
+     * As this {@code List} is unmodifiable and declared {@code final}, 
+     * and the stored {@code DAOManager}s will always be copied before use, 
+     * this attribute can safely be accessed in a multi-threading context. 
+     */
+    private static final List<DAOManager> serviceProviders = 
+            DAOManager.getServiceProviders();
+    /**
+     * Get all available providers of the {@code DAOManager} service 
+     * from the {@code ServiceLoader}, as an unmodifiable {@code List}. 
+     * Empty {@code List} if no service providers could be found. 
+     * 
+     * @return     An unmodifiable {@code List} of {@code DAOManager}s, 
+     *             in the same order they were obtained from the {@code ServiceLoader}. 
+     *             Empty {@code List} if no service providers could be found.
+     */
+    private final static List<DAOManager> getServiceProviders() {
+        log.traceEntry();
+        log.debug("Loading DAOManager service providers");
         List<DAOManager> providers = new ArrayList<DAOManager>();
-		//first, we try to load the classes that are the service providers: 
-		//Using the ServiceLoader in a servlet container context can be problematic, 
-		//and the automatic loading not work. As we know all service providers 
-		//(we just don't know which one is used), we try to load all of then 
-		//"manually"
-		for (String className: DAOManager.providerClassNames) {
-		    try {
-                providers.add((DAOManager) Class.forName(className).newInstance());
+        //first, we try to load the classes that are the service providers: 
+        //Using the ServiceLoader in a servlet container context can be problematic, 
+        //and the automatic loading not work. As we know all service providers 
+        //(we just don't know which one is used), we try to load all of then 
+        //"manually"
+        for (String className: DAOManager.providerClassNames) {
+            try {
+                providers.add((DAOManager) Class.forName(className).getDeclaredConstructor().newInstance());
                 log.debug("A DAOManager service provider was loaded by class name");
             } catch (ClassNotFoundException | InstantiationException | 
-                    IllegalAccessException e) {
+                    IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 //we do nothing, maybe the jar for this service provider is not present
                 log.catching(Level.TRACE, e);
             }
-		}
-		//now, we also check the "classical" service loader mechanism, maybe 
-		//there is a sevice provider we don't know about
-		ServiceLoader<DAOManager> loader = 
-				ServiceLoader.load(DAOManager.class);
-		for (DAOManager provider: loader) {
-		    if (!DAOManager.providerClassNames.contains(provider.getClass().getName())) {
-			    providers.add(provider);
+        }
+        //now, we also check the "classical" service loader mechanism, maybe 
+        //there is a sevice provider we don't know about
+        ServiceLoader<DAOManager> loader = 
+                ServiceLoader.load(DAOManager.class);
+        for (DAOManager provider: loader) {
+            if (!DAOManager.providerClassNames.contains(provider.getClass().getName())) {
+                providers.add(provider);
                 log.debug("A DAOManager service provider was loaded by the ServiceLoader");
-		    }
-		}
-		log.debug("Providers found: {}", providers);
-		return log.traceExit(Collections.unmodifiableList(providers));
-	}
-	
-	/**
+            }
+        }
+        log.debug("Providers found: {}", providers);
+        return log.traceExit(Collections.unmodifiableList(providers));
+    }
+    
+    /**
      * A volatile {@code boolean} to define if {@code DAOManager}s 
      * can still be acquired (using the {@code getDAOManager} methods), 
      * or if it is not possible anymore (meaning that the method {@link #closeAll()} 
      * has been called).
      */
     private static final AtomicBoolean allClosed = new AtomicBoolean(false);
-	
-	/**
-	 * Return a {@code DAOManager} instance with its parameters set using 
-	 * the provided {@code Properties}. If it is the first call to one 
-	 * of the {@code getDAOManager} methods within a given thread, 
-	 * the {@code getDAOManager} methods return a newly instantiated 
-	 * {@code DAOManager}. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the {@code close} 
-	 * or {@code kill} method was called. Please note that it is extremely 
-	 * important to close or kill {@code DAOManager} when done using it. 
-	 * <p>
-	 * If no {@code DAOManager} is available for this thread yet, this method 
-	 * will return the first available {@code Service Provider} that accepts 
-	 * {@code props}, meaning that it finds all its required parameters in it. 
-	 * This method will return {@code null} if none could be found, or if no service 
-	 * providers were available at all. {@code props} can be {@code null}, 
-	 * but that would mean that the {@code Service Provider} obtained had  
-	 * absolutely no mandatory parameters.
-	 * <p>
-	 * If a {@code DAOManager} is already available for this thread, 
-	 * then this method will simply return it, after having provided {@code props} 
-	 * to it, so that its parameters can be changed after obtaining it. 
-	 * If {@code props} is {@code null}, then the previously provided 
-	 * parameters will still be used. If {@code props} is not null, 
-	 * but the already instantiated {@code DAOManager} does not find its required 
-	 * parameters in it, an {@code IllegalStateException} will be thrown.
-	 * <p>
-	 * If caller wants to use a different {@code Service Provider}, accepting 
-	 * different parameters, then {@code close} or {@code kill} 
-	 * should first be called. 
-	 * <p>
-	 * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
-	 * was called prior to calling this method, and a {@code ServiceConfigurationError} 
-	 * if an error occurred while trying to find a service provider from the 
-	 * {@code ServiceLoader}. 
-	 * 
-	 * @param props    A {@code java.util.Properties} object, 
-	 *                 to be passed to the {@code DAOManager} instance. 
-	 * @return 	       A {@code DAOManager} accepting the parameters provided 
-	 *                 in {@code props}. {@code null} if none could be found 
-	 *                 accepting the parameters, or if no service providers 
-	 *                 were available at all.
-	 * @throws IllegalStateException   if {@code closeAll} was already called, 
-	 *                                 so that no {@code DAOManager}s can be 
-	 *                                 acquired anymore. Or if the already instantiated 
-	 *                                 {@code DAOManager} does not accept the provided 
-	 *                                 parameters.
-	 * @throws ServiceConfigurationError   If an error occurred while trying to find 
-	 * 									   a {@code DAOManager} service provider 
-	 * 									   from the {@code ServiceLoader}. 
-	 * @see #getDAOManager()
-	 */
-	public static DAOManager getDAOManager(Properties props) 
-	    throws IllegalStateException, ServiceConfigurationError {
-		log.traceEntry("{}", props);
+    
+    /**
+     * Return a {@code DAOManager} instance with its parameters set using 
+     * the provided {@code Properties}. If it is the first call to one 
+     * of the {@code getDAOManager} methods within a given thread, 
+     * the {@code getDAOManager} methods return a newly instantiated 
+     * {@code DAOManager}. Following calls from the same thread will always 
+     * return the same instance ("per-thread singleton"), unless the {@code close} 
+     * or {@code kill} method was called. Please note that it is extremely 
+     * important to close or kill {@code DAOManager} when done using it. 
+     * <p>
+     * If no {@code DAOManager} is available for this thread yet, this method 
+     * will return the first available {@code Service Provider} that accepts 
+     * {@code props}, meaning that it finds all its required parameters in it. 
+     * This method will return {@code null} if none could be found, or if no service 
+     * providers were available at all. {@code props} can be {@code null}, 
+     * but that would mean that the {@code Service Provider} obtained had  
+     * absolutely no mandatory parameters.
+     * <p>
+     * If a {@code DAOManager} is already available for this thread, 
+     * then this method will simply return it, after having provided {@code props} 
+     * to it, so that its parameters can be changed after obtaining it. 
+     * If {@code props} is {@code null}, then the previously provided 
+     * parameters will still be used. If {@code props} is not null, 
+     * but the already instantiated {@code DAOManager} does not find its required 
+     * parameters in it, an {@code IllegalStateException} will be thrown.
+     * <p>
+     * If caller wants to use a different {@code Service Provider}, accepting 
+     * different parameters, then {@code close} or {@code kill} 
+     * should first be called. 
+     * <p>
+     * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
+     * was called prior to calling this method, and a {@code ServiceConfigurationError} 
+     * if an error occurred while trying to find a service provider from the 
+     * {@code ServiceLoader}. 
+     * 
+     * @param props    A {@code java.util.Properties} object, 
+     *                 to be passed to the {@code DAOManager} instance. 
+     * @return            A {@code DAOManager} accepting the parameters provided 
+     *                 in {@code props}. {@code null} if none could be found 
+     *                 accepting the parameters, or if no service providers 
+     *                 were available at all.
+     * @throws IllegalStateException   if {@code closeAll} was already called, 
+     *                                 so that no {@code DAOManager}s can be 
+     *                                 acquired anymore. Or if the already instantiated 
+     *                                 {@code DAOManager} does not accept the provided 
+     *                                 parameters.
+     * @throws ServiceConfigurationError   If an error occurred while trying to find 
+     *                                        a {@code DAOManager} service provider 
+     *                                        from the {@code ServiceLoader}. 
+     * @see #getDAOManager()
+     */
+    public static DAOManager getDAOManager(Properties props) 
+        throws IllegalStateException, ServiceConfigurationError {
+        log.traceEntry("{}", props);
 
         if (DAOManager.allClosed.get()) {
             throw log.throwing(
-            		new IllegalStateException("closeAll() has been already called, " +
+                    new IllegalStateException("closeAll() has been already called, " +
                     "it is not possible to acquire a DAOManager anymore"));
         }
 
-		//get Thread ID as key. As Thread IDs can be reused, it is extremely important 
+        //get Thread ID as key. As Thread IDs can be reused, it is extremely important 
         //to call close() on a DAOManager after use. We use Thread ID because 
         //ThreadLocal are source of troubles. 
         long threadId = Thread.currentThread().getId();
@@ -389,181 +391,181 @@ public abstract class DAOManager implements AutoCloseable
         Throwable toThrow = null;
         if (manager == null) {
             //obtain a DAOManager from a Service Provider accepting the parameters
-        	log.debug("No DAOManager available for this thread, trying to obtain a DAOManager from a Service provider");
-        	
-        	Iterator<DAOManager> managerIterator = DAOManager.serviceProviders.iterator();
-        	providers: while (managerIterator.hasNext()) {
-        		try {
-        			//need to get a new instance, because as we store 
-        			//in a static attribute the providers, it always returns 
-        			//a same instance, while we want one instance per thread. 
-        			DAOManager testManager = 
-        					managerIterator.next().getClass().newInstance();
+            log.debug("No DAOManager available for this thread, trying to obtain a DAOManager from a Service provider");
+            
+            Iterator<DAOManager> managerIterator = DAOManager.serviceProviders.iterator();
+            providers: while (managerIterator.hasNext()) {
+                try {
+                    //need to get a new instance, because as we store 
+                    //in a static attribute the providers, it always returns 
+                    //a same instance, while we want one instance per thread. 
+                    DAOManager testManager =
+                            managerIterator.next().getClass().getDeclaredConstructor().newInstance();
 
-        			log.trace("Testing: {}", testManager);
-        			if (props != null) {
-        				testManager.setParameters(props);
-        			}
-        			//parameters accepted, we will use this manager
-        			manager = testManager;
-        			manager.setId(threadId);
+                    log.trace("Testing: {}", testManager);
+                    if (props != null) {
+                        testManager.setParameters(props);
+                    }
+                    //parameters accepted, we will use this manager
+                    manager = testManager;
+                    manager.setId(threadId);
                     //as soon as a DAOManager is loaded, we need to store a representative 
                     //of its class to properly unload them at application shutdown
                     representativeManagers.putIfAbsent(
                             testManager.getClass().getName(), testManager);
                     
-        			log.debug("Valid DAOManager: {}", manager);
-        			break providers;
+                    log.debug("Valid DAOManager: {}", manager);
+                    break providers;
 
-        		} catch (IllegalArgumentException e) {
-        			//do nothing, this exception is thrown when calling 
-        			//setParameters to try to find the appropriate service provider. 
-        			log.catching(Level.TRACE, e);
-        		} catch (Exception e) {
-        			//this catch block is needed only because of the line 
-        			//managerIterator.next().getClass().newInstance();
-        			//These exceptions should never happen, as service providers 
-        			//must implement a default public constructor with no arguments. 
-        			//If such an exception occurred, it could be seen as 
-        			//a ServiceConfigurationError
-        			toThrow = new ServiceConfigurationError(
-        					"DAOManager service provider instantiation error: " +
-        					"service provider did not provide a valid constructor", e);
-        			break providers;
-        		}
-        	}	
-        	if (manager == null) {
-        		log.debug("No DAOManager could be found");
-        	} else {
-        		//we don't use putifAbsent, as idAssigned make sure 
-        		//there won't be any multi-threading key collision
-        		managers.put(threadId, manager);
-        	}
+                } catch (IllegalArgumentException e) {
+                    //do nothing, this exception is thrown when calling 
+                    //setParameters to try to find the appropriate service provider. 
+                    log.catching(Level.TRACE, e);
+                } catch (Exception e) {
+                    //this catch block is needed only because of the line 
+                    //managerIterator.next().getClass().newInstance();
+                    //These exceptions should never happen, as service providers 
+                    //must implement a default public constructor with no arguments. 
+                    //If such an exception occurred, it could be seen as 
+                    //a ServiceConfigurationError
+                    toThrow = new ServiceConfigurationError(
+                            "DAOManager service provider instantiation error: " +
+                            "service provider did not provide a valid constructor", e);
+                    break providers;
+                }
+            }    
+            if (manager == null) {
+                log.debug("No DAOManager could be found");
+            } else {
+                //we don't use putifAbsent, as idAssigned make sure 
+                //there won't be any multi-threading key collision
+                managers.put(threadId, manager);
+            }
         } else {
             log.debug("Get an already existing DAOManager instance");
             if (props != null) {
-            	try {
+                try {
                     manager.setParameters(props);
-            	} catch (IllegalArgumentException e) {
-            		toThrow = e;
-            	}
+                } catch (IllegalArgumentException e) {
+                    toThrow = e;
+                }
             }
         }
         if (manager != null && toThrow == null) {
-        	//check that the manager was not closed by another thread while we were 
-        	//acquiring it
-        	synchronized (manager.closed) {
-        		if (manager.isClosed()) {
-        			//if the manager was closed following a call to closeAll
-        			if (DAOManager.allClosed.get()) {
-        				toThrow = new IllegalStateException(
-        						"closeAll() has been already called, " +
-        						"it is not possible to acquire a DAOManager anymore");
-        			}
-        			//otherwise, it means it was killed following a call to kill(long).
-        			//we just return the closed DAOManager, this will throw 
-        			//an IllegalStateException when trying to acquire a DAO from it
-        		}
-        		if (toThrow == null) {
-        			return log.traceExit(manager);
-        		}
-        	}
+            //check that the manager was not closed by another thread while we were 
+            //acquiring it
+            synchronized (manager.closed) {
+                if (manager.isClosed()) {
+                    //if the manager was closed following a call to closeAll
+                    if (DAOManager.allClosed.get()) {
+                        toThrow = new IllegalStateException(
+                                "closeAll() has been already called, " +
+                                "it is not possible to acquire a DAOManager anymore");
+                    }
+                    //otherwise, it means it was killed following a call to kill(long).
+                    //we just return the closed DAOManager, this will throw 
+                    //an IllegalStateException when trying to acquire a DAO from it
+                }
+                if (toThrow == null) {
+                    return log.traceExit(manager);
+                }
+            }
         }
-		
-		if (toThrow != null) {
-			if (toThrow instanceof IllegalStateException) {
-				throw log.throwing((IllegalStateException) toThrow);
-			} else if (toThrow instanceof ServiceConfigurationError) {
-				throw log.throwing((ServiceConfigurationError) toThrow);
-			} else if (toThrow instanceof IllegalArgumentException) {
-			    //this exception means that an already instantiated DAOManager
-			    //refused the parameters. This is then an illegal state.
-				throw log.throwing(new IllegalStateException(toThrow));
-			} else {
-				throw log.throwing(
-						new ServiceConfigurationError("Unexpected error", toThrow));
-			}
-		}
-		
-		return log.traceExit((DAOManager) null);
-	}
-	
-	/**
-	 * Return a {@code DAOManager} instance. If it is the first call to one 
-	 * of the {@code getDAOManager} methods within a given thread, 
-	 * the {@code getDAOManager} methods return a newly instantiated 
-	 * {@code DAOManager}. Following calls from the same thread will always 
-	 * return the same instance ("per-thread singleton"), unless the {@code close} 
-	 * or {@code kill} method was called. 
-	 * <p>
-	 * If no {@code DAOManager} is available for this thread yet, this method 
-	 * will try to obtain a {@code DAOManager} from the first Service provider 
-	 * accepting the default parameters, or will return {@code null} if none 
-	 * could be found. The default parameters are retrieved either 
-	 * from system properties, or from a configuration file. This method then calls 
-	 * {@link #getDAOManager(Properties)} and provide to it these default 
-	 * properties. If these properties were not {@code null}, the 
-	 * {@code DAOManager} obtained has to accept them, meaning that it found 
-	 * all its mandatory parameters in it. Note that the properties obtained from 
-	 * system properties or configuration file are obtained only once at class loading.
+        
+        if (toThrow != null) {
+            if (toThrow instanceof IllegalStateException) {
+                throw log.throwing((IllegalStateException) toThrow);
+            } else if (toThrow instanceof ServiceConfigurationError) {
+                throw log.throwing((ServiceConfigurationError) toThrow);
+            } else if (toThrow instanceof IllegalArgumentException) {
+                //this exception means that an already instantiated DAOManager
+                //refused the parameters. This is then an illegal state.
+                throw log.throwing(new IllegalStateException(toThrow));
+            } else {
+                throw log.throwing(
+                        new ServiceConfigurationError("Unexpected error", toThrow));
+            }
+        }
+        
+        return log.traceExit((DAOManager) null);
+    }
+    
+    /**
+     * Return a {@code DAOManager} instance. If it is the first call to one 
+     * of the {@code getDAOManager} methods within a given thread, 
+     * the {@code getDAOManager} methods return a newly instantiated 
+     * {@code DAOManager}. Following calls from the same thread will always 
+     * return the same instance ("per-thread singleton"), unless the {@code close} 
+     * or {@code kill} method was called. 
+     * <p>
+     * If no {@code DAOManager} is available for this thread yet, this method 
+     * will try to obtain a {@code DAOManager} from the first Service provider 
+     * accepting the default parameters, or will return {@code null} if none 
+     * could be found. The default parameters are retrieved either 
+     * from system properties, or from a configuration file. This method then calls 
+     * {@link #getDAOManager(Properties)} and provide to it these default 
+     * properties. If these properties were not {@code null}, the 
+     * {@code DAOManager} obtained has to accept them, meaning that it found 
+     * all its mandatory parameters in it. Note that the properties obtained from 
+     * system properties or configuration file are obtained only once at class loading.
      * <p>
      * If a {@code DAOManager} is already available for this thread, 
      * then this method will simply return it, with the previously provided properties 
      * still in use. If you want to change these properties, you need to directly 
      * call {@link #getDAOManager(Properties)}.
-	 * <p>
-	 * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
-	 * was called prior to calling this method, and a {@code ServiceConfigurationError} 
-	 * if an error occurred while trying to find a service provider from the 
-	 * {@code ServiceLoader}. 
-	 * 
-	 * @return 				The first {@code DAOManager} available,  
-	 * 						{@code null} if no service providers were available at all.
-	 * @throws IllegalStateException   if {@code closeAll} was already called, 
-	 * 								   so that no {@code DAOManager}s can be 
-	 * 								   acquired anymore. 
-	 * @throws ServiceConfigurationError	If an error occurred while trying to find 
-	 * 										a {@code DAOManager} service provider 
-	 * 										from the {@code ServiceLoader}. 
-	 * @see #getDAOManager(Properties)
-	 */
-	//TODO: we must completely get rid of these "per-thread singletons" and static methods...
-	public static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
-		log.traceEntry();
-		
-		if (hasDAOManager()) {
-		    //this will avoid useless parsing of the properties.
-		    return log.traceExit(getDAOManager(null));
-		}
-		
-		//otherwise, we use the properties obtained at class loading.
-		return log.traceExit(DAOManager.getDAOManager(DAOManager.properties));
-	}
-	
-	/**
-	 * Determine whether the {@code Thread} calling this method already 
-	 * holds a {@code DAOManager}. It is useful for instance when willing 
-	 * to close all resources at the end of an applicative code. For instance, 
-	 * if the thread was not holding a {@code DAOManager}, calling 
-	 * {@code DAOManager.getDAOManager().close()} would instantiate 
-	 * a {@code DAOManager} just for closing it... Applicative code should rather do: 
-	 * <pre>if (DAOManager.hasDAOManager()) {
-	 *     DAOManager.getDAOManager().close();
-	 * }</pre>
-	 * There is a risk that another thread could interleave to close 
-	 * the {@code DAOManager} between the test and the call to {@code close}, 
-	 * but it would not have any harmful effect. 
-	 * 
-	 * @return	A {@code boolean} {@code true} if the {@code Thread} 
-	 * 			calling this method currently holds a {@code DAOManager}, 
-	 * 			{@code false} otherwise. 
-	 */
-	public static boolean hasDAOManager() {
-		log.traceEntry();
-		return log.traceExit(managers.containsKey(Thread.currentThread().getId()));
-	}
-	
-	/**
+     * <p>
+     * This method will throw an {@code IllegalStateException} if {@link #closeAll()} 
+     * was called prior to calling this method, and a {@code ServiceConfigurationError} 
+     * if an error occurred while trying to find a service provider from the 
+     * {@code ServiceLoader}. 
+     * 
+     * @return                 The first {@code DAOManager} available,  
+     *                         {@code null} if no service providers were available at all.
+     * @throws IllegalStateException   if {@code closeAll} was already called, 
+     *                                    so that no {@code DAOManager}s can be 
+     *                                    acquired anymore. 
+     * @throws ServiceConfigurationError    If an error occurred while trying to find 
+     *                                         a {@code DAOManager} service provider 
+     *                                         from the {@code ServiceLoader}. 
+     * @see #getDAOManager(Properties)
+     */
+    //TODO: we must completely get rid of these "per-thread singletons" and static methods...
+    public static DAOManager getDAOManager() throws IllegalStateException, ServiceConfigurationError {
+        log.traceEntry();
+        
+        if (hasDAOManager()) {
+            //this will avoid useless parsing of the properties.
+            return log.traceExit(getDAOManager(null));
+        }
+        
+        //otherwise, we use the properties obtained at class loading.
+        return log.traceExit(DAOManager.getDAOManager(DAOManager.properties));
+    }
+    
+    /**
+     * Determine whether the {@code Thread} calling this method already 
+     * holds a {@code DAOManager}. It is useful for instance when willing 
+     * to close all resources at the end of an applicative code. For instance, 
+     * if the thread was not holding a {@code DAOManager}, calling 
+     * {@code DAOManager.getDAOManager().close()} would instantiate 
+     * a {@code DAOManager} just for closing it... Applicative code should rather do: 
+     * <pre>if (DAOManager.hasDAOManager()) {
+     *     DAOManager.getDAOManager().close();
+     * }</pre>
+     * There is a risk that another thread could interleave to close 
+     * the {@code DAOManager} between the test and the call to {@code close}, 
+     * but it would not have any harmful effect. 
+     * 
+     * @return    A {@code boolean} {@code true} if the {@code Thread} 
+     *             calling this method currently holds a {@code DAOManager}, 
+     *             {@code false} otherwise. 
+     */
+    public static boolean hasDAOManager() {
+        log.traceEntry();
+        return log.traceExit(managers.containsKey(Thread.currentThread().getId()));
+    }
+    
+    /**
      * Call {@link #close()} on all {@code DAOManager} instances currently registered,
      * and prevent any new {@code DAOManager} instance to be obtained again 
      * (calling a {@code getDAOManager} method from any thread 
@@ -574,8 +576,8 @@ public abstract class DAOManager implements AutoCloseable
      * This method is called for instance when a {@code ShutdownListener} 
      * want to release all resources using a data source.
      * 
-     * @return 	An {@code int} that is the number of {@code DAOManager} instances  
-     * 			that were closed.
+     * @return     An {@code int} that is the number of {@code DAOManager} instances  
+     *             that were closed.
      * 
      * @throws DAOException If an error occurred while closing the managers.
      */
@@ -593,8 +595,8 @@ public abstract class DAOManager implements AutoCloseable
 
         int managerCount = 0;
         for (DAOManager manager: managers.values()) {
-        	managerCount++;
-        	manager.close();
+            managerCount++;
+            manager.close();
         }
         //call shutdown on representative DAOManagers (see representativeManagers attribute, 
         //and shutdown method documentation)
@@ -609,16 +611,16 @@ public abstract class DAOManager implements AutoCloseable
      * Call {@link #kill()} on the {@code DAOManager} currently registered 
      * with an ID (returned by {@link #getId()}) equals to {@code managerId}.
      * 
-     * @param managerId 	A {@code long} corresponding to the ID of 
-     * 						the {@code DAOManager} to kill.
+     * @param managerId     A {@code long} corresponding to the ID of 
+     *                         the {@code DAOManager} to kill.
      * @throws DAOException If an error occurred while killing the manager.
      * @see #kill()
      */
     public static void kill(long managerId) throws DAOException {
-    	log.traceEntry("{}", managerId);
-    	DAOManager manager = managers.get(managerId);
+        log.traceEntry("{}", managerId);
+        DAOManager manager = managers.get(managerId);
         if (manager != null) {
-        	manager.kill();
+            manager.kill();
         }
         log.traceExit();
     }
@@ -626,7 +628,7 @@ public abstract class DAOManager implements AutoCloseable
      * Call {@link #kill()} on the {@code DAOManager} currently associated 
      * with {@code thread}.
      * 
-     * @param thread 	A {@code Thread} associated with a {@code DAOManager}. 
+     * @param thread     A {@code Thread} associated with a {@code DAOManager}. 
      * @throws DAOException If an error occurred while killing the manager.
      * @see #kill()
      */
@@ -640,14 +642,14 @@ public abstract class DAOManager implements AutoCloseable
     //of the running Thread, from another Thread. And we could have a "DAOManagerService" or "pool" 
     //allowing to retrieve the DAOManager of a Thread from another Thread (as in org.bgee.model.job.JobService)
     public static void kill(Thread thread) throws DAOException {
-    	log.traceEntry("{}", thread);
-    	DAOManager.kill(thread.getId());
+        log.traceEntry("{}", thread);
+        DAOManager.kill(thread.getId());
         log.traceExit();
     }
     
     //*****************************************
     //  INSTANCE ATTRIBUTES AND METHODS
-    //*****************************************	
+    //*****************************************    
     //FIXME: needs to make all these variables final
     /**
      * An {@code AtomicBoolean} to indicate whether 
@@ -689,34 +691,34 @@ public abstract class DAOManager implements AutoCloseable
      * Every concrete implementation must provide a default constructor 
      * with no parameters. 
      */
-	public DAOManager() {
-		log.traceEntry();
-		this.closed = new AtomicBoolean(false);
-		this.setKilled(false);
-		this.parameters = null;
-		log.traceExit();
-	}
-	
-	/**
-	 * Return the ID associated to this {@code DAOManager}. 
-	 * This ID can be used to call {@link #kill(long)}.
-	 * 
-	 * @return 	A {@code long} that is the ID of this {@code DAOManager}.
-	 */
-	public long getId() {
-		log.traceEntry();
-		return log.traceExit(this.id);
-	}
-	/**
-	 * Set the ID of this {@code DAOManager}. 
-	 * 
-	 * @param id 	the ID of this {@code DAOManager}
-	 */
-	private void setId(long id) {
-		this.id = id;
-	}
-	
-	/**
+    public DAOManager() {
+        log.traceEntry();
+        this.closed = new AtomicBoolean(false);
+        this.setKilled(false);
+        this.parameters = null;
+        log.traceExit();
+    }
+    
+    /**
+     * Return the ID associated to this {@code DAOManager}. 
+     * This ID can be used to call {@link #kill(long)}.
+     * 
+     * @return     A {@code long} that is the ID of this {@code DAOManager}.
+     */
+    public long getId() {
+        log.traceEntry();
+        return log.traceExit(this.id);
+    }
+    /**
+     * Set the ID of this {@code DAOManager}. 
+     * 
+     * @param id     the ID of this {@code DAOManager}
+     */
+    private void setId(long id) {
+        this.id = id;
+    }
+    
+    /**
      * Close all resources managed by this {@code DAOManager} instance, 
      * and release it (a call to a {@code getDAOManager} method from the thread 
      * that was holding it will return a new {@code DAOManager} instance).
@@ -731,23 +733,23 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill()
      * @see #kill(long)
      */
-	@Override
+    @Override
     public void close() throws DAOException {
         log.traceEntry();
         if (this.atomicCloseAndRemoveFromPool(false)) {
-        	//implementation-specific code here
-        	this.closeDAOManager();
+            //implementation-specific code here
+            this.closeDAOManager();
         }
         
         log.traceExit();
     }
-	/**
+    /**
      * Determine whether this {@code DAOManager} was closed 
      * (following a call to {@link #close()}, {@link #closeAll()}, 
      * {@link #kill()}, or {@link #kill(long)}).
      * 
-     * @return	{@code true} if this {@code DAOManager} was closed, 
-     * 			{@code false} otherwise.
+     * @return    {@code true} if this {@code DAOManager} was closed, 
+     *             {@code false} otherwise.
      */
     public boolean isClosed() {
         log.traceEntry();
@@ -757,10 +759,10 @@ public abstract class DAOManager implements AutoCloseable
      * Set {@link #closed}. The only method that should call this one besides constructors 
      * is {@link #atomicCloseAndRemoveFromPool(boolean)}. 
      * 
-     * @param closed 	a {@code boolean} to set {@link #closed}
+     * @param closed     a {@code boolean} to set {@link #closed}
      */
     private void setClosed(boolean closed) {
-    	this.closed.set(closed);
+        this.closed.set(closed);
     }
     
     /**
@@ -775,13 +777,13 @@ public abstract class DAOManager implements AutoCloseable
      * @see #kill(long)
      */
     public void kill() throws DAOException {
-    	log.traceEntry();
-    	if (this.atomicCloseAndRemoveFromPool(true)) {
-    		//implementation-specific code here
-    		this.killDAOManager();
-    	}
-    	
-    	log.traceExit();
+        log.traceEntry();
+        if (this.atomicCloseAndRemoveFromPool(true)) {
+            //implementation-specific code here
+            this.killDAOManager();
+        }
+        
+        log.traceExit();
     }
     
     /**
@@ -798,23 +800,23 @@ public abstract class DAOManager implements AutoCloseable
      * If this method returns {@code true}, then a call to {@link #isClosed()} 
      * will also return {@code true}.
      * 
-     * @return	{@code true} if this {@code DAOManager} was killed, 
-     * 			{@code false} otherwise.
+     * @return    {@code true} if this {@code DAOManager} was killed, 
+     *             {@code false} otherwise.
      * @see #kill()
      * @see #kill(long)
      */
     public boolean isKilled() {
-    	log.traceEntry();
-    	return log.traceExit(this.killed);
+        log.traceEntry();
+        return log.traceExit(this.killed);
     }
     /**
      * Set {@link #killed}. The only method that should call this one besides constructors 
      * is {@link #atomicCloseAndRemoveFromPool(boolean)}. 
      * 
-     * @param killed 	a {@code boolean} to set {@link #killed}
+     * @param killed     a {@code boolean} to set {@link #killed}
      */
     private final void setKilled(boolean killed) {
-    	this.killed = killed;
+        this.killed = killed;
     }
     
     /**
@@ -825,25 +827,25 @@ public abstract class DAOManager implements AutoCloseable
      * and {@code false} if this {@code DAOManager} was actually 
      * already closed. 
      * 
-     * @param killed 	To indicate whether this {@code DAOManager} 
-     * 					is being closed following a {@link #kill()} command.
-     * @return 			A {@code boolean} {@code true} if the operations 
-     * 					were actually performed, {@code false} if this 
-     * 					{@code DAOManager} was already closed. 
+     * @param killed     To indicate whether this {@code DAOManager} 
+     *                     is being closed following a {@link #kill()} command.
+     * @return             A {@code boolean} {@code true} if the operations 
+     *                     were actually performed, {@code false} if this 
+     *                     {@code DAOManager} was already closed. 
      */
     private final boolean atomicCloseAndRemoveFromPool(boolean killed) {
-    	log.traceEntry("{}", killed);
-    	synchronized(this.closed) {
-    		if (!this.isClosed()) {
-    			this.setClosed(true);
-    			if (killed) {
-    				this.setKilled(true);
-    			}
-    			managers.remove(this.getId());
-    			return log.traceExit(true);
-    		}
-    		return log.traceExit(false);
-    	}
+        log.traceEntry("{}", killed);
+        synchronized(this.closed) {
+            if (!this.isClosed()) {
+                this.setClosed(true);
+                if (killed) {
+                    this.setKilled(true);
+                }
+                managers.remove(this.getId());
+                return log.traceExit(true);
+            }
+            return log.traceExit(false);
+        }
     }
     
     //*****************************************
@@ -854,13 +856,13 @@ public abstract class DAOManager implements AutoCloseable
      * is closed. It throws an {@code IllegalStateException} with proper message 
      * if it is closed. 
      * 
-     * @throws IllegalStateException 	If this {@code DAOManager} is closed. 
+     * @throws IllegalStateException     If this {@code DAOManager} is closed. 
      */
     private void checkClosed() {
-    	if (this.isClosed()) {
-    		throw log.throwing(new IllegalStateException(
-    			"It is not possible to acquire a DAO after the DAOManager has been closed."));
-    	}
+        if (this.isClosed()) {
+            throw log.throwing(new IllegalStateException(
+                "It is not possible to acquire a DAO after the DAOManager has been closed."));
+        }
     }
     //XXX: change the names of the DAO getters, to make clear a new one is provided 
     //at each call?
@@ -868,14 +870,14 @@ public abstract class DAOManager implements AutoCloseable
      * Get a new {@link org.bgee.model.dao.api.source.SourceDAO SourceDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
-     * @return 	a new {@code SourceDAO}.
-     * @throws IllegalStateException 	If this {@code DAOManager} is already closed.
+     * @return     a new {@code SourceDAO}.
+     * @throws IllegalStateException     If this {@code DAOManager} is already closed.
      * @see org.bgee.model.dao.api.source.SourceDAO SourceDAO
      */
     public SourceDAO getSourceDAO() {
-    	log.traceEntry();
-    	this.checkClosed();
-    	return log.traceExit(this.getNewSourceDAO());
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewSourceDAO());
     }
     /**
      * Get a new {@link org.bgee.model.dao.api.source.SourceToSpeciesDAO SourceToSpeciesDAO}, 
@@ -1047,6 +1049,19 @@ public abstract class DAOManager implements AutoCloseable
         log.traceEntry();
         this.checkClosed();
         return log.traceExit(this.getNewRawDataConditionDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.anatdev.SexDAO SexDAO},
+     * unless this {@code DAOManager} is already closed.
+     *
+     * @return  a new {@code SexDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.anatdev.SexDAO SexDAO
+     */
+    public SexDAO getSexDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewSexDAO());
     }
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO}, 
@@ -1311,48 +1326,48 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewStageGroupingDAO());
     }
 
-	/**
-	 * Get a new {@link DownloadFileDAO},
-	 * unless this {@code DAOManager} is already closed.
-	 *
-	 * @return  A new {@code DownloadFileDAO}.
-	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-	 * @see DownloadFileDAO
-	 */
-	public DownloadFileDAO getDownloadFileDAO() {
-		log.traceEntry();
-		this.checkClosed();
-		return log.traceExit(this.getNewDownloadFileDAO());
-	}
+    /**
+     * Get a new {@link DownloadFileDAO},
+     * unless this {@code DAOManager} is already closed.
+     *
+     * @return  A new {@code DownloadFileDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see DownloadFileDAO
+     */
+    public DownloadFileDAO getDownloadFileDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewDownloadFileDAO());
+    }
 
-	/**
-	 * Get a new {@link SpeciesDataGroupDAO},
-	 * unless this {@code DAOManager} is already closed.
-	 *
-	 * @return  A new {@code SpeciesDataGroupDAO}.
-	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-	 * @see SpeciesDataGroupDAO
-	 */
-	public SpeciesDataGroupDAO getSpeciesDataGroupDAO() {
-		log.traceEntry();
-		this.checkClosed();
-		return log.traceExit(this.getNewSpeciesDataGroupDAO());
-	}
-	
-	/**
-	 * Get a new {@link KeywordDAO},
-	 * unless this {@code DAOManager} is already closed.
-	 *
-	 * @return  A new {@code KeywordDAO}.
-	 * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-	 * @see KeywordDAO
-	 */
-	public KeywordDAO getKeywordDAO() {
-		log.traceEntry();
-		this.checkClosed();
-		return log.traceExit(this.getNewKeywordDAO());
-	}
-	
+    /**
+     * Get a new {@link SpeciesDataGroupDAO},
+     * unless this {@code DAOManager} is already closed.
+     *
+     * @return  A new {@code SpeciesDataGroupDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see SpeciesDataGroupDAO
+     */
+    public SpeciesDataGroupDAO getSpeciesDataGroupDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewSpeciesDataGroupDAO());
+    }
+    
+    /**
+     * Get a new {@link KeywordDAO},
+     * unless this {@code DAOManager} is already closed.
+     *
+     * @return  A new {@code KeywordDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see KeywordDAO
+     */
+    public KeywordDAO getKeywordDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewKeywordDAO());
+    }
+    
     /**
      * Get a new {@link GeneNameSynonymDAO}, unless this {@code DAOManager} is already closed.
      *
@@ -1360,15 +1375,15 @@ public abstract class DAOManager implements AutoCloseable
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
      * @see GeneNameSynonymDAO
      */
-	public GeneNameSynonymDAO getGeneNameSynonymDAO() {
-		log.traceEntry();
-		this.checkClosed();
-		return log.traceExit(this.getNewGeneNameSynonymDAO());
-	}
-	
+    public GeneNameSynonymDAO getGeneNameSynonymDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewGeneNameSynonymDAO());
+    }
+    
     //*****************************************
     //  CORE ABSTRACT METHODS TO IMPLEMENT
-    //*****************************************	
+    //*****************************************    
     
     /**
      * Release all underlying resources used by this {@code DAOManager}. 
@@ -1459,7 +1474,7 @@ public abstract class DAOManager implements AutoCloseable
      * @param props     A {@code Properties} object containing parameter names 
      *                  and values to be used by this {@code DAOManager}. 
      * @throws IllegalArgumentException     If this {@code DAOManager} does not accept 
-     * 										{@code props}. 
+     *                                         {@code props}. 
      */
     public void setParameters(Properties props) throws IllegalArgumentException {
         log.traceEntry("{}", props);
@@ -1588,6 +1603,13 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RawDataConditionDAO}
      */
     protected abstract RawDataConditionDAO getNewRawDataConditionDAO();
+    /**
+     * Service provider must return a new {@link org.bgee.model.dao.api.anatdev.SexDAO
+     * SexDAO} instance when this method is called.
+     *
+     * @return  A new {@code SexDAO}
+     */
+    protected abstract SexDAO getNewSexDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO} 
@@ -1741,27 +1763,27 @@ public abstract class DAOManager implements AutoCloseable
      */
     protected abstract StageGroupingDAO getNewStageGroupingDAO();
 
-	/**
-	 * Service provider must return a new {@link DownloadFileDAO} instance when this method is called
-	 * @return A new {@link DownloadFileDAO}
-	 */
-	protected abstract DownloadFileDAO getNewDownloadFileDAO();
+    /**
+     * Service provider must return a new {@link DownloadFileDAO} instance when this method is called
+     * @return A new {@link DownloadFileDAO}
+     */
+    protected abstract DownloadFileDAO getNewDownloadFileDAO();
 
-	/**
-	 * Service provider must return a new {@link SpeciesDataGroupDAO} instance when this method is called
-	 * @return A new {@link SpeciesDataGroupDAO}
-	 */
-	protected abstract SpeciesDataGroupDAO getNewSpeciesDataGroupDAO();
+    /**
+     * Service provider must return a new {@link SpeciesDataGroupDAO} instance when this method is called
+     * @return A new {@link SpeciesDataGroupDAO}
+     */
+    protected abstract SpeciesDataGroupDAO getNewSpeciesDataGroupDAO();
 
-	/**
-	 * Service provider must return a new {@link KeywordDAO} instance when this method is called
-	 * @return A new {@link KeywordDAO}
-	 */
-	protected abstract KeywordDAO getNewKeywordDAO();
-	
-	/**
-	 * Service provider must return a new {@link GeneNameSynonymDAO} instance when this method is called
-	 * @return A new {@link GeneNameSynonymDAO}
-	 */
-	protected abstract GeneNameSynonymDAO getNewGeneNameSynonymDAO();
+    /**
+     * Service provider must return a new {@link KeywordDAO} instance when this method is called
+     * @return A new {@link KeywordDAO}
+     */
+    protected abstract KeywordDAO getNewKeywordDAO();
+    
+    /**
+     * Service provider must return a new {@link GeneNameSynonymDAO} instance when this method is called
+     * @return A new {@link GeneNameSynonymDAO}
+     */
+    protected abstract GeneNameSynonymDAO getNewGeneNameSynonymDAO();
 }

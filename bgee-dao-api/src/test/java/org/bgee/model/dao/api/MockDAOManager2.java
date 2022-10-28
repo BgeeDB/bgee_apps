@@ -3,6 +3,7 @@ package org.bgee.model.dao.api;
 import java.util.Properties;
 
 import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
+import org.bgee.model.dao.api.anatdev.SexDAO;
 import org.bgee.model.dao.api.anatdev.StageDAO;
 import org.bgee.model.dao.api.anatdev.TaxonConstraintDAO;
 import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
@@ -276,5 +277,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected RNASeqLibraryDAO getNewRnaSeqLibraryDAO() {
         return instanceMockManager.getNewRnaSeqLibraryDAO();
+    }
+
+    @Override
+    protected SexDAO getNewSexDAO() {
+        return instanceMockManager.getNewSexDAO();
     }
 }

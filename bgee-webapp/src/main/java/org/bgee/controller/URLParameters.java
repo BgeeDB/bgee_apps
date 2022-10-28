@@ -590,6 +590,12 @@ public class URLParameters {
             String.class);
 
     /**
+     * A {@code Parameter<Boolean>} used to define whether to obtain the list of species.
+     * Corresponds to the URL parameter "get_species_list".
+     */
+    private static final Parameter<Boolean> GET_SPECIES_LIST = new Parameter<Boolean>(
+            "get_species_list", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
+    /**
      * A {@code Parameter<Boolean>} used to define whether to obtain data results.
      * Corresponds to the URL parameter "get_results".
      */
@@ -666,6 +672,7 @@ public class URLParameters {
             CELL_TYPE_DESCENDANT,
             STAGE_DESCENDANT,
             EXP_ASSAY_ID,
+            GET_SPECIES_LIST,
             GET_RESULTS,
             GET_RESULT_COUNT,
             GET_COLUMN_DEFINITION,
@@ -1064,6 +1071,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamExpAssayId(){
         return EXP_ASSAY_ID;
+    }
+    /**
+     * @return  A {@code Parameter<Boolean>} used to define whether to obtain the list of species.
+     *          Corresponds to the URL parameter "get_species_list".
+     */
+    public Parameter<Boolean> getParamGetSpeciesList(){
+        return GET_SPECIES_LIST;
     }
     /**
      * @return  A {@code Parameter<Boolean>} used to define whether to obtain data results.

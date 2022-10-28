@@ -2490,6 +2490,18 @@ public class RequestParameters {
     }
     /**
      * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamGetSpeciesList()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamGetSpeciesList()},
+     *          {@code false} otherwise.
+     */
+    public boolean isGetSpeciesList() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamGetSpeciesList())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
      * {@link URLParameters#getParamGetResults()}.
      *
      * @return  {@code true} if it was requested for {@link URLParameters#getParamGetResults()},

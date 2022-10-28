@@ -1,11 +1,14 @@
 package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.DAODataFilter;
 
 public class DAORawDataFilter {
     private final static Logger log = LogManager.getLogger(DAORawDataFilter.class.getName());
@@ -18,42 +21,165 @@ public class DAORawDataFilter {
 
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
-    //TODO: clear javadoc in constructor and getter
-    private final boolean exprIdsAssayIdsIntersect;
+    private final boolean exprIdsAssayIdsUnion;
 
-    public DAORawDataFilter(int speciesId) {
-
+    /**
+     * Constructor allowing to create a {@code DOARawDataFilter} for a given speciesId,
+     * experimentIds and assayIds. The speciesId is mandatory.
+     * @param speciesId                 An int corresponding to the ID of the species
+     *                                  for which raw data has to be retrieved.
+     * @param experimentIds             A {@code Set} of {@code String} corresponding to the
+     *                                  experimentIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all experiments are retrieved.
+     * @param assayIds                  A {@code Set} of {@code String} corresponding to the
+     *                                  assayIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all assay are retrieved.
+     * @param exprIdsAssayIdsUnion      A {@code boolean} describing if union of values in
+     *                                  experimentsIds and/or assayIds has to be used to filter on
+     *                                  both experimentIds and assayIds. If true, union of
+     *                                  experimentIds and assayIds will be used to filter on both
+     *                                  experiment and assay. If false, values of experimentIds
+     *                                  will be used to filter on experiment and values of
+     *                                  assayIds will be used to filter on assay.
+     */
+    public DAORawDataFilter(int speciesId, Set<String> experimentIds, Set<String> assayIds,
+            boolean exprIdsAssayIdsUnion) {
+        this(speciesId, null, null, experimentIds, assayIds,
+                exprIdsAssayIdsUnion);
     }
-    public DAORawDataFilter(int speciesId, Collection<String> experimentIds,
-            Collection<String> assayIds, boolean exprIdsAssayIdsIntersect) {
-
-    }
+    /**
+     * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
+     * experimentIds and assayIds. The speciesId is mandatory.
+     * @param geneIds                   A {@code Set} of {@code Integer} corresponding to the IDs
+     *                                  of the genes for which raw data has to be retrieved. If
+     *                                  null, raw data will be retrieved for all genes. geneIds and
+     *                                  rawDataCondIds can not be both null.
+     * @param rawDataCondIds            A {@code Set} of {@code Integer} correpsonding to the IDs
+     *                                  of the raw data conditions for which raw data has to be
+     *                                  retrieved. If null, do not filter on raw data condition
+     *                                  IDs. geneIds and rawDataCondIds can not be both null.
+     */
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds) {
-
+        this(null, geneIds, rawDataCondIds, null, null, true);
     }
+    /**
+     * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
+     * experimentIds and assayIds. The speciesId is mandatory.
+     * @param geneIds                   A {@code Set} of {@code Integer} corresponding to the IDs
+     *                                  of the genes for which raw data has to be retrieved. If
+     *                                  null, raw data will be retrieved for all genes. geneIds and
+     *                                  rawDataCondIds can not be both null.
+     * @param rawDataCondIds            A {@code Set} of {@code Integer} correpsonding to the IDs
+     *                                  of the raw data conditions for which raw data has to be
+     *                                  retrieved. If null, do not filter on raw data condition
+     *                                  IDs. geneIds and rawDataCondIds can not be both null.
+     * @param experimentIds             A {@code Set} of {@code String} corresponding to the
+     *                                  experimentIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all experiments are retrieved.
+     * @param assayIds                  A {@code Set} of {@code String} corresponding to the
+     *                                  assayIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all assay are retrieved.
+     * @param exprIdsAssayIdsUnion      A {@code boolean} describing if union of values in
+     *                                  experimentsIds and/or assayIds has to be used to filter on
+     *                                  both experimentIds and assayIds. If true, union of
+     *                                  experimentIds and assayIds will be used to filter on both
+     *                                  experiment and assay. If false, values of experimentIds
+     *                                  will be used to filter on experiment and values of
+     *                                  assayIds will be used to filter on assay.
+     */
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
             Collection<String> experimentIds, Collection<String> assayIds,
-            boolean exprIdsAssayIdsIntersect) {
-
+            boolean exprIdsAssayIdsUnion) {
+        this(null, geneIds, rawDataCondIds, experimentIds, assayIds,
+                exprIdsAssayIdsUnion);
     }
-    private DAORawDataFilter(int speciesId, Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
-            Collection<String> experimentIds, Collection<String> assayIds,
-            boolean exprIdsAssayIdsIntersect) {
-        //TODO: sanity check speciesId > 0
-        // OR
-        // TODO: sanity check collections not both null or empty,
-        // and that they contains no null elements
+    private DAORawDataFilter(Integer speciesId, Collection<Integer> geneIds,
+            Collection<Integer> rawDataCondIds, Collection<String> experimentIds,
+            Collection<String> assayIds, boolean exprIdsAssayIdsUnion) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesId, geneIds, rawDataCondIds,
+                experimentIds, assayIds, exprIdsAssayIdsUnion);
+        if (speciesId != null && speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException("speciesId must be bigger than 0"));
+        }
+        this.speciesId = speciesId;
+        this.geneIds = geneIds == null? new HashSet<>() :
+            geneIds.stream().filter(g -> g != null).collect(Collectors.toSet());
+        this.rawDataCondIds = rawDataCondIds == null? new HashSet<>() :
+            rawDataCondIds.stream().filter(c -> c != null).collect(Collectors.toSet());
+        this.experimentIds = experimentIds == null? new HashSet<>() :
+            experimentIds.stream().filter(e -> StringUtils.isBlank(e)).collect(Collectors.toSet());
+        this.assayIds = assayIds == null? new HashSet<>() :
+            assayIds.stream().filter(a -> StringUtils.isBlank(a)).collect(Collectors.toSet());
+        if (this.speciesId == null && this.geneIds.isEmpty() && this.rawDataCondIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("At least one attribut among"
+                    + " speciesId, geneIds and rawDataCondIds should not be null or empty"));
+        }
+        this.exprIdsAssayIdsUnion = exprIdsAssayIdsUnion;
+    }
+    /**
+     * @return The {@code Integer} corresponding to the ID of the species for which raw data has
+     * to be retrieved. Not null only if do not filter on gene IDs or raw data condition IDs.
+     * If null, do not filter on speciesId.
+     */
+    public Integer getSpeciesId() {
+        return speciesId;
     }
 
-    //since we have no attributes but the one in DAODataFilter, we do not implement equals/hashCode for now.
+    public Set<Integer> getGeneIds() {
+        return geneIds;
+    }
+    public Set<Integer> getRawDataCondIds() {
+        return rawDataCondIds;
+    }
+    /**
+     * @return The {@code Set} of {@code String} corresponding to the experimentIds for which raw
+     * data has to be retrieved in the selected species. If null, all experiments are retrieved.
+     */
+    public Set<String> getExperimentIds() {
+        return experimentIds;
+    }
+    /**
+     * @return The {@code Set} of {@code String} corresponding to the assayIds for which raw data
+     * has to be retrieved in the selected species. If null, all assay are retrieved.
+     */
+    public Set<String> getAssayIds() {
+        return assayIds;
+    }
+    /**
+     * @return The {@code boolean} describing if union of values in experimentsIds and assayIds
+     * has to be used to filter on both experimentIds and assayIds. If true, union of
+     * experimentIds and assayIds will be used to filter on both experiment and assay. If false,
+     * values of experimentIds will be used to filter on experiments and values of assayIds will be
+     * used to filter on assays.
+     */
+    public boolean isExprIdsAssayIdsUnion() {
+        return exprIdsAssayIdsUnion;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(assayIds, experimentIds, exprIdsAssayIdsUnion, geneIds,
+                rawDataCondIds, speciesId);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DAORawDataFilter other = (DAORawDataFilter) obj;
+        return Objects.equals(assayIds, other.assayIds) && Objects.equals(experimentIds, other.experimentIds)
+                && exprIdsAssayIdsUnion == other.exprIdsAssayIdsUnion && Objects.equals(geneIds, other.geneIds)
+                && Objects.equals(rawDataCondIds, other.rawDataCondIds) && Objects.equals(speciesId, other.speciesId);
+    }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DAORawDataFilter [geneIds()=").append(getGeneIds())
-               .append(", speciesIds()=").append(getSpeciesIds())
-               .append(", conditionFilters()=").append(getConditionFilters()).append("]");
-        return builder.toString();
+        return "DAORawDataFilter [speciesId=" + speciesId + ", geneIds=" + geneIds + ", rawDataCondIds="
+                + rawDataCondIds + ", experimentIds=" + experimentIds + ", assayIds=" + assayIds
+                + ", exprIdsAssayIdsUnion=" + exprIdsAssayIdsUnion + "]";
     }
 
     @Override

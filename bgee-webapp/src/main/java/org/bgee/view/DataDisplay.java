@@ -12,7 +12,7 @@ import java.util.stream.Stream;
  * @version Bgee 14, Sept. 2018
  * @since   Bgee 14, Aug. 2018
  */
-public interface RawDataDisplay {
+public interface DataDisplay {
 
 	/**
 	 * Displays the default raw call page, when no arguments are given.

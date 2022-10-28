@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15, Oct. 2021
+ * @version Bgee 15.0, Oct. 2022
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -215,7 +215,7 @@ public class RequestParameters {
      * A {@code String} that is the value taken by the {@code page} parameter 
      * (see {@link URLParameters#getParamPage()}) when a page related to a raw data is requested.
      */
-    public static final String PAGE_RAW_DATA = "raw_data";
+    public static final String PAGE_DATA = "data";
 
     /**
      * A {@code String} that is the value taken by the {@code page} parameter 
@@ -423,6 +423,24 @@ public class RequestParameters {
      * are requested. Value of the parameter page should be {@link #PAGE_GENE}.
      */
     public static final String ACTION_GENE_EXPRESSION = "expression";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when raw data annotations
+     * are requested. Value of the parameter page should be {@link #PAGE_DATA}.
+     */
+    public static final String ACTION_RAW_DATA_ANNOTS = "raw_data_annots";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when processed expression values
+     * are requested. Value of the parameter page should be {@link #PAGE_DATA}.
+     */
+    public static final String ACTION_PROC_EXPR_VALUES = "proc_expr_values";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when present/absent expression calls
+     * are requested. Value of the parameter page should be {@link #PAGE_DATA}.
+     */
+    public static final String ACTION_EXPR_CALLS = "expr_calls";
     /**
      * A {@code String} that is the anchor to use in the hash part of an URL 
      * to link to the single-species part, in the documentation about gene expression calls.
@@ -674,7 +692,8 @@ public class RequestParameters {
      */
     public RequestParameters(URLParameters urlParametersInstance, BgeeProperties prop,
             boolean encodeUrl, String parametersSeparator, String charEncoding, int urlMaxLength)  {
-        log.entry(urlParametersInstance,prop,encodeUrl, parametersSeparator, charEncoding, urlMaxLength);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", urlParametersInstance, prop, encodeUrl,
+                parametersSeparator, charEncoding, urlMaxLength);
 
         // set the properties and then call the constructor method.
         this.prop = prop;
@@ -785,8 +804,8 @@ public class RequestParameters {
             BgeeProperties prop,  boolean encodeUrl, String parametersSeparator, String charEncoding, 
             int urlMaxLength) throws RequestParametersNotFoundException, 
                     MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(request, urlParametersInstance, prop, encodeUrl, parametersSeparator, 
-                charEncoding, urlMaxLength);
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}", request, urlParametersInstance, prop,
+                encodeUrl, parametersSeparator, charEncoding, urlMaxLength);
         
         // set the properties and then call the constructor method.
         this.prop = prop;
@@ -832,7 +851,7 @@ public class RequestParameters {
      */
     private void constructor(HttpServletRequest request) throws RequestParametersNotFoundException,
     MultipleValuesNotAllowedException, InvalidFormatException{
-        log.entry(request);
+        log.traceEntry("{}", request);
 
         this.loadParameters(request.getParameterMap());
 
@@ -876,7 +895,7 @@ public class RequestParameters {
     private void loadParameters(Map<String, String[]> paramValues) 
             throws RequestParametersNotFoundException, 
             MultipleValuesNotAllowedException, InvalidFormatException{
-        log.entry(paramValues);
+        log.traceEntry("{}", paramValues);
 
         //Get the key
         String key = Optional.ofNullable(
@@ -933,7 +952,7 @@ public class RequestParameters {
      */
     private void loadParametersFromRequest(Map<String, String[]> paramValues, boolean loadStorable) 
             throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(paramValues, loadStorable);
+        log.traceEntry("{}, {}", paramValues, loadStorable);
 
         // Browse all available parameters
         for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()) {
@@ -1041,7 +1060,7 @@ public class RequestParameters {
      */
     private void loadStorableParametersFromKey(String key) throws IOException, 
     MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(key);
+        log.traceEntry("{}", key);
 
         ReentrantReadWriteLock lock = this.getReadWriteLock(key);
         try {
@@ -1168,7 +1187,7 @@ public class RequestParameters {
      * @see         #readWriteLocks
      */
     private void removeLockIfPossible(String key) {
-        log.entry(key);
+        log.traceEntry("{}", key);
 
         //check if there is already a lock stored for this key
         ReentrantReadWriteLock lock = readWriteLocks.get(key);
@@ -1198,7 +1217,7 @@ public class RequestParameters {
      * @see #readWriteLocks
      */
     private ReentrantReadWriteLock getReadWriteLock(String key) {
-        log.entry(key);
+        log.traceEntry("{}", key);
 
         //check if there is already a lock stored for this key
         ReentrantReadWriteLock readWritelock = readWriteLocks.get(key);
@@ -1251,7 +1270,7 @@ public class RequestParameters {
     private void generateParametersQuery(String parametersSeparator,
             Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams) 
                     throws RequestParametersNotStorableException {
-        log.entry(parametersSeparator, searchOrHashParams, areSearchParams);
+        log.traceEntry("{}, {}, {}", parametersSeparator, searchOrHashParams, areSearchParams);
 
         // If there is a key already present, continue to work with a key
         String previousKey = this.getDataKey();
@@ -1341,8 +1360,8 @@ public class RequestParameters {
             boolean includeStorable, boolean includeNonStorable, String parametersSeparator, 
             Collection<URLParameters.Parameter<?>> searchOrHashParams, boolean areSearchParams){
 
-        log.entry(targetedParams, includeStorable, includeNonStorable, parametersSeparator, 
-                searchOrHashParams, areSearchParams);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", targetedParams, includeStorable,
+                includeNonStorable, parametersSeparator, searchOrHashParams, areSearchParams);
 
         String urlFragment = "";
 
@@ -1449,7 +1468,7 @@ public class RequestParameters {
      */
     private String generateParameterQueryStringFragment(URLParameters.Parameter<?> parameter, 
             List<?> parameterValues, String parameterSeparator) {
-        log.entry(parameter, parameterValues, parameterSeparator);
+        log.traceEntry("{}, {}, {}", parameter, parameterValues, parameterSeparator);
         if (parameterValues == null || parameterValues.isEmpty()) {
             return log.traceExit("");
         }
@@ -1491,7 +1510,6 @@ public class RequestParameters {
      * @see BgeeProperties#getUrlMaxLength
      */
     private boolean isUrlTooLong() {
-
         log.traceEntry();
         if (log.isTraceEnabled()) {
             log.trace("length of query: {} - max URL length: {}", 
@@ -1522,7 +1540,7 @@ public class RequestParameters {
      * @see #store()
      */
     private void generateKey(String urlFragment) {
-        log.entry(urlFragment);
+        log.traceEntry("{}", urlFragment);
 
         log.info("Trying to generate a key based on urlFragment: {}", urlFragment);
 
@@ -1562,8 +1580,7 @@ public class RequestParameters {
      * @see #encodeUrl
      */
     private String urlEncode(String url){
-
-        log.entry(url);
+        log.traceEntry("{}", url);
 
         String encodeString = url;
 
@@ -1583,19 +1600,6 @@ public class RequestParameters {
             log.error("Error while URLencoding", e);
         }
         return log.traceExit(encodeString);
-    }
-
-    /**
-     * Decode String that was received through the URL.
-     * 
-     * @param url   the {@code String} to be decoded.
-     * @return      A {@code String} decoded
-     * 
-     * @see #encodeUrl
-     */
-    private String urlDecode(String url) throws UnsupportedEncodingException {
-        log.entry(url);
-        return log.traceExit(java.net.URLDecoder.decode(url, this.getCharacterEncoding()));
     }
 
     /**
@@ -1658,7 +1662,7 @@ public class RequestParameters {
     //TODO : are the three following methods still useful, since apparently we use setters to define these arguments ?
     public String getRequestURL(String parametersSeparator) 
             throws RequestParametersNotStorableException {
-        log.entry(parametersSeparator);
+        log.traceEntry("{}", parametersSeparator);
         return log.traceExit(this.getRequestURL(parametersSeparator, null, false, false));
     }
     /**
@@ -1699,7 +1703,7 @@ public class RequestParameters {
     public String getRequestURL(Collection<URLParameters.Parameter<?>> searchOrHashParams, 
             boolean areSearchParams) throws RequestParametersNotStorableException, 
             IllegalStateException {
-        log.entry(searchOrHashParams, areSearchParams);
+        log.traceEntry("{}, {}", searchOrHashParams, areSearchParams);
         return log.traceExit(this.getRequestURL(this.parametersSeparator, 
                 searchOrHashParams, areSearchParams, false));
     }
@@ -1748,7 +1752,8 @@ public class RequestParameters {
                                 Collection<URLParameters.Parameter<?>> searchOrHashParams,
                                 boolean areSearchParams, boolean stableURL) 
             throws RequestParametersNotStorableException, IllegalStateException {
-        log.entry(parametersSeparator, searchOrHashParams, areSearchParams, stableURL);
+        log.traceEntry("{}, {}, {}, {}", parametersSeparator, searchOrHashParams,
+                areSearchParams, stableURL);
         this.generateParametersQuery(parametersSeparator, searchOrHashParams, areSearchParams);
         
         String url;
@@ -1802,8 +1807,7 @@ public class RequestParameters {
      * @return  an {@code List<T>} of values
      */
     public <T> List<T> getValues(URLParameters.Parameter<T> parameter){
-
-        log.entry(parameter);
+        log.traceEntry("{}", parameter);
         // Because the data type of URLParameters.Parameter is always checked 
         // when the value is stored, it is safe to not check.
         @SuppressWarnings("unchecked")
@@ -1835,8 +1839,7 @@ public class RequestParameters {
     @SuppressWarnings("unchecked")    // Because the data type of URLParameters.Parameter
     // is always checked when the value is stored, it should be safe.
     public <T> T getFirstValue(URLParameters.Parameter<T> parameter){
-
-        log.entry(parameter);
+        log.traceEntry("{}", parameter);
         try{
 
         	return log.traceExit(((List<T>) this.values.get(parameter)).get(0));
@@ -1868,7 +1871,7 @@ public class RequestParameters {
      */
     public <T> void addValue(URLParameters.Parameter<T> parameter, T value) 
             throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(parameter, value);
+        log.traceEntry("{}, {}", parameter, value);
 
         if (value == null) {
             log.traceExit(); return;
@@ -1895,7 +1898,7 @@ public class RequestParameters {
      */
     public <T> void addValues(URLParameters.Parameter<T> parameter, List<T> values)
             throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.entry(parameter, values);
+        log.traceEntry("{}, {}", parameter, values);
     
         this.addAnyValues(parameter, values);
     
@@ -1922,7 +1925,7 @@ public class RequestParameters {
     private void addAnyValues(URLParameters.Parameter<?> parameter, List<?> values) 
             throws IllegalArgumentException, InvalidFormatException, MultipleValuesNotAllowedException, 
             RequestSizeExceededException {
-        log.entry(parameter, values);
+        log.traceEntry("{}, {}", parameter, values);
 
         if (values == null || values.isEmpty()) {
             log.traceExit(); return;
@@ -1999,9 +2002,8 @@ public class RequestParameters {
      *  
      * @param parameter The {@code URLParameters.Parameter<T>} to reset
      */
-    public <T>  void resetValues(URLParameters.Parameter<T> parameter) 
-    {
-        log.entry(parameter);
+    public <T>  void resetValues(URLParameters.Parameter<T> parameter) {
+        log.traceEntry("{}", parameter);
         this.values.put(parameter, null);
         log.traceExit();
     }
@@ -2040,7 +2042,7 @@ public class RequestParameters {
      *             parameters depending on {@code includeNonStorable}
      */
     private RequestParameters cloneRequestParameter(boolean includeNonStorable){
-        log.entry(includeNonStorable);
+        log.traceEntry("{}", includeNonStorable);
         //to avoid duplicating methods, 
         //we we simulate a HttpServletRequest with a query string 
         //we provide holding storable parameters of this object
@@ -2050,7 +2052,7 @@ public class RequestParameters {
         RequestParameters clonedRequestParameters = null;
         try {
             clonedRequestParameters = new RequestParameters(request, 
-                    this.urlParametersInstance.getClass().newInstance(),this.prop,
+                    this.urlParametersInstance.getClass().getDeclaredConstructor().newInstance(),this.prop,
                     this.encodeUrl, this.parametersSeparator, this.charEncoding, this.secureMaxURLLength);
             if (!includeNonStorable){
                 // Add the key which is not a storable parameters and was not included
@@ -2058,11 +2060,12 @@ public class RequestParameters {
                         this.getFirstValue(this.getKeyParam()));
             }
             log.trace("Cloned RequestParameters generated: {}", clonedRequestParameters);
-        } catch ( RequestParametersNotFoundException
-                | MultipleValuesNotAllowedException | InvalidFormatException e) {
+        } catch ( RequestParametersNotFoundException | MultipleValuesNotAllowedException |
+                InvalidFormatException e) {
             // In this particular case, should never be thrown.
             throw log.throwing(new AssertionError("Code supposed to be unreachable", e));
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException |
+                NoSuchMethodException | InvocationTargetException e) {
             throw log.throwing(new IllegalStateException(e));
         }
         return log.traceExit(clonedRequestParameters);
@@ -2166,6 +2169,12 @@ public class RequestParameters {
      */
     public String getGeneId() {
     	return this.getFirstValue(this.getUrlParametersInstance().getParamGeneId());
+    }
+    /**
+     * @return the gene_id parameter when storing multiple values
+     */
+    public List<String> getGeneIds() {
+        return this.getValues(this.getUrlParametersInstance().getParamGeneId());
     }
     /**
      * Convenient method to set value of the parameter returned by 
@@ -2383,10 +2392,22 @@ public class RequestParameters {
      * {@link #getValues(URLParameters.Parameter)} for this parameter.
      * 
      * @return  A {@code List} of {@code String}s that are the values of 
-     *          the {@code dev_stage} URL parameter. Can be {@code null}. 
+     *          the {@code stage_id} URL parameter. Can be {@code null}.
      */
     public List<String> getDevStage() {
         return this.getValues(this.getUrlParametersInstance().getParamDevStage());
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamStageDescendant()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamStageDescendant()},
+     *          {@code false} otherwise.
+     */
+    public boolean isDevStageDescendant() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamStageDescendant())));
     }
     /**
      * Convenient method to retrieve values of the parameter returned by 
@@ -2394,10 +2415,148 @@ public class RequestParameters {
      * {@link #getValues(URLParameters.Parameter)} for this parameter.
      *
      * @return  The {@code List} of {@code String}s that are the values of 
-     *          the {@code anat_entity} URL parameter. Can be {@code null}. 
+     *          the {@code anat_entity_id} URL parameter. Can be {@code null}.
      */
     public List<String> getAnatEntity() {
         return this.getValues(this.getUrlParametersInstance().getParamAnatEntity());
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamAnatEntityDescendant()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamAnatEntityDescendant()},
+     *          {@code false} otherwise.
+     */
+    public boolean isAnatEntityDescendant() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamAnatEntityDescendant())));
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamCellType()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  The {@code List} of {@code String}s that are the values of
+     *          the {@code cell_type_id} URL parameter. Can be {@code null}.
+     */
+    public List<String> getCellType() {
+        return this.getValues(this.getUrlParametersInstance().getParamCellType());
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamCellTypeDescendant()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamCellTypeDescendant()},
+     *          {@code false} otherwise.
+     */
+    public boolean isCellTypeDescendant() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamCellTypeDescendant())));
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamSex()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of
+     *          the {@code sex} URL parameter. Can be {@code null}.
+     */
+    public List<String> getSex() {
+        return this.getValues(this.getUrlParametersInstance().getParamSex());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamStrain()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of
+     *          the {@code strain} URL parameter. Can be {@code null}.
+     */
+    public List<String> getStrain() {
+        return this.getValues(this.getUrlParametersInstance().getParamStrain());
+    }
+    /**
+     * Convenient method to retrieve values of the parameter returned by
+     * {@link URLParameters#getParamExpAssayId()}. Equivalent to calling
+     * {@link #getValues(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code List} of {@code String}s that are the values of
+     *          the {@code exp_assay_id} URL parameter. Can be {@code null}.
+     */
+    public List<String> getExpAssayId() {
+        return this.getValues(this.getUrlParametersInstance().getParamExpAssayId());
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamGetResults()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamGetResults()},
+     *          {@code false} otherwise.
+     */
+    public boolean isGetResults() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamGetResults())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamGetResultCount()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamGetResultCount()},
+     *          {@code false} otherwise.
+     */
+    public boolean isGetResultCount() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamGetResultCount())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamGetColumnDefinition()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamGetColumnDefinition()},
+     *          {@code false} otherwise.
+     */
+    public boolean isGetColumnDefinition() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamGetColumnDefinition())));
+    }
+    /**
+     * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
+     * {@link URLParameters#getParamGetFilters()}.
+     *
+     * @return  {@code true} if it was requested for {@link URLParameters#getParamGetFilters()},
+     *          {@code false} otherwise.
+     */
+    public boolean isGetFilters() {
+        log.traceEntry();
+        return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+                this.getUrlParametersInstance().getParamGetFilters())));
+    }
+    /**
+     * Convenient method to retrieve the first value of the parameter returned by
+     * {@link URLParameters#getParamOffset()}. Equivalent to calling
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  An {@code Integer} that is the value for the
+     *          {@code offset} URL parameter. Can be {@code null}.
+     */
+    public Integer getOffset() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamOffset());
+    }
+    /**
+     * Convenient method to retrieve the first value of the parameter returned by
+     * {@link URLParameters#getParamLimit()}. Equivalent to calling
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  An {@code Integer} that is the value for the
+     *          {@code limit} URL parameter. Can be {@code null}.
+     */
+    public Integer getLimit() {
+        return this.getFirstValue(this.getUrlParametersInstance().getParamLimit());
     }
     /**
      * Convenient method to retrieve value of the parameter returned by 
@@ -3024,10 +3183,10 @@ public class RequestParameters {
      * @return  A {@code boolean} to tell whether the request corresponds to a page of the
      *          category "raw_data"
      */
-    public boolean isARawDataPageCategory() {
+    public boolean isADataPageCategory() {
         log.traceEntry();
         if (this.getFirstValue(this.urlParametersInstance.getParamPage()) != null &&
-                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_RAW_DATA)) {
+                this.getFirstValue(this.urlParametersInstance.getParamPage()).equals(PAGE_DATA)) {
             return log.traceExit(true);
         }
         return log.traceExit(false);
@@ -3060,6 +3219,17 @@ public class RequestParameters {
         }
         return log.traceExit(false);
     }
+   /**
+    * Determine whether the detailed information about the request parameters must be provided.
+    * Corresponds to the URL parameter {@link URLParameters#getParamDetailedRequestParams()}.
+    *
+    * @return  {@code true} if detailed information must be provided, {@code false} otherwise.
+    */
+   public boolean isDetailedRequestParameters() {
+       log.traceEntry();
+       return log.traceExit(Boolean.TRUE.equals(this.getFirstValue(
+               this.getUrlParametersInstance().getParamDetailedRequestParams())));
+   }
 
     //    /**
 //     * This method has a js counterpart in {@code requestparameters.js} that should be kept 
@@ -3217,7 +3387,7 @@ public class RequestParameters {
      */
     private String secureString(String value, URLParameters.Parameter<?> parameter) 
             throws InvalidFormatException, ValueSizeExceededException {
-        log.entry(value, parameter);
+        log.traceEntry("{}, {}", value, parameter);
         if (value == null) {
             return log.traceExit("");
         }
@@ -3236,7 +3406,7 @@ public class RequestParameters {
      */
     private void throwIfParamValueTooLong(URLParameters.Parameter<?> parameter, String value) 
             throws ValueSizeExceededException {
-        log.entry(parameter, value);
+        log.traceEntry("{}, {}", parameter, value);
         if (value == null) {
             log.traceExit(); return;
         }
@@ -3256,7 +3426,7 @@ public class RequestParameters {
      */
     private void throwIfInvalidFormatParamValue(URLParameters.Parameter<?> parameter, String value) 
             throws InvalidFormatException {
-        log.entry(parameter, value);
+        log.traceEntry("{}, {}", parameter, value);
         if (value == null) {
             log.traceExit(); return;
         }
@@ -3279,7 +3449,7 @@ public class RequestParameters {
      *          Return {@code true} if {@code paramValue} is equal to "on", "true", or "1".
      */
     private boolean castToBoolean(String paramValue) {
-        log.entry(paramValue);
+        log.traceEntry("{}", paramValue);
 
         if (paramValue.equalsIgnoreCase("on") || 
                 paramValue.equalsIgnoreCase("true") || 

@@ -182,12 +182,12 @@ public abstract class ViewFactory {
 
     /**
      *
-     * @return A {@code RawDataDisplay} instance of the appropriate display type.
+     * @return A {@code DataDisplay} instance of the appropriate display type.
      *
      * @throws IOException  If an error occurs with the {@code PrintWriter} when writing the
      *                      response output.
      */
-    public abstract RawDataDisplay getRawCallDisplay() throws IOException;
+    public abstract DataDisplay getDataDisplay() throws IOException;
 
     /**
      *                              

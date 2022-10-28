@@ -14,7 +14,7 @@ import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.view.JsonHelper;
-import org.bgee.view.RawDataDisplay;
+import org.bgee.view.DataDisplay;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -31,9 +31,9 @@ import java.util.stream.Stream;
  * @version Bgee 14, Sept. 2018
  * @since   Bgee 14, Aug. 2018
  */
-public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisplay {
+public class HtmlDataDisplay extends HtmlParentDisplay implements DataDisplay {
 
-    private final static Logger log = LogManager.getLogger(HtmlRawDataDisplay.class.getName());
+    private final static Logger log = LogManager.getLogger(HtmlDataDisplay.class.getName());
 
     /**
      * @param response             A {@code HttpServletResponse} that will be used to display 
@@ -48,7 +48,7 @@ public class HtmlRawDataDisplay extends HtmlParentDisplay implements RawDataDisp
      * @throws IOException              If there is an issue when trying to get or to use the
      *                                  {@code PrintWriter} 
      */
-    public HtmlRawDataDisplay(HttpServletResponse response, RequestParameters requestParameters,
+    public HtmlDataDisplay(HttpServletResponse response, RequestParameters requestParameters,
                               BgeeProperties prop, JsonHelper jsonHelper, HtmlFactory factory)
             throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, jsonHelper, factory);

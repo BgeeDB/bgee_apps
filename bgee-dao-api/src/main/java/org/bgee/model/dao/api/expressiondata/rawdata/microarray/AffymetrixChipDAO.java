@@ -19,7 +19,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
  * 
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 14 Sept. 2018
+ * @author Julien Wollbrett
+ * @version Bgee 15 Oct. 2022
  * @since Bgee 01
  */
 public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
@@ -67,25 +68,6 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
     }
 
     /**
-     * Retrieve from a data source {@code AffymetrixChipTO}s, corresponding to
-     * the Affymetrix chips, with the chip IDs {@code affymetrixChipId}s,
-     * {@code null} if no corresponding chip was found.  
-     * 
-     * @param affymetrixChipIds	 	A {@code Collection} of {@code String} representing the IDs
-     *                                  of the Affymetrix chips that needs to
-     *                                  be retrieved from the data source.
-     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the
-     *                                  information to retrieve from the data source.
-     * @return	                        An {@code AffymetrixChipTOResultSet}, encapsulating all the
-     *                                  data related to the Affymetrix chips, {@code null} if none
-     *                                  could be found. 
-     * @throws DAOException 	        If an error occurred when accessing the data source.
-     */
-    public AffymetrixChipTOResultSet getAffymetrixChipFromIds(Collection<String> affymetrixChipIds,
-            Collection<Attribute> attributes)
-            throws DAOException;
-
-    /**
      * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,
      * ordered by microarray experiment IDs and bgee Affymetrix chip IDs.
      * <p>
@@ -93,43 +75,19 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * {@code AffymetrixChipTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param rawDatafilter    A {@code DAORawDataFilter} allowing to specify which chips to retrieve.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
-     *                         to retrieve from the data source.
-     * @return                 A {@code AffymetrixChipTOResultSet} allowing to retrieve the targeted
-     *                         {@code AffymetrixChipTO}s.
-     * @throws DAOException    If an error occurred while accessing the data source.
+     * @param rawDatafilter     A {@code DAORawDataFilter} allowing to specify which chips to retrieve.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code AffymetrixChipTOResultSet} allowing to retrieve the targeted
+     *                          {@code AffymetrixChipTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public AffymetrixChipTOResultSet getAffymetrixChipsFromRawDataFilter(
-            DAORawDataFilter filter,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,
-     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs.
-     * <p>
-     * The {@code AffymetrixChipTO}s are retrieved and returned as a
-     * {@code AffymetrixChipTOResultSet}. It is the responsibility of the caller to close this
-     * {@code DAOResultSet} once results are retrieved.
-     *
-     * @param experimentIds             A {@code Collection} of {@code String} representing the IDs
-     *                                  in the Bgee database of the microarray experiments for which
-     *                                  affymetrix chips have to be retrieved from the data source.
-     * @param bgeeAffymetrixChipIds     A {@code Collection} of {@code String} representing the IDs
-     *                                  in the Bgee database of the Affymetrix chips that needs to
-     *                                  be retrieved from the data source.
-     * @param rawDataFilter             A {@code DAORawDataFilter} allowing to specify which chips
-     *                                  to retrieve.
-     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the
-     *                                  information to retrieve from the data source.
-     * @return                          A {@code AffymetrixChipTOResultSet} allowing to retrieve
-     *                                  the targeted {@code AffymetrixChipTO}s.
-     * @throws DAOException             If an error occurred while accessing the data source.
-     */
-    public AffymetrixChipTOResultSet getAffymetrixChips(Collection<String> experimentIds,
-            Collection<String> bgeeAffymetrixChipIds, DAORawDataFilter condFilter,
-            Collection<Attribute> attributes)
-                    throws DAOException;
+    public AffymetrixChipTOResultSet getAffymetrixChips(DAORawDataFilter filter, Integer limit,
+            Integer offset, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code AffymetrixChipTO}s

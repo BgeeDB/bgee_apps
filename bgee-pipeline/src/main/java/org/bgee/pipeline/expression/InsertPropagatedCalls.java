@@ -3447,54 +3447,11 @@ public class InsertPropagatedCalls extends CallService {
 //                .values()));
 //    }
 
-    private static RawDataSex mapDAORawDataSexToRawDataSex(DAORawDataSex daoRawDataSex) {
-        log.traceEntry("{}", daoRawDataSex);
-        if (daoRawDataSex == null) {
-            log.traceExit(); return null;
-        }
-        switch(daoRawDataSex) {
-        case NOT_ANNOTATED:
-            return log.traceExit(RawDataSex.NOT_ANNOTATED);
-        case MIXED:
-            return log.traceExit(RawDataSex.MIXED);
-        case NA:
-            return log.traceExit(RawDataSex.NA);
-        case HERMAPHRODITE:
-            return log.traceExit(RawDataSex.HERMAPHRODITE);
-        case FEMALE:
-            return log.traceExit(RawDataSex.FEMALE);
-        case MALE:
-            return log.traceExit(RawDataSex.MALE);
-        default:
-            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
-        }
-    }
     private static String mapDAORawDataStrainToRawDataStrain(String daoStrain) {
         log.traceEntry("{}", daoStrain);
         if (StringUtils.isBlank(daoStrain)) {
             return log.traceExit((String) null);
         }
         return log.traceExit(daoStrain);
-    }
-
-    private static Sex mapRawDataSexToSex(RawDataSex daoRawDataSex) {
-        log.traceEntry("{}", daoRawDataSex);
-        if (daoRawDataSex == null) {
-            log.traceExit(); return null;
-        }
-        switch(daoRawDataSex) {
-        case NOT_ANNOTATED:
-        case MIXED:
-        case NA:
-            return log.traceExit(new Sex(SexEnum.ANY.getStringRepresentation()));
-        case HERMAPHRODITE:
-            return log.traceExit(new Sex(SexEnum.HERMAPHRODITE.getStringRepresentation()));
-        case FEMALE:
-            return log.traceExit(new Sex(SexEnum.FEMALE.getStringRepresentation()));
-        case MALE:
-            return log.traceExit(new Sex(SexEnum.MALE.getStringRepresentation()));
-        default:
-            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
-        }
     }
 }

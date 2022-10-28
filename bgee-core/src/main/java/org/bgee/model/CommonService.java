@@ -42,6 +42,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO.DAORawDataSex;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneBioTypeTO;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTO;
@@ -329,7 +330,50 @@ public class CommonService extends Service {
             throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
         }
     }
-    
+
+
+    protected static RawDataSex mapDAORawDataSexToRawDataSex(DAORawDataSex daoRawDataSex) {
+        log.traceEntry("{}", daoRawDataSex);
+        if (daoRawDataSex == null) {
+            log.traceExit(); return null;
+        }
+        switch(daoRawDataSex) {
+        case NOT_ANNOTATED:
+            return log.traceExit(RawDataSex.NOT_ANNOTATED);
+        case MIXED:
+            return log.traceExit(RawDataSex.MIXED);
+        case NA:
+            return log.traceExit(RawDataSex.NA);
+        case HERMAPHRODITE:
+            return log.traceExit(RawDataSex.HERMAPHRODITE);
+        case FEMALE:
+            return log.traceExit(RawDataSex.FEMALE);
+        case MALE:
+            return log.traceExit(RawDataSex.MALE);
+        default:
+            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
+        }
+    }
+    protected static Sex mapRawDataSexToSex(RawDataSex daoRawDataSex) {
+        log.traceEntry("{}", daoRawDataSex);
+        if (daoRawDataSex == null) {
+            log.traceExit(); return null;
+        }
+        switch(daoRawDataSex) {
+        case NOT_ANNOTATED:
+        case MIXED:
+        case NA:
+            return log.traceExit(new Sex(SexEnum.ANY.getStringRepresentation()));
+        case HERMAPHRODITE:
+            return log.traceExit(new Sex(SexEnum.HERMAPHRODITE.getStringRepresentation()));
+        case FEMALE:
+            return log.traceExit(new Sex(SexEnum.FEMALE.getStringRepresentation()));
+        case MALE:
+            return log.traceExit(new Sex(SexEnum.MALE.getStringRepresentation()));
+        default:
+            throw log.throwing(new IllegalStateException("Unrecognized DAORawDataSex: " + daoRawDataSex));
+        }
+    }
     protected static DAOSex convertSexToDAOSex(Sex sex) {
         log.traceEntry("{}", sex);
         SexEnum sexEnum = SexEnum.convertToSexEnum(sex.getId());

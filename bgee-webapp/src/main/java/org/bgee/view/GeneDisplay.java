@@ -1,16 +1,13 @@
 package org.bgee.view;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Set;
 
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
-import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.search.SearchMatchResult;
 
 /**
  * Interface defining methods to be implemented by views related to {@code Gene}s.
@@ -33,7 +30,7 @@ public interface GeneDisplay {
      * @param searchTerm    A {@code String} that is the query of the gene search. 
      * @param result        A {@code GeneMatchResult} that are the results of the query. 
      */
-    void displayGeneSearchResult(String searchTerm, GeneMatchResult result);
+    void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result);
 
     /**
      * Displays information about a specific {@code Gene}.

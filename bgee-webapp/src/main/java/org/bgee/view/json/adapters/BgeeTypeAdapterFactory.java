@@ -6,13 +6,15 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.RequestParameters;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
+import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatch;
+import org.bgee.model.ontology.Ontology;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatchResult;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -60,9 +62,19 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
             TypeAdapter<T> result = (TypeAdapter<T>) new StreamTypeAdapter<>(gson);
             return log.traceExit(result);
         }
-        if (GeneMatch.class.isAssignableFrom(rawClass) ) {
+        if (Ontology.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new GeneMatchTypeAdapter(gson);
+            TypeAdapter<T> result = (TypeAdapter<T>) new OntologyTypeAdapter<>(gson);
+            return log.traceExit(result);
+        }
+        if (SearchMatchResult.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchResultTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+        if (SearchMatch.class.isAssignableFrom(rawClass) ) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter<>(gson);
             return log.traceExit(result);
         }
         if (GeneHomologs.class.isAssignableFrom(rawClass) ) {

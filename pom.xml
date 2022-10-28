@@ -386,7 +386,7 @@
             <dependency>
                 <groupId>org.sphx</groupId>
                 <artifactId>api</artifactId>
-                <version>2.3.2</version>
+                <version>3.4.1</version>
                 <scope>compile</scope>
             </dependency>
 

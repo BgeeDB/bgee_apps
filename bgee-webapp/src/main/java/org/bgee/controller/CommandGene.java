@@ -29,10 +29,10 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.gene.GeneHomologsService;
-import org.bgee.model.gene.GeneMatchResult;
-import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.gene.GeneService;
+import org.bgee.model.search.SearchMatchResult;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.ViewFactory;
 
@@ -206,8 +206,9 @@ public class CommandGene extends CommandParent {
         CallService callService = serviceFactory.getCallService();
 
         if (StringUtils.isNotBlank(search)) {
-            GeneMatchResult result = serviceFactory.getGeneMatchResultService(this.prop)
-                    .searchByTerm(search, null, 0, GeneMatchResultService.SPHINX_MAX_RESULTS);
+            SearchMatchResult<Gene> result = serviceFactory.getSearchMatchResultService(this.prop)
+                    .searchGenesByTerm(search, speciesId == null? null : Set.of(speciesId), 0,
+                            SearchMatchResultService.SPHINX_MAX_RESULTS);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         } else if (geneId == null) {

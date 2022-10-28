@@ -20,10 +20,10 @@ import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
 import org.bgee.model.file.SpeciesDataGroupService;
 import org.bgee.model.gene.GeneHomologsService;
-import org.bgee.model.gene.GeneMatchResultService;
 import org.bgee.model.gene.GeneService;
 import org.bgee.model.keyword.KeywordService;
 import org.bgee.model.ontology.OntologyService;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
@@ -284,9 +284,9 @@ public class ServiceFactory implements AutoCloseable {
     //Maybe the ServiceFactory could store BgeeProperties after a call to BgeeProperties.getBgeeProperties(prop),
     //If it was mandatory to provide properties at instantiation?
     //XXX: Need to think about whether the use of this GeneMatchResultService in ServiceFactory is correct
-    public GeneMatchResultService getGeneMatchResultService(BgeeProperties props) {
+    public SearchMatchResultService getSearchMatchResultService(BgeeProperties props) {
         log.traceEntry("{}", props);
-        return log.traceExit(new GeneMatchResultService(props, this));
+        return log.traceExit(new SearchMatchResultService(props, this));
     }
 
     /**

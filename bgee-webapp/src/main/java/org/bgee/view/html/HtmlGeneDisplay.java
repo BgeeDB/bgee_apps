@@ -38,12 +38,13 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
-import org.bgee.model.gene.GeneMatch;
-import org.bgee.model.gene.GeneMatchResult;
+import org.bgee.model.search.SearchMatch;
+import org.bgee.model.search.SearchMatchResult;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Taxon;
 import org.bgee.view.GeneDisplay;
 import org.bgee.view.JsonHelper;
+
 
 /**
  * This class is the HTML implementation of the {@code GeneDisplay}.
@@ -94,13 +95,13 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
     }
 
     @Override
-    public void displayGeneSearchResult(String searchTerm, GeneMatchResult result) {
+    public void displayGeneSearchResult(String searchTerm, SearchMatchResult<Gene> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         this.displayGeneSearchPage(searchTerm, result);
         log.traceExit();
     }
 
-    private void displayGeneSearchPage(String searchTerm, GeneMatchResult result) {
+    private void displayGeneSearchPage(String searchTerm, SearchMatchResult<Gene> result) {
         log.traceEntry("{}, {}", searchTerm, result);
         String geneSearchDescription = null;
         if(searchTerm != null) {
@@ -121,7 +122,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
             if  (result == null || result.getTotalMatchCount() == 0) {
                 this.writeln("No gene found for '" + htmlEntities(searchTerm) + "'");
             } else {
-                int matchCount = result.getGeneMatches() == null ? 0 : result.getGeneMatches().size();
+                int matchCount = result.getSearchMatches() == null ? 0 : result.getSearchMatches().size();
                 boolean estimation = result.getTotalMatchCount() > matchCount;
                 String counterText = "";
                 if (estimation) {
@@ -137,7 +138,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 this.writeln("</div>"); // close gene-count
                 
                 this.writeln("<div class='table-container'>");
-                this.writeln(this.getSearchResultTable(result.getGeneMatches(), searchTerm));
+                this.writeln(this.getSearchResultTable(result.getSearchMatches(), searchTerm));
                 this.writeln("</div>"); // close table-container
             }
         }
@@ -147,7 +148,7 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
         log.traceExit();
     }
 
-    private String getSearchResultTable(List<GeneMatch> geneMatches, String searchTerm) {
+    private String getSearchResultTable(List<SearchMatch<Gene>> geneMatches, String searchTerm) {
         log.traceEntry("{}, {}", geneMatches, searchTerm);
         
         StringBuilder sb = new StringBuilder();
@@ -161,8 +162,8 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
                 .append("</tr></thead>");
 
         sb.append("<tbody>");
-        for (GeneMatch geneMatch: geneMatches) {
-            Gene gene = geneMatch.getGene();
+        for (SearchMatch<Gene> geneMatch: geneMatches) {
+            Gene gene = geneMatch.getSearchedObject();
 
             sb.append("<tr>");
             sb.append("    <td>").append(getSpecificGenePageLink(gene, gene.getGeneId())).append("</td>");
@@ -185,10 +186,10 @@ public class HtmlGeneDisplay extends HtmlParentDisplay implements GeneDisplay {
      * @param searchTerm    A {@code String} that is term of the search.
      * @return              The {@code String} representing the match.
      */
-    private String getMatch(GeneMatch geneMatch, String searchTerm) {
+    private String getMatch(SearchMatch<Gene> geneMatch, String searchTerm) {
         log.traceEntry("{}, {}", geneMatch, searchTerm);
         
-        if (GeneMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
+        if (SearchMatch.MatchSource.MULTIPLE.equals(geneMatch.getMatchSource())) {
             return log.traceExit("no exact match");
         }
 

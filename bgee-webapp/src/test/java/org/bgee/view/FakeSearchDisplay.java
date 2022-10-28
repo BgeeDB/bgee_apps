@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.search.SearchMatchResult;
 
 public class FakeSearchDisplay extends FakeParentDisplay implements SearchDisplay {
 
@@ -25,4 +26,11 @@ public class FakeSearchDisplay extends FakeParentDisplay implements SearchDispla
     public void displayMatchesForGeneCompletion(Collection<String> matches) {
         
     }
+
+    @Override
+    public void displayDefaultSphinxSearchResult(String searchTerm,
+            SearchMatchResult<?> result) {
+        this.out.println("Test search anat. entity result");
+    }
+
 }

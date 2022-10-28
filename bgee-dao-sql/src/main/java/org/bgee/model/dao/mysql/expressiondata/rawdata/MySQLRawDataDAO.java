@@ -136,4 +136,14 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a)));
     }
 
+    protected void checkLimitAndOffset(Integer offset, Integer limit) {
+        if (limit == null && offset != null) {
+            throw log.throwing(new IllegalArgumentException("limit can not be null if offset is"
+                    + " not null"));
+        }
+        if(offset != null && offset <= 0 || limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException("offset and limit has to be > 0"));
+        }
+    }
+
 }

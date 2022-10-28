@@ -61,89 +61,89 @@ implements RNASeqExperimentDAO{
             Collection<String> libraryIds, DAORawDataFilter filter,
             Collection<RNASeqExperimentDAO.Attribute> attrs) {
         log.traceEntry("{}, {}, {}, {}", experimentIds, libraryIds, filter, attrs);
-        final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
-                new HashSet<String>(): new HashSet<String>(experimentIds));
-        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
-                new HashSet<String>(): new HashSet<String>(libraryIds));
-        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
-        final Set<RNASeqExperimentDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
-                new HashSet<RNASeqExperimentDAO.Attribute>():
-                    new HashSet<RNASeqExperimentDAO.Attribute>(attrs));
+//        final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(experimentIds));
+//        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
+//                new HashSet<String>(): new HashSet<String>(libraryIds));
+//        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
+//        final Set<RNASeqExperimentDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
+//                new HashSet<RNASeqExperimentDAO.Attribute>():
+//                    new HashSet<RNASeqExperimentDAO.Attribute>(attrs));
 
         // generate SELECT
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
-        // generate FROM
-        .append(generateFromClause(clonedFilter, clonedLibIds));
-
-        boolean filterFound = false;
-        // generate WHERE
-        if (!clonedExpIds.isEmpty() || !clonedLibIds.isEmpty() 
-                || !clonedFilter.getSpeciesIds().isEmpty() || !clonedFilter.getConditionFilters().isEmpty()) {
-          sb.append(" WHERE ");
-        }
-        // FILTER on RNASeqExperimentId
-        if (!clonedExpIds.isEmpty()) {
-            sb.append(TABLE_NAME + ".")
-            .append(RNASeqExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement
-                    .generateParameterizedQueryString(clonedExpIds.size()))
-            .append(")");
-            filterFound = true;
-        }
-        // filter on library IDS
-        if (!clonedLibIds.isEmpty()) {
-            if(filterFound) {
-                sb.append(" AND ");
-            }
-            sb.append(LIB_TABLE_NAME).append(".")
-            .append(RNASeqLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(
-                    clonedFilter.getSpeciesIds().size()))
-            .append(")");
-            filterFound = true;
-        }
-        // FITER ON SPECIES IDS
-        if (!clonedFilter.getSpeciesIds().isEmpty()) {
-            if(filterFound) {
-                sb.append(" AND ");
-            }
-            sb.append(CONDITION_TABLE_NAME).append(".")
-            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(
-                    clonedFilter.getSpeciesIds().size()))
-            .append(")");
-            filterFound = true;
-        }
-        // FILTER ON RAW CONDITIONS
-        if (!clonedFilter.getConditionFilters().isEmpty()) {
-            if(filterFound) {
-                sb.append(" AND ");
-            }
-            sb.append(clonedFilter.getConditionFilters().stream()
-                    .map(cf -> generateOneConditionFilter(cf))
-                    .collect(Collectors.joining(" OR ", "(", ")")));
-        }
+//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
+//        // generate FROM
+//        .append(generateFromClause(clonedFilter, clonedLibIds));
+//
+//        boolean filterFound = false;
+//        // generate WHERE
+//        if (!clonedExpIds.isEmpty() || !clonedLibIds.isEmpty() 
+//                || !clonedFilter.getSpeciesIds().isEmpty() || !clonedFilter.getConditionFilters().isEmpty()) {
+//          sb.append(" WHERE ");
+//        }
+//        // FILTER on RNASeqExperimentId
+//        if (!clonedExpIds.isEmpty()) {
+//            sb.append(TABLE_NAME + ".")
+//            .append(RNASeqExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement
+//                    .generateParameterizedQueryString(clonedExpIds.size()))
+//            .append(")");
+//            filterFound = true;
+//        }
+//        // filter on library IDS
+//        if (!clonedLibIds.isEmpty()) {
+//            if(filterFound) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(LIB_TABLE_NAME).append(".")
+//            .append(RNASeqLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(
+//                    clonedFilter.getSpeciesIds().size()))
+//            .append(")");
+//            filterFound = true;
+//        }
+//        // FITER ON SPECIES IDS
+//        if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//            if(filterFound) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(CONDITION_TABLE_NAME).append(".")
+//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(
+//                    clonedFilter.getSpeciesIds().size()))
+//            .append(")");
+//            filterFound = true;
+//        }
+//        // FILTER ON RAW CONDITIONS
+//        if (!clonedFilter.getConditionFilters().isEmpty()) {
+//            if(filterFound) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(clonedFilter.getConditionFilters().stream()
+//                    .map(cf -> generateOneConditionFilter(cf))
+//                    .collect(Collectors.joining(" OR ", "(", ")")));
+//        }
 
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
-            int paramIndex = 1;
-            if (!clonedExpIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedExpIds, true);
-                paramIndex += clonedExpIds.size();
-            }
-            if (!clonedLibIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedLibIds, true);
-                paramIndex += clonedLibIds.size();
-            }
-            if (!clonedFilter.getSpeciesIds().isEmpty()) {
-                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
-                paramIndex += clonedFilter.getSpeciesIds().size();
-            }
-            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
-                    paramIndex);
+//            int paramIndex = 1;
+//            if (!clonedExpIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedExpIds, true);
+//                paramIndex += clonedExpIds.size();
+//            }
+//            if (!clonedLibIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedLibIds, true);
+//                paramIndex += clonedLibIds.size();
+//            }
+//            if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
+//                paramIndex += clonedFilter.getSpeciesIds().size();
+//            }
+//            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
+//                    paramIndex);
             return log.traceExit(new MySQLRNASeqExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -156,31 +156,31 @@ implements RNASeqExperimentDAO{
     // query both rnaSeqLibrary and rnaSeqLibraryAnnotatedSample tables in the same class using the same
     // TO and containing Attribute for all fields of both tables.
     // Attributes 
-    private String generateFromClause(DAORawDataFilter rawDataFilter, Collection<String> libIds) {
-        log.traceEntry("{}, {}", rawDataFilter, libIds);
-        StringBuilder sb = new StringBuilder();
-        sb.append(" FROM " + TABLE_NAME + " ");
-        if(!rawDataFilter.getSpeciesIds().isEmpty() 
-                || !rawDataFilter.getConditionFilters().isEmpty()
-                || !libIds.isEmpty()) {
-            //join on rnaSeqLibrary table
-            sb.append("INNER JOIN " + LIB_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + RNASeqExperimentDAO.Attribute.ID.getTOFieldName())
-            .append(" = " + LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.EXPERIMENT_ID
-                    .getTOFieldName())
-            //join on rnaSeqLibraryAnnotatedSample
-            .append(" INNER JOIN " + ANNOTATED_LIB_TABLE_NAME + " ON ")
-            .append(LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.ID.getTOFieldName())
-            .append(" = " + ANNOTATED_LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.ID
-                    .getTOFieldName())
-            //join on cond table
-            .append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-            .append(CONDITION_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName())
-            .append(" = " + ANNOTATED_LIB_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID
-                    .getTOFieldName());
-        }
-        return log.traceExit(sb.toString());
-    }
+//    private String generateFromClause(DAORawDataFilter rawDataFilter, Collection<String> libIds) {
+//        log.traceEntry("{}, {}", rawDataFilter, libIds);
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(" FROM " + TABLE_NAME + " ");
+//        if(!rawDataFilter.getSpeciesIds().isEmpty() 
+//                || !rawDataFilter.getConditionFilters().isEmpty()
+//                || !libIds.isEmpty()) {
+//            //join on rnaSeqLibrary table
+//            sb.append("INNER JOIN " + LIB_TABLE_NAME + " ON ")
+//            .append(TABLE_NAME + "." + RNASeqExperimentDAO.Attribute.ID.getTOFieldName())
+//            .append(" = " + LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.EXPERIMENT_ID
+//                    .getTOFieldName())
+//            //join on rnaSeqLibraryAnnotatedSample
+//            .append(" INNER JOIN " + ANNOTATED_LIB_TABLE_NAME + " ON ")
+//            .append(LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.ID.getTOFieldName())
+//            .append(" = " + ANNOTATED_LIB_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.ID
+//                    .getTOFieldName())
+//            //join on cond table
+//            .append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
+//            .append(CONDITION_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName())
+//            .append(" = " + ANNOTATED_LIB_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID
+//                    .getTOFieldName());
+//        }
+//        return log.traceExit(sb.toString());
+//    }
 
     /**
      * Get a {@code Map} associating column names to corresponding 

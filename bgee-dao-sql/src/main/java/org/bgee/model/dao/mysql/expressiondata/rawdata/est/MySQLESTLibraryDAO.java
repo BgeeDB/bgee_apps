@@ -39,107 +39,107 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
             DAORawDataFilter filter, Collection<ESTLibraryDAO.Attribute> attributes) {
         log.traceEntry("{}, {}, {}", libraryIds, filter, attributes);
 
-        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
-                new HashSet<>(): new HashSet<>(libraryIds));
-        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
-        final Set<ESTLibraryDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
-                EnumSet.noneOf(ESTLibraryDAO.Attribute.class): EnumSet.copyOf(attributes));
-
-        // generate SELECT
+//        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
+//                new HashSet<>(): new HashSet<>(libraryIds));
+//        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
+//        final Set<ESTLibraryDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
+//                EnumSet.noneOf(ESTLibraryDAO.Attribute.class): EnumSet.copyOf(attributes));
+//
+//        // generate SELECT
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(ESTLibraryDAO
-                .Attribute.class), true, attrs))
-        // generate FROM
-        .append(generateFromClause(clonedFilter));
-        
-        // generate WHERE CLAUSE
-        if (!clonedLibIds.isEmpty() || !clonedFilter.getSpeciesIds().isEmpty()
-                || !clonedFilter.getGeneIds().isEmpty()
-                || !clonedFilter.getConditionFilters().isEmpty()) {
-          sb.append(" WHERE ");
-        }
-        boolean previousFilter= false;
-        // FITER ON LIBRARY IDS
-        if (!clonedLibIds.isEmpty()) {
-            sb.append(TABLE_NAME).append(".")
-            .append(ESTLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedLibIds.size()))
-            .append(")");
-            previousFilter = true;
-        }
-        // FITER ON SPECIES IDS
-        if (!clonedFilter.getSpeciesIds().isEmpty()) {
-            if (previousFilter) {
-                sb.append(" AND ");
-            }
-            sb.append(CONDITION_TABLE_NAME).append(".")
-            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-                    .getSpeciesIds().size()))
-            .append(")");
-            previousFilter = true;
-        }
-        if (!clonedFilter.getGeneIds().isEmpty()) {
-            if (previousFilter) {
-                sb.append(" AND ");
-            }
-            sb.append(EST_TABLE_NAME).append(".")
-            .append(ESTDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-                    .getGeneIds().size()))
-            .append(")");
-            previousFilter = true;
-        }
-        // FILTER ON RAW CONDITIONS
-        if (!clonedFilter.getConditionFilters().isEmpty()) {
-            sb.append(clonedFilter.getConditionFilters().stream()
-                    .map(cf -> generateOneConditionFilter(cf))
-                    .collect(Collectors.joining(" OR ", "(", ")")));
-        }
+//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(ESTLibraryDAO
+//                .Attribute.class), true, attrs))
+//        // generate FROM
+//        .append(generateFromClause(clonedFilter));
+//        
+//        // generate WHERE CLAUSE
+//        if (!clonedLibIds.isEmpty() || !clonedFilter.getSpeciesIds().isEmpty()
+//                || !clonedFilter.getGeneIds().isEmpty()
+//                || !clonedFilter.getConditionFilters().isEmpty()) {
+//          sb.append(" WHERE ");
+//        }
+//        boolean previousFilter= false;
+//        // FITER ON LIBRARY IDS
+//        if (!clonedLibIds.isEmpty()) {
+//            sb.append(TABLE_NAME).append(".")
+//            .append(ESTLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedLibIds.size()))
+//            .append(")");
+//            previousFilter = true;
+//        }
+//        // FITER ON SPECIES IDS
+//        if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//            if (previousFilter) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(CONDITION_TABLE_NAME).append(".")
+//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
+//                    .getSpeciesIds().size()))
+//            .append(")");
+//            previousFilter = true;
+//        }
+//        if (!clonedFilter.getGeneIds().isEmpty()) {
+//            if (previousFilter) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(EST_TABLE_NAME).append(".")
+//            .append(ESTDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
+//                    .getGeneIds().size()))
+//            .append(")");
+//            previousFilter = true;
+//        }
+//        // FILTER ON RAW CONDITIONS
+//        if (!clonedFilter.getConditionFilters().isEmpty()) {
+//            sb.append(clonedFilter.getConditionFilters().stream()
+//                    .map(cf -> generateOneConditionFilter(cf))
+//                    .collect(Collectors.joining(" OR ", "(", ")")));
+//        }
 
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
-            int paramIndex = 1;
-            if (!clonedLibIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedLibIds, true);
-                paramIndex += clonedLibIds.size();
-            }
-            if (!clonedFilter.getSpeciesIds().isEmpty()) {
-                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
-                paramIndex += clonedFilter.getSpeciesIds().size();
-            }
-            if (!clonedFilter.getGeneIds().isEmpty()) {
-                stmt.setIntegers(paramIndex, clonedFilter.getGeneIds(), true);
-                paramIndex += clonedFilter.getGeneIds().size();
-            }
-            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
-                    paramIndex);
+//            int paramIndex = 1;
+//            if (!clonedLibIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedLibIds, true);
+//                paramIndex += clonedLibIds.size();
+//            }
+//            if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
+//                paramIndex += clonedFilter.getSpeciesIds().size();
+//            }
+//            if (!clonedFilter.getGeneIds().isEmpty()) {
+//                stmt.setIntegers(paramIndex, clonedFilter.getGeneIds(), true);
+//                paramIndex += clonedFilter.getGeneIds().size();
+//            }
+//            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
+//                    paramIndex);
             return log.traceExit(new MySQLESTLibraryTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
 
-    private String generateFromClause(DAORawDataFilter filter) {
-        log.traceEntry("{}", filter);
-        StringBuilder sb = new StringBuilder();
-        sb.append(" FROM " + TABLE_NAME);
-        if(!filter.getSpeciesIds() .isEmpty() || !filter.getConditionFilters().isEmpty()) {
-            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName() + " ")
-            .append(" = " + CONDITION_TABLE_NAME + "." 
-                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
-        }
-        if(!filter.getGeneIds() .isEmpty()) {
-            sb.append(" INNER JOIN " + EST_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.ID.getTOFieldName() + " ")
-            .append(" = " + EST_TABLE_NAME + "." 
-                    + ESTDAO.Attribute.EST_LIBRARY_ID.getTOFieldName());
-        }
-        return log.traceExit(sb.toString());
-    }
+//    private String generateFromClause(DAORawDataFilter filter) {
+//        log.traceEntry("{}", filter);
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(" FROM " + TABLE_NAME);
+//        if(!filter.getSpeciesIds() .isEmpty() || !filter.getConditionFilters().isEmpty()) {
+//            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
+//            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName() + " ")
+//            .append(" = " + CONDITION_TABLE_NAME + "." 
+//                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
+//        }
+//        if(!filter.getGeneIds() .isEmpty()) {
+//            sb.append(" INNER JOIN " + EST_TABLE_NAME + " ON ")
+//            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.ID.getTOFieldName() + " ")
+//            .append(" = " + EST_TABLE_NAME + "." 
+//                    + ESTDAO.Attribute.EST_LIBRARY_ID.getTOFieldName());
+//        }
+//        return log.traceExit(sb.toString());
+//    }
 
     class MySQLESTLibraryTOResultSet extends MySQLDAOResultSet<ESTLibraryTO> 
         implements ESTLibraryTOResultSet{

@@ -54,156 +54,156 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
             DAORawDataFilter rawDataFilter, Collection<InSituSpotDAO.Attribute> attrs) {
         log.traceEntry("{}, {}, {}, {}, {}", spotIds, evidenceIds, experimentIds,
                 rawDataFilter, attrs);
-        final Set<String> clonedSpotIds = Collections.unmodifiableSet(spotIds == null?
-                new HashSet<String>(): new HashSet<String>(spotIds));
-        final Set<String> clonedEvidenceIds = Collections.unmodifiableSet(evidenceIds == null?
-                new HashSet<String>(): new HashSet<String>(evidenceIds));
-        final Set<String> clonedExperimentIds = Collections.unmodifiableSet(experimentIds == null?
-                new HashSet<String>(): new HashSet<String>(experimentIds));
-        DAORawDataFilter clonedFilter = new DAORawDataFilter(rawDataFilter);
-        final Set<InSituSpotDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
-                new HashSet<InSituSpotDAO.Attribute>():
-                    new HashSet<InSituSpotDAO.Attribute>(attrs));
-
-        if (clonedSpotIds.isEmpty() && clonedEvidenceIds.isEmpty() && clonedExperimentIds.isEmpty()
-                && clonedFilter.getConditionFilters().isEmpty() && clonedFilter.getGeneIds().isEmpty()
-                && clonedFilter.getSpeciesIds().isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("At least a species ID, "
-                    + "a bgee gene ID, an Insitu Spot ID, an InSitu evidence ID, an InSitu experiment"
-                    + " ID or raw condition filter should be provided"));
-        }
+//        final Set<String> clonedSpotIds = Collections.unmodifiableSet(spotIds == null?
+//                new HashSet<String>(): new HashSet<String>(spotIds));
+//        final Set<String> clonedEvidenceIds = Collections.unmodifiableSet(evidenceIds == null?
+//                new HashSet<String>(): new HashSet<String>(evidenceIds));
+//        final Set<String> clonedExperimentIds = Collections.unmodifiableSet(experimentIds == null?
+//                new HashSet<String>(): new HashSet<String>(experimentIds));
+//        DAORawDataFilter clonedFilter = new DAORawDataFilter(rawDataFilter);
+//        final Set<InSituSpotDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null?
+//                new HashSet<InSituSpotDAO.Attribute>():
+//                    new HashSet<InSituSpotDAO.Attribute>(attrs));
+//
+//        if (clonedSpotIds.isEmpty() && clonedEvidenceIds.isEmpty() && clonedExperimentIds.isEmpty()
+//                && clonedFilter.getConditionFilters().isEmpty() && clonedFilter.getGeneIds().isEmpty()
+//                && clonedFilter.getSpeciesIds().isEmpty()) {
+//            throw log.throwing(new IllegalArgumentException("At least a species ID, "
+//                    + "a bgee gene ID, an Insitu Spot ID, an InSitu evidence ID, an InSitu experiment"
+//                    + " ID or raw condition filter should be provided"));
+//        }
         // generate SELECT
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(InSituSpotDAO
-                .Attribute.class), true, clonedAttrs))
-        // generate FROM
-        .append(generateFromClause(clonedExperimentIds, clonedFilter));
-
-     // generate WHERE CLAUSE
-        if (!clonedSpotIds.isEmpty() || !clonedEvidenceIds.isEmpty() ||
-                !clonedFilter.getConditionFilters().isEmpty() || !clonedFilter.getGeneIds().isEmpty()
-                || !clonedFilter.getSpeciesIds().isEmpty()) {
-          sb.append(" WHERE ");
-        }
-        // FITER ON SPOT IDS
-        boolean filteredAlready = false;
-        if (!clonedSpotIds.isEmpty()) {
-            sb.append(TABLE_NAME).append(".")
-            .append(InSituSpotDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpotIds.size()))
-            .append(")");
-            filteredAlready = true;
-        }
-        // FITER ON EVIDENCE IDS
-        if (!clonedEvidenceIds.isEmpty()) {
-            if (filteredAlready) {
-                sb.append(" AND ");
-            }
-            sb.append(TABLE_NAME).append(".")
-            .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedEvidenceIds.size()))
-            .append(")");
-            filteredAlready = true;
-        }
-        // FITER ON EXPERIMENT IDS
-        if (!clonedExperimentIds.isEmpty()) {
-            if (filteredAlready) {
-                sb.append(" AND ");
-            }
-            sb.append(EVIDENCE_TABLE_NAME).append(".")
-            .append(InSituEvidenceDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedExperimentIds
-                    .size()))
-            .append(")");
-            filteredAlready = true;
-        }
-        // FITER ON SPECIES IDS
-        if (!clonedFilter.getSpeciesIds().isEmpty()) {
-            if (filteredAlready) {
-                sb.append(" AND ");
-            }
-            sb.append(CONDITION_TABLE_NAME).append(".")
-            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-                    .getSpeciesIds().size()))
-            .append(")");
-            filteredAlready = true;
-        }
-        // FITER ON GENE IDS
-        if (!clonedFilter.getGeneIds().isEmpty()) {
-            if (filteredAlready) {
-                sb.append(" AND ");
-            }
-            sb.append(TABLE_NAME).append(".")
-            .append(InSituSpotDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-                    .getSpeciesIds().size()))
-            .append(")");
-            filteredAlready = true;
-        }
-        // FILTER ON RAW DATA (genes/species/conditions)
-        if (!clonedFilter.getConditionFilters().isEmpty()) {
-            if (!filteredAlready) {
-                sb.append(" AND ");
-            }
-            sb.append(clonedFilter.getConditionFilters()
-                    .stream().map(cf -> generateOneConditionFilter(cf))
-                    .collect(Collectors.joining(" OR ", "(", ")")));
-        }
+//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(InSituSpotDAO
+//                .Attribute.class), true, clonedAttrs))
+//        // generate FROM
+//        .append(generateFromClause(clonedExperimentIds, clonedFilter));
+//
+//     // generate WHERE CLAUSE
+//        if (!clonedSpotIds.isEmpty() || !clonedEvidenceIds.isEmpty() ||
+//                !clonedFilter.getConditionFilters().isEmpty() || !clonedFilter.getGeneIds().isEmpty()
+//                || !clonedFilter.getSpeciesIds().isEmpty()) {
+//          sb.append(" WHERE ");
+//        }
+//        // FITER ON SPOT IDS
+//        boolean filteredAlready = false;
+//        if (!clonedSpotIds.isEmpty()) {
+//            sb.append(TABLE_NAME).append(".")
+//            .append(InSituSpotDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedSpotIds.size()))
+//            .append(")");
+//            filteredAlready = true;
+//        }
+//        // FITER ON EVIDENCE IDS
+//        if (!clonedEvidenceIds.isEmpty()) {
+//            if (filteredAlready) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(TABLE_NAME).append(".")
+//            .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedEvidenceIds.size()))
+//            .append(")");
+//            filteredAlready = true;
+//        }
+//        // FITER ON EXPERIMENT IDS
+//        if (!clonedExperimentIds.isEmpty()) {
+//            if (filteredAlready) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(EVIDENCE_TABLE_NAME).append(".")
+//            .append(InSituEvidenceDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedExperimentIds
+//                    .size()))
+//            .append(")");
+//            filteredAlready = true;
+//        }
+//        // FITER ON SPECIES IDS
+//        if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//            if (filteredAlready) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(CONDITION_TABLE_NAME).append(".")
+//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
+//                    .getSpeciesIds().size()))
+//            .append(")");
+//            filteredAlready = true;
+//        }
+//        // FITER ON GENE IDS
+//        if (!clonedFilter.getGeneIds().isEmpty()) {
+//            if (filteredAlready) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(TABLE_NAME).append(".")
+//            .append(InSituSpotDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
+//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
+//                    .getSpeciesIds().size()))
+//            .append(")");
+//            filteredAlready = true;
+//        }
+//        // FILTER ON RAW DATA (genes/species/conditions)
+//        if (!clonedFilter.getConditionFilters().isEmpty()) {
+//            if (!filteredAlready) {
+//                sb.append(" AND ");
+//            }
+//            sb.append(clonedFilter.getConditionFilters()
+//                    .stream().map(cf -> generateOneConditionFilter(cf))
+//                    .collect(Collectors.joining(" OR ", "(", ")")));
+//        }
       //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
-            int paramIndex = 1;
-            if (!clonedSpotIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedSpotIds, true);
-                paramIndex += clonedSpotIds.size();
-            }
-            if (!clonedEvidenceIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedEvidenceIds, true);
-                paramIndex += clonedEvidenceIds.size();
-            }
-            if (!clonedExperimentIds.isEmpty()) {
-                stmt.setStrings(paramIndex, clonedExperimentIds, true);
-                paramIndex += clonedExperimentIds.size();
-            }
-            if (!clonedFilter.getSpeciesIds().isEmpty()) {
-                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
-                paramIndex += clonedFilter.getSpeciesIds().size();
-            }
-            if (!clonedFilter.getGeneIds().isEmpty()) {
-                stmt.setIntegers(paramIndex, clonedFilter.getGeneIds(), true);
-                paramIndex += clonedFilter.getGeneIds().size();
-            }
-            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
-                    paramIndex);
+//            int paramIndex = 1;
+//            if (!clonedSpotIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedSpotIds, true);
+//                paramIndex += clonedSpotIds.size();
+//            }
+//            if (!clonedEvidenceIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedEvidenceIds, true);
+//                paramIndex += clonedEvidenceIds.size();
+//            }
+//            if (!clonedExperimentIds.isEmpty()) {
+//                stmt.setStrings(paramIndex, clonedExperimentIds, true);
+//                paramIndex += clonedExperimentIds.size();
+//            }
+//            if (!clonedFilter.getSpeciesIds().isEmpty()) {
+//                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
+//                paramIndex += clonedFilter.getSpeciesIds().size();
+//            }
+//            if (!clonedFilter.getGeneIds().isEmpty()) {
+//                stmt.setIntegers(paramIndex, clonedFilter.getGeneIds(), true);
+//                paramIndex += clonedFilter.getGeneIds().size();
+//            }
+//            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
+//                    paramIndex);
             return log.traceExit(new MySQLInSituSpotTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
 
-    private String generateFromClause(Collection<String> experimentIds,
-            DAORawDataFilter rawDataFilter) {
-        log.traceEntry("{}, {}", experimentIds, rawDataFilter);
-        StringBuilder sb = new StringBuilder();
-        sb.append(" FROM " + TABLE_NAME);
-        // if at least one speciesId or one filter on condition
-        if(!rawDataFilter.getSpeciesIds().isEmpty() ||
-                !rawDataFilter.getConditionFilters().isEmpty()) {
-            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName())
-            .append(" = " + CONDITION_TABLE_NAME + "."
-                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
-        }
-        if(experimentIds.isEmpty()) {
-            sb.append(" INNER JOIN " + EVIDENCE_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + InSituEvidenceDAO.Attribute.EXPERIMENT_ID
-                    .getTOFieldName())
-            .append(" = " + CONDITION_TABLE_NAME + "."
-                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
-        }
-        return log.traceExit(sb.toString());
-    }
+//    private String generateFromClause(Collection<String> experimentIds,
+//            DAORawDataFilter rawDataFilter) {
+//        log.traceEntry("{}, {}", experimentIds, rawDataFilter);
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(" FROM " + TABLE_NAME);
+//        // if at least one speciesId or one filter on condition
+//        if(!rawDataFilter.getSpeciesIds().isEmpty() ||
+//                !rawDataFilter.getConditionFilters().isEmpty()) {
+//            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
+//            .append(TABLE_NAME + "." + InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName())
+//            .append(" = " + CONDITION_TABLE_NAME + "."
+//                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
+//        }
+//        if(experimentIds.isEmpty()) {
+//            sb.append(" INNER JOIN " + EVIDENCE_TABLE_NAME + " ON ")
+//            .append(TABLE_NAME + "." + InSituEvidenceDAO.Attribute.EXPERIMENT_ID
+//                    .getTOFieldName())
+//            .append(" = " + CONDITION_TABLE_NAME + "."
+//                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
+//        }
+//        return log.traceExit(sb.toString());
+//    }
 
     class MySQLInSituSpotTOResultSet extends MySQLDAOResultSet<InSituSpotTO>
     implements InSituSpotTOResultSet{

@@ -36,13 +36,12 @@ public class SearchMatchResultTypeAdapter extends TypeAdapter<SearchMatchResult<
         }
         out.beginObject();
         out.name("totalMatchCount").value(value.getTotalMatchCount());
-        if(value.getType() == Gene.class) {
+        if(Gene.class.isAssignableFrom(value.getType())) {
             out.name("geneMatches");
-            this.gson.getAdapter(List.class).write(out, value.getSearchMatches());
         } else {
             out.name("searchMatches");
-            this.gson.getAdapter(List.class).write(out, value.getSearchMatches());
         }
+        this.gson.getAdapter(List.class).write(out, value.getSearchMatches());
         out.endObject();
         log.traceExit();
     }
@@ -50,6 +49,6 @@ public class SearchMatchResultTypeAdapter extends TypeAdapter<SearchMatchResult<
     @Override
     public SearchMatchResult<?> read(JsonReader in) throws IOException {
         //for now, we never read JSON values
-        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for SearchMatch."));
+        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for SearchMatchResult."));
     }
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.search.SearchMatch;
 
@@ -18,8 +17,9 @@ import com.google.gson.stream.JsonWriter;
  * the {@code getTerm()} method of {@code SearchMatch} is not always filled, and this is the attribute
  * that GSON would use by default. With this {@code TypeAdapter} we can always use the method
  * {@code getMatch()}.
+ * @param <T>
  */
-public final class SearchMatchTypeAdapter extends TypeAdapter<SearchMatch<?>> {
+public final class SearchMatchTypeAdapter<T> extends TypeAdapter<SearchMatch<T>> {
     private final Gson gson;
     private static final Logger log = LogManager.getLogger(SearchMatchTypeAdapter.class.getName());
 
@@ -29,23 +29,20 @@ public final class SearchMatchTypeAdapter extends TypeAdapter<SearchMatch<?>> {
     }
 
     @Override
-    public void write(JsonWriter out, SearchMatch<?> value) throws IOException {
+    public void write(JsonWriter out, SearchMatch<T> value) throws IOException {
         log.traceEntry("{}, {}", out, value);
         if (value == null) {
             out.nullValue();
             log.traceExit(); return;
         }
         out.beginObject();
-        if(value.getType() == Gene.class) {
+        if(Gene.class.isAssignableFrom(value.getType())) {
             out.name("gene");
-            this.gson.getAdapter(Gene.class).write(out, (Gene)value.getSearchedObject());
-        } else if (value.getType() == AnatEntity.class) {
-            out.name("namedEntity");
-            this.gson.getAdapter(AnatEntity.class).write(out, (AnatEntity)value.getSearchedObject());
-        } else if (value.getType() == String.class) {
-            out.name("strain");
-            this.gson.getAdapter(String.class).write(out, (String)value.getSearchedObject());
+        } else {
+            out.name("object");
         }
+        this.gson.getAdapter(value.getType()).write(out, value.getSearchedObject());
+
         out.name("match").value(value.getMatch());
         out.name("matchSource").value(value.getMatchSource().toString().toLowerCase());
 
@@ -54,7 +51,7 @@ public final class SearchMatchTypeAdapter extends TypeAdapter<SearchMatch<?>> {
     }
 
     @Override
-    public SearchMatch<Gene> read(JsonReader in) throws IOException {
+    public SearchMatch<T> read(JsonReader in) throws IOException {
         //for now, we never read JSON values
         throw log.throwing(new UnsupportedOperationException("No custom JSON reader for SearchMatch."));
     }

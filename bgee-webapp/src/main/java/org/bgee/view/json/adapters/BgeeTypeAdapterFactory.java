@@ -74,7 +74,7 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         }
         if (SearchMatch.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter(gson);
+            TypeAdapter<T> result = (TypeAdapter<T>) new SearchMatchTypeAdapter<>(gson);
             return log.traceExit(result);
         }
         if (GeneHomologs.class.isAssignableFrom(rawClass) ) {
@@ -89,7 +89,6 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         }
         if (GeneExpressionResponse.class.isAssignableFrom(rawClass) ) {
             @SuppressWarnings("unchecked")
-            
             TypeAdapter<T> result = (TypeAdapter<T>) new GeneExpressionResponseTypeAdapter();
             return log.traceExit(result);
         }

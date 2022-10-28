@@ -37,17 +37,18 @@ import org.sphx.api.SphinxResult;
  * @see     SearchMatchResult
  * @since   Bgee 14, Apr. 2019
  */
+//TODO FB: lots of refactoring could be done for the searchXXX methods
 public class SearchMatchResultService extends CommonService {
-    
-    /**
-     * {@code Logger} of the class.
-     */
     private final static Logger log = LogManager.getLogger(SearchMatchResultService.class.getName());
 
     // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
+    //TODO FB: these two attributes should be Bgee properties
     private static final int SPHINX_CONNECT_TIMEOUT = 3000;
     public static final int SPHINX_MAX_RESULTS = 10000;
+
     private static final String SPHINX_SEPARATOR = "\\|\\|";
+
+    //XXX FB: maybe these two attributes should also be Bgee properties?
     private static final Integer SPHINX_SEARCH_ANAT_ENTITIES = 1;
     private static final Integer SPHINX_SEARCH_CELL_TYPES = 2;
 
@@ -128,7 +129,7 @@ public class SearchMatchResultService extends CommonService {
     /**
      * Search the genes.
      *
-     * @param searchTerm    A {@code String} containing the query 
+     * @param searchTerm    A {@code String} containing the query
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are species Ids
      *                      (may be empty to search on all species).
      * @param limitStart    An {@code int} representing the index of the first element to return.
@@ -148,7 +149,7 @@ public class SearchMatchResultService extends CommonService {
             }
         }
 
-        // We need to get the formatted term here, even if the term is formatted 
+        // We need to get the formatted term here, even if the term is formatted
         // in the method getSphinxResult(), to set correctly SearchMatches.
         String formattedTerm = this.getFormattedTerm(searchTerm);
 
@@ -161,7 +162,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<Gene>(0, null, Gene.class));
+            return log.traceExit(new SearchMatchResult<>(0, null, Gene.class));
         }
 
         // get mapping between attributes names and their index
@@ -210,7 +211,7 @@ public class SearchMatchResultService extends CommonService {
             try {
                 //in the index a speciesId = 0 means that the anat. entity exists for all species. If the speciesId
                 // Collection does not yet contains 0 we have to add it.
-                Set<Integer> hackedSpeciesIds = new HashSet<Integer>(speciesIds);
+                Set<Integer> hackedSpeciesIds = new HashSet<>(speciesIds);
                 if (!hackedSpeciesIds.contains(0)) {
                     hackedSpeciesIds.add(0);
                 }
@@ -253,7 +254,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<AnatEntity>(0, null, AnatEntity.class));
+            return log.traceExit(new SearchMatchResult<>(0, null, AnatEntity.class));
         }
 
         // get mapping between attributes names and their index
@@ -269,7 +270,7 @@ public class SearchMatchResultService extends CommonService {
                 // collector removing duplicates. Duplicates can be present if more than one species is
                 // selected or if both anat. entities and cell types are queried.
                 .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<SearchMatch<AnatEntity>>(Comparator.comparing(m -> m))),
+                        new TreeSet<SearchMatch<AnatEntity>>()),
                         ArrayList::new));
 
         return log.traceExit(new SearchMatchResult<AnatEntity>(anatEntityMatches.size(),
@@ -312,7 +313,7 @@ public class SearchMatchResultService extends CommonService {
 
         // if result is empty, return an empty list
         if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<String>(0, null, String.class));
+            return log.traceExit(new SearchMatchResult<>(0, null, String.class));
         }
 
         // get mapping between attributes names and their index
@@ -328,17 +329,17 @@ public class SearchMatchResultService extends CommonService {
                 // collector removing duplicates. Duplicates can be present if more than one species is
                 // selected.
                 .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<SearchMatch<String>>(Comparator.comparing(m -> m))),
+                        new TreeSet<SearchMatch<String>>()),
                         ArrayList::new));
 
-        return log.traceExit(new SearchMatchResult<String>(strainMatches.size(),
+        return log.traceExit(new SearchMatchResult<>(strainMatches.size(),
                 strainMatches, String.class));
     }
 
     /**
      * Generate the formatted term.
-     * 
-     * @param searchTerm    A {@code String} that is the term to be formatted. 
+     *
+     * @param searchTerm    A {@code String} that is the term to be formatted.
      * @return              The {@code String} that is the formatted.
      */
     private String getFormattedTerm(String searchTerm) {
@@ -348,7 +349,7 @@ public class SearchMatchResultService extends CommonService {
     /**
      * Retrieve autocomplete suggestions for the gene search from the provided {@code searchTerm}.
      *
-     * @param searchTerm    A {@code String} containing the query 
+     * @param searchTerm    A {@code String} containing the query
      * @param resultPerPage An {@code int} representing the number of elements to return
      * @return              A {@code List} of {@code String}s that are suggestions
      *                      for the gene search autocomplete (ordered).
@@ -433,7 +434,7 @@ public class SearchMatchResultService extends CommonService {
                 String.valueOf(match.attrValues.get(attrIndexMap.get("speciesname"))),
                 null, null, null, null, null, null, null,
                 ((Long) match.attrValues.get(attrIndexMap.get("speciesdisplayorder"))).intValue());
-        
+
         Gene gene = new Gene(String.valueOf(match.attrValues.get(attrIndexMap.get("geneid"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("genename"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("genedescription"))),
@@ -465,7 +466,7 @@ public class SearchMatchResultService extends CommonService {
         }
 
         // otherwise we fetch term and find the first match
-        // even if synonyms are in genes, we need to store which synonym matches the query   
+        // even if synonyms are in genes, we need to store which synonym matches the query
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
@@ -540,7 +541,7 @@ public class SearchMatchResultService extends CommonService {
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
                             String termLowerCase, String termLowerCaseEscaped) {
-        log.traceEntry("{}, {}, {}, {}, {}" ,match, attribute, attrIndexMap, termLowerCase, 
+        log.traceEntry("{}, {}, {}, {}, {}" ,match, attribute, attrIndexMap, termLowerCase,
                 termLowerCaseEscaped);
 
         String attrs = (String) match.attrValues.get(attrIndexMap.get(attribute));

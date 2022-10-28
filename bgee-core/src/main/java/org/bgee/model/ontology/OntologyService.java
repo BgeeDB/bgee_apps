@@ -37,7 +37,8 @@ import org.bgee.model.species.Taxon;
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 13, Nov. 2016
+ * @author  Julien Wollbrett
+ * @version Bgee 15.0, Oct. 2022
  * @since   Bgee 13, Dec. 2015
  */
 //TODO: unit tests for all getTaxonOntology... methods

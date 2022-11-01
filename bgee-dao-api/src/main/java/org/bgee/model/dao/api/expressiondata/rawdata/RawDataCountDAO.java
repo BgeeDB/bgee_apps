@@ -116,6 +116,13 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
 //        public Integer getRnaSeqAssayCount() {
 //            return rnaSeqAssayCount;
 //        }
+
+        @Override
+        public String toString() {
+            return "RawDataCountContainerTO [affyExperimentCount=" + affyExperimentCount + ", affyAssayCount="
+                    + affyAssayCount + ", affyResultCount=" + affyResultCount + "]";
+        }
+        
     }
 
 }

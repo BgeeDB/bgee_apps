@@ -7,7 +7,6 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.Attribute;
 
 /**
  * DAO defining queries using or retrieving {@link MicroarrayExperimentTO}s.

@@ -13,8 +13,8 @@ import org.bgee.model.gene.Gene;
  *
  *
  * @param <T>   {@code T} must be either an instance of {@code Gene}, or of {@code NamedEntity},
- *              and although we cannot declare such a generic type extending either one class or another,
- *              a check is performed in the constructor.
+ *              or of {@code String}, and although we cannot declare such a generic type
+ *              extending either one class or another, a check is performed in the constructor.
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
  * @version Bgee 15, Oct. 2022
@@ -35,7 +35,7 @@ public class SearchMatchResult<T> {
      * @throws IllegalArgumentException If {@code totalMatchCount} is less than 0,
      *                                  or the size of {@code searchMatches} is greater than {@code totalMatchCount},
      *                                  or {@code type} is not assignable either to {@code Gene}
-     *                                  or to {@code NamedEntity}.
+     *                                  or to {@code NamedEntity} or to {@code String}.
      */
 	public SearchMatchResult(int totalMatchCount, List<SearchMatch<T>> searchMatches, Class<T> type)
 	throws IllegalArgumentException {
@@ -49,9 +49,10 @@ public class SearchMatchResult<T> {
         if (type == null) {
             throw new IllegalArgumentException("A type must be provided.");
         }
-        if(!Gene.class.isAssignableFrom(type) && !NamedEntity.class.isAssignableFrom(type)) {
-            throw new IllegalArgumentException("The type must be assignable either to Gene class"
-                    + "or NamedEntity class");
+        if(!Gene.class.isAssignableFrom(type) && !NamedEntity.class.isAssignableFrom(type) &&
+                !String.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("The type must be assignable either to Gene class "
+                    + "or NamedEntity class or String class");
         }
         this.totalMatchCount = totalMatchCount;
         this.searchMatches = Collections.unmodifiableList(searchMatches == null? new ArrayList<>():

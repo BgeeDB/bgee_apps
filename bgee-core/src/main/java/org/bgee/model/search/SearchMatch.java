@@ -35,10 +35,10 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
             .thenComparing(gm -> gm.getMatchSource().ordinal(), Comparator.nullsLast(Integer::compareTo))
             .thenComparing(SearchMatch<Gene>::getMatch, Comparator.nullsLast(String::compareTo));
 
-    private static final Comparator<SearchMatch<NamedEntity<?>>> NAMED_ENTITX_MATCH_COMPARATOR = Comparator
-            .comparing(SearchMatch<NamedEntity<?>>::getMatchLength, Comparator.nullsLast(Integer::compareTo))
+    private static final Comparator<SearchMatch<?>> SEARCH_MATCH_COMPARATOR = Comparator
+            .<SearchMatch<?>, Integer>comparing(gm -> gm.getMatchLength(), Comparator.nullsLast(Integer::compareTo))
             .thenComparing(gm -> gm.getMatchSource().ordinal(), Comparator.nullsLast(Integer::compareTo))
-            .thenComparing(SearchMatch<NamedEntity<?>>::getMatch, Comparator.nullsLast(String::compareTo));
+            .thenComparing(gm -> gm.getMatch(), Comparator.nullsLast(String::compareTo));
 
     //The order of these Enum fields is important as it is used in the above Comparators
     public enum MatchSource {
@@ -55,14 +55,15 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
 
     /**
      * @param searchedObject    An {@code Object} of type {@code T}. {@code T} must be an instance either
-     *                          of {@code Gene}, or of {@code NamedEntity}, a check is performed.
+     *                          of {@code Gene}, or of {@code NamedEntity}, or of {@code String},
+     *                          a check is performed.
      * @param term              A {@code String} that is the matching term that allowed to retrieve
      *                          {@code searchedObject}.
      * @param matchSource       A {@code MatchSource} indicating the source of the matched {@code term}.
      * @param type              The {@code Class} {@code T} of {@code searchedObject}.
      * @throws IllegalArgumentException If {@code searchedObject} or {@code type} are null,
      *                                  or if {@code T} is not assignable to {@code Gene}
-     *                                  or {@code NamedEntity}.
+     *                                  or {@code NamedEntity} or {@code String}.
      */
     public SearchMatch(T searchedObject, String term, MatchSource matchSource, Class<T> type)
     throws IllegalArgumentException {
@@ -73,9 +74,10 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
         if (type == null) {
             throw new IllegalArgumentException("A type must be provided.");
         }
-        if(!Gene.class.isAssignableFrom(type) && !NamedEntity.class.isAssignableFrom(type)) {
-            throw new IllegalArgumentException("searchedObject must be an instance of Gene"
-                    + "or NamedEntity");
+        if(!Gene.class.isAssignableFrom(type) && !NamedEntity.class.isAssignableFrom(type) &&
+                !String.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("searchedObject must be an instance of Gene "
+                    + "or NamedEntity or String");
         }
         this.searchedObject = searchedObject;
         this.matchSource = matchSource;
@@ -83,7 +85,7 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
     }
 
     /**
-     * @return A {@code NamedEntity} that was matched by the search.
+     * @return A {@code T} that was matched by the search.
      */
     public T getSearchedObject() {
         return searchedObject;
@@ -155,6 +157,21 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
                             this.getMatchSource()));
             }
         }
+        if (this.getSearchedObject() instanceof String) {
+            String string = (String) this.searchedObject;
+            switch (this.getMatchSource()) {
+                case NAME:
+                case ID:
+                    return log.traceExit(string);
+                case DESCRIPTION:
+                case SYNONYM:
+                case XREF:
+                case MULTIPLE:
+                default:
+                    throw log.throwing(new IllegalStateException("Unrecognized MatchSource: " +
+                            this.getMatchSource()));
+            }
+        }
         throw log.throwing(new IllegalStateException("Not yet implemented for class" +
                 this.getSearchedObject().getClass()));
     }
@@ -181,10 +198,8 @@ public class SearchMatch<T> implements Comparable<SearchMatch<T>> {
             return GENE_MATCH_COMPARATOR.compare( (SearchMatch<Gene>)this,
                     (SearchMatch<Gene>)sm);
         }
-        if (NamedEntity.class.isAssignableFrom(this.getType()) &&
-                NamedEntity.class.isAssignableFrom(sm.getType())) {
-            return NAMED_ENTITX_MATCH_COMPARATOR.compare( (SearchMatch<NamedEntity<?>>)this,
-                    (SearchMatch<NamedEntity<?>>) sm);
+        if (this.getType() == sm.getType()) {
+            return SEARCH_MATCH_COMPARATOR.compare(this, sm);
         }
         throw new IllegalArgumentException("Not possible to compare 2 objects with searchedObject"
                 + " being an instance of 2 different class");

@@ -482,7 +482,7 @@ public class SearchMatchResultService extends CommonService {
     }
 
     /**
-     * Convert a {@code SphinxMatch} into a {@code SearchMatch<NamedEntity<String>>}.
+     * Convert a {@code SphinxMatch} into a {@code SearchMatch<AnatEntity>}.
      *
      * @param match         A {@code SphinxMatch} that is the match to be converted.
      * @param term          A {@code String} that is the query used to retrieve the {@code match}.
@@ -532,7 +532,7 @@ public class SearchMatchResultService extends CommonService {
     private SearchMatch<String> getStrainMatch(final SphinxMatch match, final String term,
                                    final Map<String, Integer> attrIndexMap) {
         log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
-        String strain = String.valueOf(match.attrValues.get(attrIndexMap.get("strainname")));
+        String strain = String.valueOf(match.attrValues.get(attrIndexMap.get("strain")));
         //for now the only match can be the name
         return log.traceExit(new SearchMatch<String>(strain, null,
                     SearchMatch.MatchSource.NAME, String.class));

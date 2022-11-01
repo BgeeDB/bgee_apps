@@ -139,7 +139,7 @@ public class FrontController extends HttpServlet {
             JobService jobService, UserService userService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
-        log.entry(prop, urlParameters, jobService, userService, 
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}",prop, urlParameters, jobService, userService, 
                 serviceFactoryProvider, viewFactoryProvider, mailSender);
 
         // If the URLParameters object is null, just use a new instance
@@ -192,10 +192,10 @@ public class FrontController extends HttpServlet {
      */
     public void doRequest(final HttpServletRequest request, final HttpServletResponse response,
             final boolean postData) {
-        log.entry(request, response, postData);
+        log.traceEntry("{}, {}, {}", request, response, postData);
         
         //default display type in case of error before we can do anything.
-        DisplayType displayType = DisplayType.HTML;
+        DisplayType displayType = DisplayType.JSON;
         //default RequestParameters in case of errors
         RequestParameters requestParameters = new RequestParameters(this.urlParameters,
                 this.prop, true, "&");
@@ -241,24 +241,9 @@ public class FrontController extends HttpServlet {
             if (requestParameters.isPostFormSubmit()) {
                 controller = new CommandRedirect(response, requestParameters, this.prop, factory, serviceFactory);
 
-            } else if (requestParameters.isTheHomePage()) {
-                controller = new CommandHome(response, requestParameters, this.prop, factory, serviceFactory);
-                
             } else if (requestParameters.isADownloadPageCategory()) {
                 controller = new CommandDownload(response, requestParameters, this.prop, factory, serviceFactory);
                 
-            } else if (requestParameters.isADocumentationPageCategory()) {
-                controller = new CommandDocumentation(response, requestParameters, this.prop, factory);
-                
-            } else if (requestParameters.isAnAboutPageCategory()) {
-                controller = new CommandAbout(response, requestParameters, this.prop, factory);
-
-            } else if (requestParameters.isAPrivatePolicyPageCategory()) {
-                controller = new CommandPrivacyPolicy(response, requestParameters, this.prop, factory);
-
-            } else if (requestParameters.isAcollaborationsPageCategory()) {
-                controller = new CommandCollaborations(response, requestParameters, this.prop, factory);
-
             } else if (requestParameters.isATopAnatPageCategory()) {
                 controller = new CommandTopAnat(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user, this.getServletContext(), this.mailSender);
@@ -286,29 +271,9 @@ public class FrontController extends HttpServlet {
             } else if (requestParameters.isASearchPageCategory()) {
             		controller = new CommandSearch(response, requestParameters, this.prop, factory,
                             serviceFactory);
-//            } else if (requestParameters.isADAOPageCategory()) {
-//                controller = new CommandDAO(response, requestParameters, this.prop, factory, 
-//                        serviceFactory, this.jobService, user);
-            } else if (requestParameters.isAPublicationPageCategory()) {
-                controller = new CommandPublication(response, requestParameters, this.prop, factory);
-                
             } else if (requestParameters.isARPackagePageCategory()) {
                 controller = new CommandRPackage(response, requestParameters, this.prop, factory, 
                         serviceFactory, this.jobService, user);
-                
-            } else if (requestParameters.isASparqlPageCategory()) {
-                controller = new CommandSparql(response, requestParameters, this.prop, factory, serviceFactory);
-                
-            } else if (requestParameters.isAResourcesPageCategory()) {
-                controller = new CommandResources(response, requestParameters, this.prop, factory, serviceFactory);
-                
-            } else if (requestParameters.isAStatsPageCategory()) {
-                //no specific controllers for this for now. 
-                //We simply respond with a 'success no content' so that the client get no errors, 
-                //and so that we get correct information stored in our Apache logs.
-                //TODO: In the future, this should call our Google Monitoring implementation
-                factory.getGeneralDisplay().respondSuccessNoContent();
-                setCookie = false;
                 
             } else if (requestParameters.isAAnatSimilarityPageCategory()) {
                 controller = new CommandAnatomicalSimilarity(
@@ -409,14 +374,14 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, false);
         log.traceExit();
     }
 
     @Override
     public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-        log.entry(request, response);
+        log.traceEntry("{}, {}", request, response);
         doRequest(request, response, true);
         log.traceExit();
     }
@@ -433,7 +398,7 @@ public class FrontController extends HttpServlet {
      * @throws InvalidRequestException  If several display types were requested. 
      */
     private DisplayType getRequestedDisplayType(HttpServletRequest request) throws InvalidRequestException {
-        log.entry(request);
+        log.traceEntry("{}", request);
         
         String[] paramValues = request.getParameterValues(
                 this.urlParameters.getParamDisplayType().getName());

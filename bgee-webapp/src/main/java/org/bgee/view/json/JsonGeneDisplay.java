@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,8 +18,6 @@ import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.CommandGene.GeneResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
-import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
@@ -50,12 +45,6 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     public JsonGeneDisplay(HttpServletResponse response, RequestParameters requestParameters, BgeeProperties prop,
             JsonHelper jsonHelper, JsonFactory factory) throws IllegalArgumentException, IOException {
         super(response, requestParameters, prop, jsonHelper, factory);
-    }
-
-    @Override
-    public void displayGeneHomePage() {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-
     }
 
     @Override
@@ -198,27 +187,6 @@ public class JsonGeneDisplay extends JsonParentDisplay implements GeneDisplay {
     @Override
     public void displayGeneChoice(Set<Gene> genes) {
         throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
-    }
-
-    private static List<Boolean> getDataTypeSpans(Collection<ExpressionCallData> callData) {
-        log.traceEntry("{}", callData);
-        final Map<DataType, Set<ExpressionCallData>> callsByDataTypes = callData.stream()
-                .collect(Collectors.groupingBy(ExpressionCallData::getDataType, Collectors.toSet()));
-        log.debug(callsByDataTypes);
-
-        return log.traceExit(EnumSet.allOf(DataType.class).stream().map(type -> {
-            return getDataSpan(type, callsByDataTypes.containsKey(type));
-        }).collect(Collectors.toList()));
-    }
-
-    private static Boolean getDataSpan(DataType type, boolean hasData) {
-        log.traceEntry("{}, {}", hasData, type);
-
-        boolean presence = false;
-        if (hasData) {
-            presence = true;
-        }
-        return log.traceExit(presence);
     }
 
     private LinkedHashMap<String, LinkedHashMap<String, String>> getXRefDisplay(Set<XRef> xRefs) {

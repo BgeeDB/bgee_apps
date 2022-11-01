@@ -212,8 +212,7 @@ public class CommandGene extends CommandParent {
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         } else if (geneId == null) {
-            display.displayGeneHomePage();
-            log.traceExit(); return;
+            throw log.throwing(new InvalidRequestException("At least one gene ID should be provided."));
         } else if (RequestParameters.ACTION_GENE_GENERAL_INFO.equals(action)) {
             this.processGeneralInfoRequest(geneService, display);
             log.traceExit(); return;

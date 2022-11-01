@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
  * @since   Bgee 14, Mar. 2018
  */
 public class CommandSearchTest extends TestAncestor {
-    private final static Logger log = LogManager.getLogger(CommandAboutTest.class.getName());
+    private final static Logger log = LogManager.getLogger(CommandSearchTest.class.getName());
 
     @Override
     protected Logger getLogger() {

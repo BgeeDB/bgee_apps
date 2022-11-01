@@ -32,11 +32,6 @@ public class JsonAnatomicalSimilarityDisplay extends JsonParentDisplay implement
     }
 
     @Override
-    public void displayAnatSimilarityHomePage(Set<Species> allSpecies) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
     //TODO: we don't need the "allSpecies" anymore to display the form.
     //We also don't need the userSpeciesList but maybe we can keep it in the method signature
     public void displayAnatSimilarityResult(Set<Species> allSpecies,  List<Integer> userSpeciesList,

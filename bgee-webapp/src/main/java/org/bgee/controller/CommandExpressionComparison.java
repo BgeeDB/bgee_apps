@@ -57,11 +57,7 @@ public class CommandExpressionComparison extends CommandParent {
 
         ExpressionComparisonDisplay display = viewFactory.getExpressionComparisonDisplay();
 
-        if (userGeneList.isEmpty()) {
-            display.displayExpressionComparisonHomePage();
-            log.traceExit(); return;
-        }
-        if (userGeneList.size() == 1) {
+        if (userGeneList.size() <= 1) {
             throw log.throwing(new InvalidRequestException("At least two IDs should be provided."));
         }
 

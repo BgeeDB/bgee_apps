@@ -541,6 +541,11 @@ public class RequestParameters {
     public static final String DISPLAY_TYPE_XML = "xml";
     /**
      * A {@code String} that is the value taken by the {@code displayType} parameter 
+     * (see {@link URLParameters#getParamDisplayType()}) to obtain a HTML view.
+     */
+    public static final String DISPLAY_TYPE_HTML = "html";
+    /**
+     * A {@code String} that is the value taken by the {@code displayType} parameter 
      * (see {@link URLParameters#getParamDisplayType()}) to obtain a CSV view.
      */
     public static final String DISPLAY_TYPE_CSV = "csv";
@@ -2707,6 +2712,15 @@ public class RequestParameters {
         if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
                 this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
                         DISPLAY_TYPE_XML)){
+            return log.traceExit(true);
+        }
+        return log.traceExit(false);
+    }
+    public boolean isHtmlDisplayType() {
+        log.traceEntry();
+        if(this.getFirstValue(this.urlParametersInstance.getParamDisplayType()) != null &&
+                this.getFirstValue(this.urlParametersInstance.getParamDisplayType()).equals(
+                        DISPLAY_TYPE_HTML)){
             return log.traceExit(true);
         }
         return log.traceExit(false);

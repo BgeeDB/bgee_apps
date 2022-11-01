@@ -423,10 +423,10 @@ public class FrontController extends HttpServlet {
                 return log.traceExit(DisplayType.TSV);
             } else if (fakeParams.isCsvDisplayType()) {
                 return log.traceExit(DisplayType.CSV);
-            } else if (fakeParams.isJsonDisplayType()) {
-                return log.traceExit(DisplayType.JSON);
-            } else {
+            } else if (fakeParams.isHtmlDisplayType()) {
                 return log.traceExit(DisplayType.HTML);
+            } else {
+                return log.traceExit(DisplayType.JSON);
             }
         } catch (MultipleValuesNotAllowedException | RequestParametersNotFoundException e) {
             throw log.throwing(new AssertionError("Error, code block supposed to be unreachable", e));

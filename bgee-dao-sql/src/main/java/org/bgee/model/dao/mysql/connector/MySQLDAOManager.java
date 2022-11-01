@@ -57,6 +57,7 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLGlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
@@ -1199,5 +1200,11 @@ public class MySQLDAOManager extends DAOManager {
     protected SexDAO getNewSexDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLSexDAO(this));
+    }
+
+    @Override
+    protected MysqlRawDataCountDAO getNewRawDataCountDAO() {
+        log.traceEntry();
+        return log.traceExit(new MysqlRawDataCountDAO(this));
     }
 }

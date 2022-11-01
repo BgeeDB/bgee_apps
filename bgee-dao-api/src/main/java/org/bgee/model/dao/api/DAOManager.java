@@ -34,6 +34,7 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
@@ -1257,6 +1258,20 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO 
+     * InSituSpotDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code InSituSpotDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO
+     */
+    public RawDataCountDAO getRawDataCountDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewRawDataCountDAO());
+    }
+
+    /**
      * Get a new {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
@@ -1722,6 +1737,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code InSituSpotDAO}
      */
     protected abstract InSituSpotDAO getNewInSituSpotDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO RawDataCountDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code RawDataCountDAO}
+     */
+    protected abstract RawDataCountDAO getNewRawDataCountDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.ontologycommon.CIOStatementDAO CIOStatementDAO}

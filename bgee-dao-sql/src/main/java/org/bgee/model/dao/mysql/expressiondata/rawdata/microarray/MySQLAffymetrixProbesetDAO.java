@@ -3,13 +3,16 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.microarray;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,161 +57,128 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
             Integer limit, Integer offset, Collection<AffymetrixProbesetDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-//        if (rawDataFilter == null) {
-//            throw log.throwing(new IllegalArgumentException("rawDataFilter can not be null"));
-//        }
-//        checkLimitAndOffset(offset, limit);
-//        final Integer clonedSpeId = rawDataFilter.getSpeciesId();
-//        final Set<Integer> clonedGeneIds = Collections.unmodifiableSet(
-//                rawDataFilter.getGeneIds());
-//        final Set<Integer> clonedRawDataCondIds = Collections.unmodifiableSet(
-//                rawDataFilter.getRawDataCondIds());
-//        final Set<String> clonedExpIds = Collections.unmodifiableSet(
-//                rawDataFilter.getExperimentIds());
-//        final Set<String> clonedChipIds = Collections.unmodifiableSet(
-//                rawDataFilter.getAssayIds());
-//        final boolean clonedExpChipUnion = rawDataFilter.isExprIdsAssayIdsUnion();
-//        final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
-//                .unmodifiableSet(attrs == null?
-//                EnumSet.noneOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
-//        // generate SELECT
+        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("rawDataFilter can not be null or empty"));
+        }
+        checkLimitAndOffset(offset, limit);
+        // force to have a list in order to keep order of elements. It is mandatory to be able
+        // to first generate a parameterised query and then add values.
+        final List<DAORawDataFilter> orderedRawDataFilter = 
+                Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
+        final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
+        //detect join to use
+        boolean needJoinChip = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
+                ||  !e.getRawDataCondIds().isEmpty() || !e.getAssayIds().isEmpty());            
+        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null 
+                && needJoinChip) ? true : false;
+        final boolean needJoinGene = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null
+                && !needJoinChip) ? true : false;
+        // generate SELECT
         StringBuilder sb = new StringBuilder();
-//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
-//                .Attribute.class), true, clonedAttrs))
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
+                .Attribute.class), true, clonedAttrs))
 //        // generate FROM
-//        .append(generateFromClause(clonedSpeId, clonedExpIds, clonedChipIds, clonedRawDataCondIds));
-//        // generate WHERE
-//          sb.append(" WHERE ");
-//        boolean filterFound = false;
-//     // FILTER ON EXPERIMENT IDs
-//        if (!clonedExpIds.isEmpty() || clonedExpChipUnion && !clonedChipIds.isEmpty()) {
-//            sb.append(CHIP_TABLE_NAME).append(".")
-//            .append(AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedExpIds.size()));
-//            // if filter on the union of expIds and assayIds
-//            if (clonedExpChipUnion && !clonedChipIds.isEmpty()) {
-//                sb.append(BgeePreparedStatement.generateParameterizedQueryString(clonedChipIds
-//                        .size()));
-//            }
-//            sb.append(")");
-//            filterFound = true;
-//        }
-//        // FILTER ON CHIP IDs
-//        if (!clonedChipIds.isEmpty() || clonedExpChipUnion && !clonedExpIds.isEmpty()) {
-//            if(filterFound) {
-//                if(clonedExpChipUnion) {
-//                    sb.append(" OR ");
-//                }else {
-//                    sb.append(" AND ");
-//                }
-//            }
-//            sb.append(TABLE_NAME).append(".")
-//            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
-//            .append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedChipIds.size()));
-//            // if filter on the union of expIds and assayIds
-//            if (clonedExpChipUnion && !clonedExpIds.isEmpty()) {
-//                sb.append(BgeePreparedStatement.generateParameterizedQueryString(clonedExpIds
-//                        .size()));
-//            }
-//            sb.append(")");
-//            filterFound = true;
-//        }
-//        // FITER ON SPECIES IDS
-//        if (clonedSpeId != null) {
-//            if(filterFound) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(CONDITION_TABLE_NAME).append(".")
-//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" = ")
-//            .append(clonedSpeId);
-//            filterFound = true;
-//        }
-//        // FITER ON GENE IDS
-//        if (!clonedGeneIds.isEmpty()) {
-//            if(filterFound) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(TABLE_NAME).append(".")
-//            .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(
-//                    clonedGeneIds.size()))
-//            .append(")");
-//            filterFound = true;
-//        }
-//        // FILTER ON RAW CONDITIONS
-//        if (!clonedRawDataCondIds.isEmpty()) {
-//            if(filterFound) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(CHIP_TABLE_NAME).append(".")
-//            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(
-//                    clonedRawDataCondIds.size()))
-//            .append(")");
-//        }
-//
-//        //add values to parameterized queries
+        .append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, false, needJoinCond,
+                needJoinGene));
+        // generate WHERE
+        // there is always a where condition as at least a speciesId, a geneId or a conditionId
+        // has to be provided in a rawDataFilter.
+        sb.append(" WHERE ")
+        // if needJoinGene is true it means the join for speciesId is done to the gene table.
+        // Otherwise it is done on the condition table
+        .append(rawDataFilters.stream().map(e -> this.generateOneFilterWhereClause(e, needJoinGene))
+                .collect(Collectors.joining(") OR (", " (", ")")));
+        //generate offset and limit
+        if (limit != null && offset != null) {
+            sb.append(" LIMIT " + offset + ", " + limit);
+        }
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection()
-                    .prepareStatement(sb.toString());
-//            int paramIndex = 1;
-//            if (!clonedExpIds.isEmpty() || clonedExpChipUnion && !clonedChipIds.isEmpty()) {
-//                stmt.setStrings(paramIndex, clonedExpIds, true);
-//                paramIndex += clonedExpIds.size();
-//                if (clonedExpChipUnion && !clonedChipIds.isEmpty()) {
-//                    stmt.setStrings(paramIndex, clonedChipIds, true);
-//                    paramIndex += clonedChipIds.size();
-//                }
-//            }
-//            if (!clonedChipIds.isEmpty() || clonedExpChipUnion && !clonedExpIds.isEmpty()) {
-//                stmt.setStrings(paramIndex, clonedChipIds, true);
-//                paramIndex += clonedChipIds.size();
-//                if (clonedExpChipUnion && !clonedExpIds.isEmpty()) {
-//                    stmt.setStrings(paramIndex, clonedExpIds, true);
-//                    paramIndex += clonedExpIds.size();
-//                }
-//            }
-//            if (!clonedGeneIds.isEmpty()) {
-//                stmt.setIntegers(paramIndex, clonedGeneIds, true);
-//                paramIndex += clonedGeneIds.size();
-//            }
-//            if (!clonedRawDataCondIds.isEmpty()) {
-//                stmt.setIntegers(paramIndex, clonedRawDataCondIds, true);
-//                paramIndex += clonedRawDataCondIds.size();
-//            }
-//            
-////            configureRawDataConditionFiltersStmt(stmt, clonedRawDataFilter.getConditionFilters(),
-////                    paramIndex);
+            BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(), orderedRawDataFilter);
             return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
 
-    private String generateFromClause(Integer speciesId, Set<String> expIds, Set<String> chipIds, Set<Integer> condIds) {
-        log.traceEntry("{}, {}, {}", speciesId, expIds, condIds);
-        StringBuilder sb = new StringBuilder();
-        sb.append(" FROM " + TABLE_NAME + " ");
-        if (!expIds.isEmpty() || !condIds.isEmpty() || !chipIds.isEmpty()) {            
-            sb.append("INNER JOIN " + CHIP_TABLE_NAME + " ON ")
-            .append(TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute
-                    .BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
-            .append(" = " + CHIP_TABLE_NAME + "." + AffymetrixChipDAO.Attribute
-                    .BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
-            //if joined already to chip table then join to cond table to retrieve species info
-            if (speciesId != null) {
-                sb.append(" INNER JOIN " + GENE_TABLE_NAME + " ON ")
-                .append(TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName())
-                .append(" = " + GENE_TABLE_NAME + "." + GeneDAO.Attribute.ID.getTOFieldName());
-            }
-        //if only species need a jonction then join to gene table to retrieve species info            
-        } else if (speciesId != null) {
-            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-            .append(CONDITION_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName())
-            .append(" = " + CHIP_TABLE_NAME + "." + AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName());
+    private String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter, boolean needJoinGene) {
+        log.traceEntry("{}", rawDataFilter);
+      Integer speId = rawDataFilter.getSpeciesId();
+      Set<Integer> geneIds = rawDataFilter.getGeneIds();
+      Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
+      Set<String> expIds = rawDataFilter.getExperimentIds();
+      Set<String> assayIds = rawDataFilter.getAssayIds();
+      boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
+      Set<String> expAssayMerged = isExpAssayUnion ? new HashSet<>(): 
+          Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet());
+      boolean filterFound = false;
+      StringBuilder sb = new StringBuilder();
+        // FITLER ON EXPERIMENT IDS
+        if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
+            sb.append(CHIP_TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    isExpAssayUnion ? expAssayMerged.size() : expIds.size()));
+            sb.append(")");
+            filterFound = true;
         }
-        return log.traceExit(sb.toString());
+        // FILTER ON Chip IDS
+        if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
+            if(filterFound) {
+                if(isExpAssayUnion) {
+                    sb.append(" OR ");
+                }else {
+                    sb.append(" AND ");
+                }
+            }
+            //has to filter on chip table as probeset table only contains bgee chip ID
+            sb.append(CHIP_TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    isExpAssayUnion ? expAssayMerged.size() : assayIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        // FILTER ON SPECIES ID
+        if (speId != null) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            if (needJoinGene) {
+                sb.append(GENE_TABLE_NAME).append(".")
+                .append(GeneDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" = ")
+                .append(speId);
+            } else {
+                sb.append(CONDITION_TABLE_NAME).append(".")
+                .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" = ")
+                .append(speId);
+            }
+            filterFound = true;
+        }
+        // FILTER ON RAW CONDITION IDS
+        if (!rawDataCondIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(CHIP_TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
+                    .size()))
+            .append(")");
+            filterFound = true;
+        }
+        // FILTER ON GENE IDS
+        if (!geneIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(TABLE_NAME).append(".")
+            .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size()))
+            .append(")");
+        }
+        return sb.toString();
     }
 
     class MySQLAffymetrixProbesetTOResultSet extends MySQLDAOResultSet<AffymetrixProbesetTO>

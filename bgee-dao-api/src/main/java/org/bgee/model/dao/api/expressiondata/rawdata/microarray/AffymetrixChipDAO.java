@@ -75,7 +75,9 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      * {@code AffymetrixChipTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param rawDatafilter     A {@code DAORawDataFilter} allowing to specify which chips to retrieve.
+     //TODO: add javadoc explaining than in a filter it is AND and between filters it is OR
+     * @param rawDatafilter     A {@code Collection} of {@code DAORawDataFilter} allowing to filter which
+     *                          chips to retrieve.
      * @param limit             An {@code Integer} used to limit the number of rows returned in a query
      *                          result. If null, all results are returned.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
@@ -86,8 +88,8 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
      *                          {@code AffymetrixChipTO}s.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public AffymetrixChipTOResultSet getAffymetrixChips(DAORawDataFilter filter, Integer limit,
-            Integer offset, Collection<Attribute> attributes) throws DAOException;
+    public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDatafilters,
+            Integer limit, Integer offset, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code AffymetrixChipTO}s

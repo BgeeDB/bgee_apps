@@ -65,56 +65,26 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
     }
 
     /**
-     * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters,
-     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and
-     * probeset IDs.
+     * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters.
      * <p>
      * The {@code AffymetrixProbesetTO}s are retrieved and returned as a
      * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param filter           A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the
-     *                          information to retrieve
-     *                          from the data source.
+     * @param filter            A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          to filter probesets to retrieve.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
      * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
-     *                          targeted
-     *                          {@code AffymetrixProbesetTO}s.
+     *                          targeted {@code AffymetrixProbesetTO}s.
      * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public AffymetrixProbesetTOResultSet getAffymetrixProbesetsFromRawDataFilter(
-            DAORawDataFilter filter,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Allows to retrieve {@code AffymetrixProbesetTO}s according to the provided filters,
-     * ordered by microarray experiment IDs and bgee Affymetrix chip IDs and bgee gene IDs and
-     * probeset IDs.
-     * <p>
-     * The {@code AffymetrixProbesetTO}s are retrieved and returned as a
-     * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
-     * {@code DAOResultSet} once results are retrieved.
-     *
-     * @param experimentIds     A {@code Collection} of {@code String} to specify experiment IDs
-     *                          of probesets to retrieve.
-     * @param chipIds       A {@code Collection} of {@code String} to specify chip IDs
-     *                          of probesets to retrieve.
-     * @param probesetIds       A {@code Collection} of {@code String} to specify IDs of probesets
-     *                          to retrieve.
-     * @param filter            A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the
-     *                          information to retrieve
-     *                          from the data source.
-     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
-     *                          targeted
-     *                          {@code AffymetrixProbesetTO}s.
-     * @throws DAOException     If an error occurred while accessing the data source.
-     */
-    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<String> experimentIds,
-            Collection<String> chipIds, Collection<String> probesetIds, DAORawDataFilter filter,
-            Collection<Attribute> attributes) throws DAOException;
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<DAORawDataFilter> rawDataFilters,
+            Integer limit, Integer offset, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code AffymetrixProbesetTO}s

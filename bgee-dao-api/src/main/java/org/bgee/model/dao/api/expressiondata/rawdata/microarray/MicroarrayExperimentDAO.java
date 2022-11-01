@@ -7,6 +7,7 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.Attribute;
 
 /**
  * DAO defining queries using or retrieving {@link MicroarrayExperimentTO}s.
@@ -49,43 +50,28 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
         }
     }
 
-	/**
-	 * Retrieve from a data source a {@code MicroarrayExperimentTO}, corresponding to 
-	 * an Affymetrix experiment with the ID {@code expId}, or {@code null} 
-	 * if no corresponding experiment could be found.  
-	 * 
-	 * @param expIds           A {@code Collection} of {code String} representing the IDs of
-	 *                         the Affymetrix experiments to retrieve from the data source.
-     * @param attributes       A {@code Collection} of {@code Attribute}s to specify the information
-     *                         to retrieve from the data source.
-	 * @return	               A {@code AffymetrixExpTO}, encapsulating all the data related to
-	 *                         the Affymetrix experiment, {@code null} if none could be found.
-     * @throws DAOException    If an error occurred when accessing the data source. 
-	 */
-	public MicroarrayExperimentTOResultSet getExperimentFromIds(Collection<String> expId,
-	        Collection<Attribute> attributes) throws DAOException;
-
-	   /**
-     * Retrieve from a data source a {@code MicroarrayExperimentTO}, corresponding to
-     * an Affymetrix experiment with the ID {@code expId}, or {@code null}
-     * if no corresponding experiment could be found.
-     * 
-     * @param expIds            A {@code Collection} of {code String} representing the IDs of
-     *                          the Affymetrix experiments to retrieve from the data source.
-     * @param chipIds           A {@code Collection} of {code String} representing the IDs of
-     *                          the Affymetrix chips for which Affymetrix Experiments have to 
-     *                          be retrieved.
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
+    /**
+     * Allows to retrieve {@code MicroarrayExperimentTO}s according to the provided filters.
+     * <p>
+     * The {@code MicroarrayExperimentTO}s are retrieved and returned as a
+     * {@code MicroarrayExperimentTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param filter            A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter experiments to retrieve.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
-     * @return                  A {@code AffymetrixExpTO}, encapsulating all the data related to
-     *                          the Affymetrix experiment, {@code null} if none could be found.
-     * @throws DAOException     If an error occurred when accessing the data source.
+     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
+     *                          targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public MicroarrayExperimentTOResultSet getExperiments(Collection<String> expId,
-            Collection<String> chipIds, DAORawDataFilter rawDataFilter, 
-            Collection<Attribute> attributes) throws DAOException;
+    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
+            Integer limit, Integer offset, Collection<Attribute> attributes) throws DAOException;
 
 	/**
      * {@code DAOResultSet} for {@code MicroarrayExperimentTO}s

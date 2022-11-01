@@ -1,32 +1,18 @@
 package org.bgee.view;
 
-import org.bgee.model.expressiondata.rawdata.insitu.InSituSpot;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import java.util.List;
 
-import java.util.stream.Stream;
+import org.bgee.controller.CommandData.DataFormDetails;
+import org.bgee.model.species.Species;
 
 /**
- * Interface defining methods to be implemented by views related to {@code RawCallSourceContainer}s.
+ * Interface defining methods to be implemented by views related to data display.
  * 
- * @author  Valentine Rech de Laval
- * @version Bgee 14, Sept. 2018
- * @since   Bgee 14, Aug. 2018
+ * @author  Frederic Bastian
+ * @version Bgee 15.0, Nov. 2022
+ * @since   Bgee 15.0, Nov. 2022
  */
 public interface DataDisplay {
 
-	/**
-	 * Displays the default raw call page, when no arguments are given.
-	 */
-	void displayRawCallHomePage();
-	
-	/**
-	 * Displays specific raw call page.
-	 * 
-	 * @param affymetrixProbesets
-	 * @param rnaSeqResults
-	 * @param inSituSpots
-	 * @param ests
-	 */
-//	void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<RNASeqResult> rnaSeqResults, Stream<InSituSpot> inSituSpots, Stream<EST> ests);
-	void displayRawCallPage(Stream<AffymetrixProbeset> affymetrixProbesets, Stream<InSituSpot> inSituSpots);
+    public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails);
 }

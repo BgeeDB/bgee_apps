@@ -93,7 +93,9 @@ public class JsonFactory extends ViewFactory {
 
     @Override
     public DataDisplay getDataDisplay() throws IOException {
-        throw log.throwing(new UnsupportedOperationException("Not available for JSON display"));
+        log.traceEntry();
+        return log.traceExit(new JsonDataDisplay(this.response, this.requestParameters, this.prop,
+                this.jsonHelper, this));
     }
 
     @Override

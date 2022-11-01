@@ -63,8 +63,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
 
         // generate FROM clause
-        this.generateFromClauseAffymetrix(MySQLAffymetrixChipDAO.TABLE_NAME,
-                false, false, needJoinProbeset, needJoinCond, false);
+        sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixChipDAO.TABLE_NAME,
+                false, false, needJoinProbeset, needJoinCond, false));
 
         // generate WHERE CLAUSE
         // there is always a where condition as at least a speciesId, a geneId or a conditionId

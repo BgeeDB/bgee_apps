@@ -336,8 +336,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             throw log.throwing(new IllegalArgumentException("limit can not be null if offset is"
                     + " not null"));
         }
-        if(offset != null && offset <= 0 || limit != null && limit <= 0) {
-            throw log.throwing(new IllegalArgumentException("offset and limit has to be > 0"));
+        if(offset != null && offset < 0 ) {
+            throw log.throwing(new IllegalArgumentException("offset has to be >= 0"));
+        }
+        if (limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException("limit has to be > 0"));
         }
     }
 

@@ -141,6 +141,84 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb.toString());
     }
 
+    protected String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter, 
+            boolean speciesFromGeneTable) {
+        log.traceEntry("{}", rawDataFilter);
+      Integer speId = rawDataFilter.getSpeciesId();
+      Set<Integer> geneIds = rawDataFilter.getGeneIds();
+      Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
+      Set<String> expIds = rawDataFilter.getExperimentIds();
+      Set<String> assayIds = rawDataFilter.getAssayIds();
+      boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
+      Set<String> expAssayMerged = isExpAssayUnion ? new HashSet<>(): 
+          Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet());
+      boolean filterFound = false;
+      StringBuilder sb = new StringBuilder();
+        // FITLER ON EXPERIMENT IDS
+        if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    isExpAssayUnion ? expAssayMerged.size() : expIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        // FILTER ON Chip IDS
+        if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
+            if(filterFound) {
+                if(isExpAssayUnion) {
+                    sb.append(" OR ");
+                }else {
+                    sb.append(" AND ");
+                }
+            }
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    isExpAssayUnion ? expAssayMerged.size() : assayIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        // FILTER ON SPECIES ID
+        if (speId != null) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            if (speciesFromGeneTable) {
+                
+            } else {
+                sb.append(CONDITION_TABLE_NAME).append(".")
+                .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" = ")
+                .append(speId);
+            }
+            filterFound = true;
+        }
+        // FILTER ON RAW CONDITION IDS
+        if (!rawDataCondIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
+                    .size()))
+            .append(")");
+            filterFound = true;
+        }
+        // FILTER ON GENE IDS
+        if (!geneIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(MySQLAffymetrixProbesetDAO.TABLE_NAME).append(".")
+            .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size()))
+            .append(")");
+        }
+        return sb.toString();
+    }
+
     protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
             Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
                     throws SQLException {

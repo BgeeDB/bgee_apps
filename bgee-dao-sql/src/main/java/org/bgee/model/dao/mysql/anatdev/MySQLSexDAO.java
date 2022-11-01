@@ -43,7 +43,8 @@ public class MySQLSexDAO extends MySQLDAO implements SexDAO {
                 + "FROM speciesToSex AS t1 ";
         if (!clonedSpeciesIds.isEmpty()) {
             sql += "WHERE t1.speciesId IN ("
-                    + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size());
+                    + BgeePreparedStatement.generateParameterizedQueryString(clonedSpeciesIds.size())
+                    + ")";
         }
         
         //we don't use a try-with-resource, because we return a pointer to the results, 

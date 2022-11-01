@@ -17,6 +17,7 @@ import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
@@ -282,5 +283,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected SexDAO getNewSexDAO() {
         return instanceMockManager.getNewSexDAO();
+    }
+
+    @Override
+    protected RawDataCountDAO getNewRawDataCountDAO() {
+        return instanceMockManager.getNewRawDataCountDAO();
     }
 }

@@ -76,8 +76,8 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         // has to be provided in a rawDataFilter.
         sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter));
         //generate offset and limit
-        if (limit != null && offset != null) {
-            sb.append(" LIMIT " + offset + ", " + limit);
+        if (limit != null || offset != null) {
+            sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
         }
         //add values to parameterized queries
         try {

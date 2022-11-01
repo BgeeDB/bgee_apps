@@ -85,8 +85,8 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
                 .map(e -> this.generateOneFilterWhereClause(e, needJoinGene))
                 .collect(Collectors.joining(") OR (", " (", ")")));
         //generate offset and limit
-        if (limit != null && offset != null) {
-            sb.append(" LIMIT " + offset + ", " + limit);
+        if (limit != null || offset != null) {
+            sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
         }
         try {
             BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(), orderedRawDataFilter);

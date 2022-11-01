@@ -108,9 +108,9 @@ public class DAORawDataFilter {
         this.rawDataCondIds = Collections.unmodifiableSet(rawDataCondIds == null? new HashSet<>() :
             rawDataCondIds.stream().filter(c -> c != null).collect(Collectors.toSet()));
         this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>() :
-            experimentIds.stream().filter(e -> StringUtils.isBlank(e)).collect(Collectors.toSet()));
+            experimentIds.stream().filter(e -> !StringUtils.isBlank(e)).collect(Collectors.toSet()));
         this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>() :
-            assayIds.stream().filter(a -> StringUtils.isBlank(a)).collect(Collectors.toSet()));
+            assayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
         if (this.speciesId == null && this.geneIds.isEmpty() && this.rawDataCondIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("At least one attribut among"
                     + " speciesId, geneIds and rawDataCondIds should not be null or empty"));

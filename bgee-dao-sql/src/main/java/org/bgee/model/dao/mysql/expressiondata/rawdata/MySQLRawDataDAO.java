@@ -49,8 +49,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<String> expIds = rawDataFilter.getExperimentIds();
             Set<String> assayIds = rawDataFilter.getAssayIds();
             boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
-            Set<String> expAssayMerged = isExpAssayUnion ? new HashSet<>(): 
-                Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet());
+            Set<String> expAssayMerged = isExpAssayUnion ? 
+                Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet()):
+                    new HashSet<>();
             // parameterise expIds
             if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
                 if(expAssayMerged.isEmpty()) {
@@ -64,8 +65,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             //parameterise assayIds
             if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
                 if(expAssayMerged.isEmpty()) {
-                    stmt.setStrings(paramIndex, expIds, true);
-                    paramIndex += expIds.size();
+                    stmt.setStrings(paramIndex, assayIds, true);
+                    paramIndex += assayIds.size();
                 } else {
                     stmt.setStrings(paramIndex, expAssayMerged, true);
                     paramIndex += expAssayMerged.size();
@@ -150,8 +151,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
       Set<String> expIds = rawDataFilter.getExperimentIds();
       Set<String> assayIds = rawDataFilter.getAssayIds();
       boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
-      Set<String> expAssayMerged = isExpAssayUnion ? new HashSet<>(): 
-          Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet());
+      Set<String> expAssayMerged = isExpAssayUnion ? 
+              Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet()) :
+                      new HashSet<>();
       boolean filterFound = false;
       StringBuilder sb = new StringBuilder();
         // FITLER ON EXPERIMENT IDS

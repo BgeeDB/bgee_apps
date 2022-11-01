@@ -7,11 +7,13 @@ import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
+import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
+import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
 
 import java.util.ArrayList;
@@ -73,6 +75,13 @@ public class CommandData extends CommandParent {
         public List<Gene> getRequestedGenes() {
             return requestedGenes;
         }
+
+        public boolean containsAnyInformation() {
+            return this.getRequestedSpeciesDevStageOntology() != null ||
+                    !this.getRequestedSpeciesSexes().isEmpty() ||
+                    !this.getRequestedAnatEntitesAndCellTypes().isEmpty() ||
+                    !this.getRequestedGenes().isEmpty();
+        }
     }
 
     private final SpeciesService speciesService;
@@ -130,6 +139,9 @@ public class CommandData extends CommandParent {
                     requestedSpeciesSexes, requestedAnatEntitesAndCellTypes, requestedGenes);
         }
 
+        DataDisplay display = viewFactory.getDataDisplay();
+        display.displayDataPage(speciesList, formDetails);
+
         log.traceExit();
     }
 
@@ -178,7 +190,7 @@ public class CommandData extends CommandParent {
                 // such as "mixed" or "NA".
                 .filter(sex -> !sex.getId().equalsIgnoreCase(SexEnum.ANY.getStringRepresentation()))
                 //Sort by their EnumSex representation for consistent ordering
-                .sort((s1, s2) -> SexEnum.convertToSexEnum(s1.getId()).compareTo(SexEnum.convertToSexEnum(s2.getId())))
+                .sorted((s1, s2) -> SexEnum.convertToSexEnum(s1.getId()).compareTo(SexEnum.convertToSexEnum(s2.getId())))
                 .collect(Collectors.toList()));
     }
 

@@ -3,29 +3,144 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDOA;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extends MySQLDAO<T> {
 
     private final static Logger log = LogManager.getLogger(MySQLAffymetrixProbesetDAO.class.getName());
     protected final static String CONDITION_TABLE_NAME = "cond";
-    
+
     public MySQLRawDataDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
     
+    protected BgeePreparedStatement parameteriseQuery(String query,
+            List<DAORawDataFilter> rawDataFilters) throws SQLException {
+        log.traceEntry("{}, {}", query, rawDataFilters);
+        BgeePreparedStatement stmt = this.getManager().getConnection()
+                .prepareStatement(query);
+        int paramIndex = 1;
+        for(DAORawDataFilter rawDataFilter : rawDataFilters) {
+            Set<Integer> geneIds = rawDataFilter.getGeneIds();
+            Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
+            Set<String> expIds = rawDataFilter.getExperimentIds();
+            Set<String> assayIds = rawDataFilter.getAssayIds();
+            boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
+            Set<String> expAssayMerged = isExpAssayUnion ? new HashSet<>(): 
+                Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet());
+            // parameterise expIds
+            if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
+                if(expAssayMerged.isEmpty()) {
+                    stmt.setStrings(paramIndex, expIds, true);
+                    paramIndex += expIds.size();
+                } else {
+                    stmt.setStrings(paramIndex, expAssayMerged, true);
+                    paramIndex += expAssayMerged.size();
+                }
+            }
+            //parameterise assayIds
+            if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
+                if(expAssayMerged.isEmpty()) {
+                    stmt.setStrings(paramIndex, expIds, true);
+                    paramIndex += expIds.size();
+                } else {
+                    stmt.setStrings(paramIndex, expAssayMerged, true);
+                    paramIndex += expAssayMerged.size();
+                }
+            }
+            //parameterise rawDataCondIds
+            if (!rawDataCondIds.isEmpty()) {
+                stmt.setIntegers(paramIndex, rawDataCondIds, true);
+                paramIndex += rawDataCondIds.size();
+            }
+            //parameterise geneIds
+            if (!geneIds.isEmpty()) {
+                stmt.setIntegers(paramIndex, geneIds, true);
+                paramIndex += geneIds.size();
+            }
+        }
+        return log.traceExit(stmt);
+    }
+
+    protected String generateFromClauseAffymetrix(String tableName, boolean needJoinExp,
+            boolean needJoinChip, boolean needJoinProbeset, boolean needJoinCond,
+            boolean needJoinGene) {
+        log.traceEntry("{}, {}, {}", needJoinChip, needJoinProbeset, needJoinCond);
+        StringBuilder sb = new StringBuilder();
+        sb.append(" FROM " + tableName);
+        // join affymetrixChip table
+        if(needJoinChip) {
+            sb.append(" INNER JOIN " + MySQLAffymetrixChipDAO.TABLE_NAME + " ON ");
+            if(tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME)) {
+                sb.append(MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + AffymetrixProbesetDAO
+                        .Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
+                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
+                        + AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
+            } else if (tableName.equals(MySQLMicroarrayExperimentDOA.TABLE_NAME)) {
+                sb.append(MySQLMicroarrayExperimentDOA.TABLE_NAME + "." + MicroarrayExperimentDAO
+                        .Attribute.ID.getTOFieldName())
+                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
+                        + AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
+            }
+        }
+        // join affymetrixProbeset table
+        if(needJoinProbeset) {
+            sb.append(" INNER JOIN " + MySQLAffymetrixProbesetDAO.TABLE_NAME + " ON ")
+            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
+            AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(" = " + MySQLAffymetrixProbesetDAO.TABLE_NAME + "." 
+                    + AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
+        }
+     // join microArrayExperiment table
+        if(needJoinExp) {
+            sb.append(" INNER JOIN " + MySQLMicroarrayExperimentDOA.TABLE_NAME + " ON ")
+            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
+            AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName())
+            .append(" = " + MySQLMicroarrayExperimentDOA.TABLE_NAME + "." 
+                    + MicroarrayExperimentDAO.Attribute.ID.getTOFieldName());
+        }
+        // join cond table
+        if(needJoinCond) {
+            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
+            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
+            AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName())
+            .append(" = " + CONDITION_TABLE_NAME + "." 
+                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
+        }
+     // join cond table
+        if(needJoinGene) {
+            sb.append(" INNER JOIN " + MySQLGeneDAO.TABLE_NAME + " ON ")
+            .append(MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + 
+            AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName())
+            .append(" = " + MySQLGeneDAO.TABLE_NAME + "." 
+                    + GeneDAO.Attribute.ID.getTOFieldName());
+        }
+        return log.traceExit(sb.toString());
+    }
+
     protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
             Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
                     throws SQLException {

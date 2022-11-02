@@ -62,7 +62,8 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             return this.fieldName;
         }
     }
-    public RawDataConditionTOResultSet getRawDataConditionsFromConditionIds(Collection<Integer> conditionIds);
+    public RawDataConditionTOResultSet getRawDataConditionsFromIds(Collection<Integer> conditionIds,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
      * Retrieves raw conditions used in data annotations for requested species.

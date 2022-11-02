@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata.rawdata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,19 +16,14 @@ import org.bgee.model.expressiondata.DataFilter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.GeneFilter;
 
-//XXX: We decided the entry point will always be a conditionFilter i.e filter on propagated conditions.
-//     This conditionFitler will then be used to retrieve associated raw conditions using the
-//     globalCondToCond . But what about user querying directly the annotation interface to retrieve
-//     all annotated experiment containing data coming from brain in human (without substructure)? 
-//     How to filter for such queries? We could add columns "conditionRelationOriginConditionParameter"
-//     e.g conditionRelationOriginAnatEntity in the globalCondToCond table for each condition parameter.
-//     The second question is what happen if we annotated experiments not used to generate globalCalls? 
-//     Don't we also want to retrieve them?
-//     We should maybe propose both possibilities. Use a global condition filter OR a raw condition filter
-//     and check that not both are not null.
-//     the global cond filter will be used to go from propagated calls to raw data and the raw cond filter
-//     will be used to query the annotation directly. We could even add a boolean allowing to define if we only
-//     want to retrieve annotation part of a call (and then use the globalCondToCond to retrieve raw data)
+/**
+ * A {@code DataFilter} allowing to configure retrieval of raw data (see {@link RawDataService}).
+ *
+ * @author Frederic Bastian
+ * @author Julien Wollbrett
+ * @version Bgee 15.0, Nov. 2022
+ * @since Bgee 15.0, Nov. 2022
+ */
 public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     private final static Logger log = LogManager.getLogger(RawDataFilter.class.getName());
 
@@ -35,36 +31,44 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
 
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
-    //TODO: clear javadoc in constructor and getter
-    private final boolean exprIdsAssayIdsIntersect;
+    private final Set<String> experimentOrAssayIds;
 
-    public RawDataFilter(GeneFilter geneFilter, RawDataConditionFilter condFilter, DataType dataTypeFilter) {
-        this(Collections.singleton(geneFilter), Collections.singleton(condFilter), EnumSet.of(dataTypeFilter));
+    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
+            Collection<DataType> dataTypes) {
+        this(geneFilters, conditionFilters, dataTypes, null, null, null);
     }
-
     /**
-     * At least one {@code GeneFilter} or one {@code RawDataConditionFilter} must be provided. The {speciesId}s
-     * returned by their method {@link GeneFilter#getSpeciesId()} and {@link RawDataConditionFilter#getSpeciesId()}
-     * must match.
-     *
-     * @param geneFilters
-     * @param conditionFilters
-     * @param dataTypes                 If {@code null} or empty, all data types are considered.
-     * @throws IllegalArgumentException If the Set of species IDs requested in {@code geneFilters} in the one hand,
-     *                                  and {@code conditionFilters} in the other hand, don't match;
-     *                                  or if no {@code {@code GeneFilter} and no {@code RawDataConditionFilter} is provided.
+     * @param geneFilters           A {@code Collection} of {@code GeneFilter}s specifying
+     *                              the species to target, or some specific genes to target.
+     * @param conditionFilters      A {@code Collection} of {@code RawDataConditionFilter}s specifying
+     *                              the species to target, or some specific conditions to target.
+     * @param dataTypes             A {@code Collection} of {@code DataType}s specifying
+     *                              the data types to target. If {@code null} or empty, all data types
+     *                              are considered.
+     * @param experimentIds         A {@code Collection} of {@code String}s that are IDs of experiments
+     *                              to consider. Only results part of these experiments will be returned.
+     * @param assayIds              A {@code Collection} of {@code String}s that are IDs of assays
+     *                              to consider. Only results part of these assays will be returned.
+     * @param experimentOrAssayIds  A {@code Collection} of {@code String}s that are IDs of either
+     *                              experiments or assays, in case it is not known which {@code String}s
+     *                              are experiment IDs, and which are assay IDs.
+     *                              Only results part of these experiments and/or assays will be returned.
+     * @throws IllegalArgumentException
      */
     public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
-            Collection<DataType> dataTypes) throws IllegalArgumentException {
+            Collection<DataType> dataTypes, Collection<String> experimentIds,
+            Collection<String> assayIds, Collection<String> experimentOrAssayIds)
+                    throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
-        if (dataTypes == null || dataTypes.isEmpty()) {
-            this.dataTypes = EnumSet.allOf(DataType.class);
-        } else {
-            this.dataTypes = EnumSet.copyOf(dataTypes);
-        }
-        if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("A GeneFilter or a RawDataConditionFilter must be provided"));
-        }
+
+        this.dataTypes = dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DataType.class):
+            EnumSet.copyOf(dataTypes);
+        this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>():
+            new HashSet<>(experimentIds));
+        this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>():
+            new HashSet<>(assayIds));
+        this.experimentOrAssayIds = Collections.unmodifiableSet(experimentOrAssayIds == null? new HashSet<>():
+            new HashSet<>(experimentOrAssayIds));
 
         Map<Integer, List<RawDataConditionFilter>> condFiltersPerSpecies = this.getConditionFilters().stream()
                 .collect(Collectors.groupingBy(f -> f.getSpeciesId()));
@@ -87,36 +91,69 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         }
     }
 
+    /**
+     * @return  An {@code EnumSet} of {@code DataType}s specifying the data types to target.
+     *          If {@code null} or empty, all data types are considered.
+     *          The returned {@code EnumSet} can be safely modified (defensive copying).
+     */
     public EnumSet<DataType> getDataTypes() {
-        return dataTypes;
+        //defensive copying, there is no unmodifiableEnumSet
+        return EnumSet.copyOf(dataTypes);
+    }
+
+    /**
+     * @return  A {@code Set} of {@code String}s that are IDs of experiments
+     *          to consider. Only results part of these experiments will be returned.
+     */
+    public Set<String> getExperimentIds() {
+        return experimentIds;
+    }
+    /**
+     * @return  A {@code Set} of {@code String}s that are IDs of assays
+     *          to consider. Only results part of these assays will be returned.
+     */
+    public Set<String> getAssayIds() {
+        return assayIds;
+    }
+    /**
+     * @return  A {@code Set} of {@code String}s that are IDs of either experiments or assays,
+     *          in case it is not known which {@code String}s are experiment IDs, and which
+     *          are assay IDs. Only results part of these experiments and/or assays will be returned.
+     */
+    public Set<String> getExperimentOrAssayIds() {
+        return experimentOrAssayIds;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(dataTypes);
+        result = prime * result + Objects.hash(assayIds, dataTypes, experimentIds, experimentOrAssayIds);
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
         if (!super.equals(obj))
             return false;
-        if (getClass() != obj.getClass())
+        if (!(obj instanceof RawDataFilter))
             return false;
         RawDataFilter other = (RawDataFilter) obj;
-        return Objects.equals(dataTypes, other.dataTypes);
+        return Objects.equals(assayIds, other.assayIds) && Objects.equals(dataTypes, other.dataTypes)
+                && Objects.equals(experimentIds, other.experimentIds)
+                && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RawDataFilter [geneFilters=").append(getGeneFilters())
-               .append(", conditionFilters=").append(getConditionFilters())
-               .append(", dataTypes=").append(getDataTypes())
+        builder.append("RawDataFilter [getGeneFilters()=").append(getGeneFilters())
+               .append(", getConditionFilters()=").append(getConditionFilters())
+               .append(", dataTypes=").append(dataTypes)
+               .append(", experimentIds=").append(experimentIds)
+               .append(", assayIds=").append(assayIds)
+               .append(", experimentOrAssayIds=").append(experimentOrAssayIds)
                .append("]");
         return builder.toString();
     }

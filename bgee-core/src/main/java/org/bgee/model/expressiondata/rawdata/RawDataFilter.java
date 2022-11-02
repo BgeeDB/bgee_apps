@@ -93,7 +93,6 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
 
     /**
      * @return  An {@code EnumSet} of {@code DataType}s specifying the data types to target.
-     *          If {@code null} or empty, all data types are considered.
      *          The returned {@code EnumSet} can be safely modified (defensive copying).
      */
     public EnumSet<DataType> getDataTypes() {

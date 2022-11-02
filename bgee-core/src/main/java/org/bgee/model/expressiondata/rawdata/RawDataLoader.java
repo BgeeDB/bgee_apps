@@ -28,37 +28,56 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
+import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.est.EST;
+import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituExperiment;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituSpot;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -73,60 +92,98 @@ import org.bgee.model.species.Species;
  * to retrieve the IDs of raw data conditions corresponding to a specific organ
  * plus all its substructures.
  *
- * @implNote    The following three attributes store all the necessary query parameters,
- *              that will be reused when calling the different methods in this class:
- *              {@link #anyGeneAnyCondRequestedSpeciesIds}, {@link #requestedGenesMap},
- *              and {@link #requestedRawDataConditionsMap}.
  * @author Frederic Bastian
  * @author Julien Wollbrett
- * @version Bgee 15 Sep. 2022
- * @since Bgee 15 Sep. 2022
+ * @version Bgee 15.0, Nov. 2022
+ * @since Bgee 15.0, Nov. 2022
+ * @see RawDataService
  */
 public class RawDataLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(RawDataLoader.class.getName());
 
     /**
+     * <ul>
+     * <li>{@code EXPERIMENT}:
+     *   <ul>
+     *   <li>For Affymetrix data, corresponds to querying {@code AffymetrixExperiment}s, or their count.
+     *   <li>For RNA-Seq data, corresponds to querying {@code RnaSeqExperiment}s, or their count.
+     *   <li>For <i>in situ</i> hybridization data, corresponds to querying {@code InSituExperiment}s, or their count.
+     *   <li>For EST data, does not correspond to anything (no concept of "experiment" for EST).
+     *   </ul>
+     * <li>{@code ASSAY}:
+     *   <ul>
+     *   <li>For Affymetrix data, corresponds to querying {@code AffymetrixChip}s, or their count.
+     *   <li>For RNA-Seq data, corresponds to querying {@code RnaSeqLibraryAnnotatedSample}s, or their count.
+     *   <li>For <i>in situ</i> hybridization data, corresponds to querying {@code InSituEvidence}s,
+     *       or their count.
+     *   <li>For EST data, corresponds to querying {@code ESTLibrary}s, or their count.
+     *   </ul>
+     * <li>{@code CALL}:
+     *   <ul>
+     *   <li>For Affymetrix data, corresponds to querying {@code AffymetrixProbeset}s, or their count.
+     *   <li>For RNA-Seq data, corresponds to querying {@code RnaSeqResultAnnotatedSample}s, or their count.
+     *   <li>For <i>in situ</i> hybridization data, corresponds to querying {@code InSituSpot}s,
+     *       or their count.
+     *   <li>For EST data, corresponds to querying {@code EST}s, or their count.
+     *   </ul>
+     * </ul>
+     *
+     * @author Frederic Bastian
+     * @version Bgee 15.0, Nov. 2022
+     * @since Bgee 15.0, Nov. 2022
+     */
+    public static enum InformationType implements BgeeEnumField {
+        EXPERIMENT("experiment"), ASSAY("assay"), CALL("result");
+
+        private final String representation;
+
+        private InformationType(String representation) {
+            this.representation = representation;
+        }
+
+        @Override
+        public String getStringRepresentation() {
+            return this.representation;
+        }
+        public static final EnumSet<InformationType> convertToDataTypeSet(Collection<String> representations) {
+            return BgeeEnum.convertStringSetToEnumSet(InformationType.class, representations);
+        }
+    }
+
+    /**
      * The {@code RawDataFilter} originally used to create this {@code RawDataLoader}.
-     * <strong>This attribute is not considered in equals/hashCode methods</strong>
-     * (in case different {@code RawDataFilter}s lead to have the exact same
-     * {@link #anyGeneAnyCondRequestedSpeciesIds}, {@link #requestedGenesMap},
-     * and {@link #requestedRawDataConditionsMap}; only those 3 attributes will be used
-     * to perform queries to DAOs).
      */
     private final RawDataFilter rawDataFilter;
-
-    //TODO javadoc
+    /**
+     * A {@code Set} of {@code DAORawDataFilter}s that allow to configure the queries to DAOs,
+     * that were generated by the {@link RawDataService} based on the provided {@link #rawDataFilter}.
+     * Several {@code DAORawDataFilter}s will be treated as "OR" conditions.
+     */
     private final Set<DAORawDataFilter> daoRawDataFilters;
+
     /**
      * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal gene IDs,
-     * the associated value being the corresponding {@code Gene}s, that were requested to retrieve raw data.
-     * When a gene is present in this {@code Map}, the species it belongs to is not present in
-     * {@link #anyGeneAnyCondRequestedSpeciesIds}.
-     * <p>
-     * The keys in this {@code Map} are used to perform queries to DAOs, the associated {@code Gene}s
-     * to instantiate the result objects. But depending on the query, other {@code Gene}s might need
-     * to be retrieved to instantiate result objects.
+     * the associated value being the corresponding {@code Gene}s, that were requested
+     * to retrieve raw data. Only genes that were explicitly requested are present in this {@code Map},
+     * for easier instantiation of the objects returned by this class.
+     * If all genes of a species were requested, they are not present in this {@code Map} and they should be
+     * retrieved as needed.
      */
     private final Map<Integer, Gene> requestedGenesMap;
     /**
      * A {@code Map} where keys are {@code Integer}s corresponding to Bgee internal
      * raw data condition IDs, the associated value being the corresponding {@code RawDataCondition}s,
-     * that were requested to retrieve raw data. When a {@code RawDataCondition} is present
-     * in this {@code Map}, the species it belongs to is not present in
-     * {@link #anyGeneAnyCondRequestedSpeciesIds}.
-     * <p>
-     * The keys in this {@code Map} are used to perform queries to DAOs,
-     * the associated {@code RawDataCondition}s to instantiate the result objects.
-     * But depending on the query, other {@code RawDataCondition}s might need to be retrieved
-     * to instantiate result objects.
+     * that were requested to retrieve raw data. Only raw data conditions that were explicitly requested
+     * are present in this {@code Map}, for easier instantiation of the objects returned by this class.
+     * If all conditions of a species were requested, they are not present in this {@code Map} and they should be
+     * retrieved as needed.
      */
     private final Map<Integer, RawDataCondition> requestedRawDataConditionsMap;
-
     /**
      * A {@code Map} where keys are species IDs, the associated value being
-     * the corresponding {@code Species}. It is stored in order to more efficiently create
-     * new {@code Gene}s and {@code RawDataCondition}s. Only {@code Species} that can
-     * potentially be queried are stored in this {@code Map}.
+     * the corresponding {@code Species}. It is stored in order to more efficiently instantiate
+     * objects returned by this class. Only {@code Species} that can potentially be queried
+     * are stored in this {@code Map}.
      */
     private final Map<Integer, Species> speciesMap;
     /**
@@ -135,33 +192,37 @@ public class RawDataLoader extends CommonService {
      * new {@code Gene}s.
      */
     private final Map<Integer, GeneBioType> geneBioTypeMap;
+    /**
+     * A {@code Map} where keys are source IDs, the associated value being
+     * the corresponding {@code Source}. It is stored for easier instantiation
+     * of the objects returned by this class.
+     */
+    private final Map<Integer, Source> sourceMap;
 
 
+    private final MicroarrayExperimentDAO microarrayExperimentDAO;
+    private final AffymetrixChipDAO affymetrixChipDAO;
+    private final AffymetrixProbesetDAO affymetrixProbesetDAO;
+    private final RawDataConditionDAO rawDataConditionDAO;
+    private final AnatEntityService anatEntityService;
+    private final DevStageService devStageService;
+
+
+    //Constructor package protected so that only the RawDataService can instantiate this class
     RawDataLoader(ServiceFactory serviceFactory, RawDataFilter rawDataFilter,
-            //1 filter per species
-            //allowed to have several filter for a species
-            Collection<DAORawDataFilter> daoFilters,
-            //these Maps are only useful to instantiate returned objects,
-            //in the case some specific gene or condition filtering was requested.
-            //These Maps might be null or empty if no filtering other than the species ID
-            //or experiment/assay ID.
-            Map<Integer, Gene> requestedGenesMap,
+            Collection<DAORawDataFilter> daoFilters, Map<Integer, Gene> requestedGenesMap,
             Map<Integer, RawDataCondition> requestedRawDataConditionsMap,
-            //These two Maps are always used to instantiate the returned objects
-            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap) {
+            //These three Maps are always used to instantiate the returned objects
+            Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap,
+            Map<Integer, Source> sourceMap) {
         super(serviceFactory);
 
         //Can be null if no parameters at all were provided
         //(to retrieve any raw data)
         this.rawDataFilter = rawDataFilter;
+        this.daoRawDataFilters = Collections.unmodifiableSet(daoFilters == null? new HashSet<>():
+            new HashSet<>(daoFilters));
 
-        this.anyGeneAnyCondRequestedSpeciesIds = Collections.unmodifiableSet(
-                anyGeneAnyCondRequestedSpeciesIds == null? new HashSet<>():
-                    new HashSet<>(anyGeneAnyCondRequestedSpeciesIds));
-        if (this.anyGeneAnyCondRequestedSpeciesIds.stream().anyMatch(id -> id == null || id < 1)) {
-            throw log.throwing(new IllegalArgumentException("Invalid species ID in: "
-                    + this.anyGeneAnyCondRequestedSpeciesIds));
-        }
         this.requestedGenesMap = Collections.unmodifiableMap(requestedGenesMap == null?
                 new HashMap<>(): new HashMap<>(requestedGenesMap));
         if (this.requestedGenesMap.entrySet().stream()
@@ -177,7 +238,6 @@ public class RawDataLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException("Invalid raw data condition Map: "
                     + this.requestedRawDataConditionsMap));
         }
-
         if (speciesMap == null || speciesMap.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(
                     "All Species that can potentially be queried must be provided"));
@@ -197,11 +257,158 @@ public class RawDataLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException("Invalid gene biotype Map: "
                     + this.geneBioTypeMap));
         }
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Sources must be provided"));
+        }
+        this.sourceMap = Collections.unmodifiableMap(new HashMap<>(sourceMap));
+        if (this.sourceMap.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getKey() < 1 || e.getValue() == null)) {
+            throw log.throwing(new IllegalArgumentException("Invalid source Map: "
+                    + this.sourceMap));
+        }
+
+        this.microarrayExperimentDAO = this.getDaoManager().getMicroarrayExperimentDAO();
+        this.affymetrixChipDAO       = this.getDaoManager().getAffymetrixChipDAO();
+        this.affymetrixProbesetDAO   = this.getDaoManager().getAffymetrixProbesetDAO();
+        this.rawDataConditionDAO     = this.getDaoManager().getRawDataConditionDAO();
+        this.anatEntityService       = this.getServiceFactory().getAnatEntityService();
+        this.devStageService         = this.getServiceFactory().getDevStageService();
     }
 
+    public RawDataContainer loadData(InformationType infoType, int offset, int limit) {
+        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+
+        RawDataContainer affyRawDataContainer = null;
+        RawDataContainer rnaSeqRawDataContainer = null;
+        RawDataContainer inSituRawDataContainer = null;
+        RawDataContainer estRawDataContainer = null;
+
+        //For each data type, we will load a partial RawDataContainer containing only the results
+        //for that data type. We will merge all results from all data types at the end.
+        if (this.getRawDataFilter().getDataTypes().contains(DataType.AFFYMETRIX)) {
+            
+        }
+    }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// METHODS LOADING AFFYMETRIX RAW DATA ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+    private RawDataContainer loadAffymetrixData(InformationType infoType, int offset, int limit) {
+        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+
+//        new AffymetrixProbeset(to.getId(), 
+//              bgeeChipIdToAssay.get(to.getAssayId()),
+//                  new RawCall(geneMap.get(to.getBgeeGeneId()), to.getPValue(),
+//                          to.getExpressionConfidence(),
+//                          ExclusionReason.convertToExclusionReason(to.getExclusionReason()
+//                                  .getStringRepresentation())),
+//                  to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank())
+        
+//        .getAffymetrixChipDAO()
+//      .getAffymetrixChips(clonedExpIds, clonedChipIds, filter, daoAttrs)
+//.stream().map(to -> {
+//  return new AffymetrixChip( to.getAffymetrixChipId(), expIdToExperiments.get(to.getExperimentId()), 
+//          new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null))
+
+        LinkedHashSet<AffymetrixProbeset> affyProbesets = null;
+        LinkedHashSet<AffymetrixChip> affyChips = null;
+
+        Set<String> affyExpIds = new HashSet<>();
+        Set<Integer> bgeeChipIds = new HashSet<>();
+        LinkedHashSet<AffymetrixProbesetTO> affyProbesetTOs = new LinkedHashSet<>();
+        LinkedHashSet<AffymetrixChipTO> affyChipTOs = null;
+
+        if (infoType == InformationType.CALL) {
+            affyProbesets = new LinkedHashSet<>();
+            affyChips     = new LinkedHashSet<>();
+            Map<Integer, AffymetrixChip> bgeeChipIdToAssay = new HashMap<>();
+
+            //First, retrieve the probesets
+            AffymetrixProbesetTOResultSet probesetTORS = this.affymetrixProbesetDAO.getAffymetrixProbesets(
+                    daoRawDataFilters, offset, limit, null);
+            while (probesetTORS.next()) {
+                AffymetrixProbesetTO probesetTO = probesetTORS.getTO();
+                bgeeChipIds.add(probesetTO.getAssayId());
+                affyProbesetTOs.add(probesetTO);
+            }
+
+        }
+
+        if (infoType == InformationType.ASSAY || !bgeeChipIds.isEmpty()) {
+            affyChipTOs = new LinkedHashSet<>();
+            AffymetrixChipTOResultSet chipTORS = !bgeeChipIds.isEmpty()?
+                    this.affymetrixChipDAO.getAffymetrixChips(bgeeChipIds):
+                    this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit, null);
+            while (chipTORS.next()) {
+                AffymetrixChipTO chipTO = chipTORS.getTO();
+                affyExpIds.add(chipTO.getExperimentId());
+                affyChipTOs.add(chipTO);
+            }
+        }
+
+        assert infoType == InformationType.EXPERIMENT || !affyExpIds.isEmpty():
+            "Experiments should always be requested in any case";
+        LinkedHashMap<String, AffymetrixExperiment> expIdToAffyExp =
+                //First, define how to retrieve the experiments:
+                (!affyExpIds.isEmpty()?
+                //based on a list of IDs: we can use a new DAORawDataFilter to provide them
+                this.microarrayExperimentDAO.getExperiments(
+                        Set.of(new DAORawDataFilter(affyExpIds, null, null)), null, null, null):
+                //or because it is the information requested, we use the computed DAORawDataFilters
+                this.microarrayExperimentDAO.getExperiments(daoRawDataFilters, offset, limit, null))
+                //Then we create a map expId -> AffymetrixExperiment
+                .stream()
+                .map(to -> Map.entry(to.getId(), new AffymetrixExperiment(to.getId(),
+                        to.getName(), to.getDescription(),
+                        getSourceById(to.getDataSourceId()))))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(),
+                        (v1, v2) -> {throw new AssertionError("No key collision possible");},
+                        LinkedHashMap::new));
+
+        //Now, if we had AffymetrixChipTOs, we can convert them to AffymetrixChip
+        //with its AffymetrixExperiment.
+        //We first check if we have any before using a Stream, because we want affyChips
+        //to remain null if the info was not requested.
+        if (affyChipTOs != null) {
+            
+            affyChips = affyChipTOs.stream()
+                    .map(chipTO -> new AffymetrixChip(to.getAffymetrixChipId(),
+                            Optional.ofNullable(expIdToAffyExp.get(to.getExperimentId()))
+                            .orElseThrow(new IllegalStateException(
+                                    "No experiment found corresponding to ID " + to.getExperimentId())), 
+          new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null))
+        }
+        
+    }
+
+    TODO: we should call this method only once over all data type requested, not once per data type...
+    this require refactoring of the code I implemented
+    private Map<Integer, RawDataCondition> loadCompleteRawDataConditionMap(Set<Integer> condIds) {
+        log.traceEntry("{}", condIds);
+        Set<Integer> missingCondIds = new HashSet<>(condIds);
+        missingCondIds.removeAll(this.requestedRawDataConditionsMap.keySet());
+        if (missingCondIds.isEmpty()) {
+            return log.traceExit(this.requestedRawDataConditionsMap);
+        }
+        Map<Integer, RawDataCondition> missingCondMap = loadRawDataConditionMapFromResultSet(
+                        (attrs) -> this.rawDataConditionDAO.getRawDataConditionsFromIds(missingCondIds, attrs),
+                        null, this.speciesMap.values(), anatEntityService, devStageService);
+        missingCondMap.putAll(this.requestedRawDataConditionsMap);
+
+        return log.traceExit(missingCondMap);
+    }
+
+    private Source getSourceById(Integer sourceId) {
+        log.traceEntry("{}", sourceId);
+        if (sourceId == null) {
+            return log.traceExit((Source) null);
+        }
+        Source source = sourceMap.get(sourceId);
+        if (source == null) {
+            throw log.throwing(new IllegalStateException("No Source found corresponding to ID " + sourceId
+                    + " - original sourceMap: " + sourceMap));
+        }
+        return log.traceExit(source);
+    }
 //
 //    /**
 //     * Load affymetrix experiments from the database
@@ -646,13 +853,17 @@ public class RawDataLoader extends CommonService {
 //        return log.traceExit(daoAttrs);
 //    }
 
+    /**
+     * @return  The {@code RawDataFilter} originally used to create this {@code RawDataLoader}.
+     */
     public RawDataFilter getRawDataFilter() {
-        return this.rawDataFilter;
+        return rawDataFilter;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(anyGeneAnyCondRequestedSpeciesIds, requestedGenesMap, requestedRawDataConditionsMap);
+        return Objects.hash(daoRawDataFilters, geneBioTypeMap, rawDataFilter, requestedGenesMap,
+                requestedRawDataConditionsMap, speciesMap);
     }
     @Override
     public boolean equals(Object obj) {
@@ -663,8 +874,20 @@ public class RawDataLoader extends CommonService {
         if (getClass() != obj.getClass())
             return false;
         RawDataLoader other = (RawDataLoader) obj;
-        return Objects.equals(anyGeneAnyCondRequestedSpeciesIds, other.anyGeneAnyCondRequestedSpeciesIds)
+        return Objects.equals(daoRawDataFilters, other.daoRawDataFilters)
+                && Objects.equals(geneBioTypeMap, other.geneBioTypeMap)
+                && Objects.equals(rawDataFilter, other.rawDataFilter)
                 && Objects.equals(requestedGenesMap, other.requestedGenesMap)
-                && Objects.equals(requestedRawDataConditionsMap, other.requestedRawDataConditionsMap);
+                && Objects.equals(requestedRawDataConditionsMap, other.requestedRawDataConditionsMap)
+                && Objects.equals(speciesMap, other.speciesMap);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("RawDataLoader [rawDataFilter=").append(rawDataFilter)
+               .append(", daoRawDataFilters=").append(daoRawDataFilters)
+               .append("]");
+        return builder.toString();
     }
 }

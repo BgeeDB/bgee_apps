@@ -29,6 +29,7 @@ import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.MultiSpeciesOntology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
+import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
 public class RawDataService extends CommonService {
@@ -361,13 +362,15 @@ public class RawDataService extends CommonService {
 
         //We load the GeneBioTypes to be used in this method and in RawDataLoader
         Map<Integer, GeneBioType> geneBioTypeMap = loadGeneBioTypeMap(this.geneDAO);
+        Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
+                .loadSourcesByIds(null);
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
             return log.traceExit(new RawDataLoader(this.getServiceFactory(), null,
             null, null, null,
             //load all Species
-            this.loadSpeciesMap(null, false, null), geneBioTypeMap));
+            this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
         }
 
         //we prepare the info the Loader will need when calling its various "load" methods.
@@ -418,7 +421,7 @@ public class RawDataService extends CommonService {
 
         return log.traceExit(new RawDataLoader(this.getServiceFactory(), filter,
                 daoFilters, requestedGeneMap, requestedRawDataCondMap,
-                speciesMap, geneBioTypeMap));
+                speciesMap, geneBioTypeMap, sourceMap));
     }
 
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(

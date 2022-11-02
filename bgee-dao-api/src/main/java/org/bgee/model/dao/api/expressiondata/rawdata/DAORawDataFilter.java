@@ -22,7 +22,7 @@ public class DAORawDataFilter {
 
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
-    private final boolean exprIdsAssayIdsUnion;
+    private final Set<String> exprOrAssayIds;
 
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for a given speciesId,
@@ -35,18 +35,15 @@ public class DAORawDataFilter {
      * @param assayIds                  A {@code Set} of {@code String} corresponding to the
      *                                  assayIds for which raw data has to be retrieved in the
      *                                  selected species. If null, all assay are retrieved.
-     * @param exprIdsAssayIdsUnion      A {@code boolean} describing if union of values in
-     *                                  experimentsIds and/or assayIds has to be used to filter on
-     *                                  both experimentIds and assayIds. If true, union of
-     *                                  experimentIds and assayIds will be used to filter on both
-     *                                  experiment and assay. If false, values of experimentIds
-     *                                  will be used to filter on experiment and values of
-     *                                  assayIds will be used to filter on assay.
+     * @param exprOrAssayIds            A {@code Set} of {@code String} corresponding rather to
+     *                                  assayIds or experimentIds for which raw data has to be
+     *                                  retrieved in the selected species. If null, all assay are
+     *                                  retrieved.
      */
     public DAORawDataFilter(int speciesId, Set<String> experimentIds, Set<String> assayIds,
-            boolean exprIdsAssayIdsUnion) {
+            Set<String> exprOrAssayIds) {
         this(speciesId, null, null, experimentIds, assayIds,
-                exprIdsAssayIdsUnion);
+                exprOrAssayIds);
     }
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
@@ -61,7 +58,7 @@ public class DAORawDataFilter {
      *                                  IDs. geneIds and rawDataCondIds can not be both null.
      */
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds) {
-        this(null, geneIds, rawDataCondIds, null, null, true);
+        this(null, geneIds, rawDataCondIds, null, null, null);
     }
     /**
      * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
@@ -80,25 +77,22 @@ public class DAORawDataFilter {
      * @param assayIds                  A {@code Set} of {@code String} corresponding to the
      *                                  assayIds for which raw data has to be retrieved in the
      *                                  selected species. If null, all assay are retrieved.
-     * @param exprIdsAssayIdsUnion      A {@code boolean} describing if union of values in
-     *                                  experimentsIds and/or assayIds has to be used to filter on
-     *                                  both experimentIds and assayIds. If true, union of
-     *                                  experimentIds and assayIds will be used to filter on both
-     *                                  experiment and assay. If false, values of experimentIds
-     *                                  will be used to filter on experiment and values of
-     *                                  assayIds will be used to filter on assay.
+     * @param exprOrAssayIds            A {@code Set} of {@code String} corresponding rather to
+     *                                  assayIds or experimentIds for which raw data has to be
+     *                                  retrieved in the selected species. If null, all assay are
+     *                                  retrieved.
      */
     public DAORawDataFilter(Collection<Integer> geneIds, Collection<Integer> rawDataCondIds,
             Collection<String> experimentIds, Collection<String> assayIds,
-            boolean exprIdsAssayIdsUnion) {
+            Collection<String> exprOrAssayIds) {
         this(null, geneIds, rawDataCondIds, experimentIds, assayIds,
-                exprIdsAssayIdsUnion);
+                exprOrAssayIds);
     }
     private DAORawDataFilter(Integer speciesId, Collection<Integer> geneIds,
             Collection<Integer> rawDataCondIds, Collection<String> experimentIds,
-            Collection<String> assayIds, boolean exprIdsAssayIdsUnion) {
+            Collection<String> assayIds, Collection<String> exprOrAssayIds) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", speciesId, geneIds, rawDataCondIds,
-                experimentIds, assayIds, exprIdsAssayIdsUnion);
+                experimentIds, assayIds, exprOrAssayIds);
         if (speciesId != null && speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("speciesId must be bigger than 0"));
         }
@@ -111,11 +105,12 @@ public class DAORawDataFilter {
             experimentIds.stream().filter(e -> !StringUtils.isBlank(e)).collect(Collectors.toSet()));
         this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>() :
             assayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
+        this.exprOrAssayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>() :
+            exprOrAssayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
         if (this.speciesId == null && this.geneIds.isEmpty() && this.rawDataCondIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("At least one attribut among"
                     + " speciesId, geneIds and rawDataCondIds should not be null or empty"));
         }
-        this.exprIdsAssayIdsUnion = exprIdsAssayIdsUnion;
     }
     /**
      * @return The {@code Integer} corresponding to the ID of the species for which raw data has
@@ -147,20 +142,19 @@ public class DAORawDataFilter {
         return assayIds;
     }
     /**
-     * @return The {@code boolean} describing if union of values in experimentsIds and assayIds
-     * has to be used to filter on both experimentIds and assayIds. If true, union of
-     * experimentIds and assayIds will be used to filter on both experiment and assay. If false,
-     * values of experimentIds will be used to filter on experiments and values of assayIds will be
-     * used to filter on assays.
+     * @return A {@code Set} of {@code String} corresponding rather to assayIds or experimentIds
+     * for which raw data has to be retrieved in the selected species. If null, all assay are
+     * retrieved.
      */
-    public boolean isExprIdsAssayIdsUnion() {
-        return exprIdsAssayIdsUnion;
+    public Set<String> getExprOrAssayIds() {
+        return exprOrAssayIds;
     }
+
+    
 
     @Override
     public int hashCode() {
-        return Objects.hash(assayIds, experimentIds, exprIdsAssayIdsUnion, geneIds,
-                rawDataCondIds, speciesId);
+        return Objects.hash(assayIds, experimentIds, exprOrAssayIds, geneIds, rawDataCondIds, speciesId);
     }
     @Override
     public boolean equals(Object obj) {
@@ -172,17 +166,16 @@ public class DAORawDataFilter {
             return false;
         DAORawDataFilter other = (DAORawDataFilter) obj;
         return Objects.equals(assayIds, other.assayIds) && Objects.equals(experimentIds, other.experimentIds)
-                && exprIdsAssayIdsUnion == other.exprIdsAssayIdsUnion && Objects.equals(geneIds, other.geneIds)
+                && Objects.equals(exprOrAssayIds, other.exprOrAssayIds) && Objects.equals(geneIds, other.geneIds)
                 && Objects.equals(rawDataCondIds, other.rawDataCondIds) && Objects.equals(speciesId, other.speciesId);
     }
 
     @Override
     public String toString() {
         return "DAORawDataFilter [speciesId=" + speciesId + ", geneIds=" + geneIds + ", rawDataCondIds="
-                + rawDataCondIds + ", experimentIds=" + experimentIds + ", assayIds=" + assayIds
-                + ", exprIdsAssayIdsUnion=" + exprIdsAssayIdsUnion + "]";
+                + rawDataCondIds + ", experimentIds=" + experimentIds + ", assayIds=" + assayIds + ", exprOrAssayIds="
+                + exprOrAssayIds + "]";
     }
-
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();

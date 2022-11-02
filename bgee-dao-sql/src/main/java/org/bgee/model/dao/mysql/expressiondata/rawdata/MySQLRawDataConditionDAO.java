@@ -22,7 +22,7 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
     private final static Logger log = LogManager.getLogger(MySQLRawDataConditionDAO.class.getName());
-    private final static String TABLE_NAME = "cond";
+    public final static String TABLE_NAME = "cond";
 
     public MySQLRawDataConditionDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);

@@ -34,11 +34,11 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
     @Override
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean resultCount) {
+        log.traceEntry("{}, {}", rawDataFilters, resultCount);
         if (rawDataFilters == null || rawDataFilters.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("rawDataFilters can not be null or"
                     + " empty"));
         }
-        log.traceEntry("{}, {}", rawDataFilters, resultCount);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilters = 
@@ -70,12 +70,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // there is always a where condition as at least a speciesId, a geneId or a conditionId
         // has to be provided in a rawDataFilter.
         sb.append(" WHERE ")
-        .append(orderedRawDataFilters.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, false))
-                .collect(Collectors.joining(") OR (", " (", ")")));
+          .append(generateWhereClause(orderedRawDataFilters));
         
         try {
-            BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(), orderedRawDataFilters);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             RawDataCountContainerTO to = resultSet.getAllTOs().iterator().next();
             resultSet.close();

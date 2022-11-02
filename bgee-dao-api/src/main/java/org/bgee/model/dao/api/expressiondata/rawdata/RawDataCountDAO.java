@@ -21,8 +21,8 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        AFFY_EXP_COUNT("affyExpCount"), AFFY_ASSAY_COUNT("affyAssayCount"),
-        AFFY_RESULT_COUNT("affyResultCount");
+        EXP_COUNT("expCount"), ASSAY_COUNT("assayCount"),
+        RESULT_COUNT("resultCount");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTLibraryTO} class.
@@ -73,9 +73,12 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
          * 
          */
         private static final long serialVersionUID = 7933114482291306433L;
-        private final Integer affyExperimentCount;
-        private final Integer affyAssayCount;
-        private final Integer affyResultCount;
+        private final Integer experimentCount;
+        //For RNA-Seq, corresponds to AnnotatedSample
+        private final Integer assayCount;
+        private final Integer resultCount;
+        private final Integer rnaSeqLibraryCount;
+        
 //        private final Integer inSituExperimentCount;
 //        private final Integer inSituAssayCount;
 //        private final Integer inSituResultCount;

@@ -20,6 +20,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
 
 public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExperimentDAO.Attribute> 
@@ -74,26 +75,21 @@ public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExpe
         // generate WHERE
         // there is always a where condition as at least a speciesId, a geneId or a conditionId
         // has to be provided in a rawDataFilter.
-        sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter));
+        sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
+                needJoinChip? MySQLAffymetrixChipDAO.TABLE_NAME: TABLE_NAME,
+                MySQLRawDataConditionDAO.TABLE_NAME));
         //generate offset and limit
         if (limit != null || offset != null) {
             sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
         }
         //add values to parameterized queries
         try {
-            BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(),
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(),
                     orderedRawDataFilter);
             return log.traceExit(new MySQLMicroarrayExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    private String generateWhereClause(List<DAORawDataFilter> rawDataFilters) {
-        String whereClause = rawDataFilters.stream().map(e -> {
-            return this.generateOneFilterWhereClause(e, false);
-        }).collect(Collectors.joining(") OR (", " (", ")"));
-        return whereClause;
     }
 
     class MySQLMicroarrayExperimentTOResultSet extends MySQLDAOResultSet<MicroarrayExperimentTO> 

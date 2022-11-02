@@ -75,7 +75,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
         }
         try {
-            BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(), orderedRawDataFilter);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter);
             return log.traceExit(new MySQLAffymetrixChipTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

@@ -16,8 +16,6 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * <li>{@code AFFY_EXP_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyExperimentCount()}.
      * <li>{@code AFFY_ASSAY_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyAssayCount()}.
      * <li>{@code AFFY_RESULT_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyResultCount()}.
-//     * <li>{@code DATA_SOURCE_ID}: corresponds to {@link ESTLibraryTO#getDataSourceId()}.
-//     * <li>{@code CONDITION_ID}: corresponds to {@link ESTLibraryTO#getConditionId()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
@@ -79,53 +77,34 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         private final Integer resultCount;
         private final Integer rnaSeqLibraryCount;
         
-//        private final Integer inSituExperimentCount;
-//        private final Integer inSituAssayCount;
-//        private final Integer inSituResultCount;
-//        private final Integer estAssayCount;
-//        private final Integer estResultCount;
-//        private final Integer rnaSeqExperimentCount;
-//        private final Integer rnaSeqAssayCount;
-//        private final Integer rnaSeqResultCount;
+        public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
+                Integer resultCount) {
+            this(experimentCount, assayCount, resultCount, null);
+        }
 
-        public RawDataCountContainerTO(Integer affyExperimentCount, Integer affyAssayCount,
-                Integer affyResultCount) {
-            this.affyExperimentCount = affyExperimentCount;
-            this.affyAssayCount = affyAssayCount;
-            this.affyResultCount = affyResultCount;
+        public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
+                Integer resultCount, Integer rnaSeqLibraryCount) {
+            this.experimentCount = experimentCount;
+            this.assayCount = assayCount;
+            this.resultCount = resultCount;
+            this.rnaSeqLibraryCount = rnaSeqLibraryCount;
         }
 
         public Integer getAffyExperimentCount() {
-            return affyExperimentCount;
+            return experimentCount;
         }
         public Integer getAffyAssayCount() {
-            return affyAssayCount;
+            return assayCount;
         }
         public Integer getAffyResultCount() {
-            return affyResultCount;
+            return resultCount;
         }
-//        public Integer getInSituExperimentCount() {
-//            return inSituExperimentCount;
-//        }
-//        public Integer getInSituAssayCount() {
-//            return inSituAssayCount;
-//        }
-//        public Integer getEstAssayCount() {
-//            return estAssayCount;
-//        }
-//        public Integer getRnaSeqExperimentCount() {
-//            return rnaSeqExperimentCount;
-//        }
-//        public Integer getRnaSeqAssayCount() {
-//            return rnaSeqAssayCount;
-//        }
 
         @Override
         public String toString() {
-            return "RawDataCountContainerTO [affyExperimentCount=" + affyExperimentCount + ", affyAssayCount="
-                    + affyAssayCount + ", affyResultCount=" + affyResultCount + "]";
+            return "RawDataCountContainerTO [experimentCount=" + experimentCount + ", assayCount=" + assayCount
+                    + ", resultCount=" + resultCount + ", rnaSeqLibraryCount=" + rnaSeqLibraryCount + "]";
         }
-        
     }
 
 }

@@ -1,26 +1,16 @@
 package org.bgee.model.expressiondata.rawdata;
 
-import java.io.Closeable;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.CommonService;
@@ -29,28 +19,14 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.anatdev.Sex;
-import org.bgee.model.anatdev.Strain;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOfExpTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.ExperimentTO;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
-import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
-import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.ontology.MultiSpeciesOntology;
-import org.bgee.model.ontology.Ontology;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -434,10 +410,10 @@ public class RawDataService extends CommonService {
                     .collect(Collectors.toSet());
             if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
                 return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.exprIdsAssayIdsIntersect());
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
             }
             return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.exprIdsAssayIdsIntersect());
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
         }).collect(Collectors.toSet());
 
         return log.traceExit(new RawDataLoader(this.getServiceFactory(), filter,

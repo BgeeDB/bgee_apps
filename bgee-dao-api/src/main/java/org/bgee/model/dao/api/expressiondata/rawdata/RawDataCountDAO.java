@@ -5,7 +5,6 @@ import java.util.Collection;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 
 public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
 
@@ -13,14 +12,15 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * {@code Enum} used to define the attributes to populate in the {@code RawDataCountContainerTO}s
      * obtained from this {@code RawDataCountDAO}.
      * <ul>
-     * <li>{@code AFFY_EXP_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyExperimentCount()}.
-     * <li>{@code AFFY_ASSAY_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyAssayCount()}.
-     * <li>{@code AFFY_RESULT_COUNT}: corresponds to {@link RawDataCountContainerTO#getAffyResultCount()}.
+     * <li>{@code EXP_COUNT}: corresponds to {@link RawDataCountContainerTO#getExperimentCount()}.
+     * <li>{@code ASSAY_COUNT}: corresponds to {@link RawDataCountContainerTO#getAssayCount()}.
+     * <li>{@code RESULT_COUNT}: corresponds to {@link RawDataCountContainerTO#getResultCount()}.
+     * <li>{@code RNA_SEQ_LIBRARY_COUNT}: corresponds to {@link RawDataCountContainerTO#getRnaSeqLibraryCount()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
         EXP_COUNT("expCount"), ASSAY_COUNT("assayCount"),
-        RESULT_COUNT("resultCount");
+        RESULT_COUNT("resultCount"), RNA_SEQ_LIBRARY_COUNT("rnaSeqLibraryCount");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTLibraryTO} class.
@@ -39,16 +39,16 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
     }
     
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean resultCount);
 
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean resultCount);
 
     public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount);
+            boolean assayCount, boolean resultCount);
 
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean libraryCount, boolean resultCount);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataCountContainerTO}s
@@ -90,14 +90,22 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
             this.rnaSeqLibraryCount = rnaSeqLibraryCount;
         }
 
-        public Integer getAffyExperimentCount() {
+        public Integer getExperimentCount() {
             return experimentCount;
         }
-        public Integer getAffyAssayCount() {
+        public Integer getAssayCount() {
             return assayCount;
         }
-        public Integer getAffyResultCount() {
+        public Integer getResultCount() {
             return resultCount;
+        }
+        /**
+         * An {@code Integer} corresponding to RNA-Seq library count. Not null only for {link RawDataCountDAO#getRnaSeqCount}
+         * when the boolean libraryCount is true.
+         * @return
+         */
+        public Integer getRnaSeqLibraryCount() {
+            return rnaSeqLibraryCount;
         }
 
         @Override

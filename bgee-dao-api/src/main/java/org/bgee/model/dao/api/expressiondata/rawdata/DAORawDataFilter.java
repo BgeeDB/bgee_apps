@@ -46,6 +46,26 @@ public class DAORawDataFilter {
                 exprOrAssayIds);
     }
     /**
+     * Constructor allowing to create a {@code DOARawDataFilter} for a given set of experimentIds,
+     * assayIds and exprOrAssayIds.
+     * @param speciesId                 An int corresponding to the ID of the species
+     *                                  for which raw data has to be retrieved.
+     * @param experimentIds             A {@code Set} of {@code String} corresponding to the
+     *                                  experimentIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all experiments are retrieved.
+     * @param assayIds                  A {@code Set} of {@code String} corresponding to the
+     *                                  assayIds for which raw data has to be retrieved in the
+     *                                  selected species. If null, all assay are retrieved.
+     * @param exprOrAssayIds            A {@code Set} of {@code String} corresponding rather to
+     *                                  assayIds or experimentIds for which raw data has to be
+     *                                  retrieved in the selected species. If null, all assay are
+     *                                  retrieved.
+     */
+    public DAORawDataFilter(Set<String> experimentIds, Set<String> assayIds,
+            Set<String> exprOrAssayIds) {
+        this(null, null, null, experimentIds, assayIds, exprOrAssayIds);
+    }
+    /**
      * Constructor allowing to create a {@code DOARawDataFilter} for given geneIds, rawDataCondIds,
      * experimentIds and assayIds. The speciesId is mandatory.
      * @param geneIds                   A {@code Set} of {@code Integer} corresponding to the IDs
@@ -93,7 +113,7 @@ public class DAORawDataFilter {
             Collection<String> assayIds, Collection<String> exprOrAssayIds) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", speciesId, geneIds, rawDataCondIds,
                 experimentIds, assayIds, exprOrAssayIds);
-        if (speciesId != null && speciesId <= 0) {
+        if (speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("speciesId must be bigger than 0"));
         }
         this.speciesId = speciesId;
@@ -105,11 +125,14 @@ public class DAORawDataFilter {
             experimentIds.stream().filter(e -> !StringUtils.isBlank(e)).collect(Collectors.toSet()));
         this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>() :
             assayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
-        this.exprOrAssayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>() :
+        this.exprOrAssayIds = Collections.unmodifiableSet(exprOrAssayIds == null? new HashSet<>() :
             exprOrAssayIds.stream().filter(a -> !StringUtils.isBlank(a)).collect(Collectors.toSet()));
-        if (this.speciesId == null && this.geneIds.isEmpty() && this.rawDataCondIds.isEmpty()) {
+        if (this.speciesId == null && this.geneIds.isEmpty() && this.rawDataCondIds.isEmpty() &&
+                this.experimentIds.isEmpty() && this.assayIds.isEmpty() &&
+                this.exprOrAssayIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("At least one attribut among"
-                    + " speciesId, geneIds and rawDataCondIds should not be null or empty"));
+                    + " speciesId, geneIds, rawDataCondIds, experimentIds, assayIds and"
+                    + " exprOrAssayIds should not be null or empty"));
         }
     }
     /**

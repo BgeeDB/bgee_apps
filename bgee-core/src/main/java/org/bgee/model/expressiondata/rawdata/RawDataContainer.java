@@ -1,9 +1,11 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
-import java.util.stream.Stream;
+import java.util.Objects;
+import java.util.Set;
 
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.est.EST;
@@ -19,87 +21,247 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
 
+/**
+ * A class allowing to contain all results of a raw data query to {@link RawDataLoader}.
+ *
+ * @author Frederic Bastian
+ * @author Julien Wollbrett
+ * @version Bgee 15.0, Nov. 2022
+ * @since Bgee 15.0, Nov. 2022
+ * @see RawDataLoader
+ */
 public class RawDataContainer {
     
-    private final EnumSet<DataType> datatypes;
-    private final LinkedHashSet<AffymetrixExperiment> affymetrixExperiments;
-    private final LinkedHashSet<AffymetrixChip> affymetrixAssays;
-    private final LinkedHashSet<AffymetrixProbeset> affymetrixCalls;
+    private final Set<DataType> dataTypes;
 
-    private final Stream<RnaSeqExperiment> rnaSeqExperiments;
-    private final Stream<RnaSeqLibrary> rnaSeqLibraries;
-    private final Stream<RnaSeqLibraryAnnotatedSample> rnaSeqAssays;
-    private final Stream<RnaSeqResultAnnotatedSample> rnaSeqCalls;
-    private final Stream<InSituExperiment> inSituExperiments;
-    private final Stream<InSituEvidence> inSituAssays;
-    private final Stream<InSituSpot> inSituCalls;
-    private final Stream<ESTLibrary> estAssays;
-    private final Stream<EST> estCalls;
+    private final Set<AffymetrixExperiment> affymetrixExperiments;
+    private final Set<AffymetrixChip> affymetrixAssays;
+    private final Set<AffymetrixProbeset> affymetrixCalls;
 
-    public RawDataContainer(Collection<DataType> datatypes,
-            Stream<AffymetrixExperiment> affymetrixExperiments, Stream<AffymetrixChip> affymetrixAssays,
-            Stream<AffymetrixProbeset> affymetrixCalls, Stream<RnaSeqExperiment> rnaSeqExperiments,
-            Stream<RnaSeqLibrary> rnaSeqLibraries, Stream<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
-            Stream<RnaSeqResultAnnotatedSample> rnaSeqCalls, Stream<InSituExperiment> inSituExperiments,
-            Stream<InSituEvidence> inSituAssays, Stream<InSituSpot> inSituCalls,
-            Stream<ESTLibrary> estAssays, Stream<EST> estCalls) {
-        if (datatypes == null || datatypes.isEmpty()) {
-            this.datatypes = EnumSet.allOf(DataType.class);
-        } else {
-            this.datatypes = EnumSet.copyOf(datatypes);
-        }
-        this.affymetrixExperiments = affymetrixExperiments;
-        this.affymetrixAssays = affymetrixAssays;
-        this.affymetrixCalls = affymetrixCalls;
-        this.rnaSeqExperiments = rnaSeqExperiments;
-        this.rnaSeqLibraries = rnaSeqLibraries;
-        this.rnaSeqAssays = rnaSeqAssays;
-        this.rnaSeqCalls = rnaSeqCalls;
-        this.inSituCalls = inSituCalls;
-        this.inSituAssays = inSituAssays;
-        this.inSituExperiments = inSituExperiments;
-        this.estAssays = estAssays;
-        this.estCalls = estCalls;
+    private final Set<RnaSeqExperiment> rnaSeqExperiments;
+    private final Set<RnaSeqLibrary> rnaSeqLibraries;
+    private final Set<RnaSeqLibraryAnnotatedSample> rnaSeqAssays;
+    private final Set<RnaSeqResultAnnotatedSample> rnaSeqCalls;
+
+    private final Set<InSituExperiment> inSituExperiments;
+    private final Set<InSituEvidence> inSituAssays;
+    private final Set<InSituSpot> inSituCalls;
+
+    private final Set<ESTLibrary> estAssays;
+    private final Set<EST> estCalls;
+
+    public RawDataContainer(Collection<DataType> dataTypes,
+            Collection<AffymetrixExperiment> affymetrixExperiments, Collection<AffymetrixChip> affymetrixAssays,
+            Collection<AffymetrixProbeset> affymetrixCalls, Collection<RnaSeqExperiment> rnaSeqExperiments,
+            Collection<RnaSeqLibrary> rnaSeqLibraries, Collection<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
+            Collection<RnaSeqResultAnnotatedSample> rnaSeqCalls, Collection<InSituExperiment> inSituExperiments,
+            Collection<InSituEvidence> inSituAssays, Collection<InSituSpot> inSituCalls,
+            Collection<ESTLibrary> estAssays, Collection<EST> estCalls) {
+
+        this.dataTypes = Collections.unmodifiableSet(dataTypes == null || dataTypes.isEmpty()?
+                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypes));
+
+        this.affymetrixExperiments = affymetrixExperiments == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixExperiments));
+        this.affymetrixAssays = affymetrixAssays == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixAssays));
+        this.affymetrixCalls = affymetrixCalls == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixCalls));
+
+        this.rnaSeqExperiments = rnaSeqExperiments == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqExperiments));
+        this.rnaSeqLibraries = rnaSeqLibraries == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqLibraries));
+        this.rnaSeqAssays = rnaSeqAssays == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqAssays));
+        this.rnaSeqCalls = rnaSeqCalls == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqCalls));
+
+        this.inSituExperiments = inSituExperiments == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(inSituExperiments));
+        this.inSituAssays = inSituAssays == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(inSituAssays));
+        this.inSituCalls = inSituCalls == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(inSituCalls));
+
+        this.estAssays = estAssays == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(estAssays));
+        this.estCalls = estCalls == null? null:
+            Collections.unmodifiableSet(new LinkedHashSet<>(estCalls));
     }
 
-    public Collection<RawDataDataType> getDatatypes() {
-        return datatypes;
+    /**
+     * @return  A {@code Set} of {@code DataType}s specifying the data types that were requested.
+     *          The underlying instance is an {@code EnumSet}, but returned as a {@code Set}
+     *          to be unmodifiable.
+     */
+    public Set<DataType> getDataTypes() {
+        return this.dataTypes;
     }
-    public Stream<AffymetrixExperiment> getAffymetrixExperiments() {
+    /**
+     * @return  A {@code Set} of {@code AffymetrixExperiment}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<AffymetrixExperiment> getAffymetrixExperiments() {
         return affymetrixExperiments;
     }
-    public Stream<AffymetrixChip> getAffymetrixAssays() {
+    /**
+     * @return  A {@code Set} of {@code AffymetrixChip}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<AffymetrixChip> getAffymetrixAssays() {
         return affymetrixAssays;
     }
-    public Stream<AffymetrixProbeset> getAffymetrixCalls() {
+    /**
+     * @return  A {@code Set} of {@code AffymetrixProbeset}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<AffymetrixProbeset> getAffymetrixCalls() {
         return affymetrixCalls;
     }
-    public Stream<RnaSeqExperiment> getRnaSeqExperiments() {
+    /**
+     * @return  A {@code Set} of {@code RnaSeqExperiment}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<RnaSeqExperiment> getRnaSeqExperiments() {
         return rnaSeqExperiments;
     }
-    public Stream<RnaSeqLibraryAnnotatedSample> getRnaSeqAssays() {
-        return rnaSeqAssays;
-    }
-    public Stream<RnaSeqResultAnnotatedSample> getRnaSeqCalls() {
-        return rnaSeqCalls;
-    }
-    public Stream<InSituExperiment> getInSituExperiments() {
-        return inSituExperiments;
-    }
-    public Stream<InSituEvidence> getInSituAssays() {
-        return inSituAssays;
-    }
-    public Stream<InSituSpot> getInSituCalls() {
-        return inSituCalls;
-    }
-    public Stream<ESTLibrary> getEstAssays() {
-        return estAssays;
-    }
-    public Stream<EST> getEstCalls() {
-        return estCalls;
-    }
-    public Stream<RnaSeqLibrary> getRnaSeqLibraries() {
+    /**
+     * @return  A {@code Set} of {@code RnaSeqLibrary}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<RnaSeqLibrary> getRnaSeqLibraries() {
         return rnaSeqLibraries;
     }
-    
+    /**
+     * @return  A {@code Set} of {@code RnaSeqLibraryAnnotatedSample}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<RnaSeqLibraryAnnotatedSample> getRnaSeqAssays() {
+        return rnaSeqAssays;
+    }
+    /**
+     * @return  A {@code Set} of {@code RnaSeqResultAnnotatedSample}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<RnaSeqResultAnnotatedSample> getRnaSeqCalls() {
+        return rnaSeqCalls;
+    }
+    /**
+     * @return  A {@code Set} of {@code InSituExperiment}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<InSituExperiment> getInSituExperiments() {
+        return inSituExperiments;
+    }
+    /**
+     * @return  A {@code Set} of {@code InSituEvidence}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<InSituEvidence> getInSituAssays() {
+        return inSituAssays;
+    }
+    /**
+     * @return  A {@code Set} of {@code InSituSpot}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<InSituSpot> getInSituCalls() {
+        return inSituCalls;
+    }
+    /**
+     * @return  A {@code Set} of {@code ESTLibrary}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<ESTLibrary> getEstAssays() {
+        return estAssays;
+    }
+    /**
+     * @return  A {@code Set} of {@code EST}s that were requested.
+     *          If {@code null}, it means that this information was not requested.
+     *          If empty, it means that there was no result based on query parameters.
+     *          When non-null, the underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
+    public Set<EST> getEstCalls() {
+        return estCalls;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(affymetrixAssays, affymetrixCalls, affymetrixExperiments, dataTypes, estAssays, estCalls,
+                inSituAssays, inSituCalls, inSituExperiments, rnaSeqAssays, rnaSeqCalls, rnaSeqExperiments,
+                rnaSeqLibraries);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RawDataContainer other = (RawDataContainer) obj;
+        return Objects.equals(affymetrixAssays, other.affymetrixAssays)
+                && Objects.equals(affymetrixCalls, other.affymetrixCalls)
+                && Objects.equals(affymetrixExperiments, other.affymetrixExperiments)
+                && Objects.equals(dataTypes, other.dataTypes) && Objects.equals(estAssays, other.estAssays)
+                && Objects.equals(estCalls, other.estCalls) && Objects.equals(inSituAssays, other.inSituAssays)
+                && Objects.equals(inSituCalls, other.inSituCalls)
+                && Objects.equals(inSituExperiments, other.inSituExperiments)
+                && Objects.equals(rnaSeqAssays, other.rnaSeqAssays) && Objects.equals(rnaSeqCalls, other.rnaSeqCalls)
+                && Objects.equals(rnaSeqExperiments, other.rnaSeqExperiments)
+                && Objects.equals(rnaSeqLibraries, other.rnaSeqLibraries);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("RawDataContainer [dataTypes=").append(dataTypes)
+               .append(", affymetrixExperiments=").append(affymetrixExperiments)
+               .append(", affymetrixAssays=").append(affymetrixAssays)
+               .append(", affymetrixCalls=").append(affymetrixCalls)
+               .append(", rnaSeqExperiments=").append(rnaSeqExperiments)
+               .append(", rnaSeqLibraries=").append(rnaSeqLibraries)
+               .append(", rnaSeqAssays=").append(rnaSeqAssays)
+               .append(", rnaSeqCalls=").append(rnaSeqCalls)
+               .append(", inSituExperiments=").append(inSituExperiments)
+               .append(", inSituAssays=").append(inSituAssays)
+               .append(", inSituCalls=").append(inSituCalls)
+               .append(", estAssays=").append(estAssays)
+               .append(", estCalls=").append(estCalls).append("]");
+        return builder.toString();
+    }
 }

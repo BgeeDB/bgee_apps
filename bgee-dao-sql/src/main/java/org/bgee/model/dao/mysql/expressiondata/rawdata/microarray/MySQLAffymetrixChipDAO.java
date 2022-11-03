@@ -45,13 +45,14 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
-                Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
         final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));
         //detect join to use
-        boolean needJoinProbeset = rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+        boolean needJoinProbeset = orderedRawDataFilter.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        boolean needJoinCond = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null);
 
         // generate SELECT
         StringBuilder sb = new StringBuilder();
@@ -62,7 +63,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
                 needJoinCond, false));
 
         // generate WHERE CLAUSE
-        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+        if (!orderedRawDataFilter.isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
                     MySQLAffymetrixChipDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }

@@ -54,16 +54,17 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
-                Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
         final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
         //detect join to use
-        boolean needJoinChip = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
+        boolean needJoinChip = orderedRawDataFilter.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
                 ||  !e.getRawDataCondIds().isEmpty() || !e.getAssayIds().isEmpty());            
-        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null 
+        boolean needJoinCond = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null 
                 && needJoinChip) ? true : false;
-        final boolean needJoinGene = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null
+        final boolean needJoinGene = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null
                 && !needJoinChip) ? true : false;
         // generate SELECT
         StringBuilder sb = new StringBuilder();
@@ -73,7 +74,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         .append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, false, needJoinCond,
                 needJoinGene));
         // generate WHERE
-        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+        if (!orderedRawDataFilter.isEmpty()) {
             sb.append(" WHERE ")
             // if needJoinGene is true it means the join for speciesId is done to the gene table.
             // Otherwise it is done on the condition table

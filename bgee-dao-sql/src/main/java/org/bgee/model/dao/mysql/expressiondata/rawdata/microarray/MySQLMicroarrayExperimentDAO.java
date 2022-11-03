@@ -41,7 +41,8 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
-                Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
         final Set<MicroarrayExperimentDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(MicroarrayExperimentDAO.Attribute.class): EnumSet.copyOf(attrs));
@@ -53,15 +54,15 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         boolean needJoinChip = false;
         boolean needJoinCond = false;
         boolean needJoinProbeset = false;
-        if(rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
+        if(orderedRawDataFilter.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 e.getSpeciesId() != null || !e.getGeneIds().isEmpty() ||
                 !e.getRawDataCondIds().isEmpty())) {
             needJoinChip = true;
         }
-        if (rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null)) {
+        if (orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null)) {
             needJoinCond = true;
         }
-        if (rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty())) {
+        if (orderedRawDataFilter.stream().anyMatch(e -> !e.getGeneIds().isEmpty())) {
             needJoinProbeset = true;
         }
         //generate FROM clause
@@ -69,7 +70,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
                 needJoinCond, false));
 
         // generate WHERE
-        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+        if (!orderedRawDataFilter.isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
                     MySQLMicroarrayExperimentDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }

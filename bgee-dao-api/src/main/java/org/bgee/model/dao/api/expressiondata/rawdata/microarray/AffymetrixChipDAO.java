@@ -66,8 +66,8 @@ public interface AffymetrixChipDAO extends DAO<AffymetrixChipDAO.Attribute> {
             return this.fieldName;
         }
     }
-    public AffymetrixChipTOResultSet getAffymetrixChipsFromBgeeChipIds(Collection<Integer> bgeeChipIds)
-            throws DAOException;
+    public AffymetrixChipTOResultSet getAffymetrixChipsFromBgeeChipIds(Collection<Integer> bgeeChipIds,
+            Collection<AffymetrixChipDAO.Attribute> attrs) throws DAOException;
 
     /**
      * Allows to retrieve {@code AffymetrixChipTO}s according to the provided filters,

@@ -23,6 +23,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
 
 public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.Attribute>
@@ -37,14 +38,10 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
 
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)
+            Integer limit, Integer offset, Collection<AffymetrixChipDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, attrs);
-        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("rawDataFilters can not be null or"
-                    + " empty"));
-        }
-        checkLimitAndOffset(offset, limit);
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
+        checkLimitAndOffset(limit, offset);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -65,17 +62,50 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
                 needJoinCond, false));
 
         // generate WHERE CLAUSE
-        // there is always a where condition as at least a speciesId, a geneId or a conditionId
-        // has to be provided in a rawDataFilter.
-        sb.append(" WHERE ").append(orderedRawDataFilter.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, false))
-                .collect(Collectors.joining(") OR (", " (", ")")));
+        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
+                    MySQLAffymetrixChipDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
+        }
         //generate offset and limit
-        if (limit != null || offset != null) {
-            sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
+        if (limit != null) {
+            sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
         }
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
+                    limit, offset);
+            return log.traceExit(new MySQLAffymetrixChipTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    @Override
+    public AffymetrixChipTOResultSet getAffymetrixChipsFromBgeeChipIds(
+            Collection<Integer> bgeeChipIds, Collection<AffymetrixChipDAO.Attribute> attrs)
+            throws DAOException {
+        log.traceEntry("{}, {}", bgeeChipIds, attrs);
+        if (bgeeChipIds == null || bgeeChipIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("need to provide at least one"
+                    + "bgeeChipId"));
+        }
+        final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));
+        final Set<Integer> clonedBgeeChipIds = Collections.unmodifiableSet(bgeeChipIds.stream()
+                .filter(id -> id != null).collect(Collectors.toSet()));
+     // generate SELECT
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixChipDAO
+                .Attribute.class), true, clonedAttrs))
+        .append(" FROM ").append(TABLE_NAME).append(" WHERE ")
+        .append(AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
+        .append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedBgeeChipIds.size()))
+        .append(")");
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            stmt.setIntegers(1, clonedBgeeChipIds, true);
             return log.traceExit(new MySQLAffymetrixChipTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -153,4 +183,5 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             }
         }
     }
+
 }

@@ -367,10 +367,11 @@ public class RawDataService extends CommonService {
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
-            return log.traceExit(new RawDataLoader(this.getServiceFactory(), null,
-            null, null, null,
-            //load all Species
-            this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
+            return log.traceExit(new RawDataLoader(this.getServiceFactory(),
+                    new RawDataPreProcessedInformation(null, null,
+                            null, null,
+                            //load all Species, gene biotypes, and sources
+                            this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap)));
         }
 
         //we prepare the info the Loader will need when calling its various "load" methods.
@@ -419,9 +420,15 @@ public class RawDataService extends CommonService {
                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
         }).collect(Collectors.toSet());
 
-        return log.traceExit(new RawDataLoader(this.getServiceFactory(), filter,
-                daoFilters, requestedGeneMap, requestedRawDataCondMap,
-                speciesMap, geneBioTypeMap, sourceMap));
+        return log.traceExit(new RawDataLoader(this.getServiceFactory(),
+                new RawDataPreProcessedInformation(filter, daoFilters,
+                        requestedGeneMap, requestedRawDataCondMap,
+                        speciesMap, geneBioTypeMap, sourceMap)));
+    }
+
+    public RawDataLoader loadRawDataLoader(RawDataPreProcessedInformation preProcessedInfo) {
+        log.traceEntry("{}", preProcessedInfo);
+        return log.traceExit(new RawDataLoader(this.getServiceFactory(), preProcessedInfo));
     }
 
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(

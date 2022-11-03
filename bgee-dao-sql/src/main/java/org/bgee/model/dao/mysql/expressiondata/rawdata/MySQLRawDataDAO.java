@@ -26,7 +26,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDOA;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extends MySQLDAO<T> {
@@ -101,8 +101,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         .Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
                 .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
                         + AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
-            } else if (tableName.equals(MySQLMicroarrayExperimentDOA.TABLE_NAME)) {
-                sb.append(MySQLMicroarrayExperimentDOA.TABLE_NAME + "." + MicroarrayExperimentDAO
+            } else if (tableName.equals(MySQLMicroarrayExperimentDAO.TABLE_NAME)) {
+                sb.append(MySQLMicroarrayExperimentDAO.TABLE_NAME + "." + MicroarrayExperimentDAO
                         .Attribute.ID.getTOFieldName())
                 .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
                         + AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
@@ -118,10 +118,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         // join microArrayExperiment table
         if(needJoinExp) {
-            sb.append(" INNER JOIN " + MySQLMicroarrayExperimentDOA.TABLE_NAME + " ON ")
+            sb.append(" INNER JOIN " + MySQLMicroarrayExperimentDAO.TABLE_NAME + " ON ")
             .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
             AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName())
-            .append(" = " + MySQLMicroarrayExperimentDOA.TABLE_NAME + "." 
+            .append(" = " + MySQLMicroarrayExperimentDAO.TABLE_NAME + "." 
                     + MicroarrayExperimentDAO.Attribute.ID.getTOFieldName());
         }
         // join cond table

@@ -23,10 +23,10 @@ import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
 
-public class MySQLMicroarrayExperimentDOA extends MySQLRawDataDAO<MicroarrayExperimentDAO.Attribute> 
+public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExperimentDAO.Attribute> 
         implements MicroarrayExperimentDAO {
 
-    private static final Logger log = LogManager.getLogger(MySQLMicroarrayExperimentDOA.class.getName());
+    private static final Logger log = LogManager.getLogger(MySQLMicroarrayExperimentDAO.class.getName());
     public static final String TABLE_NAME = "microarrayExperiment";
 
     public MySQLMicroarrayExperimentDOA(MySQLDAOManager manager) throws IllegalArgumentException {

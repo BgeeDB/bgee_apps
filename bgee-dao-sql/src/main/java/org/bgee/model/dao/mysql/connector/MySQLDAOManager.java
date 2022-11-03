@@ -61,7 +61,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDOA;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryDAO;
@@ -1175,7 +1175,7 @@ public class MySQLDAOManager extends DAOManager {
     @Override
     protected MicroarrayExperimentDAO getNewMicroarrayExperimentDAO() {
         log.traceEntry();
-        return log.traceExit(new MySQLMicroarrayExperimentDOA(this));
+        return log.traceExit(new MySQLMicroarrayExperimentDAO(this));
     }
 
     @Override

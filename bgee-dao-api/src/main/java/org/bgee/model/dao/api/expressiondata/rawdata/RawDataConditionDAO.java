@@ -249,5 +249,13 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
         public Boolean getSexInferred() {
             return sexInferred;
         }
+
+        @Override
+        public String toString() {
+            return "RawDataConditionTO [exprMappedConditionId=" + exprMappedConditionId + ", sex=" + sex
+                    + ", sexInferred=" + sexInferred + ", getAnatEntityId()=" + getAnatEntityId() + ", getStageId()="
+                    + getStageId() + ", getCellTypeId()=" + getCellTypeId() + ", getStrainId()=" + getStrainId()
+                    + ", getSpeciesId()=" + getSpeciesId() + ", getId()=" + getId() + "]";
+        }
     }
 }

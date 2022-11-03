@@ -97,6 +97,40 @@ implements RawDataConditionDAO {
         }
     }
 
+    @Override
+    public RawDataConditionTOResultSet getRawDataConditionsFromIds(Collection<Integer> conditionIds,
+            Collection<RawDataConditionDAO.Attribute> attrs)
+            throws DAOException {
+        log.traceEntry("{}, {}", conditionIds, attrs);
+        if (conditionIds == null) {
+            throw log.throwing(new IllegalArgumentException("conditionIds can not be null"));
+        }
+        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attrs));
+        final Set<Integer> clonedCondIds = Collections.unmodifiableSet(conditionIds.stream()
+                .filter(c -> c != null).collect(Collectors.toSet()));
+        if (clonedCondIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("at least one conditionId has to be"
+                    + "provided"));
+        }
+        // generate SELECT
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
+                .Attribute.class), true, clonedAttrs))
+        .append(" FROM ").append(TABLE_NAME).append(" WHERE ")
+        .append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+        .append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedCondIds.size()))
+        .append(")");        
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            stmt.setIntegers(1, clonedCondIds, true);
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }    }
     /**
      * Implementation of the {@code ConditionTOResultSet}. 
      * 
@@ -170,5 +204,103 @@ implements RawDataConditionDAO {
                 throw log.throwing(new DAOException(e));
             }
         }
+    }
+    
+    protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
+            Collection<DAORawDataConditionFilter> conditionFilters, int paramIndex)
+                    throws SQLException {
+        log.traceEntry("{}, {}, {}", stmt, conditionFilters, paramIndex);
+
+        if (conditionFilters == null) {
+            throw log.throwing(new IllegalArgumentException("conditionFilters can not be null"));
+        }
+        int offsetParamIndex = paramIndex;
+        for (DAORawDataConditionFilter condFilter: conditionFilters) {
+
+            if (!condFilter.getAnatEntityIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
+                offsetParamIndex += condFilter.getAnatEntityIds().size();
+            }
+            if (!condFilter.getDevStageIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
+                offsetParamIndex += condFilter.getDevStageIds().size();
+            }
+            if (!condFilter.getCellTypeIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
+                offsetParamIndex += condFilter.getCellTypeIds().size();
+            }
+            if (!condFilter.getSexIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
+                offsetParamIndex += condFilter.getSexIds().size();
+            }
+            if (!condFilter.getStrainIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
+                offsetParamIndex += condFilter.getStrainIds().size();
+            }
+        }
+        return log.traceExit(offsetParamIndex);
+    }
+    
+    private String generateOneConditionFilter(DAORawDataConditionFilter condFilter) {
+        log.traceEntry("{}", condFilter);
+        StringBuilder sb = new StringBuilder();
+        if(condFilter == null) {
+            throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
+        }
+        if(!condFilter.getAnatEntityIds().isEmpty() || !condFilter.getDevStageIds().isEmpty()
+                || !condFilter.getCellTypeIds().isEmpty() || !condFilter.getSexIds().isEmpty()
+                || !condFilter.getStrainIds().isEmpty()) {
+            sb.append("(");
+        }
+        boolean previousCond = false;
+        if (!condFilter.getAnatEntityIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
+                    condFilter.getAnatEntityIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getDevStageIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.STAGE_ID,
+                    condFilter.getDevStageIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getCellTypeIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
+                    condFilter.getCellTypeIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getSexIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.SEX,
+                    condFilter.getSexIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getStrainIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.STRAIN,
+                    condFilter.getStrainIds(), previousCond));
+            previousCond = true;
+        }
+        if (previousCond) {
+            sb.append(")");
+        }
+        return log.traceExit(sb.toString());
+    }
+    
+    private String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
+            Set<String> condValues, boolean previousFilter) {
+        log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
+        StringBuffer sb = new StringBuffer();
+        if(previousFilter) {
+            sb.append(" AND ");
+        }
+        sb.append(MySQLRawDataConditionDAO.TABLE_NAME).append(".")
+        .append(attr.getTOFieldName()).append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
+        .append(")");
+        return log.traceExit(sb.toString());
+        
     }
 }

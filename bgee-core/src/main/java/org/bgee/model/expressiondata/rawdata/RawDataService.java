@@ -359,19 +359,61 @@ public class RawDataService extends CommonService {
 
     public RawDataLoader loadRawDataLoader(RawDataFilter filter) {
         log.traceEntry("{}", filter);
+        return log.traceExit(new RawDataLoader(this.getServiceFactory(),
+                this.processRawDataFilter(filter)));
+    }
+
+    /**
+     * Obtain a new {@code RawDataLoader} from parameters already pre-processed, rather than
+     * from a {@code RawDataFilter}. This method exists for optimization purposes,
+     * the default method to obtain a {@code RawDataLoader} is
+     * {@link #loadRawDataLoader(RawDataFilter)}.
+     * <p>
+     * After obtaining a {@code RawDataLoader} by calling {@link #loadRawDataLoader(RawDataFilter)},
+     * it will be faster, to obtain other {@code RawDataLoader}s for the same parameters,
+     * to call this method instead. The {@code RawDataProcessedFilter} to use is obtained
+     * by calling {@link RawDataLoader#getRawDataProcessedFilter()}.
+     * <p>
+     * Some computations will thus not be unnecessarily performed again.
+     * The {@code RawDataProcessedFilter} could typically be stored in a {@code Map},
+     * where the key is the {@code RawDataFilter} used to obtain a {@code RawDataLoader},
+     * and the value the associated {@code RawDataProcessedFilter} obtained by calling
+     * {@link RawDataLoader#getRawDataProcessedFilter()}. When a new {@code RawDataFilter}
+     * is configured by a client, before calling {@code loadRawDataLoader(RawDataFilter)},
+     * an attempt to retrieve from the {@code Map} a {@code RawDataProcessedFilter}
+     * associated with an equal {@code RawDataFilter} should be made, to use this method instead.
+     * <p>
+     * It is useful to store the pre-processed information outside of a {@code RawDataLoader},
+     * in order to avoid risking to keep connections to data sources open
+     * (as {@code RawDataLoader}s are {@code Service}s, holding connections to data sources).
+     *
+     * @param preProcessedInfo  A {@code RawDataProcessedFilter} obtained
+     *                          from a {@code RawDataLoader}.
+     * @return                  A {@code RawDataLoader} equivalent to the one that provided
+     *                          {@code preProcessedInfo}.
+     * @see #loadRawDataLoader(RawDataFilter)
+     * @see RawDataLoader#getRawDataProcessedFilter()
+     */
+    public RawDataLoader getRawDataLoader(RawDataProcessedFilter preProcessedInfo) {
+        log.traceEntry("{}", preProcessedInfo);
+        return log.traceExit(new RawDataLoader(this.getServiceFactory(), preProcessedInfo));
+    }
+
+    private RawDataProcessedFilter processRawDataFilter(RawDataFilter filter) {
+        log.traceEntry("{}", filter);
 
         //We load the GeneBioTypes to be used in this method and in RawDataLoader
         Map<Integer, GeneBioType> geneBioTypeMap = loadGeneBioTypeMap(this.geneDAO);
+        //Sources to be used by the RawDataLoader
         Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
-            return log.traceExit(new RawDataLoader(this.getServiceFactory(),
-                    new RawDataPreProcessedInformation(null, null,
-                            null, null,
-                            //load all Species, gene biotypes, and sources
-                            this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap)));
+            return log.traceExit(new RawDataProcessedFilter(null, null,
+                    null, null,
+                    //load all Species, gene biotypes, and sources
+                    this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
         }
 
         //we prepare the info the Loader will need when calling its various "load" methods.
@@ -403,6 +445,8 @@ public class RawDataService extends CommonService {
             loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
                 null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
 
+        //Finally, we produce the DAORawDataFilters that will be used by the RawDataLoader
+        //when calling the raw data DAOs
         Set<DAORawDataFilter> daoFilters = speciesIds.stream().map(speciesId -> {
             Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
                     .filter(e -> speciesId == e.getValue().getSpecies().getId())
@@ -420,17 +464,10 @@ public class RawDataService extends CommonService {
                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
         }).collect(Collectors.toSet());
 
-        return log.traceExit(new RawDataLoader(this.getServiceFactory(),
-                new RawDataPreProcessedInformation(filter, daoFilters,
-                        requestedGeneMap, requestedRawDataCondMap,
-                        speciesMap, geneBioTypeMap, sourceMap)));
+        return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,
+                requestedGeneMap, requestedRawDataCondMap,
+                speciesMap, geneBioTypeMap, sourceMap));
     }
-
-    public RawDataLoader loadRawDataLoader(RawDataPreProcessedInformation preProcessedInfo) {
-        log.traceEntry("{}", preProcessedInfo);
-        return log.traceExit(new RawDataLoader(this.getServiceFactory(), preProcessedInfo));
-    }
-
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(
             Collection<RawDataConditionFilter> condFilters, OntologyService ontService) {
         log.traceEntry("{}, {}", condFilters, ontService);

@@ -102,7 +102,7 @@ public class RawDataServiceTest extends TestAncestor {
         RawDataService service = new RawDataService(this.serviceFactory);
         RawDataLoader actualLoader = service.loadRawDataLoader(filter);
 
-        RawDataPreProcessedInformation expectedPrepProcessedInfo = new RawDataPreProcessedInformation(
+        RawDataProcessedFilter expectedPrepProcessedInfo = new RawDataProcessedFilter(
                 filter,
                 Set.of(
                         new DAORawDataFilter(Set.of(1, 2), null),
@@ -115,6 +115,6 @@ public class RawDataServiceTest extends TestAncestor {
                 RAW_DATA_CONDS.entrySet().stream().filter(e -> e.getKey().equals(6))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
                 SPECIES, GENE_BIO_TYPES, SOURCES);
-        assertEquals(expectedPrepProcessedInfo, actualLoader.getRawDataPreProcessedInformation());
+        assertEquals(expectedPrepProcessedInfo, actualLoader.getRawDataProcessedFilter());
     }
 }

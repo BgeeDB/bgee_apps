@@ -65,17 +65,21 @@ import org.bgee.model.species.Species;
 /**
  * This class allows for retrieving different types of raw data information,
  * while storing the query parameters common to these different types of information.
- * This avoids to unnecessarily regenerate several times the query parameters.
+ * This avoids to unnecessarily process several times the query parameters.
  * <p>
  * Indeed, the query parameters can take some resources to be generated, for instance,
  * to retrieve the IDs of raw data conditions corresponding to a specific organ
- * plus all its substructures.
+ * plus all its substructures. See {@link #getRawDataProcessedFilter()} and
+ * {@link RawDataService#getRawDataLoader(RawDataProcessedFilter)} for more information.
  *
  * @author Frederic Bastian
  * @author Julien Wollbrett
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
+ * @see #getRawDataProcessedFilter()
  * @see RawDataService
+ * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
+ * @see RawDataService#loadRawDataLoader(RawDataFilter)
  */
 public class RawDataLoader extends CommonService {
     private final static Logger log = LogManager.getLogger(RawDataLoader.class.getName());
@@ -171,9 +175,9 @@ public class RawDataLoader extends CommonService {
     }
 
     /**
-     * @see #getRawDataPreProcessedInformation()
+     * @see #getRawDataProcessedFilter()
      */
-    private final RawDataPreProcessedInformation rawDataPreProcessedInformation;
+    private final RawDataProcessedFilter rawDataProcessedFilter;
 
     //DAOs and Services used by this class
     private final MicroarrayExperimentDAO microarrayExperimentDAO;
@@ -186,15 +190,15 @@ public class RawDataLoader extends CommonService {
 
 
     //Constructor package protected so that only the RawDataService can instantiate this class
-    RawDataLoader(ServiceFactory serviceFactory, RawDataPreProcessedInformation preProcessedInfo) {
+    RawDataLoader(ServiceFactory serviceFactory, RawDataProcessedFilter rawDataProcessedFilter) {
         super(serviceFactory);
 
-        if (preProcessedInfo == null) {
+        if (rawDataProcessedFilter == null) {
             //we need it at least to retrieve, species, gene biotypes, and sources
             throw log.throwing(new IllegalArgumentException(
-                    "A RawDataPreProcessedInformation must be provided"));
+                    "A RawDataProcessedFilter must be provided"));
         }
-        this.rawDataPreProcessedInformation = preProcessedInfo;
+        this.rawDataProcessedFilter = rawDataProcessedFilter;
 
         this.microarrayExperimentDAO = this.getDaoManager().getMicroarrayExperimentDAO();
         this.affymetrixChipDAO       = this.getDaoManager().getAffymetrixChipDAO();
@@ -217,7 +221,7 @@ public class RawDataLoader extends CommonService {
         //This will allow us to process some downstream information only once for all data types,
         //and not once for each data type.
         //*****************************************************************************************
-        final Set<DataType> dataTypes = this.getRawDataPreProcessedInformation().getDataTypes();
+        final Set<DataType> dataTypes = this.getRawDataProcessedFilter().getDataTypes();
         if (dataTypes.contains(DataType.AFFYMETRIX)) {
             affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
             allTempContainers.add(affyTempRawDataContainer);
@@ -272,7 +276,7 @@ public class RawDataLoader extends CommonService {
         Set<Integer> rawDataCondIds = new HashSet<>();
         Set<Integer> bgeeGeneIds = new HashSet<>();
 
-        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataPreProcessedInformation()
+        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
                 .getDaoRawDataFilters();
     
         if (infoType == InformationType.CALL) {
@@ -404,8 +408,8 @@ public class RawDataLoader extends CommonService {
         log.traceEntry("{}", condIds);
 
         Map<Integer, RawDataCondition> requestedRawDataConditionMap =
-                this.getRawDataPreProcessedInformation().getRequestedRawDataConditionMap();
-        Map<Integer, Species> speciesMap = this.getRawDataPreProcessedInformation().getSpeciesMap();
+                this.getRawDataProcessedFilter().getRequestedRawDataConditionMap();
+        Map<Integer, Species> speciesMap = this.getRawDataProcessedFilter().getSpeciesMap();
 
         Set<Integer> missingCondIds = new HashSet<>(condIds);
         missingCondIds.removeAll(requestedRawDataConditionMap.keySet());
@@ -422,11 +426,11 @@ public class RawDataLoader extends CommonService {
     private Map<Integer, Gene> loadCompleteGeneMap(Set<Integer> bgeeGeneIds) {
         log.traceEntry("{}", bgeeGeneIds);
 
-        Map<Integer, Gene> requestedGeneMap = this.getRawDataPreProcessedInformation()
+        Map<Integer, Gene> requestedGeneMap = this.getRawDataProcessedFilter()
                 .getRequestedGeneMap();
-        Map<Integer, Species> speciesMap = this.getRawDataPreProcessedInformation()
+        Map<Integer, Species> speciesMap = this.getRawDataProcessedFilter()
                 .getSpeciesMap();
-        Map<Integer, GeneBioType> geneBioTypeMap = this.getRawDataPreProcessedInformation()
+        Map<Integer, GeneBioType> geneBioTypeMap = this.getRawDataProcessedFilter()
                 .getGeneBioTypeMap();
 
         Set<Integer> missingGeneIds = new HashSet<>(bgeeGeneIds);
@@ -451,10 +455,10 @@ public class RawDataLoader extends CommonService {
         if (sourceId == null) {
             return log.traceExit((Source) null);
         }
-        Source source = this.getRawDataPreProcessedInformation().getSourceMap().get(sourceId);
+        Source source = this.getRawDataProcessedFilter().getSourceMap().get(sourceId);
         if (source == null) {
             throw log.throwing(new IllegalStateException("No Source found corresponding to ID " + sourceId
-                    + " - original sourceMap: " + this.getRawDataPreProcessedInformation().getSourceMap()));
+                    + " - original sourceMap: " + this.getRawDataProcessedFilter().getSourceMap()));
         }
         return log.traceExit(source);
     }
@@ -903,15 +907,22 @@ public class RawDataLoader extends CommonService {
 //    }
 
     /**
-     * @return  The {@code RawDataPreProcessedInformation} storing information pre-processed
-     *          based on the provided {@code RawDataFilter} (see {@link #getRawDataFilter()},
-     *          in order not to re-process this information at each call to a {@link RawDataLoader} method.
-     *          It is useful to store this pre-processed info outside of this {@code RawDataLoader},
-     *          in order to avoid keeping connections to data sources open (as this {@code RawDataLoader}
-     *          is a {@code Service} holding connections to data sources).
-     * @see #getRawDataFilter()
+     * Pre-processed information based on the {@code RawDataFilter} used to obtain
+     * this {@code RawDataLoader}. After obtaining a {@code RawDataLoader} by calling
+     * {@link RawDataService#loadRawDataLoader(RawDataFilter)}, it will be faster,
+     * to obtain other {@code RawDataLoader}s for the same parameters, to call the method
+     * {@link RawDataService#getRawDataLoader(RawDataProcessedFilter)} instead.
+     * See {@link RawDataService#getRawDataLoader(RawDataProcessedFilter)}
+     * for more details.
+     *
+     * @return  The {@code RawDataProcessedFilter} storing information pre-processed
+     *          based on the provided {@code RawDataFilter} (see {@link
+     *          RawDataProcessedFilter#getRawDataFilter()}).
+     * @see RawDataProcessedFilter#getRawDataFilter()
+     * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
+     * @see RawDataService#loadRawDataLoader(RawDataFilter)
      */
-    public RawDataPreProcessedInformation getRawDataPreProcessedInformation() {
-        return this.rawDataPreProcessedInformation;
+    public RawDataProcessedFilter getRawDataProcessedFilter() {
+        return this.rawDataProcessedFilter;
     }
 }

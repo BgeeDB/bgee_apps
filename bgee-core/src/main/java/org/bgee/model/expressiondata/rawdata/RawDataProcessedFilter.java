@@ -19,27 +19,27 @@ import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
 /**
- * Class holding information pre-processed information generated from
- * submitted {@link RawDataFilter}s, in order not to re-process this information
- * at each call to a {@link RawDataLoader} method.
+ * Class holding pre-processed information generated from a {@link RawDataFilter},
+ * in order not to re-process this information when obtaining different {@link RawDataLoader}s
+ * for the same parameters.
  * <p>
  * This class has been created to store this information outside of a {@link RawDataLoader},
  * because a {@code RawDataLoader} is a {@code Service}, and holds a connection to a data source.
  * If we wanted to store this pre-processed information to be reused by different threads,
- * storing it in a {@code RawDataLoader} would maintain the connection open.
- * <p>
- * Most methods and constructors are package private, so that only the {@link RawDataService}
- * can instantiate this class, and only {@link RawDataLoader} use it.
+ * storing it in a {@code RawDataLoader} could maintain the connection open.
  *
  * @author Frederic Bastian
- * @author Julien Wollbrett
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
- * @see RawDataService
- * @see RawDataLoader
+ * @see #getRawDataFilter()
+ * @see RawDataLoader#getRawDataProcessedFilter()
+ * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
+ * @see RawDataService#loadRawDataLoader(RawDataFilter)
  */
-public class RawDataPreProcessedInformation {
-    private final static Logger log = LogManager.getLogger(RawDataPreProcessedInformation.class.getName());
+//Most methods and constructors are package private, so that only the {@link RawDataService}
+//can instantiate this class, and only {@link RawDataLoader} use it.
+public class RawDataProcessedFilter {
+    private final static Logger log = LogManager.getLogger(RawDataProcessedFilter.class.getName());
 
     /**
      * @see #getRawDataFilter()
@@ -75,10 +75,10 @@ public class RawDataPreProcessedInformation {
      */
     private final Map<Integer, Source> sourceMap;
 
-    RawDataPreProcessedInformation() {
+    RawDataProcessedFilter() {
         this(null, null, null, null, null, null, null);
     }
-    RawDataPreProcessedInformation(RawDataFilter rawDataFilter,
+    RawDataProcessedFilter(RawDataFilter rawDataFilter,
             Collection<DAORawDataFilter> daoFilters,
             Map<Integer, Gene> requestedGeneMap,
             Map<Integer, RawDataCondition> requestedRawDataConditionMap,
@@ -139,7 +139,7 @@ public class RawDataPreProcessedInformation {
     }
 
     /**
-     * @return  The {@code RawDataFilter} originally used to create this {@code RawDataPreProcessedInformation}.
+     * @return  The {@code RawDataFilter} originally used to create this {@code RawDataProcessedFilter}.
      */
     public RawDataFilter getRawDataFilter() {
         return this.rawDataFilter;
@@ -224,7 +224,7 @@ public class RawDataPreProcessedInformation {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RawDataPreProcessedInformation other = (RawDataPreProcessedInformation) obj;
+        RawDataProcessedFilter other = (RawDataProcessedFilter) obj;
         return Objects.equals(daoRawDataFilters, other.daoRawDataFilters) && Objects.equals(dataTypes, other.dataTypes)
                 && Objects.equals(geneBioTypeMap, other.geneBioTypeMap)
                 && Objects.equals(rawDataFilter, other.rawDataFilter)
@@ -236,7 +236,7 @@ public class RawDataPreProcessedInformation {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RawDataPreProcessedInformation [")
+        builder.append("RawDataProcessedFilter [")
                .append("rawDataFilter=").append(rawDataFilter)
                .append(", daoRawDataFilters=").append(daoRawDataFilters)
                .append(", dataTypes=").append(dataTypes)

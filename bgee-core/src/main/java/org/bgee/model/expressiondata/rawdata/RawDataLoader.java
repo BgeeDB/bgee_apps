@@ -176,6 +176,38 @@ public class RawDataLoader extends CommonService {
     }
 
     /**
+     * An {@code int} that is the maximum allowed number of results
+     * to retrieve in one call. Value: 50,000.
+     */
+    public static int LIMIT_MAX = 50000;
+    /**
+     * Check the validity of the {@code offset} and {@code limit} arguments.
+     *
+     * @param offset    An {@code int} that is the offset to check.
+     * @param limit     An {@code int} that is the limit to check.
+     * @throws IllegalArgumentException If {@code offset} is less than 0,
+     *                                  or {@code limit} is less than or equal to 0,
+     *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
+     * @see #LIMIT_MAX
+     */
+    private static void checkOffsetLimit(int offset, int limit) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", offset, limit);
+        if (offset < 0) {
+            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
+        }
+        if (limit <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "limit cannot be less than or equal to 0"));
+        }
+        if (limit > LIMIT_MAX) {
+            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
+                    + LIMIT_MAX));
+        }
+        log.traceExit();
+    }
+
+
+    /**
      * @see #getRawDataProcessedFilter()
      */
     private final RawDataProcessedFilter rawDataProcessedFilter;
@@ -188,7 +220,6 @@ public class RawDataLoader extends CommonService {
     private final GeneDAO geneDAO;
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
-
 
     //Constructor package protected so that only the RawDataService can instantiate this class
     RawDataLoader(ServiceFactory serviceFactory, RawDataProcessedFilter rawDataProcessedFilter) {
@@ -210,8 +241,27 @@ public class RawDataLoader extends CommonService {
         this.devStageService         = this.getServiceFactory().getDevStageService();
     }
 
-    public RawDataContainer loadData(InformationType infoType, int offset, int limit) {
+    /**
+     * Load raw data of the specified {@code InformationType}.
+     *
+     * @param infoType  The {@code InformationType} to load.
+     * @param offset    An {@code int} specifying at which index to start getting results
+     *                  of the type {@code infoType}. First index is {@code 0}.
+     * @param limit     An {@code int} specifying the number of results of type {@code infoType}
+     *                  to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
+     * @return          A {@code RawDataContainer} containing the requested results.
+     * @throws IllegalArgumentException If {@code infoType} is null,
+     *                                  or {@code offset} is less than 0,
+     *                                  or {@code limit} is less than or equal to 0,
+     *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
+     */
+    public RawDataContainer loadData(InformationType infoType, int offset, int limit)
+            throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}", infoType, offset, limit);
+        if (infoType == null) {
+            throw log.throwing(new IllegalArgumentException("An InformationType must be provided"));
+        }
+        checkOffsetLimit(offset, limit);
 
         AffyTempRawDataContainer affyTempRawDataContainer = null;
         Set<TempRawDataContainer<?, ?, ?, ?>> allTempContainers = new HashSet<>();

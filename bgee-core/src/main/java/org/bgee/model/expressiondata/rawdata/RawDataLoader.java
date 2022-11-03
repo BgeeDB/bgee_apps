@@ -290,7 +290,7 @@ public class RawDataLoader extends CommonService {
     
         if (infoType == InformationType.ASSAY || !bgeeChipIds.isEmpty()) {
             AffymetrixChipTOResultSet chipTORS = !bgeeChipIds.isEmpty()?
-                    this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds):
+                    this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds, null):
                     this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit, null);
             while (chipTORS.next()) {
                 AffymetrixChipTO chipTO = chipTORS.getTO();

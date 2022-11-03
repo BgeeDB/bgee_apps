@@ -62,6 +62,19 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             return this.fieldName;
         }
     }
+
+    /**
+     * Retrieves raw conditions used in data annotations for requested bgee condition IDs.
+     *
+     * @param conditionIds          A {@code Collection} of {@code Integer} corresponding to bgee condition
+     *                              IDs used to filter condition to retrieve.
+     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s defining
+     *                              the attributes to populate in the returned {@code RawDataConditionTO}s.
+     *                              If {@code null} or empty, all attributes are populated.
+     * @return                      A {@code RawDataConditionTOResultSet} containing the requested
+     *                              raw data conditions retrieved from the data source.
+     * @throws DAOException         If an error occurred while accessing the data source.
+     */
     public RawDataConditionTOResultSet getRawDataConditionsFromIds(Collection<Integer> conditionIds,
             Collection<Attribute> attributes) throws DAOException;
 

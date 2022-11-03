@@ -37,16 +37,66 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
             return this.fieldName;
         }
     }
-    
+
+    /**
+     * Retrieve affymetrix count of experiment, assay and calls based on a {@code Collection} of 
+     * {@code DAORawDataFilter}. 
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                          affymetrix data for which count are queried.
+     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
+     * @param assayCount        A boolean defining rather assay count has to be retrieved
+     * @param callsCount        A boolean defining rather calls count has to be retrieved
+     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     */
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean experimentCount, boolean assayCount, boolean callsCount);
 
+    /**
+     * Retrieve insitu count of experiment, assay and calls based on a {@code Collection} of 
+     * {@code DAORawDataFilter}. 
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                          insitu data for which count are queried.
+     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
+     * @param assayCount        A boolean defining rather assay count has to be retrieved
+     * @param callsCount        A boolean defining rather calls count has to be retrieved
+     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     */
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean experimentCount, boolean assayCount, boolean resultCount);
 
+    /**
+     * Retrieve EST count of assay and calls based on a {@code Collection} of 
+     * {@code DAORawDataFilter}. 
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                          EST data for which count are queried.
+     * @param assayCount        A boolean defining rather assay count has to be retrieved
+     * @param callsCount        A boolean defining rather calls count has to be retrieved
+     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     */
     public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean assayCount, boolean callsCount);
 
+    /**
+     * Retrieve RNA-Seq count of experiment, assay and calls based on a {@code Collection} of 
+     * {@code DAORawDataFilter}. 
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                          RNA-Seq data for which count are queried.
+     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
+     * @param assayCount        A boolean defining rather assay count has to be retrieved. Assay
+     *                          correspond to annotated samples. It can be different from library
+     *                          count if more than one condition has been sequenced (e.g. different
+     *                          celltypes in 10x or multiplexing of different tissues)
+     * @param libraryCount      A boolean defining rather RNA-Seq library count has to be retrieved.
+     *                          It corresponds to the physical library sent to the sequencer. If only
+     *                          one condition has been sequenced (e.g. bulk RNA-Seq) then this count
+     *                          is the same than assayCount.
+     * @param callsCount        A boolean defining rather calls count has to be retrieved
+     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     */
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean experimentCount, boolean assayCount, boolean libraryCount, boolean callsCount);
 

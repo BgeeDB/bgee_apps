@@ -10,7 +10,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +21,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbes
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 
 public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbesetDAO.Attribute>
@@ -49,11 +50,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
             Integer limit, Integer offset, Collection<AffymetrixProbesetDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("rawDataFilter can not be null or"
-                    + " empty"));
-        }
-        checkLimitAndOffset(offset, limit);
+        checkLimitAndOffset(limit, offset);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -76,20 +73,20 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         .append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, false, needJoinCond,
                 needJoinGene));
         // generate WHERE
-        // there is always a where condition as at least a speciesId, a geneId or a conditionId
-        // has to be provided in a rawDataFilter.
-        sb.append(" WHERE ")
-        // if needJoinGene is true it means the join for speciesId is done to the gene table.
-        // Otherwise it is done on the condition table
-        .append(orderedRawDataFilter.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, needJoinGene))
-                .collect(Collectors.joining(") OR (", " (", ")")));
+        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+            sb.append(" WHERE ")
+            // if needJoinGene is true it means the join for speciesId is done to the gene table.
+            // Otherwise it is done on the condition table
+            .append(generateWhereClause(orderedRawDataFilter, MySQLAffymetrixChipDAO.TABLE_NAME,
+                    needJoinGene ? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
+        }
         //generate offset and limit
-        if (limit != null || offset != null) {
-            sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
+        if (limit != null) {
+            sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
         }
         try {
-            BgeePreparedStatement stmt = this.parameteriseQuery(sb.toString(), orderedRawDataFilter);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
+                    limit, offset);
             return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

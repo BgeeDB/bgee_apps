@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,47 +32,75 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount) {
-        log.traceEntry("{}, {}", rawDataFilters, resultCount);
-        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("rawDataFilters can not be null or"
-                    + " empty"));
+            boolean experimentCount, boolean assayCount, boolean callsCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, assayCount, callsCount);
+        if (!experimentCount && !assayCount && !callsCount) {
+            throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
+                    + " callsCount can not be all false at the same time"));
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilters = 
                 Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
         StringBuilder sb = new StringBuilder();
-        boolean needJoinProbeset = rawDataFilters.stream()
-                .anyMatch(e -> !e.getGeneIds().isEmpty() || resultCount);
-        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
 
+        // if ask only for calls count then start from calls table. Otherwise start from
+        // assay table
+        String tableName = callsCount && !assayCount && !experimentCount ?
+                MySQLAffymetrixProbesetDAO.TABLE_NAME: MySQLAffymetrixChipDAO.TABLE_NAME;
+        boolean needJoinProbeset = rawDataFilters.stream()
+                .anyMatch(e -> !e.getGeneIds().isEmpty() || callsCount);
+        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+        boolean needJoinChip = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
+                !e.getExperimentIds().isEmpty() || !e.getExprOrAssayIds().isEmpty() ||
+                !e.getRawDataCondIds().isEmpty() || e.getSpeciesId() != null);
         // generate SELECT clause
-        sb.append("SELECT")
-        .append(" count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-                AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName() + ") as ")
-        .append(RawDataCountDAO.Attribute.AFFY_EXP_COUNT.getTOFieldName())
-        .append(", count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
+        sb.append("SELECT");
+        boolean previousCount = false;
+        if (experimentCount) {
+            sb.append(" count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
+                    AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName() + ") as ")
+            .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (assayCount) {
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
                 AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName() + ") as ")
-        .append(RawDataCountDAO.Attribute.AFFY_ASSAY_COUNT.getTOFieldName());
-        if (resultCount) {
-            sb.append(", count(distinct " + MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + 
+        .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (callsCount) {
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(distinct " + MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + 
                     AffymetrixProbesetDAO.Attribute.ID.getTOFieldName() + ") as ")
-            .append(RawDataCountDAO.Attribute.AFFY_RESULT_COUNT.getTOFieldName());
+            .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
         }
 
         // generate FROM clause
-        sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixChipDAO.TABLE_NAME,
-                false, false, needJoinProbeset, needJoinCond, false));
+        if(tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME)) {
+            sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixProbesetDAO.TABLE_NAME,
+                    false, needJoinChip, false, needJoinCond, false));
+        } else if (tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME)) {
+            sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixChipDAO.TABLE_NAME,
+                    false, false, needJoinProbeset, needJoinCond, false));
+        } else {
+            throw log.throwing(new IllegalArgumentException("unrecognized table " + tableName));
+        }
 
         // generate WHERE CLAUSE
-        // there is always a where condition as at least a speciesId, a geneId or a conditionId
-        // has to be provided in a rawDataFilter.
-        sb.append(" WHERE ")
-          .append(generateWhereClause(orderedRawDataFilters));
-        
+        if(rawDataFilters != null || !rawDataFilters.isEmpty()) {
+            sb.append(" WHERE ")
+            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
+                    MySQLRawDataConditionDAO.TABLE_NAME));
+        }
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             RawDataCountContainerTO to = resultSet.getAllTOs().iterator().next();
             resultSet.close();
@@ -84,22 +111,21 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
     }
 
     @Override
-    public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount) {
+    public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean resultCount) {
+    public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2,
+            boolean arg3) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean arg2) {
+    public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2,
+            boolean arg3, boolean arg4) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -130,21 +156,26 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         @Override
         protected RawDataCountContainerTO getNewTO() {
             log.traceEntry();
-            Integer affyExpCount = null, affyAssayCount= null, affyResultCount = null;
+            Integer expCount = null, assayCount= null, callsCount = null,
+                    rnaSeqLibraryCount = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
-                    if (column.getValue().equals(RawDataCountDAO.Attribute.AFFY_EXP_COUNT
+                    if (column.getValue().equals(RawDataCountDAO.Attribute.EXP_COUNT
                             .getTOFieldName())) {
-                        affyExpCount = this.getCurrentResultSet().getInt(column.getKey());
+                        expCount = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.AFFY_ASSAY_COUNT
+                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.ASSAY_COUNT
                             .getTOFieldName())) {
-                        affyAssayCount = this.getCurrentResultSet().getInt(column.getKey());
+                        assayCount = this.getCurrentResultSet().getInt(column.getKey());
 
-                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.AFFY_RESULT_COUNT
+                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.CALLS_COUNT
                             .getTOFieldName())) {
-                        affyResultCount = this.getCurrentResultSet().getInt(column.getKey());
+                        callsCount = this.getCurrentResultSet().getInt(column.getKey());
+
+                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.RNA_SEQ_LIBRARY_COUNT
+                            .getTOFieldName())) {
+                        rnaSeqLibraryCount = this.getCurrentResultSet().getInt(column.getKey());
 
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
@@ -154,7 +185,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 }
             }
             // Set RawDataCountContainerTO
-            return log.traceExit(new RawDataCountContainerTO(affyExpCount, affyAssayCount, affyResultCount));
+            return log.traceExit(new RawDataCountContainerTO(expCount, assayCount, callsCount,
+                    rnaSeqLibraryCount));
         }
     }
 }

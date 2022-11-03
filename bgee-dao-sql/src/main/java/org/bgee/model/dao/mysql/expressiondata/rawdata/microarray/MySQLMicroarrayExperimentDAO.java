@@ -9,7 +9,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,19 +28,16 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
     private static final Logger log = LogManager.getLogger(MySQLMicroarrayExperimentDAO.class.getName());
     public static final String TABLE_NAME = "microarrayExperiment";
 
-    public MySQLMicroarrayExperimentDOA(MySQLDAOManager manager) throws IllegalArgumentException {
+    public MySQLMicroarrayExperimentDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
 
     @Override
-    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters, Integer limit,
-            Integer offset, Collection<MicroarrayExperimentDAO.Attribute> attrs)
+    public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
+            Integer limit, Integer offset, Collection<MicroarrayExperimentDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-        if (rawDataFilters == null || rawDataFilters.isEmpty()) {
-            throw log.throwing(new IllegalArgumentException("rawDataFilter can not be null or"
-                    + " empty"));
-        }
+        checkLimitAndOffset(limit, offset);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -73,19 +69,18 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
                 needJoinCond, false));
 
         // generate WHERE
-        // there is always a where condition as at least a speciesId, a geneId or a conditionId
-        // has to be provided in a rawDataFilter.
-        sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
-                needJoinChip? MySQLAffymetrixChipDAO.TABLE_NAME: TABLE_NAME,
-                MySQLRawDataConditionDAO.TABLE_NAME));
+        if (rawDataFilters != null || !rawDataFilters.isEmpty()) {
+            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
+                    MySQLMicroarrayExperimentDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
+        }
         //generate offset and limit
-        if (limit != null || offset != null) {
-            sb.append(offset == null ? " LIMIT " + limit: " LIMIT "+ offset + ", " + limit);
+        if (limit != null) {
+            sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
         }
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(),
-                    orderedRawDataFilter);
+                    orderedRawDataFilter, limit, offset);
             return log.traceExit(new MySQLMicroarrayExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

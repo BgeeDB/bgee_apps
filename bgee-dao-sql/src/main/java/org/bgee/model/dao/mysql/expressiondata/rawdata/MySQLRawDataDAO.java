@@ -3,12 +3,10 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,47 +29,47 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extends MySQLDAO<T> {
 
-    private final static Logger log = LogManager.getLogger(MySQLAffymetrixProbesetDAO.class.getName());
-    private final static int LIMIT_MAX = 50000;
+    private final static Logger log = LogManager.getLogger(MySQLRawDataDAO.class.getName());
 
     public MySQLRawDataDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
     
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters) throws SQLException {
-        log.traceEntry("{}, {}", query, rawDataFilters);
+            List<DAORawDataFilter> rawDataFilters, Integer limit, Integer offset)
+                    throws SQLException {
+        log.traceEntry("{}, {}, {}, {}", query, rawDataFilters, limit, offset);
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
         for(DAORawDataFilter rawDataFilter : rawDataFilters) {
             Set<Integer> geneIds = rawDataFilter.getGeneIds();
+            Integer speciesId = rawDataFilter.getSpeciesId();
             Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
             Set<String> expIds = rawDataFilter.getExperimentIds();
             Set<String> assayIds = rawDataFilter.getAssayIds();
-            boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
-            Set<String> expAssayMerged = isExpAssayUnion ? 
-                Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet()):
-                    new HashSet<>();
+            Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
             // parameterize expIds
-            if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
-                if(expAssayMerged.isEmpty()) {
-                    stmt.setStrings(paramIndex, expIds, true);
-                    paramIndex += expIds.size();
-                } else {
-                    stmt.setStrings(paramIndex, expAssayMerged, true);
-                    paramIndex += expAssayMerged.size();
-                }
+            if (!expIds.isEmpty()) {
+                stmt.setStrings(paramIndex, expIds, true);
+                paramIndex += expIds.size();
             }
             //parameterize assayIds
-            if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
-                if(expAssayMerged.isEmpty()) {
-                    stmt.setStrings(paramIndex, assayIds, true);
-                    paramIndex += assayIds.size();
-                } else {
-                    stmt.setStrings(paramIndex, expAssayMerged, true);
-                    paramIndex += expAssayMerged.size();
-                }
+            if (!assayIds.isEmpty()) {
+                stmt.setStrings(paramIndex, assayIds, true);
+                paramIndex += assayIds.size();
+            }
+            //parameterize assay or experiment IDs
+            if (!expOrAssayIds.isEmpty()) {
+                stmt.setStrings(paramIndex, expOrAssayIds, true);
+                paramIndex += expOrAssayIds.size();
+                stmt.setStrings(paramIndex, expOrAssayIds, true);
+                paramIndex += expOrAssayIds.size();
+            }
+            //parameterize speciesId
+            if (speciesId != null) {
+                stmt.setIntegers(paramIndex, Set.of(speciesId), false);
+                paramIndex++;
             }
             //parameterize rawDataCondIds
             if (!rawDataCondIds.isEmpty()) {
@@ -84,13 +82,23 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 paramIndex += geneIds.size();
             }
         }
+        //parameterize offset and limit
+        if (offset != null) {
+            stmt.setIntegers(paramIndex, Set.of(offset), false);
+            paramIndex++;
+        }
+        if (limit != null) {
+            stmt.setIntegers(paramIndex, Set.of(limit), false);
+            paramIndex++;
+        }
         return log.traceExit(stmt);
     }
 
     protected String generateFromClauseAffymetrix(String tableName, boolean needJoinExp,
             boolean needJoinChip, boolean needJoinProbeset, boolean needJoinCond,
             boolean needJoinGene) {
-        log.traceEntry("{}, {}, {}", needJoinChip, needJoinProbeset, needJoinCond);
+        log.traceEntry("{}, {}, {}, {}, {}, {}", tableName, needJoinExp, needJoinChip,
+                needJoinProbeset, needJoinCond, needJoinGene);
         StringBuilder sb = new StringBuilder();
         sb.append(" FROM " + tableName);
         // join affymetrixChip table
@@ -144,59 +152,73 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     protected String generateWhereClause(List<DAORawDataFilter> rawDataFilters,
-            String expIdTableName, String speciesIdTableName) {
-        log.traceEntry("{}, {}, {}", rawDataFilters, expIdTableName, speciesIdTableName);
+            String experimentIdTable, String speciesIdTableName) {
+        log.traceEntry("{}, {}", rawDataFilters, speciesIdTableName);
         String whereClause = rawDataFilters.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, expIdTableName, speciesIdTableName))
+                .map(e -> this.generateOneFilterWhereClause(e, experimentIdTable,
+                        speciesIdTableName))
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;
     }
 
     protected String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter, 
-            String expIdTableName, String speciesIdTableName) {
-        log.traceEntry("{}, {}, {}", rawDataFilter, expIdTableName, speciesIdTableName);
+            String experimentIdTable, String speciesIdTableName) {
+        log.traceEntry("{}, {}, {}", rawDataFilter, experimentIdTable,
+                speciesIdTableName);
 
         Integer speId = rawDataFilter.getSpeciesId();
         Set<Integer> geneIds = rawDataFilter.getGeneIds();
         Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
         Set<String> expIds = rawDataFilter.getExperimentIds();
         Set<String> assayIds = rawDataFilter.getAssayIds();
-        boolean isExpAssayUnion = rawDataFilter.isExprIdsAssayIdsUnion();
-        Set<String> expAssayMerged = isExpAssayUnion ? 
-                Stream.concat(expIds.stream(), assayIds.stream()).collect(Collectors.toSet()) :
-                    new HashSet<>();
+        Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
-        // FITLER ON EXPERIMENT IDS
-        if (!expAssayMerged.isEmpty()) {
+        // FILTER ON EXPERIMENT IDS
+        if (!expOrAssayIds.isEmpty()) {
             sb.append("(");
         }
-        if (!expIds.isEmpty() || !expAssayMerged.isEmpty()) {
-            sb.append(expIdTableName).append(".")
+        if (!expIds.isEmpty()) {
+            sb.append(experimentIdTable).append(".")
             .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(
-                    isExpAssayUnion ? expAssayMerged.size() : expIds.size()));
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
             sb.append(")");
             filterFound = true;
         }
         // FILTER ON Chip IDS
-        if (!assayIds.isEmpty() || !expAssayMerged.isEmpty()) {
+        if (!assayIds.isEmpty()) {
             if(filterFound) {
-                if(isExpAssayUnion) {
-                    sb.append(" OR ");
-                }else {
-                    sb.append(" AND ");
-                }
+                sb.append(" AND ");
             }
             sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
             .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
             .append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(
-                    isExpAssayUnion ? expAssayMerged.size() : assayIds.size()));
+            .append(BgeePreparedStatement.generateParameterizedQueryString(assayIds.size()));
             sb.append(")");
             filterFound = true;
         }
-        if (!expAssayMerged.isEmpty()) {
+        // Filter on experiment or assay 
+        if (!expOrAssayIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" OR (");
+            }
+            //try to find experimentIds
+            sb.append(experimentIdTable).append(".")
+            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
+            sb.append(") OR ");
+            // try to find assayIds
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
+            sb.append(")");
+            if(filterFound) {
+                sb.append(")");
+            }
+            filterFound = true;
+        }
+        if (!expOrAssayIds.isEmpty()) {
             sb.append(")");
         }
         // FILTER ON SPECIES ID
@@ -206,8 +228,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
             sb.append(speciesIdTableName).append(".")
               .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ")
-              .append(speId);
-            filterFound = true;
+              // only one species
+              .append(BgeePreparedStatement.generateParameterizedQueryString(1));
+              filterFound = true;
         }
         // FILTER ON RAW CONDITION IDS
         if (!rawDataCondIds.isEmpty()) {
@@ -344,15 +367,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a)));
     }
 
-    protected void checkLimitAndOffset(int offset, int limit) {
-        if (limit > LIMIT_MAX) {
-            throw log.throwing(new IllegalArgumentException("limit can not be greater than "
-                    + LIMIT_MAX));
+    protected void checkLimitAndOffset(Integer limit, Integer offset) {
+        log.traceEntry("{}, {}", limit, offset);
+        if (offset != null && limit == null) {
+            throw log.throwing(new IllegalArgumentException("limit can not be null when offset is"
+                    + " not null"));
         }
-        if(offset < 0 ) {
+        if(offset != null && offset < 0 ) {
             throw log.throwing(new IllegalArgumentException("offset has to be >= 0"));
         }
-        if (limit <= 0) {
+        if (limit != null && limit <= 0) {
             throw log.throwing(new IllegalArgumentException("limit has to be > 0"));
         }
     }

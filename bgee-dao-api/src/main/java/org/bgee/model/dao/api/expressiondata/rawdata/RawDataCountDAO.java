@@ -14,13 +14,13 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * <ul>
      * <li>{@code EXP_COUNT}: corresponds to {@link RawDataCountContainerTO#getExperimentCount()}.
      * <li>{@code ASSAY_COUNT}: corresponds to {@link RawDataCountContainerTO#getAssayCount()}.
-     * <li>{@code RESULT_COUNT}: corresponds to {@link RawDataCountContainerTO#getResultCount()}.
+     * <li>{@code CALLS_COUNT}: corresponds to {@link RawDataCountContainerTO#getResultCount()}.
      * <li>{@code RNA_SEQ_LIBRARY_COUNT}: corresponds to {@link RawDataCountContainerTO#getRnaSeqLibraryCount()}.
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
         EXP_COUNT("expCount"), ASSAY_COUNT("assayCount"),
-        RESULT_COUNT("resultCount"), RNA_SEQ_LIBRARY_COUNT("rnaSeqLibraryCount");
+        CALLS_COUNT("callsCount"), RNA_SEQ_LIBRARY_COUNT("rnaSeqLibraryCount");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTLibraryTO} class.
@@ -39,16 +39,16 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
     }
     
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean callsCount);
 
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean experimentCount, boolean assayCount, boolean resultCount);
 
     public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean assayCount, boolean resultCount);
+            boolean assayCount, boolean callsCount);
 
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean libraryCount, boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean libraryCount, boolean callsCount);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataCountContainerTO}s
@@ -74,19 +74,19 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         private final Integer experimentCount;
         //For RNA-Seq, corresponds to AnnotatedSample
         private final Integer assayCount;
-        private final Integer resultCount;
+        private final Integer callsCount;
         private final Integer rnaSeqLibraryCount;
         
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
-                Integer resultCount) {
-            this(experimentCount, assayCount, resultCount, null);
+                Integer callsCount) {
+            this(experimentCount, assayCount, callsCount, null);
         }
 
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
-                Integer resultCount, Integer rnaSeqLibraryCount) {
+                Integer callsCount, Integer rnaSeqLibraryCount) {
             this.experimentCount = experimentCount;
             this.assayCount = assayCount;
-            this.resultCount = resultCount;
+            this.callsCount = callsCount;
             this.rnaSeqLibraryCount = rnaSeqLibraryCount;
         }
 
@@ -96,8 +96,8 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         public Integer getAssayCount() {
             return assayCount;
         }
-        public Integer getResultCount() {
-            return resultCount;
+        public Integer getCallsCount() {
+            return callsCount;
         }
         /**
          * An {@code Integer} corresponding to RNA-Seq library count. Not null only for {link RawDataCountDAO#getRnaSeqCount}
@@ -111,7 +111,7 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         @Override
         public String toString() {
             return "RawDataCountContainerTO [experimentCount=" + experimentCount + ", assayCount=" + assayCount
-                    + ", resultCount=" + resultCount + ", rnaSeqLibraryCount=" + rnaSeqLibraryCount + "]";
+                    + ", callsCount=" + callsCount + ", rnaSeqLibraryCount=" + rnaSeqLibraryCount + "]";
         }
     }
 

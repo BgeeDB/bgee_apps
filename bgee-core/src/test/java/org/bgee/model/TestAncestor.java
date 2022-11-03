@@ -835,6 +835,12 @@ public abstract class TestAncestor {
         when(this.geneDAO.getGeneBioTypes()).thenReturn(rs);
         getLogger().traceExit();
     }
+    protected void whenSourceServiceGetSources() {
+        getLogger().traceEntry();
+        when(this.sourceService.loadAllSources(false)).thenReturn(List.copyOf(SOURCES.values()));
+        when(this.sourceService.loadSourcesByIds(null)).thenReturn(SOURCES);
+        getLogger().traceExit();
+    }
     @SuppressWarnings("unchecked")
     protected void whenGetAnatEntityOntology() {
         getLogger().traceEntry();

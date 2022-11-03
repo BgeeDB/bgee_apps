@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
 import org.bgee.model.expressiondata.ConditionTest;
@@ -46,6 +47,7 @@ public class RawDataServiceTest extends TestAncestor {
         this.whenGeneDAOGetGeneBioTypes();
         this.whenGetAnatEntityOntology();
         this.whenGetDevStageOntology();
+        this.whenSourceServiceGetSources();
 
         //Genes
         //The RawDataService will only retrieve genes that are specifically requested,
@@ -99,14 +101,20 @@ public class RawDataServiceTest extends TestAncestor {
 
         RawDataService service = new RawDataService(this.serviceFactory);
         RawDataLoader actualLoader = service.loadRawDataLoader(filter);
-        RawDataLoader expectedLoader = new RawDataLoader(this.serviceFactory, filter,
-                Set.of(3),
+
+        RawDataPreProcessedInformation expectedPrepProcessedInfo = new RawDataPreProcessedInformation(
+                filter,
+                Set.of(
+                        new DAORawDataFilter(Set.of(1, 2), null),
+                        new DAORawDataFilter(3, null, null, null),
+                        new DAORawDataFilter(null, Set.of(6))
+                        ),
                 GENES.entrySet().stream().filter(e -> Set.of("geneId1", "geneId2").contains(
                         e.getValue().getGeneId()) && e.getValue().getSpecies().getId().equals(1))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
                 RAW_DATA_CONDS.entrySet().stream().filter(e -> e.getKey().equals(6))
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
-                SPECIES, GENE_BIO_TYPES);
-        assertEquals(expectedLoader, actualLoader);
+                SPECIES, GENE_BIO_TYPES, SOURCES);
+        assertEquals(expectedPrepProcessedInfo, actualLoader.getRawDataPreProcessedInformation());
     }
 }

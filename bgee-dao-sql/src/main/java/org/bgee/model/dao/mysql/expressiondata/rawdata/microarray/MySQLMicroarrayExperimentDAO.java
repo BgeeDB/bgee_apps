@@ -34,10 +34,10 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
 
     @Override
     public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Integer limit, Integer offset, Collection<MicroarrayExperimentDAO.Attribute> attrs)
+            Integer offset, Integer limit, Collection<MicroarrayExperimentDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-        checkLimitAndOffset(limit, offset);
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -81,7 +81,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(),
-                    orderedRawDataFilter, limit, offset);
+                    orderedRawDataFilter, offset, limit);
             return log.traceExit(new MySQLMicroarrayExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

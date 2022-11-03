@@ -38,10 +38,10 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
 
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDataFilters,
-            Integer limit, Integer offset, Collection<AffymetrixChipDAO.Attribute> attrs)
+            Integer offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-        checkLimitAndOffset(limit, offset);
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -73,7 +73,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
-                    limit, offset);
+                    offset, limit);
             return log.traceExit(new MySQLAffymetrixChipTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

@@ -58,11 +58,11 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      *
      * @param filter            A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                          how to filter experiments to retrieve.
-     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
-     *                          result. If null, all results are returned.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row. If
      *                          not null, a limit should be also provided
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
      * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
@@ -70,7 +70,7 @@ public interface MicroarrayExperimentDAO extends DAO<MicroarrayExperimentDAO.Att
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Integer limit, Integer offset, Collection<Attribute> attributes) throws DAOException;
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
 	/**
      * {@code DAOResultSet} for {@code MicroarrayExperimentTO}s

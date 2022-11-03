@@ -47,10 +47,10 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
 
     @Override
     public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<DAORawDataFilter> rawDataFilters,
-            Integer limit, Integer offset, Collection<AffymetrixProbesetDAO.Attribute> attrs)
+            Integer offset, Integer limit, Collection<AffymetrixProbesetDAO.Attribute> attrs)
             throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, limit, offset, attrs);
-        checkLimitAndOffset(limit, offset);
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilter = 
@@ -87,7 +87,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
-                    limit, offset);
+                    offset, limit);
             return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

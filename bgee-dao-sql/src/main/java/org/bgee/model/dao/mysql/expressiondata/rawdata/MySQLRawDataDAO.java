@@ -34,9 +34,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
     
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters, Integer limit, Integer offset)
+            List<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}", query, rawDataFilters, limit, offset);
+        log.traceEntry("{}, {}, {}, {}", query, rawDataFilters, offset, limit);
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
@@ -269,8 +269,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a)));
     }
 
-    protected void checkLimitAndOffset(Integer limit, Integer offset) {
-        log.traceEntry("{}, {}", limit, offset);
+    protected void checkOffsetAndLimit(Integer offset, Integer limit) {
+        log.traceEntry("{}, {}", offset, limit);
         if (offset != null && limit == null) {
             throw log.throwing(new IllegalArgumentException("limit can not be null when offset is"
                     + " not null"));

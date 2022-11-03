@@ -217,8 +217,7 @@ public class RawDataLoader extends CommonService {
         //This will allow us to process some downstream information only once for all data types,
         //and not once for each data type.
         //*****************************************************************************************
-        final EnumSet<DataType> dataTypes = this.getRawDataPreProcessedInformation().getRawDataFilter()
-                .getDataTypes();
+        final Set<DataType> dataTypes = this.getRawDataPreProcessedInformation().getDataTypes();
         if (dataTypes.contains(DataType.AFFYMETRIX)) {
             affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
             allTempContainers.add(affyTempRawDataContainer);

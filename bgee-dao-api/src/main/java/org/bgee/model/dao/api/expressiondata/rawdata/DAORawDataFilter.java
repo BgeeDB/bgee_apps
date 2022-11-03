@@ -113,7 +113,7 @@ public class DAORawDataFilter {
             Collection<String> assayIds, Collection<String> exprOrAssayIds) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", speciesId, geneIds, rawDataCondIds,
                 experimentIds, assayIds, exprOrAssayIds);
-        if (speciesId <= 0) {
+        if (speciesId != null && speciesId <= 0) {
             throw log.throwing(new IllegalArgumentException("speciesId must be bigger than 0"));
         }
         this.speciesId = speciesId;

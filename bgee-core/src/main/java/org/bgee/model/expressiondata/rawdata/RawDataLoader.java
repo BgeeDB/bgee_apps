@@ -44,6 +44,8 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO.RawDataCountContainerTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTOResultSet;
@@ -217,6 +219,7 @@ public class RawDataLoader extends CommonService {
     private final AffymetrixChipDAO affymetrixChipDAO;
     private final AffymetrixProbesetDAO affymetrixProbesetDAO;
     private final RawDataConditionDAO rawDataConditionDAO;
+    private final RawDataCountDAO rawDataCountDAO;
     private final GeneDAO geneDAO;
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
@@ -239,6 +242,7 @@ public class RawDataLoader extends CommonService {
         this.geneDAO                 = this.getDaoManager().getGeneDAO();
         this.anatEntityService       = this.getServiceFactory().getAnatEntityService();
         this.devStageService         = this.getServiceFactory().getDevStageService();
+        this.rawDataCountDAO         = this.getDaoManager().getRawDataCountDAO();
     }
 
     /**
@@ -311,6 +315,41 @@ public class RawDataLoader extends CommonService {
                 null, null, null,
                 //EST
                 null, null));
+    }
+
+    public RawDataCountContainer loadDataCount(EnumSet<InformationType> infoTypes) {
+        log.traceEntry("{}", infoTypes);
+
+        // create booleans used to query the DAO
+        boolean withCalls = infoTypes.contains(InformationType.CALL) ? true: false;
+        boolean withAssay = infoTypes.contains(InformationType.ASSAY) ? true: false;
+        boolean withExperiment = infoTypes.contains(InformationType.EXPERIMENT) ? true: false;
+
+        RawDataCountContainerTO affyCountTO = this.rawDataProcessedFilter.getDataTypes()
+                .contains(DataType.AFFYMETRIX) ? rawDataCountDAO.getAffymetrixCount(
+                        this.getRawDataProcessedFilter().getDaoRawDataFilters(), withExperiment,
+                        withAssay, withCalls): new RawDataCountContainerTO(null, null, null);
+
+        //TODO: count for est, insitu, bulk rnaseq and single cell rnaseq are not yet implemented
+        // in the DAO
+        RawDataCountContainerTO estCountTO = this.rawDataProcessedFilter.getDataTypes()
+                .contains(DataType.EST) ? null: new RawDataCountContainerTO(null, null, null);
+        RawDataCountContainerTO inSituCountTO = this.rawDataProcessedFilter.getDataTypes()
+                .contains(DataType.IN_SITU) ? null: new RawDataCountContainerTO(null, null, null);
+        RawDataCountContainerTO bulkRnaSeqCountTO = this.rawDataProcessedFilter.getDataTypes()
+                .contains(DataType.RNA_SEQ) ? null: new RawDataCountContainerTO(null, null, null);
+        RawDataCountContainerTO singleCellRnaSeqCountTO = this.rawDataProcessedFilter.getDataTypes()
+                .contains(DataType.RNA_SEQ) ? null: new RawDataCountContainerTO(null, null, null);
+
+        return log.traceExit(new RawDataCountContainer(
+                affyCountTO.getExperimentCount(), affyCountTO.getAssayCount(),
+                affyCountTO.getCallsCount(), inSituCountTO.getExperimentCount(),
+                inSituCountTO.getAssayCount(), inSituCountTO.getCallsCount(),
+                estCountTO.getAssayCount(), estCountTO.getCallsCount(),
+                bulkRnaSeqCountTO.getExperimentCount(), bulkRnaSeqCountTO.getAssayCount(),
+                bulkRnaSeqCountTO.getCallsCount(), singleCellRnaSeqCountTO.getExperimentCount(),
+                singleCellRnaSeqCountTO.getAssayCount(), singleCellRnaSeqCountTO.getRnaSeqLibraryCount(),
+                singleCellRnaSeqCountTO.getCallsCount()));
     }
 
 //*****************************************************************************************

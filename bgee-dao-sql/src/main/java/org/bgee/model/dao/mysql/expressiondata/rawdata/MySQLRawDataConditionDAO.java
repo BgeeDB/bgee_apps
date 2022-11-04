@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,30 +30,13 @@ implements RawDataConditionDAO {
     }
 
     @Override
-    public RawDataConditionTOResultSet getRawDataConditionsFromSpeciesIds(Collection<Integer> speciesIds,
-            Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}", speciesIds, attributes);
-        return log.traceExit(getRawDataConditions(speciesIds, null, attributes));
-    }
-
-    @Override
     public RawDataConditionTOResultSet getRawDataConditionsFromRawConditionFilters(
             Collection<DAORawDataConditionFilter> rawCondFilters,
             Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}", rawCondFilters, attributes);
-        return log.traceExit(getRawDataConditions(null, rawCondFilters, attributes));
-    }
-
-    @Override
-    public RawDataConditionTOResultSet getRawDataConditions(Collection<Integer> speciesIds,
-            Collection<DAORawDataConditionFilter> conditionFilters,
-            Collection<RawDataConditionDAO.Attribute> attributes)
-            throws DAOException {
-        final Set<Integer> speIds = Collections.unmodifiableSet(speciesIds == null? new HashSet<>():
-            new HashSet<>(speciesIds));
         final Set<DAORawDataConditionFilter> condFilters = Collections.unmodifiableSet(
-                conditionFilters == null?
-                new HashSet<>(): new HashSet<>(conditionFilters));
+                rawCondFilters == null?
+                new HashSet<>(): new HashSet<>(rawCondFilters));
         final Set<RawDataConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
 
@@ -63,33 +47,19 @@ implements RawDataConditionDAO {
         .append(" FROM ").append(TABLE_NAME);
 
         // generate WHERE CLAUSE
-        if (!speIds.isEmpty() || !condFilters.isEmpty()) {
-          sb.append(" WHERE ");
-        }
-        // FITER ON SPECIES IDS
-        if (!speIds.isEmpty()) {
-            sb.append(TABLE_NAME).append(".")
-            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(speIds.size()))
-            .append(")");
-            if (!condFilters.isEmpty()) {
-                sb.append(" AND ");
-            }
-        }
+        //XXX should we forbid to retrieve all conditions ?
         // FILTER ON CONDITION PARAMETERS
-        if (!condFilters.isEmpty()) {
-            sb.append(condFilters.stream().map(cf -> {
+        if (condFilters != null && !condFilters.isEmpty()) {
+            sb.append(" WHERE ")
+            .append(condFilters.stream().map(cf -> {
                 return generateOneConditionFilter(cf);
             }).collect(Collectors.joining(" OR ", "(", ")")));
         }
+        //parameterize query
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
             int paramIndex = 1;
-            if (!speIds.isEmpty()) {
-                stmt.setIntegers(paramIndex, speIds, true);
-                paramIndex += speIds.size();
-            }
             configureRawDataConditionFiltersStmt(stmt, condFilters, paramIndex);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
@@ -216,18 +186,35 @@ implements RawDataConditionDAO {
         }
         int offsetParamIndex = paramIndex;
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
-
-            if (!condFilter.getAnatEntityIds().isEmpty()) {
+            Set<String> mergedAnatAndCell = !condFilter.getAnatEntityIds().isEmpty()
+                    && !condFilter.getCellTypeIds().isEmpty() ?
+                    Stream.of(condFilter.getAnatEntityIds(),condFilter.getCellTypeIds())
+                    .flatMap(x -> x.stream())
+                    .collect(Collectors.toSet()): new HashSet<>();
+            
+            if (!mergedAnatAndCell.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, mergedAnatAndCell, true);
+                offsetParamIndex += mergedAnatAndCell.size();
+                stmt.setStrings(offsetParamIndex, mergedAnatAndCell, true);
+                offsetParamIndex += mergedAnatAndCell.size();
+            } else if (!condFilter.getAnatEntityIds().isEmpty()) {
                 stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
                 offsetParamIndex += condFilter.getAnatEntityIds().size();
+                stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
+                offsetParamIndex += condFilter.getAnatEntityIds().size();
+            } else if (!condFilter.getCellTypeIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
+                offsetParamIndex += condFilter.getCellTypeIds().size();
+                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
+                offsetParamIndex += condFilter.getCellTypeIds().size();
+            }
+            if (!condFilter.getSpeciesIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
+                offsetParamIndex += condFilter.getSpeciesIds().size();
             }
             if (!condFilter.getDevStageIds().isEmpty()) {
                 stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
                 offsetParamIndex += condFilter.getDevStageIds().size();
-            }
-            if (!condFilter.getCellTypeIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
-                offsetParamIndex += condFilter.getCellTypeIds().size();
             }
             if (!condFilter.getSexIds().isEmpty()) {
                 stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
@@ -240,35 +227,79 @@ implements RawDataConditionDAO {
         }
         return log.traceExit(offsetParamIndex);
     }
-    
+
     private String generateOneConditionFilter(DAORawDataConditionFilter condFilter) {
         log.traceEntry("{}", condFilter);
         StringBuilder sb = new StringBuilder();
         if(condFilter == null) {
             throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
         }
-        if(!condFilter.getAnatEntityIds().isEmpty() || !condFilter.getDevStageIds().isEmpty()
-                || !condFilter.getCellTypeIds().isEmpty() || !condFilter.getSexIds().isEmpty()
-                || !condFilter.getStrainIds().isEmpty()) {
-            sb.append("(");
-        }
+
+        Set<String> anatEntityIds = condFilter.getAnatEntityIds();
+        Set<String> cellIds = condFilter.getCellTypeIds();
+
+        // It is possible that cell type terms are used to annotate the anat. entities.
+        // In order to solve this potential issue :
+        // 1. if only anat. entities are provided then check for these annotation in both
+        //    anat. entities and cell type columns
+        // 2. if only cell types provided then check for these annotation in both anat.
+        //    entities and cell type columns
+        // 3. if both cell type and anat. entities are provided then check for the jonction
+        //    of these values in both anat. entities and cell type columns
+        // merge anatEntities and cell types together
+        Set<String> mergedAnatAndCell = !anatEntityIds.isEmpty()&& !cellIds.isEmpty() ?
+                Stream.of(anatEntityIds,cellIds).flatMap(x -> x.stream())
+                .collect(Collectors.toSet()): new HashSet<>();
+//        if(!anatEntityIds.isEmpty() || !condFilter.getDevStageIds().isEmpty()
+//                || !condFilter.getCellTypeIds().isEmpty() || !condFilter.getSexIds().isEmpty()
+//                || !condFilter.getStrainIds().isEmpty() || !condFilter.getSpeciesIds().isEmpty()) {
+//            sb.append("(");
+//        }
         boolean previousCond = false;
-        if (!condFilter.getAnatEntityIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
+        if (!mergedAnatAndCell.isEmpty()) {
+            sb.append("(")
+            .append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    condFilter.getAnatEntityIds(), previousCond));
+                    mergedAnatAndCell, previousCond))
+            .append(" OR ")
+            .append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
+                    mergedAnatAndCell, previousCond))
+            .append(")");
+            previousCond = true;
+        } else if (!anatEntityIds.isEmpty()) {
+            sb.append("(")
+            .append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
+                    anatEntityIds, previousCond))
+            .append(" OR ")
+            .append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
+                    anatEntityIds, previousCond))
+            .append(")");
+            previousCond = true;
+        } else if (!cellIds.isEmpty()) {
+            sb.append("(")
+            .append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
+                    cellIds, previousCond))
+            .append(" OR ")
+            .append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
+                    cellIds, previousCond))
+            .append(")");
+            previousCond = true;
+        }
+        if (!condFilter.getSpeciesIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    RawDataConditionDAO.Attribute.SPECIES_ID,
+                    condFilter.getSpeciesIds(), previousCond));
             previousCond = true;
         }
         if (!condFilter.getDevStageIds().isEmpty()) {
             sb.append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.STAGE_ID,
                     condFilter.getDevStageIds(), previousCond));
-            previousCond = true;
-        }
-        if (!condFilter.getCellTypeIds().isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    condFilter.getCellTypeIds(), previousCond));
             previousCond = true;
         }
         if (!condFilter.getSexIds().isEmpty()) {
@@ -288,9 +319,9 @@ implements RawDataConditionDAO {
         }
         return log.traceExit(sb.toString());
     }
-    
+   
     private String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
-            Set<String> condValues, boolean previousFilter) {
+            Set<?> condValues, boolean previousFilter) {
         log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
         StringBuffer sb = new StringBuffer();
         if(previousFilter) {

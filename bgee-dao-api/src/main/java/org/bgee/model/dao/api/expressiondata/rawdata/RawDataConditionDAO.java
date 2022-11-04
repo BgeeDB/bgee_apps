@@ -79,25 +79,6 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieves raw conditions used in data annotations for requested species.
-     * <p>
-     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
-     *
-     * @param speciesIds            A {@code Collection} of {@code Integer}s that are the IDs of species
-     *                              allowing to filter the conditions to retrieve. If {@code null}
-     *                              or empty, condition for all species are retrieved.
-     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s defining
-     *                              the attributes to populate in the returned {@code RawDataConditionTO}s.
-     *                              If {@code null} or empty, all attributes are populated.
-     * @return                      A {@code RawDataConditionTOResultSet} containing the requested
-     *                              raw data conditions retrieved from the data source.
-     * @throws DAOException         If an error occurred while accessing the data source.
-     */
-    public RawDataConditionTOResultSet getRawDataConditionsFromSpeciesIds(Collection<Integer> speciesIds,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
      * Retrieves raw conditions used in data annotations for requested species and condition filters.
      * The condition filters allow to target <strong>raw</strong> conditions used in the
      * <strong>raw</strong> expression table, to return their associated source raw conditions.
@@ -119,33 +100,6 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      */
     public RawDataConditionTOResultSet getRawDataConditionsFromRawConditionFilters(
             Collection<DAORawDataConditionFilter> condFilters,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Retrieves raw conditions used in data annotations for requested species and condition filters.
-     * The condition filters allow to target <strong>global</strong> conditions used in the
-     * <strong>global</strong> expression table, to return their associated source raw conditions.
-     * <p>
-     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
-     *
-     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
-     *                          allowing to filter the conditions to retrieve. If {@code null}
-     *                          or empty, condition for all species are retrieved.
-     * @param condFilters       A {@code Collection} of {@code DAORawDataConditionFilter}s
-     *                          allowing to specify the <strong>global</strong> conditions
-     *                          that should be considered to retrieve the associated <strong>raw</strong>
-     *                          conditions.
-     * @param attributes        A {@code Collection} of {@code RawDataConditionDAO.Attribute}s defining
-     *                          the attributes to populate in the returned {@code RawDataConditionTO}s.
-     *                          If {@code null} or empty, all attributes are populated.
-     * @return                  A {@code RawDataConditionTOResultSet} containing the requested
-     *                          raw data conditions retrieved from the data source.
-     * @throws DAOException     If an error occurred while accessing the data source.
-     */
-    //XXX FB: probably to delete now that speciesIds are integrated in the DAORawDataConditionFilters?
-    public RawDataConditionTOResultSet getRawDataConditions(
-            Collection<Integer> speciesIds, Collection<DAORawDataConditionFilter> condFilters,
             Collection<Attribute> attributes) throws DAOException;
 
     /**

@@ -449,7 +449,7 @@ public class RawDataService extends CommonService {
         //when calling the raw data DAOs
         Set<DAORawDataFilter> daoFilters = speciesIds.stream().map(speciesId -> {
             Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
-                    .filter(e -> speciesId == e.getValue().getSpecies().getId())
+                    .filter(e -> speciesId.equals(e.getValue().getSpecies().getId()))
                     .map(e -> e.getKey())
                     .collect(Collectors.toSet());
             Set<Integer> rawCondIds = requestedRawDataCondMap.entrySet().stream()

@@ -369,19 +369,26 @@ public class RawDataService extends CommonService {
      * the default method to obtain a {@code RawDataLoader} is
      * {@link #loadRawDataLoader(RawDataFilter)}.
      * <p>
-     * After obtaining a {@code RawDataLoader} by calling {@link #loadRawDataLoader(RawDataFilter)},
-     * it will be faster, to obtain other {@code RawDataLoader}s for the same parameters,
-     * to call this method instead. The {@code RawDataProcessedFilter} to use is obtained
-     * by calling {@link RawDataLoader#getRawDataProcessedFilter()}.
+     * When a {@code RawDataProcessedFilter} has been computed, it is faster to obtain
+     * a new {@code RawDataLoader} by calling this method than by calling
+     * {@code loadRawDataLoader(RawDataFilter)}. A {@code RawDataProcessedFilter}
+     * can be obtained either:
+     * <ul>
+     * <li>by calling {@link RawDataLoader#getRawDataProcessedFilter()},
+     * the {@code RawDataProcessedFilter} would have been already computed
+     * to create the {@code RawDataLoader}
+     * <li>or by calling {@link #processRawDataFilter(RawDataFilter)}, which will trigger
+     * the computation of a new {@code RawDataProcessedFilter}.
+     * </ul>
      * <p>
      * Some computations will thus not be unnecessarily performed again.
      * The {@code RawDataProcessedFilter} could typically be stored in a {@code Map},
-     * where the key is the {@code RawDataFilter} used to obtain a {@code RawDataLoader},
-     * and the value the associated {@code RawDataProcessedFilter} obtained by calling
-     * {@link RawDataLoader#getRawDataProcessedFilter()}. When a new {@code RawDataFilter}
-     * is configured by a client, before calling {@code loadRawDataLoader(RawDataFilter)},
-     * an attempt to retrieve from the {@code Map} a {@code RawDataProcessedFilter}
-     * associated with an equal {@code RawDataFilter} should be made, to use this method instead.
+     * where the key is the source {@code RawDataFilter}, and the value the associated
+     * {@code RawDataProcessedFilter}. When a new {@code RawDataFilter}
+     * is configured by a client, before calling {@code loadRawDataLoader(RawDataFilter)}
+     * or {@code processRawDataFilter(RawDataFilter)}, an attempt to retrieve from the {@code Map}
+     * a {@code RawDataProcessedFilter} associated with an equal {@code RawDataFilter}
+     * should be made, to use this method instead.
      * <p>
      * It is useful to store the pre-processed information outside of a {@code RawDataLoader},
      * in order to avoid risking to keep connections to data sources open
@@ -392,6 +399,7 @@ public class RawDataService extends CommonService {
      * @return                  A {@code RawDataLoader} equivalent to the one that provided
      *                          {@code preProcessedInfo}.
      * @see #loadRawDataLoader(RawDataFilter)
+     * @see #processRawDataFilter(RawDataFilter)
      * @see RawDataLoader#getRawDataProcessedFilter()
      */
     public RawDataLoader getRawDataLoader(RawDataProcessedFilter preProcessedInfo) {
@@ -399,7 +407,7 @@ public class RawDataService extends CommonService {
         return log.traceExit(new RawDataLoader(this.getServiceFactory(), preProcessedInfo));
     }
 
-    private RawDataProcessedFilter processRawDataFilter(RawDataFilter filter) {
+    public RawDataProcessedFilter processRawDataFilter(RawDataFilter filter) {
         log.traceEntry("{}", filter);
 
         //We load the GeneBioTypes to be used in this method and in RawDataLoader

@@ -179,9 +179,10 @@ public class RawDataLoader extends CommonService {
 
     /**
      * An {@code int} that is the maximum allowed number of results
-     * to retrieve in one call. Value: 50,000.
+     * to retrieve in one method call, for each requested data type independently.
+     * Value: 10,000.
      */
-    public static int LIMIT_MAX = 50000;
+    public static int LIMIT_MAX = 10000;
     /**
      * Check the validity of the {@code offset} and {@code limit} arguments.
      *
@@ -246,13 +247,18 @@ public class RawDataLoader extends CommonService {
     }
 
     /**
-     * Load raw data of the specified {@code InformationType}.
+     * Load raw data of the specified {@code InformationType}. The {@code offset} and {@code limit}
+     * parameters apply independently to each {@code DataType} requested. For instance,
+     * if {@code limit} was set to 1000, the returned {@code RawDataContainer} could contain
+     * 1000 Affymetrix probesets and 1000 bulk RNA-Seq calls.
      *
      * @param infoType  The {@code InformationType} to load.
      * @param offset    An {@code int} specifying at which index to start getting results
-     *                  of the type {@code infoType}. First index is {@code 0}.
+     *                  of the type {@code infoType} for each requested data type independently.
+     *                  First index is {@code 0}.
      * @param limit     An {@code int} specifying the number of results of type {@code infoType}
-     *                  to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
+     *                  to retrieve for each requested data type independently. Cannot be greater
+     *                  than {@link #LIMIT_MAX}.
      * @return          A {@code RawDataContainer} containing the requested results.
      * @throws IllegalArgumentException If {@code infoType} is null,
      *                                  or {@code offset} is less than 0,

@@ -41,6 +41,6 @@ public class RawDataAnnotationTypeAdapter extends TypeAdapter<RawDataAnnotation>
 
     @Override
     public RawDataAnnotation read(JsonReader in) throws IOException {
-        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for AffymetrixChip."));
+        throw log.throwing(new UnsupportedOperationException("No custom JSON reader for RawDataAnnotation."));
     }
 }

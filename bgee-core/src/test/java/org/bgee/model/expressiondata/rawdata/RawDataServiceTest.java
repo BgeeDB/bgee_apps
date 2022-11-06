@@ -95,8 +95,7 @@ public class RawDataServiceTest extends TestAncestor {
                 Set.of(new RawDataConditionFilter(2, Set.of("anatId2", "anatId3"),
                         Set.of("stageId3"), Set.of("cellTypeId2", "cellTypeId3"),
                         Set.of(ConditionDAO.SEX_ROOT_ID), Set.of(ConditionDAO.STRAIN_ROOT_ID),
-                        true, true, true, true, false)),
-                null
+                        true, true, true, true, false))
                 );
 
         RawDataService service = new RawDataService(this.serviceFactory);

@@ -192,6 +192,8 @@ public class CommandData extends CommandParent {
                 RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             log.debug("Action identified: {}", this.requestParameters.getAction());
 
+            EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+
             //Queries that required a RawDataLoader
             if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
                     this.requestParameters.isGetFilters()) {
@@ -206,7 +208,7 @@ public class CommandData extends CommandParent {
 
                     //Raw data results
                     if (this.requestParameters.isGetResults()) {
-                        rawDataContainer = this.loadRawDataResults(rawDataLoader);
+                        rawDataContainer = this.loadRawDataResults(rawDataLoader, dataTypes);
                     }
 
                     job.completeWithSuccess();
@@ -327,7 +329,7 @@ public class CommandData extends CommandParent {
         return log.traceExit(genes);
     }
 
-    private RawDataLoader loadRawDataLoader() throws InvalidRequestException {
+    private RawDataLoader loadRawDataLoader() {
         log.traceEntry();
 
         RawDataFilter filter = this.loadRawDataFilter();
@@ -346,13 +348,12 @@ public class CommandData extends CommandParent {
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
 
-    private RawDataFilter loadRawDataFilter() throws InvalidRequestException {
+    private RawDataFilter loadRawDataFilter() {
         log.traceEntry();
 
         GeneFilter geneFilter = null;
         RawDataConditionFilter condFilter = null;
         Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
-        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
 
         if (this.requestParameters.getSpeciesId() != null) {
             int speciesId = this.requestParameters.getSpeciesId();
@@ -385,13 +386,12 @@ public class CommandData extends CommandParent {
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
                 condFilter != null? Collections.singleton(condFilter): null,
-                dataTypes,
                 null, null, expOrAssayIds));
     }
 
-    private RawDataContainer loadRawDataResults(RawDataLoader rawDataLoader)
+    private RawDataContainer loadRawDataResults(RawDataLoader rawDataLoader, EnumSet<DataType> dataTypes)
             throws InvalidRequestException {
-        log.traceEntry("{}", rawDataLoader);
+        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
         Integer limit = this.requestParameters.getLimit();
         if (limit == null) {
@@ -424,6 +424,6 @@ public class CommandData extends CommandParent {
                     + this.requestParameters.getAction()));
         }
 
-        return log.traceExit(rawDataLoader.loadData(infoType, offset, limit));
+        return log.traceExit(rawDataLoader.loadData(infoType, dataTypes, offset, limit));
     }
 }

@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
-import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -51,10 +49,6 @@ public class RawDataProcessedFilter {
     private final Set<DAORawDataFilter> daoRawDataFilters;
 
     /**
-     * @see #getDataTypes()
-     */
-    private final Set<DataType> dataTypes;
-    /**
      * @see #getRequestedGenesMap()
      */
     private final Map<Integer, Gene> requestedGeneMap;
@@ -89,9 +83,6 @@ public class RawDataProcessedFilter {
 
         this.daoRawDataFilters = Collections.unmodifiableSet(daoFilters == null? new HashSet<>():
             new HashSet<>(daoFilters));
-
-        this.dataTypes = Collections.unmodifiableSet(rawDataFilter == null? EnumSet.allOf(DataType.class):
-            EnumSet.copyOf(rawDataFilter.getDataTypes()));
 
         this.requestedGeneMap = Collections.unmodifiableMap(requestedGeneMap == null?
                 new HashMap<>(): new HashMap<>(requestedGeneMap));
@@ -154,14 +145,6 @@ public class RawDataProcessedFilter {
         return daoRawDataFilters;
     }
     /**
-     * @return  A {@code Set} of {@code DataType}s specifying the data types that were requested.
-     *          The underlying instance is an {@code EnumSet}, but returned as a {@code Set}
-     *          to be unmodifiable.
-     */
-    public Set<DataType> getDataTypes() {
-        return dataTypes;
-    }
-    /**
      * @return  A {@code Map} where keys are {@code Integer}s corresponding to
      *          Bgee internal gene IDs, the associated value being the corresponding
      *          {@code Gene}, that were requested to retrieve raw data. Only genes
@@ -213,7 +196,7 @@ public class RawDataProcessedFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(daoRawDataFilters, dataTypes, geneBioTypeMap, rawDataFilter, requestedGeneMap,
+        return Objects.hash(daoRawDataFilters, geneBioTypeMap, rawDataFilter, requestedGeneMap,
                 requestedRawDataConditionMap, sourceMap, speciesMap);
     }
     @Override
@@ -225,7 +208,7 @@ public class RawDataProcessedFilter {
         if (getClass() != obj.getClass())
             return false;
         RawDataProcessedFilter other = (RawDataProcessedFilter) obj;
-        return Objects.equals(daoRawDataFilters, other.daoRawDataFilters) && Objects.equals(dataTypes, other.dataTypes)
+        return Objects.equals(daoRawDataFilters, other.daoRawDataFilters)
                 && Objects.equals(geneBioTypeMap, other.geneBioTypeMap)
                 && Objects.equals(rawDataFilter, other.rawDataFilter)
                 && Objects.equals(requestedGeneMap, other.requestedGeneMap)
@@ -239,7 +222,6 @@ public class RawDataProcessedFilter {
         builder.append("RawDataProcessedFilter [")
                .append("rawDataFilter=").append(rawDataFilter)
                .append(", daoRawDataFilters=").append(daoRawDataFilters)
-               .append(", dataTypes=").append(dataTypes)
                .append(", requestedGenesMap=").append(requestedGeneMap)
                .append(", requestedRawDataConditionsMap=").append(requestedRawDataConditionMap)
                .append(", speciesMap=").append(speciesMap)

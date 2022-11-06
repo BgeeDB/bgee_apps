@@ -253,6 +253,8 @@ public class RawDataLoader extends CommonService {
      * 1000 Affymetrix probesets and 1000 bulk RNA-Seq calls.
      *
      * @param infoType  The {@code InformationType} to load.
+     * @param dataTypes A {@code Collection} of the {@code DataType}s for which to retrieve
+     *                  {@code InformationType}.
      * @param offset    An {@code int} specifying at which index to start getting results
      *                  of the type {@code infoType} for each requested data type independently.
      *                  First index is {@code 0}.
@@ -265,9 +267,9 @@ public class RawDataLoader extends CommonService {
      *                                  or {@code limit} is less than or equal to 0,
      *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
      */
-    public RawDataContainer loadData(InformationType infoType, int offset, int limit)
-            throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+    public RawDataContainer loadData(InformationType infoType, Collection<DataType> dataTypes,
+            int offset, int limit) throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}", infoType, dataTypes, offset, limit);
         if (infoType == null) {
             throw log.throwing(new IllegalArgumentException("An InformationType must be provided"));
         }
@@ -282,8 +284,9 @@ public class RawDataLoader extends CommonService {
         //This will allow us to process some downstream information only once for all data types,
         //and not once for each data type.
         //*****************************************************************************************
-        final Set<DataType> dataTypes = this.getRawDataProcessedFilter().getDataTypes();
-        if (dataTypes.contains(DataType.AFFYMETRIX)) {
+        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
+
+        if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
             affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
             allTempContainers.add(affyTempRawDataContainer);
         }
@@ -310,7 +313,7 @@ public class RawDataLoader extends CommonService {
         //*****************************************************************************************
         //And finally we merge all results in one single container
         //*****************************************************************************************
-        return log.traceExit(new RawDataContainer(dataTypes,
+        return log.traceExit(new RawDataContainer(requestedDataTypes,
                 //Affymetrix
                 partialAffyContainer.getAffymetrixExperiments(),
                 partialAffyContainer.getAffymetrixAssays(),
@@ -323,29 +326,34 @@ public class RawDataLoader extends CommonService {
                 null, null));
     }
 
-    public RawDataCountContainer loadDataCount(EnumSet<InformationType> infoTypes) {
-        log.traceEntry("{}", infoTypes);
+    public RawDataCountContainer loadDataCount(EnumSet<InformationType> infoTypes,
+            Collection<DataType> dataTypes) {
+        log.traceEntry("{}, {}", infoTypes, dataTypes);
 
         // create booleans used to query the DAO
         boolean withCalls = infoTypes.contains(InformationType.CALL) ? true: false;
         boolean withAssay = infoTypes.contains(InformationType.ASSAY) ? true: false;
         boolean withExperiment = infoTypes.contains(InformationType.EXPERIMENT) ? true: false;
+        RawDataCountContainerTO countContainerTOWithNulls =
+                new RawDataCountContainerTO(null, null, null);
+        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
 
-        RawDataCountContainerTO affyCountTO = this.rawDataProcessedFilter.getDataTypes()
-                .contains(DataType.AFFYMETRIX) ? rawDataCountDAO.getAffymetrixCount(
-                        this.getRawDataProcessedFilter().getDaoRawDataFilters(), withExperiment,
-                        withAssay, withCalls): new RawDataCountContainerTO(null, null, null);
+        RawDataCountContainerTO affyCountTO = requestedDataTypes.contains(DataType.AFFYMETRIX)?
+                rawDataCountDAO.getAffymetrixCount(
+                        this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                        withExperiment, withAssay, withCalls):
+                countContainerTOWithNulls;
 
         //TODO: count for est, insitu, bulk rnaseq and single cell rnaseq are not yet implemented
         // in the DAO
-        RawDataCountContainerTO estCountTO = this.rawDataProcessedFilter.getDataTypes()
-                .contains(DataType.EST) ? null: new RawDataCountContainerTO(null, null, null);
-        RawDataCountContainerTO inSituCountTO = this.rawDataProcessedFilter.getDataTypes()
-                .contains(DataType.IN_SITU) ? null: new RawDataCountContainerTO(null, null, null);
-        RawDataCountContainerTO bulkRnaSeqCountTO = this.rawDataProcessedFilter.getDataTypes()
-                .contains(DataType.RNA_SEQ) ? null: new RawDataCountContainerTO(null, null, null);
-        RawDataCountContainerTO singleCellRnaSeqCountTO = this.rawDataProcessedFilter.getDataTypes()
-                .contains(DataType.RNA_SEQ) ? null: new RawDataCountContainerTO(null, null, null);
+        RawDataCountContainerTO estCountTO = requestedDataTypes
+                .contains(DataType.EST)? null: countContainerTOWithNulls;
+        RawDataCountContainerTO inSituCountTO = requestedDataTypes
+                .contains(DataType.IN_SITU)? null: countContainerTOWithNulls;
+        RawDataCountContainerTO bulkRnaSeqCountTO = requestedDataTypes
+                .contains(DataType.RNA_SEQ)? null: countContainerTOWithNulls;
+        RawDataCountContainerTO singleCellRnaSeqCountTO = requestedDataTypes
+                .contains(DataType.FULL_LENGTH)? null: countContainerTOWithNulls;
 
         return log.traceExit(new RawDataCountContainer(
                 affyCountTO.getExperimentCount(), affyCountTO.getAssayCount(),
@@ -571,6 +579,12 @@ public class RawDataLoader extends CommonService {
                     + " - original sourceMap: " + this.getRawDataProcessedFilter().getSourceMap()));
         }
         return log.traceExit(source);
+    }
+
+    private static EnumSet<DataType> getDataTypes(Collection<DataType> dataTypes) {
+        log.traceEntry("{}", dataTypes);
+        return log.traceExit(dataTypes == null || dataTypes.isEmpty()?
+                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypes));
     }
 //
 //    /**

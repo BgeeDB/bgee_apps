@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataFilter;
-import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.gene.GeneFilter;
 
 /**
@@ -27,24 +25,18 @@ import org.bgee.model.gene.GeneFilter;
 public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     private final static Logger log = LogManager.getLogger(RawDataFilter.class.getName());
 
-    private final EnumSet<DataType> dataTypes;
-
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
     private final Set<String> experimentOrAssayIds;
 
-    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
-            Collection<DataType> dataTypes) {
-        this(geneFilters, conditionFilters, dataTypes, null, null, null);
+    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
+        this(geneFilters, conditionFilters, null, null, null);
     }
     /**
      * @param geneFilters           A {@code Collection} of {@code GeneFilter}s specifying
      *                              the species to target, or some specific genes to target.
      * @param conditionFilters      A {@code Collection} of {@code RawDataConditionFilter}s specifying
      *                              the species to target, or some specific conditions to target.
-     * @param dataTypes             A {@code Collection} of {@code DataType}s specifying
-     *                              the data types to target. If {@code null} or empty, all data types
-     *                              are considered.
      * @param experimentIds         A {@code Collection} of {@code String}s that are IDs of experiments
      *                              to consider. Only results part of these experiments will be returned.
      * @param assayIds              A {@code Collection} of {@code String}s that are IDs of assays
@@ -56,13 +48,10 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
      * @throws IllegalArgumentException
      */
     public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
-            Collection<DataType> dataTypes, Collection<String> experimentIds,
-            Collection<String> assayIds, Collection<String> experimentOrAssayIds)
+            Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
                     throws IllegalArgumentException {
         super(geneFilters, conditionFilters);
 
-        this.dataTypes = dataTypes == null || dataTypes.isEmpty()? EnumSet.allOf(DataType.class):
-            EnumSet.copyOf(dataTypes);
         this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>():
             new HashSet<>(experimentIds));
         this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>():
@@ -92,15 +81,6 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     }
 
     /**
-     * @return  An {@code EnumSet} of {@code DataType}s specifying the data types to target.
-     *          The returned {@code EnumSet} can be safely modified (defensive copying).
-     */
-    public EnumSet<DataType> getDataTypes() {
-        //defensive copying, there is no unmodifiableEnumSet
-        return EnumSet.copyOf(dataTypes);
-    }
-
-    /**
      * @return  A {@code Set} of {@code String}s that are IDs of experiments
      *          to consider. Only results part of these experiments will be returned.
      */
@@ -127,7 +107,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(assayIds, dataTypes, experimentIds, experimentOrAssayIds);
+        result = prime * result + Objects.hash(assayIds, experimentIds, experimentOrAssayIds);
         return result;
     }
     @Override
@@ -139,7 +119,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         if (!(obj instanceof RawDataFilter))
             return false;
         RawDataFilter other = (RawDataFilter) obj;
-        return Objects.equals(assayIds, other.assayIds) && Objects.equals(dataTypes, other.dataTypes)
+        return Objects.equals(assayIds, other.assayIds)
                 && Objects.equals(experimentIds, other.experimentIds)
                 && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds);
     }
@@ -149,7 +129,6 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         StringBuilder builder = new StringBuilder();
         builder.append("RawDataFilter [getGeneFilters()=").append(getGeneFilters())
                .append(", getConditionFilters()=").append(getConditionFilters())
-               .append(", dataTypes=").append(dataTypes)
                .append(", experimentIds=").append(experimentIds)
                .append(", assayIds=").append(assayIds)
                .append(", experimentOrAssayIds=").append(experimentOrAssayIds)

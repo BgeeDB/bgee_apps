@@ -24,6 +24,7 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.rawdata.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
@@ -33,6 +34,39 @@ import com.google.gson.stream.JsonWriter;
 public class TypeAdaptersUtils {
 
     private static final Logger log = LogManager.getLogger(TypeAdaptersUtils.class.getName());
+
+    public void writeSimplifiedRawDataCondition(JsonWriter out, RawDataCondition cond)
+            throws IOException {
+        log.traceEntry("{}, {}}", out, cond);
+        if (cond == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
+        out.beginObject();
+
+        out.name("anatEntity");
+        writeSimplifiedNamedEntity(out, cond.getAnatEntity());
+
+        out.name("cellType");
+        if (cond.getCellType() == null) {
+            out.value("NA");
+        } else {
+            writeSimplifiedNamedEntity(out, cond.getCellType());
+        }
+
+        out.name("devStage");
+        writeSimplifiedNamedEntity(out, cond.getDevStage());
+
+        out.name("sex").value(cond.getSex().getStringRepresentation());
+
+        out.name("strain").value(cond.getStrain());
+
+        out.name("species");
+        writeSimplifiedSpecies(out, cond.getSpecies(), false, null);
+
+        out.endObject();
+        log.traceExit();
+    }
 
     public void writeSimplifiedCondition(JsonWriter out, Condition cond,
             EnumSet<CallService.Attribute> condParams) throws IOException {
@@ -121,6 +155,10 @@ public class TypeAdaptersUtils {
 
     public void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
+        if (source == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
         out.name("name").value(source.getName());
         out.name("description").value(source.getDescription());
         out.name("baseUrl").value(source.getBaseUrl());

@@ -10,6 +10,7 @@ import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
 import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneHomologs;
 import org.bgee.model.ontology.Ontology;
@@ -104,6 +105,11 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         if (AnatEntitySimilarityAnalysis.class.isAssignableFrom(rawClass)) {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new AnatEntitySimilarityAnalysisTypeAdapter(gson, this.utils);
+            return log.traceExit(result);
+        }
+        if (AffymetrixChip.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixChipTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
 

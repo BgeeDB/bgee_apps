@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
@@ -15,6 +16,7 @@ import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
 import org.bgee.view.json.adapters.GeneXRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
+import org.bgee.view.json.adapters.RawDataAnnotationTypeAdapter;
 import org.bgee.view.json.adapters.RequestParameterTypeAdapter;
 import org.bgee.view.json.adapters.TopAnatResultsTypeAdapter;
 import org.bgee.view.json.adapters.TypeAdaptersUtils;
@@ -140,6 +142,7 @@ public class JsonHelper {
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
                 .registerTypeAdapter(GeneXRef.class,
                         new GeneXRefTypeAdapter(s -> this.urlEncode(s), this.utils))
+                .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
                         () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()

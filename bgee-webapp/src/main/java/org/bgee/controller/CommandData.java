@@ -13,6 +13,7 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
@@ -188,6 +189,7 @@ public class CommandData extends CommandParent {
 
         //Actions: raw data results, processed expression values
         RawDataContainer rawDataContainer = null;
+        RawDataCountContainer rawDataCountContainer = null;
         if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
                 RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             log.debug("Action identified: {}", this.requestParameters.getAction());
@@ -210,6 +212,10 @@ public class CommandData extends CommandParent {
                     if (this.requestParameters.isGetResults()) {
                         rawDataContainer = this.loadRawDataResults(rawDataLoader, dataTypes);
                     }
+                    //Raw data counts
+                    if (this.requestParameters.isGetResultCount()) {
+                        rawDataCountContainer = this.loadRawDataCounts(rawDataLoader, dataTypes);
+                    }
 
                     job.completeWithSuccess();
                 } finally {
@@ -221,7 +227,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayDataPage(speciesList, formDetails, rawDataContainer);
+        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer);
 
         log.traceExit();
     }
@@ -425,5 +431,19 @@ public class CommandData extends CommandParent {
         }
 
         return log.traceExit(rawDataLoader.loadData(infoType, dataTypes, offset, limit));
+    }
+
+    private RawDataCountContainer loadRawDataCounts(RawDataLoader rawDataLoader,
+            EnumSet<DataType> dataTypes) {
+        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
+
+        if (this.requestParameters.getAction() == null) {
+            throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
+        }
+        EnumSet<InformationType> infoTypes = EnumSet.of(InformationType.EXPERIMENT, InformationType.ASSAY);
+        if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+            infoTypes.add(InformationType.CALL);
+        }
+        return log.traceExit(rawDataLoader.loadDataCount(infoTypes, dataTypes));
     }
 }

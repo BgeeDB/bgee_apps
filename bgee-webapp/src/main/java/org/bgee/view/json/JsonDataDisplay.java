@@ -14,6 +14,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
 import org.bgee.model.species.Species;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.JsonHelper;
@@ -35,8 +36,9 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
     }
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
-            RawDataContainer rawDataContainer) {
-        log.traceEntry("{}, {}, {}", speciesList, formDetails, rawDataContainer);
+            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer) {
+        log.traceEntry("{}, {}, {}, {}", speciesList, formDetails,
+                rawDataContainer, rawDataCountContainer);
 
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
         if (speciesList != null && !speciesList.isEmpty()) {
@@ -96,15 +98,20 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
                 }
             }
             if (assayMap != null) {
-                resultMap.put("raw data annotations", assayMap);
+                resultMap.put("rawDataAnnotations", assayMap);
             }
             if (callMap != null) {
-                resultMap.put("processed expression values", callMap);
+                resultMap.put("processedExpressionValues", callMap);
             }
             if (!resultMap.isEmpty()) {
                 responseMap.put("results", resultMap);
             }
         }
+
+        if (rawDataCountContainer != null) {
+            responseMap.put("resultCount", rawDataCountContainer);
+        }
+
         this.sendResponse("Data page", responseMap);
         log.traceExit();
     }

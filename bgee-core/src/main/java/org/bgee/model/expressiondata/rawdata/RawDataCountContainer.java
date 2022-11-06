@@ -12,7 +12,7 @@ import java.util.Objects;
  */
 public class RawDataCountContainer {
 
-    private final Integer microarrayExperimentCount;
+    private final Integer affymetrixExperimentCount;
     private final Integer affymetrixAssayCount;
     private final Integer affymetrixCallsCount;
     private final Integer insituExperimentCount;
@@ -30,13 +30,13 @@ public class RawDataCountContainer {
 
     
     // null if not queried and 0 if no results
-    public RawDataCountContainer(Integer microarrayExperimentCount, Integer affymetrixAssayCount,
+    public RawDataCountContainer(Integer affymetrixExperimentCount, Integer affymetrixAssayCount,
             Integer affymetrixCallsCount, Integer insituExperimentCount, Integer insituAssayCount,
             Integer insituCallsCount, Integer estAssayCount, Integer estCallsCount, Integer bulkRnaSeqExperimentCount,
             Integer bulkRnaSeqAssayCount, Integer bulkRnaSeqCallsCount, Integer singleCellRnaSeqExperimentCount,
             Integer singleCellRnaSeqAssayCount, Integer singleCellRnaSeqLibraryCount,
             Integer singleCellRnaSeqCallsCount) {
-        this.microarrayExperimentCount = microarrayExperimentCount;
+        this.affymetrixExperimentCount = affymetrixExperimentCount;
         this.affymetrixAssayCount = affymetrixAssayCount;
         this.affymetrixCallsCount = affymetrixCallsCount;
         this.insituExperimentCount = insituExperimentCount;
@@ -53,8 +53,8 @@ public class RawDataCountContainer {
         this.singleCellRnaSeqCallsCount = singleCellRnaSeqCallsCount;
     }
 
-    public Integer getMicroarrayExperimentCount() {
-        return microarrayExperimentCount;
+    public Integer getAffymetrixExperimentCount() {
+        return affymetrixExperimentCount;
     }
     public Integer getAffymetrixAssayCount() {
         return affymetrixAssayCount;
@@ -102,7 +102,7 @@ public class RawDataCountContainer {
     public int hashCode() {
         return Objects.hash(affymetrixAssayCount, affymetrixCallsCount, bulkRnaSeqAssayCount, bulkRnaSeqCallsCount,
                 bulkRnaSeqExperimentCount, estAssayCount, estCallsCount, insituAssayCount, insituCallsCount,
-                insituExperimentCount, microarrayExperimentCount, singleCellRnaSeqAssayCount,
+                insituExperimentCount, affymetrixExperimentCount, singleCellRnaSeqAssayCount,
                 singleCellRnaSeqCallsCount, singleCellRnaSeqExperimentCount, singleCellRnaSeqLibraryCount);
     }
     @Override
@@ -124,7 +124,7 @@ public class RawDataCountContainer {
                 && Objects.equals(insituAssayCount, other.insituAssayCount)
                 && Objects.equals(insituCallsCount, other.insituCallsCount)
                 && Objects.equals(insituExperimentCount, other.insituExperimentCount)
-                && Objects.equals(microarrayExperimentCount, other.microarrayExperimentCount)
+                && Objects.equals(affymetrixExperimentCount, other.affymetrixExperimentCount)
                 && Objects.equals(singleCellRnaSeqAssayCount, other.singleCellRnaSeqAssayCount)
                 && Objects.equals(singleCellRnaSeqCallsCount, other.singleCellRnaSeqCallsCount)
                 && Objects.equals(singleCellRnaSeqExperimentCount, other.singleCellRnaSeqExperimentCount)
@@ -132,7 +132,7 @@ public class RawDataCountContainer {
     }
     @Override
     public String toString() {
-        return "RawDataCountContainer [microarrayExperimentCount=" + microarrayExperimentCount
+        return "RawDataCountContainer [affymetrixExperimentCount=" + affymetrixExperimentCount
                 + ", affymetrixAssayCount=" + affymetrixAssayCount + ", affymetrixCallsCount=" + affymetrixCallsCount
                 + ", insituExperimentCount=" + insituExperimentCount + ", insituAssayCount=" + insituAssayCount
                 + ", insituCallsCount=" + insituCallsCount + ", estAssayCount=" + estAssayCount + ", estCallsCount="

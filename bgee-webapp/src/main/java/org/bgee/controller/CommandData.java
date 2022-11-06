@@ -3,6 +3,7 @@ package org.bgee.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.user.User;
 import org.bgee.controller.utils.LRUCache;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -20,6 +21,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.job.Job;
+import org.bgee.model.job.JobService;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -140,8 +142,10 @@ public class CommandData extends CommandParent {
      * @param serviceFactory    A {@code ServiceFactory} that provides the services to be used.
      */
     public CommandData(HttpServletResponse response, RequestParameters requestParameters,
-                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory);
+                          BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
+                          JobService jobService, User user) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user,
+                null, null);
         this.speciesService = this.serviceFactory.getSpeciesService();
     }
 
@@ -186,10 +190,12 @@ public class CommandData extends CommandParent {
         RawDataContainer rawDataContainer = null;
         if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
                 RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+            log.debug("Action identified: {}", this.requestParameters.getAction());
 
             //Queries that required a RawDataLoader
             if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
                     this.requestParameters.isGetFilters()) {
+                log.debug("Loading RawDataLoader");
                 //try...finally block to manage number of jobs per users,
                 //to limit the concurrent number of queries a user can make
                 Job job = null;
@@ -213,7 +219,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayDataPage(speciesList, formDetails);
+        display.displayDataPage(speciesList, formDetails, rawDataContainer);
 
         log.traceExit();
     }
@@ -376,7 +382,10 @@ public class CommandData extends CommandParent {
                     false);
         }
 
-        return log.traceExit(new RawDataFilter(Set.of(geneFilter), Set.of(condFilter), dataTypes,
+        return log.traceExit(new RawDataFilter(
+                geneFilter != null? Collections.singleton(geneFilter): null,
+                condFilter != null? Collections.singleton(condFilter): null,
+                dataTypes,
                 null, null, expOrAssayIds));
     }
 

@@ -260,7 +260,8 @@ public class FrontController extends HttpServlet {
                 controller = new CommandExpressionComparison(response, requestParameters, this.prop, factory, serviceFactory);
 
             } else if (requestParameters.isADataPageCategory()){
-                controller = new CommandData(response, requestParameters, this.prop, factory, serviceFactory);
+                controller = new CommandData(response, requestParameters, this.prop, factory, serviceFactory,
+                        this.jobService, user);
 
             } else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);

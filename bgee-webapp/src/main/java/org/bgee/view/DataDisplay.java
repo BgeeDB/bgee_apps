@@ -3,6 +3,7 @@ package org.bgee.view;
 import java.util.List;
 
 import org.bgee.controller.CommandData.DataFormDetails;
+import org.bgee.model.expressiondata.rawdata.RawDataContainer;
 import org.bgee.model.species.Species;
 
 /**
@@ -14,5 +15,6 @@ import org.bgee.model.species.Species;
  */
 public interface DataDisplay {
 
-    public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails);
+    public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
+            RawDataContainer rawDataContainer);
 }

@@ -326,17 +326,18 @@ public class RawDataLoader extends CommonService {
                 null, null));
     }
 
-    public RawDataCountContainer loadDataCount(EnumSet<InformationType> infoTypes,
+    public RawDataCountContainer loadDataCount(Collection<InformationType> infoTypes,
             Collection<DataType> dataTypes) {
         log.traceEntry("{}, {}", infoTypes, dataTypes);
 
+        EnumSet<InformationType> requestedInfoTypes = getInformationTypes(infoTypes);
+        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
         // create booleans used to query the DAO
-        boolean withCalls = infoTypes.contains(InformationType.CALL) ? true: false;
-        boolean withAssay = infoTypes.contains(InformationType.ASSAY) ? true: false;
-        boolean withExperiment = infoTypes.contains(InformationType.EXPERIMENT) ? true: false;
+        boolean withCalls = requestedInfoTypes.contains(InformationType.CALL);
+        boolean withAssay = requestedInfoTypes.contains(InformationType.ASSAY);
+        boolean withExperiment = requestedInfoTypes.contains(InformationType.EXPERIMENT);
         RawDataCountContainerTO countContainerTOWithNulls =
                 new RawDataCountContainerTO(null, null, null);
-        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
 
         RawDataCountContainerTO affyCountTO = requestedDataTypes.contains(DataType.AFFYMETRIX)?
                 rawDataCountDAO.getAffymetrixCount(
@@ -347,13 +348,13 @@ public class RawDataLoader extends CommonService {
         //TODO: count for est, insitu, bulk rnaseq and single cell rnaseq are not yet implemented
         // in the DAO
         RawDataCountContainerTO estCountTO = requestedDataTypes
-                .contains(DataType.EST)? null: countContainerTOWithNulls;
+                .contains(DataType.EST)? countContainerTOWithNulls: countContainerTOWithNulls;
         RawDataCountContainerTO inSituCountTO = requestedDataTypes
-                .contains(DataType.IN_SITU)? null: countContainerTOWithNulls;
+                .contains(DataType.IN_SITU)? countContainerTOWithNulls: countContainerTOWithNulls;
         RawDataCountContainerTO bulkRnaSeqCountTO = requestedDataTypes
-                .contains(DataType.RNA_SEQ)? null: countContainerTOWithNulls;
+                .contains(DataType.RNA_SEQ)? countContainerTOWithNulls: countContainerTOWithNulls;
         RawDataCountContainerTO singleCellRnaSeqCountTO = requestedDataTypes
-                .contains(DataType.FULL_LENGTH)? null: countContainerTOWithNulls;
+                .contains(DataType.FULL_LENGTH)? countContainerTOWithNulls: countContainerTOWithNulls;
 
         return log.traceExit(new RawDataCountContainer(
                 affyCountTO.getExperimentCount(), affyCountTO.getAssayCount(),
@@ -585,6 +586,11 @@ public class RawDataLoader extends CommonService {
         log.traceEntry("{}", dataTypes);
         return log.traceExit(dataTypes == null || dataTypes.isEmpty()?
                 EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypes));
+    }
+    private static EnumSet<InformationType> getInformationTypes(Collection<InformationType> infoTypes) {
+        log.traceEntry("{}", infoTypes);
+        return log.traceExit(infoTypes == null || infoTypes.isEmpty()?
+                EnumSet.allOf(InformationType.class): EnumSet.copyOf(infoTypes));
     }
 //
 //    /**

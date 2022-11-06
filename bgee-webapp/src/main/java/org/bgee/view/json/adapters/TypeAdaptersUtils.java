@@ -34,7 +34,7 @@ public class TypeAdaptersUtils {
 
     private static final Logger log = LogManager.getLogger(TypeAdaptersUtils.class.getName());
 
-    protected static void writeSimplifiedCondition(JsonWriter out, Condition cond,
+    public void writeSimplifiedCondition(JsonWriter out, Condition cond,
             EnumSet<CallService.Attribute> condParams) throws IOException {
         log.traceEntry("{}, {}, {}", out, cond, condParams);
         out.beginObject();
@@ -92,7 +92,7 @@ public class TypeAdaptersUtils {
         log.traceExit();
     }
 
-    protected static void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
+    public void writeSimplifiedMultiSpeciesCondition(JsonWriter out, MultiSpeciesCondition cond)
             throws IOException {
         log.traceEntry("{}, {}", out, cond);
         out.beginObject();
@@ -119,14 +119,14 @@ public class TypeAdaptersUtils {
         log.traceExit();
     }
 
-    protected static void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
+    public void writeSimplifiedSource(JsonWriter out, Source source) throws IOException {
         log.traceEntry("{}, {}", out, source);
         out.name("name").value(source.getName());
         out.name("description").value(source.getDescription());
         out.name("baseUrl").value(source.getBaseUrl());
         log.traceExit();
     }
-    protected static void writeSimplifiedXRef(JsonWriter out, XRef xRef,
+    public void writeSimplifiedXRef(JsonWriter out, XRef xRef,
             Function<String, String> urlEncodeFunction) throws IOException {
         log.traceEntry("{}, {}", out, xRef, urlEncodeFunction);
         out.name("xRefId").value(xRef.getXRefId());
@@ -134,7 +134,7 @@ public class TypeAdaptersUtils {
         out.name("xRefURL").value(xRef.getXRefUrl(false, urlEncodeFunction));
         log.traceExit();
     }
-    protected static void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
+    public void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesDataSource,
             EnumSet<DataType> allowedDataTypes)
             throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, gene, withSpeciesDataSource, allowedDataTypes);
@@ -150,7 +150,7 @@ public class TypeAdaptersUtils {
         out.endObject();
         log.traceExit();
     }
-    protected static void writeSimplifiedSpecies(JsonWriter out, Species species,
+    public void writeSimplifiedSpecies(JsonWriter out, Species species,
             boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, species, withSpeciesDataSource, allowedDataTypes);
         out.beginObject();
@@ -170,7 +170,7 @@ public class TypeAdaptersUtils {
         out.endObject();
         log.traceExit();
     }
-    protected static void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
+    public void writeSourcesPerDataType(JsonWriter out, Map<DataType, Set<Source>> map,
             EnumSet<DataType> allowedDataTypes) throws IOException {
         log.traceEntry("{}, {}, {}", out, map, allowedDataTypes);
         // We order the Map by DataType and Source alphabetical name order
@@ -200,7 +200,7 @@ public class TypeAdaptersUtils {
         out.endArray(); // end Map
         log.traceExit();
     }
-    protected static void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
+    public void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
             throws IOException {
         log.traceEntry("{}, {}", out, namedEntity);
         if (namedEntity == null) {
@@ -213,5 +213,4 @@ public class TypeAdaptersUtils {
         out.endObject();
         log.traceExit();
     }
-
 }

@@ -26,8 +26,11 @@ import com.google.gson.stream.JsonWriter;
 public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExpressionResponse> {
     private static final Logger log = LogManager.getLogger(GeneExpressionResponseTypeAdapter.class.getName());
 
+    private final TypeAdaptersUtils utils;
 
-    protected GeneExpressionResponseTypeAdapter() {}
+    protected GeneExpressionResponseTypeAdapter(TypeAdaptersUtils utils) {
+        this.utils = utils;
+    }
 
     @Override
     public void write(JsonWriter out, GeneExpressionResponse value) throws IOException {
@@ -75,7 +78,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.beginObject();
 
             out.name("condition");
-            TypeAdaptersUtils.writeSimplifiedCondition(out, call.getCondition(), condParams);
+            this.utils.writeSimplifiedCondition(out, call.getCondition(), condParams);
 
             out.name("expressionScore");
             out.beginObject();
@@ -116,7 +119,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
         if (!value.getCalls().isEmpty()) {
             assert !dataTypesWithData.isEmpty();
             out.name("gene");
-            TypeAdaptersUtils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
+            this.utils.writeSimplifiedGene(out, value.getCalls().iterator().next().getGene(),
                     true, dataTypesWithData);
         }
 

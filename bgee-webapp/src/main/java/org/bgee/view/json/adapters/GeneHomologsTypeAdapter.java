@@ -29,6 +29,8 @@ import com.google.gson.stream.JsonWriter;
  * notably with {@code Map}s.
  */
 public final class GeneHomologsTypeAdapter extends TypeAdapter<GeneHomologs> {
+    private static final Logger log = LogManager.getLogger(GeneHomologsTypeAdapter.class.getName());
+
     //TODO: refactor with comparator in HtmlGeneDisplay
     private final static Comparator<Gene> GENE_HOMOLOGY_COMPARATOR = Comparator
             .<Gene, Integer>comparing(x -> x.getSpecies().getPreferredDisplayOrder(),
@@ -37,11 +39,13 @@ public final class GeneHomologsTypeAdapter extends TypeAdapter<GeneHomologs> {
 
     private final Gson gson;
     private final Supplier<RequestParameters> rpSupplier;
-    private static final Logger log = LogManager.getLogger(GeneHomologsTypeAdapter.class.getName());
+    private final TypeAdaptersUtils utils;
 
-    protected GeneHomologsTypeAdapter(Gson gson, Supplier<RequestParameters> rpSupplier) {
+    protected GeneHomologsTypeAdapter(Gson gson, Supplier<RequestParameters> rpSupplier,
+            TypeAdaptersUtils utils) {
         this.gson = gson;
         this.rpSupplier = rpSupplier;
+        this.utils = utils;
     }
 
     @Override
@@ -54,7 +58,7 @@ public final class GeneHomologsTypeAdapter extends TypeAdapter<GeneHomologs> {
         out.beginObject();
 
         out.name("gene");
-        TypeAdaptersUtils.writeSimplifiedGene(out, value.getGene(), false, null);
+        this.utils.writeSimplifiedGene(out, value.getGene(), false, null);
 
         out.name("orthologsByTaxon");
         this.writeHomologsByTaxon(out, value.getGene(), value.getOrthologsByTaxon());
@@ -97,7 +101,7 @@ public final class GeneHomologsTypeAdapter extends TypeAdapter<GeneHomologs> {
             out.name("genes");
             out.beginArray();
             for (Gene gene: orderedHomologsWithDescendant) {
-                TypeAdaptersUtils.writeSimplifiedGene(out, gene, false, null);
+                this.utils.writeSimplifiedGene(out, gene, false, null);
             }
             out.endArray();
 

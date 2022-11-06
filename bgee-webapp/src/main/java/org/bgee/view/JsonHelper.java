@@ -17,6 +17,7 @@ import org.bgee.view.json.adapters.GeneXRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RequestParameterTypeAdapter;
 import org.bgee.view.json.adapters.TopAnatResultsTypeAdapter;
+import org.bgee.view.json.adapters.TypeAdaptersUtils;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -83,6 +84,8 @@ public class JsonHelper {
      * A {@code String} defining the character encoding for encoding query strings.
      */
     private final String charEncoding;
+
+    private final TypeAdaptersUtils utils;
     
     /**
      * Default constructor delegating to {@link #JsonHelper(BgeeProperties)} with null arguments.
@@ -90,21 +93,25 @@ public class JsonHelper {
      * @see #JsonHelper(BgeeProperties)
      */
     public JsonHelper() {
-        this(null, null);
+        this(null, null, null);
     }
     /**
      * @param props The {@code BgeeProperties} to retrieve parameters from. If {@code null}, 
      *              the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
      */
     public JsonHelper(BgeeProperties props) {
-        this(props, null);
+        this(props, null, null);
+    }
+    public JsonHelper(BgeeProperties props, RequestParameters requestParameters) {
+        this(props, requestParameters, null);
     }
     /**
      * @param props             The {@code BgeeProperties} to retrieve parameters from. 
      *                          If {@code null}, the value returned by {@link BgeeProperties#getBgeeProperties()} is used.
      * @param requestParameters The {@code RequestParameters} corresponding to the current request to the webapp.
      */
-    public JsonHelper(BgeeProperties props, RequestParameters requestParameters) {
+    public JsonHelper(BgeeProperties props, RequestParameters requestParameters,
+            TypeAdaptersUtils utils) {
         if (props == null) {
             this.props = BgeeProperties.getBgeeProperties();
         } else {
@@ -117,6 +124,11 @@ public class JsonHelper {
             this.requestParameters = requestParameters.cloneWithAllParameters();
             this.charEncoding = this.requestParameters.getCharacterEncoding();
         }
+        if (utils == null) {
+            this.utils = new TypeAdaptersUtils();
+        } else {
+            this.utils = utils;
+        }
         
         //we do not allow the Gson object to be injected, so that signatures of this class 
         //are not dependent of a specific JSON library. 
@@ -126,9 +138,10 @@ public class JsonHelper {
                 .registerTypeAdapter(RequestParameters.class, new RequestParameterTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
-                .registerTypeAdapter(GeneXRef.class, new GeneXRefTypeAdapter(s -> this.urlEncode(s)))
+                .registerTypeAdapter(GeneXRef.class,
+                        new GeneXRefTypeAdapter(s -> this.urlEncode(s), this.utils))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
-                        () -> getNewRequestParameters()))
+                        () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();

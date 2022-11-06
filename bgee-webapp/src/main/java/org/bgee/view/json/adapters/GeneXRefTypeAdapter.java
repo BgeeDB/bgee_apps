@@ -16,12 +16,15 @@ import com.google.gson.stream.JsonWriter;
  * to call the method {@code getXRefUrl()}.
  */
 public final class GeneXRefTypeAdapter extends TypeAdapter<GeneXRef> {
-
-    private final Function<String, String> urlEncodeFunction;
     private static final Logger log = LogManager.getLogger(GeneXRefTypeAdapter.class.getName());
 
-    public GeneXRefTypeAdapter(Function<String, String> urlEncodeFunction) {
+    private final Function<String, String> urlEncodeFunction;
+    private final TypeAdaptersUtils utils;
+
+    public GeneXRefTypeAdapter(Function<String, String> urlEncodeFunction,
+            TypeAdaptersUtils utils) {
         this.urlEncodeFunction = urlEncodeFunction;
+        this.utils = utils;
     }
 
     @Override
@@ -33,12 +36,12 @@ public final class GeneXRefTypeAdapter extends TypeAdapter<GeneXRef> {
         }
         out.beginObject();
 
-        TypeAdaptersUtils.writeSimplifiedXRef(out, value, urlEncodeFunction);
+        this.utils.writeSimplifiedXRef(out, value, urlEncodeFunction);
 
         //Simplified display of Source inside XRefs
         out.name("source");
         out.beginObject();
-        TypeAdaptersUtils.writeSimplifiedSource(out, value.getSource());
+        this.utils.writeSimplifiedSource(out, value.getSource());
         out.endObject();
 
         out.endObject();

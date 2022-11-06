@@ -3,13 +3,23 @@ package org.bgee.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.utils.LRUCache;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.RawDataFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataLoader;
+import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
+import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
+import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
+import org.bgee.model.job.Job;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
@@ -20,8 +30,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -84,6 +96,36 @@ public class CommandData extends CommandParent {
         }
     }
 
+    /**
+     * An {@code int} that is the maximum allowed number of results
+     * to retrieve in one request, for each requested data type independently.
+     * Value: 10,000.
+     */
+    private final static int LIMIT_MAX = 10000;
+    /**
+     * An {@code int} that is the default number of results
+     * to retrieve in one request, for each requested data type independently.
+     * Value: 100.
+     */
+    private final static int DEFAULT_LIMIT = 100;
+    /**
+     * A {@code Map} used as a LRU cache to retrieve {@code RawDataProcessedFilter} from a
+     * {@code RawDataFilter}. The {@code Map} can hold max 20 entries.
+     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
+     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
+     * Maybe we should use a Guava cache instead.
+     */
+    private final static Map<RawDataFilter, RawDataProcessedFilter> RAW_DATA_PROCESSED_FILTER_CACHE =
+            Collections.synchronizedMap(new LRUCache<RawDataFilter, RawDataProcessedFilter>(20));
+
+    //Static initializer
+    {
+        if (LIMIT_MAX > RawDataLoader.LIMIT_MAX) {
+            throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
+                    + "is greater than the maximum limit allowed by the RawDataLoader."));
+        }
+    }
+
     private final SpeciesService speciesService;
 
     /**
@@ -107,13 +149,14 @@ public class CommandData extends CommandParent {
     public void processRequest() throws Exception {
         log.traceEntry();
 
+        //Species list
         List<Species> speciesList = null;
-        DataFormDetails formDetails = null;
-
         if (this.requestParameters.isGetSpeciesList()) {
             speciesList = this.loadSpeciesList();
         }
 
+        //Form details
+        DataFormDetails formDetails = null;
         if (this.requestParameters.isDetailedRequestParameters()) {
             Ontology<DevStage, String> requestedSpeciesDevStageOntology = null;
             List<Sex> requestedSpeciesSexes = null;
@@ -137,6 +180,36 @@ public class CommandData extends CommandParent {
 
             formDetails = new DataFormDetails(requestedSpecies, requestedSpeciesDevStageOntology,
                     requestedSpeciesSexes, requestedAnatEntitesAndCellTypes, requestedGenes);
+        }
+
+        //Actions: raw data results, processed expression values
+        RawDataContainer rawDataContainer = null;
+        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
+                RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+
+            //Queries that required a RawDataLoader
+            if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
+                    this.requestParameters.isGetFilters()) {
+                //try...finally block to manage number of jobs per users,
+                //to limit the concurrent number of queries a user can make
+                Job job = null;
+                try {
+                    job = this.jobService.registerNewJob(this.user.getUUID().toString());
+                    job.startJob();
+                    RawDataLoader rawDataLoader = this.loadRawDataLoader();
+
+                    //Raw data results
+                    if (this.requestParameters.isGetResults()) {
+                        rawDataContainer = this.loadRawDataResults(rawDataLoader);
+                    }
+
+                    job.completeWithSuccess();
+                } finally {
+                    if (job != null) {
+                        job.release();
+                    }
+                }
+            }
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
@@ -246,5 +319,102 @@ public class CommandData extends CommandParent {
                     "Some genes could not be identified: " + clonedGeneIds));
         }
         return log.traceExit(genes);
+    }
+
+    private RawDataLoader loadRawDataLoader() throws InvalidRequestException {
+        log.traceEntry();
+
+        RawDataFilter filter = this.loadRawDataFilter();
+        RawDataService rawDataService = this.serviceFactory.getRawDataService();
+        //Try to get the processed filter from the cache.
+        //We don't use the method computeIfAbsent, because that would probably block
+        //the whole cache while the computation of RawDataProcessedFilter is done,
+        //since we simply used Collections.synchronizedMap to make the cache thread-safe.
+        //It is a simple optimization, we don't care so much if several threads
+        //are computing the same RawDataProcessedFilter.
+        RawDataProcessedFilter processedFilter = RAW_DATA_PROCESSED_FILTER_CACHE.get(filter);
+        if (processedFilter == null) {
+            processedFilter = rawDataService.processRawDataFilter(filter);
+            RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+        }
+        return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
+    }
+
+    private RawDataFilter loadRawDataFilter() throws InvalidRequestException {
+        log.traceEntry();
+
+        GeneFilter geneFilter = null;
+        RawDataConditionFilter condFilter = null;
+        Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+
+        if (this.requestParameters.getSpeciesId() != null) {
+            int speciesId = this.requestParameters.getSpeciesId();
+
+            geneFilter = new GeneFilter(speciesId, this.requestParameters.getGeneIds());
+
+            condFilter = new RawDataConditionFilter(speciesId,
+                    this.requestParameters.getAnatEntity(),
+                    this.requestParameters.getDevStage(),
+                    this.requestParameters.getCellType(),
+                    this.requestParameters.getSex(),
+                    this.requestParameters.getStrain(),
+                    //includeSubAnatEntities
+                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                            this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant())),
+                    //includeSubDevStages
+                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                            this.requestParameters.getUrlParametersInstance().getParamStageDescendant())),
+                    //includeSubCellTypes
+                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                            this.requestParameters.getUrlParametersInstance().getParamCellTypeDescendant())),
+                    //sex descendant always false: requesting descendants of the root is equivalent
+                    //to request all sexes, in which case we don't provide requested sex IDs
+                    false,
+                    //strain descendant always false: requesting descendants of the root is equivalent
+                    //to request all strains, in which case we don't provide requested strains
+                    false);
+        }
+
+        return log.traceExit(new RawDataFilter(Set.of(geneFilter), Set.of(condFilter), dataTypes,
+                null, null, expOrAssayIds));
+    }
+
+    private RawDataContainer loadRawDataResults(RawDataLoader rawDataLoader)
+            throws InvalidRequestException {
+        log.traceEntry("{}", rawDataLoader);
+
+        Integer limit = this.requestParameters.getLimit();
+        if (limit == null) {
+            //The validity of DEFAULT_LIMIT is checked already in the static initializer
+            limit = DEFAULT_LIMIT;
+        } else if (limit > LIMIT_MAX) {
+            throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                    + LIMIT_MAX + " results."));
+        }
+        Integer offset = this.requestParameters.getOffset();
+        if (offset == null) {
+            offset = 0;
+        } else if (offset < 0) {
+            throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+        }
+
+        if (this.requestParameters.getAction() == null) {
+            throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
+        }
+        InformationType infoType = null;
+        switch (this.requestParameters.getAction()) {
+        case RequestParameters.ACTION_RAW_DATA_ANNOTS:
+            infoType = InformationType.ASSAY;
+            break;
+        case RequestParameters.ACTION_PROC_EXPR_VALUES:
+            infoType = InformationType.CALL;
+            break;
+        default:
+            throw log.throwing(new UnsupportedOperationException("Unsupported action: "
+                    + this.requestParameters.getAction()));
+        }
+
+        return log.traceExit(rawDataLoader.loadData(infoType, offset, limit));
     }
 }

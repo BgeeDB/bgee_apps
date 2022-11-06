@@ -23,6 +23,7 @@ import org.bgee.model.anatdev.TaxonConstraint;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
@@ -694,7 +695,9 @@ public class OntologyService extends CommonService {
         if (strainIds == null || strainIds.isEmpty() ||
                 getDescendants && strainIds.contains(ConditionDAO.STRAIN_ROOT_ID)) {
             speciesStrainIds = this.getServiceFactory().getDAOManager().getRawDataConditionDAO()
-                    .getRawDataConditionsFromSpeciesIds(Collections.singleton(speciesId),
+                    .getRawDataConditionsFromRawConditionFilters(
+                            Set.of(new DAORawDataConditionFilter(Set.of(speciesId),
+                                    null, null, null, null, null)),
                             EnumSet.of(RawDataConditionDAO.Attribute.STRAIN))
                             .stream()
                             .map(rawCondTO -> mapRawDataStrainToStrain(rawCondTO.getStrainId()).getId())

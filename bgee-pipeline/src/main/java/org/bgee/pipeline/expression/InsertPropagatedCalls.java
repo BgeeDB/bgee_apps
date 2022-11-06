@@ -62,6 +62,7 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO.SamplePValueTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO.DAORawDataSex;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
@@ -2129,7 +2130,10 @@ public class InsertPropagatedCalls extends CallService {
         }
 
         RawDataConditionTOResultSet rs = this.getDaoManager().getRawDataConditionDAO()
-                .getRawDataConditionsFromSpeciesIds(speMap.keySet(), null);
+                .getRawDataConditionsFromRawConditionFilters(
+                        Set.of(new DAORawDataConditionFilter(speMap.keySet(),
+                                null, null, null, null, null)),
+                        null);
 
         while (rs.next()) {
             RawDataConditionTO condTO = rs.getTO();

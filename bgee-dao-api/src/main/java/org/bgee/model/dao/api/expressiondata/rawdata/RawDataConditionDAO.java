@@ -61,6 +61,15 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
         public String getTOFieldName() {
             return this.fieldName;
         }
+
+        public boolean isConditionParameter() {
+            if( this.equals(Attribute.ANAT_ENTITY_ID) || this.equals(Attribute.CELL_TYPE_ID) ||
+                    this.equals(Attribute.STAGE_ID) || this.equals(Attribute.SEX) ||
+                    this.equals(Attribute.STRAIN)) {
+                return true;
+            }
+            return false;
+        }
     }
 
     /**

@@ -30,6 +30,7 @@ public class RawDataCountContainer {
 
     
     // null if not queried and 0 if no results
+    //FIXME: we also need bulkRnaSeqLibraryCount (example: BRB-Seq data)
     public RawDataCountContainer(Integer affymetrixExperimentCount, Integer affymetrixAssayCount,
             Integer affymetrixCallsCount, Integer insituExperimentCount, Integer insituAssayCount,
             Integer insituCallsCount, Integer estAssayCount, Integer estCallsCount, Integer bulkRnaSeqExperimentCount,

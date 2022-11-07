@@ -340,9 +340,7 @@ public class RawDataLoader extends CommonService {
                 new RawDataCountContainerTO(null, null, null);
 
         RawDataCountContainerTO affyCountTO = requestedDataTypes.contains(DataType.AFFYMETRIX)?
-                rawDataCountDAO.getAffymetrixCount(
-                        this.getRawDataProcessedFilter().getDaoRawDataFilters(),
-                        withExperiment, withAssay, withCalls):
+                this.loadAffymetrixDataCount(withExperiment, withAssay, withCalls):
                 countContainerTOWithNulls;
 
         //TODO: count for est, insitu, bulk rnaseq and single cell rnaseq are not yet implemented
@@ -517,6 +515,48 @@ public class RawDataLoader extends CommonService {
                 null, null, null, null,
                 null, null, null,
                 null, null));
+    }
+
+    private RawDataCountContainerTO loadAffymetrixDataCount(boolean withExperiment,
+            boolean withAssay, boolean withCall) {
+        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
+
+        RawDataFilter filter = this.getRawDataProcessedFilter().getRawDataFilter();
+        //If we don't need any filtering on assay information,
+        boolean noNeedChipInfo = filter.getAssayIds().isEmpty() &&
+                filter.getExperimentIds().isEmpty() &&
+                filter.getExperimentOrAssayIds().isEmpty() &&
+                filter.getConditionFilters().stream().allMatch(cf -> cf.areAllCondParamFiltersEmpty());
+        //and we don't need filtering on probeset information for counting assays or experiments,
+        boolean noProbesetFilteringForAssayExpCount = !withExperiment && !withAssay ||
+                filter.getGeneFilters().stream().allMatch(gf -> gf.getGeneIds().isEmpty());
+        //then, if requested, we count the probesets in a separate query for faster results.
+        RawDataCountContainerTO probesetCountTO = null;
+        boolean updatedWithCall = withCall;
+        if (withCall && noNeedChipInfo && noProbesetFilteringForAssayExpCount) {
+            probesetCountTO = rawDataCountDAO.getAffymetrixCount(
+                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                    false, false, true);
+            updatedWithCall = false;
+        }
+        //Now we do the "requested" call if we don't have the counts we need yet
+        RawDataCountContainerTO affyRemainingCountTO = null;
+        if (updatedWithCall || withExperiment || withAssay) {
+            affyRemainingCountTO = rawDataCountDAO.getAffymetrixCount(
+                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                    withExperiment, withAssay, updatedWithCall);
+        }
+        assert probesetCountTO != null || affyRemainingCountTO != null;
+        assert probesetCountTO == null || probesetCountTO.getCallsCount() != null;
+
+        return log.traceExit(new RawDataCountContainerTO(
+                //experiment count
+                affyRemainingCountTO != null? affyRemainingCountTO.getExperimentCount(): null,
+                //assay count
+                affyRemainingCountTO != null? affyRemainingCountTO.getAssayCount(): null,
+                //call count
+                probesetCountTO != null? probesetCountTO.getCallsCount():
+                    affyRemainingCountTO.getCallsCount()));
     }
 
 //*****************************************************************************************

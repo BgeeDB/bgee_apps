@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,9 +35,10 @@ implements RawDataConditionDAO {
             Collection<DAORawDataConditionFilter> rawCondFilters,
             Collection<RawDataConditionDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}", rawCondFilters, attributes);
+
         final Set<DAORawDataConditionFilter> condFilters = Collections.unmodifiableSet(
                 rawCondFilters == null?
-                new HashSet<>(): new HashSet<>(rawCondFilters));
+                new LinkedHashSet<>(): new LinkedHashSet<>(rawCondFilters));
         final Set<RawDataConditionDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
                 EnumSet.noneOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
 
@@ -49,11 +51,11 @@ implements RawDataConditionDAO {
         // generate WHERE CLAUSE
         //XXX should we forbid to retrieve all conditions ?
         // FILTER ON CONDITION PARAMETERS
-        if (condFilters != null && !condFilters.isEmpty()) {
+        if (!condFilters.isEmpty()) {
             sb.append(" WHERE ")
             .append(condFilters.stream().map(cf -> {
                 return generateOneConditionFilter(cf);
-            }).collect(Collectors.joining(" OR ", "(", ")")));
+            }).collect(Collectors.joining(" OR ")));
         }
         //parameterize query
         try {
@@ -186,27 +188,19 @@ implements RawDataConditionDAO {
         }
         int offsetParamIndex = paramIndex;
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
-            Set<String> mergedAnatAndCell = !condFilter.getAnatEntityIds().isEmpty()
-                    && !condFilter.getCellTypeIds().isEmpty() ?
-                    Stream.of(condFilter.getAnatEntityIds(),condFilter.getCellTypeIds())
-                    .flatMap(x -> x.stream())
-                    .collect(Collectors.toSet()): new HashSet<>();
-            
-            if (!mergedAnatAndCell.isEmpty()) {
-                stmt.setStrings(offsetParamIndex, mergedAnatAndCell, true);
-                offsetParamIndex += mergedAnatAndCell.size();
-                stmt.setStrings(offsetParamIndex, mergedAnatAndCell, true);
-                offsetParamIndex += mergedAnatAndCell.size();
-            } else if (!condFilter.getAnatEntityIds().isEmpty()) {
+            Set<String> anatOrCellIds = condFilter.getAnatEntityIds().isEmpty()?
+                    condFilter.getCellTypeIds(): condFilter.getAnatEntityIds();
+
+            if (!condFilter.getAnatEntityIds().isEmpty() && !condFilter.getCellTypeIds().isEmpty()) {
                 stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
                 offsetParamIndex += condFilter.getAnatEntityIds().size();
-                stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
-                offsetParamIndex += condFilter.getAnatEntityIds().size();
-            } else if (!condFilter.getCellTypeIds().isEmpty()) {
                 stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
                 offsetParamIndex += condFilter.getCellTypeIds().size();
-                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
-                offsetParamIndex += condFilter.getCellTypeIds().size();
+            } else if (!anatOrCellIds.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, anatOrCellIds, true);
+                offsetParamIndex += anatOrCellIds.size();
+                stmt.setStrings(offsetParamIndex, anatOrCellIds, true);
+                offsetParamIndex += anatOrCellIds.size();
             }
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
@@ -244,49 +238,26 @@ implements RawDataConditionDAO {
         //    anat. entities and cell type columns
         // 2. if only cell types provided then check for these annotation in both anat.
         //    entities and cell type columns
-        // 3. if both cell type and anat. entities are provided then check for the jonction
-        //    of these values in both anat. entities and cell type columns
-        // merge anatEntities and cell types together
-        Set<String> mergedAnatAndCell = !anatEntityIds.isEmpty()&& !cellIds.isEmpty() ?
-                Stream.of(anatEntityIds,cellIds).flatMap(x -> x.stream())
-                .collect(Collectors.toSet()): new HashSet<>();
-//        if(!anatEntityIds.isEmpty() || !condFilter.getDevStageIds().isEmpty()
-//                || !condFilter.getCellTypeIds().isEmpty() || !condFilter.getSexIds().isEmpty()
-//                || !condFilter.getStrainIds().isEmpty() || !condFilter.getSpeciesIds().isEmpty()) {
-//            sb.append("(");
-//        }
+        Set<String> anatOrCellIds = anatEntityIds.isEmpty()? cellIds: anatEntityIds;
         boolean previousCond = false;
-        if (!mergedAnatAndCell.isEmpty()) {
-            sb.append("(")
-            .append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    mergedAnatAndCell, previousCond))
-            .append(" OR ")
-            .append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    mergedAnatAndCell, previousCond))
-            .append(")");
-            previousCond = true;
-        } else if (!anatEntityIds.isEmpty()) {
-            sb.append("(")
-            .append(generateOneConditionParameterWhereClause(
+        if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
                     anatEntityIds, previousCond))
-            .append(" OR ")
+            .append(" AND ")
             .append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    anatEntityIds, previousCond))
-            .append(")");
+                    cellIds, previousCond));
             previousCond = true;
-        } else if (!cellIds.isEmpty()) {
+        } else if (!anatOrCellIds.isEmpty()) {
             sb.append("(")
             .append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    cellIds, previousCond))
+                    anatOrCellIds, previousCond))
             .append(" OR ")
             .append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    cellIds, previousCond))
+                    anatOrCellIds, previousCond))
             .append(")");
             previousCond = true;
         }
@@ -314,12 +285,9 @@ implements RawDataConditionDAO {
                     condFilter.getStrainIds(), previousCond));
             previousCond = true;
         }
-        if (previousCond) {
-            sb.append(")");
-        }
         return log.traceExit(sb.toString());
     }
-   
+
     private String generateOneConditionParameterWhereClause(RawDataConditionDAO.Attribute attr,
             Set<?> condValues, boolean previousFilter) {
         log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
@@ -332,6 +300,5 @@ implements RawDataConditionDAO {
         .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
         .append(")");
         return log.traceExit(sb.toString());
-        
     }
 }

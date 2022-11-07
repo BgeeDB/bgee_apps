@@ -176,13 +176,23 @@ public class TypeAdaptersUtils {
             EnumSet<DataType> allowedDataTypes)
             throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, gene, withSpeciesDataSource, allowedDataTypes);
+        this.writeSimplifiedGene(out, gene, true, withSpeciesDataSource, allowedDataTypes);
+        log.traceExit();
+    }
+    public void writeSimplifiedGene(JsonWriter out, Gene gene, boolean withSpeciesInfo,
+            boolean withSpeciesDataSource, EnumSet<DataType> allowedDataTypes) throws IOException {
+
+        log.traceEntry("{}, {}, {}, {}, {}", out, gene, withSpeciesInfo, withSpeciesDataSource,
+                allowedDataTypes);
         out.beginObject();
         out.name("geneId").value(gene.getGeneId());
         out.name("name").value(gene.getName());
 
         //Simplified display of Species
-        out.name("species");
-        writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
+        if (withSpeciesInfo) {
+            out.name("species");
+            writeSimplifiedSpecies(out, gene.getSpecies(), withSpeciesDataSource, allowedDataTypes);
+        }
 
         out.name("geneMappedToSameGeneIdCount").value(gene.getGeneMappedToSameGeneIdCount());
         out.endObject();

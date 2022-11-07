@@ -172,52 +172,12 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
-        // FILTER ON EXPERIMENT IDS
-        if (!expOrAssayIds.isEmpty()) {
-            sb.append("(");
-        }
-        if (!expIds.isEmpty()) {
-            sb.append(experimentIdTable).append(".")
-            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
-            sb.append(")");
+        // FILTER ON EXPERIMENT/ASSAY IDS
+        String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
+                experimentIdTable);
+        if (!expAssayIdFilter.isEmpty()) {
+            sb.append(expAssayIdFilter);
             filterFound = true;
-        }
-        // FILTER ON Chip IDS
-        if (!assayIds.isEmpty()) {
-            if(filterFound) {
-                sb.append(" AND ");
-            }
-            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
-            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
-            .append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(assayIds.size()));
-            sb.append(")");
-            filterFound = true;
-        }
-        // Filter on experiment or assay 
-        if (!expOrAssayIds.isEmpty()) {
-            if(filterFound) {
-                sb.append(" OR (");
-            }
-            //try to find experimentIds
-            sb.append(experimentIdTable).append(".")
-            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
-            sb.append(") OR ");
-            // try to find assayIds
-            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
-            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
-            .append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
-            sb.append(")");
-            if(filterFound) {
-                sb.append(")");
-            }
-            filterFound = true;
-        }
-        if (!expOrAssayIds.isEmpty()) {
-            sb.append(")");
         }
         // FILTER ON SPECIES ID
         if (speId != null) {
@@ -225,9 +185,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 sb.append(" AND ");
             }
             sb.append(speciesIdTableName).append(".")
-              .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ")
-              // only one species
-              .append(BgeePreparedStatement.generateParameterizedQueryString(1));
+              .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ?");
               filterFound = true;
         }
         // FILTER ON RAW CONDITION IDS
@@ -251,12 +209,64 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size()))
             .append(")");
+            filterFound = true;
         }
-        return sb.toString();
+        return log.traceExit(sb.toString());
+    }
+    private String generateExpAssayIdFilter(Set<String> expIds, Set<String> assayIds,
+            Set<String> expOrAssayIds, String experimentIdTable) {
+        log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, experimentIdTable);
+        StringBuilder sb = new StringBuilder();
+
+        if (!expOrAssayIds.isEmpty()) {
+            sb.append("(");
+        }
+        boolean filterFound = false;
+        if (!expIds.isEmpty()) {
+            sb.append(experimentIdTable).append(".")
+            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        // FILTER ON Chip IDS
+        if (!assayIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" AND ");
+            }
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(assayIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        // Filter on experiment or assay 
+        if (!expOrAssayIds.isEmpty()) {
+            if(filterFound) {
+                sb.append(" OR ");
+            }
+            //try to find experimentIds
+            sb.append(experimentIdTable).append(".")
+            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
+            sb.append(") OR ");
+            // try to find assayIds
+            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
+            sb.append(")");
+            filterFound = true;
+        }
+        if (!expOrAssayIds.isEmpty()) {
+            sb.append(")");
+        }
+
+        return log.traceExit(sb.toString());
     }
 
 
-    
     /**
      * Get a {@code Map} associating column names to corresponding {@code ESTLibraryDAO.Attribute}.
      * 

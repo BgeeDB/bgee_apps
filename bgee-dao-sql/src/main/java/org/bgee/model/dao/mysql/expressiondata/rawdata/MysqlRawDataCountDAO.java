@@ -13,13 +13,13 @@ import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attribute>
         implements RawDataCountDAO {
@@ -41,68 +41,107 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilters = 
-                Collections.unmodifiableList(new ArrayList<>(rawDataFilters));
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
         StringBuilder sb = new StringBuilder();
 
-        // if ask only for calls count then start from calls table. Otherwise start from
-        // assay table
-        String tableName = callsCount && !assayCount && !experimentCount ?
+        boolean needSpeciesId = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+        boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        boolean needChipTableInfo = orderedRawDataFilters.stream()
+                .anyMatch(e -> !e.getAssayIds().isEmpty() ||
+                        !e.getExperimentIds().isEmpty() ||
+                        !e.getExprOrAssayIds().isEmpty() ||
+                        !e.getRawDataCondIds().isEmpty());
+        //We don't need the chip table if call counts are requested but not experiment counts,
+        //and we don't need info about exp. or assay public IDs or cond. IDs.
+        //In that case the number of assays can be retrieved, if requested,
+        //by counting the number of distinct bgeeAffymetrixChipIds in the affymetrixProbeset table.
+        //And a filtering on speciesIds can be performed through the gene table directly.
+        boolean chipTable = !(callsCount && !experimentCount && !needChipTableInfo);
+        boolean probesetTable = needGeneId || callsCount;
+        assert chipTable || probesetTable:
+            "If chip table not needed then probeset table needed for call counts";
+        //We use the condition table only if we need to search for species,
+        //and that it was necessary to join to the chip table already
+        boolean condTable = needSpeciesId && chipTable;
+        //otherwise we use the gene table
+        boolean geneTable = needSpeciesId && !chipTable;
+        assert !(condTable && geneTable): "If condition table needed, we never use the gene table";
+        //In case we use a SELECT STRAIGHT_JOIN, we start from the probeset table
+        //if that table is needed and if no filtering is requested on chip table
+        String tableName = probesetTable && !needChipTableInfo && !condTable?
                 MySQLAffymetrixProbesetDAO.TABLE_NAME: MySQLAffymetrixChipDAO.TABLE_NAME;
-        boolean needJoinProbeset = rawDataFilters.stream()
-                .anyMatch(e -> !e.getGeneIds().isEmpty() || callsCount);
-        boolean needJoinCond = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
-        boolean needJoinChip = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
-                !e.getExperimentIds().isEmpty() || !e.getExprOrAssayIds().isEmpty() ||
-                !e.getRawDataCondIds().isEmpty() || e.getSpeciesId() != null);
         // generate SELECT clause
         sb.append("SELECT");
         boolean previousCount = false;
         if (experimentCount) {
-            sb.append(" count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-                    AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName() + ") as ")
-            .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
+            assert chipTable;
+            sb.append(" count(distinct ").append(tableName).append(".")
+                    .append(AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(") as ")
+                    .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
             previousCount = true;
         }
         if (assayCount) {
             if(previousCount) {
                 sb.append(",");
             }
-            sb.append(" count(distinct " + MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-                AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName() + ") as ")
-        .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            sb.append(" count(");
+            if (!probesetTable) {
+                //count(*) is faster than count(columnName)
+                //(see https://stackoverflow.com/a/3003482).
+                //If the probesets were not required, then
+                //number of lines = number of bgeeAffymetrixChipId
+                //(primary key of the affymetrixChip table)
+                sb.append("*");
+            } else {
+                //If probesets are needed, we need to add DISTINCT,
+                //because relation 1-to-many to table affymetrixProbeset.
+                sb.append("distinct ").append(tableName).append(".")
+                        .append(AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
+            }
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
             previousCount = true;
         }
         if (callsCount) {
+            assert probesetTable;
             if(previousCount) {
                 sb.append(",");
             }
-            sb.append(" count(distinct " + MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + 
-                    AffymetrixProbesetDAO.Attribute.ID.getTOFieldName() + ") as ")
-            .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
+            //Here, number of lines always equal to
+            //count(distinct affymetrixProbesetId, bgeeAffymetrixChipId)
+            //(the primary key of the table that we need to count).
+            //We wouldn't need the DISTINCT.
+            //And count(*) is faster than count(columnName)
+            sb.append(" count(*) as ")
+              .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
         }
 
         // generate FROM clause
-        if(tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME)) {
-            sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixProbesetDAO.TABLE_NAME,
-                    false, needJoinChip, false, needJoinCond, false));
-        } else if (tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME)) {
-            sb.append(this.generateFromClauseAffymetrix(MySQLAffymetrixChipDAO.TABLE_NAME,
-                    false, false, needJoinProbeset, needJoinCond, false));
-        } else {
-            throw log.throwing(new IllegalArgumentException("unrecognized table " + tableName));
-        }
+        sb.append(this.generateFromClauseAffymetrix(tableName,
+                //experiment join
+                false,
+                //chip join
+                !tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME) && chipTable,
+                //probeset join
+                !tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME) && probesetTable,
+                //cond join
+                condTable,
+                //gene join
+                geneTable));
 
         // generate WHERE CLAUSE
-        if(rawDataFilters != null || !rawDataFilters.isEmpty()) {
+        if(!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
-                    MySQLRawDataConditionDAO.TABLE_NAME));
+                    geneTable? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
                     null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
-            RawDataCountContainerTO to = resultSet.getAllTOs().iterator().next();
+            resultSet.next();
+            RawDataCountContainerTO to = resultSet.getTO();
             resultSet.close();
             return log.traceExit(to);
         } catch (SQLException e) {

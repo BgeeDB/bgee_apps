@@ -2,24 +2,26 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
@@ -301,4 +303,45 @@ implements RawDataConditionDAO {
         .append(")");
         return log.traceExit(sb.toString());
     }
+
+    @Override
+    public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
+            Collection<DAORawDataFilter> rawDataFilters,
+            RawDataConditionDAO.Attribute conditionAttribute) {
+        log.traceEntry("{}, {}", rawDataFilters, conditionAttribute);
+
+        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
+                rawDataFilters == null?
+                new ArrayList<>(): new ArrayList<>(rawDataFilters));
+        if (conditionAttribute == null || !conditionAttribute.isConditionParameter()) {
+            throw log.throwing(new IllegalArgumentException(conditionAttribute + " is not a"
+                    + " condition parameter"));
+        }
+        StringBuilder sb = new StringBuilder();
+        // generate SELECT
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
+                .Attribute.class), true, Set.of(conditionAttribute)));
+        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
+                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty() ||
+                !c.getGeneIds().isEmpty());
+        boolean needJoinProbeset = orderedRawDataFilters.stream().anyMatch(c -> !c.getGeneIds().isEmpty());
+        //generate FROM
+        sb.append(this.generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, needJoinProbeset,
+                false, false));
+        if (!orderedRawDataFilters.isEmpty()) {
+            // generate WHERE
+            sb.append(" WHERE ")
+            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
+                    TABLE_NAME));
+        }
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    null, null);
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+        
+    }
+    
 }

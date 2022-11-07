@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -190,19 +191,17 @@ implements RawDataConditionDAO {
         }
         int offsetParamIndex = paramIndex;
         for (DAORawDataConditionFilter condFilter: conditionFilters) {
-            Set<String> anatOrCellIds = condFilter.getAnatEntityIds().isEmpty()?
-                    condFilter.getCellTypeIds(): condFilter.getAnatEntityIds();
+            // It is possible that cell type terms are used to annotate the anat. entities.
+            // In order to solve this potential issue, we always check anat. entities and cell types
+            // in both columns.
+            Set<String> anatEntityCellTypeIds = new HashSet<>(condFilter.getAnatEntityIds());
+            anatEntityCellTypeIds.addAll(condFilter.getCellTypeIds());
 
-            if (!condFilter.getAnatEntityIds().isEmpty() && !condFilter.getCellTypeIds().isEmpty()) {
-                stmt.setStrings(offsetParamIndex, condFilter.getAnatEntityIds(), true);
-                offsetParamIndex += condFilter.getAnatEntityIds().size();
-                stmt.setStrings(offsetParamIndex, condFilter.getCellTypeIds(), true);
-                offsetParamIndex += condFilter.getCellTypeIds().size();
-            } else if (!anatOrCellIds.isEmpty()) {
-                stmt.setStrings(offsetParamIndex, anatOrCellIds, true);
-                offsetParamIndex += anatOrCellIds.size();
-                stmt.setStrings(offsetParamIndex, anatOrCellIds, true);
-                offsetParamIndex += anatOrCellIds.size();
+            if (!anatEntityCellTypeIds.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
+                offsetParamIndex += anatEntityCellTypeIds.size();
+                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
+                offsetParamIndex += anatEntityCellTypeIds.size();
             }
             if (!condFilter.getSpeciesIds().isEmpty()) {
                 stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
@@ -235,34 +234,28 @@ implements RawDataConditionDAO {
         Set<String> cellIds = condFilter.getCellTypeIds();
 
         // It is possible that cell type terms are used to annotate the anat. entities.
-        // In order to solve this potential issue :
-        // 1. if only anat. entities are provided then check for these annotation in both
-        //    anat. entities and cell type columns
-        // 2. if only cell types provided then check for these annotation in both anat.
-        //    entities and cell type columns
-        Set<String> anatOrCellIds = anatEntityIds.isEmpty()? cellIds: anatEntityIds;
+        // In order to solve this potential issue, we always check anat. entities and cell types
+        // in both columns.
+        Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
+        anatEntityCellTypeIds.addAll(cellIds);
         boolean previousCond = false;
-        if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
-            sb.append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    anatEntityIds, previousCond))
-            .append(" AND ")
-            .append(generateOneConditionParameterWhereClause(
-                    RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    cellIds, previousCond));
-            previousCond = true;
-        } else if (!anatOrCellIds.isEmpty()) {
+        if (!anatEntityCellTypeIds.isEmpty()) {
             sb.append("(")
             .append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.ANAT_ENTITY_ID,
-                    anatOrCellIds, previousCond))
-            .append(" OR ")
-            .append(generateOneConditionParameterWhereClause(
+                    anatEntityCellTypeIds, previousCond));
+            if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
+                sb.append(" AND ");
+            } else {
+                sb.append(" OR ");
+            }
+            sb.append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.CELL_TYPE_ID,
-                    anatOrCellIds, previousCond))
+                    anatEntityCellTypeIds, previousCond))
             .append(")");
             previousCond = true;
         }
+
         if (!condFilter.getSpeciesIds().isEmpty()) {
             sb.append(generateOneConditionParameterWhereClause(
                     RawDataConditionDAO.Attribute.SPECIES_ID,

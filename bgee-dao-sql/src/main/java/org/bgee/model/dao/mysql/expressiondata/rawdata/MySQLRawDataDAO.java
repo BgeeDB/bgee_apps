@@ -112,6 +112,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         .Attribute.ID.getTOFieldName())
                 .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
                         + AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
+            } else if (tableName.equals(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                sb.append(MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO
+                        .Attribute.ID.getTOFieldName())
+                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
+                        + AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName());
+            } 
+            else {
+                throw log.throwing(new IllegalArgumentException("join AffymetrixChip to " +
+            tableName + " is not yet implemented"));
             }
         }
         // join affymetrixProbeset table

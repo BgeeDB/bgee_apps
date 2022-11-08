@@ -452,6 +452,16 @@ public class RawDataService extends CommonService {
         Map<Integer, RawDataCondition> requestedRawDataCondMap = daoCondFiltersToUse.isEmpty()? new HashMap<>():
             loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
                 null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
+        //Maybe we have no matching conditions for some RawDataConditionFilters,
+        //it means we should have no result in the related species.
+        //we have to identify the species for which it is the case, to discard them,
+        //otherwise, with no condition IDs specified, we could retrieve all results
+        //for that species instead of no result.
+        //We need this Set to implement the discarding below.
+        Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
+                .filter(cf -> !cf.areAllCondParamFiltersEmpty())
+                .map(f -> f.getSpeciesId())
+                .collect(Collectors.toSet());
 
         //Finally, we produce the DAORawDataFilters that will be used by the RawDataLoader
         //when calling the raw data DAOs
@@ -464,13 +474,29 @@ public class RawDataService extends CommonService {
                     .filter(e -> speciesId == e.getValue().getSpeciesId())
                     .map(e -> e.getKey())
                     .collect(Collectors.toSet());
+            if (rawCondIds.isEmpty() && speciesIdsWithCondRequested.contains(speciesId)) {
+                //there should be no results in that species, since there was no condition
+                //matching the query. If we didn't return null, we could retrieve all results
+                //in that species, instead of no result.
+                log.debug("No RawDataCondition matching the condition filters for species ID: {}",
+                        speciesId);
+                return null;
+            }
             if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
                 return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
             }
             return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
-        }).collect(Collectors.toSet());
+        })
+        .filter(f -> f != null)
+        .collect(Collectors.toSet());
+
+        if (!speciesIds.isEmpty() && daoFilters.isEmpty()) {
+            //it means that there is no conditions matching the query in all species,
+            //we return null to signal there will be no result at all.
+            return log.traceExit((RawDataProcessedFilter) null);
+        }
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,
                 requestedGeneMap, requestedRawDataCondMap,

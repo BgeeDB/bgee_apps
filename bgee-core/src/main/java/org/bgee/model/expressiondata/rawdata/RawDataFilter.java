@@ -45,7 +45,9 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
      *                              experiments or assays, in case it is not known which {@code String}s
      *                              are experiment IDs, and which are assay IDs.
      *                              Only results part of these experiments and/or assays will be returned.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException If a RawDataConditionFilter queries all conditions in a species,
+                                        while another RawDataConditionFilter queries
+                                        some more specific conditions in that species
      */
     public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
             Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
@@ -74,7 +76,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             return noFilter && filter;
         })) {
             throw log.throwing(new IllegalArgumentException(
-                    "A RawDataConditionFilter queries all conditions in a species,"
+                    "A RawDataConditionFilter queries all conditions in a species, "
                     + "while another RawDataConditionFilter queries some more specific conditions "
                     + "in that species"));
         }

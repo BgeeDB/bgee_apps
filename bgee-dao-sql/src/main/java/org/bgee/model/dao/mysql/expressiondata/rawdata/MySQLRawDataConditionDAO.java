@@ -300,15 +300,15 @@ implements RawDataConditionDAO {
     @Override
     public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
             Collection<DAORawDataFilter> rawDataFilters,
-            RawDataConditionDAO.Attribute conditionAttribute) {
-        log.traceEntry("{}, {}", rawDataFilters, conditionAttribute);
+            Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}", rawDataFilters, attributes);
 
         final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
                 rawDataFilters == null?
                 new ArrayList<>(): new ArrayList<>(rawDataFilters));
-        if (conditionAttribute == null || !conditionAttribute.isConditionParameter()) {
-            throw log.throwing(new IllegalArgumentException(conditionAttribute + " is not a"
-                    + " condition parameter"));
+        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
         }
         StringBuilder sb = new StringBuilder();
         // generate SELECT

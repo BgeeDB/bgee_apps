@@ -103,24 +103,23 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieves distinct values of one raw condition parameter used in data annotations 
-     * for requested raw data filters. 
+     * Retrieves distinct raw conditions used in data annotations for requested raw data filters. 
      * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results
      * are retrieved.
      *
      * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                              filters to use to retrieve <strong>raw</strong> condition.
-     * @param conditionAttribute    A {@code RawDataConditionDAO.Attribute}s defining the attribute
-     *                              to populate in the returned {@code RawDataConditionTO}s.
-     *                              Can not be null.
+     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
+     *                              defining the attributes to populate in the returned
+     *                              {@code RawDataConditionTO}s.
      * @return                      A {@code RawDataConditionTOResultSet} containing the requested
      *                              raw data conditions populated with the selected 
      *                              {@code RawDataConditionDAO.Attribute}.
      * @throws DAOException         If an error occurred while accessing the data source.
      */
     public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters, RawDataConditionDAO.Attribute conditionAttribute);
+            Collection<DAORawDataFilter> rawDataFilters, Collection<Attribute> attributes);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataConditionTO}s

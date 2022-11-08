@@ -26,6 +26,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.JobResultNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.dao.api.exception.QueryInterruptedException;
+import org.bgee.model.gene.GeneNotFoundException;
 import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.view.ErrorDisplay;
@@ -365,6 +366,8 @@ public class FrontController extends HttpServlet {
                 errorDisplay.displayUnsupportedOperationException();
             } else if (realException instanceof TooManyJobsException) {
                 errorDisplay.displayControllerException((TooManyJobsException) realException);
+            } else if (realException instanceof GeneNotFoundException) {
+                errorDisplay.displayControllerException(new InvalidRequestException(e.getMessage()));
             } else {
                 errorDisplay.displayUnexpectedError();
             } 

@@ -92,6 +92,7 @@ public class RawDataCountContainer {
             dataTypes.add(DataType.FULL_LENGTH);
         }
 
+        //We will use defensive copying in the getter, there is no unmodifiable EnumSet
         this.requestedDataTypes = dataTypes;
     }
 
@@ -145,7 +146,8 @@ public class RawDataCountContainer {
     }
 
     public EnumSet<DataType> getRequestedDataTypes() {
-        return requestedDataTypes;
+        //Defensive copying, there is no unmodifiable EnumSet
+        return EnumSet.copyOf(requestedDataTypes);
     }
 
     @Override

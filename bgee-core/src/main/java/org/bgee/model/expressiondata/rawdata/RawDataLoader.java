@@ -342,15 +342,17 @@ public class RawDataLoader extends CommonService {
         EnumSet<InformationType> requestedInfoTypes = getInformationTypes(infoTypes);
         final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
         // create booleans used to query the DAO
-        boolean withCalls = requestedInfoTypes.contains(InformationType.CALL);
+        boolean withCall = requestedInfoTypes.contains(InformationType.CALL);
         boolean withAssay = requestedInfoTypes.contains(InformationType.ASSAY);
         boolean withExperiment = requestedInfoTypes.contains(InformationType.EXPERIMENT);
         RawDataCountContainerTO countContainerTOWithNulls =
-                new RawDataCountContainerTO(null, null, null);
+                new RawDataCountContainerTO(null, null, null, null);
         RawDataCountContainerTO noResultCountContainerTO = new RawDataCountContainerTO(
                         withExperiment? 0: null,
                         withAssay? 0: null,
-                        withCalls? 0: null);
+                        withCall? 0: null,
+                        //RNA-Seq library count
+                        withAssay? 0: null);
 
         RawDataCountContainerTO affyCountTO = countContainerTOWithNulls;
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -361,7 +363,7 @@ public class RawDataLoader extends CommonService {
             }
         } else {
             if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-                affyCountTO = this.loadAffymetrixDataCount(withExperiment, withAssay, withCalls);
+                affyCountTO = this.loadAffymetrixDataCount(withExperiment, withAssay, withCall);
             }
         }
 
@@ -378,13 +380,14 @@ public class RawDataLoader extends CommonService {
 
         return log.traceExit(new RawDataCountContainer(
                 affyCountTO.getExperimentCount(), affyCountTO.getAssayCount(),
-                affyCountTO.getCallsCount(), inSituCountTO.getExperimentCount(),
-                inSituCountTO.getAssayCount(), inSituCountTO.getCallsCount(),
-                estCountTO.getAssayCount(), estCountTO.getCallsCount(),
+                affyCountTO.getCallCount(), inSituCountTO.getExperimentCount(),
+                inSituCountTO.getAssayCount(), inSituCountTO.getCallCount(),
+                estCountTO.getAssayCount(), estCountTO.getCallCount(),
                 bulkRnaSeqCountTO.getExperimentCount(), bulkRnaSeqCountTO.getAssayCount(),
-                bulkRnaSeqCountTO.getCallsCount(), singleCellRnaSeqCountTO.getExperimentCount(),
-                singleCellRnaSeqCountTO.getAssayCount(), singleCellRnaSeqCountTO.getRnaSeqLibraryCount(),
-                singleCellRnaSeqCountTO.getCallsCount()));
+                bulkRnaSeqCountTO.getRnaSeqLibraryCount(), bulkRnaSeqCountTO.getCallCount(),
+                singleCellRnaSeqCountTO.getExperimentCount(), singleCellRnaSeqCountTO.getAssayCount(),
+                singleCellRnaSeqCountTO.getRnaSeqLibraryCount(),
+                singleCellRnaSeqCountTO.getCallCount()));
     }
 
 //*****************************************************************************************
@@ -592,7 +595,7 @@ public class RawDataLoader extends CommonService {
                     withExperiment, withAssay, updatedWithCall);
         }
         assert probesetCountTO != null || affyRemainingCountTO != null;
-        assert probesetCountTO == null || probesetCountTO.getCallsCount() != null;
+        assert probesetCountTO == null || probesetCountTO.getCallCount() != null;
 
         return log.traceExit(new RawDataCountContainerTO(
                 //experiment count
@@ -600,8 +603,8 @@ public class RawDataLoader extends CommonService {
                 //assay count
                 affyRemainingCountTO != null? affyRemainingCountTO.getAssayCount(): null,
                 //call count
-                probesetCountTO != null? probesetCountTO.getCallsCount():
-                    affyRemainingCountTO.getCallsCount()));
+                probesetCountTO != null? probesetCountTO.getCallCount():
+                    affyRemainingCountTO.getCallCount()));
     }
 
 //*****************************************************************************************

@@ -69,10 +69,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         assert !(condTable && geneTable): "If condition table needed, we never use the gene table";
         //In case we use a SELECT STRAIGHT_JOIN, we start from the probeset table
         //if that table is needed and if no filtering is requested on chip table
-        String tableName = probesetTable && !needChipTableInfo && !condTable?
+        String tableName = probesetTable && (!needChipTableInfo && !condTable || needGeneId)?
                 MySQLAffymetrixProbesetDAO.TABLE_NAME: MySQLAffymetrixChipDAO.TABLE_NAME;
         // generate SELECT clause
-        sb.append("SELECT");
+        sb.append("SELECT STRAIGHT_JOIN");
         boolean previousCount = false;
         if (experimentCount) {
             assert chipTable;

@@ -2494,6 +2494,20 @@ public class RequestParameters {
         return this.getValues(this.getUrlParametersInstance().getParamExpAssayId());
     }
     /**
+     * Convenient method to retrieve value of the parameter returned by
+     * {@link URLParameters#getParamExperimentId()}. Equivalent to calling
+     * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
+     *
+     * @return  A {@code String} that is the value of
+     *          the {@code exp_id} URL parameter. Can be {@code null}.
+     */
+    public String getExperimentId() {
+        log.traceEntry();
+        return log.traceExit(this.getFirstValue(
+                this.getUrlParametersInstance().getParamExperimentId()));
+    }
+
+    /**
      * Convenient method to identify whether a {@code TRUE} value was sent for the URL parameter
      * {@link URLParameters#getParamGetSpeciesList()}.
      *

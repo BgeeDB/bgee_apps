@@ -588,6 +588,13 @@ public class URLParameters {
     private static final Parameter<String> EXP_ASSAY_ID = new Parameter<String>("exp_assay_id",
             true, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE, DEFAULT_FORMAT,
             String.class);
+    /**
+     * A {@code Parameter<String>} defining the requested experiment ID.
+     * Corresponds to the URL parameter "exp_id".
+     */
+    private static final Parameter<String> EXPERIMENT_ID = new Parameter<String>("exp_id",
+            false, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE, DEFAULT_FORMAT,
+            String.class);
 
     /**
      * A {@code Parameter<Boolean>} used to define whether to obtain the list of species.
@@ -672,6 +679,7 @@ public class URLParameters {
             CELL_TYPE_DESCENDANT,
             STAGE_DESCENDANT,
             EXP_ASSAY_ID,
+            EXPERIMENT_ID,
             GET_SPECIES_LIST,
             GET_RESULTS,
             GET_RESULT_COUNT,
@@ -1071,6 +1079,13 @@ public class URLParameters {
      */
     public Parameter<String> getParamExpAssayId(){
         return EXP_ASSAY_ID;
+    }
+    /**
+     * A {@code Parameter<String>} defining the requested experiment ID.
+     * Corresponds to the URL parameter "exp_id".
+     */
+    public Parameter<String> getParamExperimentId(){
+        return EXPERIMENT_ID;
     }
     /**
      * @return  A {@code Parameter<Boolean>} used to define whether to obtain the list of species.

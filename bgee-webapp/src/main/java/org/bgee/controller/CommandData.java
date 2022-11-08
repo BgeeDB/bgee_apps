@@ -348,8 +348,11 @@ public class CommandData extends CommandParent {
         //are computing the same RawDataProcessedFilter.
         RawDataProcessedFilter processedFilter = RAW_DATA_PROCESSED_FILTER_CACHE.get(filter);
         if (processedFilter == null) {
+            log.debug("Cache miss for filter: {}", filter);
             processedFilter = rawDataService.processRawDataFilter(filter);
             RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+        } else {
+            log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
         }
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }

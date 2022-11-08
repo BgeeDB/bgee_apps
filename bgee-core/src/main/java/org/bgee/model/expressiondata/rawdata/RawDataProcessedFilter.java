@@ -69,9 +69,6 @@ public class RawDataProcessedFilter {
      */
     private final Map<Integer, Source> sourceMap;
 
-    RawDataProcessedFilter() {
-        this(null, null, null, null, null, null, null);
-    }
     RawDataProcessedFilter(RawDataFilter rawDataFilter,
             Collection<DAORawDataFilter> daoFilters,
             Map<Integer, Gene> requestedGeneMap,
@@ -81,8 +78,10 @@ public class RawDataProcessedFilter {
 
         this.rawDataFilter = rawDataFilter;
 
-        this.daoRawDataFilters = Collections.unmodifiableSet(daoFilters == null? new HashSet<>():
-            new HashSet<>(daoFilters));
+        //When daoFilters are null, it means that there was no matching conditions
+        //for the parameters, and that there will be no results
+        this.daoRawDataFilters = daoFilters == null? null:
+            Collections.unmodifiableSet(new HashSet<>(daoFilters));
 
         this.requestedGeneMap = Collections.unmodifiableMap(requestedGeneMap == null?
                 new HashMap<>(): new HashMap<>(requestedGeneMap));

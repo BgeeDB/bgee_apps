@@ -25,7 +25,6 @@ package org.bgee.model.expressiondata.rawdata;
 //}
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -230,9 +229,11 @@ public class RawDataLoader extends CommonService {
     RawDataLoader(ServiceFactory serviceFactory, RawDataProcessedFilter rawDataProcessedFilter) {
         super(serviceFactory);
 
-        //null value is accepted for rawDataProcessedFilter,
-        //it means that the inital processing did not allow to identify
-        //any result
+        if (rawDataProcessedFilter == null) {
+            //we need it at least to retrieve, species, gene biotypes, and sources
+            throw log.throwing(new IllegalArgumentException(
+                    "A RawDataProcessedFilter must be provided"));
+        }
         this.rawDataProcessedFilter = rawDataProcessedFilter;
 
         this.microarrayExperimentDAO = this.getDaoManager().getMicroarrayExperimentDAO();
@@ -285,16 +286,18 @@ public class RawDataLoader extends CommonService {
         //*****************************************************************************************
         final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
 
-        if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-            if (this.getRawDataProcessedFilter() == null) {
-                //If we already know we can't retrieve any result, because we could already
-                //not identify matching conditions and/or genes, we create directly a container
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
                 affyTempRawDataContainer = this.getNoResultAffymetrixTempContainer(infoType);
-            } else {
-                //otherwise we query the data
-                affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
+                allTempContainers.add(affyTempRawDataContainer);
             }
-            allTempContainers.add(affyTempRawDataContainer);
+        } else {
+            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
+                affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
+                allTempContainers.add(affyTempRawDataContainer);
+            }
         }
 
         //*****************************************************************************************
@@ -303,16 +306,12 @@ public class RawDataLoader extends CommonService {
         //*****************************************************************************************
         Set<Integer> allRawDataCondIds = new HashSet<>();
         Set<Integer> allBgeeGeneIds = new HashSet<>();
-        Map<Integer, RawDataCondition> condMap = new HashMap<>();
-        Map<Integer, Gene> geneMap = new HashMap<>();
-        if (this.getRawDataProcessedFilter() != null) {
-            for (TempRawDataContainer<?, ?, ?, ?> tempContainer: allTempContainers) {
-                allRawDataCondIds.addAll(tempContainer.rawDataConditionIds);
-                allBgeeGeneIds.addAll(tempContainer.bgeeGeneIds);
-            }
-            condMap = this.loadCompleteRawDataConditionMap(allRawDataCondIds);
-            geneMap = this.loadCompleteGeneMap(allBgeeGeneIds);
+        for (TempRawDataContainer<?, ?, ?, ?> tempContainer: allTempContainers) {
+            allRawDataCondIds.addAll(tempContainer.rawDataConditionIds);
+            allBgeeGeneIds.addAll(tempContainer.bgeeGeneIds);
         }
+        Map<Integer, RawDataCondition> condMap = this.loadCompleteRawDataConditionMap(allRawDataCondIds);
+        Map<Integer, Gene> geneMap = this.loadCompleteGeneMap(allBgeeGeneIds);
 
         //*****************************************************************************************
         //Now we load the actual data for each data type
@@ -354,11 +353,14 @@ public class RawDataLoader extends CommonService {
                         withCalls? 0: null);
 
         RawDataCountContainerTO affyCountTO = countContainerTOWithNulls;
-        if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-            if (this.getRawDataProcessedFilter() == null) {
-                //If we already know there will be no results
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
                 affyCountTO = noResultCountContainerTO;
-            } else {
+            }
+        } else {
+            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
                 affyCountTO = this.loadAffymetrixDataCount(withExperiment, withAssay, withCalls);
             }
         }
@@ -398,6 +400,7 @@ public class RawDataLoader extends CommonService {
 
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
                 .getDaoRawDataFilters();
+        assert daoRawDataFilters != null;
 
         Set<Integer> bgeeChipIds = new HashSet<>();
         Set<Integer> bgeeGeneIds = new HashSet<>();
@@ -572,6 +575,7 @@ public class RawDataLoader extends CommonService {
         boolean noProbesetFilteringForAssayExpCount = !withExperiment && !withAssay ||
                 filter.getGeneFilters().stream().allMatch(gf -> gf.getGeneIds().isEmpty());
         //then, if requested, we count the probesets in a separate query for faster results.
+        //FIXME FB: actually, it should be the DAO doing this logic
         RawDataCountContainerTO probesetCountTO = null;
         boolean updatedWithCall = withCall;
         if (withCall && noNeedChipInfo && noProbesetFilteringForAssayExpCount) {

@@ -458,6 +458,9 @@ public class RawDataService extends CommonService {
         //otherwise, with no condition IDs specified, we could retrieve all results
         //for that species instead of no result.
         //We need this Set to implement the discarding below.
+        //
+        //Of note, we don't have this problem with gene IDs: users can only select valid gene IDs,
+        //and loadGeneMapFromGeneFilters throws an exception of a gene ID is not found.
         Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
                 .filter(cf -> !cf.areAllCondParamFiltersEmpty())
                 .map(f -> f.getSpeciesId())
@@ -478,6 +481,8 @@ public class RawDataService extends CommonService {
                 //there should be no results in that species, since there was no condition
                 //matching the query. If we didn't return null, we could retrieve all results
                 //in that species, instead of no result.
+                //Of note, we don't have this problem with gene IDs: users can only select valid gene IDs,
+                //and loadGeneMapFromGeneFilters throws an exception of a gene ID is not found.
                 log.debug("No RawDataCondition matching the condition filters for species ID: {}",
                         speciesId);
                 return null;
@@ -494,8 +499,9 @@ public class RawDataService extends CommonService {
 
         if (!speciesIds.isEmpty() && daoFilters.isEmpty()) {
             //it means that there is no conditions matching the query in all species,
-            //we return null to signal there will be no result at all.
-            return log.traceExit((RawDataProcessedFilter) null);
+            //we make the daoFilter null to signal there will be no result at all,
+            //as opposed to when no filtering is requested (empty daoFilters as well)
+            daoFilters = null;
         }
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,

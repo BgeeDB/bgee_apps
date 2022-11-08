@@ -81,6 +81,13 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
             .append(generateWhereClause(orderedRawDataFilter, MySQLAffymetrixChipDAO.TABLE_NAME,
                     needJoinGene ? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
         }
+
+        // generate ORDER BY
+        sb.append(" ORDER BY")
+        .append(" " + TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID
+                .getTOFieldName())
+        .append(", " + TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute.ID.getTOFieldName());
+
         //generate offset and limit
         if (limit != null) {
             sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");

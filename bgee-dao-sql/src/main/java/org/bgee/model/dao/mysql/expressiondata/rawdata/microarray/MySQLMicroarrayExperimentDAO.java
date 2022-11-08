@@ -74,6 +74,11 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
             sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
                     MySQLMicroarrayExperimentDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }
+
+        // generate ORDER BY
+        sb.append(" ORDER BY")
+        .append(" " + TABLE_NAME + "." + MicroarrayExperimentDAO.Attribute.ID.getTOFieldName());
+
         //generate offset and limit
         if (limit != null) {
             sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");

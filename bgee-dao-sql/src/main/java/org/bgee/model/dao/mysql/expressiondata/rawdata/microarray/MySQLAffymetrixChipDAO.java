@@ -67,6 +67,14 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
                     MySQLAffymetrixChipDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }
+
+        // generate ORDER BY
+        sb.append(" ORDER BY")
+        .append(" " + TABLE_NAME + "." + AffymetrixChipDAO.Attribute.EXPERIMENT_ID
+                .getTOFieldName())
+        .append(", " + TABLE_NAME + "." + AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID
+                .getTOFieldName());
+
         //generate offset and limit
         if (limit != null) {
             sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");

@@ -1,6 +1,9 @@
 package org.bgee.model.expressiondata.rawdata;
 
+import java.util.EnumSet;
 import java.util.Objects;
+
+import org.bgee.model.expressiondata.baseelements.DataType;
 
 /**
  * A class allowing to contain count for all potential raw data resulting
@@ -28,6 +31,8 @@ public class RawDataCountContainer {
     private final Integer singleCellRnaSeqLibraryCount;
     private final Integer singleCellRnaSeqCallsCount;
 
+    //Not used in equals/hashCode since it is derived from the other fields
+    private final EnumSet<DataType> requestedDataTypes;
     
     // null if not queried and 0 if no results
     //FIXME: we also need bulkRnaSeqLibraryCount (example: BRB-Seq data)
@@ -37,21 +42,54 @@ public class RawDataCountContainer {
             Integer bulkRnaSeqAssayCount, Integer bulkRnaSeqCallsCount, Integer singleCellRnaSeqExperimentCount,
             Integer singleCellRnaSeqAssayCount, Integer singleCellRnaSeqLibraryCount,
             Integer singleCellRnaSeqCallsCount) {
+        EnumSet<DataType> dataTypes = EnumSet.noneOf(DataType.class);
+
         this.affymetrixExperimentCount = affymetrixExperimentCount;
         this.affymetrixAssayCount = affymetrixAssayCount;
         this.affymetrixCallsCount = affymetrixCallsCount;
+        if (this.affymetrixExperimentCount != null ||
+                this.affymetrixAssayCount != null ||
+                this.affymetrixCallsCount != null) {
+            dataTypes.add(DataType.AFFYMETRIX);
+        }
+
         this.insituExperimentCount = insituExperimentCount;
         this.insituAssayCount = insituAssayCount;
         this.insituCallsCount = insituCallsCount;
+        if (this.insituExperimentCount != null ||
+                this.insituAssayCount != null ||
+                this.insituCallsCount != null) {
+            dataTypes.add(DataType.IN_SITU);
+        }
+
         this.estAssayCount = estAssayCount;
         this.estCallsCount = estCallsCount;
+        if (this.estAssayCount != null ||
+                this.estCallsCount != null) {
+            dataTypes.add(DataType.EST);
+        }
+
         this.bulkRnaSeqExperimentCount = bulkRnaSeqExperimentCount;
         this.bulkRnaSeqAssayCount = bulkRnaSeqAssayCount;
         this.bulkRnaSeqCallsCount = bulkRnaSeqCallsCount;
+        if (this.bulkRnaSeqExperimentCount != null ||
+                this.bulkRnaSeqAssayCount != null ||
+                this.bulkRnaSeqCallsCount != null) {
+            dataTypes.add(DataType.RNA_SEQ);
+        }
+
         this.singleCellRnaSeqExperimentCount = singleCellRnaSeqExperimentCount;
         this.singleCellRnaSeqAssayCount = singleCellRnaSeqAssayCount;
         this.singleCellRnaSeqLibraryCount = singleCellRnaSeqLibraryCount;
         this.singleCellRnaSeqCallsCount = singleCellRnaSeqCallsCount;
+        if (this.singleCellRnaSeqExperimentCount != null ||
+                this.singleCellRnaSeqAssayCount != null ||
+                this.singleCellRnaSeqLibraryCount != null ||
+                this.singleCellRnaSeqCallsCount != null) {
+            dataTypes.add(DataType.FULL_LENGTH);
+        }
+
+        this.requestedDataTypes = dataTypes;
     }
 
     public Integer getAffymetrixExperimentCount() {
@@ -99,6 +137,11 @@ public class RawDataCountContainer {
     public Integer getSingleCellRnaSeqCallsCount() {
         return singleCellRnaSeqCallsCount;
     }
+
+    public EnumSet<DataType> getRequestedDataTypes() {
+        return requestedDataTypes;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(affymetrixAssayCount, affymetrixCallsCount, bulkRnaSeqAssayCount, bulkRnaSeqCallsCount,
@@ -131,6 +174,7 @@ public class RawDataCountContainer {
                 && Objects.equals(singleCellRnaSeqExperimentCount, other.singleCellRnaSeqExperimentCount)
                 && Objects.equals(singleCellRnaSeqLibraryCount, other.singleCellRnaSeqLibraryCount);
     }
+
     @Override
     public String toString() {
         return "RawDataCountContainer [affymetrixExperimentCount=" + affymetrixExperimentCount
@@ -141,8 +185,7 @@ public class RawDataCountContainer {
                 + bulkRnaSeqAssayCount + ", bulkRnaSeqCallsCount=" + bulkRnaSeqCallsCount
                 + ", singleCellRnaSeqExperimentCount=" + singleCellRnaSeqExperimentCount
                 + ", singleCellRnaSeqAssayCount=" + singleCellRnaSeqAssayCount + ", singleCellRnaSeqLibraryCount="
-                + singleCellRnaSeqLibraryCount + ", singleCellRnaSeqCallsCount=" + singleCellRnaSeqCallsCount + "]";
+                + singleCellRnaSeqLibraryCount + ", singleCellRnaSeqCallsCount=" + singleCellRnaSeqCallsCount
+                + ", requestedDataTypes=" + requestedDataTypes + "]";
     }
-
-    
 }

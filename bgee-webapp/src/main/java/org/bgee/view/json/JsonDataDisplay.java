@@ -3,6 +3,7 @@ package org.bgee.view.json;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +14,8 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.Assay;
+import org.bgee.model.expressiondata.rawdata.Experiment;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
 import org.bgee.model.species.Species;
@@ -111,6 +114,19 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         if (rawDataCountContainer != null) {
             responseMap.put("resultCount", rawDataCountContainer);
         }
+
+        this.sendResponse("Data page", responseMap);
+        log.traceExit();
+    }
+
+    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
+            DataType dataType) {
+        log.traceEntry("{}, {}, {}", experiment, assays, dataType);
+
+        LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
+        responseMap.put("dataType", dataType);
+        responseMap.put("experiment", experiment);
+        responseMap.put("assays", assays);
 
         this.sendResponse("Data page", responseMap);
         log.traceExit();

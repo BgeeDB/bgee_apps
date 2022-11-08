@@ -130,6 +130,7 @@ public class RawDataProcessedFilter {
 
     /**
      * @return  The {@code RawDataFilter} originally used to create this {@code RawDataProcessedFilter}.
+     *          Can be {@code null} (equivalent to requesting all results).
      */
     public RawDataFilter getRawDataFilter() {
         return this.rawDataFilter;

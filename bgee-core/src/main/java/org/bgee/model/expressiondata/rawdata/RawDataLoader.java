@@ -181,6 +181,10 @@ public class RawDataLoader extends CommonService {
      * An {@code int} that is the maximum allowed number of results
      * to retrieve in one method call, for each requested data type independently.
      * Value: 10,000.
+     * <p>
+     * Note that this limit should remain above the max. number of assays in an experiment,
+     * to be able to retrieve at once all assays part of one specific experiment
+     * (specified through {@link RawDataFilter#getExperimentIds()}).
      */
     public static int LIMIT_MAX = 10000;
     /**

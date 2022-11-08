@@ -3,6 +3,7 @@ package org.bgee.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
+import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.LRUCache;
 import org.bgee.model.ServiceFactory;
@@ -11,6 +12,8 @@ import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.Assay;
+import org.bgee.model.expressiondata.rawdata.Experiment;
 import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
@@ -23,18 +26,22 @@ import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.job.Job;
 import org.bgee.model.job.JobService;
+import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
+import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.ontology.Ontology;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.ViewFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -161,6 +168,135 @@ public class CommandData extends CommandParent {
         }
 
         //Form details
+        DataFormDetails formDetails = this.loadFormDetails();
+
+        //Actions: raw data results, processed expression values
+        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
+                RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+
+            this.processRawDataPage(speciesList, formDetails);
+
+        } else if (this.requestParameters.getExperimentId() != null) {
+
+            this.processExperimentPage();
+        }
+
+
+        log.traceExit();
+    }
+
+    private void processRawDataPage(List<Species> speciesList, DataFormDetails formDetails)
+            throws InvalidRequestException, ThreadAlreadyWorkingException,
+            TooManyJobsException, IOException {
+        log.traceEntry("{}, {}", speciesList, formDetails);
+
+        log.debug("Action identified: {}", this.requestParameters.getAction());
+        RawDataContainer rawDataContainer = null;
+        RawDataCountContainer rawDataCountContainer = null;
+
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+
+        //Queries that required a RawDataLoader
+        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
+                this.requestParameters.isGetFilters()) {
+            log.debug("Loading RawDataLoader");
+            //try...finally block to manage number of jobs per users,
+            //to limit the concurrent number of queries a user can make
+            Job job = null;
+            try {
+                job = this.jobService.registerNewJob(this.user.getUUID().toString());
+                job.startJob();
+                RawDataLoader rawDataLoader = this.loadRawDataLoader();
+
+                //Raw data results
+                if (this.requestParameters.isGetResults()) {
+                    rawDataContainer = this.loadRawDataResults(rawDataLoader, dataTypes);
+                }
+                //Raw data counts
+                if (this.requestParameters.isGetResultCount()) {
+                    rawDataCountContainer = this.loadRawDataCounts(rawDataLoader, dataTypes);
+                }
+
+                job.completeWithSuccess();
+            } finally {
+                if (job != null) {
+                    job.release();
+                }
+            }
+        }
+        DataDisplay display = viewFactory.getDataDisplay();
+        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer);
+
+        log.traceExit();
+    }
+
+    private void processExperimentPage() throws PageNotFoundException, IOException {
+        log.traceEntry();
+
+        //We don't use the loadRawDataLoader method, because there is no complex processing
+        //of the RawDataFilter, so that we don't want to put it in cache
+        RawDataLoader rawDataLoader = this.serviceFactory.getRawDataService()
+                .loadRawDataLoader(this.loadRawDataFilter());
+        RawDataContainer expContainer = rawDataLoader.loadData(
+                //We want the assays to be displayed on the experiment page,
+                //The experiment itself will be retrieved along the way
+                InformationType.ASSAY,
+                //We don't specify data types since we don't know which it is for now
+                null,
+                0,
+                //RawDataLoader.LIMIT_MAX should always be defined to remain above
+                //the max number of assays in an experiment
+                RawDataLoader.LIMIT_MAX);
+
+        EnumSet<DataType> dataTypesWithResults = expContainer.getDataTypesWithResults();
+        if (dataTypesWithResults.size() > 1) {
+            throw log.throwing(new IllegalStateException(
+                    "Not unique experiment ID accross data types: "
+                    + this.requestParameters.getExperimentId()));
+        } else if (dataTypesWithResults.isEmpty()) {
+            throw log.throwing(new PageNotFoundException("The experiment ID "
+                    + this.requestParameters.getExperimentId() + " does not exist in Bgee."));
+        }
+        DataType dataTypeWithResults = dataTypesWithResults.iterator().next();
+
+        Experiment<?> experiment = null;
+        LinkedHashSet<Assay<?>> assays = null;
+        switch (dataTypeWithResults) {
+        case AFFYMETRIX:
+            if (expContainer.getAffymetrixExperiments().size() != 1) {
+                throw log.throwing(new IllegalStateException(
+                        "Ambiguous experiment ID, should not happen"));
+            }
+            if (expContainer.getAffymetrixAssays().isEmpty()) {
+                throw log.throwing(new IllegalStateException(
+                        "Experiment with no assay, should not happen"));
+            }
+            experiment = expContainer.getAffymetrixExperiments().iterator().next();
+            assays = new LinkedHashSet<>(expContainer.getAffymetrixAssays());
+            break;
+        //TODO: continue for all data types
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported data type: "
+                    + dataTypeWithResults));
+        }
+
+        DataDisplay display = viewFactory.getDataDisplay();
+        display.displayExperimentPage(experiment, assays, dataTypeWithResults);
+
+        log.traceExit();
+    }
+
+    private List<Species> loadSpeciesList() {
+        log.traceEntry();
+        return log.traceExit(this.speciesService.loadSpeciesByIds(null, false)
+                .stream()
+                .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
+                .collect(Collectors.toList()));
+    }
+
+    private DataFormDetails loadFormDetails() throws InvalidRequestException {
+        log.traceEntry();
+
         DataFormDetails formDetails = null;
         if (this.requestParameters.isDetailedRequestParameters()) {
             Ontology<DevStage, String> requestedSpeciesDevStageOntology = null;
@@ -187,57 +323,7 @@ public class CommandData extends CommandParent {
                     requestedSpeciesSexes, requestedAnatEntitesAndCellTypes, requestedGenes);
         }
 
-        //Actions: raw data results, processed expression values
-        RawDataContainer rawDataContainer = null;
-        RawDataCountContainer rawDataCountContainer = null;
-        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
-                RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
-            log.debug("Action identified: {}", this.requestParameters.getAction());
-
-            EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
-
-            //Queries that required a RawDataLoader
-            if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
-                    this.requestParameters.isGetFilters()) {
-                log.debug("Loading RawDataLoader");
-                //try...finally block to manage number of jobs per users,
-                //to limit the concurrent number of queries a user can make
-                Job job = null;
-                try {
-                    job = this.jobService.registerNewJob(this.user.getUUID().toString());
-                    job.startJob();
-                    RawDataLoader rawDataLoader = this.loadRawDataLoader();
-
-                    //Raw data results
-                    if (this.requestParameters.isGetResults()) {
-                        rawDataContainer = this.loadRawDataResults(rawDataLoader, dataTypes);
-                    }
-                    //Raw data counts
-                    if (this.requestParameters.isGetResultCount()) {
-                        rawDataCountContainer = this.loadRawDataCounts(rawDataLoader, dataTypes);
-                    }
-
-                    job.completeWithSuccess();
-                } finally {
-                    if (job != null) {
-                        job.release();
-                    }
-                }
-            }
-        }
-
-        DataDisplay display = viewFactory.getDataDisplay();
-        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer);
-
-        log.traceExit();
-    }
-
-    private List<Species> loadSpeciesList() {
-        log.traceEntry();
-        return log.traceExit(this.speciesService.loadSpeciesByIds(null, false)
-                .stream()
-                .sorted(Comparator.comparing(Species::getPreferredDisplayOrder))
-                .collect(Collectors.toList()));
+        return log.traceExit(formDetails);
     }
 
     private Species loadRequestedSpecies() throws InvalidRequestException {
@@ -363,6 +449,7 @@ public class CommandData extends CommandParent {
         GeneFilter geneFilter = null;
         RawDataConditionFilter condFilter = null;
         Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
+        String experimentId = this.requestParameters.getExperimentId();
 
         if (this.requestParameters.getSpeciesId() != null) {
             int speciesId = this.requestParameters.getSpeciesId();
@@ -395,7 +482,9 @@ public class CommandData extends CommandParent {
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
                 condFilter != null? Collections.singleton(condFilter): null,
-                null, null, expOrAssayIds));
+                experimentId != null? Collections.singleton(experimentId): null,
+                null, //assay IDs
+                expOrAssayIds));
     }
 
     private RawDataContainer loadRawDataResults(RawDataLoader rawDataLoader, EnumSet<DataType> dataTypes)

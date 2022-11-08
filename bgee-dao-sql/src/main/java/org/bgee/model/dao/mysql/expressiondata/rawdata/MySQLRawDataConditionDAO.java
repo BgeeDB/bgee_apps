@@ -23,6 +23,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
@@ -105,7 +106,74 @@ implements RawDataConditionDAO {
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
-        }    }
+        }
+    }
+
+    // The query was taking too much time when querying genes. In order to solve this issue
+    // the order of the table can be manually decided rather than using the MySQL query planner.
+    // If all DAORawDataFilter contain geneIds, then affymetrixProbeset will always be the first
+    // table followed by affymetrixChip and at the end cond.
+    // In case of several DAORawDataFilter and if not all of them contain geneIds it is safer to
+    // let MySQL otpimize the query plan. Indeed gene IDs could be used in one
+    // DAORawDataFilter but not in the other ones. Forcing MySQL to first use the affymetrixProbeset
+    // could then result in a loss of performance.
+    @Override
+    public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
+            Collection<DAORawDataFilter> rawDataFilters,
+            Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}", rawDataFilters, attributes);
+
+        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
+                rawDataFilters == null?
+                new ArrayList<>(): new ArrayList<>(rawDataFilters));
+        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
+
+        boolean needJoinProbeset = orderedRawDataFilters.stream()
+                .anyMatch(c -> !c.getGeneIds().isEmpty());
+        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
+                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty() ||
+                needJoinProbeset);
+
+        assert !(needJoinProbeset && !needJoinChip);
+
+        StringBuilder sb = new StringBuilder();
+
+        // generate SELECT
+        // do not let MySQL decide the execution plan if all DAORawDataFilter contain geneIDs.
+        // This is done by adding STRAIGHT_JOIN in the select clause
+        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
+                .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
+
+        //generate FROM
+        // if require to join to probeset table, then start the FROM clause with this table. Has a
+        // huge impact on time to run the query if the STRAIGHT_JOIN clause is used.        
+        if (needJoinProbeset) {
+            sb.append(this.generateFromClauseAffymetrix( MySQLAffymetrixProbesetDAO.TABLE_NAME,
+                    false, needJoinChip, false, true, false));
+        } else if (needJoinChip) {
+            sb.append(this.generateFromClauseAffymetrix( MySQLAffymetrixChipDAO.TABLE_NAME,
+                    false, false, false, true, false));
+        } else {
+            sb.append(" FROM " + TABLE_NAME);
+        }
+        if (!orderedRawDataFilters.isEmpty()) {
+            // generate WHERE
+            sb.append(" WHERE ")
+            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
+                    TABLE_NAME));
+        }
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    null, null);
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
     /**
      * Implementation of the {@code ConditionTOResultSet}. 
      * 
@@ -297,44 +365,4 @@ implements RawDataConditionDAO {
         return log.traceExit(sb.toString());
     }
 
-    @Override
-    public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters,
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}", rawDataFilters, attributes);
-
-        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
-                rawDataFilters == null?
-                new ArrayList<>(): new ArrayList<>(rawDataFilters));
-        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-        }
-        StringBuilder sb = new StringBuilder();
-        // generate SELECT
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
-                .Attribute.class), true, Set.of(conditionAttribute)));
-        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
-                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty() ||
-                !c.getGeneIds().isEmpty());
-        boolean needJoinProbeset = orderedRawDataFilters.stream().anyMatch(c -> !c.getGeneIds().isEmpty());
-        //generate FROM
-        sb.append(this.generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, needJoinProbeset,
-                false, false));
-        if (!orderedRawDataFilters.isEmpty()) {
-            // generate WHERE
-            sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
-                    TABLE_NAME));
-        }
-        try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    null, null);
-            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-        
-    }
-    
 }

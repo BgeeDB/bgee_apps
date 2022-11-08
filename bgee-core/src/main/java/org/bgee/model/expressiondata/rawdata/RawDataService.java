@@ -418,7 +418,12 @@ public class RawDataService extends CommonService {
 
         //It's OK that the filter is null if we want to retrieve any raw data
         if (filter == null) {
-            return log.traceExit(new RawDataProcessedFilter(null, null,
+            return log.traceExit(new RawDataProcessedFilter(filter,
+                    //Important to provide a HashSet here, a null value means
+                    //"we could not find conditions matching the parameters,
+                    //thus there will be no result and no query done".
+                    //While here we want to say "give me all results".
+                    new HashSet<>(),
                     null, null,
                     //load all Species, gene biotypes, and sources
                     this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));

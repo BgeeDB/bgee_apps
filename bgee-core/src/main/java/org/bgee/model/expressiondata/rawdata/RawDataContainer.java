@@ -31,8 +31,9 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
  * @see RawDataLoader
  */
 public class RawDataContainer {
-    
-    private final Set<DataType> dataTypes;
+
+    private final EnumSet<DataType> requestedDataTypes;
+    private final EnumSet<DataType> dataTypesWithResults;
 
     private final Set<AffymetrixExperiment> affymetrixExperiments;
     private final Set<AffymetrixChip> affymetrixAssays;
@@ -50,7 +51,7 @@ public class RawDataContainer {
     private final Set<ESTLibrary> estAssays;
     private final Set<EST> estCalls;
 
-    public RawDataContainer(Collection<DataType> dataTypes,
+    public RawDataContainer(Collection<DataType> requestedDataTypes,
             Collection<AffymetrixExperiment> affymetrixExperiments, Collection<AffymetrixChip> affymetrixAssays,
             Collection<AffymetrixProbeset> affymetrixCalls, Collection<RnaSeqExperiment> rnaSeqExperiments,
             Collection<RnaSeqLibrary> rnaSeqLibraries, Collection<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
@@ -58,8 +59,10 @@ public class RawDataContainer {
             Collection<InSituEvidence> inSituAssays, Collection<InSituSpot> inSituCalls,
             Collection<ESTLibrary> estAssays, Collection<EST> estCalls) {
 
-        this.dataTypes = Collections.unmodifiableSet(dataTypes == null || dataTypes.isEmpty()?
-                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypes));
+        //We will use defensive copying in the getter
+        this.requestedDataTypes = requestedDataTypes == null || requestedDataTypes.isEmpty()?
+                EnumSet.allOf(DataType.class): EnumSet.copyOf(requestedDataTypes);
+        EnumSet<DataType> dataTypesWithResults = EnumSet.noneOf(DataType.class);
 
         this.affymetrixExperiments = affymetrixExperiments == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixExperiments));
@@ -67,6 +70,11 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixAssays));
         this.affymetrixCalls = affymetrixCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixCalls));
+        if (this.affymetrixExperiments != null && !this.affymetrixExperiments.isEmpty() ||
+                this.affymetrixAssays != null && !this.affymetrixAssays.isEmpty() ||
+                this.affymetrixCalls != null && !this.affymetrixCalls.isEmpty()) {
+            dataTypesWithResults.add(DataType.AFFYMETRIX);
+        }
 
         this.rnaSeqExperiments = rnaSeqExperiments == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqExperiments));
@@ -76,6 +84,12 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqAssays));
         this.rnaSeqCalls = rnaSeqCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqCalls));
+        if (this.rnaSeqExperiments != null && !this.rnaSeqExperiments.isEmpty() ||
+                this.rnaSeqLibraries != null && !this.rnaSeqLibraries.isEmpty() ||
+                this.rnaSeqAssays != null && !this.rnaSeqAssays.isEmpty() ||
+                this.rnaSeqCalls != null && !this.rnaSeqCalls.isEmpty()) {
+            dataTypesWithResults.add(DataType.RNA_SEQ);
+        }
 
         this.inSituExperiments = inSituExperiments == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(inSituExperiments));
@@ -83,20 +97,41 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(inSituAssays));
         this.inSituCalls = inSituCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(inSituCalls));
+        if (this.inSituExperiments != null && !this.inSituExperiments.isEmpty() ||
+                this.inSituAssays != null && !this.inSituAssays.isEmpty() ||
+                this.inSituCalls != null && !this.inSituCalls.isEmpty()) {
+            dataTypesWithResults.add(DataType.IN_SITU);
+        }
 
         this.estAssays = estAssays == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(estAssays));
         this.estCalls = estCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(estCalls));
+        if (this.estAssays != null && !this.estAssays.isEmpty() ||
+                this.estCalls != null && !this.estCalls.isEmpty()) {
+            dataTypesWithResults.add(DataType.EST);
+        }
+
+        //We will use defensive copying in the getter
+        this.dataTypesWithResults = dataTypesWithResults;
     }
 
     /**
-     * @return  A {@code Set} of {@code DataType}s specifying the data types that were requested.
-     *          The underlying instance is an {@code EnumSet}, but returned as a {@code Set}
-     *          to be unmodifiable.
+     * @return  An {@code EnumSet} of {@code DataType}s specifying the data types that were requested.
+     *          This {@code EnumSet} is a copy of the attribute (defensive copying).
      */
-    public Set<DataType> getDataTypes() {
-        return this.dataTypes;
+    public EnumSet<DataType> getRequestedDataTypes() {
+        //defensive copying
+        return EnumSet.copyOf(this.requestedDataTypes);
+    }
+    /**
+     * @return  An {@code EnumSet} of {@code DataType}s specifying the data types
+     *          for which results exist.
+     *          This {@code EnumSet} is a copy of the attribute (defensive copying).
+     */
+    public EnumSet<DataType> getDataTypesWithResults() {
+        //defensive copying
+        return EnumSet.copyOf(this.dataTypesWithResults);
     }
     /**
      * @return  A {@code Set} of {@code AffymetrixExperiment}s that were requested.
@@ -128,6 +163,7 @@ public class RawDataContainer {
     public Set<AffymetrixProbeset> getAffymetrixCalls() {
         return affymetrixCalls;
     }
+
     /**
      * @return  A {@code Set} of {@code RnaSeqExperiment}s that were requested.
      *          If {@code null}, it means that this information was not requested.
@@ -168,6 +204,7 @@ public class RawDataContainer {
     public Set<RnaSeqResultAnnotatedSample> getRnaSeqCalls() {
         return rnaSeqCalls;
     }
+
     /**
      * @return  A {@code Set} of {@code InSituExperiment}s that were requested.
      *          If {@code null}, it means that this information was not requested.
@@ -198,6 +235,7 @@ public class RawDataContainer {
     public Set<InSituSpot> getInSituCalls() {
         return inSituCalls;
     }
+
     /**
      * @return  A {@code Set} of {@code ESTLibrary}s that were requested.
      *          If {@code null}, it means that this information was not requested.
@@ -221,7 +259,8 @@ public class RawDataContainer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(affymetrixAssays, affymetrixCalls, affymetrixExperiments, dataTypes, estAssays, estCalls,
+        return Objects.hash(affymetrixAssays, affymetrixCalls, affymetrixExperiments,
+                requestedDataTypes, dataTypesWithResults, estAssays, estCalls,
                 inSituAssays, inSituCalls, inSituExperiments, rnaSeqAssays, rnaSeqCalls, rnaSeqExperiments,
                 rnaSeqLibraries);
     }
@@ -237,7 +276,9 @@ public class RawDataContainer {
         return Objects.equals(affymetrixAssays, other.affymetrixAssays)
                 && Objects.equals(affymetrixCalls, other.affymetrixCalls)
                 && Objects.equals(affymetrixExperiments, other.affymetrixExperiments)
-                && Objects.equals(dataTypes, other.dataTypes) && Objects.equals(estAssays, other.estAssays)
+                && Objects.equals(requestedDataTypes, other.requestedDataTypes)
+                && Objects.equals(dataTypesWithResults, other.dataTypesWithResults)
+                && Objects.equals(estAssays, other.estAssays)
                 && Objects.equals(estCalls, other.estCalls) && Objects.equals(inSituAssays, other.inSituAssays)
                 && Objects.equals(inSituCalls, other.inSituCalls)
                 && Objects.equals(inSituExperiments, other.inSituExperiments)
@@ -249,7 +290,8 @@ public class RawDataContainer {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RawDataContainer [dataTypes=").append(dataTypes)
+        builder.append("RawDataContainer [requestedDataTypes=").append(requestedDataTypes)
+               .append(", dataTypesWithResults=").append(dataTypesWithResults)
                .append(", affymetrixExperiments=").append(affymetrixExperiments)
                .append(", affymetrixAssays=").append(affymetrixAssays)
                .append(", affymetrixCalls=").append(affymetrixCalls)

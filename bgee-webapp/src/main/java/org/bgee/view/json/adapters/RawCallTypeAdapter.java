@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.rawdata.RawCall;
+import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -31,7 +32,12 @@ public class RawCallTypeAdapter extends TypeAdapter<RawCall> {
         out.name("gene");
         this.utils.writeSimplifiedGene(out, value.getGene(), false, false, null);
         out.name("pValue").value(value.getPValue());
-        out.name("exclusionReason").value(value.getExclusionReason().getStringRepresentation());
+        out.name("exclusionReason");
+        if (ExclusionReason.NOT_EXCLUDED == value.getExclusionReason()) {
+            out.nullValue();
+        } else {
+            out.value(value.getExclusionReason().getStringRepresentation());
+        }
 
         out.endObject();
         log.traceExit();

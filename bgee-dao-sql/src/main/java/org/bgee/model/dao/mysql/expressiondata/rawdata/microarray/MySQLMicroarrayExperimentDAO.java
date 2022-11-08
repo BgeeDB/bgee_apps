@@ -32,6 +32,14 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         super(manager);
     }
 
+    // The query was taking too much time when querying genes. In order to solve this issue
+    // the order of the table can be manually decided rather than using the MySQL query planner.
+    // If all DAORawDataFilter contain geneIds, then affymetrixProbeset will always be the first
+    // table followed by affymetrixChip and at the end cond.
+    // In case of several DAORawDataFilter and if not all of them contain geneIds it is safer to
+    // let MySQL otpimize the query plan. Indeed gene IDs could be used in one
+    // DAORawDataFilter but not in the other ones. Forcing MySQL to first use the affymetrixProbeset
+    // could then result in a loss of performance.
     @Override
     public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
             Integer offset, Integer limit, Collection<MicroarrayExperimentDAO.Attribute> attrs)
@@ -40,38 +48,51 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilter = 
+        final List<DAORawDataFilter> orderedRawDataFilters = 
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
         final Set<MicroarrayExperimentDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(MicroarrayExperimentDAO.Attribute.class): EnumSet.copyOf(attrs));
-        // generate SELECT
+
         StringBuilder sb = new StringBuilder();
+
+        // generate SELECT
+        // do not let MySQL decide the execution plan if all DAORawDataFilter contain
+        // geneIDs. This is done by adding STRAIGHT_JOIN in the select clause
+        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(MicroarrayExperimentDAO
-                .Attribute.class), true, clonedAttrs));
-        // generate FROM
+                .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
+
         boolean needJoinChip = false;
         boolean needJoinCond = false;
         boolean needJoinProbeset = false;
-        if(orderedRawDataFilter.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
+        if(orderedRawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 e.getSpeciesId() != null || !e.getGeneIds().isEmpty() ||
-                !e.getRawDataCondIds().isEmpty())) {
+                !e.getRawDataCondIds().isEmpty() || !e.getExprOrAssayIds().isEmpty())) {
             needJoinChip = true;
         }
-        if (orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null)) {
+        if (orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null)) {
             needJoinCond = true;
         }
-        if (orderedRawDataFilter.stream().anyMatch(e -> !e.getGeneIds().isEmpty())) {
+        if (orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty())) {
             needJoinProbeset = true;
         }
         //generate FROM clause
-        sb.append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, needJoinProbeset,
-                needJoinCond, false));
+        // if require to join to probeset table, then start the FROM clause with this table. Has a
+        // huge impact on time to run the query if the STRAIGHT_JOIN clause is used.
+        if(needJoinProbeset) {
+        sb.append(generateFromClauseAffymetrix(MySQLAffymetrixProbesetDAO.TABLE_NAME, true, true,
+                false, needJoinCond, false));
+        } else {
+            sb.append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, needJoinProbeset,
+                    needJoinCond, false));
+        }
 
         // generate WHERE
-        if (!orderedRawDataFilter.isEmpty()) {
-            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
+        if (!orderedRawDataFilters.isEmpty()) {
+            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilters,
                     MySQLMicroarrayExperimentDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }
 
@@ -86,7 +107,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(),
-                    orderedRawDataFilter, offset, limit);
+                    orderedRawDataFilters, offset, limit);
             return log.traceExit(new MySQLMicroarrayExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

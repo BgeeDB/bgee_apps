@@ -53,32 +53,40 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilter = 
+        final List<DAORawDataFilter> orderedRawDataFilters = 
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
         final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
         //detect join to use
-        boolean needJoinChip = orderedRawDataFilter.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
-                ||  !e.getRawDataCondIds().isEmpty() || !e.getAssayIds().isEmpty());            
-        boolean needJoinCond = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null 
+        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
+                || !e.getRawDataCondIds().isEmpty() || !e.getAssayIds().isEmpty()
+                || !e.getExprOrAssayIds().isEmpty());            
+        boolean needJoinCond = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null 
                 && needJoinChip) ? true : false;
-        final boolean needJoinGene = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null
+        final boolean needJoinGene = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null
                 && !needJoinChip) ? true : false;
-        // generate SELECT
+
         StringBuilder sb = new StringBuilder();
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
-                .Attribute.class), true, clonedAttrs))
-//        // generate FROM
+
+        // generate SELECT
+        // do not let MySQL decide the execution plan if all DAORawDataFilter contain
+        // geneIDs. This is done by adding STRAIGHT_JOIN in the select clause
+        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
+            sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
+                    .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs))
+
+        // generate FROM
         .append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, false, needJoinCond,
                 needJoinGene));
         // generate WHERE
-        if (!orderedRawDataFilter.isEmpty()) {
+        if (!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
             // if needJoinGene is true it means the join for speciesId is done to the gene table.
             // Otherwise it is done on the condition table
-            .append(generateWhereClause(orderedRawDataFilter, MySQLAffymetrixChipDAO.TABLE_NAME,
+            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
                     needJoinGene ? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
         }
 
@@ -93,7 +101,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
             sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
         }
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
                     offset, limit);
             return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(stmt));
         } catch (SQLException e) {

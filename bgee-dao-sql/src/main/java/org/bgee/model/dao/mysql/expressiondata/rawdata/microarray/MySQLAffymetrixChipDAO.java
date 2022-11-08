@@ -36,6 +36,14 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         super(manager);
     }
 
+    // The query was taking too much time when querying genes. In order to solve this issue
+    // the order of the table can be manually decided rather than using the MySQL query planner.
+    // If all DAORawDataFilter contain geneIds, then affymetrixProbeset will always be the first
+    // table followed by affymetrixChip and at the end cond.
+    // In case of several DAORawDataFilter and if not all of them contain geneIds it is safer to
+    // let MySQL otpimize the query plan. Indeed gene IDs could be used in one
+    // DAORawDataFilter but not in the other ones. Forcing MySQL to first use the affymetrixProbeset
+    // could then result in a loss of performance.
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDataFilters,
             Integer offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)
@@ -44,27 +52,40 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         checkOffsetAndLimit(offset, limit);
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilter = 
+        final List<DAORawDataFilter> orderedRawDataFilters = 
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
         final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));
         //detect join to use
-        boolean needJoinProbeset = orderedRawDataFilter.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean needJoinCond = orderedRawDataFilter.stream().anyMatch(e -> e.getSpeciesId() != null);
+        boolean needJoinProbeset = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        boolean needJoinCond = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+
+        StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        StringBuilder sb = new StringBuilder();
+        // do not let MySQL decide the execution plan if all DAORawDataFilter contain geneIDs.
+        // This is done by adding STRAIGHT_JOIN in the select clause
+        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixChipDAO
-                .Attribute.class), true, clonedAttrs))
+                .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
+
         // generate FROM
-        .append(generateFromClauseAffymetrix(TABLE_NAME, false, false, needJoinProbeset,
-                needJoinCond, false));
+        // if require to join to probeset table, then start the FROM clause with this table. Has a
+        // huge impact on time to run the query if the STRAIGHT_JOIN clause is used.
+        if (needJoinProbeset) {
+            sb.append(generateFromClauseAffymetrix(MySQLAffymetrixProbesetDAO.TABLE_NAME, false, true,
+                    false, needJoinCond, false));
+        } else {
+            sb.append(generateFromClauseAffymetrix(TABLE_NAME, false, false, needJoinProbeset,
+                    needJoinCond, false));
+        }
 
         // generate WHERE CLAUSE
-        if (!orderedRawDataFilter.isEmpty()) {
-            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilter,
+        if (!orderedRawDataFilters.isEmpty()) {
+            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilters,
                     MySQLAffymetrixChipDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
         }
 
@@ -80,7 +101,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
         }
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilter,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
                     offset, limit);
             return log.traceExit(new MySQLAffymetrixChipTOResultSet(stmt));
         } catch (SQLException e) {

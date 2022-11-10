@@ -9,12 +9,14 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
@@ -22,8 +24,6 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
@@ -109,14 +109,6 @@ implements RawDataConditionDAO {
         }
     }
 
-    // The query was taking too much time when querying genes. In order to solve this issue
-    // the order of the table can be manually decided rather than using the MySQL query planner.
-    // If all DAORawDataFilter contain geneIds, then affymetrixProbeset will always be the first
-    // table followed by affymetrixChip and at the end cond.
-    // In case of several DAORawDataFilter and if not all of them contain geneIds it is safer to
-    // let MySQL otpimize the query plan. Indeed gene IDs could be used in one
-    // DAORawDataFilter but not in the other ones. Forcing MySQL to first use the affymetrixProbeset
-    // could then result in a loss of performance.
     @Override
     public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
             Collection<DAORawDataFilter> rawDataFilters,
@@ -149,22 +141,13 @@ implements RawDataConditionDAO {
                 .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
 
         //generate FROM
-        // if require to join to probeset table, then start the FROM clause with this table. Has a
-        // huge impact on time to run the query if the STRAIGHT_JOIN clause is used.        
-        if (needJoinProbeset) {
-            sb.append(this.generateFromClauseAffymetrix( MySQLAffymetrixProbesetDAO.TABLE_NAME,
-                    false, needJoinChip, false, true, false));
-        } else if (needJoinChip) {
-            sb.append(this.generateFromClauseAffymetrix( MySQLAffymetrixChipDAO.TABLE_NAME,
-                    false, false, false, true, false));
-        } else {
-            sb.append(" FROM " + TABLE_NAME);
-        }
+        Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+                Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+        
         if (!orderedRawDataFilters.isEmpty()) {
             // generate WHERE
             sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
-                    TABLE_NAME));
+            .append(generateWhereClause(orderedRawDataFilters, columnToTable));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,

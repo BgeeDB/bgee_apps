@@ -107,7 +107,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
 //
 //        // generate FROM clause
-        Map<RawDataColumn, String> colToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+        Map<AmbiguousRawDataColumn, String> colToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
                 necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE

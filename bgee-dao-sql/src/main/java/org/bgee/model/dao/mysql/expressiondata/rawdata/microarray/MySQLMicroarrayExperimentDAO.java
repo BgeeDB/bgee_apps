@@ -56,7 +56,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
                 clonedAttrs));
 
         //generate FROM clause
-        Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
                 Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE

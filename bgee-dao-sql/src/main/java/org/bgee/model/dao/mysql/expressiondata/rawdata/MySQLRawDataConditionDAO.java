@@ -137,7 +137,7 @@ implements RawDataConditionDAO {
                getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
-        Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
                 Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
         
         if (!orderedRawDataFilters.isEmpty()) {

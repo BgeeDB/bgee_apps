@@ -4,12 +4,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
@@ -19,7 +23,6 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
-import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attribute>
         implements RawDataCountDAO {
@@ -117,24 +120,23 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
         }
 
-        // generate FROM clause
-        sb.append(this.generateFromClauseAffymetrix(tableName,
-                //experiment join
-                false,
-                //chip join
-                !tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME) && chipTable,
-                //probeset join
-                !tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME) && probesetTable,
-                //cond join
-                condTable,
-                //gene join
-                geneTable));
+        // create a 
+        Set<String> necessaryTables = new HashSet<>();
+        necessaryTables.add(tableName);
+        if (!tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME) && chipTable) {
+            necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
+        } else if (!tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME) && probesetTable) {
+            necessaryTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
+        }
+//
+//        // generate FROM clause
+        Map<RawDataColumn, String> colToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+                necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
         if(!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
-                    geneTable? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
+            .append(generateWhereClause(orderedRawDataFilters, colToTable));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,

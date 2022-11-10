@@ -1,5 +1,6 @@
 package org.bgee.model.expressiondata.rawdata;
 
+import org.bgee.model.XRef;
 import org.bgee.model.source.Source;
 
 /**
@@ -11,4 +12,5 @@ import org.bgee.model.source.Source;
  */
 public interface RawDataWithDataSource {
     public Source getDataSource();
+    public XRef getXRef();
 }

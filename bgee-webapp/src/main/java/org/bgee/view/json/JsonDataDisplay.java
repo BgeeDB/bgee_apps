@@ -128,7 +128,7 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         responseMap.put("experiment", experiment);
         responseMap.put("assays", assays);
 
-        this.sendResponse("Data page", responseMap);
+        this.sendResponse("Experiment page", responseMap);
         log.traceExit();
     }
 }

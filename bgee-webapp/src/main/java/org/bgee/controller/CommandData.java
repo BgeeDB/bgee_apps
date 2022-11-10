@@ -265,7 +265,8 @@ public class CommandData extends CommandParent {
         case AFFYMETRIX:
             if (expContainer.getAffymetrixExperiments().size() != 1) {
                 throw log.throwing(new IllegalStateException(
-                        "Ambiguous experiment ID, should not happen"));
+                        "Ambiguous experiment ID, should not happen. Experiments retrieved: "
+                        + expContainer.getAffymetrixExperiments()));
             }
             if (expContainer.getAffymetrixAssays().isEmpty()) {
                 throw log.throwing(new IllegalStateException(

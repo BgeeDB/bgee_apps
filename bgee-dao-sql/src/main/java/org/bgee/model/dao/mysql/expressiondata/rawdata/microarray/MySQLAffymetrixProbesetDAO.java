@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -15,15 +16,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
-import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 
 public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbesetDAO.Attribute>
@@ -59,35 +59,22 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
-        //detect join to use
-        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() 
-                || !e.getRawDataCondIds().isEmpty() || !e.getAssayIds().isEmpty()
-                || !e.getExprOrAssayIds().isEmpty());            
-        boolean needJoinCond = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null 
-                && needJoinChip) ? true : false;
-        final boolean needJoinGene = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null
-                && !needJoinChip) ? true : false;
 
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        // do not let MySQL decide the execution plan if all DAORawDataFilter contain
-        // geneIDs. This is done by adding STRAIGHT_JOIN in the select clause
-        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
-                .allMatch(c -> !c.getGeneIds().isEmpty());
-            sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
-                    .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs))
+        // do not let MySQL decide the execution plan if only one DAORawDataFilter
+        boolean straightJoin = orderedRawDataFilters.size() == 1;
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
+                    .Attribute.class), true, straightJoin, clonedAttrs));
 
         // generate FROM
-        .append(generateFromClauseAffymetrix(TABLE_NAME, false, needJoinChip, false, needJoinCond,
-                needJoinGene));
+        Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+                Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
         // generate WHERE
         if (!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
-            // if needJoinGene is true it means the join for speciesId is done to the gene table.
-            // Otherwise it is done on the condition table
-            .append(generateWhereClause(orderedRawDataFilters, MySQLAffymetrixChipDAO.TABLE_NAME,
-                    needJoinGene ? MySQLGeneDAO.TABLE_NAME: MySQLRawDataConditionDAO.TABLE_NAME));
+            .append(generateWhereClause(orderedRawDataFilters, columnToTable));
         }
 
         // generate ORDER BY

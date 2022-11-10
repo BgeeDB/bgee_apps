@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO.DetectionType;
@@ -23,7 +25,6 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
 
 public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.Attribute>
@@ -50,6 +51,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
+
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilters = 
@@ -58,35 +60,22 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));
-        //detect join to use
-        boolean needJoinProbeset = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean needJoinCond = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
 
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        // do not let MySQL decide the execution plan if all DAORawDataFilter contain geneIDs.
-        // This is done by adding STRAIGHT_JOIN in the select clause
-        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
-                .allMatch(c -> !c.getGeneIds().isEmpty());
+        // do not let MySQL decide the execution plan if only one DAORawDataFilter
+        boolean straightJoin = orderedRawDataFilters.size() == 1;
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixChipDAO
-                .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
+                .Attribute.class), true, straightJoin, clonedAttrs));
 
         // generate FROM
-        // if require to join to probeset table, then start the FROM clause with this table. Has a
-        // huge impact on time to run the query if the STRAIGHT_JOIN clause is used.
-        if (needJoinProbeset) {
-            sb.append(generateFromClauseAffymetrix(MySQLAffymetrixProbesetDAO.TABLE_NAME, false, true,
-                    false, needJoinCond, false));
-        } else {
-            sb.append(generateFromClauseAffymetrix(TABLE_NAME, false, false, needJoinProbeset,
-                    needJoinCond, false));
-        }
+        Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, 
+                orderedRawDataFilters, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
         if (!orderedRawDataFilters.isEmpty()) {
-            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilters,
-                    MySQLAffymetrixChipDAO.TABLE_NAME, MySQLRawDataConditionDAO.TABLE_NAME));
+            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilters, columnToTable));
         }
 
         // generate ORDER BY

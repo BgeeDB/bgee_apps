@@ -213,7 +213,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 !e.getExprOrAssayIds().isEmpty());
 
         //check filters always used
-        //XXX The idea is not to start with probesetTable if geneIds are asked in only one filter
+        //XXX The idea is to not start with probesetTable if geneIds are asked in only one filter
         // but not in others. Indeed, in this scenario forcing to start with porbeset table
         // decrease drastically the time needed to query. It is maybe overthinking as it is
         // probably also the case for other tables (especially the species table). The best
@@ -370,15 +370,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     sb.append(" INNER JOIN " + table + " ON ")
                     .append(MySQLAffymetrixProbesetDAO.TABLE_NAME + ".")
                     .append(AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
-                    .append(" = " + table + "." + AffymetrixProbesetDAO.Attribute
+                    .append(" = " + table + "." + AffymetrixChipDAO.Attribute
                             .BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
                 // not sure this case really exists
-                } else if (previousTables.contains(MySQLAffymetrixProbesetDAO.TABLE_NAME)) {
+                } else if (previousTables.contains(MySQLMicroarrayExperimentDAO.TABLE_NAME)) {
                     sb.append(" INNER JOIN " + table + " ON ")
-                    .append(MySQLAffymetrixProbesetDAO.TABLE_NAME + ".")
-                    .append(AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
-                    .append(" = " + table + "." + AffymetrixProbesetDAO.Attribute
-                            .BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
+                    .append(MySQLMicroarrayExperimentDAO.TABLE_NAME + ".")
+                    .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName())
+                    .append(" = " + table + "." + AffymetrixChipDAO.Attribute
+                            .EXPERIMENT_ID.getTOFieldName());
                 } else {
                     throw log.throwing(new IllegalStateException(table + " can not be join to an"
                             + " other table."));

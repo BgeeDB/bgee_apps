@@ -132,9 +132,9 @@ implements RawDataConditionDAO {
 
         boolean needJoinProbeset = orderedRawDataFilters.stream()
                 .anyMatch(c -> !c.getGeneIds().isEmpty());
-        boolean needJoinChip = orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
-                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty() ||
-                needJoinProbeset);
+        boolean needJoinChip = needJoinProbeset ||
+                orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
+                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty());
 
         assert !(needJoinProbeset && !needJoinChip);
 

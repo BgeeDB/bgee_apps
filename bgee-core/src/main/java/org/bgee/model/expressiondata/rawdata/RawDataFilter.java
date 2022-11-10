@@ -83,6 +83,18 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     }
 
     /**
+     * @return  {@code true} if at least one of {@link #getExperimentsIds()},
+     *          or {@link #getAssayIds}, or {@link #getExperimentOrAssayIds()},
+     *          return non-empty {@code Set}s. {@code false} otherwise.
+     */
+    public boolean hasExperimentAssayIds() {
+        log.traceEntry();
+        return log.traceExit(!this.getExperimentIds().isEmpty() ||
+                !this.getAssayIds().isEmpty() ||
+                !this.getExperimentOrAssayIds().isEmpty());
+    }
+
+    /**
      * @return  A {@code Set} of {@code String}s that are IDs of experiments
      *          to consider. Only results part of these experiments will be returned.
      */

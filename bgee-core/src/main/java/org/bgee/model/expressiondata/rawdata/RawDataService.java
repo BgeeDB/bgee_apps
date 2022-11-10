@@ -507,6 +507,11 @@ public class RawDataService extends CommonService {
             //we make the daoFilter null to signal there will be no result at all,
             //as opposed to when no filtering is requested (empty daoFilters as well)
             daoFilters = null;
+        } else if (speciesIds.isEmpty() && filter.hasExperimentAssayIds()) {
+            //In case no species ID was targeted, we need to add a DAO filter
+            //for experiment/assay IDs if any was provided.
+            daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
         }
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,

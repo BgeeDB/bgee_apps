@@ -37,14 +37,6 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         super(manager);
     }
 
-    // The query was taking too much time when querying genes. In order to solve this issue
-    // the order of the table can be manually decided rather than using the MySQL query planner.
-    // If all DAORawDataFilter contain geneIds, then affymetrixProbeset will always be the first
-    // table followed by affymetrixChip and at the end cond.
-    // In case of several DAORawDataFilter and if not all of them contain geneIds it is safer to
-    // let MySQL otpimize the query plan. Indeed gene IDs could be used in one
-    // DAORawDataFilter but not in the other ones. Forcing MySQL to first use the affymetrixProbeset
-    // could then result in a loss of performance.
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDataFilters,
             Integer offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)

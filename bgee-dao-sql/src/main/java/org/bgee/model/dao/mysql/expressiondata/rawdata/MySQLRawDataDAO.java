@@ -423,19 +423,17 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     protected String generateWhereClause(List<DAORawDataFilter> rawDataFilters,
-            String experimentIdTable, String speciesIdTableName) {
-        log.traceEntry("{}, {}", rawDataFilters, speciesIdTableName);
+            Map<RawDataColumn, String> columnToTable) {
+        log.traceEntry("{}, {}", rawDataFilters, columnToTable);
         String whereClause = rawDataFilters.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, experimentIdTable,
-                        speciesIdTableName))
+                .map(e -> this.generateOneFilterWhereClause(e, columnToTable))
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;
     }
 
     protected String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter, 
-            String experimentIdTable, String speciesIdTableName) {
-        log.traceEntry("{}, {}, {}", rawDataFilter, experimentIdTable,
-                speciesIdTableName);
+            Map<RawDataColumn, String> columnToTable) {
+        log.traceEntry("{}, {}", rawDataFilter, columnToTable);
 
         Integer speId = rawDataFilter.getSpeciesId();
         Set<Integer> geneIds = rawDataFilter.getGeneIds();
@@ -447,7 +445,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
         String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
-                experimentIdTable);
+                columnToTable.get(RawDataColumn.EXPERIMENT_ID));
         if (!expAssayIdFilter.isEmpty()) {
             sb.append(expAssayIdFilter);
             filterFound = true;
@@ -457,7 +455,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(speciesIdTableName).append(".")
+            sb.append(columnToTable.get(RawDataColumn.SPECIES_ID)).append(".")
               .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ?");
               filterFound = true;
         }
@@ -466,7 +464,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+            sb.append(columnToTable.get(RawDataColumn.COND_ID)).append(".")
             .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
                     .size()))

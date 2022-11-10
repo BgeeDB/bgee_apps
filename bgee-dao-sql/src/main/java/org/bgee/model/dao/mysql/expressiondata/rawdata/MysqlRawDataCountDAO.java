@@ -48,38 +48,14 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                     new ArrayList<>(rawDataFilters));
         StringBuilder sb = new StringBuilder();
 
-        boolean needSpeciesId = orderedRawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
         boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean needChipTableInfo = orderedRawDataFilters.stream()
-                .anyMatch(e -> !e.getAssayIds().isEmpty() ||
-                        !e.getExperimentIds().isEmpty() ||
-                        !e.getExprOrAssayIds().isEmpty() ||
-                        !e.getRawDataCondIds().isEmpty());
-        //We don't need the chip table if call counts are requested but not experiment counts,
-        //and we don't need info about exp. or assay public IDs or cond. IDs.
-        //In that case the number of assays can be retrieved, if requested,
-        //by counting the number of distinct bgeeAffymetrixChipIds in the affymetrixProbeset table.
-        //And a filtering on speciesIds can be performed through the gene table directly.
-        boolean chipTable = !(callsCount && !experimentCount && !needChipTableInfo);
         boolean probesetTable = needGeneId || callsCount;
-        assert chipTable || probesetTable:
-            "If chip table not needed then probeset table needed for call counts";
-        //We use the condition table only if we need to search for species,
-        //and that it was necessary to join to the chip table already
-        boolean condTable = needSpeciesId && chipTable;
-        //otherwise we use the gene table
-        boolean geneTable = needSpeciesId && !chipTable;
-        assert !(condTable && geneTable): "If condition table needed, we never use the gene table";
-        //In case we use a SELECT STRAIGHT_JOIN, we start from the probeset table
-        //if that table is needed and if no filtering is requested on chip table
-        String tableName = probesetTable && (!needChipTableInfo && !condTable || needGeneId)?
-                MySQLAffymetrixProbesetDAO.TABLE_NAME: MySQLAffymetrixChipDAO.TABLE_NAME;
+
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
         boolean previousCount = false;
         if (experimentCount) {
-            assert chipTable;
-            sb.append(" count(distinct ").append(tableName).append(".")
+            sb.append(" count(distinct ").append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
                     .append(AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(") as ")
                     .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
             previousCount = true;
@@ -99,7 +75,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             } else {
                 //If probesets are needed, we need to add DISTINCT,
                 //because relation 1-to-many to table affymetrixProbeset.
-                sb.append("distinct ").append(tableName).append(".")
+                sb.append("distinct ").append(MySQLAffymetrixProbesetDAO.TABLE_NAME).append(".")
                         .append(AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
             }
             sb.append(") as ")
@@ -120,13 +96,14 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
         }
 
-        // create a 
+        // create the set of tables it is necessary to use in FROM clause even if no filter
+        // on those columns
         Set<String> necessaryTables = new HashSet<>();
-        necessaryTables.add(tableName);
-        if (!tableName.equals(MySQLAffymetrixChipDAO.TABLE_NAME) && chipTable) {
-            necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
-        } else if (!tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME) && probesetTable) {
+        if (callsCount) {
             necessaryTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
+        }
+        if (experimentCount) {
+            necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
         }
 //
 //        // generate FROM clause

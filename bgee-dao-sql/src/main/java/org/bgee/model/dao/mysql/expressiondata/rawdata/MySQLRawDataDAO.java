@@ -137,8 +137,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 distinct, attributes);
         //XXX FB: shouldn't we always use a straight_join now that we have properly define
         //table order?
-        boolean straightJoin = filters != null && filters.stream()
-                .allMatch(c -> !c.getGeneIds().isEmpty());
+        boolean straightJoin = filters != null
+                && !filters.isEmpty() //allMatch returns true if the stream is empty
+                && filters.stream().allMatch(c -> !c.getGeneIds().isEmpty());
         return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes,
                 distinct, straightJoin, attributes));
     }
@@ -234,7 +235,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // decrease drastically the time needed to query. It is maybe overthinking as it is
         // probably also the case for other tables (especially the species table). The best
         // optimization is probably to query each DAORawDataFilter separately
-        boolean alwaysGeneId = filters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
+        boolean alwaysGeneId = !filters.isEmpty() //allMatch returns true if a stream is empty
+                && filters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
+        log.debug("needSpeciesId: {}, needGeneId: {}, needAssayId: {}, needCondId: {}, needExpId: {}, alwaysGeneId: {}, filters: {}",
+                needSpeciesId, needGeneId, needAssayId, needCondId, needExpId, alwaysGeneId, filters);
 
         // check needed tables
         boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
@@ -249,6 +253,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         boolean chipTable = necessaryTables.contains(MySQLAffymetrixChipDAO.TABLE_NAME) ||
                 needAssayId || !expTable && needExpId || !condTable && needCondId ||
                 expTable && condTable || expTable && probesetTable || condTable && probesetTable;
+        log.debug("geneTable: {}, condTable: {}, expTable: {}, probesetTable: {}, chipTable: {}",
+                geneTable, condTable, expTable, probesetTable, chipTable);
 
 
         // first check if always require geneIds. 
@@ -301,6 +307,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         } else if (needCondId) {
             colToTableMap.put(AmbiguousRawDataColumn.COND_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
         }
+        log.debug("orderedTables: {}", orderedTables);
 
         sb.append(writeFromClauseAffymetrix(orderedTables));
 

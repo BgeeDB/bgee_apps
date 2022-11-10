@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
@@ -212,6 +213,12 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         boolean needExpId = filters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
 
+        if (necessaryTables.containsAll(Set.of(MySQLRawDataConditionDAO.TABLE_NAME, 
+                MySQLAffymetrixProbesetDAO.TABLE_NAME))) {
+            throw log.throwing(new IllegalStateException(MySQLRawDataConditionDAO.TABLE_NAME +
+                    " and " + MySQLAffymetrixProbesetDAO.TABLE_NAME + " can not be defined as"
+                            + " necessary tables both at the same time."));
+        }
         //check filters always used
         //XXX The idea is to not start with probesetTable if geneIds are asked in only one filter
         // but not in others. Indeed, in this scenario forcing to start with porbeset table

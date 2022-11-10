@@ -480,7 +480,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
         String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
-                columnToTable.get(RawDataColumn.EXPERIMENT_ID));
+                Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
+                .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                + RawDataColumn.EXPERIMENT_ID)));
         if (!expAssayIdFilter.isEmpty()) {
             sb.append(expAssayIdFilter);
             filterFound = true;
@@ -490,7 +492,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(columnToTable.get(RawDataColumn.SPECIES_ID)).append(".")
+            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.SPECIES_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.EXPERIMENT_ID))).append(".")
               .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ?");
               filterFound = true;
         }
@@ -499,7 +503,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(columnToTable.get(RawDataColumn.COND_ID)).append(".")
+            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.COND_ID))).append(".")
             .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
                     .size()))

@@ -480,9 +480,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
         String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
-                Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
-                .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                + RawDataColumn.EXPERIMENT_ID)));
+                columnToTable);
         if (!expAssayIdFilter.isEmpty()) {
             sb.append(expAssayIdFilter);
             filterFound = true;
@@ -494,7 +492,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
             sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.SPECIES_ID))
                     .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + RawDataColumn.EXPERIMENT_ID))).append(".")
+                            + RawDataColumn.SPECIES_ID))).append(".")
               .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ?");
               filterFound = true;
         }
@@ -503,7 +501,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
+            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.COND_ID))
                     .orElseThrow(() -> new IllegalStateException("no table associated to column"
                             + RawDataColumn.COND_ID))).append(".")
             .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
@@ -526,8 +524,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb.toString());
     }
     private String generateExpAssayIdFilter(Set<String> expIds, Set<String> assayIds,
-            Set<String> expOrAssayIds, String experimentIdTable) {
-        log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, experimentIdTable);
+            Set<String> expOrAssayIds, Map<RawDataColumn, String> columnToTable) {
+        log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, columnToTable);
         StringBuilder sb = new StringBuilder();
 
         if (!expOrAssayIds.isEmpty()) {
@@ -535,7 +533,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         boolean filterFound = false;
         if (!expIds.isEmpty()) {
-            sb.append(experimentIdTable).append(".")
+            //retrieve table to use for experimentId
+            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.EXPERIMENT_ID)))
+            .append(".")
             .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
             sb.append(")");
@@ -559,7 +561,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 sb.append(" OR ");
             }
             //try to find experimentIds
-            sb.append(experimentIdTable).append(".")
+            sb.append(Optional.ofNullable(columnToTable.get(RawDataColumn.EXPERIMENT_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.EXPERIMENT_ID)))
+            .append(".")
             .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
             sb.append(") OR ");

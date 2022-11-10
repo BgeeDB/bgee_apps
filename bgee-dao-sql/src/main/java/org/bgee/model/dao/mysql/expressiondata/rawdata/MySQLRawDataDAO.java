@@ -32,7 +32,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     public MySQLRawDataDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
-    
+
+    /**
+     * An {@code Enum} describing columns potentially used in a where clause but for
+     * which the table used can change depending on the query.
+     * @author Julien Wollbrett
+     * @version Bgee 15.0, Nov. 2022
+     * @since Bgee 15.0, Nov. 2022
+     */
+    public static enum RawDataColumn {SPECIES_ID, EXPERIMENT_ID, COND_ID}
+
     protected BgeePreparedStatement parameterizeQuery(String query,
             List<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit)
                     throws SQLException {

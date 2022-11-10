@@ -6,16 +6,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.rawdata.RawCall;
 import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.model.gene.GeneXRef;
 import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
-import org.bgee.view.json.adapters.GeneXRefTypeAdapter;
+import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RawCallTypeAdapter;
 import org.bgee.view.json.adapters.RawDataAnnotationTypeAdapter;
@@ -142,8 +142,8 @@ public class JsonHelper {
                 .registerTypeAdapter(RequestParameters.class, new RequestParameterTypeAdapter())
                 .registerTypeAdapter(TopAnatResults.class, new TopAnatResultsTypeAdapter(this.requestParameters))
                 .registerTypeAdapter(Job.class, new JobTypeAdapter())
-                .registerTypeAdapter(GeneXRef.class,
-                        new GeneXRefTypeAdapter(s -> this.urlEncode(s), this.utils))
+                .registerTypeAdapter(XRef.class,
+                        new XRefTypeAdapter(s -> this.urlEncode(s), this.utils))
                 .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),

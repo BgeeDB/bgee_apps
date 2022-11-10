@@ -40,6 +40,11 @@ public class Source extends NamedEntity<Integer> {
      * in URLs returned by {@link #getXRefUrl()}.
      */
     public final static String HOMOLOGY_TYPE_TAG = "[homology_type]";
+    /**
+     * The {@code String} that is the tag to be replaced by an experiment ID
+     * in URLs returned by {@link #getXRefUrl()}.
+     */
+    public final static String EXPERIMENT_TAG = "[experiment_id]";
 
     /**
      * A {@code String} that is the URL for cross-references to data source.

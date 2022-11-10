@@ -1,12 +1,14 @@
 package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -105,6 +107,39 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(stmt);
     }
 
+    /**
+     * Helper method to generate the SELECT clause of a query, from the {@code Attribute}s
+     * provided using the method {@link #getSelectExprFromAttribute(Enum, Map)}. Will add
+     * SRAIGHT_JOIN if all {@code DAORawDataFilter} contain a filter on geneIds.
+     * Helps only in simple cases, more complex statements should be hand-written (for instance,
+     * when {@code Attribute}s correspond to columns in different tables, or to a sub-query).
+     * 
+     * @param filters                   A {@code Collection} of {@code DAORawDataFilter} used to
+     *                                  define if STRAIGHT_JOIN will be added to the SELECT clause.
+     * @param tableName                 A {@code String} that is the name of the table 
+     *                                  to retrieve data from, or its alias defined in the query.
+     * @param selectExprsToAttributes   A {@code Map} where keys are {@code String}s corresponding to 
+     *                                  'select_expr's, associated to their corresponding 
+     *                                  {@code Attribute} as values. This {@code Map} does not have  
+     *                                  {@code Attribute}s as keys for coherence with the method 
+     *                                  {@link #getAttributeFromColName(String, Map)}.
+     * @param distinct                  A {@code boolean} defining whether the DISTINCT keyword 
+     *                                  is needed in the SELECT clause.
+     * @param attributes                A {@code Collection} of {@code T.Attribute}s
+     *                                  defining the attributes to populate in the returned
+     *                                  SELECT clause.
+     * @return                          A {@code String} that is the generated SELECT clause.
+     */
+    protected String generateSelectClauseRawDataFilters(Collection<DAORawDataFilter> filters,
+            String tableName, Map<String, T> selectExprsToAttributes, boolean distinct,
+            Set<T> attributes) {
+        log.traceEntry("{}, {}, {}, {}, {}", filters, tableName, selectExprsToAttributes,
+                distinct, attributes);
+        boolean straightJoin = filters != null && filters.stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
+        return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes,
+                distinct, straightJoin, attributes));
+    }
     /**
      * Method allowing to add a FROM clause to a {@code StringBuilder} based on
      * {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.

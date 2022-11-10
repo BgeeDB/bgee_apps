@@ -63,10 +63,8 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        // do not let MySQL decide the execution plan if only one DAORawDataFilter
-        boolean straightJoin = orderedRawDataFilters.size() == 1;
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(AffymetrixProbesetDAO
-                    .Attribute.class), true, straightJoin, clonedAttrs));
+        sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+                getColToAttributesMap(AffymetrixProbesetDAO.Attribute.class), true, clonedAttrs));
 
         // generate FROM
         Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,

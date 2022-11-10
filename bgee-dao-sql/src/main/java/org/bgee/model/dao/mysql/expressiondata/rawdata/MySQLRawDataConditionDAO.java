@@ -133,12 +133,8 @@ implements RawDataConditionDAO {
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        // do not let MySQL decide the execution plan if all DAORawDataFilter contain geneIDs.
-        // This is done by adding STRAIGHT_JOIN in the select clause
-        boolean allFiltersContainGeneIds = orderedRawDataFilters.stream()
-                .allMatch(c -> !c.getGeneIds().isEmpty());
-        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RawDataConditionDAO
-                .Attribute.class), true, allFiltersContainGeneIds, clonedAttrs));
+       sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
         Map<RawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,

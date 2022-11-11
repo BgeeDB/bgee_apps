@@ -36,10 +36,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
-import org.bgee.model.BgeeEnum.BgeeEnumField;
+import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
+import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
@@ -57,6 +59,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperi
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
+import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
@@ -337,6 +340,66 @@ public class RawDataLoader extends CommonService {
                 null, null, null,
                 //EST
                 null, null));
+    }
+
+    /**
+     * Load anatomical entities, dev. stages, cell types, sexes and strains for the specified
+     * data type using the condition IDs of the {@code DAORawDataFilter}s.
+     * 
+     * @param dataType  A {@code DataType} corresponding to the datatype for which
+     *                  post filters have to be loaded
+     * @return          A {@code RawDataPostFilter} containing condition parameters to filter on.
+     */
+    public RawDataPostFilter loadPostFilter(DataType dataType) {
+        log.traceEntry("{}", dataType);
+        if (dataType == null) {
+            throw log.throwing(new IllegalArgumentException("dataType can not be null"));
+        }
+        if (dataType.equals(DataType.AFFYMETRIX)) {
+            return log.traceExit(this.loadAffymetrixPostFilter());
+        }
+        throw log.throwing(new IllegalArgumentException("Unrecognized datatype " + dataType));
+    }
+
+    private RawDataPostFilter loadAffymetrixPostFilter() {
+        log.traceEntry();
+        // retrieve anatEntities
+        Set<String> anatEntityIds = this.rawDataConditionDAO
+        .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
+        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
+        .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
+        Set<AnatEntity> anatEntities = anatEntityService.loadAnatEntities(anatEntityIds, false)
+                .collect(Collectors.toSet());
+
+        // retrieve cellTypes
+        Set<String> cellTypeIds = this.rawDataConditionDAO
+                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
+                .stream().map(c -> c.getCellTypeId()).collect(Collectors.toSet());
+        Set<AnatEntity> cellTypes = anatEntityService.loadAnatEntities(cellTypeIds, false)
+                .collect(Collectors.toSet());
+
+        //retrieve dev. stages
+        Set<String> stageIds = this.rawDataConditionDAO
+                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
+                .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
+        Set<DevStage> stages = devStageService.loadDevStages(null, null, stageIds, false)
+                .collect(Collectors.toSet());
+
+        // retrieve strains
+        Set<String> strains = this.rawDataConditionDAO
+                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
+                .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
+
+        //retrieve sexes
+        Set<RawDataSex> sexes = this.rawDataConditionDAO
+                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
+                .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
+        return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
+                sexes, strains));
     }
 
     public RawDataCountContainer loadDataCount(Collection<InformationType> infoTypes,

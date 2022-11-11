@@ -1,5 +1,6 @@
 package org.bgee.view;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.bgee.model.expressiondata.rawdata.Assay;
 import org.bgee.model.expressiondata.rawdata.Experiment;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.species.Species;
 
 /**
@@ -21,7 +23,8 @@ import org.bgee.model.species.Species;
 public interface DataDisplay {
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
-            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer);
+            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
+            Collection<RawDataPostFilter> rawDataPostFilters);
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
             DataType dataType);

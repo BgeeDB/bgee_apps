@@ -9,6 +9,7 @@ import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.rawdata.RawCall;
 import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.job.Job;
 import org.bgee.model.species.Species;
@@ -19,6 +20,7 @@ import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RawCallTypeAdapter;
 import org.bgee.view.json.adapters.RawDataAnnotationTypeAdapter;
+import org.bgee.view.json.adapters.RawDataPostFilterTypeAdapter;
 import org.bgee.view.json.adapters.RequestParameterTypeAdapter;
 import org.bgee.view.json.adapters.TopAnatResultsTypeAdapter;
 import org.bgee.view.json.adapters.TypeAdaptersUtils;
@@ -146,6 +148,8 @@ public class JsonHelper {
                         new XRefTypeAdapter(s -> this.urlEncode(s), this.utils))
                 .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
+                .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
+                        this.utils, this.requestParameters.getUrlParametersInstance()))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
                         () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()

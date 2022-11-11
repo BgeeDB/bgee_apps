@@ -1,11 +1,13 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -19,6 +21,7 @@ import org.bgee.model.expressiondata.rawdata.Assay;
 import org.bgee.model.expressiondata.rawdata.Experiment;
 import org.bgee.model.expressiondata.rawdata.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.species.Species;
 import org.bgee.view.DataDisplay;
 import org.bgee.view.JsonHelper;
@@ -40,9 +43,10 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
     }
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
-            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer) {
-        log.traceEntry("{}, {}, {}, {}", speciesList, formDetails,
-                rawDataContainer, rawDataCountContainer);
+            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
+            Collection<RawDataPostFilter> rawDataPostFilters) {
+        log.traceEntry("{}, {}, {}, {}, {}", speciesList, formDetails,
+                rawDataContainer, rawDataCountContainer, rawDataPostFilters);
 
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
         if (speciesList != null && !speciesList.isEmpty()) {
@@ -52,15 +56,21 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             responseMap.put("requestDetails", formDetails);
         }
 
-        if (rawDataContainer != null || rawDataCountContainer != null) {
+        if (rawDataContainer != null || rawDataCountContainer != null ||
+                rawDataPostFilters != null && !rawDataPostFilters.isEmpty()) {
+
             //The Sets returned by rawDataContainer are backed-up by a LinkedHashSet,
             //iteration order is guaranteed
             LinkedHashMap<DataType, Set<?>> resultMap = new LinkedHashMap<>();
-            LinkedHashMap<DataType, LinkedHashMap<String, Integer>> resultCountMap =
-                    new LinkedHashMap<>();
+            //for counts
             final String expCountKey = "experimentCount";
             final String assayCountKey = "assayCount";
             final String callCountKey = "callCount";
+            LinkedHashMap<DataType, LinkedHashMap<String, Integer>> resultCountMap =
+                    new LinkedHashMap<>();
+            //For filters
+            LinkedHashMap<DataType, RawDataPostFilter> filterMap = new LinkedHashMap<>();
+
             for (DataType dt: EnumSet.allOf(DataType.class)) {
                 switch (dt) {
                 //It is important to start from calls, then assay, then experiments,
@@ -97,6 +107,10 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
                             resultCountMap.put(dt, counts);
                         }
                     }
+                    RawDataPostFilter postFilter = getDataTypeRawDataPostFilter(rawDataPostFilters, dt);
+                    if (postFilter != null) {
+                        filterMap.put(dt, postFilter);
+                    }
                     break;
                 case EST:
                     break;
@@ -111,6 +125,9 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             }
             if (!resultCountMap.isEmpty()) {
                 responseMap.put("resultCount", resultCountMap);
+            }
+            if (!filterMap.isEmpty()) {
+                responseMap.put("filters", filterMap);
             }
         }
 
@@ -129,5 +146,24 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
 
         this.sendResponse("Experiment page", responseMap);
         log.traceExit();
+    }
+
+    private static RawDataPostFilter getDataTypeRawDataPostFilter(Collection<RawDataPostFilter> rawDataPostFilters,
+            DataType dt) {
+        log.traceEntry("{}, {}", rawDataPostFilters, dt);
+        if (rawDataPostFilters == null) {
+            return log.traceExit((RawDataPostFilter) null);
+        }
+        Set<RawDataPostFilter> dtPostFilters = rawDataPostFilters.stream()
+                .filter(f -> dt == f.getRequestedDataType())
+                .collect(Collectors.toSet());
+        if (dtPostFilters.isEmpty()) {
+            return log.traceExit((RawDataPostFilter) null);
+        }
+        if (dtPostFilters.size() > 1) {
+            throw log.throwing(new IllegalStateException(
+                    "Only one RawDataPostFilter per DataType is allowed"));
+        }
+        return log.traceExit(dtPostFilters.iterator().next());
     }
 }

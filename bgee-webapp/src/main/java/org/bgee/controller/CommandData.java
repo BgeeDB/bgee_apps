@@ -20,6 +20,7 @@ import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
+import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.gene.Gene;
@@ -197,6 +198,10 @@ public class CommandData extends CommandParent {
         log.debug("Action identified: {}", this.requestParameters.getAction());
         RawDataContainer rawDataContainer = null;
         RawDataCountContainer rawDataCountContainer = null;
+        //Usually we will request rawDataPostFilters only for one data type,
+        //but we leave open the possibility to retrieve them for several data types,
+        //and return them all in a Set.
+        Set<RawDataPostFilter> rawDataPostFilters = null;
 
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
 
@@ -220,6 +225,10 @@ public class CommandData extends CommandParent {
                 if (this.requestParameters.isGetResultCount()) {
                     rawDataCountContainer = this.loadRawDataCounts(rawDataLoader, dataTypes);
                 }
+                //Filters
+                if (this.requestParameters.isGetFilters()) {
+                    rawDataPostFilters = this.loadRawDataPostFilters(rawDataLoader, dataTypes);
+                }
 
                 job.completeWithSuccess();
             } finally {
@@ -229,7 +238,8 @@ public class CommandData extends CommandParent {
             }
         }
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer);
+        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer,
+                rawDataPostFilters);
 
         log.traceExit();
     }
@@ -550,5 +560,16 @@ public class CommandData extends CommandParent {
             infoTypes.add(InformationType.CALL);
         }
         return log.traceExit(rawDataLoader.loadDataCount(infoTypes, dataTypes));
+    }
+
+    private Set<RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
+            EnumSet<DataType> dataTypes) {
+        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
+
+        Set<RawDataPostFilter> rawDataPostFilters = new HashSet<>();
+        for (DataType dataType: dataTypes) {
+            rawDataPostFilters.add(rawDataLoader.loadPostFilter(dataType));
+        }
+        return log.traceExit(rawDataPostFilters);
     }
 }

@@ -35,28 +35,38 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         }
         out.beginObject();
 
-        out.name("anatEntities");
-        this.writePostFilterNamedEntityParameter(out, "Anatomical entities",
-                this.urlParameters.getParamAnatEntity().getName(), value.getAnatEntities());
+        if (!value.getAnatEntities().isEmpty()) {
+            out.name("anatEntities");
+            this.writePostFilterNamedEntityParameter(out, "Anatomical entities",
+                    this.urlParameters.getParamAnatEntity().getName(), value.getAnatEntities());
+        }
 
-        out.name("cellTypes");
-        this.writePostFilterNamedEntityParameter(out, "Cell types",
-                this.urlParameters.getParamCellType().getName(), value.getCellTypes());
+        if (!value.getCellTypes().isEmpty()) {
+            out.name("cellTypes");
+            this.writePostFilterNamedEntityParameter(out, "Cell types",
+                    this.urlParameters.getParamCellType().getName(), value.getCellTypes());
+        }
 
-        out.name("devStages");
-        this.writePostFilterNamedEntityParameter(out, "Developmental and life stages",
-                this.urlParameters.getParamDevStage().getName(), value.getDevStages());
+        if (!value.getDevStages().isEmpty()) {
+            out.name("devStages");
+            this.writePostFilterNamedEntityParameter(out, "Developmental and life stages",
+                    this.urlParameters.getParamDevStage().getName(), value.getDevStages());
+        }
 
-        out.name("sexes");
-        this.writePostFilterStringParameter(out, "Sexes",
-                this.urlParameters.getParamSex().getName(),
-                value.getSexes().stream().map(s -> s.getStringRepresentation())
-                .collect(Collectors.toList()));
+        if (!value.getSexes().isEmpty()) {
+            out.name("sexes");
+            this.writePostFilterStringParameter(out, "Sexes",
+                    this.urlParameters.getParamSex().getName(),
+                    value.getSexes().stream().map(s -> s.getStringRepresentation())
+                    .collect(Collectors.toList()));
+        }
 
-        out.name("strains");
-        this.writePostFilterStringParameter(out, "Strains",
-                this.urlParameters.getParamStrain().getName(),
-                value.getStrains());
+        if (!value.getStrains().isEmpty()) {
+            out.name("strains");
+            this.writePostFilterStringParameter(out, "Strains",
+                    this.urlParameters.getParamStrain().getName(),
+                    value.getStrains());
+        }
 
         out.endObject();
         log.traceExit();

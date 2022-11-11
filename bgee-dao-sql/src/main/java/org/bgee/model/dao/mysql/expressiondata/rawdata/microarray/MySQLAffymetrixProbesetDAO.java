@@ -64,7 +64,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
 
         // generate SELECT
         sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
-                getColToAttributesMap(AffymetrixProbesetDAO.Attribute.class), true, clonedAttrs));
+                getColToAttributesMap(AffymetrixProbesetDAO.Attribute.class), false, clonedAttrs));
 
         // generate FROM
         Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,

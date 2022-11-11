@@ -568,6 +568,10 @@ public class CommandData extends CommandParent {
 
         Set<RawDataPostFilter> rawDataPostFilters = new HashSet<>();
         for (DataType dataType: dataTypes) {
+            //TODO: remove this check when all data types will be implemented
+            if (dataType != DataType.AFFYMETRIX) {
+                continue;
+            }
             rawDataPostFilters.add(rawDataLoader.loadPostFilter(dataType));
         }
         return log.traceExit(rawDataPostFilters);

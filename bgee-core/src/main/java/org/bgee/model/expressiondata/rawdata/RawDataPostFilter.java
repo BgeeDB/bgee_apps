@@ -27,7 +27,7 @@ public class RawDataPostFilter {
     private final Set<AnatEntity> cellTypes;
     private final Set<RawDataSex> sexes;
     private final Set<String> strains;
-    private final DataType requestedDatatype;
+    private final DataType requestedDataType;
 
     /**
      * 
@@ -41,64 +41,90 @@ public class RawDataPostFilter {
      *                          to use in the filtering
      * @param strains           A {@code Collection} of {@code String} specifying the strains to use
      *                          in the filtering
-     * @param requestedDatatype A {@code DataType} corresponding to the data type for which post
+     * @param requestedDataType A {@code DataType} corresponding to the data type for which post
      *                          fitlers have been retrieved.
      */
     public RawDataPostFilter(Collection<AnatEntity> anatEntities, Collection<DevStage> devStages,
             Collection<AnatEntity> cellTypes, Collection<RawDataSex> sexes,
-            Collection<String> strains, DataType requestedDatatype) {
-        super();
-        this.anatEntities = anatEntities == null ? null :
-            Collections.unmodifiableSet(new LinkedHashSet<>(anatEntities.stream()
+            Collection<String> strains, DataType requestedDataType) {
+        if (requestedDataType == null) {
+            throw new IllegalArgumentException("requestedDataType cannot be null");
+        }
+        this.anatEntities = anatEntities == null? null:
+            Collections.unmodifiableSet(anatEntities.stream()
                     .sorted(Comparator.comparing(ae -> ae.getName()))
-                    .collect(Collectors.toCollection(LinkedHashSet::new))));
-        this.devStages = devStages == null ? null :
-            Collections.unmodifiableSet(new LinkedHashSet<>(devStages.stream()
+                    .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
+        this.devStages = devStages == null? null:
+            Collections.unmodifiableSet(devStages.stream()
                     .sorted(Comparator.comparing(ds -> ds.getName()))
-                    .collect(Collectors.toCollection(LinkedHashSet::new))));
-        this.cellTypes = cellTypes == null ? null :
-            Collections.unmodifiableSet(new LinkedHashSet<>(cellTypes.stream()
+                    .collect(Collectors.<DevStage, LinkedHashSet<DevStage>>toCollection(LinkedHashSet::new)));
+        this.cellTypes = cellTypes == null? null:
+            Collections.unmodifiableSet(cellTypes.stream()
                     .sorted(Comparator.comparing(ct -> ct.getName()))
-                    .collect(Collectors.toCollection(LinkedHashSet::new))));
-        this.sexes = sexes == null ? null :
-            Collections.unmodifiableSet(new LinkedHashSet<>(sexes.stream()
+                    .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
+        this.sexes = sexes == null? null :
+            Collections.unmodifiableSet(sexes.stream()
                     .sorted(Comparator.comparing(s -> s.getStringRepresentation()))
-                    .collect(Collectors.toCollection(LinkedHashSet::new))));
-        this.strains = strains == null ? null :
-            Collections.unmodifiableSet(new LinkedHashSet<>(strains.stream().sorted()
-                    .collect(Collectors.toSet())));
-        this.requestedDatatype = requestedDatatype;
+                    .collect(Collectors.<RawDataSex, LinkedHashSet<RawDataSex>>toCollection(LinkedHashSet::new)));
+        this.strains = strains == null? null:
+            Collections.unmodifiableSet(strains.stream().sorted()
+                    .collect(Collectors.<String, LinkedHashSet<String>>toCollection(LinkedHashSet::new)));
+        this.requestedDataType = requestedDataType;
     }
 
+    /**
+     * @return  A {@code Set} of {@code AnatEntity}s present in a raw data query result.
+     *          The underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
     public Set<AnatEntity> getAnatEntities() {
         return anatEntities;
     }
-
+    /**
+     * @return  A {@code Set} of {@code DevStage}s present in a raw data query result.
+     *          The underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
     public Set<DevStage> getDevStages() {
         return devStages;
     }
-
+    /**
+     * @return  A {@code Set} of {@code AnatEntity}s representing cell types,
+     *          present in a raw data query result.
+     *          The underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
     public Set<AnatEntity> getCellTypes() {
         return cellTypes;
     }
-
+    /**
+     * @return  A {@code Set} of {@code RawDataSex}s present in a raw data query result.
+     *          The underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
     public Set<RawDataSex> getSexes() {
         return sexes;
     }
-
+    /**
+     * @return  A {@code Set} of {@code String}s representing strains,
+     *          present in a raw data query result.
+     *          The underlying instance is a {@code LinkedHashSet},
+     *          but returned as a {@code Set} to be unmodifiable.
+     */
     public Set<String> getStrains() {
         return strains;
     }
-
-    public DataType getRequestedDatatype() {
-        return requestedDatatype;
+    /**
+     * @return  The {@code DataType} for which this {@code RawDataPostFilter} was requested.
+     */
+    public DataType getRequestedDataType() {
+        return requestedDataType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(anatEntities, cellTypes, devStages, sexes, strains);
+        return Objects.hash(anatEntities, cellTypes, devStages, sexes, strains, requestedDataType);
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -110,13 +136,20 @@ public class RawDataPostFilter {
         RawDataPostFilter other = (RawDataPostFilter) obj;
         return Objects.equals(anatEntities, other.anatEntities) && Objects.equals(cellTypes, other.cellTypes)
                 && Objects.equals(devStages, other.devStages) && Objects.equals(sexes, other.sexes)
-                && Objects.equals(strains, other.strains);
+                && Objects.equals(strains, other.strains)
+                && Objects.equals(requestedDataType, other.requestedDataType);
     }
 
     @Override
     public String toString() {
-        return "RawDataConditionPostFilter [anatEntities=" + anatEntities + ", devStages=" + devStages + ", cellTypes="
-                + cellTypes + ", sexes=" + sexes + ", strains=" + strains + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("RawDataPostFilter [anatEntities=").append(anatEntities)
+               .append(", devStages=").append(devStages)
+               .append(", cellTypes=").append(cellTypes)
+               .append(", sexes=").append(sexes)
+               .append(", strains=").append(strains)
+               .append(", requestedDataType=").append(requestedDataType)
+               .append("]");
+        return builder.toString();
     }
-
 }

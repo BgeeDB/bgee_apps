@@ -425,6 +425,12 @@ public class RequestParameters {
     public static final String ACTION_GENE_EXPRESSION = "expression";
     /**
      * A {@code String} that is the value taken by the {@code action} parameter
+     * (see {@link URLParameters#getParamAction()}) when experiment list
+     * is requested. Value of the parameter page should be {@link #PAGE_DATA}.
+     */
+    public static final String ACTION_EXPERIMENTS = "experiments";
+    /**
+     * A {@code String} that is the value taken by the {@code action} parameter
      * (see {@link URLParameters#getParamAction()}) when raw data annotations
      * are requested. Value of the parameter page should be {@link #PAGE_DATA}.
      */

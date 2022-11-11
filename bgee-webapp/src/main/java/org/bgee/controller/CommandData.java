@@ -134,6 +134,9 @@ public class CommandData extends CommandParent {
             throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
                     + "is greater than the maximum limit allowed by the RawDataLoader."));
         }
+        if (DEFAULT_LIMIT > LIMIT_MAX) {
+            throw log.throwing(new IllegalStateException("The default limit is greater than the max. limit."));
+        }
     }
 
     private final SpeciesService speciesService;
@@ -170,8 +173,9 @@ public class CommandData extends CommandParent {
         //Form details
         DataFormDetails formDetails = this.loadFormDetails();
 
-        //Actions: raw data results, processed expression values
-        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
+        //Actions: experiment list, raw data results, processed expression values
+        if (RequestParameters.ACTION_EXPERIMENTS.equals(this.requestParameters.getAction()) ||
+                RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
                 RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
 
             this.processRawDataPage(speciesList, formDetails);
@@ -494,7 +498,8 @@ public class CommandData extends CommandParent {
 
         Integer limit = this.requestParameters.getLimit();
         if (limit == null) {
-            //The validity of DEFAULT_LIMIT is checked already in the static initializer
+            //The validity of DEFAULT_LIMIT and LIMIT_MAX as compared to RawDataLoader.LIMIT_MAX
+            //are checked already in the static initializer
             limit = DEFAULT_LIMIT;
         } else if (limit > LIMIT_MAX) {
             throw log.throwing(new InvalidRequestException("It is not possible to request more than "
@@ -512,6 +517,9 @@ public class CommandData extends CommandParent {
         }
         InformationType infoType = null;
         switch (this.requestParameters.getAction()) {
+        case RequestParameters.ACTION_EXPERIMENTS:
+            infoType = InformationType.EXPERIMENT;
+            break;
         case RequestParameters.ACTION_RAW_DATA_ANNOTS:
             infoType = InformationType.ASSAY;
             break;
@@ -533,7 +541,11 @@ public class CommandData extends CommandParent {
         if (this.requestParameters.getAction() == null) {
             throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
         }
-        EnumSet<InformationType> infoTypes = EnumSet.of(InformationType.EXPERIMENT, InformationType.ASSAY);
+        EnumSet<InformationType> infoTypes = EnumSet.of(InformationType.EXPERIMENT);
+        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
+                RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+            infoTypes.add(InformationType.ASSAY);
+        }
         if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             infoTypes.add(InformationType.CALL);
         }

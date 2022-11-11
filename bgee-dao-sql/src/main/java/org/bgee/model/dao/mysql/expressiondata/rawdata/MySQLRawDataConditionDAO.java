@@ -20,10 +20,12 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
@@ -122,14 +124,6 @@ implements RawDataConditionDAO {
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
 
-        boolean needJoinProbeset = orderedRawDataFilters.stream()
-                .anyMatch(c -> !c.getGeneIds().isEmpty());
-        boolean needJoinChip = needJoinProbeset ||
-                orderedRawDataFilters.stream().anyMatch(c ->!c.getAssayIds().isEmpty() ||
-                !c.getExperimentIds().isEmpty() || !c.getExprOrAssayIds().isEmpty());
-
-        assert !(needJoinProbeset && !needJoinChip);
-
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
@@ -137,14 +131,27 @@ implements RawDataConditionDAO {
                getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
-        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
+        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(
+                sb, orderedRawDataFilters,
                 Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
-        
+
+        // generate WHERE
+        sb.append(" WHERE ");
         if (!orderedRawDataFilters.isEmpty()) {
-            // generate WHERE
-            sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, columnToTable));
+            sb.append("(")
+              .append(generateWhereClause(orderedRawDataFilters, columnToTable))
+              .append(") AND ");
         }
+        //We at least always need to check that results are from conditions
+        //used in annotations of the requested data type.
+        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
+        //to the affymetrixChip table, we always add this clause:
+        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLAffymetrixChipDAO.TABLE_NAME)
+          .append(" WHERE ").append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+          .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+          .append(")");
+
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
                     null, null);

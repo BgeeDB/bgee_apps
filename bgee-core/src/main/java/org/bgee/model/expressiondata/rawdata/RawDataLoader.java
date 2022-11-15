@@ -561,18 +561,9 @@ public class RawDataLoader extends CommonService {
             Map<Integer, RawDataCondition> condMap, Map<Integer, Gene> geneMap) {
         log.traceEntry("{}, {}, {}, {}", tempRawDataContainer, infoType, condMap, geneMap);
 
-        if (tempRawDataContainer == null) {
-            return log.traceExit(new RawDataContainer(EnumSet.of(DataType.AFFYMETRIX),
-                    null, null, null,
-                    null, null, null, null,
-                    null, null, null,
-                    null, null));
-        }
-
         //Experiments are always needed
         LinkedHashSet<AffymetrixExperiment> affymetrixExperiments =
                 new LinkedHashSet<>(tempRawDataContainer.experimentMap.values());
-
 
         //Now we load the LinkedHashSets only if needed, to distinguish between
         //null value = info not requested, and empty Collection = no result

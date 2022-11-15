@@ -329,7 +329,7 @@ public class RawDataLoader extends CommonService {
         //*****************************************************************************************
         //And finally we merge all results in one single container
         //*****************************************************************************************
-        return log.traceExit(new RawDataContainer(requestedDataTypes,
+        return log.traceExit(new RawDataContainer(
                 //Affymetrix
                 partialAffyContainer.getAffymetrixExperiments(),
                 partialAffyContainer.getAffymetrixAssays(),
@@ -619,7 +619,7 @@ public class RawDataLoader extends CommonService {
             }
         }
 
-        return log.traceExit(new RawDataContainer(EnumSet.of(DataType.AFFYMETRIX),
+        return log.traceExit(new RawDataContainer(
                 affymetrixExperiments, affymetrixAssays, affymetrixCalls,
                 null, null, null, null,
                 null, null, null,

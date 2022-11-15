@@ -51,17 +51,15 @@ public class RawDataContainer {
     private final Set<ESTLibrary> estAssays;
     private final Set<EST> estCalls;
 
-    public RawDataContainer(Collection<DataType> requestedDataTypes,
-            Collection<AffymetrixExperiment> affymetrixExperiments, Collection<AffymetrixChip> affymetrixAssays,
-            Collection<AffymetrixProbeset> affymetrixCalls, Collection<RnaSeqExperiment> rnaSeqExperiments,
-            Collection<RnaSeqLibrary> rnaSeqLibraries, Collection<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
+    public RawDataContainer(Collection<AffymetrixExperiment> affymetrixExperiments,
+            Collection<AffymetrixChip> affymetrixAssays, Collection<AffymetrixProbeset> affymetrixCalls,
+            Collection<RnaSeqExperiment> rnaSeqExperiments, Collection<RnaSeqLibrary> rnaSeqLibraries,
+            Collection<RnaSeqLibraryAnnotatedSample> rnaSeqAssays,
             Collection<RnaSeqResultAnnotatedSample> rnaSeqCalls, Collection<InSituExperiment> inSituExperiments,
             Collection<InSituEvidence> inSituAssays, Collection<InSituSpot> inSituCalls,
             Collection<ESTLibrary> estAssays, Collection<EST> estCalls) {
 
-        //We will use defensive copying in the getter
-        this.requestedDataTypes = requestedDataTypes == null || requestedDataTypes.isEmpty()?
-                EnumSet.allOf(DataType.class): EnumSet.copyOf(requestedDataTypes);
+        EnumSet<DataType> requestedDataTypes = EnumSet.noneOf(DataType.class);
         EnumSet<DataType> dataTypesWithResults = EnumSet.noneOf(DataType.class);
 
         this.affymetrixExperiments = affymetrixExperiments == null? null:
@@ -70,6 +68,11 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixAssays));
         this.affymetrixCalls = affymetrixCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(affymetrixCalls));
+        if (this.affymetrixExperiments != null ||
+                this.affymetrixAssays != null ||
+                this.affymetrixCalls != null) {
+            requestedDataTypes.add(DataType.AFFYMETRIX);
+        }
         if (this.affymetrixExperiments != null && !this.affymetrixExperiments.isEmpty() ||
                 this.affymetrixAssays != null && !this.affymetrixAssays.isEmpty() ||
                 this.affymetrixCalls != null && !this.affymetrixCalls.isEmpty()) {
@@ -84,6 +87,12 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqAssays));
         this.rnaSeqCalls = rnaSeqCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(rnaSeqCalls));
+        if (this.rnaSeqExperiments != null ||
+                this.rnaSeqLibraries != null ||
+                this.rnaSeqAssays != null ||
+                this.rnaSeqCalls != null) {
+            requestedDataTypes.add(DataType.RNA_SEQ);
+        }
         if (this.rnaSeqExperiments != null && !this.rnaSeqExperiments.isEmpty() ||
                 this.rnaSeqLibraries != null && !this.rnaSeqLibraries.isEmpty() ||
                 this.rnaSeqAssays != null && !this.rnaSeqAssays.isEmpty() ||
@@ -97,6 +106,11 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(inSituAssays));
         this.inSituCalls = inSituCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(inSituCalls));
+        if (this.inSituExperiments != null ||
+                this.inSituAssays != null ||
+                this.inSituCalls != null) {
+            requestedDataTypes.add(DataType.IN_SITU);
+        }
         if (this.inSituExperiments != null && !this.inSituExperiments.isEmpty() ||
                 this.inSituAssays != null && !this.inSituAssays.isEmpty() ||
                 this.inSituCalls != null && !this.inSituCalls.isEmpty()) {
@@ -107,12 +121,17 @@ public class RawDataContainer {
             Collections.unmodifiableSet(new LinkedHashSet<>(estAssays));
         this.estCalls = estCalls == null? null:
             Collections.unmodifiableSet(new LinkedHashSet<>(estCalls));
+        if (this.estAssays != null ||
+                this.estCalls != null) {
+            requestedDataTypes.add(DataType.EST);
+        }
         if (this.estAssays != null && !this.estAssays.isEmpty() ||
                 this.estCalls != null && !this.estCalls.isEmpty()) {
             dataTypesWithResults.add(DataType.EST);
         }
 
         //We will use defensive copying in the getter
+        this.requestedDataTypes = requestedDataTypes;
         this.dataTypesWithResults = dataTypesWithResults;
     }
 

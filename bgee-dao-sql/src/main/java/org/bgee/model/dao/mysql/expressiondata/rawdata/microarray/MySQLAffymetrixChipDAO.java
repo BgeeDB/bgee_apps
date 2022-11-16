@@ -60,7 +60,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
                 getColToAttributesMap(AffymetrixChipDAO.Attribute.class), true, clonedAttrs));
 
         // generate FROM
-        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb, 
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 orderedRawDataFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE

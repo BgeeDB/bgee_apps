@@ -55,7 +55,7 @@ public class MySQLRNASeqTechnologyDAO extends MySQLRawDataDAO<RNASeqTechnologyDA
             boolean foundBefore = false;
             if (!clonedTechNames.isEmpty()) {
                 sb.append(RNASeqTechnologyDAO.Attribute.NAME.getTOFieldName())
-                .append(" IN (") 
+                .append(" IN (")
                 .append(BgeePreparedStatement.generateParameterizedQueryString(clonedTechNames.size()))
                 .append(")");
                 foundBefore = true;
@@ -90,8 +90,8 @@ public class MySQLRNASeqTechnologyDAO extends MySQLRawDataDAO<RNASeqTechnologyDA
     }
 
     /**
-     * Implementation of the {@code RNASeqTechnologyTOResultSet}. 
-     * 
+     * Implementation of the {@code RNASeqTechnologyTOResultSet}.
+     *
      * @author Julien Wollbrett
      * @version Bgee 15, Nov. 2022
      * @since Bgee 15

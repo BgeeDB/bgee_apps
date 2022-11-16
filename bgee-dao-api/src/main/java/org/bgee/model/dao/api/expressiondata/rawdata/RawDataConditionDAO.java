@@ -103,7 +103,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieves distinct raw conditions used in data annotations for requested raw data filters. 
+     * Retrieves distinct raw conditions used in data annotations for requested raw data filters.
      * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results
      * are retrieved.
@@ -114,7 +114,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                              defining the attributes to populate in the returned
      *                              {@code RawDataConditionTO}s.
      * @return                      A {@code RawDataConditionTOResultSet} containing the requested
-     *                              raw data conditions populated with the selected 
+     *                              raw data conditions populated with the selected
      *                              {@code RawDataConditionDAO.Attribute}.
      * @throws DAOException         If an error occurred while accessing the data source.
      */

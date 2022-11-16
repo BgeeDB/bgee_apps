@@ -38,13 +38,13 @@ public interface RNASeqTechnologyDAO extends DAO<RNASeqTechnologyDAO.Attribute>{
     }
 
     public RNASeqTechnologyTOResultSet getRNASeqTechnologies(Collection<RNASeqTechnologyDAO.Attribute> attrs);
-    
+
     public RNASeqTechnologyTOResultSet getRNASeqTechnologies(Boolean isSingleCell,
             Collection<String> technologyName, Collection<RNASeqTechnologyDAO.Attribute> attrs);
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
-     * 
+     *
      * @author  Julien Wollbrett
      * @version Bgee 15, Nov. 2022
      * @since   Bgee 15
@@ -54,7 +54,7 @@ public interface RNASeqTechnologyDAO extends DAO<RNASeqTechnologyDAO.Attribute>{
 
     /**
      * {@code TransferObject} for RNA-Seq technologies.
-     * 
+     *
      * @author Julien Wollbrett
      * @version Bgee 15, Nov. 2022
      * @since Bgee 15

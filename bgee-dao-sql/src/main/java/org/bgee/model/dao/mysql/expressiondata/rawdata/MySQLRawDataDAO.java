@@ -441,7 +441,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to columns to use
      * in the WHERE clause as keys and {@code String} corresponding to the table to use to
      * retrieve the data as values.
-     * 
+     *
      * @param sb                The {@code StringBuilder} for which the FROM clause will be
      *                          created.
      * @param rawDatafilters    A {@code List} of {@code DAORawDataFilter} to use to generate the
@@ -472,16 +472,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // result and annotated samples and libraries (for all the counts)
         if (necessaryTables.size() == 2 && !(necessaryTables.containsAll(
                 Set.of(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME, MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)) ||
-                necessaryTables.containsAll(Set.of(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME, 
+                necessaryTables.containsAll(Set.of(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME,
                         MySQLRNASeqLibraryDAO.TABLE_NAME)))
                 || necessaryTables.size() == 3 && !necessaryTables.containsAll(
-                        Set.of(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME, 
+                        Set.of(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME,
                                 MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME, MySQLRNASeqLibraryDAO.TABLE_NAME))
                 || necessaryTables.size() > 3) {
             throw log.throwing(new IllegalStateException("Combination of necessary tables unsupported: "
                     + necessaryTables));
         }
-        
+
         Map<AmbiguousRawDataColumn, String> colToTableMap = new LinkedHashMap<>();
         LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
 
@@ -533,7 +533,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 resultAnnotatedSampleTable);
 
 
-        // first check if always require geneIds. 
+        // first check if always require geneIds.
         if (alwaysGeneId) {
             orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         }
@@ -593,7 +593,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
                         MySQLRawDataConditionDAO.TABLE_NAME);
             }
-        // if cond is not a necessary table it means conditionId can be retrieved from 
+        // if cond is not a necessary table it means conditionId can be retrieved from library
+        // annotated sample table
         } else if (needCondId) {
             colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
                     MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
@@ -608,7 +609,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     /**
      * Generate the {@code StringBuilder} corresponding to the FROM clause of any RNA-Seq
      * query based on a {@code LinkedHashSet} containing tables to join in the proper order.
-     * 
+     *
      * @param tables    A {@code LinkedHashSet} containing tables to join in the FROM clause in
      *                  the proper order
      * @return          A {@code StringBuilder} corresponding to the FROM clause of any RNA_Seq
@@ -802,8 +803,6 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         return log.traceExit(sb.toString());
     }
-    
-
 
     protected boolean generateWhereClauseTechnologyRnaSeq(StringBuilder sb,
             List<Integer> technologyIds, boolean foundPrevious) {

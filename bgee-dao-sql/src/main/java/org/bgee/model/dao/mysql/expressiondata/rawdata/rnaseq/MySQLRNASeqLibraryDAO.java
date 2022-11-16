@@ -58,10 +58,10 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters = 
+        final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds = 
+        final List<Integer> orderedTechnologyIds =
                 Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
                     new ArrayList<>(technologyIds));
         final Set<RNASeqLibraryDAO.Attribute> clonedAttrs = Collections
@@ -75,7 +75,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                 getColToAttributesMap(RNASeqLibraryDAO.Attribute.class), true, clonedAttrs));
 
         // generate FROM
-        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb, 
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 orderedRawDataFilters, orderedTechnologyIds, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
@@ -182,7 +182,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
                 }
-                return log.traceExit(new RNASeqLibraryTO(id, experimentId, sequencerName, 
+                return log.traceExit(new RNASeqLibraryTO(id, experimentId, sequencerName,
                         technologyId, sampleMultiplexing, libraryMultiplexing,
                         strandSelection, cellCompartment, seqTranscriptPart,
                         fragmentation, populationCaptureId, libType));

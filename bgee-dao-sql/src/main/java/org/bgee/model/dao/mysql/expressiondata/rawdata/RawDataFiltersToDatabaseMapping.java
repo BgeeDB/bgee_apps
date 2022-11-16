@@ -22,7 +22,7 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultA
 
 /**
  * Class used to map raw data filters to their corresponding columns and tables
- * 
+ *
  * @author Julien Wollbrett
  * @version Bgee 15, Nov. 2022
  *
@@ -33,7 +33,7 @@ public class RawDataFiltersToDatabaseMapping {
     private final Map<RawDataColumn, String> colToColumnName;
     private final DAODataType datatype;
 
-    private final static Logger log = 
+    private final static Logger log =
             LogManager.getLogger(RawDataFiltersToDatabaseMapping.class);
 
 
@@ -133,7 +133,7 @@ public class RawDataFiltersToDatabaseMapping {
         }
         return finalColToColName;
     }
-    
+
     private static RawDataColumn fromAmbiguousColumnToColumn(AmbiguousRawDataColumn ambiguousColumn) {
         log.traceEntry("{}", ambiguousColumn);
         if (ambiguousColumn.equals(AmbiguousRawDataColumn.COND_ID)) {

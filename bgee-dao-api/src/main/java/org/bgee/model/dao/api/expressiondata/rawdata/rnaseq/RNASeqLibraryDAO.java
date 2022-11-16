@@ -1,4 +1,4 @@
- package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
+package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.util.Collection;
 
@@ -47,7 +47,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqLibraryId"), EXPERIMENT_ID("rnaSeqExperimentId"), SEQUENCER_NAME("rnaSeqSequencerName"),
         TECHNOLOGY_ID("rnaSeqTechnologyId"), SAMPLE_MULTIPLEXING("sampleMultiplexing"),
-        LIBRARY_MULTIPLEXING("libraryMultiplexing"), STRAND_SELECTION("strandSelection"), 
+        LIBRARY_MULTIPLEXING("libraryMultiplexing"), STRAND_SELECTION("strandSelection"),
         CELL_COMPARTMENT("cellCompartment"), SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"),
         FRAGMENTATION("fragmentation"), POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"),
         LIBRARY_TYPE("libraryType");
@@ -85,7 +85,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      *                          to retrieve from the library.
      * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
      *          related to the RNA-Seq library retrieved from the data source,
-     *          or {@code null} if none could be found. 
+     *          or {@code null} if none could be found.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
@@ -107,7 +107,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      *                          to retrieve from the library.
      * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
      *          related to the RNA-Seq library retrieved from the data source,
-     *          or {@code null} if none could be found. 
+     *          or {@code null} if none could be found.
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
@@ -415,8 +415,6 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
                     + ", fragmentation=" + fragmentation + ", populationCaptureId=" + populationCaptureId
                     + ", libraryType=" + libraryType + "]";
         }
-
-        
 
     }
 }

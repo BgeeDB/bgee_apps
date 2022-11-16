@@ -3,29 +3,29 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO.RNASeqLibraryAnnotatedSampleTO.AbundanceUnit;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping;
 
 public class MySQLRNASeqResultAnnotatedSampleDAO
 extends MySQLRawDataDAO<RNASeqResultAnnotatedSampleDAO.Attribute>
@@ -37,8 +37,6 @@ implements RNASeqResultAnnotatedSampleDAO {
     private final static Logger log = 
             LogManager.getLogger(MySQLRNASeqResultAnnotatedSampleDAO.class.getName());
     public final static String TABLE_NAME = "rnaSeqLibraryAnnotatedSampleGeneResultDev";
-    private final static String LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME = MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME;
-    private final static String LIBRARY_TABLE_NAME = MySQLRNASeqLibraryDAO.TABLE_NAME;
 
     /**
      * Constructor providing the {@code MySQLDAOManager} that this {@code MySQLDAO} 
@@ -53,164 +51,76 @@ implements RNASeqResultAnnotatedSampleDAO {
     }
 
     @Override
-    public RNASeqResultAnnotatedSampleTOResultSet getRNASeqResultAnnotatedSampleFromLibraryIds(
-            Collection<String> libraryIds,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attrs) {
-        log.traceEntry("{}, {}", libraryIds, attrs);
-        return log.traceExit(getRNASeqResultAnnotatedSamples(null, libraryIds, null, attrs));
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes)
+            throws DAOException {
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
+        return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, null, offset, limit,
+                attributes));
     }
 
-    @Override
-    public RNASeqResultAnnotatedSampleTOResultSet getRNASeqResultAnnotatedSampleFromRawDataFilter(
-            DAORawDataFilter filter,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attrs) {
-        log.traceEntry("{}, {}", filter, attrs);
-        return log.traceExit(getRNASeqResultAnnotatedSamples(null, null, filter, attrs));
-    }
 
     @Override
-    public RNASeqResultAnnotatedSampleTOResultSet getRNASeqResultAnnotatedSamples(
-            Collection<String> experimentIds, Collection<String> libraryIds,
-            DAORawDataFilter filter, Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attrs) {
-        log.traceEntry("{}, {}, {}", libraryIds, filter, attrs);
-//        final Set<String> clonedExpIds = Collections.unmodifiableSet(experimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(experimentIds));
-//        final Set<String> clonedLibraryIds = Collections.unmodifiableSet(libraryIds == null?
-//                new HashSet<String>(): new HashSet<String>(libraryIds));
-//        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
-//        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs =
-//                Collections.unmodifiableSet(attrs == null?
-//                new HashSet<>(): new HashSet<>(attrs));
-//     // generate SELECT
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(Collection<DAORawDataFilter> rawDataFilters,
+            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, technologyIds, offset, limit,
+                attributes);
+
+        // force to have a list in order to keep order of elements. It is mandatory to be able
+        // to first generate a parameterised query and then add values.
+        final List<DAORawDataFilter> orderedRawDataFilters = 
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
+        final List<Integer> orderedTechnologyIds = 
+                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
+                    new ArrayList<>(technologyIds));
+        final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
+
         StringBuilder sb = new StringBuilder();
-//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RNASeqResultAnnotatedSampleDAO
-//                .Attribute.class), true, clonedAttrs))
-//        // generate FROM
-//        .append(generateFromClause(clonedFilter, clonedExpIds, clonedLibraryIds));
-//        //generate WHERE clause
-//        if(!clonedFilter.getSpeciesIds().isEmpty() || !clonedFilter.getConditionFilters().isEmpty()
-//                || !clonedLibraryIds.isEmpty() || !clonedFilter.getGeneIds().isEmpty()
-//                || !clonedExpIds.isEmpty()) {
-//            sb.append(" WHERE ");
-//        }
-//        boolean filteredBefore = false;
-//      //filter on experimentIds
-//        if (!clonedExpIds.isEmpty()) {
-//            sb.append(LIBRARY_TABLE_NAME + ".")
-//            .append(RNASeqLibraryDAO.Attribute.EXPERIMENT_ID.getTOFieldName())
-//            .append(" IN (")
-//            .append(BgeePreparedStatement
-//                    .generateParameterizedQueryString(clonedExpIds.size()))
-//            .append(")");
-//            filteredBefore = true;
-//        }
-//        //filter on libraryIds
-//        if (!clonedLibraryIds.isEmpty()) {
-//            if(filteredBefore) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME + ".")
-//            .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID.getTOFieldName())
-//            .append(" IN (")
-//            .append(BgeePreparedStatement
-//                    .generateParameterizedQueryString(clonedLibraryIds.size()))
-//            .append(")");
-//            filteredBefore = true;
-//        }
-//        // FILTER on speciesIds
-//        if (!clonedFilter.getSpeciesIds().isEmpty()) {
-//            if(filteredBefore) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(CONDITION_TABLE_NAME + ".")
-//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName() + " IN (")
-//            .append(BgeePreparedStatement
-//                    .generateParameterizedQueryString(clonedFilter.getSpeciesIds().size()))
-//            .append(")");
-//            filteredBefore = true;
-//        }
-//        // FILTER on gene Ids
-//        if (!clonedFilter.getGeneIds().isEmpty()) {
-//            if(filteredBefore) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(TABLE_NAME + ".")
-//            .append(RNASeqResultAnnotatedSampleDAO.Attribute.BGEE_GENE_ID.getTOFieldName())
-//            .append(" IN (")
-//            .append(BgeePreparedStatement
-//                    .generateParameterizedQueryString(clonedFilter.getGeneIds().size()))
-//            .append(")");
-//            filteredBefore = true;
-//        }
-//        // FILTER on raw conditions
-//        if (!clonedFilter.getConditionFilters().isEmpty()) {
-//            if(filteredBefore) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(clonedFilter.getConditionFilters().stream()
-//                    .map(cf -> generateOneConditionFilter(cf))
-//                    .collect(Collectors.joining(" OR ", "(", ")")));
-//        }
+
+        // generate SELECT
+        sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+                getColToAttributesMap(RNASeqResultAnnotatedSampleDAO.Attribute.class), true, clonedAttrs));
+
+        // generate FROM
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb, 
+                orderedRawDataFilters, orderedTechnologyIds, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+
+        // generate WHERE CLAUSE
+        if (!orderedRawDataFilters.isEmpty() || !orderedTechnologyIds.isEmpty()) {
+            sb.append(" WHERE ");
+        }
+        boolean foundPrevious = false;
+        if (!orderedRawDataFilters.isEmpty()) {
+            sb.append(generateWhereClauseRawDataFilter(orderedRawDataFilters,
+                    filtersToDatabaseMapping));
+            foundPrevious = true;
+        }
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds,
+                foundPrevious);
+
+        // generate ORDER BY
+        sb.append(" ORDER BY")
+        .append(" " + TABLE_NAME + "." + RNASeqResultAnnotatedSampleDAO.Attribute
+                .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName());
+
+        //generate offset and limit
+        if (limit != null) {
+            sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
+        }
+
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection()
-                    .prepareStatement(sb.toString());
-//            int paramIndex = 1;
-//            if (!clonedExpIds.isEmpty()) {
-//                stmt.setStrings(paramIndex, clonedExpIds, true);
-//                paramIndex += clonedExpIds.size();
-//            }
-//            if (!clonedLibraryIds.isEmpty()) {
-//                stmt.setStrings(paramIndex, clonedLibraryIds, true);
-//                paramIndex += clonedLibraryIds.size();
-//            }
-//            if (!clonedFilter.getSpeciesIds().isEmpty()) {
-//                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
-//                paramIndex += clonedFilter.getSpeciesIds().size();
-//            }
-//            if (!clonedFilter.getGeneIds().isEmpty()) {
-//                stmt.setIntegers(paramIndex, null, filteredBefore);
-//                paramIndex += clonedFilter.getGeneIds().size();
-//            }
-//            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
-//                    paramIndex);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    orderedTechnologyIds, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqResultAnnotatedSampleTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
-        }    }
-
-//    private String generateFromClause(DAORawDataFilter filter, Collection<String> expIds,
-//            Collection<String> libIds) {
-//        log.traceEntry("{}, {}, {}", filter, expIds, libIds);
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(" FROM " + TABLE_NAME);
-//        // join on rnaSeqLibraryAnnotatedSample table
-//        if(!filter.getSpeciesIds().isEmpty() || !filter.getConditionFilters().isEmpty()
-//                || !expIds.isEmpty() || !libIds.isEmpty()) {
-//            sb.append(" INNER JOIN " + LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME + " ON ")
-//            .append(TABLE_NAME + "." + RNASeqResultAnnotatedSampleDAO.Attribute
-//                    .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
-//            .append(" = " + LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME + "."
-//                    + RNASeqLibraryAnnotatedSampleDAO.Attribute.ID
-//                    .getTOFieldName());
-//        }
-//        //join on cond table
-//        if(!filter.getSpeciesIds().isEmpty() || !filter.getConditionFilters().isEmpty()) {
-//            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-//            .append(LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME + "." + RNASeqLibraryAnnotatedSampleDAO
-//                    .Attribute.CONDITION_ID.getTOFieldName())
-//            .append(" = " + CONDITION_TABLE_NAME + "." + RawDataConditionDAO.Attribute.ID
-//                    .getTOFieldName());
-//        }
-//      //join on library table
-//        if(!expIds.isEmpty()) {
-//            sb.append(" INNER JOIN " + LIBRARY_TABLE_NAME + " ON ")
-//            .append(LIBRARY_ANNOTATED_SAMPLE_TABLE_NAME + "." + RNASeqLibraryAnnotatedSampleDAO
-//                    .Attribute.RNASEQ_LIBRARY_ID.getTOFieldName())
-//            .append(" = " + LIBRARY_TABLE_NAME + "." + RNASeqLibraryDAO.Attribute.ID
-//                    .getTOFieldName());
-//        }
-//        return log.traceExit(sb.toString());
-//    }
+        }
+    }
 
     class MySQLRNASeqResultAnnotatedSampleTOResultSet
     extends MySQLDAOResultSet<RNASeqResultAnnotatedSampleTO>
@@ -273,6 +183,10 @@ implements RNASeqResultAnnotatedSampleDAO {
                     } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
                             .ZSCORE.getTOFieldName())) {
                         zScore = currentResultSet.getBigDecimal(column.getKey());
+                    } else if(column.getValue().equals(RNASeqResultAnnotatedSampleDAO.Attribute
+                            .DETECTION_FLAG.getTOFieldName())) {
+                        //TODO the database schema still contain the column detectionFlag that is not
+                        // used and should be removed. Remove this condition when the schema is updated
                     } else {
                         log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }

@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -23,7 +22,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbes
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
+import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping;
 
 
 public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbesetDAO.Attribute>
@@ -67,12 +68,12 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
                 getColToAttributesMap(AffymetrixProbesetDAO.Attribute.class), false, clonedAttrs));
 
         // generate FROM
-        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
-                Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                orderedRawDataFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
         // generate WHERE
         if (!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, columnToTable));
+            .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
         }
 
         // generate ORDER BY
@@ -87,7 +88,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    offset, limit);
+                    DAODataType.AFFYMETRIX, offset, limit);
             return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -145,13 +146,14 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
                 } else if(column.getValue().equals(AffymetrixProbesetDAO.Attribute
                         .REASON_FOR_EXCLUSION.getTOFieldName())) {
                     reasonForExclusion = currentResultSet.getString(column.getKey());
-                }  
-                // currently disabled this exception as the database schema still contain columns like
-                // detectionFlag and rawDetectionFlag that are not used and should be removed
-                // from the database
-//                else {
-//                    log.throwing(new UnrecognizedColumnException(column.getValue()));
-//                }
+                }  else if (column.getValue().equals(AffymetrixProbesetDAO.Attribute
+                        .RAW_DETECTION_FLAG.getTOFieldName())) {
+                    //TODO the database schema still contain the column rawDetectionFlag that is not
+                    // used and should be removed. Remove this condition when the schema is updated
+                }
+                else {
+                    log.throwing(new UnrecognizedColumnException(column.getValue()));
+                }
             }
             return log.traceExit(new AffymetrixProbesetTO(affymetrixProbesetId, bgeeAffymetrixChipId,
                     bgeeGeneId, normalizedSignalIntensity, pValue, qValue, expressionId, rank,

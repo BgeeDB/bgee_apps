@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -22,6 +21,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping;
 
 public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExperimentDAO.Attribute> 
         implements MicroarrayExperimentDAO {
@@ -56,12 +56,13 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
                 clonedAttrs));
 
         //generate FROM clause
-        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
-                Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                orderedRawDataFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE
         if (!orderedRawDataFilters.isEmpty()) {
-            sb.append(" WHERE ").append(generateWhereClause(orderedRawDataFilters,columnToTable));
+            sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(orderedRawDataFilters,
+                    filtersToDatabaseMapping));
         }
 
         // generate ORDER BY
@@ -75,7 +76,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         //add values to parameterized queries
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(),
-                    orderedRawDataFilters, offset, limit);
+                    orderedRawDataFilters, DAODataType.AFFYMETRIX, offset, limit);
             return log.traceExit(new MySQLMicroarrayExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

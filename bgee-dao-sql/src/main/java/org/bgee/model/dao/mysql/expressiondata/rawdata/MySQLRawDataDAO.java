@@ -435,70 +435,286 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb);
     }
 
-    protected String generateFromClauseAffymetrix(String tableName, boolean needJoinExp,
-            boolean needJoinChip, boolean needJoinProbeset, boolean needJoinCond,
-            boolean needJoinGene) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", tableName, needJoinExp, needJoinChip,
-                needJoinProbeset, needJoinCond, needJoinGene);
-        StringBuilder sb = new StringBuilder();
-        sb.append(" FROM " + tableName);
-        // join affymetrixChip table
-        if(needJoinChip) {
-            sb.append(" INNER JOIN " + MySQLAffymetrixChipDAO.TABLE_NAME + " ON ");
-            if(tableName.equals(MySQLAffymetrixProbesetDAO.TABLE_NAME)) {
-                sb.append(MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + AffymetrixProbesetDAO
-                        .Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
-                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
-                        + AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
-            } else if (tableName.equals(MySQLMicroarrayExperimentDAO.TABLE_NAME)) {
-                sb.append(MySQLMicroarrayExperimentDAO.TABLE_NAME + "." + MicroarrayExperimentDAO
-                        .Attribute.ID.getTOFieldName())
-                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
-                        + AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
-            } else if (tableName.equals(MySQLRawDataConditionDAO.TABLE_NAME)) {
-                sb.append(MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO
-                        .Attribute.ID.getTOFieldName())
-                .append(" = " + MySQLAffymetrixChipDAO.TABLE_NAME + "." 
-                        + AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName());
-            } 
-            else {
-                throw log.throwing(new IllegalArgumentException("join AffymetrixChip to " +
-            tableName + " is not yet implemented"));
+    /**
+     * Method, specific to rnaseq, allowing to add a FROM clause to a {@code StringBuilder}
+     * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
+     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to columns to use
+     * in the WHERE clause as keys and {@code String} corresponding to the table to use to
+     * retrieve the data as values.
+     * 
+     * @param sb                The {@code StringBuilder} for which the FROM clause will be
+     *                          created.
+     * @param rawDatafilters    A {@code List} of {@code DAORawDataFilter} to use to generate the
+     *                          FROM clause
+     * @param technologyIds     A {@code List} of {@code Integer} corresponding to RNA-Seq technology
+     *                          IDs to filter on. If null, retrieve all technologies.
+     * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
+     *                          of tables necessary to the creation of the FROM clause.
+     *                          {@code necessaryTables} must contain only the names
+     *                          of the tables used to retrieve necessary information
+     *                          in the SELECT clause, not the tables used for filtering results.
+     *                          Other tables will be automatically added to the clause
+     *                          by this method to satisfy the {@code filter}s.
+     * @param isSingleCell      A {@code Boolean} defining if bulk RNA-Seq or single cell RNA-Seq
+     *                          technologies have to be retrieved. If null, all RNA-Seq data (bulk
+     *                          and single cell) are retrieved.
+     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     *                          {@code String} as value defining the table to use.
+     */
+    protected Map<AmbiguousRawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
+            List<DAORawDataFilter> rawDataFilters, List<Integer> technologyIds,
+            Set<String> necessaryTables) {
+        log.traceEntry("{}, {}, {}, {}", sb, rawDataFilters, technologyIds, necessaryTables);
+
+        // possibilities : experiment or library or annotated samples or result or condition or
+        // result and annotated sample (for the counts, to retrieve results, assay and libraries) or
+        // annotated sample and library (for the counts, to retrieve assay, library and potentially experiments) or
+        // result and annotated samples and libraries (for all the counts)
+        if (necessaryTables.size() == 2 && !(necessaryTables.containsAll(
+                Set.of(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME, MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)) ||
+                necessaryTables.containsAll(Set.of(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME, 
+                        MySQLRNASeqLibraryDAO.TABLE_NAME)))
+                || necessaryTables.size() == 3 && !necessaryTables.containsAll(
+                        Set.of(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME, 
+                                MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME, MySQLRNASeqLibraryDAO.TABLE_NAME))
+                || necessaryTables.size() > 3) {
+            throw log.throwing(new IllegalStateException("Combination of necessary tables unsupported: "
+                    + necessaryTables));
+        }
+        
+        Map<AmbiguousRawDataColumn, String> colToTableMap = new LinkedHashMap<>();
+        LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
+
+        // check needed filters
+        boolean needSpeciesId = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+        boolean needGeneId = rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        // for the sake of clarity we call the assayId libraryId as it is not the
+        // rnaSeqlibraryAnnotatedSampleId we are looking for
+        boolean needLibraryId = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
+                !e.getExprOrAssayIds().isEmpty());
+        boolean needTechnologyId = technologyIds != null && !technologyIds.isEmpty();
+        boolean needCondId = rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
+        boolean needExpId = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
+                !e.getExprOrAssayIds().isEmpty());
+        //check filters always used
+        //XXX The idea is to not start with probesetTable if geneIds are asked in only one filter
+        // but not in others. Indeed, in this scenario forcing to start with porbeset table
+        // decrease drastically the time needed to query. It is maybe overthinking as it is
+        // probably also the case for other tables (especially the species table). The best
+        // optimization is probably to query each DAORawDataFilter separately
+        boolean alwaysGeneId = !rawDataFilters.isEmpty() //allMatch returns true if a stream is empty
+                && rawDataFilters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
+        log.debug("needSpeciesId: {}, needGeneId: {}, needAssayId: {}, needCondId: {}, needExpId: {},"
+                + " alwaysGeneId: {}, filters: {}",
+                needSpeciesId, needGeneId, needLibraryId, needCondId, needExpId, alwaysGeneId,
+                rawDataFilters);
+
+        // check needed tables
+        boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
+                necessaryTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)
+                && !needLibraryId && !needExpId && !needCondId && !needTechnologyId;
+        boolean condTable = needSpeciesId && !geneTable || necessaryTables.contains(
+                MySQLRawDataConditionDAO.TABLE_NAME);
+        assert !(geneTable && condTable): "We should never need both cond and gene table";
+        boolean expTable = necessaryTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME);
+        boolean libraryTable = expTable && (needCondId || needGeneId || needLibraryId ||
+                needSpeciesId || needTechnologyId) || necessaryTables.contains(MySQLRNASeqLibraryDAO
+                .TABLE_NAME) || !expTable && (needExpId || needTechnologyId);
+        boolean resultAnnotatedSampleTable = necessaryTables
+                .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || needGeneId;
+        boolean libraryAnnotatedSampleTable = necessaryTables.contains(
+                MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME) ||
+                needLibraryId && !libraryTable ||
+                needCondId && !condTable  || libraryTable && condTable ||
+                libraryTable && resultAnnotatedSampleTable || condTable && resultAnnotatedSampleTable;
+        log.debug("geneTable: {}, condTable: {}, expTable: {}, libraryTable: {},"
+                + "libraryAnnotatedSampleTable: {}, resultAnnotatedSampleTable: {}",
+                geneTable, condTable, expTable, libraryTable, libraryAnnotatedSampleTable,
+                resultAnnotatedSampleTable);
+
+
+        // first check if always require geneIds. 
+        if (alwaysGeneId) {
+            orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+        }
+        assert !(alwaysGeneId && needSpeciesId):
+            "In a RawDataDAOFilter, when bgeeGeneIds are provided, no species ID is provided";
+        // then check table filtering on speciesId if any
+        if (needSpeciesId) {
+            if (geneTable) {
+                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
+                orderedTables.add(MySQLGeneDAO.TABLE_NAME);
+                if (resultAnnotatedSampleTable) {
+                    orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+                }
+            } else if (condTable) {
+                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+                orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
             }
         }
-        // join affymetrixProbeset table
-        if(needJoinProbeset) {
-            sb.append(" INNER JOIN " + MySQLAffymetrixProbesetDAO.TABLE_NAME + " ON ")
-            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-            AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
-            .append(" = " + MySQLAffymetrixProbesetDAO.TABLE_NAME + "." 
-                    + AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
+        // then add chip table if required
+        if (libraryAnnotatedSampleTable) {
+            orderedTables.add(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+            if (needLibraryId && !libraryTable) {
+                colToTableMap.put(AmbiguousRawDataColumn.ASSAY_ID,
+                        MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+            }
         }
-        // join microArrayExperiment table
-        if(needJoinExp) {
-            sb.append(" INNER JOIN " + MySQLMicroarrayExperimentDAO.TABLE_NAME + " ON ")
-            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-            AffymetrixChipDAO.Attribute.EXPERIMENT_ID.getTOFieldName())
-            .append(" = " + MySQLMicroarrayExperimentDAO.TABLE_NAME + "." 
-                    + MicroarrayExperimentDAO.Attribute.ID.getTOFieldName());
+        // then add rnaSeqResultAnnotatedSample table. Not added if already inserted as we use a LinkedHashSet,
+        //and insertion order is not affected if an element is re-inserted into the set.
+        if (resultAnnotatedSampleTable) {
+            orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         }
-        // join cond table
-        if(needJoinCond) {
-            sb.append(" INNER JOIN " + MySQLRawDataConditionDAO.TABLE_NAME + " ON ")
-            .append(MySQLAffymetrixChipDAO.TABLE_NAME + "." + 
-            AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName())
-            .append(" = " + MySQLRawDataConditionDAO.TABLE_NAME + "." 
-                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
+        // then check if the rnaSeqLibrary table has to be added.
+        if (libraryTable) {
+            orderedTables.add(MySQLRNASeqLibraryDAO.TABLE_NAME);
+            if (needLibraryId) {
+                colToTableMap.put(AmbiguousRawDataColumn.ASSAY_ID,
+                        MySQLRNASeqLibraryDAO.TABLE_NAME);
+            }
         }
-        // join gene table
-        if(needJoinGene) {
-            sb.append(" INNER JOIN " + MySQLGeneDAO.TABLE_NAME + " ON ")
-            .append(MySQLAffymetrixProbesetDAO.TABLE_NAME + "." + 
-            AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName())
-            .append(" = " + MySQLGeneDAO.TABLE_NAME + "." 
-                    + GeneDAO.Attribute.ID.getTOFieldName());
+        // then check if the experiment table was necessary and adapt expId table accordingly
+        if (expTable) {
+            orderedTables.add(MySQLRNASeqExperimentDAO.TABLE_NAME);
+            if (needExpId) {
+                colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID,
+                        MySQLRNASeqExperimentDAO.TABLE_NAME);
+            }
+        } else if (needExpId) {
+            colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID,
+                    MySQLRNASeqLibraryDAO.TABLE_NAME);
         }
-        return log.traceExit(sb.toString());
+
+        // finally check if the cond table has to be added. Not added if already inserted as we use
+        // a LinkedHashSet. Detect which table to use to retrieve the potential conditionId
+        if (condTable) {
+            orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+            if (needCondId) {
+                colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
+                        MySQLRawDataConditionDAO.TABLE_NAME);
+            }
+        // if cond is not a necessary table it means conditionId can be retrieved from 
+        } else if (needCondId) {
+            colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
+                    MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+        }
+        log.debug("orderedTables: {}", orderedTables);
+
+        sb.append(writeFromClauseRnaSeq(orderedTables));
+
+        return log.traceExit(colToTableMap);
+    }
+
+    /**
+     * Generate the {@code StringBuilder} corresponding to the FROM clause of any RNA-Seq
+     * query based on a {@code LinkedHashSet} containing tables to join in the proper order.
+     * 
+     * @param tables    A {@code LinkedHashSet} containing tables to join in the FROM clause in
+     *                  the proper order
+     * @return          A {@code StringBuilder} corresponding to the FROM clause of any RNA_Seq
+     *                  query
+     */
+    private StringBuilder writeFromClauseRnaSeq(LinkedHashSet<String> tables) {
+        log.traceEntry("{}", tables);
+        if (tables == null || tables.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("tables can not be null"
+                    + " or empty."));
+        }
+        Set<String> previousTables = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append(" FROM");
+        for (String table : tables) {
+            if (previousTables.isEmpty()) {
+                sb.append(" " + table);
+                previousTables.add(table);
+
+            } else if (table.equals(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                assert previousTables.contains(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+                sb.append(" INNER JOIN " + table + " ON ")
+                .append(table + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = ")
+                .append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME + ".")
+                .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName());
+                previousTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+
+            // manage experiment table
+            } else if (table.equals(MySQLRNASeqExperimentDAO.TABLE_NAME)) {
+                assert previousTables.contains(MySQLRNASeqLibraryDAO.TABLE_NAME);
+                sb.append(" INNER JOIN " + table + " ON ")
+                .append(table + "." + RNASeqExperimentDAO.Attribute.ID.getTOFieldName() + " = ")
+                .append(MySQLRNASeqLibraryDAO.TABLE_NAME + ".")
+                .append(RNASeqLibraryDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
+                previousTables.add(MySQLRNASeqExperimentDAO.TABLE_NAME);
+
+            // manage result table
+            } else if (table.equals(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLGeneDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLGeneDAO.TABLE_NAME + "." + GeneDAO.Attribute.ID.getTOFieldName())
+                    .append(" = " + table + "." + RNASeqResultAnnotatedSampleDAO.Attribute.BGEE_GENE_ID
+                            .getTOFieldName());
+                } else if (previousTables.contains(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME + "." +
+                            RNASeqLibraryAnnotatedSampleDAO.Attribute.ID.getTOFieldName() + " = ")
+                    .append(table + "." + RNASeqResultAnnotatedSampleDAO.Attribute
+                            .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+
+            // manage library table
+            } else if (table.equals(MySQLRNASeqLibraryDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRNASeqExperimentDAO.TABLE_NAME + "." + RNASeqExperimentDAO.Attribute
+                            .ID.getTOFieldName())
+                    .append(" = " + table + "." + RNASeqLibraryDAO.Attribute.EXPERIMENT_ID
+                            .getTOFieldName());
+                } else if (previousTables.contains(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME + "." +
+                            RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID.getTOFieldName())
+                    .append(" = " + table + "." + RNASeqLibraryDAO.Attribute.ID.getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(MySQLRNASeqLibraryDAO.TABLE_NAME);
+
+            // and finally manage assay table
+            } else if (table.equals(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRawDataConditionDAO.TABLE_NAME + ".")
+                    .append(RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = " +table + ".")
+                    .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName());
+                } else if (previousTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME + ".")
+                    .append(RNASeqResultAnnotatedSampleDAO.Attribute.LIBRARY_ANNOTATED_SAMPLE_ID
+                            .getTOFieldName())
+                    .append(" = " + table + "." + RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .ID.getTOFieldName());
+                } else if (previousTables.contains(MySQLRNASeqLibraryDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRNASeqLibraryDAO.TABLE_NAME + ".")
+                    .append(RNASeqLibraryDAO.Attribute.ID.getTOFieldName())
+                    .append(" = " + table + "." + RNASeqLibraryAnnotatedSampleDAO.Attribute
+                            .RNASEQ_LIBRARY_ID.getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+            } else {
+                throw log.throwing(new IllegalStateException(
+                        table + " is not a proper table name or not in proper order. Previous tables: "
+                        + previousTables));
+            }
+        }
+        return log.traceExit(sb);
     }
 
     protected String generateWhereClauseRawDataFilter(List<DAORawDataFilter> rawDataFilters,
@@ -586,6 +802,26 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         return log.traceExit(sb.toString());
     }
+    
+
+
+    protected boolean generateWhereClauseTechnologyRnaSeq(StringBuilder sb,
+            List<Integer> technologyIds, boolean foundPrevious) {
+        log.traceEntry("{}, {}", technologyIds, foundPrevious);
+        if (!technologyIds.isEmpty()) {
+            if (foundPrevious) {
+                sb.append(" AND ");
+            }
+            sb.append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
+            .append(RNASeqLibraryDAO.Attribute.TECHNOLOGY_ID.getTOFieldName()).append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(
+                    technologyIds.size()))
+            .append(")");
+            foundPrevious = true;
+        }
+        return log.traceExit(foundPrevious);
+    }
+
     private String generateExpAssayIdFilter(Set<String> expIds, Set<String> assayIds,
             Set<String> expOrAssayIds, RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
         log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, filtersToDatabaseMapping);

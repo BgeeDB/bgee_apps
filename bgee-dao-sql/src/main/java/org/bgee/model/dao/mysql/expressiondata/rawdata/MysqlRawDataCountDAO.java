@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -107,17 +106,17 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
 //
 //        // generate FROM clause
-        Map<AmbiguousRawDataColumn, String> colToTable = generateFromClauseRawData(sb, orderedRawDataFilters,
-                necessaryTables, DAODataType.AFFYMETRIX);
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                orderedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
         if(!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClause(orderedRawDataFilters, colToTable));
+            .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    null, null);
+                    DAODataType.AFFYMETRIX, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();

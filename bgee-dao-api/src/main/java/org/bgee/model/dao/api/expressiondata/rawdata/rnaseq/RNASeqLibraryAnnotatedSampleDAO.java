@@ -12,14 +12,12 @@ import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
 
 /**
  * {@code DAO} for {@link RNASeqLibraryAnnotatedSampleTO}s.
  * 
  * @author Julien Wollbrett
- * @version Bgee 15
- * @see RNASeqLibraryTO
+ * @version Bgee 15, Nov. 2022
  * @since Bgee 15
  */
 public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnotatedSampleDAO.Attribute> {
@@ -85,85 +83,56 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
     }
 
     /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryAnnotatedSampleTO}s,  
-     * corresponding to the RNA-Seq library with the ID {@code libraryId}, 
-     * {@code null} if none could be found.  
-     * 
-     * @param libraryIds        A {@code {@link Collection} of {@code String} representing the IDs 
-     *                          of the RNA-Seq library to retrieve from the data source.
+     * Allows to retrieve {@code RNASeqLibraryAnnotatedSampleTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqLibraryAnnotatedSampleTO}s are retrieved and returned as a
+     * {@code RNASeqLibraryAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter annotated samples to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param technologyIds     A {@code Collection} of {@code Integer} allowing to filter annotated
+     *                          samples based on the ID of their technology.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the annotated library.
-     * @return  A {@code RNASeqLibraryAnnotatedSampleTOResultSet}, encapsulating all the data 
-     *          related to the RNA-Seq annotated library retrieved from the data source, 
-     *          or {@code null} if none could be found. 
-     * @throws DAOException     If an error occurred when accessing the data source.
+     *                          to retrieve from the data source.
+     * @return                  A {@code RNASeqLibraryAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                          targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public RNASeqLibraryAnnotatedSampleTOResultSet getRnaSeqLibraryAnnotatedSampleFromLibraryIds(
-            Collection<String> libraryIds, Collection<Attribute> attributes) throws DAOException;
+    public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Collection<Integer> technologyIds,
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryAnnotatedSampleTO}s,  
-     * corresponding to the annotated RNA-Seq libraries with the experiment IDs {@code experimentIds}, 
-     * {@code null} if none could be found.  
-     * 
-     * @param experimentIds     A {@code {@link Collection} of {@code String} representing the IDs 
-     *                          of the RNA-Seq experiments of the annotated libraries to retrieve 
-     *                          from the data source.
+     * Allows to retrieve {@code RNASeqExperimentTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqExperimentTO}s are retrieved and returned as a
+     * {@code RNASeqExperimentTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter experiments to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the annotated library.
-     * @return  A {@code RNASeqLibraryAnnotatedSampleTOResultSet}, encapsulating all the data 
-     *          related to the RNA-Seq annotated libraries retrieved from the data source, 
-     *          or {@code null} if none could be found. 
-     * @throws DAOException     If an error occurred when accessing the data source.
+     *                          to retrieve from the data source.
+     * @return                  A {@code AffymetrixProbesetTOResultSet} allowing to retrieve the
+     *                          targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public RNASeqLibraryAnnotatedSampleTOResultSet getRnaSeqLibraryAnnotatedSampleFromExperimentIds(
-            Collection<String> experimentIds, Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryAnnotatedSampleTO}s,  
-     * corresponding to the annotated RNA-Seq libraries with selected species IDs
-     * and raw condition parameters
-     * {@code null} if none could be found.  
-     * 
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which library to
-     *                          retrieve.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
-     * @return  A {@code RNASeqLibraryTOResultSet}, encapsulating all the data 
-     *          related to the annotated RNA-Seq libraries retrieved from the data source, 
-     *          or {@code null} if none could be found. 
-     * @throws DAOException     If an error occurred when accessing the data source.
-     */
-    public RNASeqLibraryAnnotatedSampleTOResultSet getRnaSeqLibraryAnnotatedSampleFromRawDataFilter(
-            DAORawDataFilter rawDataFilter, Collection<Attribute> attributes) 
-            throws DAOException;
-
-    /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryAnnotatedSampleTO}s,  
-     * corresponding to the annotated RNA-Seq libraries with selected library IDs, experiment IDs,
-     * species IDs, and raw condition parameters
-     * {@code null} if none could be found.  
-     * 
-     * @param experimentIds     A {@code {@link Collection} of {@code String} representing the IDs 
-     *                          of the RNA-Seq experiments of the annotated libraries to retrieve
-     *                          from the data source.
-     * @param libraryIds        A {@code {@link Collection} of {@code String} representing the IDs 
-     *                          of the RNA-Seq library of the annotated libraries to retrieve from
-     *                          the data source. 
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which annotated 
-     *                          libraries to retrieve.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
-     *                          
-     * @return  A {@code RNASeqLibraryAnnotatedSampleTOResultSet}, encapsulating all the data 
-     *          related to the annotated RNA-Seq libraries retrieved from the data source, 
-     *          or {@code null} if none could be found. 
-     * @throws DAOException     If an error occurred when accessing the data source.
-     */
-    public RNASeqLibraryAnnotatedSampleTOResultSet getRnaSeqLibraryAnnotatedSamples(
-            Collection<String> experimentIds, Collection<String> libraryIds,
-            DAORawDataFilter rawDataFilter, Collection<Attribute> attributes) 
-            throws DAOException;
+    public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
@@ -417,6 +386,5 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
                     + ", distinctRankCount=" + distinctRankCount + ", multipleLibraryIndividualSample="
                     + multipleLibraryIndividualSample + ", barcode=" + barcode + ", genotype=" + genotype + "]";
         }
-        
     }
 }

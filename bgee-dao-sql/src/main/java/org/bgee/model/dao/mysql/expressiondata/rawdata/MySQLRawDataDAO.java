@@ -3,6 +3,7 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -21,14 +22,23 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
-import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping.AmbiguousRawDataColumn;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping.RawDataColumn;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqExperimentDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extends MySQLDAO<T> {
@@ -39,19 +49,25 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         super(manager);
     }
 
-    /**
-     * An {@code Enum} describing columns potentially used in a where clause but for
-     * which the table used can change depending on the query.
-     * @author Julien Wollbrett
-     * @version Bgee 15.0, Nov. 2022
-     * @since Bgee 15.0, Nov. 2022
-     */
-    public static enum AmbiguousRawDataColumn {SPECIES_ID, EXPERIMENT_ID, COND_ID}
-
+    //parameterize query without rnaSeqTechnologyIds
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit)
+            List<DAORawDataFilter> rawDataFilters, DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}", query, rawDataFilters, offset, limit);
+        log.traceEntry("{}, {}, {}, {}, {}", query, rawDataFilters, datatype, offset, limit);
+        return log.traceExit(this.parameterizeQuery(query, rawDataFilters, null, datatype,
+                offset, limit));
+    }
+
+    //parameterize query with rnaSeqTechnologyIds
+    protected BgeePreparedStatement parameterizeQuery(String query,
+            List<DAORawDataFilter> rawDataFilters, List<Integer> technologyIds,
+            DAODataType datatype, Integer offset, Integer limit)
+                    throws SQLException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", query, rawDataFilters, technologyIds,
+                datatype, offset, limit);
+        if (datatype == null) {
+            throw log.throwing(new IllegalArgumentException("datatype can not be null"));
+        }
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
@@ -63,7 +79,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<String> assayIds = rawDataFilter.getAssayIds();
             Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
             // parameterize expIds
-            if (!expIds.isEmpty()) {
+            // ESTs does not have experimentIds
+            if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
                 stmt.setStrings(paramIndex, expIds, true);
                 paramIndex += expIds.size();
             }
@@ -74,8 +91,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
             //parameterize assay or experiment IDs
             if (!expOrAssayIds.isEmpty()) {
-                stmt.setStrings(paramIndex, expOrAssayIds, true);
-                paramIndex += expOrAssayIds.size();
+                // ESTs does not have experimentIds
+                if (!datatype.equals(DAODataType.EST)) {
+                    stmt.setStrings(paramIndex, expOrAssayIds, true);
+                    paramIndex += expOrAssayIds.size();
+                }
                 stmt.setStrings(paramIndex, expOrAssayIds, true);
                 paramIndex += expOrAssayIds.size();
             }
@@ -94,6 +114,12 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 stmt.setIntegers(paramIndex, geneIds, true);
                 paramIndex += geneIds.size();
             }
+        }
+        // parameterize technologyIds only for rnaseq
+        if (datatype.equals(DAODataType.RNA_SEQ) && technologyIds != null
+                && !technologyIds.isEmpty()) {
+            stmt.setIntegers(paramIndex, technologyIds, true);
+            paramIndex += technologyIds.size();
         }
         //parameterize offset and limit
         if (offset != null) {
@@ -143,6 +169,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes,
                 distinct, straightJoin, attributes));
     }
+    //TODO: Delete this method and move the datatype specific methods generating FROM clause from
+    // MySQLRawDataDAO to a class specific to that datatype (e.g MySQLRawDataAffymetrixDAO)
+    // OR
+    // find a way to make this method more generic using a RawDataFiltersToDatabaseMapping object
+    // as argument
     /**
      * Method allowing to add a FROM clause to a {@code StringBuilder} based on
      * {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
@@ -150,40 +181,44 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * in the WHERE clause as keys and {@code String} corresponding to the table to use to
      * retrieve the data as values. {@code sb} will be modified as a result to calling this method.
      * 
-     * @param sb                The {@code StringBuilder} for which the FROM clause will be
-     *                          created. It will be modified as a result to calling this method.
-     * @param filters           A {@code List} of {@code DAORawDataFilter} to use to generate the
-     *                          FROM clause
-     * @param necessaryTables   A {@code Set} of {@code String} corresponding to tables necessary
-     *                          to the creation of the query
-     * @param dataType          The {@code DAODataType} for which the FROM clause has to be
-     *                          generated
-     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
-     *                          {@code String} as value defining the table to use.
-     *                          Only the names of the tables that would be ambiguous to retrieve
-     *                          or filter a field for are returned in this {@code Map}
-     *                          (see {@link AmbiguousRawDataColumn}).
+     * @param sb                    The {@code StringBuilder} for which the FROM clause will be
+     *                              created. It will be modified as a result to calling this method.
+     * @param filters               A {@code List} of {@code DAORawDataFilter} to use to generate the
+     *                              FROM clause
+     * @param rnaSeqTochnologyIds   A {@code List} of {@code Integers} corresponding to to use to generate the
+     *                              FROM clause
+     * @param necessaryTables       A {@code Set} of {@code String} corresponding to tables necessary
+     *                              to the creation of the query
+     * @param dataType              The {@code DAODataType} for which the FROM clause has to be
+     *                              generated
+     * @return                      A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     *                              {@code String} as value defining the table to use.
+     *                              Only the names of the tables that would be ambiguous to retrieve
+     *                              or filter a field for are returned in this {@code Map}
+     *                              (see {@link AmbiguousRawDataColumn}).
      */
-    protected Map<AmbiguousRawDataColumn, String> generateFromClauseRawData(StringBuilder sb,
-            List<DAORawDataFilter> filters, Set<String> necessaryTables, DAODataType datatype) {
-        log.traceEntry("{}, {}, {}, {}", sb, filters, necessaryTables, datatype);
+    protected RawDataFiltersToDatabaseMapping generateFromClauseRawData(StringBuilder sb,
+            List<DAORawDataFilter> filters, List<Integer> rnaSeqTechnologyIds,
+            Set<String> necessaryTables, DAODataType datatype) {
+        log.traceEntry("{}, {}, {}, {}, {}", sb, filters, rnaSeqTechnologyIds, necessaryTables,
+                datatype);
+        Map<AmbiguousRawDataColumn, String> ambiguousColToTable = new HashMap<>();
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
-            return log.traceExit(generateFromClauseRawDataAffymetrix(sb, filters, necessaryTables));
-        }
-        if (datatype.equals(DAODataType.IN_SITU)) {
+            ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb, filters, necessaryTables);
+        } else if (datatype.equals(DAODataType.IN_SITU)) {
             throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
                     + "."));
-        }
-        if (datatype.equals(DAODataType.EST)) {
+        } else if (datatype.equals(DAODataType.EST)) {
             throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
                     + "."));
-        }
-        if (datatype.equals(DAODataType.RNA_SEQ)) {
-            throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
-                    + "."));
-        }
-        throw log.throwing(new IllegalStateException("dataType " + datatype
+        } else if (datatype.equals(DAODataType.RNA_SEQ)) {
+            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, filters, rnaSeqTechnologyIds,
+                    necessaryTables);
+        } else {
+            throw log.throwing(new IllegalStateException("dataType " + datatype
                     + "not recognized."));
+        }
+        return log.traceExit(new RawDataFiltersToDatabaseMapping(ambiguousColToTable, datatype));
     }
 
     /**
@@ -466,19 +501,18 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb.toString());
     }
 
-    protected String generateWhereClause(List<DAORawDataFilter> rawDataFilters,
-            Map<AmbiguousRawDataColumn, String> columnToTable) {
-        log.traceEntry("{}, {}", rawDataFilters, columnToTable);
+    protected String generateWhereClauseRawDataFilter(List<DAORawDataFilter> rawDataFilters,
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
+        log.traceEntry("{}, {}", rawDataFilters, filtersToDatabaseMapping);
         String whereClause = rawDataFilters.stream()
-                .map(e -> this.generateOneFilterWhereClause(e, columnToTable))
+                .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping))
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;
     }
 
-    protected String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter, 
-            Map<AmbiguousRawDataColumn, String> columnToTable) {
-        log.traceEntry("{}, {}", rawDataFilter, columnToTable);
-
+    private String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
+        log.traceEntry("{}, {}", rawDataFilter, filtersToDatabaseMapping);
         Integer speId = rawDataFilter.getSpeciesId();
         Set<Integer> geneIds = rawDataFilter.getGeneIds();
         Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
@@ -489,7 +523,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
         String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
-                columnToTable);
+                filtersToDatabaseMapping);
         if (!expAssayIdFilter.isEmpty()) {
             sb.append(expAssayIdFilter);
             filterFound = true;
@@ -499,10 +533,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(Optional.ofNullable(columnToTable.get(AmbiguousRawDataColumn.SPECIES_ID))
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.SPECIES_ID))
                     .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + AmbiguousRawDataColumn.SPECIES_ID))).append(".")
-              .append(SpeciesDAO.Attribute.ID.getTOFieldName()).append(" = ?");
+                            + RawDataColumn.SPECIES_ID)))
+            .append(".")
+              .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                      .get(RawDataColumn.SPECIES_ID))
+                      .orElseThrow(() -> new IllegalStateException("no column name associated to column" +
+                      RawDataColumn.SPECIES_ID)))
+              .append(" = ?");
               filterFound = true;
         }
         // FILTER ON RAW CONDITION IDS
@@ -510,10 +550,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(Optional.ofNullable(columnToTable.get(AmbiguousRawDataColumn.COND_ID))
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.COND_ID))
                     .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + AmbiguousRawDataColumn.COND_ID))).append(".")
-            .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" IN (")
+                            + RawDataColumn.COND_ID)))
+            .append(".")
+            .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.COND_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.COND_ID)))
+            .append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
                     .size()))
             .append(")");
@@ -524,8 +570,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(MySQLAffymetrixProbesetDAO.TABLE_NAME).append(".")
-            .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.GENE_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.GENE_ID)))
+            .append(".")
+            .append((Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.GENE_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.GENE_ID))))
+            .append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(geneIds.size()))
             .append(")");
             filterFound = true;
@@ -533,53 +587,85 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb.toString());
     }
     private String generateExpAssayIdFilter(Set<String> expIds, Set<String> assayIds,
-            Set<String> expOrAssayIds, Map<AmbiguousRawDataColumn, String> columnToTable) {
-        log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, columnToTable);
+            Set<String> expOrAssayIds, RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
+        log.traceEntry("{}, {}, {}, {}", expIds, assayIds, expOrAssayIds, filtersToDatabaseMapping);
         StringBuilder sb = new StringBuilder();
 
         if (!expOrAssayIds.isEmpty()) {
             sb.append("(");
         }
         boolean filterFound = false;
-        if (!expIds.isEmpty()) {
-            //retrieve table to use for experimentId
-            sb.append(Optional.ofNullable(columnToTable.get(AmbiguousRawDataColumn.EXPERIMENT_ID))
-                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + AmbiguousRawDataColumn.EXPERIMENT_ID)))
-            .append(".")
-            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
-            sb.append(")");
-            filterFound = true;
+        // filter on experiment for all datatypes except est as no such concept exists
+        if (!filtersToDatabaseMapping.getDatatype().equals(DAODataType.EST)) {
+            if (!expIds.isEmpty()) {
+                //retrieve table to use for experimentId
+                sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                        .get(RawDataColumn.EXPERIMENT_ID))
+                        .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                                + RawDataColumn.EXPERIMENT_ID)))
+                .append(".")
+                .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                        .get(RawDataColumn.EXPERIMENT_ID))
+                        .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                                + RawDataColumn.EXPERIMENT_ID)))
+                .append(" IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
+                sb.append(")");
+                filterFound = true;
+            }
         }
-        // FILTER ON Chip IDS
+        // FILTER ON assay IDS
+        // Specific case for RNASeq. An assay corresponds to a library annotated sample. No public
+        // IDs exist for such concept so we consider the assayId as the libraryId
         if (!assayIds.isEmpty()) {
             if(filterFound) {
                 sb.append(" AND ");
             }
-            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
-            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.ASSAY_ID)))
+            .append(".")
+            .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.ASSAY_ID)))
             .append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(assayIds.size()));
             sb.append(")");
             filterFound = true;
         }
-        // Filter on experiment or assay 
+        // Filter on experiment or assay
         if (!expOrAssayIds.isEmpty()) {
             if(filterFound) {
                 sb.append(" OR ");
             }
-            //try to find experimentIds
-            sb.append(Optional.ofNullable(columnToTable.get(AmbiguousRawDataColumn.EXPERIMENT_ID))
-                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + AmbiguousRawDataColumn.EXPERIMENT_ID)))
-            .append(".")
-            .append(MicroarrayExperimentDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
-            sb.append(") OR ");
+            // Once again, ESTs does not have experimentIds
+            if (!filtersToDatabaseMapping.getDatatype().equals(DAODataType.EST)) {
+                //try to find experimentIds
+                sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                        .get(RawDataColumn.EXPERIMENT_ID))
+                        .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                                + RawDataColumn.EXPERIMENT_ID)))
+                .append(".")
+                .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                        .get(RawDataColumn.EXPERIMENT_ID))
+                        .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                                + RawDataColumn.EXPERIMENT_ID)))
+                .append(" IN (")
+                .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
+                sb.append(") OR ");
+            }
             // try to find assayIds
-            sb.append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
-            .append(AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID.getTOFieldName())
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.ASSAY_ID)))
+            .append(".")
+            .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.ASSAY_ID)))
             .append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(expOrAssayIds.size()));
             sb.append(")");

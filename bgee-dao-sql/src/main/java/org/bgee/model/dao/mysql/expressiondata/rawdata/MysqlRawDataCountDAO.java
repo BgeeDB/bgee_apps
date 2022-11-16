@@ -148,18 +148,22 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean libraryCount, boolean assayCount, boolean callCount) {
-        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, libraryCount, assayCount,
-                callCount);
+            Collection<Integer> technologyIds, boolean experimentCount, boolean libraryCount,
+            boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, technologyIds, experimentCount, libraryCount,
+                assayCount, callCount);
         if (!experimentCount && !libraryCount && !assayCount && !callCount) {
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters = 
+        final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
+        final List<Integer> orderedTechnologyIds =
+                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
+                    new ArrayList<>(technologyIds));
         StringBuilder sb = new StringBuilder();
 
         boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
@@ -245,19 +249,21 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if (experimentCount) {
             necessaryTables.add(MySQLRNASeqLibraryDAO.TABLE_NAME);
         }
-//
-//        // generate FROM clause
+        // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, null, necessaryTables, DAODataType.RNA_SEQ);
+                orderedRawDataFilters, orderedTechnologyIds, necessaryTables, DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
+        boolean foundPrevious = false;
         if(!orderedRawDataFilters.isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
+            foundPrevious = true;
         }
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    DAODataType.RNA_SEQ, null, null);
+                    orderedTechnologyIds, DAODataType.RNA_SEQ, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();

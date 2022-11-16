@@ -16,12 +16,18 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
 
 public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attribute>
         implements RawDataCountDAO {
@@ -141,10 +147,125 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
     }
 
     @Override
-    public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2,
-            boolean arg3, boolean arg4) {
-        // TODO Auto-generated method stub
-        return null;
+    public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
+            boolean experimentCount, boolean libraryCount, boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, libraryCount, assayCount,
+                callCount);
+        if (!experimentCount && !libraryCount && !assayCount && !callCount) {
+            throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
+                    + " callsCount can not be all false at the same time"));
+        }
+        // force to have a list in order to keep order of elements. It is mandatory to be able
+        // to first generate a parameterised query and then add values.
+        final List<DAORawDataFilter> orderedRawDataFilters = 
+                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
+                    new ArrayList<>(rawDataFilters));
+        StringBuilder sb = new StringBuilder();
+
+        boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        boolean callTable = needGeneId || callCount;
+        boolean assayTable = callTable || assayCount;
+
+        // generate SELECT clause
+        sb.append("SELECT STRAIGHT_JOIN");
+        boolean previousCount = false;
+        if (experimentCount) {
+            sb.append(" count(distinct ").append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
+                    .append(RNASeqLibraryDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(") as ")
+                    .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (libraryCount) {
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(");
+            if (!assayTable) {
+                //count(*) is faster than count(columnName)
+                //(see https://stackoverflow.com/a/3003482).
+                //If the assays were not required, then
+                //number of lines = number of rnaSeqLibraryId
+                sb.append("*");
+            } else {
+                //If assay are needed, we need to add DISTINCT,
+                //because relation 1-to-many to table rnaSeqLibraryAnnotatedSample.
+                sb.append("distinct ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
+                .append(".").append(RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID
+                        .getTOFieldName());
+            }
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.RNA_SEQ_LIBRARY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (assayCount) {
+            assert assayTable;
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(");
+            if (!callTable) {
+                //If the calls were not required, then
+                //number of lines = number of rnaSeqLibraryAnnotatedSampleId
+                //(primary key of the rnaSeqLibraryAnnotatedSample table)
+                sb.append("*");
+            } else {
+                //If calls are needed, we need to add DISTINCT,
+                //because relation 1-to-many to table rnaSeqLibraryAnnotatedSampleGeneResult.
+                sb.append("distinct ").append(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)
+                .append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
+                        .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName());
+            }
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (callCount) {
+            assert callTable;
+            if(previousCount) {
+                sb.append(",");
+            }
+            //Here, number of lines always equal to
+            //count(distinct rnaSeqLibraryAnnotatedSampleGeneResultId)
+            //(the primary key of the table that we need to count).
+            //We wouldn't need the DISTINCT.
+            //And count(*) is faster than count(columnName)
+            sb.append(" count(*) as ")
+              .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
+        }
+
+        // create the set of tables it is necessary to use in FROM clause even if no filter
+        // on those columns
+        Set<String> necessaryTables = new HashSet<>();
+        if (callCount) {
+            necessaryTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+        }
+        if (libraryCount) {
+            necessaryTables.add(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
+        }
+        if (experimentCount) {
+            necessaryTables.add(MySQLRNASeqLibraryDAO.TABLE_NAME);
+        }
+//
+//        // generate FROM clause
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                orderedRawDataFilters, null, necessaryTables, DAODataType.RNA_SEQ);
+
+        // generate WHERE CLAUSE
+        if(!orderedRawDataFilters.isEmpty()) {
+            sb.append(" WHERE ")
+            .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
+        }
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    DAODataType.RNA_SEQ, null, null);
+            MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
+            resultSet.next();
+            RawDataCountContainerTO to = resultSet.getTO();
+            resultSet.close();
+            return log.traceExit(to);
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     /**

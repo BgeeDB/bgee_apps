@@ -71,8 +71,9 @@ public interface AffymetrixProbesetDAO extends DAO<AffymetrixProbesetDAO.Attribu
      * {@code AffymetrixProbesetTOResultSet}. It is the responsibility of the caller to close this
      * {@code DAOResultSet} once results are retrieved.
      *
-     * @param filter            A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                          to filter probesets to retrieve.
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter probesets to retrieve. The query uses AND between elements
+     *                          of a same filter and uses OR between filters.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row.
      * @param limit             An {@code Integer} used to limit the number of rows returned in a query

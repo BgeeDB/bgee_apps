@@ -9,7 +9,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -131,15 +130,15 @@ implements RawDataConditionDAO {
                getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
-        Map<AmbiguousRawDataColumn, String> columnToTable = generateFromClauseRawData(
-                sb, orderedRawDataFilters,
+        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
+                sb, orderedRawDataFilters, null,
                 Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE
         sb.append(" WHERE ");
         if (!orderedRawDataFilters.isEmpty()) {
             sb.append("(")
-              .append(generateWhereClause(orderedRawDataFilters, columnToTable))
+              .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, rawDataFiltersToDatabaseMapping))
               .append(") AND ");
         }
         //We at least always need to check that results are from conditions
@@ -154,7 +153,7 @@ implements RawDataConditionDAO {
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    null, null);
+                    DAODataType.AFFYMETRIX, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

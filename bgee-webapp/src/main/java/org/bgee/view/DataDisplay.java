@@ -22,6 +22,8 @@ import org.bgee.model.species.Species;
  */
 public interface DataDisplay {
 
+    public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails);
+
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
             RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
             Collection<RawDataPostFilter> rawDataPostFilters);

@@ -184,8 +184,14 @@ public class CommandData extends CommandParent {
         } else if (this.requestParameters.getExperimentId() != null) {
 
             this.processExperimentPage();
-        }
 
+        } else if (speciesList != null || formDetails != null) {
+            DataDisplay display = viewFactory.getDataDisplay();
+            display.displayDataPage(speciesList, formDetails);
+        } else {
+            throw log.throwing(new InvalidRequestException(
+                    "The request does not have any mandatory parameter"));
+        }
 
         log.traceExit();
     }

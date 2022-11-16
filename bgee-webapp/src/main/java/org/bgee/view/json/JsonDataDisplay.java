@@ -42,6 +42,11 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         super(response, requestParameters, prop, jsonHelper, factory);
     }
 
+    public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails) {
+        log.traceEntry("{}, {}", speciesList, formDetails);
+        this.displayDataPage(speciesList, formDetails, null, null, null);
+        log.traceExit();
+    }
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
             RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
             Collection<RawDataPostFilter> rawDataPostFilters) {

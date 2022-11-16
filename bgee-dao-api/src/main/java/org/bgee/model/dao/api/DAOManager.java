@@ -1042,9 +1042,9 @@ public abstract class DAOManager implements AutoCloseable
      * Get a new {@link org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
-     * @return  a new {@code ConditionDAO}.
+     * @return  a new {@code RawDataConditionDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO RawDataConditionDAO
      */
     public RawDataConditionDAO getRawDataConditionDAO() {
         log.traceEntry();

@@ -86,19 +86,19 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
      *                          RNA-Seq data for which count are queried.
      * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved. Assay
-     *                          correspond to annotated samples. It can be different from library
-     *                          count if more than one condition has been sequenced (e.g. different
-     *                          celltypes in 10x or multiplexing of different tissues)
      * @param libraryCount      A boolean defining rather RNA-Seq library count has to be retrieved.
      *                          It corresponds to the physical library sent to the sequencer. If only
      *                          one condition has been sequenced (e.g. bulk RNA-Seq) then this count
      *                          is the same than assayCount.
-     * @param callsCount        A boolean defining rather calls count has to be retrieved
+     * @param assayCount        A boolean defining rather assay count has to be retrieved. Assay
+     *                          correspond to annotated samples. It can be different from library
+     *                          count if more than one condition has been sequenced (e.g. different
+     *                          celltypes in 10x or multiplexing of different tissues)
+     * @param callCount         A boolean defining rather calls count has to be retrieved
      * @return                  A {@code RawDataConditionTO} containing requested counts.
      */
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean libraryCount, boolean callsCount);
+            boolean experimentCount, boolean libraryCount, boolean assayCount, boolean callCount);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataCountContainerTO}s

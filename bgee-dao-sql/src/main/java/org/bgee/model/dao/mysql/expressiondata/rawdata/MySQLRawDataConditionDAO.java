@@ -20,11 +20,13 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
 
 public class MySQLRawDataConditionDAO extends MySQLRawDataDAO<RawDataConditionDAO.Attribute>
 implements RawDataConditionDAO {
@@ -154,6 +156,65 @@ implements RawDataConditionDAO {
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
                     DAODataType.AFFYMETRIX, null, null);
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    public RawDataConditionTOResultSet getRNASeqRawDataConditions(
+            Collection<DAORawDataFilter> rawDataFilters, Collection<Integer> rnaSeqTechnologyIds,
+            Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}, {}", rawDataFilters, rnaSeqTechnologyIds, attributes);
+
+        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
+                rawDataFilters == null?
+                new ArrayList<>(): new ArrayList<>(rawDataFilters));
+        final List<Integer> orderedTechnologyIds = Collections.unmodifiableList(
+                rnaSeqTechnologyIds == null?
+                new ArrayList<>(): new ArrayList<>(rnaSeqTechnologyIds));
+        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
+
+        StringBuilder sb = new StringBuilder();
+
+        // generate SELECT
+       sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
+
+        //generate FROM
+        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
+                sb, orderedRawDataFilters, orderedTechnologyIds,
+                Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+
+        // generate WHERE
+        sb.append(" WHERE ");
+        boolean foundPrevious = false;
+        if (!orderedRawDataFilters.isEmpty()) {
+            sb.append("(")
+              .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, rawDataFiltersToDatabaseMapping))
+              .append(")");
+            foundPrevious = true;
+        }
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
+
+        //We at least always need to check that results are from conditions
+        //used in annotations of the requested data type.
+        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
+        //to the affymetrixChip table, we always add this clause:
+        if (foundPrevious) {
+            sb.append(" AND ");
+        }
+        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
+          .append(" WHERE ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME).append(".")
+          .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+          .append(")");
+
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+                    orderedTechnologyIds, DAODataType.RNA_SEQ, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

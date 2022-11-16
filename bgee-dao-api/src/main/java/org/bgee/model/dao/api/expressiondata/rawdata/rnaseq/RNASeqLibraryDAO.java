@@ -1,7 +1,6 @@
-package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
+ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.util.Collection;
-import java.util.EnumSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +18,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayPartOf
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
  * @author Julien Wollbrett
- * @version Bgee 15
+ * @version Bgee 15, Nov. 2022
  * @see RNASeqLibraryTO
  * @since Bgee 12
  */
@@ -32,7 +31,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
 // columns from rnaSeqLibrary table
      * <li>{@code ID}: corresponds to {@link RNASeqLibraryTO#getId()}.
      * <li>{@code EXPERIMENT_ID}: corresponds to {@link RNASeqLibraryTO#getExperimentId()}.
-     * <li>{@code PLATFORM_NAME}: corresponds to {@link RNASeqLibraryTO#getPlatformId()}.
+     * <li>{@code SEQUENCER_NAME}: corresponds to {@link RNASeqLibraryTO#getSequencerName()}.
+     * <li>{@code TECHNOLOGY_ID}: corresponds to {@link RNASeqLibraryTO#getTechnologyId()}.
      * <li>{@code SAMPLE_MULTIPLEXING}: corresponds to {@link RNASeqLibraryTO#getSampleMultiplexing()}.
      * <li>{@code LIBRARY_MULTIPLEXING}: corresponds to {@link RNASeqLibraryTO#getLibraryMultiplexing()}.
 //XXX should maybe move all these columns in a table RNASeqProtocol
@@ -45,9 +45,9 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID("rnaSeqLibraryId"), EXPERIMENT_ID("rnaSeqExperimentId"), PLATFORM_ID("rnaSeqPlatformName"),
-        SAMPLE_MULTIPLEXING("sampleMultiplexing"), LIBRARY_MULTIPLEXING("libraryMultiplexing"),
-        MULTIPLE_ANNOTATED_SAMPLES("multipleLibraryAnnotatedSample"), STRAND_SELECTION("strandSelection"), 
+        ID("rnaSeqLibraryId"), EXPERIMENT_ID("rnaSeqExperimentId"), SEQUENCER_NAME("rnaSeqSequencerName"),
+        TECHNOLOGY_ID("rnaSeqTechnologyId"), SAMPLE_MULTIPLEXING("sampleMultiplexing"),
+        LIBRARY_MULTIPLEXING("libraryMultiplexing"), STRAND_SELECTION("strandSelection"), 
         CELL_COMPARTMENT("cellCompartment"), SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"),
         FRAGMENTATION("fragmentation"), POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"),
         LIBRARY_TYPE("libraryType");
@@ -65,58 +65,22 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public String getTOFieldName() {
             return this.fieldName;
         }
-        public EnumSet<Attribute> getRnaSeqLibraryField() {
-            return EnumSet.of(ID, EXPERIMENT_ID, PLATFORM_ID, SAMPLE_MULTIPLEXING,
-                    LIBRARY_MULTIPLEXING);
-        }
-        public EnumSet<Attribute> getRnaSeqLibraryAnnotatedField() {
-            return EnumSet.complementOf(getRnaSeqLibraryAnnotatedField());
-        }
+
     }
 
     /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s,
-     * corresponding to the RNA-Seq library with the ID {@code libraryId}, 
-     * {@code null} if none could be found.
+     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s according to the provided filters,
+     * ordered by experiment IDs and RNA-Seq library IDs.
      * 
-     * @param libraryIds        A {@code {@link Collection} of {@code String} representing the IDs
-     *                          of the RNA-Seq library to retrieve from the data source.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
-     * @return	A {@code RNASeqLibraryTO}, encapsulating all the data
-     * 			related to the RNA-Seq library retrieved from the data source,
-     * 			or {@code null} if none could be found. 
-     * @throws DAOException 	If an error occurred when accessing the data source.
-     */
-    public RNASeqLibraryTOResultSet getRnaSeqLibraryFromIds(Collection<String> libraryIds,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s,
-     * corresponding to the RNA-Seq library with the experiment IDs {@code experimentIds},
-     * {@code null} if none could be found.
-     * 
-     * @param experimentIds     A {@code {@link Collection} of {@code String} representing the IDs
-     *                          of the RNA-Seq experiments of the libraries to retrieve from the data
-     *                          source.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
-     * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
-     *          related to the RNA-Seq library retrieved from the data source,
-     *          or {@code null} if none could be found.
-     * @throws DAOException     If an error occurred when accessing the data source.
-     */
-    public RNASeqLibraryTOResultSet getRnaSeqLibraryFromExperimentIds(Collection<String> experimentIds,
-            Collection<Attribute> attributes) throws DAOException;
-
-    /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s,
-     * corresponding to the RNA-Seq library with with selected species IDs, gene IDs
-     * and raw condition parameters
-     * {@code null} if none could be found.
-     * 
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which library to
-     *                          retrieve.
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          which library to retrieve. The query uses AND between elements of a
+     *                          same filter and uses OR between filters.
+     * @param technologyIds     A {@code Collection} of {@code Integer} allowing to filter RNA-Seq libraries based
+     *                          on the ID of their technology.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the library.
      * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
@@ -124,41 +88,37 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      *          or {@code null} if none could be found. 
      * @throws DAOException     If an error occurred when accessing the data source.
      */
-    public RNASeqLibraryTOResultSet getRnaSeqLibraryFromRawDataFilter(DAORawDataFilter rawDataFilter,
-            Collection<Attribute> attributes)
-            throws DAOException;
+    public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
+            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s,
-     * corresponding to the RNA-Seq library with selected library IDs, species IDs, gene IDs
-     * and raw condition parameters
-     * {@code null} if none could be found.
+     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s according to the provided filters,
+     * ordered by experiment IDs and RNA-Seq library IDs.
      * 
-     * @param experimentIds     A {@code {@link Collection} of {@code String} representing the IDs
-     *                          of the RNA-Seq experiments of the libraries to retrieve from the data
-     *                          source.
-     * @param libraryIds        A {@code {@link Collection} of {@code String} representing the IDs
-     *                          of the RNA-Seq library to retrieve from the data source.
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which library to
-     *                          retrieve.
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          which library to retrieve. The query uses AND between elements of a
+     *                          same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the library.
-     * 
      * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
      *          related to the RNA-Seq library retrieved from the data source,
-     *          or {@code null} if none could be found.
+     *          or {@code null} if none could be found. 
      * @throws DAOException     If an error occurred when accessing the data source.
      */
-    public RNASeqLibraryTOResultSet getRnaSeqLibraries(Collection<String> experimentIds,
-            Collection<String> libraryIds, DAORawDataFilter rawDataFilter,
-            Collection<Attribute> attributes)
+    public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
+            Integer offset, Integer limit, Collection<Attribute> attributes)
             throws DAOException;
 
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
      * 
      * @author  Julien Wollbrett
-     * @version Bgee 15, Aug. 2022
+     * @version Bgee 15, Nov. 2022
      * @since   Bgee 15
      */
     public interface RNASeqLibraryTOResultSet extends DAOResultSet<RNASeqLibraryTO> {
@@ -212,7 +172,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              *
              * @param representation    A {@code String} representing a library type.
              * @return                  A {@code LibraryType} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code LibraryType}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any
+             * {@code LibraryType}.
              */
             public static final LibraryType convertToLibraryType(String representation) {
                 log.traceEntry("{}", representation);
@@ -259,7 +220,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              *
              * @param representation    A {@code String} representing a strand selection.
              * @return                  A {@code StrandSelection} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code StrandSelection}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any
+             * {@code StrandSelection}.
              */
             public static final StrandSelection convertToStrandSelection(String representation) {
                 log.traceEntry("{}", representation);
@@ -305,7 +267,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              *
              * @param representation    A {@code String} representing a cell compartment.
              * @return                  A {@code CellCompartment} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code CellCompartment}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any
+             * {@code CellCompartment}.
              */
             public static final CellCompartment convertToCellCompartment(String representation) {
                 log.traceEntry("{}", representation);
@@ -335,9 +298,11 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              */
             private final String stringRepresentation;
             /**
-             * Constructor providing the {@code String} representation of this {@code SequencedTrancriptPart}.
+             * Constructor providing the {@code String} representation of this
+             * {@code SequencedTrancriptPart}.
              *
-             * @param stringRepresentation  A {@code String} corresponding to this {@code SequencedTrancriptPart}.
+             * @param stringRepresentation  A {@code String} corresponding to this
+             *                              {@code SequencedTrancriptPart}.
              */
             private SequencedTrancriptPart(String stringRepresentation) {
                 this.stringRepresentation = stringRepresentation;
@@ -351,7 +316,8 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
              *
              * @param representation    A {@code String} representing a sequenced transcript part.
              * @return                  A {@code SequencedTrancriptPart} corresponding to {@code representation}.
-             * @throws IllegalArgumentException If {@code representation} does not correspond to any {@code SequencedTrancriptPart}.
+             * @throws IllegalArgumentException If {@code representation} does not correspond to any
+             * {@code SequencedTrancriptPart}.
              */
             public static final SequencedTrancriptPart convertToSequencedTranscriptPart(
                     String representation) {
@@ -375,11 +341,10 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          * A {@code String} representing the ID of the platform used 
          * to generate this RNA-Seq library.
          */
-        private final String platformId;
-
+        private final String sequencerName;
+        private final Integer technologyId;
         private final boolean sampleMultiplexing;
         private final boolean libraryMultiplexing;
-        private final boolean multipleLibraryAnnotatedSamples;
         private final StrandSelection strandSelection;
         private final CellCompartment cellCompartment;
         private final SequencedTrancriptPart sequencedTranscriptPart;
@@ -387,16 +352,17 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         private final Integer populationCaptureId;
         private final LibraryType libraryType;
 
-        public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String platformId,
-                boolean sampleMultiplexing, boolean libraryMultiplexing, boolean multipleLibraryAnnotatedSamples, StrandSelection strandSelection,
-                CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart, Integer fragmentation,
+        public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
+                Integer technologyId, boolean sampleMultiplexing, boolean libraryMultiplexing,
+                StrandSelection strandSelection, CellCompartment cellCompartment,
+                SequencedTrancriptPart seqTranscriptPart, Integer fragmentation,
                 Integer populationCaptureId, LibraryType libType) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
-            this.platformId = platformId;
+            this.sequencerName = sequencerName;
+            this.technologyId = technologyId;
             this.sampleMultiplexing = sampleMultiplexing;
             this.libraryMultiplexing = libraryMultiplexing;
-            this.multipleLibraryAnnotatedSamples = multipleLibraryAnnotatedSamples;
             this.strandSelection = strandSelection;
             this.cellCompartment = cellCompartment;
             this.sequencedTranscriptPart = seqTranscriptPart;
@@ -409,14 +375,14 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public String getExperimentId() {
             return this.rnaSeqExperimentId;
         }
-        public String getPlatformId() {
-            return platformId;
+        public String getSequencerName() {
+            return sequencerName;
+        }
+        public Integer getTechnologyId() {
+            return technologyId;
         }
         public boolean isSampleMultiplexing() {
             return sampleMultiplexing;
-        }
-        public boolean isMultipleLibraryAnnotatedSamples() {
-            return multipleLibraryAnnotatedSamples;
         }
         public boolean isLibraryMultiplexing() {
             return libraryMultiplexing;
@@ -442,13 +408,15 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "RNASeqLibraryTO [rnaSeqExperimentId=" + rnaSeqExperimentId + ", platformId=" + platformId
-                    + ", sampleMultiplexing=" + sampleMultiplexing + ", libraryMultiplexing=" + libraryMultiplexing
-                    + ", multipleLibraryAnnotatedSamples=" + multipleLibraryAnnotatedSamples + ", strandSelection="
-                    + strandSelection + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart="
-                    + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="
-                    + populationCaptureId + ", libraryType=" + libraryType + "]";
+            return "RNASeqLibraryTO [rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
+                    + ", technologyId=" + technologyId + ", sampleMultiplexing=" + sampleMultiplexing
+                    + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection=" + strandSelection
+                    + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart=" + sequencedTranscriptPart
+                    + ", fragmentation=" + fragmentation + ", populationCaptureId=" + populationCaptureId
+                    + ", libraryType=" + libraryType + "]";
         }
+
+        
 
     }
 }

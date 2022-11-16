@@ -11,9 +11,10 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataExperimentDAO.Experi
 /**
  * {@code DAO} for {@link RNASeqExperimentTO}s.
  * 
+ * @author Juline Wollbrett
  * @author Frederic Bastian
  * @author Valentine Rech de Laval
- * @version Bgee 14
+ * @version Bgee 15, Nov. 2022
  * @see RNASeqExperimentTO
  * @since Bgee 12
  */
@@ -50,57 +51,55 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
     }
 
     /**
-     * Retrieve from the data source a {@code RNASeqExpTO}, corresponding to the RNA-Seq
-     * experiment with the ID {@code expId}, {@code null} if none could be found.
-     * 
-     * @param expIds            A {@code Collection} of {code String} representing the IDs of
-     *                          the RNA-Seq experiments to retrieve from the data source.
+     * Allows to retrieve {@code RNASeqExperimentTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqExperimentTO}s are retrieved and returned as a
+     * {@code RNASeqExperimentTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter experiments to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param technologyIds     A {@code Collection} of {@code Integer} allowing to filter RNA-Seq
+     *                          experiments based on the ID of their technology.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
-     * @return                  A {@code RNASeqExperimentTOResultSet}, encapsulating all the data
-     *                          related to the RNA-Seq experiments, {@code null} if none could be found.
-     * @throws DAOException     If an error occurred when accessing the data source.
+     * @return                  A {@code RNASeqExperimentTOResultSet} allowing to retrieve the
+     *                          targeted {@code RNASeqExperimentTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public RNASeqExperimentTOResultSet getExperimentsFromIds(Collection<String> expIds,
+    public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
+            Collection<Integer> technologyIds, Integer offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieve from the data source a {@code RNASeqExpTO}, corresponding to the RNA-Seq
-     * experiment with the ID {@code expId}, {@code null} if none could be found.
-     * 
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
+     * Allows to retrieve {@code RNASeqExperimentTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqExperimentTO}s are retrieved and returned as a
+     * {@code RNASeqExperimentTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter experiments to retrieve. The query uses AND between
+     *                          elements of a same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row. If
+     *                          not null, a limit should be also provided
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
-     * @return                  A {@code RNASeqExperimentTOResultSet}, encapsulating all the data
-     *                          related to the RNA-Seq experiments, {@code null} if none could be
-     *                          found.
-     * @throws DAOException     If an error occurred when accessing the data source.
+     * @return                  A {@code RNASeqExperimentTOResultSet} allowing to retrieve the
+     *                          targeted {@code RNASeqExperimentTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public RNASeqExperimentTOResultSet getExperimentsFromRawDataFilter(
-            DAORawDataFilter rawDataFilter,
-            Collection<Attribute> attributes) throws DAOException;
-    
-    /**
-     * Retrieve from the data source a {@code RNASeqExpTO}, corresponding to the RNA-Seq
-     * experiment with the ID {@code expId}, {@code null} if none could be found.
-     * 
-     * @param expIds            A {@code Collection} of {code String} representing the IDs of
-     *                          the RNA-Seq experiments to retrieve from the data source.
-     * @param libraryIds        A {@code Collection} of {code String} representing the IDs of
-     *                          the RNA-Seq libraries to retrieve from the data source.
-     * @param rawDataFilter     a {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the data source.
-     * @return                  A {@code RNASeqExperimentTOResultSet}, encapsulating all the data
-     *                          related to the RNA-Seq experiments, {@code null} if none could be found.
-     * @throws DAOException     If an error occurred when accessing the data source.
-     */
-    public RNASeqExperimentTOResultSet getExperiments(Collection<String> expIds, 
-            Collection<String> explibraryIds, DAORawDataFilter filter,
-            Collection<Attribute> attributes) throws DAOException;
-
+    public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
     /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
      * 

@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -147,10 +148,26 @@ public class RawCall {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(exclusionReason, expressionConfidence, gene, pValue);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RawCall other = (RawCall) obj;
+        return exclusionReason == other.exclusionReason && expressionConfidence == other.expressionConfidence
+                && Objects.equals(gene, other.gene) && Objects.equals(pValue, other.pValue);
+    }
+
+    @Override
     public String toString() {
         return "RawCall [gene=" + gene + ", pValue=" + pValue + ", expressionConfidence="
                 + expressionConfidence + ", exclusionReason=" + exclusionReason + "]";
     }
-
-    
 }

@@ -1,5 +1,6 @@
 package org.bgee.controller;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -41,11 +42,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
@@ -59,6 +62,73 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CommandData extends CommandParent {
     private final static Logger log = LogManager.getLogger(CommandData.class.getName());
+
+    public static class ColumnDescription {
+        public static enum ColumnType {
+            STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE
+        }
+        public static final String INTERNAL_LINK_TARGET_EXP = "experiment";
+        public static final String INTERNAL_LINK_TARGET_GENE = "gene";
+        private static final Set<String> INTERNAL_LINK_TARGETS = Set.of(
+                INTERNAL_LINK_TARGET_EXP, INTERNAL_LINK_TARGET_GENE);
+
+        private final String title;
+        private final String infoBubble;
+        private final List<String> attributes;
+        private final ColumnType columnType;
+        /**
+         * Only applicable when {@code columnType} is {@code INTERNAL_LINK}.
+         */
+        private final String linkTarget;
+
+        public ColumnDescription(String title, String infoBubble, List<String> attributes,
+                ColumnType columnType, String linkTarget) {
+            if (columnType == null) {
+                throw log.throwing(new IllegalArgumentException(
+                        "a column type is mandatory"));
+            }
+            if (!ColumnType.INTERNAL_LINK.equals(columnType) && StringUtils.isNotBlank(linkTarget)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "linkTarget only applicable when columnType is INTERNAL_LINK"));
+            } else if (ColumnType.INTERNAL_LINK.equals(columnType) && StringUtils.isBlank(linkTarget)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "linkTarget must be defined when columnType is INTERNAL_LINK"));
+            }
+            if (StringUtils.isNotBlank(linkTarget) && !INTERNAL_LINK_TARGETS.contains(linkTarget)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Invalid value for linkTarget: " + linkTarget));
+            }
+            if (StringUtils.isBlank(title)) {
+                throw log.throwing(new IllegalArgumentException(
+                        "title of the column is mandatory"));
+            }
+            if (attributes == null || attributes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException(
+                        "a list of attributes is mandatory"));
+            }
+            this.title = title;
+            this.infoBubble = infoBubble;
+            this.attributes = Collections.unmodifiableList(attributes);
+            this.columnType = columnType;
+            this.linkTarget = linkTarget;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+        public String getInfoBubble() {
+            return infoBubble;
+        }
+        public List<String> getAttributes() {
+            return attributes;
+        }
+        public ColumnType getColumnType() {
+            return columnType;
+        }
+        public String getLinkTarget() {
+            return linkTarget;
+        }
+    }
 
     public static class DataFormDetails {
         private final Species requestedSpecies;
@@ -208,6 +278,9 @@ public class CommandData extends CommandParent {
         //but we leave open the possibility to retrieve them for several data types,
         //and return them all in a Set.
         Set<RawDataPostFilter> rawDataPostFilters = null;
+        //We also leave open the possibility to obtain the column descriptions
+        //for several data types, and store them in a Map associated with the data type
+        Map<DataType, List<ColumnDescription>> colDescriptions = null;
 
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
 
@@ -243,9 +316,13 @@ public class CommandData extends CommandParent {
                 }
             }
         }
+        if (this.requestParameters.isGetColumnDefinition()) {
+            colDescriptions = this.getColumnDescriptions(
+                    this.requestParameters.getAction(), dataTypes);
+        }
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayDataPage(speciesList, formDetails, rawDataContainer, rawDataCountContainer,
-                rawDataPostFilters);
+        display.displayDataPage(speciesList, formDetails, colDescriptions,
+                rawDataContainer, rawDataCountContainer, rawDataPostFilters);
 
         log.traceExit();
     }
@@ -281,6 +358,7 @@ public class CommandData extends CommandParent {
 
         Experiment<?> experiment = null;
         LinkedHashSet<Assay<?>> assays = null;
+        List<ColumnDescription> colDescr = null;
         switch (dataTypeWithResults) {
         case AFFYMETRIX:
             if (expContainer.getAffymetrixExperiments().size() != 1) {
@@ -294,6 +372,14 @@ public class CommandData extends CommandParent {
             }
             experiment = expContainer.getAffymetrixExperiments().iterator().next();
             assays = new LinkedHashSet<>(expContainer.getAffymetrixAssays());
+            try {
+                colDescr = this.getColumnDescriptions(RequestParameters.ACTION_RAW_DATA_ANNOTS,
+                        dataTypesWithResults).get(dataTypeWithResults);
+            } catch (InvalidRequestException e) {
+                //here it means we didn't correctly called the method getColumnDescriptions,
+                //it is not an InvalidRequestException
+                throw log.throwing(new IllegalStateException(e));
+            }
             break;
         //TODO: continue for all data types
         default:
@@ -302,7 +388,7 @@ public class CommandData extends CommandParent {
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
-        display.displayExperimentPage(experiment, assays, dataTypeWithResults);
+        display.displayExperimentPage(experiment, assays, dataTypeWithResults, colDescr);
 
         log.traceExit();
     }
@@ -581,5 +667,152 @@ public class CommandData extends CommandParent {
             rawDataPostFilters.add(rawDataLoader.loadPostFilter(dataType));
         }
         return log.traceExit(rawDataPostFilters);
+    }
+
+    private Map<DataType, List<ColumnDescription>> getColumnDescriptions(String action,
+            EnumSet<DataType> dataTypes) throws InvalidRequestException {
+        log.traceEntry("{}, {}", action, dataTypes);
+        Map<DataType, List<ColumnDescription>> dataTypeToColDescr = new HashMap<>();
+        Map<DataType, Supplier<List<ColumnDescription>>> dataTypeTolDescrSupplier = new HashMap<>();
+
+        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(action)) {
+            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
+                    () -> getAffymetrixRawDataAnnotsColumnDescriptions());
+        } else if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(action)) {
+            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
+                    () -> getAffymetrixProcExprValuesColumnDescriptions());
+        } else if (RequestParameters.ACTION_EXPERIMENTS.equals(action)) {
+            dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
+                    () -> getAffymetrixExperimentsColumnDescriptions());
+        } else {
+            throw log.throwing(new InvalidRequestException("Unsupported action for column definition: " +
+                    this.requestParameters.getAction()));
+        }
+
+        for (DataType dataType: dataTypes) {
+            //TODO: remove this check when all data types will be implemented
+            if (dataType != DataType.AFFYMETRIX) {
+                continue;
+            }
+            Supplier<List<ColumnDescription>> supplier = dataTypeTolDescrSupplier.get(dataType);
+            if (supplier == null) {
+                throw log.throwing(new IllegalStateException(
+                        "No column supplier for data type: " + dataType));
+            }
+            dataTypeToColDescr.put(dataType, supplier.get());
+        }
+
+        return log.traceExit(dataTypeToColDescr);
+    }
+    private List<ColumnDescription> getAffymetrixRawDataAnnotsColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Experiment name", null,
+                List.of("result.experiment.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
+                List.of("result.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result"));
+
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
+                List.of("result.assay.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Probeset ID", "Identifier of the probeset for the chip type",
+                List.of("result.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Gene ID", null,
+                List.of("result.expressionCall.gene.geneId"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE));
+        colDescr.add(new ColumnDescription("Gene name", null,
+                List.of("result.expressionCall.gene.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Signal intensity",
+                "Normalized signal intensity of the probeset",
+                List.of("result.normalizedSignalIntensity"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Expression p-value",
+                "P-value for the test of expression signal of the gene "
+                + "significantly different from background expression",
+                List.of("result.expressionCall.pValue"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getAffymetrixExperimentsColumnDescriptions() {
+        log.traceEntry();
+
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Experiment name", null,
+                List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Description", null,
+                List.of("result.description"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        return log.traceExit(colDescr);
+    }
+    private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart) {
+        log.traceEntry("{}", attributeStart);
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Anat. entity",
+                "Annotation of the anatomical localization of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.cellType.id",
+                        attributeStart + ".annotation.rawDataCondition.cellType.name",
+                        attributeStart + ".annotation.rawDataCondition.anatEntity.id",
+                        attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
+                ColumnDescription.ColumnType.ANAT_ENTITY,
+                null));
+        colDescr.add(new ColumnDescription("Stage",
+                "Annotation of the developmental and life stage of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.devStage.id",
+                        attributeStart + ".annotation.rawDataCondition.devStage.name"),
+                ColumnDescription.ColumnType.DEV_STAGE,
+                null));
+        colDescr.add(new ColumnDescription("Sex",
+                "Annotation of the sex of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.sex"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Strain",
+                "Annotation of the strain of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.strain"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Species", null,
+                List.of(attributeStart + ".annotation.rawDataCondition.species.genus",
+                        attributeStart + ".annotation.rawDataCondition.species.speciesName"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        return log.traceExit(colDescr);
     }
 }

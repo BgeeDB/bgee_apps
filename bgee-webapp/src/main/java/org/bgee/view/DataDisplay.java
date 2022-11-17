@@ -3,7 +3,9 @@ package org.bgee.view;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
+import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.Assay;
@@ -25,9 +27,10 @@ public interface DataDisplay {
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails);
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
+            Map<DataType, List<ColumnDescription>> colDescriptions,
             RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
             Collection<RawDataPostFilter> rawDataPostFilters);
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
-            DataType dataType);
+            DataType dataType, List<ColumnDescription> columnDescriptions);
 }

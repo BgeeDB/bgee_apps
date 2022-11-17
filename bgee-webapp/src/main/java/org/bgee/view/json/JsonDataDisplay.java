@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
+import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.Assay;
@@ -44,13 +46,14 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails) {
         log.traceEntry("{}, {}", speciesList, formDetails);
-        this.displayDataPage(speciesList, formDetails, null, null, null);
+        this.displayDataPage(speciesList, formDetails, null, null, null, null);
         log.traceExit();
     }
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
+            Map<DataType, List<ColumnDescription>> colDescriptions,
             RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
             Collection<RawDataPostFilter> rawDataPostFilters) {
-        log.traceEntry("{}, {}, {}, {}, {}", speciesList, formDetails,
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesList, formDetails, colDescriptions,
                 rawDataContainer, rawDataCountContainer, rawDataPostFilters);
 
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
@@ -59,6 +62,9 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         }
         if (formDetails != null && formDetails.containsAnyInformation()) {
             responseMap.put("requestDetails", formDetails);
+        }
+        if (colDescriptions != null && !colDescriptions.isEmpty()) {
+            responseMap.put("columnDescriptions", colDescriptions);
         }
 
         if (rawDataContainer != null || rawDataCountContainer != null ||
@@ -141,11 +147,12 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
     }
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
-            DataType dataType) {
-        log.traceEntry("{}, {}, {}", experiment, assays, dataType);
+            DataType dataType, List<ColumnDescription> columnDescriptions) {
+        log.traceEntry("{}, {}, {}, {}", experiment, assays, dataType, columnDescriptions);
 
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
         responseMap.put("dataType", dataType);
+        responseMap.put("columnDescriptions", columnDescriptions);
         responseMap.put("experiment", experiment);
         responseMap.put("assays", assays);
 

@@ -83,6 +83,25 @@ public interface RNASeqLibraryAnnotatedSampleDAO extends DAO<RNASeqLibraryAnnota
     }
 
     /**
+     * Allows to retrieve {@code RNASeqLibraryAnnotatedSampleTO}s according to the provided library
+     * annotated sample IDs
+     * <p>
+     * The {@code RNASeqLibraryAnnotatedSampleTO}s are retrieved and returned as a
+     * {@code RNASeqLibraryAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param libraryAnnotatedSampleIds A {@code Collection} of {@code Integer} allowing to specify
+     *                                  library annotated sample IDs used to filter.
+     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the information
+     *                                  to retrieve from the data source.
+     * @return                          A {@code RNASeqLibraryAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                                  targeted {@code AffymetrixProbesetTO}s.
+     * @throws DAOException             If an error occurred while accessing the data source.
+     */
+    public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamplesFromLibraryAnnotatedSampleIds(
+            Collection<Integer> libraryAnnotatedSampleIds, Collection<Attribute> attributes) throws DAOException;
+
+    /**
      * Allows to retrieve {@code RNASeqLibraryAnnotatedSampleTO}s according to the provided filters.
      * <p>
      * The {@code RNASeqLibraryAnnotatedSampleTO}s are retrieved and returned as a

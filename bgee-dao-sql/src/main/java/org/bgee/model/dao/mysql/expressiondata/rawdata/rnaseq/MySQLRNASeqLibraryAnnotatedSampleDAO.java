@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +48,41 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                 attrs));
     }
 
-
+    @Override
+    public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamplesFromLibraryAnnotatedSampleIds(
+            Collection<Integer> libraryAnnotatedSampleIds, 
+            Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs)
+            throws DAOException {
+        log.traceEntry("{}, {}", libraryAnnotatedSampleIds, attrs);
+        if (libraryAnnotatedSampleIds == null || libraryAnnotatedSampleIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("need to provide at least one"
+                    + "library annotated sample ID"));
+        }
+        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class):
+                    EnumSet.copyOf(attrs));
+        final Set<Integer> clonedannotatedSampleIds = Collections
+                .unmodifiableSet(libraryAnnotatedSampleIds.stream()
+                        .filter(id -> id != null).collect(Collectors.toSet()));
+     // generate SELECT
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RNASeqLibraryAnnotatedSampleDAO
+                .Attribute.class), true, clonedAttrs))
+        .append(" FROM ").append(TABLE_NAME).append(" WHERE ")
+        .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID.getTOFieldName())
+        .append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedannotatedSampleIds.size()))
+        .append(")");
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            stmt.setIntegers(1, clonedannotatedSampleIds, true);
+            return log.traceExit(new MySQLRNASeqLibraryAnnotatedSampleTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
 
     @Override
     public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(

@@ -148,9 +148,9 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, boolean experimentCount, boolean libraryCount,
+            Boolean isSingleCell, boolean experimentCount, boolean libraryCount,
             boolean assayCount, boolean callCount) {
-        log.traceEntry("{}, {},{}, {}", rawDataFilters, technologyIds, experimentCount, libraryCount,
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, isSingleCell, experimentCount, libraryCount,
                 assayCount, callCount);
         if (!experimentCount && !libraryCount && !assayCount && !callCount) {
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
@@ -161,9 +161,6 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds =
-                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
-                    new ArrayList<>(technologyIds));
         StringBuilder sb = new StringBuilder();
 
         boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
@@ -251,7 +248,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, orderedTechnologyIds, necessaryTables, DAODataType.RNA_SEQ);
+                orderedRawDataFilters, isSingleCell, necessaryTables, DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
         boolean foundPrevious = false;
@@ -260,10 +257,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
             foundPrevious = true;
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    orderedTechnologyIds, DAODataType.RNA_SEQ, null, null);
+                    isSingleCell, DAODataType.RNA_SEQ, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();

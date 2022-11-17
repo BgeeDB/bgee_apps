@@ -163,16 +163,13 @@ implements RawDataConditionDAO {
     }
 
     public RawDataConditionTOResultSet getRNASeqRawDataConditions(
-            Collection<DAORawDataFilter> rawDataFilters, Collection<Integer> rnaSeqTechnologyIds,
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}, {}", rawDataFilters, rnaSeqTechnologyIds, attributes);
+        log.traceEntry("{}, {}, {}", rawDataFilters, isSingleCell, attributes);
 
         final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
                 rawDataFilters == null?
                 new ArrayList<>(): new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds = Collections.unmodifiableList(
-                rnaSeqTechnologyIds == null?
-                new ArrayList<>(): new ArrayList<>(rnaSeqTechnologyIds));
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -185,7 +182,7 @@ implements RawDataConditionDAO {
 
         //generate FROM
         RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, orderedRawDataFilters, orderedTechnologyIds,
+                sb, orderedRawDataFilters, isSingleCell,
                 Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE
@@ -197,7 +194,7 @@ implements RawDataConditionDAO {
               .append(")");
             foundPrevious = true;
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
 
         //We at least always need to check that results are from conditions
         //used in annotations of the requested data type.
@@ -214,7 +211,7 @@ implements RawDataConditionDAO {
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    orderedTechnologyIds, DAODataType.RNA_SEQ, null, null);
+                    isSingleCell, DAODataType.RNA_SEQ, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

@@ -43,18 +43,15 @@ implements RNASeqExperimentDAO{
 
     @Override
     public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Boolean isSingleCell, Integer offset, Integer limit,
             Collection<RNASeqExperimentDAO.Attribute> attrs) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, technologyIds, offset, limit, attrs);
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
 
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds =
-                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
-                    new ArrayList<>(technologyIds));
         final Set<RNASeqExperimentDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(RNASeqExperimentDAO.Attribute.class): EnumSet.copyOf(attrs));
@@ -67,11 +64,11 @@ implements RNASeqExperimentDAO{
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, orderedTechnologyIds, Set.of(TABLE_NAME),
+                orderedRawDataFilters, isSingleCell, Set.of(TABLE_NAME),
                 DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        if (!orderedRawDataFilters.isEmpty() || !orderedTechnologyIds.isEmpty()) {
+        if (!orderedRawDataFilters.isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ");
         }
         boolean foundPrevious = false;
@@ -80,7 +77,7 @@ implements RNASeqExperimentDAO{
                     filtersToDatabaseMapping));
             foundPrevious = true;
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
 
         // generate ORDER BY
         sb.append(" ORDER BY")
@@ -94,7 +91,7 @@ implements RNASeqExperimentDAO{
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    orderedTechnologyIds, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqExperimentTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

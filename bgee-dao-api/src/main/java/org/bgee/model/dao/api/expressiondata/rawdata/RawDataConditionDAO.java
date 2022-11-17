@@ -129,8 +129,10 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *
      * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                              filters to use to retrieve <strong>raw</strong> condition.
-     * @param rnaSeqTechnologyIds   A {@code Collection} of {@code Integer} allowing to specify RNA-Seq
-     *                              technologies to use to retrieve <strong>raw</strong> condition.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
      * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
      *                              defining the attributes to populate in the returned
      *                              {@code RawDataConditionTO}s.
@@ -140,7 +142,7 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      * @throws DAOException         If an error occurred while accessing the data source.
      */
     public RawDataConditionTOResultSet getRNASeqRawDataConditions(
-            Collection<DAORawDataFilter> rawDataFilters, Collection<Integer> rnaSeqTechnologyIds,
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Collection<Attribute> attributes);
 
     /**

@@ -46,11 +46,11 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID("rnaSeqLibraryId"), EXPERIMENT_ID("rnaSeqExperimentId"), SEQUENCER_NAME("rnaSeqSequencerName"),
-        TECHNOLOGY_ID("rnaSeqTechnologyId"), SAMPLE_MULTIPLEXING("sampleMultiplexing"),
-        LIBRARY_MULTIPLEXING("libraryMultiplexing"), STRAND_SELECTION("strandSelection"),
-        CELL_COMPARTMENT("cellCompartment"), SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"),
-        FRAGMENTATION("fragmentation"), POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"),
-        LIBRARY_TYPE("libraryType");
+        TECHNOLOGY_NAME("rnaSeqTechnologyName"), IS_SINGLE_CELL("rnaSeqTechnologyIsSingleCell"),
+        SAMPLE_MULTIPLEXING("sampleMultiplexing"), LIBRARY_MULTIPLEXING("libraryMultiplexing"),
+        STRAND_SELECTION("strandSelection"), CELL_COMPARTMENT("cellCompartment"),
+        SEQUENCED_TRANSCRIPT_PART("sequencedTranscriptPart"), FRAGMENTATION("fragmentation"),
+        POPULATION_CAPTURE_ID("rnaSeqPopulationCaptureId"), LIBRARY_TYPE("libraryType");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTTO} class.
@@ -75,8 +75,10 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                          which library to retrieve. The query uses AND between elements of a
      *                          same filter and uses OR between filters.
-     * @param technologyIds     A {@code Collection} of {@code Integer} allowing to filter RNA-Seq libraries based
-     *                          on the ID of their technology.
+     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                          If <strong>null</strong> all RNA-Seq are retrieved.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row.
      * @param limit             An {@code Integer} used to limit the number of rows returned in a query
@@ -89,7 +91,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
      * @throws DAOException     If an error occurred when accessing the data source.
      */
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Boolean isSingleCell, Integer offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
 
     /**
@@ -291,7 +293,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          * @since Bgee 15
          */
         public enum SequencedTrancriptPart implements EnumDAOField {
-            NA("NA"), THREE_PRIME("3prime"), FIVE_PRIME("5prime"), FULL_LENGTH("full_length");
+            NA("NA"), THREE_PRIME("3prime"), FIVE_PRIME("5prime"), FULL_LENGTH("full length");
 
             /**
              * See {@link #getStringRepresentation()}
@@ -342,25 +344,27 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          * to generate this RNA-Seq library.
          */
         private final String sequencerName;
-        private final Integer technologyId;
+        private final String technologyName;
+        private final boolean isSingleCell;
         private final boolean sampleMultiplexing;
         private final boolean libraryMultiplexing;
         private final StrandSelection strandSelection;
         private final CellCompartment cellCompartment;
         private final SequencedTrancriptPart sequencedTranscriptPart;
         private final Integer fragmentation;
-        private final Integer populationCaptureId;
+        private final String populationCaptureId;
         private final LibraryType libraryType;
 
         public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
-                Integer technologyId, boolean sampleMultiplexing, boolean libraryMultiplexing,
-                StrandSelection strandSelection, CellCompartment cellCompartment,
-                SequencedTrancriptPart seqTranscriptPart, Integer fragmentation,
-                Integer populationCaptureId, LibraryType libType) {
+                String technologyName, boolean isSingleCell, boolean sampleMultiplexing,
+                boolean libraryMultiplexing, StrandSelection strandSelection,
+                CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
+                Integer fragmentation, String populationCaptureId, LibraryType libType) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
             this.sequencerName = sequencerName;
-            this.technologyId = technologyId;
+            this.technologyName = technologyName;
+            this.isSingleCell = isSingleCell;
             this.sampleMultiplexing = sampleMultiplexing;
             this.libraryMultiplexing = libraryMultiplexing;
             this.strandSelection = strandSelection;
@@ -371,15 +375,17 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
             this.libraryType = libType;
         }
 
-        @Override
         public String getExperimentId() {
             return this.rnaSeqExperimentId;
         }
         public String getSequencerName() {
             return sequencerName;
         }
-        public Integer getTechnologyId() {
-            return technologyId;
+        public String getTechnologyName() {
+            return technologyName;
+        }
+        public boolean isSingleCell() {
+            return isSingleCell;
         }
         public boolean isSampleMultiplexing() {
             return sampleMultiplexing;
@@ -399,7 +405,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public Integer getFragmentation() {
             return fragmentation;
         }
-        public Integer getPopulationCaptureId() {
+        public String getPopulationCaptureId() {
             return populationCaptureId;
         }
         public LibraryType getLibraryType() {
@@ -408,12 +414,12 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
 
         @Override
         public String toString() {
-            return "RNASeqLibraryTO [rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
-                    + ", technologyId=" + technologyId + ", sampleMultiplexing=" + sampleMultiplexing
-                    + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection=" + strandSelection
-                    + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart=" + sequencedTranscriptPart
-                    + ", fragmentation=" + fragmentation + ", populationCaptureId=" + populationCaptureId
-                    + ", libraryType=" + libraryType + "]";
+            return "RNASeqLibraryTO [rnaSeqLibraryId=" + getId() + ", rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
+                    + ", technologyName=" + technologyName + ", isSingleCell=" + isSingleCell + ", sampleMultiplexing="
+                    + sampleMultiplexing + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection="
+                    + strandSelection + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart="
+                    + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="
+                    + populationCaptureId + ", libraryType=" + libraryType + "]";
         }
 
     }

@@ -60,10 +60,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     //parameterize query with rnaSeqTechnologyIds
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters, List<Integer> technologyIds,
+            List<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", query, rawDataFilters, technologyIds,
+        log.traceEntry("{}, {}, {}, {}, {}, {}", query, rawDataFilters, isSingleCell,
                 datatype, offset, limit);
         if (datatype == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
@@ -116,10 +116,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
         }
         // parameterize technologyIds only for rnaseq
-        if (datatype.equals(DAODataType.RNA_SEQ) && technologyIds != null
-                && !technologyIds.isEmpty()) {
-            stmt.setIntegers(paramIndex, technologyIds, true);
-            paramIndex += technologyIds.size();
+        if (datatype.equals(DAODataType.RNA_SEQ) && isSingleCell != null) {
+            stmt.setBoolean(paramIndex, isSingleCell);
+            paramIndex++;
         }
         //parameterize offset and limit
         if (offset != null) {
@@ -185,8 +184,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                              created. It will be modified as a result to calling this method.
      * @param filters               A {@code List} of {@code DAORawDataFilter} to use to generate the
      *                              FROM clause
-     * @param rnaSeqTochnologyIds   A {@code List} of {@code Integers} corresponding to to use to generate the
-     *                              FROM clause
+     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                              If <strong>null</strong> all RNA-Seq are retrieved.
      * @param necessaryTables       A {@code Set} of {@code String} corresponding to tables necessary
      *                              to the creation of the query
      * @param dataType              The {@code DAODataType} for which the FROM clause has to be
@@ -198,9 +199,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                              (see {@link AmbiguousRawDataColumn}).
      */
     protected RawDataFiltersToDatabaseMapping generateFromClauseRawData(StringBuilder sb,
-            List<DAORawDataFilter> filters, List<Integer> rnaSeqTechnologyIds,
+            List<DAORawDataFilter> filters, Boolean isSingleCell,
             Set<String> necessaryTables, DAODataType datatype) {
-        log.traceEntry("{}, {}, {}, {}, {}", sb, filters, rnaSeqTechnologyIds, necessaryTables,
+        log.traceEntry("{}, {}, {}, {}, {}", sb, filters, isSingleCell, necessaryTables,
                 datatype);
         Map<AmbiguousRawDataColumn, String> ambiguousColToTable = new HashMap<>();
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
@@ -212,7 +213,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
                     + "."));
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
-            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, filters, rnaSeqTechnologyIds,
+            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, filters, isSingleCell,
                     necessaryTables);
         } else {
             throw log.throwing(new IllegalStateException("dataType " + datatype
@@ -446,8 +447,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          created.
      * @param rawDatafilters    A {@code List} of {@code DAORawDataFilter} to use to generate the
      *                          FROM clause
-     * @param technologyIds     A {@code List} of {@code Integer} corresponding to RNA-Seq technology
-     *                          IDs to filter on. If null, retrieve all technologies.
+     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                          If <strong>null</strong> all RNA-Seq are retrieved.
      * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
      *                          of tables necessary to the creation of the FROM clause.
      *                          {@code necessaryTables} must contain only the names
@@ -462,9 +465,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     protected Map<AmbiguousRawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
-            List<DAORawDataFilter> rawDataFilters, List<Integer> technologyIds,
+            List<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Set<String> necessaryTables) {
-        log.traceEntry("{}, {}, {}, {}", sb, rawDataFilters, technologyIds, necessaryTables);
+        log.traceEntry("{}, {}, {}, {}", sb, rawDataFilters, isSingleCell, necessaryTables);
 
         // possibilities : experiment or library or annotated samples or result or condition or
         // result and annotated sample (for the counts, to retrieve results, assay and libraries) or
@@ -492,7 +495,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // rnaSeqlibraryAnnotatedSampleId we are looking for
         boolean needLibraryId = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
-        boolean needTechnologyId = technologyIds != null && !technologyIds.isEmpty();
+        boolean needIsSingleCell = isSingleCell != null;
         boolean needCondId = rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
         boolean needExpId = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
@@ -512,14 +515,14 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // check needed tables
         boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
                 necessaryTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)
-                && !needLibraryId && !needExpId && !needCondId && !needTechnologyId;
+                && !needLibraryId && !needExpId && !needCondId && !needIsSingleCell;
         boolean condTable = needSpeciesId && !geneTable || necessaryTables.contains(
                 MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME);
         boolean libraryTable = expTable && (needCondId || needGeneId || needLibraryId ||
-                needSpeciesId || needTechnologyId) || necessaryTables.contains(MySQLRNASeqLibraryDAO
-                .TABLE_NAME) || !expTable && (needExpId || needTechnologyId);
+                needSpeciesId || needIsSingleCell) || necessaryTables.contains(MySQLRNASeqLibraryDAO
+                .TABLE_NAME) || !expTable && (needExpId || needIsSingleCell);
         boolean resultAnnotatedSampleTable = necessaryTables
                 .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || needGeneId;
         boolean libraryAnnotatedSampleTable = necessaryTables.contains(
@@ -805,17 +808,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     protected boolean generateWhereClauseTechnologyRnaSeq(StringBuilder sb,
-            List<Integer> technologyIds, boolean foundPrevious) {
-        log.traceEntry("{}, {}", technologyIds, foundPrevious);
-        if (!technologyIds.isEmpty()) {
+            Boolean isSingleCell, boolean foundPrevious) {
+        log.traceEntry("{}, {}", isSingleCell, foundPrevious);
+        if (isSingleCell != null) {
             if (foundPrevious) {
                 sb.append(" AND ");
             }
             sb.append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
-            .append(RNASeqLibraryDAO.Attribute.TECHNOLOGY_ID.getTOFieldName()).append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(
-                    technologyIds.size()))
-            .append(")");
+            .append(RNASeqLibraryDAO.Attribute.IS_SINGLE_CELL.getTOFieldName())
+            .append(" = ?");
             foundPrevious = true;
         }
         return log.traceExit(foundPrevious);

@@ -62,20 +62,18 @@ implements RNASeqResultAnnotatedSampleDAO {
 
 
     @Override
-    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, Integer offset, Integer limit,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, technologyIds, offset, limit,
+    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell, Integer offset,
+            Integer limit, Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) 
+                    throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes);
 
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters = 
+        final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds = 
-                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
-                    new ArrayList<>(technologyIds));
         final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -87,11 +85,11 @@ implements RNASeqResultAnnotatedSampleDAO {
                 getColToAttributesMap(RNASeqResultAnnotatedSampleDAO.Attribute.class), true, clonedAttrs));
 
         // generate FROM
-        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb, 
-                orderedRawDataFilters, orderedTechnologyIds, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                orderedRawDataFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        if (!orderedRawDataFilters.isEmpty() || !orderedTechnologyIds.isEmpty()) {
+        if (!orderedRawDataFilters.isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ");
         }
         boolean foundPrevious = false;
@@ -100,7 +98,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                     filtersToDatabaseMapping));
             foundPrevious = true;
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds,
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell,
                 foundPrevious);
 
         // generate ORDER BY
@@ -115,7 +113,7 @@ implements RNASeqResultAnnotatedSampleDAO {
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    orderedTechnologyIds, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqResultAnnotatedSampleTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

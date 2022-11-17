@@ -85,8 +85,10 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      *
      * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
      *                          RNA-Seq data for which count are queried.
-     * @param technologyIds     A {@code Collection} of {@code Integer} used to filter
-     *                          RNA-Seq data for which count are queried based on their technology.
+     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                          If <strong>null</strong> all RNA-Seq are retrieved.
      * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
      * @param libraryCount      A boolean defining rather RNA-Seq library count has to be retrieved.
      *                          It corresponds to the physical library sent to the sequencer. If only
@@ -100,7 +102,7 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * @return                  A {@code RawDataConditionTO} containing requested counts.
      */
     public RawDataCountContainerTO getRnaSeqCount(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, boolean experimentCount, boolean libraryCount,
+            Boolean isSingleCell, boolean experimentCount, boolean libraryCount,
             boolean assayCount, boolean callCount);
 
     /**

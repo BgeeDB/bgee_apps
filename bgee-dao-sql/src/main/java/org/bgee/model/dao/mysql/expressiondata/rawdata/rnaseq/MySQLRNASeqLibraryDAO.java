@@ -51,9 +51,9 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
     @Override
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Boolean isSingleCell, Integer offset, Integer limit,
             Collection<RNASeqLibraryDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, technologyIds, offset, limit,
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes);
 
         // force to have a list in order to keep order of elements. It is mandatory to be able
@@ -61,9 +61,6 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         final List<DAORawDataFilter> orderedRawDataFilters =
                 Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
                     new ArrayList<>(rawDataFilters));
-        final List<Integer> orderedTechnologyIds =
-                Collections.unmodifiableList(technologyIds == null? new ArrayList<>():
-                    new ArrayList<>(technologyIds));
         final Set<RNASeqLibraryDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -76,10 +73,10 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, orderedTechnologyIds, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+                orderedRawDataFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        if (!orderedRawDataFilters.isEmpty() || !orderedTechnologyIds.isEmpty()) {
+        if (!orderedRawDataFilters.isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ");
         }
         boolean foundPrevious = false;
@@ -88,7 +85,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                     filtersToDatabaseMapping));
             foundPrevious = true;
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, orderedTechnologyIds, foundPrevious);
+        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
 
         // generate ORDER BY
         sb.append(" ORDER BY")
@@ -104,7 +101,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    orderedTechnologyIds, DAODataType.RNA_SEQ, offset, limit);
+                    isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqLibraryTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -126,14 +123,15 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
             log.traceEntry();
             try {
                 final ResultSet currentResultSet = this.getCurrentResultSet();
-                Boolean sampleMultiplexing = null, libraryMultiplexing = null;
-                String id = null, experimentId = null, sequencerName= null;
+                Boolean sampleMultiplexing = null, libraryMultiplexing = null,
+                        isSingleCell = null;
+                String id = null, experimentId = null, sequencerName= null,
+                        technologyName = null, populationCaptureId = null;
                 StrandSelection strandSelection = null;
                 CellCompartment cellCompartment = null;
                 SequencedTrancriptPart seqTranscriptPart = null;
                 LibraryType libType = null;
-                Integer technologyId = null, fragmentation = null,
-                        populationCaptureId = null;
+                Integer fragmentation = null;
 
                 for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                     if (column.getValue().equals(RNASeqLibraryDAO.Attribute.ID.getTOFieldName())) {
@@ -145,8 +143,11 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                             .getTOFieldName())) {
                         sequencerName = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
-                            .TECHNOLOGY_ID.getTOFieldName())) {
-                        technologyId = currentResultSet.getInt(column.getKey());
+                            .TECHNOLOGY_NAME.getTOFieldName())) {
+                        technologyName = currentResultSet.getString(column.getKey());
+                    } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
+                            .IS_SINGLE_CELL.getTOFieldName())) {
+                        isSingleCell = currentResultSet.getBoolean(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .CELL_COMPARTMENT.getTOFieldName())) {
                         cellCompartment = CellCompartment
@@ -163,7 +164,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                         libraryMultiplexing = currentResultSet.getBoolean(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .POPULATION_CAPTURE_ID.getTOFieldName())) {
-                        populationCaptureId = currentResultSet.getInt(column.getKey());
+                        populationCaptureId = currentResultSet.getString(column.getKey());
                     } else if(column.getValue().equals(RNASeqLibraryDAO.Attribute
                             .SEQUENCED_TRANSCRIPT_PART.getTOFieldName())) {
                         seqTranscriptPart = SequencedTrancriptPart
@@ -183,7 +184,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
                     }
                 }
                 return log.traceExit(new RNASeqLibraryTO(id, experimentId, sequencerName,
-                        technologyId, sampleMultiplexing, libraryMultiplexing,
+                        technologyName, isSingleCell, sampleMultiplexing, libraryMultiplexing,
                         strandSelection, cellCompartment, seqTranscriptPart,
                         fragmentation, populationCaptureId, libType));
             } catch (SQLException e) {

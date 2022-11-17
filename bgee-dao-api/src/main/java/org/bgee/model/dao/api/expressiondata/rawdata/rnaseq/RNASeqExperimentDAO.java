@@ -60,8 +60,10 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                          how to filter experiments to retrieve. The query uses AND between
      *                          elements of a same filter and uses OR between filters.
-     * @param technologyIds     A {@code Collection} of {@code Integer} allowing to filter RNA-Seq
-     *                          experiments based on the ID of their technology.
+     * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                          If <strong>null</strong> all RNA-Seq are retrieved.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row. If
      *                          not null, a limit should be also provided
@@ -74,7 +76,7 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Collection<Integer> technologyIds, Integer offset, Integer limit,
+            Boolean isSingleCell, Integer offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
 
     /**

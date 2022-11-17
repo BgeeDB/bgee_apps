@@ -37,6 +37,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
@@ -1175,6 +1176,19 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewAffymetrixChipDAO());
     }
     /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code AffymetrixChipTypeDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO 
+     */
+    public AffymetrixChipTypeDAO getAffymetrixChipTypeDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewAffymetrixChipTypeDAO());
+    }
+    /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
@@ -1689,6 +1703,14 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code AffymetrixChipDAO}
      */
     protected abstract AffymetrixChipDAO getNewAffymetrixChipDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO 
+     * AffymetrixChipTypeDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code AffymetrixChipTypeDAO}
+     */
+    protected abstract AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO 

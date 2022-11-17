@@ -20,6 +20,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
@@ -288,5 +289,10 @@ public class MockDAOManager2 extends DAOManager {
     @Override
     protected RawDataCountDAO getNewRawDataCountDAO() {
         return instanceMockManager.getNewRawDataCountDAO();
+    }
+
+    @Override
+    protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
+        return instanceMockManager.getNewAffymetrixChipTypeDAO();
     }
 }

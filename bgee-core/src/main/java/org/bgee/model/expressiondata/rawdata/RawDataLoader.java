@@ -1,6 +1,8 @@
 package org.bgee.model.expressiondata.rawdata;
 
 
+import java.math.BigDecimal;
+
 //RnaSeqTechnology technology = clonedAttrs.contains(RawDataService.Attribute.TECHNOLOGY)?
 //        //TODO: implement protocol name in the database schema and in the dao
 //        new RnaSeqTechnology( null, libIdToLibTO.get(to.getLibraryId()).getId(),
@@ -61,6 +63,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;
@@ -590,7 +593,11 @@ public class RawDataLoader extends CommonService {
                                                     "Missing RawDataCondition ID "
                                                     + to.getConditionId()
                                                     + " for chip ID " + to.getAffymetrixChipId())),
-                                            null, null, null)),
+                                            null, null, null),
+                                    new AffymetrixChipPipelineSummary(
+                                            to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
+                                            to.getNormalizationType().getStringRepresentation(),
+                                            to.getQualityScore(), to.getPercentPresent())),
 
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));

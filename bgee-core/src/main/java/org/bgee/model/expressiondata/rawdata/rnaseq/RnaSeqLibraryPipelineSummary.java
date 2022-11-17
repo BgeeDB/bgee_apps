@@ -3,7 +3,9 @@ package org.bgee.model.expressiondata.rawdata.rnaseq;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public class RnaSeqLibraryPipelineSummary {
+import org.bgee.model.expressiondata.rawdata.RawDataPipelineSummary;
+
+public class RnaSeqLibraryPipelineSummary extends RawDataPipelineSummary{
 
     private final BigDecimal meanRefIntergenicDistribution;
     private final BigDecimal sdRefIntergenicDistribution;
@@ -14,14 +16,13 @@ public class RnaSeqLibraryPipelineSummary {
     private final Integer mappedUMIsCount;
     private final Integer minReadLength;
     private final Integer maxReadLength;
-    private final BigDecimal libraryMaxRank;
-    private final Integer libraryDistinctRankCount;
 
     public RnaSeqLibraryPipelineSummary (BigDecimal meanRefIntergenicDistribution,
             BigDecimal sdRefIntergenicDistribution, BigDecimal pValueThreshold,
             Integer allReadsCount, Integer allUMIsCount, Integer mappedReadsCount,
             Integer mappedUMIsCount, Integer minReadLength, Integer maxReadLength,
             BigDecimal libraryMaxRank, Integer libraryDistinctRankCount) {
+        super(libraryDistinctRankCount, libraryMaxRank);
         this.meanRefIntergenicDistribution = meanRefIntergenicDistribution;
         this.sdRefIntergenicDistribution = sdRefIntergenicDistribution;
         this.pValueThreshold = pValueThreshold;
@@ -31,8 +32,6 @@ public class RnaSeqLibraryPipelineSummary {
         this.mappedUMIsCount = mappedUMIsCount;
         this.minReadLength = minReadLength;
         this.maxReadLength = maxReadLength;
-        this.libraryMaxRank = libraryMaxRank;
-        this.libraryDistinctRankCount = libraryDistinctRankCount;
     }
 
     public BigDecimal getMeanRefIntergenicDistribution() {
@@ -62,32 +61,29 @@ public class RnaSeqLibraryPipelineSummary {
     public Integer getMaxReadLength() {
         return maxReadLength;
     }
-    public BigDecimal getLibraryMaxRank() {
-        return libraryMaxRank;
-    }
-    public Integer getLibraryDistinctRankCount() {
-        return libraryDistinctRankCount;
-    }
 
     @Override
     public int hashCode() {
-        return Objects.hash(allReadsCount, allUMIsCount, libraryDistinctRankCount, libraryMaxRank, mappedReadsCount,
-                mappedUMIsCount, maxReadLength, meanRefIntergenicDistribution, minReadLength, pValueThreshold,
-                sdRefIntergenicDistribution);
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result
+                + Objects.hash(allReadsCount, allUMIsCount, mappedReadsCount, mappedUMIsCount,
+                        maxReadLength, meanRefIntergenicDistribution, minReadLength,
+                        pValueThreshold, sdRefIntergenicDistribution);
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
         RnaSeqLibraryPipelineSummary other = (RnaSeqLibraryPipelineSummary) obj;
-        return Objects.equals(allReadsCount, other.allReadsCount) && Objects.equals(allUMIsCount, other.allUMIsCount)
-                && Objects.equals(libraryDistinctRankCount, other.libraryDistinctRankCount)
-                && Objects.equals(libraryMaxRank, other.libraryMaxRank)
+        return Objects.equals(allReadsCount, other.allReadsCount) &&
+                Objects.equals(allUMIsCount, other.allUMIsCount)
                 && Objects.equals(mappedReadsCount, other.mappedReadsCount)
                 && Objects.equals(mappedUMIsCount, other.mappedUMIsCount)
                 && Objects.equals(maxReadLength, other.maxReadLength)
@@ -103,9 +99,11 @@ public class RnaSeqLibraryPipelineSummary {
                 + ", sdRefIntergenicDistribution=" + sdRefIntergenicDistribution + ", pValueThreshold="
                 + pValueThreshold + ", allReadsCount=" + allReadsCount + ", allUMIsCount=" + allUMIsCount
                 + ", mappedReadsCount=" + mappedReadsCount + ", mappedUMIsCount=" + mappedUMIsCount + ", minReadLength="
-                + minReadLength + ", maxReadLength=" + maxReadLength + ", libraryMaxRank=" + libraryMaxRank
-                + ", libraryDistinctRankCount=" + libraryDistinctRankCount + "]";
+                + minReadLength + ", maxReadLength=" + maxReadLength + ", distinctRankCount="
+                + getDistinctRankCount() + ", maxRank=" + getMaxRank() + "]";
     }
+
+    
 
     
 }

@@ -153,7 +153,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         log.traceEntry("{}, {},{}, {}", rawDataFilters, isSingleCell, experimentCount, libraryCount,
                 assayCount, callCount);
         if (!experimentCount && !libraryCount && !assayCount && !callCount) {
-            throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
+            throw log.throwing(new IllegalArgumentException(
+                    "experimentCount, libraryCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
@@ -240,7 +241,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if (callCount) {
             necessaryTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         }
-        if (libraryCount) {
+        if (libraryCount || assayCount) {
             necessaryTables.add(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
         }
         if (experimentCount) {

@@ -500,17 +500,17 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         boolean needExpId = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
         //check filters always used
-        //XXX The idea is to not start with probesetTable if geneIds are asked in only one filter
+        //XXX The idea is to not start with result table if geneIds are asked in only one filter
         // but not in others. Indeed, in this scenario forcing to start with porbeset table
         // decrease drastically the time needed to query. It is maybe overthinking as it is
         // probably also the case for other tables (especially the species table). The best
         // optimization is probably to query each DAORawDataFilter separately
         boolean alwaysGeneId = !rawDataFilters.isEmpty() //allMatch returns true if a stream is empty
                 && rawDataFilters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
-        log.debug("needSpeciesId: {}, needGeneId: {}, needAssayId: {}, needCondId: {}, needExpId: {},"
-                + " alwaysGeneId: {}, filters: {}",
-                needSpeciesId, needGeneId, needLibraryId, needCondId, needExpId, alwaysGeneId,
-                rawDataFilters);
+        log.debug("needSpeciesId: {}, needGeneId: {}, needLibraryId: {}, needIsSingleCell: {}, "
+                + "needCondId: {}, needExpId: {}, alwaysGeneId: {}, filters: {}",
+                needSpeciesId, needGeneId, needLibraryId, needIsSingleCell, needCondId,
+                needExpId, alwaysGeneId, rawDataFilters);
 
         // check needed tables
         boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
@@ -520,9 +520,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME);
-        boolean libraryTable = expTable && (needCondId || needGeneId || needLibraryId ||
-                needSpeciesId || needIsSingleCell) || necessaryTables.contains(MySQLRNASeqLibraryDAO
-                .TABLE_NAME) || !expTable && (needExpId || needIsSingleCell);
+        boolean libraryTable = needIsSingleCell ||
+                necessaryTables.contains(MySQLRNASeqLibraryDAO.TABLE_NAME) ||
+                expTable && (needCondId || needGeneId || needLibraryId || needSpeciesId) ||
+                !expTable && needExpId;
         boolean resultAnnotatedSampleTable = necessaryTables
                 .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || needGeneId;
         boolean libraryAnnotatedSampleTable = necessaryTables.contains(
@@ -584,6 +585,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         MySQLRNASeqExperimentDAO.TABLE_NAME);
             }
         } else if (needExpId) {
+            assert libraryTable;
             colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID,
                     MySQLRNASeqLibraryDAO.TABLE_NAME);
         }
@@ -599,6 +601,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // if cond is not a necessary table it means conditionId can be retrieved from library
         // annotated sample table
         } else if (needCondId) {
+            assert libraryAnnotatedSampleTable;
             colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
                     MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
         }

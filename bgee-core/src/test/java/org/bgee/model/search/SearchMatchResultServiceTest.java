@@ -70,7 +70,8 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         when(sphinxClient.Query("\"" + term + "\"", "autocomplete_index")).thenReturn(sphinxResult);
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entity_index", "strains_index", "autocomplete_index");
+                "genes_index", "anat_entity_index", "strains_index", "autocomplete_index",
+                GENE_BIO_TYPES);
         List<String> autocompleteResult = service.autocomplete(term, 100);
 
         assertNotNull(autocompleteResult);
@@ -112,7 +113,8 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         when(sphinxClient.Query("\"" + term + "\"", "genes_index")).thenReturn(sphinxResult);
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index");
+                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                GENE_BIO_TYPES);
         SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 
         assertEquals(1, geneMatchResult.getTotalMatchCount());
@@ -177,7 +179,8 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         when(sphinxClient.Query("\"" + term + "\"", "anat_entities_index")).thenReturn(sphinxResult);
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index");
+                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                GENE_BIO_TYPES);
         SearchMatchResult<AnatEntity> anatMatchResult =
                 service.searchAnatEntitiesByTerm(term, null, true, true, 0, 100);
 
@@ -208,7 +211,8 @@ public class SearchMatchResultServiceTest extends TestAncestor {
         when(sphinxClient.Query(term, "prefix_genes")).thenReturn(null);
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
-                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index");
+                "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                GENE_BIO_TYPES);
         SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 
         assertEquals(0, geneMatchResult.getTotalMatchCount());

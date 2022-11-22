@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,17 +32,26 @@ import org.sphx.api.SphinxResult;
  *
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15, Oct 2022
+ * @author  Frederic Bastian
+ * @version Bgee 15.0, Nov. 2022
  * @see     SearchMatchResult
  * @since   Bgee 14, Apr. 2019
  */
-//TODO FB: lots of refactoring could be done for the searchXXX methods
 public class SearchMatchResultService extends CommonService {
     private final static Logger log = LogManager.getLogger(SearchMatchResultService.class.getName());
+
+    @FunctionalInterface
+    protected static interface TriFunction<T, U, V, R> {
+        public R apply(T t, U u, V v);
+    }
 
     // as for Bgee 15.0 the default timeout was to stringent. Increased it to 3 seconds
     //TODO FB: these two attributes should be Bgee properties
     private static final int SPHINX_CONNECT_TIMEOUT = 3000;
+    /**
+     * An {@code int} that is the maximum permitted number of results to retrieve
+     * from a Sphinx query. Current value: 10,000.
+     */
     public static final int SPHINX_MAX_RESULTS = 10000;
 
     private static final String SPHINX_SEPARATOR = "\\|\\|";
@@ -72,20 +80,32 @@ public class SearchMatchResultService extends CommonService {
      * @see #getSphinxAutocompleteIndex()
      */
     private final String sphinxAutocompleteIndex;
+    /**
+     * In order to avoid querying the GeneBioType for each letter used to search for genes,
+     * we instantiate this {@code Map} with the service.
+     */
+    final Map<Integer, GeneBioType> geneBioTypeMap;
 
     /**
      * Construct a new {@code SearchMatchResultService} using the provided {@code BgeeProperties}.
      */
     public SearchMatchResultService(BgeeProperties props, ServiceFactory serviceFactory) {
+        this(props, serviceFactory, null);
+    }
+    public SearchMatchResultService(BgeeProperties props, ServiceFactory serviceFactory,
+            Map<Integer, GeneBioType> geneBioTypeMap) {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
                 serviceFactory, props.getSearchGenesIndex(), props.getSearchAnatEntitiesIndex(),
-                props.getSearchStrainsIndex(), props.getSearchAutocompleteIndex());
+                props.getSearchStrainsIndex(), props.getSearchAutocompleteIndex(),
+                geneBioTypeMap);
     }
     /**
      * Construct a new {@code SearchMatchResultService} using the provided {@code SphinxClient}.
      */
-    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory, String sphinxGeneSearchIndex,
-            String sphinxAnatEntitySearchIndex, String sphinxStrainSearchIndex, String sphinxAutocompleteIndex) {
+    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory,
+            String sphinxGeneSearchIndex, String sphinxAnatEntitySearchIndex,
+            String sphinxStrainSearchIndex, String sphinxAutocompleteIndex,
+            Map<Integer, GeneBioType> geneBioTypeMap) {
         super(serviceFactory);
         sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
         this.sphinxClient = sphinxClient;
@@ -93,36 +113,34 @@ public class SearchMatchResultService extends CommonService {
         this.sphinxAnatEntitySearchIndex = sphinxAnatEntitySearchIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
         this.sphinxStrainSearchIndex = sphinxStrainSearchIndex;
+        this.geneBioTypeMap = Collections.unmodifiableMap(
+                geneBioTypeMap == null || geneBioTypeMap.isEmpty()?
+                        loadGeneBioTypeMap(this.getDaoManager().getGeneDAO()):
+                new HashMap<>(geneBioTypeMap));
     }
 
     /**
-     * @return  The {@code SphinxClient} used by this {@code SearchMatchResultService}.
-     */
-    public SphinxClient getSphinxClient() {
-        return sphinxClient;
-    }
-    /**
      * @return  The {@code String} used as name for genes index
      */
-    public String getSphinxGeneSearchIndex() {
+    private String getSphinxGeneSearchIndex() {
         return sphinxGeneSearchIndex;
     }
     /**
      * @return  The {@code String} used as name for anat. entities index
      */
-    public String getSphinxAnatEntitySearchIndex() {
+    private String getSphinxAnatEntitySearchIndex() {
         return sphinxAnatEntitySearchIndex;
     }
     /**
      * @return  The {@code String} used as name for anat. entities index
      */
-    public String getSphinxStrainSearchIndex() {
+    private String getSphinxStrainSearchIndex() {
         return sphinxStrainSearchIndex;
     }
     /**
      * @return  The {@code String} used as name for autocomplete index
      */
-    public String getSphinxAutocompleteIndex() {
+    private String getSphinxAutocompleteIndex() {
         return sphinxAutocompleteIndex;
     }
 
@@ -132,55 +150,24 @@ public class SearchMatchResultService extends CommonService {
      * @param searchTerm    A {@code String} containing the query
      * @param speciesIds    A {@code Collection} of {@code Integer}s that are species Ids
      *                      (may be empty to search on all species).
-     * @param limitStart    An {@code int} representing the index of the first element to return.
-     * @param resultPerPage An {@code int} representing the number of elements to return
+     * @param offset        An {@code Integer} defining at which index to start to retrieve results.
+     *                      Can be {@code null} to start from the first index (0).
+     * @param limit         An {@code Integer} defining the number of results to retrieve.
+     *                      Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
      * @return              A {@code SearchMatchResult} of results (ordered).
+     * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
+     *                                  or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
      */
-    public SearchMatchResult<Gene> searchGenesByTerm(final String searchTerm, Collection<Integer> speciesIds,
-                                        int limitStart, int resultPerPage) {
-        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
+    public SearchMatchResult<Gene> searchGenesByTerm(final String searchTerm,
+            Collection<Integer> speciesIds, Integer offset, Integer limit)
+                    throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, offset, limit);
 
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-            try {
-                sphinxClient.SetFilter("speciesId", speciesIds.stream().mapToInt(x -> x).toArray(), false);
-            } catch (SphinxException e) {
-                throw log.throwing(new IllegalStateException(
-                        "Sphinx search has generated an exception", e));
-            }
-        }
-
-        // We need to get the formatted term here, even if the term is formatted
-        // in the method getSphinxResult(), to set correctly SearchMatches.
-        String formattedTerm = this.getFormattedTerm(searchTerm);
-
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage, this.getSphinxGeneSearchIndex(), null);
-
-        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
-            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
-                    + result.error));
-        }
-
-        // if result is empty, return an empty list
-        if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<>(0, null, Gene.class));
-        }
-
-        // get mapping between attributes names and their index
-        Map<String, Integer> attrNameToIdx = new HashMap<>();
-        for (int idx = 0; idx < result.attrNames.length; idx++) {
-            attrNameToIdx.put(result.attrNames[idx], idx);
-        }
-
-        final Map<Integer, GeneBioType> geneBioTypeMap = Collections.unmodifiableMap(
-                loadGeneBioTypeMap(this.getDaoManager().getGeneDAO()));
-
-        // build list of SearchMatch
-        List<SearchMatch<Gene>> geneMatches = Arrays.stream(result.matches)
-                .map(m -> getGeneMatch(m, formattedTerm, attrNameToIdx, geneBioTypeMap))
-                .sorted()
-                .collect(Collectors.toList());
-
-        return log.traceExit(new SearchMatchResult<Gene>(result.totalFound, geneMatches, Gene.class));
+        return log.traceExit(this.search(
+                (match, term, attrIndexMap) -> getGeneMatch(match, term, attrIndexMap, this.geneBioTypeMap),
+                this.getSphinxGeneSearchIndex(), null, Gene.class, searchTerm, speciesIds, false,
+                offset, limit));
     }
 
     /**
@@ -197,36 +184,27 @@ public class SearchMatchResultService extends CommonService {
      *                          retrieved or not. if <code>true</code> then cell types are
      *                          retrieved. Not both withAnatEntities and withCellTypes can be false
      *                          at the same time.
-     * @param limitStart        An {@code int} representing the index of the first element to return.
-     * @param resultPerPage     An {@code int} representing the number of elements to return
+     * @param offset            An {@code Integer} defining at which index to start to retrieve results.
+     *                          Can be {@code null} to start from the first index (0).
+     * @param limit             An {@code Integer} defining the number of results to retrieve.
+     *                          Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
      * @return                  A {@code SearchMatchResult} of results (ordered).
+     * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
+     *                                  or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
      */
     public SearchMatchResult<AnatEntity> searchAnatEntitiesByTerm(final String searchTerm,
-            Collection<Integer> speciesIds, boolean withAnatEntities, boolean withCellTypes, int limitStart,
-            int resultPerPage) {
+            Collection<Integer> speciesIds, boolean withAnatEntities, boolean withCellTypes,
+            Integer offset, Integer limit) throws IllegalArgumentException, IllegalStateException {
         log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, withAnatEntities, withCellTypes,
-                limitStart, resultPerPage);
+                offset, limit);
 
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-            try {
-                //in the index a speciesId = 0 means that the anat. entity exists for all species. If the speciesId
-                // Collection does not yet contains 0 we have to add it.
-                Set<Integer> hackedSpeciesIds = new HashSet<>(speciesIds);
-                if (!hackedSpeciesIds.contains(0)) {
-                    hackedSpeciesIds.add(0);
-                }
-                sphinxClient.SetFilter("speciesId", hackedSpeciesIds.stream().mapToInt(x -> x).toArray(), false);
-            } catch (SphinxException e) {
-                throw log.throwing(new IllegalStateException(
-                        "Sphinx search has generated an exception", e));
-            }
-        }
         if (!withAnatEntities && !withCellTypes) {
-            throw log.throwing(new IllegalStateException("At least one of withAnatEntities or withCellTypes"
-                    + " has to be true"));
-        // filtering done only if not both withAnatEntities and withCellType are true.
-        //TODO: update the filtering once the new index is available
-        } else if (!(withAnatEntities && withCellTypes)) {
+            throw log.throwing(new IllegalStateException(
+                    "At least one of withAnatEntities or withCellTypes has to be true"));
+        }
+        //Specific configuration of sphinxClient for this query
+        if (!withAnatEntities || !withCellTypes) {
             try {
                 if(withAnatEntities) {
                     sphinxClient.SetFilter("type", SPHINX_SEARCH_ANAT_ENTITIES, false);
@@ -239,42 +217,10 @@ public class SearchMatchResultService extends CommonService {
                         "Sphinx search has generated an exception", e));
             }
         }
-
-        // We need to get the formatted term here, even if the term is formatted
-        // in the method getSphinxResult(), to set correctly NamedEntityMatch.
-        String formattedTerm = this.getFormattedTerm(searchTerm);
-
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage,
-                this.getSphinxAnatEntitySearchIndex(), null);
-
-        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
-            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
-                    + result.error));
-        }
-
-        // if result is empty, return an empty list
-        if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<>(0, null, AnatEntity.class));
-        }
-
-        // get mapping between attributes names and their index
-        Map<String, Integer> attrNameToIdx = new HashMap<>();
-        for (int idx = 0; idx < result.attrNames.length; idx++) {
-            attrNameToIdx.put(result.attrNames[idx], idx);
-        }
-
-        // build list of SearchMatch
-        List<SearchMatch<AnatEntity>> anatEntityMatches = Arrays.stream(result.matches)
-                .map(m -> getAnatEntityMatch(m, formattedTerm, attrNameToIdx))
-                .sorted()
-                // collector removing duplicates. Duplicates can be present if more than one species is
-                // selected or if both anat. entities and cell types are queried.
-                .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<SearchMatch<AnatEntity>>()),
-                        ArrayList::new));
-
-        return log.traceExit(new SearchMatchResult<AnatEntity>(anatEntityMatches.size(),
-                anatEntityMatches, AnatEntity.class));
+        return log.traceExit(this.search(
+                (match, term, attrIndexMap) -> getAnatEntityMatch(match, term, attrIndexMap),
+                this.getSphinxAnatEntitySearchIndex(), null, AnatEntity.class, searchTerm,
+                speciesIds, true, offset, limit));
     }
 
     /**
@@ -283,57 +229,58 @@ public class SearchMatchResultService extends CommonService {
      * @param searchTerm        A {@code String} containing the query
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are species Ids
      *                          (may be empty to search on all species).
-     * @param limitStart        An {@code int} representing the index of the first element to return.
-     * @param resultPerPage     An {@code int} representing the number of elements to return
+     * @param offset            An {@code Integer} defining at which index to start to retrieve results.
+     *                          Can be {@code null} to start from the first index (0).
+     * @param limit             An {@code Integer} defining the number of results to retrieve.
+     *                          Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
      * @return                  A {@code SearchMatchResult} of results (ordered).
+     * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
+     *                                  or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
      */
     public SearchMatchResult<String> searchStrainsByTerm(final String searchTerm,
-            Collection<Integer> speciesIds, int limitStart, int resultPerPage) {
-        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, limitStart, resultPerPage);
+            Collection<Integer> speciesIds, Integer offset, Integer limit)
+                throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}, {}, {}", searchTerm, speciesIds, offset, limit);
 
-        if (speciesIds != null && !speciesIds.isEmpty()) {
-            try {
-                sphinxClient.SetFilter("speciesId", speciesIds.stream().mapToInt(x -> x).toArray(), false);
-            } catch (SphinxException e) {
-                throw log.throwing(new IllegalStateException(
-                        "Sphinx search has generated an exception", e));
-            }
-        }
-        // We need to get the formatted term here, even if the term is formatted
-        // in the method getSphinxResult(), to set correctly SearchMatch.
-        String formattedTerm = this.getFormattedTerm(searchTerm);
+        return log.traceExit(this.search(
+                (match, term, attrIndexMap) -> getStrainMatch(match, term, attrIndexMap),
+                this.getSphinxStrainSearchIndex(), null, String.class, searchTerm,
+                speciesIds, false, offset, limit));
+    }
 
-        SphinxResult result = this.getSphinxResult(formattedTerm, limitStart, resultPerPage,
-                this.getSphinxStrainSearchIndex(), null);
+    /**
+     * Retrieve autocomplete suggestions for the gene search from the provided {@code searchTerm}.
+     *
+     * @param searchTerm    A {@code String} containing the query
+     * @param limit         An {@code Integer} defining the number of results to retrieve.
+     *                      Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
+     * @return              A {@code List} of {@code String}s that are suggestions
+     *                      for the gene search autocomplete (ordered).
+     * @throws IllegalArgumentException If {@code limit} is less than or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
+     */
+    public List<String> autocomplete(final String searchTerm, Integer limit)
+            throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}", searchTerm, limit);
 
-        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
-            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
-                    + result.error));
-        }
-
-        // if result is empty, return an empty list
-        if (result == null || result.totalFound == 0) {
-            return log.traceExit(new SearchMatchResult<>(0, null, String.class));
-        }
-
-        // get mapping between attributes names and their index
-        Map<String, Integer> attrNameToIdx = new HashMap<>();
-        for (int idx = 0; idx < result.attrNames.length; idx++) {
-            attrNameToIdx.put(result.attrNames[idx], idx);
-        }
-
-        // build list of SearchMatch
-        List<SearchMatch<String>> strainMatches = Arrays.stream(result.matches)
-                .map(m -> getStrainMatch(m, formattedTerm, attrNameToIdx))
-                .sorted()
-                // collector removing duplicates. Duplicates can be present if more than one species is
-                // selected.
-                .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<SearchMatch<String>>()),
-                        ArrayList::new));
-
-        return log.traceExit(new SearchMatchResult<>(strainMatches.size(),
-                strainMatches, String.class));
+        return log.traceExit(
+                //We hack a little bit the search method to return simply a List of Strings,
+                //and not a SearchMatchResult
+                this.search((match, term, attrIndexMap) -> new SearchMatch<String>(
+                        String.valueOf(match.attrValues.get(0)), null,
+                        SearchMatch.MatchSource.ID, String.class),
+                        this.getSphinxAutocompleteIndex(),
+                        // We use the ranker SPH_RANK_SPH04 to get field equals the exact query first.
+                        SphinxClient.SPH_RANK_SPH04,
+                        String.class, searchTerm, null, false,
+                        // The index of the first element is not necessary,
+                        //as it's for the autocomplete we start at 0.
+                        0,
+                        limit)
+                .getSearchMatches().stream()
+                .map(sm -> sm.getMatch())
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -347,66 +294,126 @@ public class SearchMatchResultService extends CommonService {
     }
 
     /**
-     * Retrieve autocomplete suggestions for the gene search from the provided {@code searchTerm}.
+     * Generalization of retrieving a {@code SearchMatchResult}.
      *
-     * @param searchTerm    A {@code String} containing the query
-     * @param resultPerPage An {@code int} representing the number of elements to return
-     * @return              A {@code List} of {@code String}s that are suggestions
-     *                      for the gene search autocomplete (ordered).
+     * @param getMatchFunction  A {@link SearchMatchResultService.TriFunction TriFunction}
+     *                          to map a {@code SphynxMatch} into a {@code SearchMatch}.
+     *                          First argument is the {@code SearchMatch}, second argument is
+     *                          the {@code String} formatted searched term, third argument is
+     *                          a {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                          the associated values being {@code Integer}s corresponding
+     *                          to index of the attribute
+     * @param index             A {@code String} that is the name of the Sphinx index to use
+     *                          for the search.
+     * @param ranker            An {@code Integer} defining the SPhinx ranker to use
+     *                          (as defined in the {@code SphinxClient} class static attributes).
+     * @param classType         A {@code Class} that is the type of {@code T} to return in the
+     *                          {@code SearchMatchResult}.
+     * @param searchTerm        A {@code String} that is the unformatted search term.
+     * @param speciesIds        A {@code Collection} of {@code Integer}s that are the IDs of species
+     *                          for which to retrieve matches. Can be {@code null} or empty.
+     * @param multiSpeciesTerms A {@code boolean} defining whether the matches can exist
+     *                          in several species. In that case, a special ID value is inserted
+     *                          in the Sphinx index, "0", meaning that the match exists
+     *                          in all Bgee species.
+     * @param offset            An {@code Integer} defining at which index to start to retrieve results.
+     *                          Can be {@code null} to start from the first index (0).
+     * @param limit             An {@code Integer} defining the number of results to retrieve.
+     *                          Can be {@code null} to retrieve {@code SPHINX_MAX_RESULTS} results.
+     * @param <T>               The type of object contained in the returned {@code SearchMatchResult}.
+     * @return                  A {@code SearchMatchResult} containing the {@code SearchMatch}es
+     *                          for the type {@code T}.
+     * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
+     *                                  or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
      */
-    public List<String> autocomplete(final String searchTerm, int resultPerPage) {
-        log.traceEntry("{}, {}", searchTerm, resultPerPage);
-
-        // The index of the first element is not necessary, as it's for the autocomplete we start at 0.
-        // We use the ranker SPH_RANK_SPH04 to get field equals the exact query first.
-        SphinxResult result = this.getSphinxResult(searchTerm, 0, resultPerPage, this.getSphinxAutocompleteIndex(),
-                SphinxClient.SPH_RANK_SPH04);
-
-        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
-            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
-                    + result.error));
+    private <T> SearchMatchResult<T> search(
+            TriFunction<SphinxMatch, String,  Map<String, Integer>, SearchMatch<T>> getMatchFunction,
+            String index, Integer ranker, Class<T> classType, String searchTerm,
+            Collection<Integer> speciesIds, boolean multiSpeciesTerms,
+            Integer offset, Integer limit) throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", getMatchFunction, index, ranker,
+                classType, searchTerm, speciesIds, multiSpeciesTerms, offset, limit);
+        if (offset != null && offset < 0) {
+            throw log.throwing(new IllegalArgumentException("offset cannot be negative"));
         }
-
-        // if result is empty, return an empty list
-        if (result == null || result.totalFound == 0) {
-            return log.traceExit(new ArrayList<>());
+        if (limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException("limit cannot be less than or equal to 0"));
         }
+        int newOffset = offset == null? 0: offset;
+        int newLimit = limit == null? SPHINX_MAX_RESULTS: limit;
 
-        // build list of propositions
-        List<String> propositions = Arrays.stream(result.matches)
-                .map(m -> String.valueOf(m.attrValues.get(0)))
-                //sort by the shortest matched terms first
-                .sorted(Comparator.comparingInt(m -> m.length()))
-                .collect(Collectors.toList());
-
-        return log.traceExit(propositions);
-    }
-
-    /**
-     * Retrieve sphinx result from provided parameters.
-     *
-     * @param searchTerm    A {@code String} that is the query.
-     * @param limitStart    An {@code int} that is the index of the first element to return.
-     * @param resultPerPage An {@code int} that is the number of elements to return.
-     * @param index         A {@code String} that is the index to query.
-     * @param ranker        An {@code Integer} that is the ranking mode.
-     * @return              The {@code SphinxResult} that is the result of the query.
-     */
-    private SphinxResult getSphinxResult(String searchTerm, int limitStart, int resultPerPage,
-                                         String index, Integer ranker) {
-        log.traceEntry("{}, {}, {}, {}, {}", searchTerm, limitStart, resultPerPage, index, ranker);
-
+        // We need to get the formatted term here, even if the term is formatted
+        // in the method getSphinxResult(), to set correctly SearchMatches.
+        String formattedTerm = this.getFormattedTerm(searchTerm);
+        SphinxResult result = null;
         try {
-            sphinxClient.SetLimits(limitStart, resultPerPage, SPHINX_MAX_RESULTS);
+            if (speciesIds != null && !speciesIds.isEmpty()) {
+                //If a term can exist in several species, in the index a speciesId = 0 means
+                //that the term exists for all species. If the speciesId
+                // Collection does not yet contains 0 we have to add it.
+                Set<Integer> hackedSpeciesIds = new HashSet<>(speciesIds);
+                if (multiSpeciesTerms) {
+                    hackedSpeciesIds.add(0);
+                }
+                sphinxClient.SetFilter("speciesId",
+                        hackedSpeciesIds.stream().mapToInt(x -> x).toArray(), false);
+            }
+
+            //We always retrieve the max allowed number of results,
+            //independently of what the client requested,
+            //because we reorder the results in this Service, so we need to have a wide net
+            //to catch the fish we're looking for and order it properly.
+            sphinxClient.SetLimits(0, SPHINX_MAX_RESULTS, SPHINX_MAX_RESULTS);
             if (ranker != null) {
                 sphinxClient.SetRankingMode(ranker, null);
             }
-            String queryTerm = "^" + this.getFormattedTerm(searchTerm) + "$ | \"" + this.getFormattedTerm(searchTerm) + "\"";
-            return log.traceExit(sphinxClient.Query(queryTerm, index));
+
+            String queryTerm = "^" + formattedTerm + "$ | \"" + formattedTerm + "\"";
+            result = sphinxClient.Query(queryTerm, index);
+
         } catch (SphinxException e) {
             throw log.throwing(new IllegalStateException(
                     "Sphinx search has generated an exception", e));
         }
+        if (result != null && result.getStatus() == SphinxClient.SEARCHD_ERROR) {
+            throw log.throwing(new IllegalStateException("Sphinx search has generated an error: "
+                    + result.error));
+        }
+        // if result is empty, return an empty list
+        if (result == null || result.totalFound == 0) {
+            return log.traceExit(new SearchMatchResult<>(0, null, classType));
+        }
+
+        // get mapping between attributes names and their index
+        Map<String, Integer> attrNameToIdx = new HashMap<>();
+        for (int idx = 0; idx < result.attrNames.length; idx++) {
+            attrNameToIdx.put(result.attrNames[idx], idx);
+        }
+
+        // build list of SearchMatch
+        List<SearchMatch<T>> searchMatches = Arrays.stream(result.matches)
+                .map(m -> getMatchFunction.apply(m, formattedTerm, attrNameToIdx))
+                .sorted()
+                .skip(newOffset)
+                .limit(newLimit)
+                //collector removing duplicates. Duplicates can be present
+                //if more than one species is selected or if both anat. entities
+                //and cell types are queried.
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toCollection(() -> new TreeSet<>()),
+                        ArrayList::new));
+
+        //When we make search for terms that can exist in multiple species
+        //(multiSpeciesTerms is true), we can have redundant matches
+        //because of the different species. We try as much as possible to get the correct
+        //total number of matches.
+        int resultCount = result.totalFound;
+        //If we receive all results, then this is the total number of matches.
+        if (searchMatches.size() < newLimit) {
+            resultCount = searchMatches.size();
+        }
+        return log.traceExit(new SearchMatchResult<>(resultCount, searchMatches, classType));
     }
 
     /**

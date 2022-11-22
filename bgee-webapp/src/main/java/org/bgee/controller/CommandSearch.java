@@ -13,6 +13,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.expressiondata.rawdata.ExperimentAssay;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.model.search.SearchMatchResultService;
@@ -99,6 +100,13 @@ public class CommandSearch extends CommandParent {
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
                             false, true, 0, this.requestParameters.getLimit());
+            display.displayDefaultSphinxSearchResult(searchTerm, result);
+        } else if (this.requestParameters.getAction() != null &&
+                this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_EXPERIMENTS_ASSAYS)) {
+            String searchTerm = this.getSearchTerm();
+            SearchMatchResult<ExperimentAssay> result = serviceFactory
+                    .getSearchMatchResultService(this.prop)
+                    .searchExperimentsAndAssaysByTerm(searchTerm, 0, this.requestParameters.getLimit());
             display.displayDefaultSphinxSearchResult(searchTerm, result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 

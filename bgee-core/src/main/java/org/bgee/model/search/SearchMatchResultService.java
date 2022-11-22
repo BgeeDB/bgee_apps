@@ -678,9 +678,12 @@ public class SearchMatchResultService extends CommonService {
                                    final Map<String, Integer> attrIndexMap) {
         log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
 
-        ExperimentAssay expAssay = new ExperimentAssay(
-                    String.valueOf(match.attrValues.get(attrIndexMap.get("assayid"))),
-                    null, null);
+        String id = String.valueOf(match.attrValues.get(attrIndexMap.get("assayid")));
+        String name = String.valueOf(match.attrValues.get(attrIndexMap.get("assayname")));
+        if (StringUtils.isBlank(name)) {
+            name = id;
+        }
+        ExperimentAssay expAssay = new ExperimentAssay(id, name, null);
 
         // If the gene name, id or description match there is no term
         //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
@@ -692,6 +695,11 @@ public class SearchMatchResultService extends CommonService {
         if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
             return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
                     SearchMatch.MatchSource.ID, ExperimentAssay.class));
+        }
+        final String nameLowerCase = expAssay.getName().toLowerCase();
+        if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                    SearchMatch.MatchSource.NAME, ExperimentAssay.class));
         }
         return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
                 SearchMatch.MatchSource.MULTIPLE, ExperimentAssay.class));

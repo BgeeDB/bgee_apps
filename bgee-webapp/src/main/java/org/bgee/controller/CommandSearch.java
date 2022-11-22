@@ -61,7 +61,8 @@ public class CommandSearch extends CommandParent {
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             String searchTerm = this.getSearchTerm();
-            List<String> result = searchMatchService.autocomplete(searchTerm, 20);
+            List<String> result = searchMatchService.autocomplete(searchTerm,
+                    this.requestParameters.getLimit());
             display.displayMatchesForGeneCompletion(result);
             
         } else if (this.requestParameters.getAction() != null &&
@@ -77,8 +78,7 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            true, false, 0,
-                            SearchMatchResultService.SPHINX_MAX_RESULTS);
+                            true, false, 0, this.requestParameters.getLimit());
             display.displayDefaultSphinxSearchResult(searchTerm, result);
 
         } else if (this.requestParameters.getAction() != null &&
@@ -88,7 +88,7 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<String> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchStrainsByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            0, SearchMatchResultService.SPHINX_MAX_RESULTS);
+                            0, this.requestParameters.getLimit());
             display.displayDefaultSphinxSearchResult(searchTerm, result);
 
         } else if (this.requestParameters.getAction() != null &&
@@ -98,8 +98,7 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            false, true, 0,
-                            SearchMatchResultService.SPHINX_MAX_RESULTS);
+                            false, true, 0, this.requestParameters.getLimit());
             display.displayDefaultSphinxSearchResult(searchTerm, result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 

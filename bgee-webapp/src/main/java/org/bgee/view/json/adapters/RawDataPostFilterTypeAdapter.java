@@ -96,7 +96,10 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
 
         startWritePostFilterParameter(out, filterName, urlParameterName);
         for (String value: values) {
-            out.value(value);
+            out.beginObject();
+            out.name("id").value(value);
+            out.name("name").value(value);
+            out.endObject();
         }
         endWritePostFilterParameter(out);
 

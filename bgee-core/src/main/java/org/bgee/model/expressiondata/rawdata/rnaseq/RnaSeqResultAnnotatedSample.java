@@ -7,8 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCallSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 
 /**
  * Class describing rna seq annotated sample results

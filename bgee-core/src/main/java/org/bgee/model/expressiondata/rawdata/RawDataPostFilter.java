@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 /**
  * A class containing values of all condition parameters used to create filters
  * 

@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.rawdata.microarray;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import org.bgee.model.expressiondata.rawdata.RawDataPipelineSummary;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataPipelineSummary;
 
 /**
  * Class describing pipeline summary for affymetrix chips

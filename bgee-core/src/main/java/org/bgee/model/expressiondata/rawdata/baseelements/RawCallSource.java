@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 /**
  * An interface for classes describing sources of {@code RawCall}s (see 'see also' section).

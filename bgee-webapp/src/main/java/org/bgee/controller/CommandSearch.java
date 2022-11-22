@@ -13,7 +13,7 @@ import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.expressiondata.rawdata.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.search.SearchMatchResult;
 import org.bgee.model.search.SearchMatchResultService;
@@ -25,7 +25,8 @@ import org.bgee.view.ViewFactory;
  * page=search
  *
  * @author  Valentine Rech de Laval
- * @version Bgee 14, Apr. 2019
+ * @author  Frederic Bastian
+ * @version Bgee 15.0, Nov. 2022
  * @since   Bgee 13, Feb. 2016
  */
 public class CommandSearch extends CommandParent {

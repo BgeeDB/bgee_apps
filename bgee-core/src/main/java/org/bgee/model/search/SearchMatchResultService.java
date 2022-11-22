@@ -18,7 +18,7 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.expressiondata.rawdata.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;

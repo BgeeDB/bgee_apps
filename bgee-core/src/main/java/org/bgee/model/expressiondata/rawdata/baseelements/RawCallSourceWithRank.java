@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 import java.math.BigDecimal;
 

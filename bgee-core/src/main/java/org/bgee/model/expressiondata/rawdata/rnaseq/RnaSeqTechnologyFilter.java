@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.bgee.model.expressiondata.rawdata.CellCompartment;
-import org.bgee.model.expressiondata.rawdata.SequencedTranscriptPart;
-import org.bgee.model.expressiondata.rawdata.Strand;
+import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
+import org.bgee.model.expressiondata.rawdata.baseelements.SequencedTranscriptPart;
+import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
 
 /**
  * A filter to parameterize queries using rnaseq technology. 

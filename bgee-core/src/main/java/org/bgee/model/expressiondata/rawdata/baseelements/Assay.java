@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 /**
  * An assay allows to generate {@link RawCallSource}s. When it is part of an {@code Experiment},

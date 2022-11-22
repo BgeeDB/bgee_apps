@@ -4,9 +4,9 @@ import java.util.Comparator;
 import java.util.Objects;
 
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
-import org.bgee.model.expressiondata.rawdata.CellCompartment;
-import org.bgee.model.expressiondata.rawdata.SequencedTranscriptPart;
-import org.bgee.model.expressiondata.rawdata.Strand;
+import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
+import org.bgee.model.expressiondata.rawdata.baseelements.SequencedTranscriptPart;
+import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
 
 //Note: this class does not extend NamedEntity, because it does not have IDs
 public class RnaSeqTechnology {

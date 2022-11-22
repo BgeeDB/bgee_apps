@@ -24,7 +24,7 @@ import org.bgee.model.expressiondata.CallService;
 import org.bgee.model.expressiondata.Condition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;

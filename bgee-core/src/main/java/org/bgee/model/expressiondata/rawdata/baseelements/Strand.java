@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.BgeeEnum;

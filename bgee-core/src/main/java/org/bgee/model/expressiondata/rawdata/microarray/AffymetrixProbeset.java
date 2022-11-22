@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCallSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 
 public class AffymetrixProbeset implements RawCallSource<AffymetrixChip> {
     private final static Logger log = LogManager.getLogger(AffymetrixProbeset.class.getName());

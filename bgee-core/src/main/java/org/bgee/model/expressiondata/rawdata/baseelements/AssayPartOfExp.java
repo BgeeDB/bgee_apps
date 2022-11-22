@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 /**
  * An {@code Assay} that is part of an {@code Experiment}.

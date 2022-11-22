@@ -1,6 +1,6 @@
 package org.bgee.model.expressiondata.rawdata.insitu;
 
-import org.bgee.model.expressiondata.rawdata.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.source.Source;
 
 public class InSituExperiment extends Experiment<String> {

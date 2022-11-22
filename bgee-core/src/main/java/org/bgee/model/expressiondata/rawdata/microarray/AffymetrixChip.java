@@ -5,9 +5,9 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.rawdata.AssayPartOfExp;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
 public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperiment>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(AffymetrixChip.class.getName());

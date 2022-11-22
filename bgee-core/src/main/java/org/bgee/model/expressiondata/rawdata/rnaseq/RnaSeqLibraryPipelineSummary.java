@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.rawdata.rnaseq;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import org.bgee.model.expressiondata.rawdata.RawDataPipelineSummary;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataPipelineSummary;
 
 public class RnaSeqLibraryPipelineSummary extends RawDataPipelineSummary{
 

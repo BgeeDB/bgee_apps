@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.DataContainer;
 import org.bgee.model.expressiondata.rawdata.est.EST;
 import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;

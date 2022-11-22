@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

@@ -3,10 +3,10 @@ package org.bgee.model.expressiondata.rawdata.insitu;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCallSource;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
 public class InSituSpot extends Entity<String> implements RawCallSource<InSituEvidence>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(InSituSpot.class.getName());

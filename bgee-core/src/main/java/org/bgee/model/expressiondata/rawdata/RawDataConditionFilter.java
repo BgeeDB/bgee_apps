@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 
 /**
  * A filter to parameterize queries retrieving information related to {@link RawDataCondition}s.

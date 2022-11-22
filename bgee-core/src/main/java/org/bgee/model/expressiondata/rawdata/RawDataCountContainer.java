@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.DataContainer;
 
 /**
  * A class allowing to contain count for all potential raw data resulting

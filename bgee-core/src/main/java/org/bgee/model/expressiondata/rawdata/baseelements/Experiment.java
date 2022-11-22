@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.rawdata.baseelements;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;

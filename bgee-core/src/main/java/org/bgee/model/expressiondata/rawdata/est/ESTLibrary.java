@@ -2,10 +2,10 @@ package org.bgee.model.expressiondata.rawdata.est;
 
 import org.bgee.model.NamedEntity;
 import org.bgee.model.XRef;
-import org.bgee.model.expressiondata.rawdata.Assay;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
-import org.bgee.model.expressiondata.rawdata.RawDataWithDataSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataWithDataSource;
 import org.bgee.model.source.Source;
 
 public class ESTLibrary extends NamedEntity<String> implements Assay<String>, RawDataWithDataSource, 

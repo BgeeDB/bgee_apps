@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.rawdata.insitu;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
-import org.bgee.model.expressiondata.rawdata.AssayPartOfExp;
+import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
 
 public class InSituEvidence extends Entity<String> implements AssayPartOfExp<String, InSituExperiment> {
     private final static Logger log = LogManager.getLogger(InSituEvidence.class.getName());

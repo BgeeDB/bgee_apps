@@ -3,8 +3,8 @@ package org.bgee.model.expressiondata.rawdata.est;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
-import org.bgee.model.expressiondata.rawdata.RawCall;
-import org.bgee.model.expressiondata.rawdata.RawCallSource;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCallSource;
 
 public class EST extends Entity<String> implements RawCallSource<ESTLibrary>{
 

@@ -57,8 +57,12 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperi
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.RawCall.ExclusionReason;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;

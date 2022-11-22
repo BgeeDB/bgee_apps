@@ -6,10 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
-import org.bgee.model.expressiondata.rawdata.AssayPartOfExp;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotated;
-import org.bgee.model.expressiondata.rawdata.RawDataAnnotation;
-import org.bgee.model.expressiondata.rawdata.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 
 // This object will merge information present in RNASeqLibraryTO and RNASeqLibraryAnnotatedSampleTO
 // from the DAO. The ID of RNASeqLibraryAnnotatedSampleTO is internal to Bgee, it is not meant to

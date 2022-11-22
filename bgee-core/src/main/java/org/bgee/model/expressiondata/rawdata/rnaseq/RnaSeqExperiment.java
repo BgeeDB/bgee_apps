@@ -1,6 +1,6 @@
 package org.bgee.model.expressiondata.rawdata.rnaseq;
 
-import org.bgee.model.expressiondata.rawdata.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.source.Source;
 
 public class RnaSeqExperiment extends Experiment<String>{

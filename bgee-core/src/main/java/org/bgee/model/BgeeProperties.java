@@ -176,6 +176,32 @@ public class BgeeProperties {
      * @see #BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY
      */
     public final static String BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the sphinx experiment index used for searches..
+     *
+     * @see #BGEE_SEARCH_INDEX_EXPERIMENTS_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_EXPERIMENTS_KEY = "org.bgee.search.experiments";
+    /**
+     * A {@code String} that is the default value of the experiment index used for searches.
+     *
+     * @see #BGEE_SEARCH_INDEX_EXPERIMENTS_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_EXPERIMENTS_DEFAULT = null;
+    /**
+     * A {@code String} that is the key to access to the System property that contains the value
+     * of the sphinx assay index used for searches.
+     *
+     * @see #BGEE_SEARCH_INDEX_ASSAYS_DEFAULT
+     */
+    public final static String BGEE_SEARCH_INDEX_ASSAYS_KEY = "org.bgee.search.assays";
+    /**
+     * A {@code String} that is the default value of the assay index used for searches.
+     *
+     * @see #BGEE_SEARCH_INDEX_ASSAYS_KEY
+     */
+    public final static String BGEE_SEARCH_INDEX_ASSAYS_DEFAULT = null;
 
     //TopAnat
     /**
@@ -768,6 +794,12 @@ public class BgeeProperties {
         searchAutocompleteIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_KEY,
                 BGEE_SEARCH_INDEX_AUTOCOMPLETE_DEFAULT);
+        searchExperimentsIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_EXPERIMENTS_KEY,
+                BGEE_SEARCH_INDEX_EXPERIMENTS_DEFAULT);
+        searchAssaysIndex = getStringOption(prop, SYS_PROPS, FILE_PROPS,
+                BGEE_SEARCH_INDEX_ASSAYS_KEY,
+                BGEE_SEARCH_INDEX_ASSAYS_DEFAULT);
         topAnatRScriptExecutable = getStringOption(prop, SYS_PROPS, FILE_PROPS, 
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_KEY,  
                 TOP_ANAT_R_SCRIPT_EXECUTABLE_DEFAULT);
@@ -831,6 +863,15 @@ public class BgeeProperties {
      * A {@code String} that is the name of the autocomplete index which is used to query a search.
      */
     private final String searchAutocompleteIndex;
+
+    /**
+     * A {@code String} that is the name of the experiment index which is used for searches.
+     */
+    private final String searchExperimentsIndex;
+    /**
+     * A {@code String} that is the name of the assay index which is used for searches.
+     */
+    private final String searchAssaysIndex;
 
     /**
      * A {@code String} that is the Bioconductor Release number used to download
@@ -974,6 +1015,18 @@ public class BgeeProperties {
      */
     public String getSearchAutocompleteIndex() {
         return searchAutocompleteIndex;
+    }
+    /**
+     * @return A {@code String} that is the name of the experiment index which is used for searches.
+     */
+    public String getSearchExperimentsIndex() {
+        return searchExperimentsIndex;
+    }
+    /**
+     * @return A {@code String} that is the name of the assay index which is used for searches.
+     */
+    public String getSearchAssaysIndex() {
+        return searchAssaysIndex;
     }
 
     //TopAnat

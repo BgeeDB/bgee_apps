@@ -1,8 +1,5 @@
 package org.bgee.model.expressiondata.rawdata;
 
-
-import java.math.BigDecimal;
-
 //RnaSeqTechnology technology = clonedAttrs.contains(RawDataService.Attribute.TECHNOLOGY)?
 //        //TODO: implement protocol name in the database schema and in the dao
 //        new RnaSeqTechnology( null, libIdToLibTO.get(to.getLibraryId()).getId(),
@@ -529,7 +526,7 @@ public class RawDataLoader extends CommonService {
                     .collect(Collectors.toMap(
                             to -> to.getId(),
                             to -> new AffymetrixExperiment(to.getId(), to.getName(),
-                                    to.getDescription(), getSourceById(to.getDataSourceId())),
+                                    to.getDescription(), getSourceById(to.getDataSourceId()), 0),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
         }

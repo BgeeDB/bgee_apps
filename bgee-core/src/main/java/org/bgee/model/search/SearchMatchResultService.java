@@ -453,16 +453,19 @@ public class SearchMatchResultService extends CommonService {
 
         final String geneIdLowerCase = gene.getGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.ID, Gene.class));
+            return log.traceExit(new SearchMatch<Gene>(gene, gene.getGeneId(),
+                    SearchMatch.MatchSource.ID, Gene.class));
         }
 
         final String geneNameLowerCase = gene.getName().toLowerCase();
         if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.NAME, Gene.class));
+            return log.traceExit(new SearchMatch<Gene>(gene, gene.getName(),
+                    SearchMatch.MatchSource.NAME, Gene.class));
         }
         final String descriptionLowerCase = gene.getDescription().toLowerCase();
         if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, null, SearchMatch.MatchSource.DESCRIPTION, Gene.class));
+            return log.traceExit(new SearchMatch<Gene>(gene, gene.getDescription(),
+                    SearchMatch.MatchSource.DESCRIPTION, Gene.class));
         }
 
         // otherwise we fetch term and find the first match
@@ -470,15 +473,18 @@ public class SearchMatchResultService extends CommonService {
         final String geneNameSynonym = this.getMatch(match, "genenamesynonym", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneNameSynonym != null) {
-            return log.traceExit(new SearchMatch<Gene>(gene, geneNameSynonym, SearchMatch.MatchSource.SYNONYM, Gene.class));
+            return log.traceExit(new SearchMatch<Gene>(gene, geneNameSynonym,
+                    SearchMatch.MatchSource.SYNONYM, Gene.class));
         }
 
         final String geneXRef = this.getMatch(match, "genexref", attrIndexMap,
                 termLowerCase, termLowerCaseEscaped);
         if (geneXRef != null) {
-            return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.XREF, Gene.class));
+            return log.traceExit(new SearchMatch<Gene>(gene, geneXRef,
+                    SearchMatch.MatchSource.XREF, Gene.class));
         }
-        return log.traceExit(new SearchMatch<Gene>(gene, geneXRef, SearchMatch.MatchSource.MULTIPLE, Gene.class));
+        return log.traceExit(new SearchMatch<Gene>(gene, null,
+                SearchMatch.MatchSource.MULTIPLE, Gene.class));
     }
 
     /**
@@ -506,13 +512,13 @@ public class SearchMatchResultService extends CommonService {
 
         final String idLowerCase = anatEntity.getId().toLowerCase();
         if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, anatEntity.getId(),
                     SearchMatch.MatchSource.ID, AnatEntity.class));
         }
 
         final String nameLowerCase = anatEntity.getName().toLowerCase();
         if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, anatEntity.getName(),
                     SearchMatch.MatchSource.NAME, AnatEntity.class));
         }
         return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
@@ -534,7 +540,7 @@ public class SearchMatchResultService extends CommonService {
         log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
         String strain = String.valueOf(match.attrValues.get(attrIndexMap.get("strain")));
         //for now the only match can be the name
-        return log.traceExit(new SearchMatch<String>(strain, null,
+        return log.traceExit(new SearchMatch<String>(strain, strain,
                     SearchMatch.MatchSource.NAME, String.class));
 
     }

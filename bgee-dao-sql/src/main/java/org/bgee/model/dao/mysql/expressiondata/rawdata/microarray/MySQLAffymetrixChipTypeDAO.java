@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -38,9 +38,11 @@ public MySQLAffymetrixChipTypeDAO(MySQLDAOManager manager) throws IllegalArgumen
     
         final Set<String> clonedChipTypeIds = Collections.unmodifiableSet(
                 chipTypeIds == null?
-                new LinkedHashSet<>(): new LinkedHashSet<>(chipTypeIds));
-        final Set<AffymetrixChipTypeDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null?
-                EnumSet.noneOf(AffymetrixChipTypeDAO.Attribute.class): EnumSet.copyOf(attributes));
+                new HashSet<>(): new HashSet<>(chipTypeIds));
+        final Set<AffymetrixChipTypeDAO.Attribute> attrs = Collections.unmodifiableSet(
+                attributes == null || attributes.isEmpty()?
+                        EnumSet.allOf(AffymetrixChipTypeDAO.Attribute.class):
+                        EnumSet.copyOf(attributes));
     
         // generate SELECT clause
         StringBuilder sb = new StringBuilder();

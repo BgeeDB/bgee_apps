@@ -62,22 +62,22 @@ implements RNASeqLibraryAnnotatedSampleDAO{
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class):
                     EnumSet.copyOf(attrs));
-        final Set<Integer> clonedannotatedSampleIds = Collections
+        final Set<Integer> clonedAnnotatedSampleIds = Collections
                 .unmodifiableSet(libraryAnnotatedSampleIds.stream()
                         .filter(id -> id != null).collect(Collectors.toSet()));
-     // generate SELECT
+        // generate SELECT
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(RNASeqLibraryAnnotatedSampleDAO
                 .Attribute.class), true, clonedAttrs))
         .append(" FROM ").append(TABLE_NAME).append(" WHERE ")
         .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID.getTOFieldName())
         .append(" IN (")
-        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedannotatedSampleIds.size()))
+        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedAnnotatedSampleIds.size()))
         .append(")");
         try {
             BgeePreparedStatement stmt = this.getManager().getConnection()
                     .prepareStatement(sb.toString());
-            stmt.setIntegers(1, clonedannotatedSampleIds, true);
+            stmt.setIntegers(1, clonedAnnotatedSampleIds, true);
             return log.traceExit(new MySQLRNASeqLibraryAnnotatedSampleTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

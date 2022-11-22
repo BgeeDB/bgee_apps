@@ -15,6 +15,7 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
     private final String id;
     private final AffymetrixExperiment experiment;
     private final RawDataAnnotation annotation;
+    private final ChipType chipType;
     private final AffymetrixChipPipelineSummary pipelineSummary;
 
     /**
@@ -22,7 +23,8 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
      * @throws IllegalArgumentException If {@code id} is blank, or {@code experiment} is {@code null}.
      */
     public AffymetrixChip(String id, AffymetrixExperiment experiment, RawDataAnnotation annotation,
-            AffymetrixChipPipelineSummary pipelineSummary) throws IllegalArgumentException {
+            ChipType chipType, AffymetrixChipPipelineSummary pipelineSummary)
+                    throws IllegalArgumentException {
         if (StringUtils.isBlank(id)) {
             throw log.throwing(new IllegalArgumentException("ID cannot be blank"));
         }
@@ -35,6 +37,7 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
             throw log.throwing(new IllegalArgumentException("Annotation cannot be null"));
         }
         this.annotation = annotation;
+        this.chipType = chipType;
         this.pipelineSummary = pipelineSummary;
     }
 
@@ -50,6 +53,10 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
         return this.annotation;
     }
 
+    public ChipType getChipType() {
+        return chipType;
+    }
+
     public AffymetrixChipPipelineSummary getPipelineSummary() {
         return pipelineSummary;
     }
@@ -58,7 +65,7 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
     //This is why we reimplement hashCode/equals rather than using the 'Entity' implementation.
     @Override
     public int hashCode() {
-        return Objects.hash(annotation, experiment, id, pipelineSummary);
+        return Objects.hash(annotation, chipType, experiment, id, pipelineSummary);
     }
 
     @Override
@@ -70,13 +77,15 @@ public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperime
         if (getClass() != obj.getClass())
             return false;
         AffymetrixChip other = (AffymetrixChip) obj;
-        return Objects.equals(annotation, other.annotation) && Objects.equals(experiment, other.experiment)
-                && Objects.equals(id, other.id) && Objects.equals(pipelineSummary, other.pipelineSummary);
+        return Objects.equals(annotation, other.annotation) && Objects.equals(chipType, other.chipType)
+                && Objects.equals(experiment, other.experiment) && Objects.equals(id, other.id)
+                && Objects.equals(pipelineSummary, other.pipelineSummary);
     }
 
     @Override
     public String toString() {
-        return "AffymetrixChip [id=" + id + ", experiment=" + experiment + ", annotation=" + annotation
-                + ", pipelineSummary=" + pipelineSummary + "]";
+        return "AffymetrixChip [id=" + id + ", experiment=" + experiment + ", annotation=" + annotation + ", chipType="
+                + chipType + ", pipelineSummary=" + pipelineSummary + "]";
     }
+
 }

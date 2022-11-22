@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.bgee.model.BgeeProperties;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
+import org.bgee.model.expressiondata.rawdata.ExperimentAssay;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
@@ -50,7 +52,7 @@ public class SearchMatchResultService extends CommonService {
      * An {@code int} that is the maximum permitted number of results to retrieve
      * from a Sphinx query. Current value: 10,000.
      */
-    public static final int SPHINX_MAX_RESULTS = 10000;
+    public static final int MAX_RESULTS = 10000;
 
     private static final String SPHINX_SEPARATOR = "\\|\\|";
 
@@ -79,6 +81,14 @@ public class SearchMatchResultService extends CommonService {
      */
     private final String sphinxAutocompleteIndex;
     /**
+     * @see #getSphinxExperimentIndex()
+     */
+    private final String sphinxExperimentSearchIndex;
+    /**
+     * @see #getSphinxAssayIndex()
+     */
+    private final String sphinxAssaySearchIndex;
+    /**
      * In order to avoid querying the GeneBioType for each letter used to search for genes,
      * we instantiate this {@code Map} with the service.
      */
@@ -95,14 +105,16 @@ public class SearchMatchResultService extends CommonService {
         this(new SphinxClient(props.getSearchServerURL(), Integer.valueOf(props.getSearchServerPort())),
                 serviceFactory, props.getSearchGenesIndex(), props.getSearchAnatEntitiesIndex(),
                 props.getSearchStrainsIndex(), props.getSearchAutocompleteIndex(),
+                props.getSearchExperimentsIndex(), props.getSearchAssaysIndex(),
                 geneBioTypeMap);
     }
     /**
      * Construct a new {@code SearchMatchResultService} using the provided {@code SphinxClient}.
      */
-    public SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory,
+    protected SearchMatchResultService(SphinxClient sphinxClient, ServiceFactory serviceFactory,
             String sphinxGeneSearchIndex, String sphinxAnatEntitySearchIndex,
             String sphinxStrainSearchIndex, String sphinxAutocompleteIndex,
+            String sphinxExperimentSearchIndex, String sphinxAssaySearchIndex,
             Map<Integer, GeneBioType> geneBioTypeMap) {
         super(serviceFactory);
         sphinxClient.SetConnectTimeout(SPHINX_CONNECT_TIMEOUT);
@@ -111,6 +123,8 @@ public class SearchMatchResultService extends CommonService {
         this.sphinxAnatEntitySearchIndex = sphinxAnatEntitySearchIndex;
         this.sphinxAutocompleteIndex = sphinxAutocompleteIndex;
         this.sphinxStrainSearchIndex = sphinxStrainSearchIndex;
+        this.sphinxExperimentSearchIndex = sphinxExperimentSearchIndex;
+        this.sphinxAssaySearchIndex = sphinxAssaySearchIndex;
         this.geneBioTypeMap = Collections.unmodifiableMap(
                 geneBioTypeMap == null || geneBioTypeMap.isEmpty()?
                         loadGeneBioTypeMap(this.getDaoManager().getGeneDAO()):
@@ -130,16 +144,29 @@ public class SearchMatchResultService extends CommonService {
         return sphinxAnatEntitySearchIndex;
     }
     /**
-     * @return  The {@code String} used as name for anat. entities index
+     * @return  The {@code String} used as name for strain index
      */
     private String getSphinxStrainSearchIndex() {
         return sphinxStrainSearchIndex;
     }
     /**
-     * @return  The {@code String} used as name for autocomplete index
+     * @return  The {@code String} used as name for gene autocomplete index
      */
     private String getSphinxAutocompleteIndex() {
         return sphinxAutocompleteIndex;
+    }
+
+    /**
+     * @return  The {@code String} used as name for experiment index
+     */
+    private String getSphinxExperimentSearchIndex() {
+        return sphinxExperimentSearchIndex;
+    }
+    /**
+     * @return  The {@code String} used as name for assay index
+     */
+    private String getSphinxAssaySearchIndex() {
+        return sphinxAssaySearchIndex;
     }
 
     /**
@@ -151,7 +178,7 @@ public class SearchMatchResultService extends CommonService {
      * @param offset        An {@code Integer} defining at which index to start to retrieve results.
      *                      Can be {@code null} to start from the first index (0).
      * @param limit         An {@code Integer} defining the number of results to retrieve.
-     *                      Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
+     *                      Can be {@code null} to retrieve {@link #MAX_RESULTS} results.
      * @return              A {@code SearchMatchResult} of results (ordered).
      * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
      *                                  or equal to 0.
@@ -185,7 +212,7 @@ public class SearchMatchResultService extends CommonService {
      * @param offset            An {@code Integer} defining at which index to start to retrieve results.
      *                          Can be {@code null} to start from the first index (0).
      * @param limit             An {@code Integer} defining the number of results to retrieve.
-     *                          Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
+     *                          Can be {@code null} to retrieve {@link #MAX_RESULTS} results.
      * @return                  A {@code SearchMatchResult} of results (ordered).
      * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
      *                                  or equal to 0.
@@ -222,7 +249,7 @@ public class SearchMatchResultService extends CommonService {
     }
 
     /**
-     * Search strains in sphinx index
+     * Search strains.
      *
      * @param searchTerm        A {@code String} containing the query
      * @param speciesIds        A {@code Collection} of {@code Integer}s that are species Ids
@@ -230,7 +257,7 @@ public class SearchMatchResultService extends CommonService {
      * @param offset            An {@code Integer} defining at which index to start to retrieve results.
      *                          Can be {@code null} to start from the first index (0).
      * @param limit             An {@code Integer} defining the number of results to retrieve.
-     *                          Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
+     *                          Can be {@code null} to retrieve {@link #MAX_RESULTS} results.
      * @return                  A {@code SearchMatchResult} of results (ordered).
      * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
      *                                  or equal to 0.
@@ -248,11 +275,58 @@ public class SearchMatchResultService extends CommonService {
     }
 
     /**
+     * Search experiments and assays.
+     *
+     * @param searchTerm        A {@code String} containing the query
+     * @param offset            An {@code Integer} defining at which index to start to retrieve results.
+     *                          Can be {@code null} to start from the first index (0).
+     * @param limit             An {@code Integer} defining the number of results to retrieve.
+     *                          Can be {@code null} to retrieve {@link #MAX_RESULTS} results.
+     * @return                  A {@code SearchMatchResult} of results (ordered).
+     * @throws IllegalArgumentException If {@code offset} is negative, or {@code limit} is less than
+     *                                  or equal to 0.
+     * @throws IllegalStateException    If the search encountered an error.
+     */
+    public SearchMatchResult<ExperimentAssay> searchExperimentsAndAssaysByTerm(
+            String searchTerm, Integer offset, Integer limit)
+                throws IllegalArgumentException, IllegalStateException {
+        log.traceEntry("{}, {}, {}", searchTerm, offset, limit);
+        checkOffsetLimit(offset, limit);
+        int newOffset = offset == null? 0: offset;
+        int newLimit = limit == null? MAX_RESULTS: limit;
+
+        //We query both the experiment and assay indexes
+        SearchMatchResult<ExperimentAssay> experiments = this.search(
+                (match, term, attrIndexMap) -> getExperimentMatch(match, term, attrIndexMap),
+                this.getSphinxExperimentSearchIndex(), null, ExperimentAssay.class, searchTerm,
+                null, false,
+                //we get all possible results for both queries
+                null, null);
+        SearchMatchResult<ExperimentAssay> assays = this.search(
+                (match, term, attrIndexMap) -> getAssayMatch(match, term, attrIndexMap),
+                this.getSphinxAssaySearchIndex(), null, ExperimentAssay.class, searchTerm,
+                null, false,
+                //we get all possible results for both queries
+                null, null);
+
+        //Then we merge the results to sort and offset/limit over them all
+        int totalMatchCount = experiments.getTotalMatchCount() + assays.getTotalMatchCount();
+        List<SearchMatch<ExperimentAssay>> searchMatches = Stream.concat(
+                experiments.getSearchMatches().stream(), assays.getSearchMatches().stream())
+                .sorted()
+                .skip(newOffset)
+                .limit(newLimit)
+                .collect(Collectors.toList());
+        return log.traceExit(new SearchMatchResult<>(totalMatchCount, searchMatches,
+                ExperimentAssay.class));
+    }
+
+    /**
      * Retrieve autocomplete suggestions for the gene search from the provided {@code searchTerm}.
      *
      * @param searchTerm    A {@code String} containing the query
      * @param limit         An {@code Integer} defining the number of results to retrieve.
-     *                      Can be {@code null} to retrieve {@link #SPHINX_MAX_RESULTS} results.
+     *                      Can be {@code null} to retrieve {@link #MAX_RESULTS} results.
      * @return              A {@code List} of {@code String}s that are suggestions
      *                      for the gene search autocomplete (ordered).
      * @throws IllegalArgumentException If {@code limit} is less than or equal to 0.
@@ -295,7 +369,7 @@ public class SearchMatchResultService extends CommonService {
      * Generalization of retrieving a {@code SearchMatchResult}.
      *
      * @param getMatchFunction  A {@link SearchMatchResultService.TriFunction TriFunction}
-     *                          to map a {@code SphynxMatch} into a {@code SearchMatch}.
+     *                          to map a {@code SphinxMatch} into a {@code SearchMatch}.
      *                          First argument is the {@code SearchMatch}, second argument is
      *                          the {@code String} formatted searched term, third argument is
      *                          a {@code Map} where keys are {@code String}s corresponding to attributes,
@@ -317,7 +391,7 @@ public class SearchMatchResultService extends CommonService {
      * @param offset            An {@code Integer} defining at which index to start to retrieve results.
      *                          Can be {@code null} to start from the first index (0).
      * @param limit             An {@code Integer} defining the number of results to retrieve.
-     *                          Can be {@code null} to retrieve {@code SPHINX_MAX_RESULTS} results.
+     *                          Can be {@code null} to retrieve {@code MAX_RESULTS} results.
      * @param <T>               The type of object contained in the returned {@code SearchMatchResult}.
      * @return                  A {@code SearchMatchResult} containing the {@code SearchMatch}es
      *                          for the type {@code T}.
@@ -332,14 +406,9 @@ public class SearchMatchResultService extends CommonService {
             Integer offset, Integer limit) throws IllegalArgumentException, IllegalStateException {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}", getMatchFunction, index, ranker,
                 classType, searchTerm, speciesIds, multiSpeciesTerms, offset, limit);
-        if (offset != null && offset < 0) {
-            throw log.throwing(new IllegalArgumentException("offset cannot be negative"));
-        }
-        if (limit != null && limit <= 0) {
-            throw log.throwing(new IllegalArgumentException("limit cannot be less than or equal to 0"));
-        }
+        checkOffsetLimit(offset, limit);
         int newOffset = offset == null? 0: offset;
-        int newLimit = limit == null? SPHINX_MAX_RESULTS: limit;
+        int newLimit = limit == null? MAX_RESULTS: limit;
 
         // We need to get the formatted term here, even if the term is formatted
         // in the method getSphinxResult(), to set correctly SearchMatches.
@@ -362,7 +431,7 @@ public class SearchMatchResultService extends CommonService {
             //independently of what the client requested,
             //because we reorder the results in this Service, so we need to have a wide net
             //to catch the fish we're looking for and order it properly.
-            sphinxClient.SetLimits(0, SPHINX_MAX_RESULTS, SPHINX_MAX_RESULTS);
+            sphinxClient.SetLimits(0, MAX_RESULTS, MAX_RESULTS);
             if (ranker != null) {
                 sphinxClient.SetRankingMode(ranker, null);
             }
@@ -458,18 +527,18 @@ public class SearchMatchResultService extends CommonService {
 
         final String geneIdLowerCase = gene.getGeneId().toLowerCase();
         if (geneIdLowerCase.contains(termLowerCase) || geneIdLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, gene.getGeneId(),
+            return log.traceExit(new SearchMatch<Gene>(gene, null,
                     SearchMatch.MatchSource.ID, Gene.class));
         }
 
         final String geneNameLowerCase = gene.getName().toLowerCase();
         if (geneNameLowerCase.contains(termLowerCase) || geneNameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, gene.getName(),
+            return log.traceExit(new SearchMatch<Gene>(gene, null,
                     SearchMatch.MatchSource.NAME, Gene.class));
         }
         final String descriptionLowerCase = gene.getDescription().toLowerCase();
         if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<Gene>(gene, gene.getDescription(),
+            return log.traceExit(new SearchMatch<Gene>(gene, null,
                     SearchMatch.MatchSource.DESCRIPTION, Gene.class));
         }
 
@@ -504,7 +573,7 @@ public class SearchMatchResultService extends CommonService {
      */
     private SearchMatch<AnatEntity> getAnatEntityMatch(final SphinxMatch match, final String term,
                                    final Map<String, Integer> attrIndexMap) {
-        log.traceEntry("{}, {}, {}, {}", match, term, attrIndexMap);
+        log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
         AnatEntity anatEntity = new AnatEntity(String.valueOf(match.attrValues
                 .get(attrIndexMap.get("anatentityid"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("anatentityname"))), null);
@@ -517,13 +586,13 @@ public class SearchMatchResultService extends CommonService {
 
         final String idLowerCase = anatEntity.getId().toLowerCase();
         if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, anatEntity.getId(),
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
                     SearchMatch.MatchSource.ID, AnatEntity.class));
         }
 
         final String nameLowerCase = anatEntity.getName().toLowerCase();
         if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
-            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, anatEntity.getName(),
+            return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
                     SearchMatch.MatchSource.NAME, AnatEntity.class));
         }
         return log.traceExit(new SearchMatch<AnatEntity>(anatEntity, null,
@@ -545,9 +614,87 @@ public class SearchMatchResultService extends CommonService {
         log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
         String strain = String.valueOf(match.attrValues.get(attrIndexMap.get("strain")));
         //for now the only match can be the name
-        return log.traceExit(new SearchMatch<String>(strain, strain,
+        return log.traceExit(new SearchMatch<String>(strain, null,
                     SearchMatch.MatchSource.NAME, String.class));
 
+    }
+
+    /**
+     * Convert a {@code SphinxMatch} into a {@code SearchMatch<ExperimentAssay>}
+     * for an experiment request.
+     *
+     * @param match         A {@code SphinxMatch} that is the match to be converted.
+     * @param term          A {@code String} that is the query used to retrieve the {@code match}.
+     * @param attrIndexMap  A {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                      the associated values being {@code Integer}s corresponding
+     *                      to index of the attribute.
+     * @return              The {@code SearchMatch} that is the converted {@code SphinxMatch}.
+     */
+    private SearchMatch<ExperimentAssay> getExperimentMatch(final SphinxMatch match, final String term,
+                                   final Map<String, Integer> attrIndexMap) {
+        log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
+
+        ExperimentAssay expAssay = new ExperimentAssay(
+                    String.valueOf(match.attrValues.get(attrIndexMap.get("experimentid"))),
+                    String.valueOf(match.attrValues.get(attrIndexMap.get("experimentname"))),
+                    String.valueOf(match.attrValues.get(attrIndexMap.get("experimentdescription"))));
+
+        // If the gene name, id or description match there is no term
+        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+        //and returns terms, that are then not matched here
+        final String termLowerCase = term.toLowerCase();
+        final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
+
+        final String idLowerCase = expAssay.getId().toLowerCase();
+        if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                    SearchMatch.MatchSource.ID, ExperimentAssay.class));
+        }
+        final String nameLowerCase = expAssay.getName().toLowerCase();
+        if (nameLowerCase.contains(termLowerCase) || nameLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                    SearchMatch.MatchSource.NAME, ExperimentAssay.class));
+        }
+        final String descriptionLowerCase = expAssay.getDescription().toLowerCase();
+        if (descriptionLowerCase.contains(termLowerCase) || descriptionLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                    SearchMatch.MatchSource.DESCRIPTION, ExperimentAssay.class));
+        }
+        return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                SearchMatch.MatchSource.MULTIPLE, ExperimentAssay.class));
+    }
+    /**
+     * Convert a {@code SphinxMatch} into a {@code SearchMatch<ExperimentAssay>}
+     * for an assay request.
+     *
+     * @param match         A {@code SphinxMatch} that is the match to be converted.
+     * @param term          A {@code String} that is the query used to retrieve the {@code match}.
+     * @param attrIndexMap  A {@code Map} where keys are {@code String}s corresponding to attributes,
+     *                      the associated values being {@code Integer}s corresponding
+     *                      to index of the attribute.
+     * @return              The {@code SearchMatch} that is the converted {@code SphinxMatch}.
+     */
+    private SearchMatch<ExperimentAssay> getAssayMatch(final SphinxMatch match, final String term,
+                                   final Map<String, Integer> attrIndexMap) {
+        log.traceEntry("{}, {}, {}", match, term, attrIndexMap);
+
+        ExperimentAssay expAssay = new ExperimentAssay(
+                    String.valueOf(match.attrValues.get(attrIndexMap.get("assayid"))),
+                    null, null);
+
+        // If the gene name, id or description match there is no term
+        //Fix issue with term search such as "upk\3a". MySQL does not consider the backslash
+        //and returns terms, that are then not matched here
+        final String termLowerCase = term.toLowerCase();
+        final String termLowerCaseEscaped = termLowerCase.replaceAll("\\\\", "");
+
+        final String idLowerCase = expAssay.getId().toLowerCase();
+        if (idLowerCase.contains(termLowerCase) || idLowerCase.contains(termLowerCaseEscaped)) {
+            return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                    SearchMatch.MatchSource.ID, ExperimentAssay.class));
+        }
+        return log.traceExit(new SearchMatch<ExperimentAssay>(expAssay, null,
+                SearchMatch.MatchSource.MULTIPLE, ExperimentAssay.class));
     }
 
     private String getMatch(SphinxMatch match, String attribute, Map<String, Integer> attrIndexMap,
@@ -568,5 +715,17 @@ public class SearchMatchResultService extends CommonService {
             return log.traceExit(terms.get(0));
         }
         return log.traceExit((String) null);
+    }
+
+    private static void checkOffsetLimit(Integer offset, Integer limit) {
+        log.traceEntry("{}, {}", offset, limit);
+        if (offset != null && offset < 0) {
+            throw log.throwing(new IllegalArgumentException("offset cannot be negative"));
+        }
+        if (limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "limit cannot be less than or equal to 0"));
+        }
+        log.traceExit();
     }
 }

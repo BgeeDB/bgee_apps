@@ -71,6 +71,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entity_index", "strains_index", "autocomplete_index",
+                "experiments_index", "assays_index",
                 GENE_BIO_TYPES);
         List<String> autocompleteResult = service.autocomplete(term, 100);
 
@@ -114,6 +115,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                "experiments_index", "assays_index",
                 GENE_BIO_TYPES);
         SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 
@@ -180,6 +182,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                "experiments_index", "assays_index",
                 GENE_BIO_TYPES);
         SearchMatchResult<AnatEntity> anatMatchResult =
                 service.searchAnatEntitiesByTerm(term, null, true, true, 0, 100);
@@ -212,6 +215,7 @@ public class SearchMatchResultServiceTest extends TestAncestor {
 
         SearchMatchResultService service = new SearchMatchResultService(sphinxClient, this.serviceFactory,
                 "genes_index", "anat_entities_index", "strains_index", "autocomplete_index",
+                "experiments_index", "assays_index",
                 GENE_BIO_TYPES);
         SearchMatchResult<Gene> geneMatchResult = service.searchGenesByTerm(term, null, 0, 100);
 

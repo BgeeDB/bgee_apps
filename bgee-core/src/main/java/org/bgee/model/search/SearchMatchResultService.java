@@ -1,6 +1,5 @@
 package org.bgee.model.search;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -394,15 +392,15 @@ public class SearchMatchResultService extends CommonService {
         // build list of SearchMatch
         List<SearchMatch<T>> searchMatches = Arrays.stream(result.matches)
                 .map(m -> getMatchFunction.apply(m, formattedTerm, attrNameToIdx))
+                //We need to remove duplicates now, before setting offset and limit.
+                //Duplicates can be present if more than one species is selected
+                //or if both anat. entities and cell types are queried.
+                //And it's more optimized to sort after removing duplicates.
+                .collect(Collectors.toSet()).stream()
                 .sorted()
                 .skip(newOffset)
                 .limit(newLimit)
-                //collector removing duplicates. Duplicates can be present
-                //if more than one species is selected or if both anat. entities
-                //and cell types are queried.
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toCollection(() -> new TreeSet<>()),
-                        ArrayList::new));
+                .collect(Collectors.toList());
 
         //When we make search for terms that can exist in multiple species
         //(multiSpeciesTerms is true), we can have redundant matches

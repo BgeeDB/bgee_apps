@@ -2,11 +2,9 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -14,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.CellCompartment;
@@ -56,11 +55,8 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes);
 
-        // force to have a list in order to keep order of elements. It is mandatory to be able
-        // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters =
-                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
-                    new ArrayList<>(rawDataFilters));
+        final DAOProcessedRawDataFilter processedFilters =
+                new DAOProcessedRawDataFilter(rawDataFilters);
         final Set<RNASeqLibraryDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -68,20 +64,20 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-        sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+        sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
                 getColToAttributesMap(RNASeqLibraryDAO.Attribute.class), true, clonedAttrs));
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+                processedFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        if (!orderedRawDataFilters.isEmpty() || isSingleCell != null) {
+        if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ");
         }
         boolean foundPrevious = false;
-        if (!orderedRawDataFilters.isEmpty()) {
-            sb.append(generateWhereClauseRawDataFilter(orderedRawDataFilters,
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
+            sb.append(generateWhereClauseRawDataFilter(processedFilters,
                     filtersToDatabaseMapping));
             foundPrevious = true;
         }
@@ -100,7 +96,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         }
 
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
                     isSingleCell, DAODataType.RNA_SEQ, offset, limit);
             return log.traceExit(new MySQLRNASeqLibraryTOResultSet(stmt));
         } catch (SQLException e) {

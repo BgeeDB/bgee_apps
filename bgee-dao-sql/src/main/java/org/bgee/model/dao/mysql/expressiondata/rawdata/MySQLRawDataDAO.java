@@ -1,13 +1,11 @@
 package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -17,8 +15,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
@@ -30,8 +31,9 @@ import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping.AmbiguousRawDataColumn;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping.RawDataColumn;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
@@ -51,19 +53,19 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     //parameterize query without rnaSeqTechnologyIds
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters, DAODataType datatype, Integer offset, Integer limit)
+            DAOProcessedRawDataFilter processedFilters, DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}, {}", query, rawDataFilters, datatype, offset, limit);
-        return log.traceExit(this.parameterizeQuery(query, rawDataFilters, null, datatype,
+        log.traceEntry("{}, {}, {}, {}, {}", query, processedFilters, datatype, offset, limit);
+        return log.traceExit(this.parameterizeQuery(query, processedFilters, null, datatype,
                 offset, limit));
     }
 
     //parameterize query with rnaSeqTechnologyIds
     protected BgeePreparedStatement parameterizeQuery(String query,
-            List<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
             DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", query, rawDataFilters, isSingleCell,
+        log.traceEntry("{}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
                 datatype, offset, limit);
         if (datatype == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
@@ -71,7 +73,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
-        for(DAORawDataFilter rawDataFilter : rawDataFilters) {
+        for(DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
             Set<Integer> geneIds = rawDataFilter.getGeneIds();
             Integer speciesId = rawDataFilter.getSpeciesId();
             Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
@@ -139,7 +141,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * Helps only in simple cases, more complex statements should be hand-written (for instance,
      * when {@code Attribute}s correspond to columns in different tables, or to a sub-query).
      * 
-     * @param filters                   A {@code Collection} of {@code DAORawDataFilter} used to
+     * @param processedFilters          The {@code DAOProcessedRawDataFilter} used to
      *                                  define if STRAIGHT_JOIN will be added to the SELECT clause.
      * @param tableName                 A {@code String} that is the name of the table 
      *                                  to retrieve data from, or its alias defined in the query.
@@ -155,16 +157,17 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                                  SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
      */
-    protected String generateSelectClauseRawDataFilters(Collection<DAORawDataFilter> filters,
+    protected String generateSelectClauseRawDataFilters(DAOProcessedRawDataFilter processedFilters,
             String tableName, Map<String, T> selectExprsToAttributes, boolean distinct,
             Set<T> attributes) {
-        log.traceEntry("{}, {}, {}, {}, {}", filters, tableName, selectExprsToAttributes,
+        log.traceEntry("{}, {}, {}, {}, {}", processedFilters, tableName, selectExprsToAttributes,
                 distinct, attributes);
         //XXX FB: shouldn't we always use a straight_join now that we have properly define
         //table order?
-        boolean straightJoin = filters != null
-                && !filters.isEmpty() //allMatch returns true if the stream is empty
-                && filters.stream().allMatch(c -> !c.getGeneIds().isEmpty());
+        boolean straightJoin = processedFilters.getRawDataFilters() != null
+                && !processedFilters.getRawDataFilters().isEmpty() //allMatch returns true if the stream is empty
+                && processedFilters.getRawDataFilters().stream()
+                .allMatch(c -> !c.getGeneIds().isEmpty());
         return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes,
                 distinct, straightJoin, attributes));
     }
@@ -176,13 +179,13 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     /**
      * Method allowing to add a FROM clause to a {@code StringBuilder} based on
      * {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
-     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to columns to use
-     * in the WHERE clause as keys and {@code String} corresponding to the table to use to
-     * retrieve the data as values. {@code sb} will be modified as a result to calling this method.
+     * A {@code RawDataFiltersToDatabaseMapping} containing the datatype, and the mapping to both
+     * actual columns and tables names to use in the query. {@code sb} will be modified as a result
+     * to calling this method.
      * 
      * @param sb                    The {@code StringBuilder} for which the FROM clause will be
      *                              created. It will be modified as a result to calling this method.
-     * @param filters               A {@code List} of {@code DAORawDataFilter} to use to generate the
+     * @param processedFilters      A {@code DAOProcessedRawDataFilter} to use to generate the
      *                              FROM clause
      * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
      *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
@@ -192,28 +195,25 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                              to the creation of the query
      * @param dataType              The {@code DAODataType} for which the FROM clause has to be
      *                              generated
-     * @return                      A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
-     *                              {@code String} as value defining the table to use.
-     *                              Only the names of the tables that would be ambiguous to retrieve
-     *                              or filter a field for are returned in this {@code Map}
-     *                              (see {@link AmbiguousRawDataColumn}).
+     * @return                      A {@code RawDataFiltersToDatabaseMapping} containing the datatype,
+     *                              and the mapping to both actual columns and tables names to use in
+     *                              the query.
      */
     protected RawDataFiltersToDatabaseMapping generateFromClauseRawData(StringBuilder sb,
-            List<DAORawDataFilter> filters, Boolean isSingleCell,
+            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
             Set<String> necessaryTables, DAODataType datatype) {
-        log.traceEntry("{}, {}, {}, {}, {}", sb, filters, isSingleCell, necessaryTables,
+        log.traceEntry("{}, {}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables,
                 datatype);
-        Map<AmbiguousRawDataColumn, String> ambiguousColToTable = new HashMap<>();
+        Map<RawDataColumn, String> ambiguousColToTable = new HashMap<>();
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
-            ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb, filters, necessaryTables);
+            ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb, processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.IN_SITU)) {
             throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
                     + "."));
         } else if (datatype.equals(DAODataType.EST)) {
-            throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
-                    + "."));
+            ambiguousColToTable = generateFromClauseRawDataEst(sb, processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
-            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, filters, isSingleCell,
+            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, processedFilters, isSingleCell,
                     necessaryTables);
         } else {
             throw log.throwing(new IllegalStateException("dataType " + datatype
@@ -231,7 +231,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * 
      * @param sb                The {@code StringBuilder} for which the FROM clause will be
      *                          created.
-     * @param filters           A {@code List} of {@code DAORawDataFilter} to use to generate the
+     * @param processedFilters  A {@code DAOProcessedRawDataFilter} to use to generate the
      *                          FROM clause
      * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
      *                          of tables necessary to the creation of the FROM clause.
@@ -243,9 +243,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
      *                          {@code String} as value defining the table to use.
      */
-    private Map<AmbiguousRawDataColumn, String> generateFromClauseRawDataAffymetrix(StringBuilder sb,
-            List<DAORawDataFilter> filters, Set<String> necessaryTables) {
-        log.traceEntry("{}, {}, {}", sb, filters, necessaryTables);
+    private Map<RawDataColumn, String> generateFromClauseRawDataAffymetrix(StringBuilder sb,
+            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+        log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
 
         if (necessaryTables.size() == 2 && !necessaryTables.containsAll(
                 Set.of(MySQLAffymetrixProbesetDAO.TABLE_NAME, MySQLAffymetrixChipDAO.TABLE_NAME)) ||
@@ -254,40 +254,23 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     + necessaryTables));
         }
         
-        Map<AmbiguousRawDataColumn, String> colToTableMap = new LinkedHashMap<>();
+        Map<RawDataColumn, String> colToTableMap = new LinkedHashMap<>();
         LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
 
-        // check needed filters
-        boolean needSpeciesId = filters.stream().anyMatch(e -> e.getSpeciesId() != null);
-        boolean needGeneId = filters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean needAssayId = filters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
-                !e.getExprOrAssayIds().isEmpty());
-        boolean needCondId = filters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
-        boolean needExpId = filters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
-                !e.getExprOrAssayIds().isEmpty());
-        //check filters always used
-        //XXX The idea is to not start with probesetTable if geneIds are asked in only one filter
-        // but not in others. Indeed, in this scenario forcing to start with porbeset table
-        // decrease drastically the time needed to query. It is maybe overthinking as it is
-        // probably also the case for other tables (especially the species table). The best
-        // optimization is probably to query each DAORawDataFilter separately
-        boolean alwaysGeneId = !filters.isEmpty() //allMatch returns true if a stream is empty
-                && filters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
-        log.debug("needSpeciesId: {}, needGeneId: {}, needAssayId: {}, needCondId: {}, needExpId: {}, alwaysGeneId: {}, filters: {}",
-                needSpeciesId, needGeneId, needAssayId, needCondId, needExpId, alwaysGeneId, filters);
-
         // check needed tables
-        boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
+        boolean geneTable = processedFilters.isNeedSpeciesId() && necessaryTables.size() == 1 &&
                 necessaryTables.contains(MySQLAffymetrixProbesetDAO.TABLE_NAME)
-                && !needAssayId && !needExpId && !needCondId;
-        boolean condTable = needSpeciesId && !geneTable || necessaryTables.contains(
-                MySQLRawDataConditionDAO.TABLE_NAME);
+                && !processedFilters.isNeedAssayId() && !processedFilters.isNeedExperimentId() &&
+                !processedFilters.isNeedConditionId();
+        boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable ||
+                necessaryTables.contains(MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLMicroarrayExperimentDAO.TABLE_NAME);
         boolean probesetTable = necessaryTables.contains(MySQLAffymetrixProbesetDAO.TABLE_NAME) ||
-                needGeneId;
+                processedFilters.isNeedGeneId();
         boolean chipTable = necessaryTables.contains(MySQLAffymetrixChipDAO.TABLE_NAME) ||
-                needAssayId || !expTable && needExpId || !condTable && needCondId ||
+                processedFilters.isNeedAssayId() || !expTable && processedFilters.isNeedExperimentId() ||
+                !condTable && processedFilters.isNeedConditionId() ||
                 expTable && condTable || expTable && probesetTable || condTable && probesetTable;
         log.debug("geneTable: {}, condTable: {}, expTable: {}, probesetTable: {}, chipTable: {}",
                 geneTable, condTable, expTable, probesetTable, chipTable);
@@ -295,21 +278,19 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
         // first check if always require geneIds. 
         //XXX maybe overthinking as it is anyway not optimized for a Collection of filters
-        if (alwaysGeneId) {
+        if (processedFilters.isAlwaysGeneId()) {
             orderedTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
         }
-        assert !(alwaysGeneId && needSpeciesId):
-            "In a RawDataDAOFilter, when bgeeGeneIds are provided, no species ID is provided";
         // then check table filtering on speciesId if any
-        if (needSpeciesId) {
+        if (processedFilters.isNeedSpeciesId()) {
             if (geneTable) {
-                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
                 orderedTables.add(MySQLGeneDAO.TABLE_NAME);
                 if (probesetTable) {
                     orderedTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
                 }
             } else if (condTable) {
-                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
                 orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
             }
         }
@@ -325,23 +306,23 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // then check if the experiment table was necessary and adapt expId table accordingly
         if (expTable) {
             orderedTables.add(MySQLMicroarrayExperimentDAO.TABLE_NAME);
-            if (needExpId) {
-                colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID, MySQLMicroarrayExperimentDAO.TABLE_NAME);
+            if (processedFilters.isNeedExperimentId()) {
+                colToTableMap.put(RawDataColumn.EXPERIMENT_ID, MySQLMicroarrayExperimentDAO.TABLE_NAME);
             }
-        } else if (needExpId) {
-            colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
+        } else if (processedFilters.isNeedExperimentId()) {
+            colToTableMap.put(RawDataColumn.EXPERIMENT_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
         }
 
         // finally check if the cond table has to be added. Not added if already inserted as we use
         // a LinkedHashSet. Detect which table to use to retrieve the potential conditionId
         if (condTable) {
             orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
-            if (needCondId) {
-                colToTableMap.put(AmbiguousRawDataColumn.COND_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+            if (processedFilters.isNeedConditionId()) {
+                colToTableMap.put(RawDataColumn.COND_ID, MySQLRawDataConditionDAO.TABLE_NAME);
             }
         // if cond is not a necessary table it means conditionId can be retrieved from 
-        } else if (needCondId) {
-            colToTableMap.put(AmbiguousRawDataColumn.COND_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
+        } else if (processedFilters.isNeedConditionId()) {
+            colToTableMap.put(RawDataColumn.COND_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
         }
         log.debug("orderedTables: {}", orderedTables);
 
@@ -445,7 +426,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *
      * @param sb                The {@code StringBuilder} for which the FROM clause will be
      *                          created.
-     * @param rawDatafilters    A {@code List} of {@code DAORawDataFilter} to use to generate the
+     * @param processedFilters  The {@code DAOProcessedRawDataFilter} to use to generate the
      *                          FROM clause
      * @param isSingleCell      A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
      *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
@@ -461,13 +442,13 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      * @param isSingleCell      A {@code Boolean} defining if bulk RNA-Seq or single cell RNA-Seq
      *                          technologies have to be retrieved. If null, all RNA-Seq data (bulk
      *                          and single cell) are retrieved.
-     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     * @return                  A {@code Map} with {@code RawDataColumn} as keys and
      *                          {@code String} as value defining the table to use.
      */
-    protected Map<AmbiguousRawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
-            List<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+    protected Map<RawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
+            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
             Set<String> necessaryTables) {
-        log.traceEntry("{}, {}, {}, {}", sb, rawDataFilters, isSingleCell, necessaryTables);
+        log.traceEntry("{}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables);
 
         // possibilities : experiment or library or annotated samples or result or condition or
         // result and annotated sample (for the counts, to retrieve results, assay and libraries) or
@@ -485,51 +466,32 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     + necessaryTables));
         }
 
-        Map<AmbiguousRawDataColumn, String> colToTableMap = new LinkedHashMap<>();
+        Map<RawDataColumn, String> colToTableMap = new LinkedHashMap<>();
         LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
-
-        // check needed filters
-        boolean needSpeciesId = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
-        boolean needGeneId = rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        // for the sake of clarity we call the assayId libraryId as it is not the
-        // rnaSeqlibraryAnnotatedSampleId we are looking for
-        boolean needLibraryId = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
-                !e.getExprOrAssayIds().isEmpty());
+        
         boolean needIsSingleCell = isSingleCell != null;
-        boolean needCondId = rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
-        boolean needExpId = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
-                !e.getExprOrAssayIds().isEmpty());
-        //check filters always used
-        //XXX The idea is to not start with result table if geneIds are asked in only one filter
-        // but not in others. Indeed, in this scenario forcing to start with porbeset table
-        // decrease drastically the time needed to query. It is maybe overthinking as it is
-        // probably also the case for other tables (especially the species table). The best
-        // optimization is probably to query each DAORawDataFilter separately
-        boolean alwaysGeneId = !rawDataFilters.isEmpty() //allMatch returns true if a stream is empty
-                && rawDataFilters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
-        log.debug("needSpeciesId: {}, needGeneId: {}, needLibraryId: {}, needIsSingleCell: {}, "
-                + "needCondId: {}, needExpId: {}, alwaysGeneId: {}, filters: {}",
-                needSpeciesId, needGeneId, needLibraryId, needIsSingleCell, needCondId,
-                needExpId, alwaysGeneId, rawDataFilters);
+
 
         // check needed tables
-        boolean geneTable = needSpeciesId && necessaryTables.size() == 1 &&
+        boolean geneTable = processedFilters.isNeedSpeciesId() && necessaryTables.size() == 1 &&
                 necessaryTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)
-                && !needLibraryId && !needExpId && !needCondId && !needIsSingleCell;
-        boolean condTable = needSpeciesId && !geneTable || necessaryTables.contains(
+                && !processedFilters.isNeedAssayId() && !processedFilters.isNeedExperimentId() &&
+                !processedFilters.isNeedConditionId() && !needIsSingleCell;
+        boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable || necessaryTables.contains(
                 MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLRNASeqExperimentDAO.TABLE_NAME);
         boolean libraryTable = needIsSingleCell ||
                 necessaryTables.contains(MySQLRNASeqLibraryDAO.TABLE_NAME) ||
-                expTable && (needCondId || needGeneId || needLibraryId || needSpeciesId) ||
-                !expTable && needExpId;
+                expTable && (processedFilters.isNeedConditionId() || processedFilters.isNeedGeneId() ||
+                        processedFilters.isNeedAssayId() || processedFilters.isNeedSpeciesId()) ||
+                !expTable && processedFilters.isNeedExperimentId();
         boolean resultAnnotatedSampleTable = necessaryTables
-                .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || needGeneId;
+                .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || processedFilters.isNeedGeneId();
         boolean libraryAnnotatedSampleTable = necessaryTables.contains(
                 MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME) ||
-                needLibraryId && !libraryTable ||
-                needCondId && !condTable  || libraryTable && condTable ||
+                processedFilters.isNeedAssayId() && !libraryTable ||
+                processedFilters.isNeedConditionId() && !condTable  || libraryTable && condTable ||
                 libraryTable && resultAnnotatedSampleTable || condTable && resultAnnotatedSampleTable;
         log.debug("geneTable: {}, condTable: {}, expTable: {}, libraryTable: {},"
                 + "libraryAnnotatedSampleTable: {}, resultAnnotatedSampleTable: {}",
@@ -538,29 +500,28 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
 
         // first check if always require geneIds.
-        if (alwaysGeneId) {
+        if (processedFilters.isAlwaysGeneId()) {
             orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         }
-        assert !(alwaysGeneId && needSpeciesId):
-            "In a RawDataDAOFilter, when bgeeGeneIds are provided, no species ID is provided";
+
         // then check table filtering on speciesId if any
-        if (needSpeciesId) {
+        if (processedFilters.isNeedSpeciesId()) {
             if (geneTable) {
-                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
                 orderedTables.add(MySQLGeneDAO.TABLE_NAME);
                 if (resultAnnotatedSampleTable) {
                     orderedTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
                 }
             } else if (condTable) {
-                colToTableMap.put(AmbiguousRawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
                 orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
             }
         }
         // then add chip table if required
         if (libraryAnnotatedSampleTable) {
             orderedTables.add(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
-            if (needLibraryId && !libraryTable) {
-                colToTableMap.put(AmbiguousRawDataColumn.ASSAY_ID,
+            if (processedFilters.isNeedAssayId() && !libraryTable) {
+                colToTableMap.put(RawDataColumn.ASSAY_ID,
                         MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
             }
         }
@@ -572,21 +533,21 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // then check if the rnaSeqLibrary table has to be added.
         if (libraryTable) {
             orderedTables.add(MySQLRNASeqLibraryDAO.TABLE_NAME);
-            if (needLibraryId) {
-                colToTableMap.put(AmbiguousRawDataColumn.ASSAY_ID,
+            if (processedFilters.isNeedAssayId()) {
+                colToTableMap.put(RawDataColumn.ASSAY_ID,
                         MySQLRNASeqLibraryDAO.TABLE_NAME);
             }
         }
         // then check if the experiment table was necessary and adapt expId table accordingly
         if (expTable) {
             orderedTables.add(MySQLRNASeqExperimentDAO.TABLE_NAME);
-            if (needExpId) {
-                colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID,
+            if (processedFilters.isNeedExperimentId()) {
+                colToTableMap.put(RawDataColumn.EXPERIMENT_ID,
                         MySQLRNASeqExperimentDAO.TABLE_NAME);
             }
-        } else if (needExpId) {
+        } else if (processedFilters.isNeedExperimentId()) {
             assert libraryTable;
-            colToTableMap.put(AmbiguousRawDataColumn.EXPERIMENT_ID,
+            colToTableMap.put(RawDataColumn.EXPERIMENT_ID,
                     MySQLRNASeqLibraryDAO.TABLE_NAME);
         }
 
@@ -594,15 +555,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         // a LinkedHashSet. Detect which table to use to retrieve the potential conditionId
         if (condTable) {
             orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
-            if (needCondId) {
-                colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
+            if (processedFilters.isNeedConditionId()) {
+                colToTableMap.put(RawDataColumn.COND_ID,
                         MySQLRawDataConditionDAO.TABLE_NAME);
             }
         // if cond is not a necessary table it means conditionId can be retrieved from library
         // annotated sample table
-        } else if (needCondId) {
+        } else if (processedFilters.isNeedConditionId()) {
             assert libraryAnnotatedSampleTable;
-            colToTableMap.put(AmbiguousRawDataColumn.COND_ID,
+            colToTableMap.put(RawDataColumn.COND_ID,
                     MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME);
         }
         log.debug("orderedTables: {}", orderedTables);
@@ -724,10 +685,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb);
     }
 
-    protected String generateWhereClauseRawDataFilter(List<DAORawDataFilter> rawDataFilters,
+    protected String generateWhereClauseRawDataFilter(DAOProcessedRawDataFilter processedRawDataFilters,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
-        log.traceEntry("{}, {}", rawDataFilters, filtersToDatabaseMapping);
-        String whereClause = rawDataFilters.stream()
+        log.traceEntry("{}, {}", processedRawDataFilters, filtersToDatabaseMapping);
+        String whereClause = processedRawDataFilters.getRawDataFilters().stream()
                 .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping))
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;

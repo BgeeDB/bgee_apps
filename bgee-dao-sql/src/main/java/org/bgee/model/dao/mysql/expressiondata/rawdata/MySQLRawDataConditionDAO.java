@@ -2,13 +2,11 @@ package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
@@ -118,9 +117,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}", rawDataFilters, attributes);
 
-        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
-                rawDataFilters == null?
-                new ArrayList<>(): new ArrayList<>(rawDataFilters));
+        final DAOProcessedRawDataFilter processedFilters =
+                new DAOProcessedRawDataFilter(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -128,19 +126,19 @@ implements RawDataConditionDAO {
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-       sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
                getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
         RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, orderedRawDataFilters, null,
+                sb, processedFilters, null,
                 Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
 
         // generate WHERE
         sb.append(" WHERE ");
-        if (!orderedRawDataFilters.isEmpty()) {
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append("(")
-              .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, rawDataFiltersToDatabaseMapping))
+              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
               .append(") AND ");
         }
         //We at least always need to check that results are from conditions
@@ -154,7 +152,7 @@ implements RawDataConditionDAO {
           .append(")");
 
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
                     DAODataType.AFFYMETRIX, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
@@ -167,9 +165,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}, {}", rawDataFilters, isSingleCell, attributes);
 
-        final List<DAORawDataFilter> orderedRawDataFilters = Collections.unmodifiableList(
-                rawDataFilters == null?
-                new ArrayList<>(): new ArrayList<>(rawDataFilters));
+        final DAOProcessedRawDataFilter processedFilters =
+                new DAOProcessedRawDataFilter(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -177,20 +174,20 @@ implements RawDataConditionDAO {
         StringBuilder sb = new StringBuilder();
 
         // generate SELECT
-       sb.append(generateSelectClauseRawDataFilters(orderedRawDataFilters, TABLE_NAME,
+       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
                getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
 
         //generate FROM
         RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, orderedRawDataFilters, isSingleCell,
+                sb, processedFilters, isSingleCell,
                 Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE
         sb.append(" WHERE ");
         boolean foundPrevious = false;
-        if (!orderedRawDataFilters.isEmpty()) {
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append("(")
-              .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, rawDataFiltersToDatabaseMapping))
+              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
               .append(")");
             foundPrevious = true;
         }
@@ -210,7 +207,7 @@ implements RawDataConditionDAO {
           .append(")");
 
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
                     isSingleCell, DAODataType.RNA_SEQ, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {

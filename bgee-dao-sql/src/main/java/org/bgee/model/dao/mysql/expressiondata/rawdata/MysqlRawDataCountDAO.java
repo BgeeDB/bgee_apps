@@ -1,11 +1,8 @@
 package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -13,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
@@ -46,15 +44,11 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
-        // force to have a list in order to keep order of elements. It is mandatory to be able
-        // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters = 
-                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
-                    new ArrayList<>(rawDataFilters));
+        final DAOProcessedRawDataFilter processedRawDataFilters = 
+                new DAOProcessedRawDataFilter(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
-        boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean probesetTable = needGeneId || callsCount;
+        boolean probesetTable = processedRawDataFilters.isNeedGeneId() || callsCount;
 
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
@@ -113,16 +107,17 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 //
 //        // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
+                processedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
 
         // generate WHERE CLAUSE
-        if(!orderedRawDataFilters.isEmpty()) {
+        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
+            .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
+                    filtersToDatabaseMapping));
         }
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
-                    DAODataType.AFFYMETRIX, null, null);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
+                    processedRawDataFilters, DAODataType.AFFYMETRIX, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();
@@ -159,14 +154,12 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final List<DAORawDataFilter> orderedRawDataFilters =
-                Collections.unmodifiableList(rawDataFilters == null? new ArrayList<>():
-                    new ArrayList<>(rawDataFilters));
+        final DAOProcessedRawDataFilter processedFilters = new DAOProcessedRawDataFilter(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
-        boolean needGeneId = orderedRawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        boolean callTable = needGeneId || callCount;
-        boolean assayTable = callTable || assayCount;
+        boolean callTable = processedFilters.isNeedGeneId() || callCount;
+        // used to know if it is possible to do a count(*) for rnaSeqLibrary count
+        boolean assayOrCallTable = callTable || assayCount || processedFilters.isNeedConditionId();
 
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
@@ -182,7 +175,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 sb.append(",");
             }
             sb.append(" count(");
-            if (!assayTable) {
+            if (!assayOrCallTable) {
                 //count(*) is faster than count(columnName)
                 //(see https://stackoverflow.com/a/3003482).
                 //If the assays were not required, then
@@ -200,7 +193,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             previousCount = true;
         }
         if (assayCount) {
-            assert assayTable;
+            assert assayOrCallTable;
             if(previousCount) {
                 sb.append(",");
             }
@@ -249,18 +242,18 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                orderedRawDataFilters, isSingleCell, necessaryTables, DAODataType.RNA_SEQ);
+                processedFilters, isSingleCell, necessaryTables, DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
         boolean foundPrevious = false;
-        if(!orderedRawDataFilters.isEmpty()) {
+        if(!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClauseRawDataFilter(orderedRawDataFilters, filtersToDatabaseMapping));
+            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
             foundPrevious = true;
         }
         foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
         try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), orderedRawDataFilters,
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
                     isSingleCell, DAODataType.RNA_SEQ, null, null);
             MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
             resultSet.next();

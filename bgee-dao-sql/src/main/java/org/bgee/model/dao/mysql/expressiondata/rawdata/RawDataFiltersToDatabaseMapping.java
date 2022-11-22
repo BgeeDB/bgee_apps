@@ -16,6 +16,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
@@ -38,18 +39,7 @@ public class RawDataFiltersToDatabaseMapping {
 
 
     /**
-     * An {@code Enum} describing columns potentially used in a where clause but for
-     * which the table used can change depending on the query.
-     * @author Julien Wollbrett
-     * @version Bgee 15.0, Nov. 2022
-     * @since Bgee 15.0, Nov. 2022
-     */
-    public static enum AmbiguousRawDataColumn {SPECIES_ID, EXPERIMENT_ID, COND_ID,
-        ASSAY_ID}
-
-    /**
-     * An {@code Enum} describing columns potentially used in a where clause but for
-     * which the table can not change depending on the query.
+     * An {@code Enum} describing columns potentially used in a where clause.
      * @author Julien Wollbrett
      * @version Bgee 15.0, Nov. 2022
      * @since Bgee 15.0, Nov. 2022
@@ -57,12 +47,12 @@ public class RawDataFiltersToDatabaseMapping {
     public static enum RawDataColumn {SPECIES_ID, EXPERIMENT_ID, COND_ID,
         ASSAY_ID, CALL_ID, GENE_ID}
 
-    public RawDataFiltersToDatabaseMapping(Map<AmbiguousRawDataColumn, String> ambiguousColToTableName,
+    public RawDataFiltersToDatabaseMapping(Map<RawDataColumn, String> ambiguousColToTableName,
             DAODataType datatype) {
         if (datatype == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
         }
-        Map<AmbiguousRawDataColumn, String> clonedAmbiguousColumns = ambiguousColToTableName == null ?
+        Map<RawDataColumn, String> clonedAmbiguousColumns = ambiguousColToTableName == null ?
                 Collections.unmodifiableMap(new HashMap<>()) :
                     Collections.unmodifiableMap(ambiguousColToTableName);
         this.colToTableName = Collections.unmodifiableMap(RawDataFiltersToDatabaseMapping
@@ -70,9 +60,7 @@ public class RawDataFiltersToDatabaseMapping {
         this.colToColumnName = Collections.unmodifiableMap(RawDataFiltersToDatabaseMapping
                 .generateColToColName(datatype));
         this.datatype = datatype;
-        log.debug("datatype : {}", this.datatype);
-        log.debug("colToColumnName : {}", this.getColToColumnName());
-        log.debug("colToTableName : {}", this.getColToTableName());
+        log.debug(this.toString());
     }
 
     public Map<RawDataColumn, String> getColToTableName() {
@@ -88,17 +76,19 @@ public class RawDataFiltersToDatabaseMapping {
     }
 
     private static Map<RawDataColumn, String> generateColToTableName(
-            Map<AmbiguousRawDataColumn, String> ambiguousColToTable, DAODataType datatype) {
+            Map<RawDataColumn, String> ambiguousColToTable, DAODataType datatype) {
         Map<RawDataColumn, String> finalColToTable = new HashMap<>();
         // first add all tables that have been detected as ambiguous
         finalColToTable.putAll(ambiguousColToTable.entrySet().stream()
-                .collect(Collectors.toMap(e-> fromAmbiguousColumnToColumn(e.getKey()), e-> e.getValue())));
+                .collect(Collectors.toMap(e-> e.getKey(), e-> e.getValue())));
         // then add tables that can not be ambiguous. It depends on the datatype
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
             finalColToTable.put(RawDataColumn.ASSAY_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLAffymetrixProbesetDAO.TABLE_NAME);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+        } else if (datatype.equals(DAODataType.EST)) {
+            finalColToTable.put(RawDataColumn.GENE_ID, MySQLESTDAO.TABLE_NAME);
         } else {
             throw log.throwing(new IllegalStateException("not yet implemented for datatype " +
                     datatype));
@@ -132,24 +122,6 @@ public class RawDataFiltersToDatabaseMapping {
                     datatype));
         }
         return finalColToColName;
-    }
-
-    private static RawDataColumn fromAmbiguousColumnToColumn(AmbiguousRawDataColumn ambiguousColumn) {
-        log.traceEntry("{}", ambiguousColumn);
-        if (ambiguousColumn.equals(AmbiguousRawDataColumn.COND_ID)) {
-            return log.traceExit(RawDataColumn.COND_ID);
-        }
-        if (ambiguousColumn.equals(AmbiguousRawDataColumn.EXPERIMENT_ID)) {
-            return log.traceExit(RawDataColumn.EXPERIMENT_ID);
-        }
-        if (ambiguousColumn.equals(AmbiguousRawDataColumn.ASSAY_ID)) {
-            return log.traceExit(RawDataColumn.ASSAY_ID);
-        }
-        if (ambiguousColumn.equals(AmbiguousRawDataColumn.SPECIES_ID)) {
-            return log.traceExit(RawDataColumn.SPECIES_ID);
-        }
-        throw log.throwing(new IllegalArgumentException(ambiguousColumn + " can not be"
-                + " transformed to a RawDataColumn"));
     }
 
     @Override

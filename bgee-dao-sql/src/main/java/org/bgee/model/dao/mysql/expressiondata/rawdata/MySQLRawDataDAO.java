@@ -329,6 +329,178 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     /**
+     * Method, specific to ESTs, allowing to add a FROM clause to a {@code StringBuilder}
+     * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
+     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to
+     * ambiguous columns to use in the WHERE clause as keys and {@code String} corresponding
+     * to the ambiguous tables to use to retrieve the data as values.
+     * 
+     * @param sb                The {@code StringBuilder} for which the FROM clause will be
+     *                          created.
+     * @param processedFilters  The {@code DAOProcessedRawDataFilter} to use to generate the
+     *                          FROM clause
+     * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
+     *                          of tables necessary to the creation of the FROM clause.
+     *                          {@code necessaryTables} must contain only the names
+     *                          of the tables used to retrieve necessary information
+     *                          in the SELECT clause, not the tables used for filtering results.
+     *                          Other tables will be automatically added to the clause
+     *                          by this method to satisfy the {@code filter}s.
+     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     *                          {@code String} as value defining the table to use.
+     */
+    private Map<RawDataColumn, String> generateFromClauseRawDataEst(StringBuilder sb,
+            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+        log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
+
+        if (necessaryTables.size() > 1) {
+            throw log.throwing(new IllegalStateException("Combination of necessary tables unsupported: "
+                    + necessaryTables));
+        }
+        
+        Map<RawDataColumn, String> colToTableMap = new LinkedHashMap<>();
+        LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
+
+        // check needed tables
+        boolean geneTable = processedFilters.isNeedSpeciesId() && necessaryTables.size() == 1 &&
+                necessaryTables.contains(MySQLESTDAO.TABLE_NAME)
+                && !processedFilters.isNeedAssayId() && !processedFilters.isNeedConditionId();
+        boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable || necessaryTables.contains(
+                MySQLRawDataConditionDAO.TABLE_NAME);
+        assert !(geneTable && condTable): "We should never need both cond and gene table";
+        boolean callTable = necessaryTables.contains(MySQLESTDAO.TABLE_NAME) ||
+                processedFilters.isNeedGeneId();
+        boolean assayTable = necessaryTables.contains(MySQLESTLibraryDAO.TABLE_NAME) ||
+                !condTable && processedFilters.isNeedConditionId() ||
+                condTable && callTable;
+        log.debug("geneTable: {}, condTable: {}, estTable: {}, estLibraryTable: {}",
+                geneTable, condTable, callTable, assayTable);
+
+        // then check table filtering on speciesId if any
+        if (processedFilters.isNeedSpeciesId()) {
+            if (geneTable) {
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLGeneDAO.TABLE_NAME);
+                orderedTables.add(MySQLGeneDAO.TABLE_NAME);
+                if (callTable) {
+                    orderedTables.add(MySQLESTDAO.TABLE_NAME);
+                }
+            } else if (condTable) {
+                colToTableMap.put(RawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+                orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+            }
+        }
+        // then add assay table if required
+        if (assayTable) {
+            orderedTables.add(MySQLESTLibraryDAO.TABLE_NAME);
+            if (processedFilters.isNeedAssayId()) {
+                colToTableMap.put(RawDataColumn.ASSAY_ID, MySQLESTLibraryDAO.TABLE_NAME);
+            }
+        // if assay is not a necessary table it means assayId can be retrieved from call table
+        } else if (processedFilters.isNeedAssayId()) {
+            colToTableMap.put(RawDataColumn.ASSAY_ID, MySQLESTDAO.TABLE_NAME);
+        }
+        // then add call table. Not added if already inserted as we use a LinkedHashSet,
+        //and insertion order is not affected if an element is re-inserted into the set.
+        if (callTable) {
+            orderedTables.add(MySQLESTDAO.TABLE_NAME);
+        }
+        // finally check if the cond table has to be added. Not added if already inserted as we use
+        // a LinkedHashSet. Detect which table to use to retrieve the potential conditionId
+        if (condTable) {
+            orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+            if (processedFilters.isNeedConditionId()) {
+                colToTableMap.put(RawDataColumn.COND_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+            }
+        // if cond is not a necessary table it means conditionId can be retrieved from 
+        } else if (processedFilters.isNeedConditionId()) {
+            colToTableMap.put(RawDataColumn.COND_ID, MySQLESTLibraryDAO.TABLE_NAME);
+        }
+        log.debug("orderedTables: {}", orderedTables);
+
+        sb.append(writeFromClauseEST(orderedTables));
+
+        return log.traceExit(colToTableMap);
+    }
+
+    /**
+     * Generate the {@code StringBuilder} corresponding to the FROM clause of any EST
+     * query based on a {@code LinkedHashSet} containing tables to join in the proper order.
+     * 
+     * @param tables    A {@code LinkedHashSet} containing tables to join in the FROM clause in
+     *                  the proper order
+     * @return          A {@code StringBuilder} corresponding to the FROM clause of any EST
+     *                  query
+     */
+    private StringBuilder writeFromClauseEST(LinkedHashSet<String> tables) {
+        log.traceEntry("{}", tables);
+        if (tables == null || tables.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("tables can not be null"
+                    + " or empty."));
+        }
+        Set<String> previousTables = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append(" FROM");
+        for (String table : tables) {
+            if (previousTables.isEmpty()) {
+                sb.append(" " + table);
+                previousTables.add(table);
+
+            //manage condition table
+            } else if (table.equals(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                assert previousTables.contains(MySQLESTLibraryDAO.TABLE_NAME);
+                sb.append(" INNER JOIN " + table + " ON ")
+                .append(table + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = ")
+                .append(MySQLESTLibraryDAO.TABLE_NAME + ".")
+                .append(ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName());
+                previousTables.add(table);
+
+            // manage call table
+            } else if (table.equals(MySQLESTDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLGeneDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLGeneDAO.TABLE_NAME + "." + GeneDAO.Attribute.ID.getTOFieldName())
+                    .append(" = " + table + "." + ESTDAO.Attribute.BGEE_GENE_ID
+                            .getTOFieldName());
+                } else if (previousTables.contains(MySQLESTLibraryDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLESTLibraryDAO.TABLE_NAME + "." + ESTLibraryDAO.Attribute
+                            .ID.getTOFieldName() + " = ")
+                    .append(table + "." + ESTDAO.Attribute.EST_LIBRARY_ID
+                            .getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(table);
+
+            // and finally manage assay table
+            } else if (table.equals(MySQLESTLibraryDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRawDataConditionDAO.TABLE_NAME + ".")
+                    .append(RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = " + table + ".")
+                    .append(ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName());
+                } else if (previousTables.contains(MySQLESTDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLESTDAO.TABLE_NAME + ".")
+                    .append(ESTDAO.Attribute.EST_LIBRARY_ID.getTOFieldName())
+                    .append(" = " + table + "." + ESTLibraryDAO.Attribute
+                            .ID.getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(table);
+            } else {
+                throw log.throwing(new IllegalStateException(
+                        table + " is not a proper table name or not in proper order. Previous tables: "
+                        + previousTables));
+            }
+        }
+        return log.traceExit(sb);
+    }
+
+    /**
      * Generate the {@code StringBuilder} corresponding to the FROM clause of any affymetrix
      * query based on a {@code LinkedHashSet} containing tables to join in the proper order.
      * 

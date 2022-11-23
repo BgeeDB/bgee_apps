@@ -18,6 +18,8 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
@@ -285,6 +287,16 @@ public class MockDAOManager extends DAOManager {
     @Override
     protected AffymetrixChipTypeDAO getNewAffymetrixChipTypeDAO() {
         return this.instanceMockManager.getAffymetrixChipTypeDAO();
+    }
+
+    @Override
+    protected ESTLibraryDAO getNewESTLibraryDAO() {
+        return this.instanceMockManager.getESTLibraryDAO();
+    }
+
+    @Override
+    protected ESTDAO getNewESTDAO() {
+        return this.instanceMockManager.getESTDAO();
     }
 	
 }

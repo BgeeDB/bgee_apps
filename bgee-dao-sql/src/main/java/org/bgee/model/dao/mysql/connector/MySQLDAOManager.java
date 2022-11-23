@@ -32,6 +32,8 @@ import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
@@ -59,6 +61,8 @@ import org.bgee.model.dao.mysql.expressiondata.MySQLRawExpressionCallDAO;
 import org.bgee.model.dao.mysql.expressiondata.MySQLSamplePValueDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipTypeDAO;
@@ -1197,7 +1201,16 @@ public class MySQLDAOManager extends DAOManager {
         log.traceEntry();
         return log.traceExit(new MySQLRNASeqLibraryDAO(this));
     }
-
+    @Override
+    protected ESTLibraryDAO getNewESTLibraryDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLESTLibraryDAO(this));
+    }
+    @Override
+    protected ESTDAO getNewESTDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLESTDAO(this));
+    }
     @Override
     protected SexDAO getNewSexDAO() {
         log.traceEntry();

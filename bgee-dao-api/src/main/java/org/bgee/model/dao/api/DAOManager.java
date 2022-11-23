@@ -35,6 +35,8 @@ import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
@@ -1258,6 +1260,32 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code ESTLibraryDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO
+     */
+    public ESTLibraryDAO getESTLibraryDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewESTLibraryDAO());
+    }
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO}, 
+     * unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code ESTDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO
+     */
+    public ESTDAO getESTDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewESTDAO());
+    }
+    /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO 
      * InSituSpotDAO}, unless this {@code DAOManager} is already closed. 
      * 
@@ -1751,6 +1779,22 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code RNASeqResultDAO}
      */
     protected abstract RNASeqResultAnnotatedSampleDAO getNewRNASeqResultAnnotatedSampleDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO 
+     * ESTLibraryDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code ESTLibraryDAO}
+     */
+    protected abstract ESTLibraryDAO getNewESTLibraryDAO();
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO 
+     * ESTDAO} instance when this method is called. 
+     * 
+     * @return  A new {@code ESTDAO}
+     */
+    protected abstract ESTDAO getNewESTDAO();
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO} 

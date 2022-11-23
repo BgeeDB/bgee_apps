@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
@@ -116,6 +117,10 @@ public class RawDataFiltersToDatabaseMapping {
                     .ID.getTOFieldName());
             // for RNA-Seq the filtering is done on library IDs
             finalColToColName.put(RawDataColumn.ASSAY_ID, RNASeqLibraryDAO.Attribute
+                    .ID.getTOFieldName());
+        } else if (datatype.equals(DAODataType.EST)) {
+            // for RNA-Seq the filtering is done on library IDs
+            finalColToColName.put(RawDataColumn.ASSAY_ID, ESTLibraryDAO.Attribute
                     .ID.getTOFieldName());
         } else {
             throw log.throwing(new IllegalStateException("not yet implemented for datatype " +

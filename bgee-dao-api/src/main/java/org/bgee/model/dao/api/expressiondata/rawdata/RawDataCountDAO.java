@@ -53,6 +53,19 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
             boolean experimentCount, boolean assayCount, boolean callCount);
 
     /**
+     * Retrieve EST count of assay and calls based on a {@code Collection} of 
+     * {@code DAORawDataFilter}. 
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                          EST data for which count are queried.
+     * @param assayCount        A boolean defining rather assay count has to be retrieved
+     * @param callCount         A boolean defining rather calls count has to be retrieved
+     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     */
+    public RawDataCountContainerTO getESTCount(Collection<DAORawDataFilter> rawDataFilters,
+            boolean assayCount, boolean callCount);
+
+    /**
      * Retrieve insitu count of experiment, assay and calls based on a {@code Collection} of 
      * {@code DAORawDataFilter}. 
      *
@@ -65,19 +78,6 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      */
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
             boolean experimentCount, boolean assayCount, boolean resultCount);
-
-    /**
-     * Retrieve EST count of assay and calls based on a {@code Collection} of 
-     * {@code DAORawDataFilter}. 
-     *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
-     *                          EST data for which count are queried.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved
-     * @param callsCount        A boolean defining rather calls count has to be retrieved
-     * @return                  A {@code RawDataConditionTO} containing requested counts.
-     */
-    public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean assayCount, boolean callsCount);
 
     /**
      * Retrieve RNA-Seq count of experiment, assay and calls based on a {@code Collection} of 

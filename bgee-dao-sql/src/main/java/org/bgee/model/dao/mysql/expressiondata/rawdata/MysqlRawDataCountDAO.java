@@ -13,6 +13,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -21,6 +22,8 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
@@ -104,8 +107,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if (experimentCount) {
             necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
         }
-//
-//        // generate FROM clause
+
+        // generate FROM clause
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 processedRawDataFilters, null, necessaryTables, DAODataType.AFFYMETRIX);
 
@@ -128,10 +131,87 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
     }
 
-    @Override
-    public RawDataCountContainerTO getEstCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        return null;
+    public RawDataCountContainerTO getESTCount(Collection<DAORawDataFilter> rawDataFilters,
+            boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, assayCount, callCount);
+        if (!assayCount && !callCount) {
+            throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
+                    + " callsCount can not be all false at the same time"));
+        }
+        final DAOProcessedRawDataFilter processedRawDataFilters = 
+                new DAOProcessedRawDataFilter(rawDataFilters);
+        StringBuilder sb = new StringBuilder();
+
+        boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount;
+
+        // generate SELECT clause
+        sb.append("SELECT STRAIGHT_JOIN");
+        boolean previousCount = false;
+        if (assayCount) {
+            sb.append(" count(");
+            if (!callTable) {
+                //count(*) is faster than count(columnName)
+                //(see https://stackoverflow.com/a/3003482).
+                //If the calls were not required, then
+                //number of lines = number of estLibraryId
+                //(primary key of the estLibrary table)
+                sb.append("*");
+            } else {
+                //If calls are needed, we need to add DISTINCT,
+                //because relation 1-to-many to table call.
+                sb.append("distinct ").append(MySQLESTDAO.TABLE_NAME).append(".")
+                        .append(ESTDAO.Attribute.EST_LIBRARY_ID.getTOFieldName());
+            }
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (callCount) {
+            assert callTable;
+            if(previousCount) {
+                sb.append(",");
+            }
+            //Here, number of lines always equal to
+            //count(distinct estId)
+            //(the primary key of the table that we need to count).
+            //We wouldn't need the DISTINCT.
+            //And count(*) is faster than count(columnName)
+            sb.append(" count(*) as ")
+              .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
+        }
+
+        // create the set of tables it is necessary to use in FROM clause even if no filter
+        // on those columns.
+        // If callCount then all count can be retrieved from the call table
+        Set<String> necessaryTables = new HashSet<>();
+        if (callCount) {
+            necessaryTables.add(MySQLESTDAO.TABLE_NAME);
+        } else {
+            assert assayCount;
+            necessaryTables.add(MySQLESTLibraryDAO.TABLE_NAME);
+        }
+
+        // generate FROM clause
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                processedRawDataFilters, null, necessaryTables, DAODataType.EST);
+
+        // generate WHERE CLAUSE
+        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
+            sb.append(" WHERE ")
+            .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
+                    filtersToDatabaseMapping));
+        }
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
+                    processedRawDataFilters, DAODataType.EST, null, null);
+            MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
+            resultSet.next();
+            RawDataCountContainerTO to = resultSet.getTO();
+            resultSet.close();
+            return log.traceExit(to);
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     @Override

@@ -5,141 +5,83 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping;
 
 public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
         implements ESTLibraryDAO{
 
     private final static Logger log = LogManager.getLogger(MySQLESTLibraryDAO.class.getName());
     public final static String TABLE_NAME = "estLibrary";
-    private final static String EST_TABLE_NAME = MySQLESTDAO.TABLE_NAME;
 
     public MySQLESTLibraryDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
     }
 
     @Override
-    public ESTLibraryTOResultSet getESTLibraries(Collection<String> libraryIds, 
-            DAORawDataFilter filter, Collection<ESTLibraryDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}, {}", libraryIds, filter, attributes);
+    public ESTLibraryTOResultSet getESTLibraries(Collection<DAORawDataFilter> rawDataFilters,
+            Integer offset, Integer limit, Collection<ESTLibraryDAO.Attribute> attrs)
+            throws DAOException {
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
 
-//        final Set<String> clonedLibIds = Collections.unmodifiableSet(libraryIds == null?
-//                new HashSet<>(): new HashSet<>(libraryIds));
-//        final DAORawDataFilter clonedFilter = new DAORawDataFilter(filter);
-//        final Set<ESTLibraryDAO.Attribute> attrs = Collections.unmodifiableSet(attributes == null? 
-//                EnumSet.noneOf(ESTLibraryDAO.Attribute.class): EnumSet.copyOf(attributes));
-//
-//        // generate SELECT
+        final DAOProcessedRawDataFilter processedFilters =
+                new DAOProcessedRawDataFilter(rawDataFilters);
+        final Set<ESTLibraryDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attrs == null || attrs.isEmpty()?
+                EnumSet.allOf(ESTLibraryDAO.Attribute.class): EnumSet.copyOf(attrs));
+
         StringBuilder sb = new StringBuilder();
-//        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(ESTLibraryDAO
-//                .Attribute.class), true, attrs))
-//        // generate FROM
-//        .append(generateFromClause(clonedFilter));
-//        
-//        // generate WHERE CLAUSE
-//        if (!clonedLibIds.isEmpty() || !clonedFilter.getSpeciesIds().isEmpty()
-//                || !clonedFilter.getGeneIds().isEmpty()
-//                || !clonedFilter.getConditionFilters().isEmpty()) {
-//          sb.append(" WHERE ");
-//        }
-//        boolean previousFilter= false;
-//        // FITER ON LIBRARY IDS
-//        if (!clonedLibIds.isEmpty()) {
-//            sb.append(TABLE_NAME).append(".")
-//            .append(ESTLibraryDAO.Attribute.ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedLibIds.size()))
-//            .append(")");
-//            previousFilter = true;
-//        }
-//        // FITER ON SPECIES IDS
-//        if (!clonedFilter.getSpeciesIds().isEmpty()) {
-//            if (previousFilter) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(CONDITION_TABLE_NAME).append(".")
-//            .append(RawDataConditionDAO.Attribute.SPECIES_ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-//                    .getSpeciesIds().size()))
-//            .append(")");
-//            previousFilter = true;
-//        }
-//        if (!clonedFilter.getGeneIds().isEmpty()) {
-//            if (previousFilter) {
-//                sb.append(" AND ");
-//            }
-//            sb.append(EST_TABLE_NAME).append(".")
-//            .append(ESTDAO.Attribute.BGEE_GENE_ID.getTOFieldName()).append(" IN (")
-//            .append(BgeePreparedStatement.generateParameterizedQueryString(clonedFilter
-//                    .getGeneIds().size()))
-//            .append(")");
-//            previousFilter = true;
-//        }
-//        // FILTER ON RAW CONDITIONS
-//        if (!clonedFilter.getConditionFilters().isEmpty()) {
-//            sb.append(clonedFilter.getConditionFilters().stream()
-//                    .map(cf -> generateOneConditionFilter(cf))
-//                    .collect(Collectors.joining(" OR ", "(", ")")));
-//        }
 
-        //add values to parameterized queries
+        // generate SELECT
+        sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
+                getColToAttributesMap(ESTLibraryDAO.Attribute.class), true, clonedAttrs));
+
+        // generate FROM
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                processedFilters, null, Set.of(TABLE_NAME), DAODataType.EST);
+
+        // generate WHERE CLAUSE
+        if (!processedFilters.getRawDataFilters().isEmpty() &&
+                !processedFilters.getRawDataFilters().stream().allMatch(f ->
+                f.getAssayIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
+                f.getGeneIds().isEmpty() && f.getRawDataCondIds().isEmpty() &&
+                f.getSpeciesId() == null)) {
+            sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
+                    filtersToDatabaseMapping));
+        }
+
+        // generate ORDER BY
+        sb.append(" ORDER BY")
+        .append(" " + TABLE_NAME + "." + ESTLibraryDAO.Attribute.ID
+                .getTOFieldName());
+
+        //generate offset and limit
+        if (limit != null) {
+            sb.append(offset == null ? " LIMIT ?": " LIMIT ?, ?");
+        }
         try {
-            BgeePreparedStatement stmt = this.getManager().getConnection()
-                    .prepareStatement(sb.toString());
-//            int paramIndex = 1;
-//            if (!clonedLibIds.isEmpty()) {
-//                stmt.setStrings(paramIndex, clonedLibIds, true);
-//                paramIndex += clonedLibIds.size();
-//            }
-//            if (!clonedFilter.getSpeciesIds().isEmpty()) {
-//                stmt.setIntegers(paramIndex, clonedFilter.getSpeciesIds(), true);
-//                paramIndex += clonedFilter.getSpeciesIds().size();
-//            }
-//            if (!clonedFilter.getGeneIds().isEmpty()) {
-//                stmt.setIntegers(paramIndex, clonedFilter.getGeneIds(), true);
-//                paramIndex += clonedFilter.getGeneIds().size();
-//            }
-//            configureRawDataConditionFiltersStmt(stmt, clonedFilter.getConditionFilters(),
-//                    paramIndex);
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
+                    DAODataType.EST, offset, limit);
             return log.traceExit(new MySQLESTLibraryTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
-
-//    private String generateFromClause(DAORawDataFilter filter) {
-//        log.traceEntry("{}", filter);
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(" FROM " + TABLE_NAME);
-//        if(!filter.getSpeciesIds() .isEmpty() || !filter.getConditionFilters().isEmpty()) {
-//            sb.append(" INNER JOIN " + CONDITION_TABLE_NAME + " ON ")
-//            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName() + " ")
-//            .append(" = " + CONDITION_TABLE_NAME + "." 
-//                    + RawDataConditionDAO.Attribute.ID.getTOFieldName());
-//        }
-//        if(!filter.getGeneIds() .isEmpty()) {
-//            sb.append(" INNER JOIN " + EST_TABLE_NAME + " ON ")
-//            .append(TABLE_NAME + "." + ESTLibraryDAO.Attribute.ID.getTOFieldName() + " ")
-//            .append(" = " + EST_TABLE_NAME + "." 
-//                    + ESTDAO.Attribute.EST_LIBRARY_ID.getTOFieldName());
-//        }
-//        return log.traceExit(sb.toString());
-//    }
 
     class MySQLESTLibraryTOResultSet extends MySQLDAOResultSet<ESTLibraryTO> 
         implements ESTLibraryTOResultSet{
@@ -185,5 +127,4 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
             }
         }
     }
-
 }

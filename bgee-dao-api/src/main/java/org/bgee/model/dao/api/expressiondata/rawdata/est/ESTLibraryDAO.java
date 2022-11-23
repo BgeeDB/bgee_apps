@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.NamedEntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAssayDAO.AssayTO;
@@ -34,7 +35,7 @@ public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         ID("estLibraryId"), NAME("estLibraryName"), DESCRIPTION("estLibraryDescription"), 
-        DATA_SOURCE_ID("dataSourceid"), CONDITION_ID("conditionId");
+        DATA_SOURCE_ID("dataSourceId"), CONDITION_ID("conditionId");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTLibraryTO} class.
@@ -53,20 +54,26 @@ public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
     }
 
     /**
-     * Retrieve EST Libraries existing in any requested species IDs or corresponding
-     * to any requested combination of condition parameters and potentially filtered
-     * using requested EST library IDs
-     * 
-     * @param libraryIds        A {@code Collection} of {@code String} corresponding to
-     *                          library IDs to filter on.
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param speciesIds        A {@code Collection} of {@code Integer} corresponding to the
-     *                          species IDs used to filter EST Libraries
-     * @return
+     * Allows to retrieve {@code ESTLibraryTO}s according to the provided filters.
+     * <p>
+     * The {@code ESTLibraryTO}s are retrieved and returned as a {@code ESTLibraryTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter EST libraries to retrieve. The query uses AND between elements
+     *                          of a same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code ESTLibraryTOResultSet} allowing to retrieve the
+     *                          targeted {@code ESTLibraryTOResultSet}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public ESTLibraryTOResultSet getESTLibraries(Collection<String> libraryIds,
-            DAORawDataFilter rawDaraFilter, Collection<ESTLibraryDAO.Attribute> attrs);
+    public ESTLibraryTOResultSet getESTLibraries(Collection<DAORawDataFilter> rawDataFilters,
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ESTLibraryTO}s

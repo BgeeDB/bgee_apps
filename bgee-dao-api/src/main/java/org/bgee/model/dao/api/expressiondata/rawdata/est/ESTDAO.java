@@ -6,6 +6,7 @@ import java.util.Collection;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
@@ -58,53 +59,26 @@ public interface ESTDAO extends DAO<ESTDAO.Attribute> {
     }
 
     /**
-     * retrieve ESTs filtered on EST library IDs.
-     * 
-     * @param estLibraryIds     A {@code Collection} of {@code String} that corresponds
-     *                          to EST libraries for which ESTs have to be retrieved.
-     * @param attrs             A {@code Collection} of {@code ESTDAO.Attribute}s defining the
-     *                          attributes to populate in the returned {@code ESTTO}s.
-     *                          If {@code null} or empty, all attributes are populated.
-     * 
-     * @return                  A {@code ESTTOResultSet} containing ESTs
+     * Allows to retrieve {@code ESTTO}s according to the provided filters.
+     * <p>
+     * The {@code ESTTO}s are retrieved and returned as a {@code ESTTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                          how to filter ESTs to retrieve. The query uses AND between elements
+     *                          of a same filter and uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code ESTTOResultSet} allowing to retrieve the
+     *                          targeted {@code ESTTOResultSet}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public ESTTOResultSet getESTByLibraryIds(Collection<String> estLibraryIds,
-            Collection<ESTDAO.Attribute> attrs);
-
-    /**
-     * retrieve ESTs filtered on bgee gene IDs, speciesIds and conditions
-     * 
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param attrs             A {@code Collection} of {@code ESTDAO.Attribute}s defining the
-     *                          attributes to populate in the returned {@code ESTTO}s.
-     *                          If {@code null} or empty, all attributes are populated.
-     * 
-     * @return                  A {@code ESTTOResultSet} containing ESTs
-     */
-    public ESTTOResultSet getESTByRawDataFilter(DAORawDataFilter rawDataFilter,
-            Collection<ESTDAO.Attribute> attrs);
-
-    /**
-     * retrieve ESTs filtered on species IDs, bgee gene IDs, conditions, EST library IDs and 
-     * est IDs
-     * 
-     * @param estLibraryIds     A {@code Collection} of {@code String} that corresponds
-     *                          to EST libraries for which ESTs have to be retrieved.
-     * @param estIds            A {@code Collection} of {@code String} that corresponds
-     *                          to EST IDs for which ESTs have to be retrieved. ESTs have
-     *                          two IDs in the database. This filtering can be on any of
-     *                          them.
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * @param attrs             A {@code Collection} of {@code ESTDAO.Attribute}s defining the
-     *                          attributes to populate in the returned {@code ESTTO}s.
-     *                          If {@code null} or empty, all attributes are populated. 
-     * 
-     * @return                  A {@code ESTTOResultSet} containing ESTs
-     */
-    public ESTTOResultSet getESTs(Collection<String> estLibraryIds, Collection<String> estIds,
-            DAORawDataFilter rawDataFilter, Collection<ESTDAO.Attribute> attrs);
+    public ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters,
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     public interface ESTTOResultSet extends DAOResultSet<ESTTO> {}
 

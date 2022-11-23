@@ -42,6 +42,8 @@
       <filter.org.bgee.search.url>server_url</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
+	  <filter.org.bgee.search.anat.entities>bgee_anat_auto_${project.version}</filter.org.bgee.search.anat.entities>
+      <filter.org.bgee.search.strains>bgee_strains_${project.version}</filter.org.bgee.search.strains>
       <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
       <!-- Properties for running TopAnat -->
       <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
@@ -58,7 +60,10 @@
       <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
       <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
       <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
-      <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
+            <filter.org.bgee.webapp.sparqlCurrentUrl>http://test.com/sparql/</filter.org.bgee.webapp.sparqlCurrentUrl>
+      <filter.org.bgee.webapp.sparqlStableUrl>http://test.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
+      <filter.org.bgee.webapp.sparqlStableGraph>http://test.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
+      <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
     </properties>
   </profile>
   <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 
@@ -81,8 +86,11 @@
       <filter.org.bgee.search.url>127.0.0.1</filter.org.bgee.search.url>
       <filter.org.bgee.search.port>9312</filter.org.bgee.search.port>
       <filter.org.bgee.search.genes>bgee_genes_${project.version}</filter.org.bgee.search.genes>
+	  <filter.org.bgee.search.anat.entities>bgee_anat_auto_${project.version}</filter.org.bgee.search.anat.entities>
+      <filter.org.bgee.search.strains>bgee_strains_${project.version}</filter.org.bgee.search.strains>
       <filter.org.bgee.search.autocomplete>bgee_autocomplete_${project.version}</filter.org.bgee.search.autocomplete>
       <!-- Properties for running TopAnat -->
+      <filter.org.bgee.core.bioconductorReleaseNumber>3.11</filter.org.bgee.core.bioconductorReleaseNumber>
       <filter.org.bgee.core.topAnatRWorkingDirectory>/workingDir/</filter.org.bgee.core.topAnatRWorkingDirectory>
       <filter.org.bgee.core.topAnatResultsWritingDirectory>/resultDir/</filter.org.bgee.core.topAnatResultsWritingDirectory>
       <filter.org.bgee.core.topAnatRScriptExecutable>/RscriptLocation</filter.org.bgee.core.topAnatRScriptExecutable>
@@ -96,7 +104,10 @@
       <filter.org.bgee.webapp.bgeeRootDirectory>http://production.com/</filter.org.bgee.webapp.bgeeRootDirectory>
       <filter.org.bgee.webapp.bgeeStableRootDirectory>http://production.com/production14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
       <filter.org.bgee.webapp.bgeeCurrentUrl>http://production.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
-      <filter.org.bgee.webapp.bgeeRootDomain>.production.com</filter.org.bgee.webapp.bgeeRootDomain>
+      <filter.org.bgee.webapp.sparqlCurrentUrl>http://production.com/sparql/</filter.org.bgee.webapp.sparqlCurrentUrl>
+      <filter.org.bgee.webapp.sparqlStableUrl>http://production.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
+      <filter.org.bgee.webapp.sparqlStableGraph>http://production.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
+      <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
     </properties>
   </profile>
   <!-- Profile used for Bgee integration tests-->

@@ -164,10 +164,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 distinct, attributes);
         //XXX FB: shouldn't we always use a straight_join now that we have properly define
         //table order?
-        boolean straightJoin = processedFilters.getRawDataFilters() != null
-                && !processedFilters.getRawDataFilters().isEmpty() //allMatch returns true if the stream is empty
-                && processedFilters.getRawDataFilters().stream()
-                .allMatch(c -> !c.getGeneIds().isEmpty());
+        boolean straightJoin = processedFilters.isAlwaysGeneId();
         return log.traceExit(generateSelectClause(tableName, selectExprsToAttributes,
                 distinct, straightJoin, attributes));
     }

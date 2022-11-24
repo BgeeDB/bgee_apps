@@ -17,10 +17,10 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
  * @since Bgee 15.0, Nov. 2022
  * @see org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType RawDataDataType
  */
-public class RnaSeqDataType extends RawDataDataType<RnaSeqRawDataContainer, RnaSeqRawDataCountContainer> {
+public class RnaSeqDataType extends RawDataDataType<RnaSeqContainer, RnaSeqCountContainer> {
 
     public RnaSeqDataType(DataType dataType) {
-        super(dataType);
+        super(dataType, RnaSeqContainer.class, RnaSeqCountContainer.class);
         if (dataType == null) {
             throw new IllegalArgumentException("dataType cannot be null");
         }

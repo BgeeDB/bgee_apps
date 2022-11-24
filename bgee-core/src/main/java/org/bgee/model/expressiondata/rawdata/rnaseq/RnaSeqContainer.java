@@ -15,12 +15,12 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithEx
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
  */
-public class RnaSeqRawDataContainer extends RawDataContainerWithExperiment<RnaSeqExperiment,
+public class RnaSeqContainer extends RawDataContainerWithExperiment<RnaSeqExperiment,
 RnaSeqLibraryAnnotatedSample, RnaSeqResultAnnotatedSample> {
 
     private final Set<RnaSeqLibrary> libraries;
 
-    public RnaSeqRawDataContainer(Collection<RnaSeqExperiment> experiments,
+    public RnaSeqContainer(Collection<RnaSeqExperiment> experiments,
             Collection<RnaSeqLibraryAnnotatedSample> assays, Collection<RnaSeqLibrary> libraries,
             Collection<RnaSeqResultAnnotatedSample> calls) {
         super(experiments, assays, calls, libraries != null && !libraries.isEmpty());
@@ -55,14 +55,14 @@ RnaSeqLibraryAnnotatedSample, RnaSeqResultAnnotatedSample> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RnaSeqRawDataContainer other = (RnaSeqRawDataContainer) obj;
+        RnaSeqContainer other = (RnaSeqContainer) obj;
         return Objects.equals(libraries, other.libraries);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RnaSeqRawDataContainer [")
+        builder.append("RnaSeqContainer [")
                .append("getExperiments()=").append(getExperiments())
                .append(", libraries=").append(libraries)
                .append(", getAssays()=").append(getAssays())

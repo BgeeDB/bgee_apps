@@ -15,10 +15,11 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
  * @since Bgee 15.0, Nov. 2022
  * @see org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType RawDataDataType
  */
-public class AffymetrixDataType extends RawDataDataType<AffymetrixRawDataContainer,
-AffymetrixRawDataCountContainer> {
+public class AffymetrixDataType extends RawDataDataType<AffymetrixContainer,
+AffymetrixCountContainer> {
 
     public AffymetrixDataType() {
-        super(DataType.AFFYMETRIX);
+        super(DataType.AFFYMETRIX, AffymetrixContainer.class,
+                AffymetrixCountContainer.class);
     }
 }

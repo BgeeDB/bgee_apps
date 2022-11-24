@@ -9,9 +9,9 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainerW
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
  */
-public class AffymetrixRawDataCountContainer extends RawDataCountContainerWithExperiment {
+public class AffymetrixCountContainer extends RawDataCountContainerWithExperiment {
 
-    public AffymetrixRawDataCountContainer(Integer experimentCount,
+    public AffymetrixCountContainer(Integer experimentCount,
             Integer assayCount, Integer callCount) {
         super(experimentCount, assayCount, callCount);
     }

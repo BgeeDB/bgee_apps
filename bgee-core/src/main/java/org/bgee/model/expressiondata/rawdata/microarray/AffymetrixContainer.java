@@ -11,10 +11,10 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithEx
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
  */
-public class AffymetrixRawDataContainer
+public class AffymetrixContainer
 extends RawDataContainerWithExperiment<AffymetrixExperiment, AffymetrixChip, AffymetrixProbeset> {
 
-    public AffymetrixRawDataContainer(Collection<AffymetrixExperiment> experiments,
+    public AffymetrixContainer(Collection<AffymetrixExperiment> experiments,
             Collection<AffymetrixChip> assays, Collection<AffymetrixProbeset> calls) {
         super(experiments, assays, calls);
     }

@@ -11,11 +11,11 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainerW
  * @version Bgee 15.0, Nov. 2022
  * @since Bgee 15.0, Nov. 2022
  */
-public class RnaSeqRawDataCountContainer extends RawDataCountContainerWithExperiment {
+public class RnaSeqCountContainer extends RawDataCountContainerWithExperiment {
 
     private final Integer libraryCount;
 
-    protected RnaSeqRawDataCountContainer(Integer experimentCount, Integer assayCount,
+    protected RnaSeqCountContainer(Integer experimentCount, Integer assayCount,
             Integer libraryCount, Integer callCount) {
         super(experimentCount, assayCount, callCount, libraryCount != null && libraryCount > 0);
 
@@ -49,14 +49,14 @@ public class RnaSeqRawDataCountContainer extends RawDataCountContainerWithExperi
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RnaSeqRawDataCountContainer other = (RnaSeqRawDataCountContainer) obj;
+        RnaSeqCountContainer other = (RnaSeqCountContainer) obj;
         return Objects.equals(libraryCount, other.libraryCount);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RnaSeqRawDataCountContainer [")
+        builder.append("RnaSeqCountContainer [")
                 .append("getExperimentCount()=").append(getExperimentCount())
                 .append(", getAssayCount()=").append(getAssayCount())
                 .append(", libraryCount=").append(libraryCount)

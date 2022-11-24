@@ -43,8 +43,25 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        ID, IN_SITU_EVIDENCE_ID, IN_SITU_EXPRESSION_PATTERN_ID, CONDITION_ID,
-        BGEE_GENE_ID, EXPRESSION_ID, PVALUE, IN_SITU_DATA, REASON_FOR_EXCLUSION;
+        ID("inSituSpotId"), IN_SITU_EVIDENCE_ID("inSituEvidenceId"),
+        IN_SITU_EXPRESSION_PATTERN_ID("inSituExpressionPatternId"), CONDITION_ID("conditionId"),
+        BGEE_GENE_ID("bgeeGeneId"), EXPRESSION_ID("expressionId"), PVALUE("pValue"),
+        IN_SITU_DATA("inSituData"), REASON_FOR_EXCLUSION("reasonForExclusion");
+
+        /**
+         * A {@code String} that is the corresponding field name in {@code InSituSpotTO} class.
+         * @see {@link Attribute#getTOFieldName()}
+         */
+        private final String fieldName;
+
+        private Attribute(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getTOFieldName() {
+            return this.fieldName;
+        }
     }
 
     /**

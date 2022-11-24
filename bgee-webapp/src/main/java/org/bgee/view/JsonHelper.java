@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.XRef;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
@@ -16,6 +17,7 @@ import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
+import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
 import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RawCallTypeAdapter;
@@ -150,6 +152,8 @@ public class JsonHelper {
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
                 .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
                         this.utils, this.requestParameters.getUrlParametersInstance()))
+                .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
+                        this.utils))
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
                         () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()

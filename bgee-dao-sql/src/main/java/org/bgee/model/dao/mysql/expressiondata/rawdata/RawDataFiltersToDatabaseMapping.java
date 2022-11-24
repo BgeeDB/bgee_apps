@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
@@ -18,6 +20,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqResultAnnotatedSampleDAO;
@@ -90,6 +93,9 @@ public class RawDataFiltersToDatabaseMapping {
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         } else if (datatype.equals(DAODataType.EST)) {
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLESTDAO.TABLE_NAME);
+        } else if (datatype.equals(DAODataType.IN_SITU)) {
+            finalColToTable.put(RawDataColumn.GENE_ID, MySQLInSituSpotDAO.TABLE_NAME);
+            finalColToTable.put(RawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
         } else {
             throw log.throwing(new IllegalStateException("not yet implemented for datatype " +
                     datatype));
@@ -121,6 +127,11 @@ public class RawDataFiltersToDatabaseMapping {
         } else if (datatype.equals(DAODataType.EST)) {
             // for RNA-Seq the filtering is done on library IDs
             finalColToColName.put(RawDataColumn.ASSAY_ID, ESTLibraryDAO.Attribute
+                    .ID.getTOFieldName());
+        } else if (datatype.equals(DAODataType.IN_SITU)) {
+            finalColToColName.put(RawDataColumn.ASSAY_ID, InSituEvidenceDAO.Attribute
+                    .IN_SITU_EVIDENCE_ID.getTOFieldName());
+            finalColToColName.put(RawDataColumn.EXPERIMENT_ID, InSituExperimentDAO.Attribute
                     .ID.getTOFieldName());
         } else {
             throw log.throwing(new IllegalStateException("not yet implemented for datatype " +

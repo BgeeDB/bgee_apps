@@ -34,6 +34,8 @@ import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
@@ -63,6 +65,8 @@ import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.MysqlRawDataCountDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituExperimentDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipTypeDAO;
@@ -1093,6 +1097,16 @@ public class MySQLDAOManager extends DAOManager {
     protected MySQLAffymetrixProbesetDAO getNewAffymetrixProbesetDAO() {
         log.traceEntry();
         return log.traceExit(new MySQLAffymetrixProbesetDAO(this));
+    }
+    @Override
+    protected InSituEvidenceDAO getNewInSituEvidenceDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLInSituEvidenceDAO(this));
+    }
+    @Override
+    protected InSituExperimentDAO getNewInSituExperimentDAO() {
+        log.traceEntry();
+        return log.traceExit(new MySQLInSituExperimentDAO(this));
     }
     @Override
     protected MySQLInSituSpotDAO getNewInSituSpotDAO() {

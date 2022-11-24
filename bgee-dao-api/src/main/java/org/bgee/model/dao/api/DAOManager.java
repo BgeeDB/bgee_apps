@@ -37,6 +37,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipTypeDAO;
@@ -1285,6 +1287,35 @@ public abstract class DAOManager implements AutoCloseable
         this.checkClosed();
         return log.traceExit(this.getNewESTDAO());
     }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO 
+     * InSituExperimentDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code InSituExperimentDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO InSituExperimentDAO
+     */
+    public InSituExperimentDAO getInSituExperimentDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewInSituExperimentDAO());
+    }
+
+    /**
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO 
+     * InSituEvidenceDAO}, unless this {@code DAOManager} is already closed. 
+     * 
+     * @return  a new {@code InSituEvidenceDAO}.
+     * @throws IllegalStateException    If this {@code DAOManager} is already closed.
+     * @see org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO InSituEvidenceDAO
+     */
+    public InSituEvidenceDAO getInSituEvidenceDAO() {
+        log.traceEntry();
+        this.checkClosed();
+        return log.traceExit(this.getNewInSituEvidenceDAO());
+    }
+
     /**
      * Get a new {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO 
      * InSituSpotDAO}, unless this {@code DAOManager} is already closed. 
@@ -1795,6 +1826,25 @@ public abstract class DAOManager implements AutoCloseable
      * @return  A new {@code ESTDAO}
      */
     protected abstract ESTDAO getNewESTDAO();
+
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO InSituExperimentDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code InSituExperimentDAO}
+     */
+    protected abstract InSituExperimentDAO getNewInSituExperimentDAO();
+
+    /**
+     * Service provider must return a new 
+     * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO InSituEvidenceDAO} 
+     * instance when this method is called. 
+     * 
+     * @return  A new {@code InSituEvidenceDAO}
+     */
+    protected abstract InSituEvidenceDAO getNewInSituEvidenceDAO();
+
     /**
      * Service provider must return a new 
      * {@link org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO InSituSpotDAO} 

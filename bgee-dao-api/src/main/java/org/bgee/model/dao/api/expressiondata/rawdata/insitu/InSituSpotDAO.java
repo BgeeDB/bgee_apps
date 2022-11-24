@@ -6,11 +6,14 @@ import java.util.Collection;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
+import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataAnnotatedTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.Attribute;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceTO;
 
 /**
@@ -45,23 +48,28 @@ public interface InSituSpotDAO extends DAO<InSituSpotDAO.Attribute> {
     }
 
     /**
-     * retrieve insitu evidences filtered on evidence IDs, species IDs, gene IDs and condition
-     * parameters
-     * 
-     * @param spotIds           A {@code Collection} of {@code String} corresponding to the
-     *                          IDs of the In Situ spots to retrieve.
-     * @param evidenceIds       A {@code Collection} of {@code String} corresponding to the
-     *                          IDs of the In Situ evidence of the spots to retrieve.
-     * @param experimentIds     A {@code Collection} of {@code String} corresponding to the
-     *                          IDs of the In Situ experiments of the spots to retrieve.
-     * @param rawDataFilter     A {@code DAORawDataFilter} allowing to specify which probesets to
-     *                          retrieve.
-     * 
-     * @return                  A {@code InSituExperimentTOResultSet} containing InSitu experiments
+     * Allows to retrieve {@code InSituSpotTO}s according to the provided filters,
+     * ordered by insitu evidence IDs and insitu spot IDs.
+     * <p>
+     * The {@code InSituSpotTO}s are retrieved and returned as a
+     * {@code InSituSpotTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDatafilters    A {@code Collection} of {@code DAORawDataFilter} allowing to filter which
+     *                          spot to retrieve. The query uses AND between elements of a same filter and
+     *                          uses OR between filters.
+     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     *                          in the result of a query. If null, retrieve data from the first row.
+     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     *                          result. If null, all results are returned.
+     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
+     *                          to retrieve from the data source.
+     * @return                  A {@code InSituSpotTOResultSet} allowing to retrieve the targeted
+     *                          {@code InSituSpotTO}s.
+     * @throws DAOException     If an error occurred while accessing the data source.
      */
-    public InSituSpotTOResultSet getInSituSpots(Collection<String> spotIds,
-            Collection<String> evidenceIds, Collection<String> experimentIds,
-            DAORawDataFilter rawDataFilter, Collection<InSituSpotDAO.Attribute> attrs);
+    public InSituSpotTOResultSet getInSituSpots(Collection<DAORawDataFilter> rawDatafilters,
+            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     public interface InSituSpotTOResultSet extends DAOResultSet<InSituSpotTO> {}
 

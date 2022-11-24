@@ -19,6 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
@@ -26,6 +27,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
 
@@ -209,6 +211,56 @@ implements RawDataConditionDAO {
             throw log.throwing(new DAOException(e));
         }
     }
+
+    @Override
+    public RawDataConditionTOResultSet getInSituRawDataConditionsFromRawDataFilters(
+            Collection<DAORawDataFilter> rawDataFilters, 
+            Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}", rawDataFilters, attributes);
+
+        final DAOProcessedRawDataFilter processedFilters =
+                new DAOProcessedRawDataFilter(rawDataFilters);
+        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
+                .unmodifiableSet(attributes == null || attributes.isEmpty()?
+                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
+
+        StringBuilder sb = new StringBuilder();
+
+        // generate SELECT
+       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
+               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
+
+        //generate FROM
+        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
+                sb, processedFilters, null,
+                Set.of(TABLE_NAME), DAODataType.IN_SITU);
+
+        // generate WHERE
+        sb.append(" WHERE ");
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
+            sb.append("(")
+              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
+              .append(") AND ");
+        }
+        //We at least always need to check that results are from conditions
+        //used in annotations of the requested data type.
+        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
+        //to the inSituSpot table, we always add this clause:
+        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLInSituSpotDAO.TABLE_NAME)
+          .append(" WHERE ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+          .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+          .append(")");
+
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
+                    DAODataType.IN_SITU, null, null);
+            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
     public RawDataConditionTOResultSet getRNASeqRawDataConditions(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
             Collection<RawDataConditionDAO.Attribute> attributes) {

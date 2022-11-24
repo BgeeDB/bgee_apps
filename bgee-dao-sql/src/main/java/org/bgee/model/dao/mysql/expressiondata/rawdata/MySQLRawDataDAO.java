@@ -20,6 +20,9 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
@@ -34,6 +37,9 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.RawDataFiltersToDatabaseMapping.RawDataColumn;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituExperimentDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLMicroarrayExperimentDAO;
@@ -205,8 +211,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
             ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb, processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.IN_SITU)) {
-            throw log.throwing(new IllegalStateException("Not yet implemented for " + datatype
-                    + "."));
+            ambiguousColToTable = generateFromClauseRawDataInSitu(sb, processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.EST)) {
             ambiguousColToTable = generateFromClauseRawDataEst(sb, processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
@@ -324,6 +329,119 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.debug("orderedTables: {}", orderedTables);
 
         sb.append(writeFromClauseAffymetrix(orderedTables));
+
+        return log.traceExit(colToTableMap);
+    }
+
+    /**
+     * Method, specific to insitu, allowing to add a FROM clause to a {@code StringBuilder}
+     * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
+     * It will return a {@code Map} with {@code RawDataColumn} corresponding to columns to use
+     * in the WHERE clause as keys and {@code String} corresponding to the table to use to
+     * retrieve the data as values.
+     * 
+     * @param sb                The {@code StringBuilder} for which the FROM clause will be
+     *                          created.
+     * @param processedFilters  A {@code DAOProcessedRawDataFilter} to use to generate the
+     *                          FROM clause
+     * @param necessaryTables   A {@code Set} of {@code String}s corresponding to the names
+     *                          of tables necessary to the creation of the FROM clause.
+     *                          {@code necessaryTables} must contain only the names
+     *                          of the tables used to retrieve necessary information
+     *                          in the SELECT clause, not the tables used for filtering results.
+     *                          Other tables will be automatically added to the clause
+     *                          by this method to satisfy the {@code filter}s.
+     * @return                  A {@code Map} with {@code RawDataColumn} as keys and
+     *                          {@code String} as value defining the table to use.
+     */
+    private Map<RawDataColumn, String> generateFromClauseRawDataInSitu(StringBuilder sb,
+            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+        log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
+
+        if (necessaryTables.size() == 2 && !necessaryTables.containsAll(
+                Set.of(MySQLInSituEvidenceDAO.TABLE_NAME, MySQLInSituSpotDAO.TABLE_NAME)) ||
+            necessaryTables.size() > 2) {
+            throw log.throwing(new IllegalStateException("Combination of necessary tables unsupported: "
+                    + necessaryTables));
+        }
+        
+        Map<RawDataColumn, String> colToTableMap = new LinkedHashMap<>();
+        LinkedHashSet<String> orderedTables = new LinkedHashSet<>();
+
+        // check needed tables
+        
+        boolean condTable = processedFilters.isNeedSpeciesId() ||
+                necessaryTables.contains(MySQLRawDataConditionDAO.TABLE_NAME);
+        boolean expTable = necessaryTables.contains(MySQLInSituExperimentDAO.TABLE_NAME);
+        boolean assayTable = necessaryTables.contains(MySQLInSituEvidenceDAO.TABLE_NAME) ||
+                processedFilters.isNeedAssayId() && expTable ||
+                processedFilters.isNeedExperimentId() && !expTable ||
+                expTable && (condTable || processedFilters.isNeedConditionId() ||
+                        processedFilters.isNeedGeneId());
+        boolean callTable = necessaryTables.contains(MySQLInSituSpotDAO.TABLE_NAME) ||
+                processedFilters.isNeedGeneId() ||
+                // for insitu condition are at the call level.
+                processedFilters.isNeedConditionId() &&
+                !necessaryTables.contains(MySQLRawDataConditionDAO.TABLE_NAME) ||
+                processedFilters.isNeedAssayId() && !assayTable ||
+                assayTable && condTable;
+
+        log.debug("condTable: {}, expTable: {}, assayTable: {}, callTable: {}",
+                condTable, expTable, assayTable, callTable);
+
+
+        // first check if always require geneIds. 
+        if (processedFilters.isAlwaysGeneId()) {
+            orderedTables.add(MySQLInSituSpotDAO.TABLE_NAME);
+        }
+        // then check if require filtering on speciesId
+        if (processedFilters.isNeedSpeciesId()) {
+            orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+            // and add the spot table if require. Not added if already
+            // inserted as we use a LinkedHashSet, and does not change
+            // the order of already inserted tables.
+            if (callTable) {
+                orderedTables.add(MySQLInSituSpotDAO.TABLE_NAME);
+            }
+        }
+        // then add chip table if required and adapt assayId
+        // table accordingly
+        if (assayTable) {
+            orderedTables.add(MySQLInSituEvidenceDAO.TABLE_NAME);
+            if (processedFilters.isNeedAssayId()) {
+                colToTableMap.put(RawDataColumn.ASSAY_ID, MySQLInSituEvidenceDAO.TABLE_NAME);
+            }
+        } else if (processedFilters.isNeedAssayId()) {
+            colToTableMap.put(RawDataColumn.ASSAY_ID, MySQLInSituSpotDAO.TABLE_NAME);
+        }
+        // then check if the experiment table was necessary and
+        // adapt expId table accordingly
+        if (expTable) {
+            orderedTables.add(MySQLInSituExperimentDAO.TABLE_NAME);
+            if (processedFilters.isNeedExperimentId()) {
+                colToTableMap.put(RawDataColumn.EXPERIMENT_ID, MySQLInSituExperimentDAO.TABLE_NAME);
+            }
+        } else if (processedFilters.isNeedExperimentId()) {
+            colToTableMap.put(RawDataColumn.EXPERIMENT_ID, MySQLInSituEvidenceDAO.TABLE_NAME);
+        }
+        // then check if the inSituSpot table was necessary
+        if (callTable) {
+            orderedTables.add(MySQLInSituSpotDAO.TABLE_NAME);
+        }
+        // finally check if the cond table has to be added.
+        // Not added if already inserted as we use a LinkedHashSet.
+        // Detect which table to use to retrieve the potential conditionId
+        if (condTable) {
+            orderedTables.add(MySQLRawDataConditionDAO.TABLE_NAME);
+            if (processedFilters.isNeedConditionId()) {
+                colToTableMap.put(RawDataColumn.COND_ID, MySQLRawDataConditionDAO.TABLE_NAME);
+            }
+        } else if (processedFilters.isNeedConditionId()) {
+            colToTableMap.put(RawDataColumn.COND_ID, MySQLInSituSpotDAO.TABLE_NAME);
+        }
+        log.debug("orderedTables: {}", orderedTables);
+
+        sb.append(writeFromClauseInSitu(orderedTables));
 
         return log.traceExit(colToTableMap);
     }
@@ -577,6 +695,92 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                             + " other table."));
                 }
                 previousTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
+            } else {
+                throw log.throwing(new IllegalStateException(
+                        table + " is not a proper table name or not in proper order. Previous tables: "
+                        + previousTables));
+            }
+        }
+        return log.traceExit(sb);
+    }
+
+    /**
+     * Generate the {@code StringBuilder} corresponding to the FROM clause of any affymetrix
+     * query based on a {@code LinkedHashSet} containing tables to join in the proper order.
+     * 
+     * @param tables    A {@code LinkedHashSet} containing tables to join in the FROM clause in
+     *                  the proper order
+     * @return          A {@code StringBuilder} corresponding to the FROM clause of any affymetrix
+     *                  query
+     */
+    private StringBuilder writeFromClauseInSitu(LinkedHashSet<String> tables) {
+        log.traceEntry("{}", tables);
+        if (tables == null || tables.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("tables can not be null"
+                    + " or empty."));
+        }
+        Set<String> previousTables = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append(" FROM");
+        for (String table : tables) {
+            if (previousTables.isEmpty()) {
+                sb.append(" " + table);
+                previousTables.add(table);
+
+            } else if (table.equals(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                assert previousTables.contains(MySQLInSituSpotDAO.TABLE_NAME);
+                sb.append(" INNER JOIN " + table + " ON ")
+                .append(table + "." + RawDataConditionDAO.Attribute.ID.getTOFieldName() + " = ")
+                .append(MySQLInSituSpotDAO.TABLE_NAME + ".")
+                .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName());
+                previousTables.add(table);
+
+            // manage experiment table
+            } else if (table.equals(MySQLInSituExperimentDAO.TABLE_NAME)) {
+                assert previousTables.contains(MySQLInSituEvidenceDAO.TABLE_NAME);
+                sb.append(" INNER JOIN " + table + " ON ")
+                .append(table + "." + InSituExperimentDAO.Attribute.ID.getTOFieldName() + " = ")
+                .append(MySQLInSituEvidenceDAO.TABLE_NAME + ".")
+                .append(InSituEvidenceDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
+                previousTables.add(table);
+
+            // manage spot table
+            } else if (table.equals(MySQLInSituSpotDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLRawDataConditionDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLRawDataConditionDAO.TABLE_NAME + "." + RawDataConditionDAO
+                            .Attribute.ID.getTOFieldName())
+                    .append(" = " + table + "." + InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName());
+                } else if (previousTables.contains(MySQLInSituEvidenceDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLInSituEvidenceDAO.TABLE_NAME + "." + InSituEvidenceDAO.Attribute
+                            .IN_SITU_EVIDENCE_ID.getTOFieldName() + " = ")
+                    .append(table + "." + InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID
+                            .getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(table);
+
+            // and finally manage evidence table
+            } else if (table.equals(MySQLInSituEvidenceDAO.TABLE_NAME)) {
+                if (previousTables.contains(MySQLInSituExperimentDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLInSituExperimentDAO.TABLE_NAME + ".")
+                    .append(InSituExperimentDAO.Attribute.ID.getTOFieldName() + " = " +table + ".")
+                    .append(InSituEvidenceDAO.Attribute.EXPERIMENT_ID.getTOFieldName());
+                } else if (previousTables.contains(MySQLInSituSpotDAO.TABLE_NAME)) {
+                    sb.append(" INNER JOIN " + table + " ON ")
+                    .append(MySQLInSituSpotDAO.TABLE_NAME + ".")
+                    .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName())
+                    .append(" = " + table + "." + InSituEvidenceDAO.Attribute
+                            .IN_SITU_EVIDENCE_ID.getTOFieldName());
+                } else {
+                    throw log.throwing(new IllegalStateException(table + " can not be join to an"
+                            + " other table."));
+                }
+                previousTables.add(table);
             } else {
                 throw log.throwing(new IllegalStateException(
                         table + " is not a proper table name or not in proper order. Previous tables: "

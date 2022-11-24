@@ -177,31 +177,6 @@ public class RawDataLoader extends CommonService {
      * @see #updateGeneMap(Set)
      */
     private static final int MAX_ELEMENTS_IN_MAP = 10000;
-    /**
-     * Check the validity of the {@code offset} and {@code limit} arguments.
-     *
-     * @param offset    An {@code int} that is the offset to check.
-     * @param limit     An {@code int} that is the limit to check.
-     * @throws IllegalArgumentException If {@code offset} is less than 0,
-     *                                  or {@code limit} is less than or equal to 0,
-     *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
-     * @see #LIMIT_MAX
-     */
-    private static void checkOffsetLimit(int offset, int limit) throws IllegalArgumentException {
-        log.traceEntry("{}, {}", offset, limit);
-        if (offset < 0) {
-            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
-        }
-        if (limit <= 0) {
-            throw log.throwing(new IllegalArgumentException(
-                    "limit cannot be less than or equal to 0"));
-        }
-        if (limit > LIMIT_MAX) {
-            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
-                    + LIMIT_MAX));
-        }
-        log.traceExit();
-    }
 
 
     /**
@@ -283,18 +258,20 @@ public class RawDataLoader extends CommonService {
      * @param infoType          The {@code InformationType} to load.
      * @param rawDataDataType   A {@code RawDataDataType} for which to retrieve
      *                          {@code InformationType}.
-     * @param offset            An {@code int} specifying at which index to start getting results
-     *                          of the type {@code infoType}. First index is {@code 0}.
-     * @param limit             An {@code int} specifying the number of results of type {@code infoType}
-     *                          Cannot be greater than {@link #LIMIT_MAX}.
+     * @param offset            An {@code Integer} specifying at which index to start getting results
+     *                          of the type {@code infoType}. If {@code null}, equivalent to {@code 0}
+     *                          (first index).
+     * @param limit             An {@code Integer} specifying the number of results of type
+     *                          {@code infoType} to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
+     *                          If {@code null}, equivalent to {@link #LIMIT_MAX}.
      * @return                  A {@code RawDataContainer} containing the requested results.
      * @throws IllegalArgumentException If {@code infoType} is null,
-     *                                  or {@code offset} is less than 0,
-     *                                  or {@code limit} is less than or equal to 0,
-     *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
+     *                                  or {@code offset} is non-null and less than 0,
+     *                                  or {@code limit} is non-null and less than or equal to 0,
+     *                                  or greater than {@link #LIMIT_MAX}.
      */
     public <T extends RawDataContainer<?, ?>> T loadData(InformationType infoType,
-            RawDataDataType<T, ?> rawDataDataType, int offset, int limit)
+            RawDataDataType<T, ?> rawDataDataType, Integer offset, Integer limit)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}", infoType, rawDataDataType, offset, limit);
         if (infoType == null) {
@@ -303,7 +280,19 @@ public class RawDataLoader extends CommonService {
         if (rawDataDataType == null) {
             throw log.throwing(new IllegalArgumentException("A RawDataDataType must be provided"));
         }
-        checkOffsetLimit(offset, limit);
+        if (offset != null && offset < 0) {
+            throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
+        }
+        if (limit != null && limit <= 0) {
+            throw log.throwing(new IllegalArgumentException(
+                    "limit cannot be less than or equal to 0"));
+        }
+        if (limit != null && limit > LIMIT_MAX) {
+            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
+                    + LIMIT_MAX));
+        }
+        int newOffset = offset == null? 0: offset;
+        int newLimit = limit == null? LIMIT_MAX: limit;
 
         DataType requestedDataType = rawDataDataType.getDataType();
         Class<T> rawDataContainerClass = rawDataDataType.getRawDataContainerClass();
@@ -311,7 +300,7 @@ public class RawDataLoader extends CommonService {
         switch (requestedDataType) {
         case AFFYMETRIX:
             rawDataContainer = rawDataContainerClass.cast(
-                    this.loadAffymetrixData(infoType, offset, limit));
+                    this.loadAffymetrixData(infoType, newOffset, newLimit));
             break;
         default:
             //TODO: reenable the exception when all data types supported

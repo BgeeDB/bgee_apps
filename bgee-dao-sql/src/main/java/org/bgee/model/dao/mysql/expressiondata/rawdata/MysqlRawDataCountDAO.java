@@ -108,7 +108,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if (callsCount) {
             necessaryTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
         }
-        if (experimentCount) {
+        if (experimentCount || assayCount && !callsCount) {
             necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
         }
 

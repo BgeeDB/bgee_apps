@@ -227,7 +227,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     /**
      * Method, specific to affymetrix, allowing to add a FROM clause to a {@code StringBuilder}
      * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
-     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to columns to use
+     * It will return a {@code Map} with {@code RawDataColumn} corresponding to columns to use
      * in the WHERE clause as keys and {@code String} corresponding to the table to use to
      * retrieve the data as values.
      * 
@@ -242,7 +242,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          in the SELECT clause, not the tables used for filtering results.
      *                          Other tables will be automatically added to the clause
      *                          by this method to satisfy the {@code filter}s.
-     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     * @return                  A {@code Map} with {@code RawDataColumn} as keys and
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataAffymetrix(StringBuilder sb,
@@ -449,7 +449,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     /**
      * Method, specific to ESTs, allowing to add a FROM clause to a {@code StringBuilder}
      * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
-     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to
+     * It will return a {@code Map} with {@code RawDataColumn} corresponding to
      * ambiguous columns to use in the WHERE clause as keys and {@code String} corresponding
      * to the ambiguous tables to use to retrieve the data as values.
      * 
@@ -464,7 +464,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          in the SELECT clause, not the tables used for filtering results.
      *                          Other tables will be automatically added to the clause
      *                          by this method to satisfy the {@code filter}s.
-     * @return                  A {@code Map} with {@code AmbiguousRawDataColumn} as keys and
+     * @return                  A {@code Map} with {@code RawDataColumn} as keys and
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataEst(StringBuilder sb,
@@ -793,7 +793,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     /**
      * Method, specific to rnaseq, allowing to add a FROM clause to a {@code StringBuilder}
      * based on {@code DAORawDataFilter}s, and {@code boolean}s describing mandatory tables.
-     * It will return a {@code Map} with {@code AmbiguousRawDataColumn} corresponding to columns to use
+     * It will return a {@code Map} with {@code RawDataColumn} corresponding to columns to use
      * in the WHERE clause as keys and {@code String} corresponding to the table to use to
      * retrieve the data as values.
      *

@@ -15,9 +15,12 @@ import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.expressiondata.rawdata.RawDataConditionFilter;
-import org.bgee.model.expressiondata.rawdata.RawDataContainer;
-import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader;
 import org.bgee.model.expressiondata.rawdata.RawDataLoader.InformationType;
@@ -31,6 +34,7 @@ import org.bgee.model.job.JobService;
 import org.bgee.model.job.exception.ThreadAlreadyWorkingException;
 import org.bgee.model.job.exception.TooManyJobsException;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.species.Species;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.view.DataDisplay;
@@ -136,11 +140,12 @@ public class CommandData extends CommandParent {
         private final List<Sex> requestedSpeciesSexes;
         private final List<AnatEntity> requestedAnatEntitesAndCellTypes;
         private final List<Gene> requestedGenes;
+        private final List<ExperimentAssay> requestedExperimentAndAssays;
 
         public DataFormDetails(Species requestedSpecies,
                 Ontology<DevStage, String> requestedSpeciesDevStageOntology,
                 List<Sex> requestedSpeciesSexes, List<AnatEntity> requestedAnatEntitesAndCellTypes,
-                List<Gene> requestedGenes) {
+                List<Gene> requestedGenes, List<ExperimentAssay> requestedExperimentAndAssays) {
 
             this.requestedSpecies = requestedSpecies;
             this.requestedSpeciesDevStageOntology = requestedSpeciesDevStageOntology;
@@ -151,6 +156,9 @@ public class CommandData extends CommandParent {
                     new ArrayList<>(): new ArrayList<>(requestedAnatEntitesAndCellTypes));
             this.requestedGenes = Collections.unmodifiableList(requestedGenes == null?
                     new ArrayList<>(): new ArrayList<>(requestedGenes));
+            this.requestedExperimentAndAssays = Collections.unmodifiableList(
+                    requestedExperimentAndAssays == null?
+                    new ArrayList<>(): new ArrayList<>(requestedExperimentAndAssays));
         }
 
         public Species getRequestedSpecies() {
@@ -168,12 +176,16 @@ public class CommandData extends CommandParent {
         public List<Gene> getRequestedGenes() {
             return requestedGenes;
         }
+        public List<ExperimentAssay> getRequestedExperimentAndAssays() {
+            return requestedExperimentAndAssays;
+        }
 
         public boolean containsAnyInformation() {
             return this.getRequestedSpeciesDevStageOntology() != null ||
                     !this.getRequestedSpeciesSexes().isEmpty() ||
                     !this.getRequestedAnatEntitesAndCellTypes().isEmpty() ||
-                    !this.getRequestedGenes().isEmpty();
+                    !this.getRequestedGenes().isEmpty() ||
+                    !this.getRequestedExperimentAndAssays().isEmpty();
         }
     }
 
@@ -272,14 +284,9 @@ public class CommandData extends CommandParent {
         log.traceEntry("{}, {}", speciesList, formDetails);
 
         log.debug("Action identified: {}", this.requestParameters.getAction());
-        RawDataContainer rawDataContainer = null;
-        RawDataCountContainer rawDataCountContainer = null;
-        //Usually we will request rawDataPostFilters only for one data type,
-        //but we leave open the possibility to retrieve them for several data types,
-        //and return them all in a Set.
-        Set<RawDataPostFilter> rawDataPostFilters = null;
-        //We also leave open the possibility to obtain the column descriptions
-        //for several data types, and store them in a Map associated with the data type
+        Map<DataType, RawDataContainer<?, ?>> rawDataContainers = null;
+        Map<DataType, RawDataCountContainer> rawDataCountContainers = null;
+        Map<DataType, RawDataPostFilter> rawDataPostFilters = null;
         Map<DataType, List<ColumnDescription>> colDescriptions = null;
 
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
@@ -298,11 +305,11 @@ public class CommandData extends CommandParent {
 
                 //Raw data results
                 if (this.requestParameters.isGetResults()) {
-                    rawDataContainer = this.loadRawDataResults(rawDataLoader, dataTypes);
+                    rawDataContainers = this.loadRawDataResults(rawDataLoader, dataTypes);
                 }
                 //Raw data counts
                 if (this.requestParameters.isGetResultCount()) {
-                    rawDataCountContainer = this.loadRawDataCounts(rawDataLoader, dataTypes);
+                    rawDataCountContainers = this.loadRawDataCounts(rawDataLoader, dataTypes);
                 }
                 //Filters
                 if (this.requestParameters.isGetFilters()) {
@@ -322,7 +329,7 @@ public class CommandData extends CommandParent {
         }
         DataDisplay display = viewFactory.getDataDisplay();
         display.displayDataPage(speciesList, formDetails, colDescriptions,
-                rawDataContainer, rawDataCountContainer, rawDataPostFilters);
+                rawDataContainers, rawDataCountContainers, rawDataPostFilters);
 
         log.traceExit();
     }
@@ -334,57 +341,58 @@ public class CommandData extends CommandParent {
         //of the RawDataFilter, so that we don't want to put it in cache
         RawDataLoader rawDataLoader = this.serviceFactory.getRawDataService()
                 .loadRawDataLoader(this.loadRawDataFilter());
-        RawDataContainer expContainer = rawDataLoader.loadData(
-                //We want the assays to be displayed on the experiment page,
-                //The experiment itself will be retrieved along the way
-                InformationType.ASSAY,
-                //We don't specify data types since we don't know which it is for now
-                null,
-                0,
-                //RawDataLoader.LIMIT_MAX should always be defined to remain above
-                //the max number of assays in an experiment
-                RawDataLoader.LIMIT_MAX);
 
-        EnumSet<DataType> dataTypesWithResults = expContainer.getDataTypesWithResults();
-        if (dataTypesWithResults.size() > 1) {
-            throw log.throwing(new IllegalStateException(
-                    "Not unique experiment ID accross data types: "
-                    + this.requestParameters.getExperimentId()));
-        } else if (dataTypesWithResults.isEmpty()) {
+        //We don't know which data type the experiment belongs to,
+        //so we test them all
+        DataType dataTypeWithResults = null;
+        RawDataContainerWithExperiment<?, ?, ?> container = null;
+        for (DataType dt: EnumSet.allOf(DataType.class)) {
+            RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>, ?> rdt =
+                    RawDataDataType.getRawDataDataTypeWithExperiment(dt);
+            //we skip data types that have no experiments
+            if (rdt == null) {
+                continue;
+            }
+
+            container = rawDataLoader.loadData(
+                    //We want the assays to be displayed on the experiment page,
+                    //The experiment itself will be retrieved along the way
+                    InformationType.ASSAY,
+                    rdt,
+                    0,
+                    //RawDataLoader.LIMIT_MAX should always be defined to remain above
+                    //the max number of assays in an experiment
+                    RawDataLoader.LIMIT_MAX);
+            if (!container.getAssays().isEmpty()) {
+                //we found our result
+                dataTypeWithResults = dt;
+                break;
+            }
+            //otherwise we continue to search
+            container = null;
+        }
+        if (container == null) {
             throw log.throwing(new PageNotFoundException("The experiment ID "
                     + this.requestParameters.getExperimentId() + " does not exist in Bgee."));
         }
-        DataType dataTypeWithResults = dataTypesWithResults.iterator().next();
 
-        Experiment<?> experiment = null;
-        LinkedHashSet<Assay<?>> assays = null;
-        List<ColumnDescription> colDescr = null;
-        switch (dataTypeWithResults) {
-        case AFFYMETRIX:
-            if (expContainer.getAffymetrixExperiments().size() != 1) {
-                throw log.throwing(new IllegalStateException(
-                        "Ambiguous experiment ID, should not happen. Experiments retrieved: "
-                        + expContainer.getAffymetrixExperiments()));
-            }
-            if (expContainer.getAffymetrixAssays().isEmpty()) {
-                throw log.throwing(new IllegalStateException(
-                        "Experiment with no assay, should not happen"));
-            }
-            experiment = expContainer.getAffymetrixExperiments().iterator().next();
-            assays = new LinkedHashSet<>(expContainer.getAffymetrixAssays());
-            try {
-                colDescr = this.getColumnDescriptions(RequestParameters.ACTION_RAW_DATA_ANNOTS,
-                        dataTypesWithResults).get(dataTypeWithResults);
-            } catch (InvalidRequestException e) {
-                //here it means we didn't correctly called the method getColumnDescriptions,
-                //it is not an InvalidRequestException
-                throw log.throwing(new IllegalStateException(e));
-            }
-            break;
-        //TODO: continue for all data types
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported data type: "
-                    + dataTypeWithResults));
+        if (container.getExperiments().size() != 1) {
+            throw log.throwing(new IllegalStateException(
+                    "Ambiguous experiment ID, should not happen. Experiments retrieved: "
+                    + container.getExperiments()));
+        }
+        assert dataTypeWithResults != null;
+        Experiment<?> experiment = container.getExperiments().iterator().next();
+        LinkedHashSet<Assay<?>> assays = new LinkedHashSet<>(container.getAssays());
+        List<ColumnDescription> colDescr;
+        try {
+            colDescr = this.getColumnDescriptions(
+                    RequestParameters.ACTION_RAW_DATA_ANNOTS, EnumSet.of(dataTypeWithResults))
+                    .get(dataTypeWithResults);
+        } catch (InvalidRequestException e) {
+            //here it means we didn't correctly called the method getColumnDescriptions,
+            //it is not an InvalidRequestException
+            throw log.throwing(new IllegalStateException(e));
         }
 
         DataDisplay display = viewFactory.getDataDisplay();
@@ -410,6 +418,7 @@ public class CommandData extends CommandParent {
             List<Sex> requestedSpeciesSexes = null;
             List<AnatEntity> requestedAnatEntitesAndCellTypes = null;
             List<Gene> requestedGenes = null;
+            List<ExperimentAssay> expAssays = null;
 
             Species requestedSpecies = this.loadRequestedSpecies();
             List<String> requestedGeneIds = this.requestParameters.getGeneIds();
@@ -425,9 +434,10 @@ public class CommandData extends CommandParent {
                         "A species ID must be provided to query genes"));
             }
             requestedAnatEntitesAndCellTypes = this.loadRequestedAnatEntitesAndCellTypes();
+            expAssays = this.loadRequestedExperimentsAndAssays();
 
             formDetails = new DataFormDetails(requestedSpecies, requestedSpeciesDevStageOntology,
-                    requestedSpeciesSexes, requestedAnatEntitesAndCellTypes, requestedGenes);
+                    requestedSpeciesSexes, requestedAnatEntitesAndCellTypes, requestedGenes, expAssays);
         }
 
         return log.traceExit(formDetails);
@@ -503,6 +513,38 @@ public class CommandData extends CommandParent {
         }
 
         return log.traceExit(anatEntities);
+    }
+
+    private List<ExperimentAssay> loadRequestedExperimentsAndAssays() throws InvalidRequestException {
+        log.traceEntry();
+
+        Set<String> expAssayIds = this.requestParameters.getExpAssayId() == null? new HashSet<>():
+            new HashSet<>(this.requestParameters.getExpAssayId());
+        if (expAssayIds.isEmpty()) {
+            return log.traceExit((List<ExperimentAssay>) null);
+        }
+        //ExperimentAssay is not a real object in the data source,
+        //it was created for convenience for autocomplete searches.
+        //For this reason, for now we keep on using the search tool,
+        //rather than formally using a RawDataLoader to query experiments and assays
+        //for each data type
+        SearchMatchResultService service = this.serviceFactory.getSearchMatchResultService(this.prop);
+        List<ExperimentAssay> results = expAssayIds.stream()
+                .flatMap(id -> service.searchExperimentsAndAssaysByTerm(id, null, null)
+                        .getSearchMatches().stream().map(sm -> sm.getSearchedObject()))
+                .filter(ea -> expAssayIds.contains(ea.getId()))
+                .collect(Collectors.toList());
+        if (results.size() != expAssayIds.size()) {
+            Set<String> retrievedIds = results.stream()
+                    .map(ea -> ea.getId())
+                    .collect(Collectors.toSet());
+            expAssayIds.removeAll(retrievedIds);
+            throw log.throwing(new InvalidRequestException(
+                    "Some experiment or assay IDs could not be identified: "
+                    + expAssayIds));
+        }
+
+        return log.traceExit(results);
     }
 
     private List<Gene> loadRequestedGenes(int speciesId, Collection<String> requestedGeneIds) throws InvalidRequestException {
@@ -594,23 +636,18 @@ public class CommandData extends CommandParent {
                 expOrAssayIds));
     }
 
-    private RawDataContainer loadRawDataResults(RawDataLoader rawDataLoader, EnumSet<DataType> dataTypes)
-            throws InvalidRequestException {
+    private Map<DataType, RawDataContainer<?, ?>> loadRawDataResults(RawDataLoader rawDataLoader,
+            EnumSet<DataType> dataTypes) throws InvalidRequestException {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
-        Integer limit = this.requestParameters.getLimit();
-        if (limit == null) {
-            //The validity of DEFAULT_LIMIT and LIMIT_MAX as compared to RawDataLoader.LIMIT_MAX
-            //are checked already in the static initializer
-            limit = DEFAULT_LIMIT;
-        } else if (limit > LIMIT_MAX) {
+        Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+            this.requestParameters.getLimit();
+        if (limit > LIMIT_MAX) {
             throw log.throwing(new InvalidRequestException("It is not possible to request more than "
                     + LIMIT_MAX + " results."));
         }
         Integer offset = this.requestParameters.getOffset();
-        if (offset == null) {
-            offset = 0;
-        } else if (offset < 0) {
+        if (offset != null && offset < 0) {
             throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }
 
@@ -632,11 +669,17 @@ public class CommandData extends CommandParent {
             throw log.throwing(new UnsupportedOperationException("Unsupported action: "
                     + this.requestParameters.getAction()));
         }
-
-        return log.traceExit(rawDataLoader.loadData(infoType, dataTypes, offset, limit));
+        InformationType finalInfoType = infoType;
+        return log.traceExit(dataTypes.stream()
+                //TODO: remove this filter when all data types will be implemented
+                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .collect(Collectors.toMap(
+                        dt -> dt,
+                        dt -> rawDataLoader.loadData(finalInfoType,
+                                RawDataDataType.getRawDataDataType(dt), offset, limit))));
     }
 
-    private RawDataCountContainer loadRawDataCounts(RawDataLoader rawDataLoader,
+    private Map<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes) {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
@@ -651,22 +694,25 @@ public class CommandData extends CommandParent {
         if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             infoTypes.add(InformationType.CALL);
         }
-        return log.traceExit(rawDataLoader.loadDataCount(infoTypes, dataTypes));
+        return log.traceExit(dataTypes.stream()
+                //TODO: remove this filter when all data types will be implemented
+                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .collect(Collectors.toMap(
+                        dt -> dt,
+                        dt -> rawDataLoader.loadDataCount(infoTypes,
+                                RawDataDataType.getRawDataDataType(dt)))));
     }
 
-    private Set<RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
+    private Map<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes) {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
-        Set<RawDataPostFilter> rawDataPostFilters = new HashSet<>();
-        for (DataType dataType: dataTypes) {
-            //TODO: remove this check when all data types will be implemented
-            if (dataType != DataType.AFFYMETRIX) {
-                continue;
-            }
-            rawDataPostFilters.add(rawDataLoader.loadPostFilter(dataType));
-        }
-        return log.traceExit(rawDataPostFilters);
+        return log.traceExit(dataTypes.stream()
+                //TODO: remove this filter when all data types will be implemented
+                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .collect(Collectors.toMap(
+                        dt -> dt,
+                        dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)))));
     }
 
     private Map<DataType, List<ColumnDescription>> getColumnDescriptions(String action,

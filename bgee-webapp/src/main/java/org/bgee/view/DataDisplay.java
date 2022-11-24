@@ -1,6 +1,5 @@
 package org.bgee.view;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +9,8 @@ import org.bgee.controller.CommandData.DataFormDetails;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
-import org.bgee.model.expressiondata.rawdata.RawDataContainer;
-import org.bgee.model.expressiondata.rawdata.RawDataCountContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.species.Species;
 
@@ -28,8 +27,9 @@ public interface DataDisplay {
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
             Map<DataType, List<ColumnDescription>> colDescriptions,
-            RawDataContainer rawDataContainer, RawDataCountContainer rawDataCountContainer,
-            Collection<RawDataPostFilter> rawDataPostFilters);
+            Map<DataType, RawDataContainer<?, ?>> rawDataContainers,
+            Map<DataType, RawDataCountContainer> rawDataCountContainers,
+            Map<DataType, RawDataPostFilter> rawDataPostFilters);
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);

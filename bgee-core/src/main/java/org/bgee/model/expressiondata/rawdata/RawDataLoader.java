@@ -24,6 +24,7 @@ package org.bgee.model.expressiondata.rawdata;
 //}
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,7 +43,6 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
@@ -57,16 +57,20 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperi
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
-import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixCountContainer;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -81,6 +85,15 @@ import org.bgee.model.species.Species;
  * to retrieve the IDs of raw data conditions corresponding to a specific organ
  * plus all its substructures. See {@link #getRawDataProcessedFilter()} and
  * {@link RawDataService#getRawDataLoader(RawDataProcessedFilter)} for more information.
+ * <p>
+ * This class also stores the {@code RawDataCondition}s and {@code Gene}s retrieved
+ * over several independent calls to this {@code RawDataLoader}, in order to save resources
+ * and not query them multiple times.
+ * <p>
+ * Note that this class is not thread-safe. And anyway, it would not make much sense to have
+ * several threads to access the same {@code RawDataLoader}, since there would be only
+ * one connection to the data source for all the calls. Each thread should use their own
+ * {@code RawDataLoader}.
  *
  * @author Frederic Bastian
  * @author Julien Wollbrett
@@ -144,47 +157,6 @@ public class RawDataLoader extends CommonService {
     }
 
     /**
-     * A simple container to store results for one data type, in order to aggregate
-     * the results for different data types, and optimize some downstream queries,
-     * such as retrieving all {@code RawDataCondition}s or {@code Gene}s
-     * in one query at once for all requested data type.
-     *
-     * @author Frederic Bastian
-     * @version Bgee 15.0, Nov. 2022
-     * @since Bgee 15.0, Nov. 2022
-     * @param <T>   The type of ID for {@code Experiment} {@code U}, extending {@code Comparable}.
-     * @param <U>   {@code Experiment} type for a data type.
-     * @param <V>   {@code TransferObject} representing an assay for a data type.
-     * @param <W>   {@code TransferObject} representing a call for a data type.
-     */
-    private static class TempRawDataContainer<T extends Comparable<T>, U extends Experiment<T>,
-    V extends TransferObject, W extends TransferObject> {
-        public final LinkedHashMap<T, U> experimentMap;
-        public final LinkedHashSet<V> assayTOs;
-        public final LinkedHashSet<W> callTOs;
-        public final Set<Integer> rawDataConditionIds;
-        public final Set<Integer> bgeeGeneIds;
-
-        protected TempRawDataContainer(LinkedHashMap<T, U> experimentMap, LinkedHashSet<V> assayTOs,
-                LinkedHashSet<W> callTOs, Set<Integer> rawDataConditionIds, Set<Integer> bgeeGeneIds) {
-            this.experimentMap = experimentMap;
-            this.assayTOs = assayTOs;
-            this.callTOs = callTOs;
-            this.rawDataConditionIds = rawDataConditionIds;
-            this.bgeeGeneIds = bgeeGeneIds;
-        }
-    }
-    private static class AffyTempRawDataContainer extends TempRawDataContainer<String, AffymetrixExperiment,
-    AffymetrixChipTO, AffymetrixProbesetTO> {
-
-        protected AffyTempRawDataContainer(LinkedHashMap<String, AffymetrixExperiment> experimentMap,
-                LinkedHashSet<AffymetrixChipTO> assayTOs, LinkedHashSet<AffymetrixProbesetTO> callTOs,
-                Set<Integer> rawDataConditionIds, Set<Integer> bgeeGeneIds) {
-            super(experimentMap, assayTOs, callTOs, rawDataConditionIds, bgeeGeneIds);
-        }
-    }
-
-    /**
      * An {@code int} that is the maximum allowed number of results
      * to retrieve in one method call, for each requested data type independently.
      * Value: 10,000.
@@ -194,6 +166,17 @@ public class RawDataLoader extends CommonService {
      * (specified through {@link RawDataFilter#getExperimentIds()}).
      */
     public static int LIMIT_MAX = 10000;
+    /**
+     * An {@code int} that is the maximum number of elements
+     * in {@link #rawDataConditionMap} and {@link #geneMap} before starting
+     * to flushing some existing entries. It is not a <strong>guarantee</strong>
+     * that those {@code Map}s will never exceed that size, just a trigger
+     * to flushing entries as much as possible.
+     *
+     * @see #updateRawDataConditionMap(Set)
+     * @see #updateGeneMap(Set)
+     */
+    private static final int MAX_ELEMENTS_IN_MAP = 10000;
     /**
      * Check the validity of the {@code offset} and {@code limit} arguments.
      *
@@ -236,6 +219,32 @@ public class RawDataLoader extends CommonService {
     private final AnatEntityService anatEntityService;
     private final DevStageService devStageService;
 
+    //These attributes are mutable, it is acceptable for a Service.
+    //We keep the speciesMap and geneBiotypeMap inside the rawDataProcessedFilter,
+    //as there will be no update to them by this RawDataLoader.
+    /**
+     * A {@code Map} where keys are {@code Integer}s that are internal IDs of raw data conditions,
+     * the value being the associated {@code RawDataCondition}. this {@code Map} is used
+     * to store the retrieved {@code RawDataCondition}s over several independent calls
+     * to this {@code RawDataLoader}, in order to avoid querying multiple times for the same
+     * conditions.
+     *
+     * @see #MAX_ELEMENTS_IN_MAP
+     * @see #updateRawDataConditionMap(Set)
+     */
+    private final Map<Integer, RawDataCondition> rawDataConditionMap;
+    /**
+     * A {@code Map} where keys are {@code Integer}s that are internal IDs of genes,
+     * the value being the associated {@code Gene}. this {@code Map} is used
+     * to store the retrieved {@code Gene}s over several independent calls
+     * to this {@code RawDataLoader}, in order to avoid querying multiple times for the same
+     * conditions.
+     *
+     * @see #MAX_ELEMENTS_IN_MAP
+     * @see #updateGeneMap(Set)
+     */
+    private final Map<Integer, Gene> geneMap;
+
     //Constructor package protected so that only the RawDataService can instantiate this class
     RawDataLoader(ServiceFactory serviceFactory, RawDataProcessedFilter rawDataProcessedFilter) {
         super(serviceFactory);
@@ -255,95 +264,93 @@ public class RawDataLoader extends CommonService {
         this.anatEntityService       = this.getServiceFactory().getAnatEntityService();
         this.devStageService         = this.getServiceFactory().getDevStageService();
         this.rawDataCountDAO         = this.getDaoManager().getRawDataCountDAO();
+
+        this.rawDataConditionMap = new HashMap<>();
+        this.geneMap = new HashMap<>();
+        //Seed the Maps with any condition or gene already identified
+        //from the processed filter.
+        //We keep the speciesMap and geneBiotypeMap inside the rawDataProcessedFilter,
+        //as there will be no update to them by this RawDataLoader.
+        this.rawDataConditionMap.putAll(this.rawDataProcessedFilter.getRequestedRawDataConditionMap());
+        this.geneMap.putAll(this.rawDataProcessedFilter.getRequestedGeneMap());
     }
 
     /**
-     * Load raw data of the specified {@code InformationType}. The {@code offset} and {@code limit}
-     * parameters apply independently to each {@code DataType} requested. For instance,
-     * if {@code limit} was set to 1000, the returned {@code RawDataContainer} could contain
-     * 1000 Affymetrix probesets and 1000 bulk RNA-Seq calls.
+     * Load raw data of the specified {@code InformationType} and {@code RawDataDataType}.
      *
-     * @param infoType  The {@code InformationType} to load.
-     * @param dataTypes A {@code Collection} of the {@code DataType}s for which to retrieve
-     *                  {@code InformationType}.
-     * @param offset    An {@code int} specifying at which index to start getting results
-     *                  of the type {@code infoType} for each requested data type independently.
-     *                  First index is {@code 0}.
-     * @param limit     An {@code int} specifying the number of results of type {@code infoType}
-     *                  to retrieve for each requested data type independently. Cannot be greater
-     *                  than {@link #LIMIT_MAX}.
-     * @return          A {@code RawDataContainer} containing the requested results.
+     * @param <T>               The type of {@code RawDataContainer} returned, dependent on
+     *                          the {@code RawDataDataType} requested.
+     * @param infoType          The {@code InformationType} to load.
+     * @param rawDataDataType   A {@code RawDataDataType} for which to retrieve
+     *                          {@code InformationType}.
+     * @param offset            An {@code int} specifying at which index to start getting results
+     *                          of the type {@code infoType}. First index is {@code 0}.
+     * @param limit             An {@code int} specifying the number of results of type {@code infoType}
+     *                          Cannot be greater than {@link #LIMIT_MAX}.
+     * @return                  A {@code RawDataContainer} containing the requested results.
      * @throws IllegalArgumentException If {@code infoType} is null,
      *                                  or {@code offset} is less than 0,
      *                                  or {@code limit} is less than or equal to 0,
      *                                  or {@code limit} is greater than {@link #LIMIT_MAX}.
      */
-    public RawDataContainer loadData(InformationType infoType, Collection<DataType> dataTypes,
-            int offset, int limit) throws IllegalArgumentException {
-        log.traceEntry("{}, {}, {}, {}", infoType, dataTypes, offset, limit);
+    public <T extends RawDataContainer<?, ?>> T loadData(InformationType infoType,
+            RawDataDataType<T, ?> rawDataDataType, int offset, int limit)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}", infoType, rawDataDataType, offset, limit);
         if (infoType == null) {
             throw log.throwing(new IllegalArgumentException("An InformationType must be provided"));
         }
+        if (rawDataDataType == null) {
+            throw log.throwing(new IllegalArgumentException("A RawDataDataType must be provided"));
+        }
         checkOffsetLimit(offset, limit);
 
-        AffyTempRawDataContainer affyTempRawDataContainer = null;
-        Set<TempRawDataContainer<?, ?, ?, ?>> allTempContainers = new HashSet<>();
-
-        //*****************************************************************************************
-        //For each data type, we will load a TempRawDataContainer, holding the information,
-        //notably TransferObjects, allowing to instantiate the final objects.
-        //This will allow us to process some downstream information only once for all data types,
-        //and not once for each data type.
-        //*****************************************************************************************
-        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
-
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
-            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-                affyTempRawDataContainer = this.getNoResultAffymetrixTempContainer(infoType);
-                allTempContainers.add(affyTempRawDataContainer);
-            }
-        } else {
-            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-                affyTempRawDataContainer = this.loadAffymetrixData(infoType, offset, limit);
-                allTempContainers.add(affyTempRawDataContainer);
-            }
+        DataType requestedDataType = rawDataDataType.getDataType();
+        Class<T> rawDataContainerClass = rawDataDataType.getRawDataContainerClass();
+        T rawDataContainer = null;
+        switch (requestedDataType) {
+        case AFFYMETRIX:
+            rawDataContainer = rawDataContainerClass.cast(
+                    this.loadAffymetrixData(infoType, offset, limit));
+            break;
+        default:
+            //TODO: reenable the exception when all data types supported
+            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
         }
 
-        //*****************************************************************************************
-        //Now we retrieve all RawDataConditions and Genes necessary to instantiate objects,
-        //over all data types
-        //*****************************************************************************************
-        Set<Integer> allRawDataCondIds = new HashSet<>();
-        Set<Integer> allBgeeGeneIds = new HashSet<>();
-        for (TempRawDataContainer<?, ?, ?, ?> tempContainer: allTempContainers) {
-            allRawDataCondIds.addAll(tempContainer.rawDataConditionIds);
-            allBgeeGeneIds.addAll(tempContainer.bgeeGeneIds);
+        return log.traceExit(rawDataContainer);
+    }
+
+    public <T extends RawDataCountContainer> T loadDataCount(Collection<InformationType> infoTypes,
+            RawDataDataType<?, T> rawDataDataType) {
+        log.traceEntry("{}, {}", infoTypes, rawDataDataType);
+
+        EnumSet<InformationType> requestedInfoTypes = infoTypes == null || infoTypes.isEmpty()?
+                EnumSet.allOf(InformationType.class): EnumSet.copyOf(infoTypes);
+        if (rawDataDataType == null) {
+            throw log.throwing(new IllegalArgumentException("A RawDataDataType must be provided"));
         }
-        Map<Integer, RawDataCondition> condMap = this.loadCompleteRawDataConditionMap(allRawDataCondIds);
-        Map<Integer, Gene> geneMap = this.loadCompleteGeneMap(allBgeeGeneIds);
 
-        //*****************************************************************************************
-        //Now we load the actual data for each data type
-        //*****************************************************************************************
-        RawDataContainer partialAffyContainer = this.loadPartialAffymetrixRawDataContainer(
-                    affyTempRawDataContainer, infoType, condMap, geneMap);
+        // create booleans used to query the DAO
+        boolean withExperiment = requestedInfoTypes.contains(InformationType.EXPERIMENT);
+        boolean withAssay = requestedInfoTypes.contains(InformationType.ASSAY);
+        boolean withCall = requestedInfoTypes.contains(InformationType.CALL);
 
-        //*****************************************************************************************
-        //And finally we merge all results in one single container
-        //*****************************************************************************************
-        return log.traceExit(new RawDataContainer(
-                //Affymetrix
-                partialAffyContainer.getAffymetrixExperiments(),
-                partialAffyContainer.getAffymetrixAssays(),
-                partialAffyContainer.getAffymetrixCalls(),
-                //RNA-Seq
-                null, null, null, null,
-                //In situ
-                null, null, null,
-                //EST
-                null, null));
+        DataType requestedDataType = rawDataDataType.getDataType();
+        Class<T> rawDataCountContainerClass = rawDataDataType.getRawDataCountContainerClass();
+        T rawDataCountContainer = null;
+
+        switch (requestedDataType) {
+        case AFFYMETRIX:
+            rawDataCountContainer = rawDataCountContainerClass.cast(
+                    this.loadAffymetrixDataCount(withExperiment, withAssay, withCall));
+            break;
+        default:
+            //TODO: reenable the exception when all data types supported
+            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
+        }
+
+        return log.traceExit(rawDataCountContainer);
     }
 
     /**
@@ -354,15 +361,241 @@ public class RawDataLoader extends CommonService {
      *                  post filters have to be loaded
      * @return          A {@code RawDataPostFilter} containing condition parameters to filter on.
      */
-    public RawDataPostFilter loadPostFilter(DataType dataType) {
-        log.traceEntry("{}", dataType);
-        if (dataType == null) {
+    //We also use a RawDataDataType, in case we create data-type-specific PostFilters
+    //in the future. In that case, we could add a third generic type parameter to RawDataDataType,
+    //specifying the type of RawDataPostFilter to return.
+    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType) {
+        log.traceEntry("{}", rawDataDataType);
+        if (rawDataDataType == null) {
             throw log.throwing(new IllegalArgumentException("dataType can not be null"));
         }
-        if (dataType.equals(DataType.AFFYMETRIX)) {
+        DataType requestedDataType = rawDataDataType.getDataType();
+        switch (requestedDataType) {
+        case AFFYMETRIX:
             return log.traceExit(this.loadAffymetrixPostFilter());
+        default:
+            //TODO: reenable the exception when all data types supported and remove the return null
+            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
+            return null;
         }
-        throw log.throwing(new IllegalArgumentException("Unrecognized datatype " + dataType));
+    }
+
+//*****************************************************************************************
+//                       METHODS LOADING AFFYMETRIX RAW DATA
+//*****************************************************************************************
+
+    private AffymetrixContainer loadAffymetrixData(InformationType infoType, int offset, int limit) {
+        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(this.getNoResultAffymetrixContainer(infoType));
+        }
+
+        //************************************************************
+        // First, we retrieve all necessary TransferObjects
+        //************************************************************
+        LinkedHashSet<AffymetrixProbesetTO> affyProbesetTOs = new LinkedHashSet<>();
+        LinkedHashSet<AffymetrixChipTO> affyChipTOs = new LinkedHashSet<>();
+        Set<Integer> bgeeChipIds = new HashSet<>();
+        Set<Integer> bgeeGeneIds = new HashSet<>();
+        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
+                .getDaoRawDataFilters();
+        assert daoRawDataFilters != null;
+
+        //*********** Calls ***********
+        if (infoType == InformationType.CALL) {
+            AffymetrixProbesetTOResultSet probesetTORS = this.affymetrixProbesetDAO.getAffymetrixProbesets(
+                    daoRawDataFilters, offset, limit, null);
+            while (probesetTORS.next()) {
+                AffymetrixProbesetTO probesetTO = probesetTORS.getTO();
+                bgeeChipIds.add(probesetTO.getAssayId());
+                bgeeGeneIds.add(probesetTO.getBgeeGeneId());
+                affyProbesetTOs.add(probesetTO);
+            }
+        }
+
+        //*********** Assays ***********
+        AffymetrixChipTOResultSet chipTORS = null;
+        Set<String> affyExpIds = new HashSet<>();
+        Set<Integer> rawDataCondIds = new HashSet<>();
+        //We need to write the test in this way, in case CALLs were requested, but there was
+        //no result retrieved
+        if (!bgeeChipIds.isEmpty()) {
+            chipTORS = this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds, null);
+        } else if (infoType == InformationType.ASSAY) {
+            chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit, null);
+        }
+        if (chipTORS != null) {
+            while (chipTORS.next()) {
+                AffymetrixChipTO chipTO = chipTORS.getTO();
+                affyExpIds.add(chipTO.getExperimentId());
+                rawDataCondIds.add(chipTO.getConditionId());
+                affyChipTOs.add(chipTO);
+            }
+        }
+
+        //*********** Experiments ***********
+        MicroarrayExperimentTOResultSet expTORS = null;
+        //Experiments should always be retrieved at this point if there is any result,
+        //but we need this check in case there was no result returned when requesting
+        //CALLs or ASSAYs.
+        if (!affyExpIds.isEmpty()) {
+            //we can use a new DAORawDataFilter to retrieve the requested experiments
+            expTORS = this.microarrayExperimentDAO.getExperiments(
+                    Set.of(new DAORawDataFilter(affyExpIds, null, null)), null, null, null);
+        } else if (infoType == InformationType.EXPERIMENT) {
+            //otherwise, it was the information requested originally
+            expTORS = this.microarrayExperimentDAO.getExperiments(daoRawDataFilters, offset, limit, null);
+        }
+        LinkedHashMap<String, AffymetrixExperiment> expIdToAffyExp =
+                expTORS == null? new LinkedHashMap<>():
+                    expTORS.stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+                            to -> new AffymetrixExperiment(to.getId(), to.getName(),
+                                    to.getDescription(), getSourceById(to.getDataSourceId()), 0),
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+
+        //************************************************************
+        // Now, we load missing Genes and RawDataConditions
+        //************************************************************
+        this.updateRawDataConditionMap(rawDataCondIds);
+        this.updateGeneMap(bgeeGeneIds);
+
+
+        //************************************************************
+        // Finally, we instantiate all bgee-core objects necessary
+        //************************************************************
+        //Experiments are always needed
+        LinkedHashSet<AffymetrixExperiment> affymetrixExperiments =
+                new LinkedHashSet<>(expIdToAffyExp.values());
+
+        //Now we load the LinkedHashSets only if needed, to distinguish between
+        //null value = info not requested, and empty Collection = no result
+        LinkedHashSet<AffymetrixChip> affymetrixAssays = null;
+        LinkedHashSet<AffymetrixProbeset> affymetrixCalls = null;
+        if (infoType == InformationType.ASSAY || infoType == InformationType.CALL) {
+            //We create a Map bgeeChipId -> AffymetrixChip for easier instantiation
+            //of AffymetrixProbesets
+            LinkedHashMap<Integer, AffymetrixChip> affyChipMap = affyChipTOs
+                    .stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+
+                            to -> new AffymetrixChip(
+                                    to.getAffymetrixChipId(),
+                                    Optional.ofNullable(expIdToAffyExp.get(to.getExperimentId()))
+                                    .orElseThrow(() -> new IllegalStateException(
+                                            "Missing experiment ID " + to.getExperimentId()
+                                            + " for chip ID " + to.getAffymetrixChipId())), 
+                                    new RawDataAnnotation(
+                                            Optional.ofNullable(
+                                                    this.rawDataConditionMap.get(to.getConditionId()))
+                                            .orElseThrow(() -> new IllegalStateException(
+                                                    "Missing RawDataCondition ID "
+                                                    + to.getConditionId()
+                                                    + " for chip ID " + to.getAffymetrixChipId())),
+                                            null, null, null),
+                                    null,
+                                    new AffymetrixChipPipelineSummary(
+                                            to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
+                                            to.getNormalizationType().getStringRepresentation(),
+                                            to.getQualityScore(), to.getPercentPresent())),
+
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+            affymetrixAssays = new LinkedHashSet<>(affyChipMap.values());
+
+            if (infoType == InformationType.CALL) {
+                affymetrixCalls = affyProbesetTOs
+                        .stream()
+                        .map(to -> new AffymetrixProbeset(
+                                to.getId(),
+                                Optional.ofNullable(affyChipMap.get(to.getAssayId()))
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "Missing chip ID " + to.getAssayId()
+                                        + " for probeset ID " + to.getId())),
+                                new RawCall(
+                                        Optional.ofNullable(geneMap.get(to.getBgeeGeneId()))
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                "Missing gene ID " + to.getBgeeGeneId()
+                                                + " for probeset ID " + to.getId())),
+                                        to.getPValue(),
+                                        to.getExpressionConfidence(),
+                                        ExclusionReason.convertToExclusionReason(
+                                                to.getExclusionReason().getStringRepresentation())),
+                                to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+        }
+
+        return log.traceExit(new AffymetrixContainer(
+                affymetrixExperiments, affymetrixAssays, affymetrixCalls));
+    }
+    private AffymetrixContainer getNoResultAffymetrixContainer(InformationType infoType) {
+        log.traceEntry("{}", infoType);
+
+        return log.traceExit(new AffymetrixContainer(
+                //Experiments always end up being requested
+                Set.of(),
+                //We also get the chips when we request the probesets
+                infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
+                infoType == InformationType.CALL? Set.of(): null));
+    }
+
+    private AffymetrixCountContainer loadAffymetrixDataCount(boolean withExperiment,
+            boolean withAssay, boolean withCall) {
+        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(new AffymetrixCountContainer(
+                    withExperiment? 0: null,
+                    withAssay? 0: null,
+                    withCall? 0: null));
+        }
+
+        RawDataFilter filter = this.getRawDataProcessedFilter().getRawDataFilter();
+        //If we don't need any filtering on assay information,
+        boolean noNeedChipInfo = filter.getAssayIds().isEmpty() &&
+                filter.getExperimentIds().isEmpty() &&
+                filter.getExperimentOrAssayIds().isEmpty() &&
+                filter.getConditionFilters().stream().allMatch(cf -> cf.areAllCondParamFiltersEmpty());
+        //and we don't need filtering on probeset information for counting assays or experiments,
+        boolean noProbesetFilteringForAssayExpCount = !withExperiment && !withAssay ||
+                filter.getGeneFilters().stream().allMatch(gf -> gf.getGeneIds().isEmpty());
+        //then, if requested, we count the probesets in a separate query for faster results.
+        //FIXME FB: actually, it should be the DAO doing this logic
+        RawDataCountContainerTO probesetCountTO = null;
+        boolean updatedWithCall = withCall;
+        if (withCall && noNeedChipInfo && noProbesetFilteringForAssayExpCount) {
+            probesetCountTO = rawDataCountDAO.getAffymetrixCount(
+                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                    false, false, true);
+            updatedWithCall = false;
+        }
+        //Now we do the "requested" call if we don't have the counts we need yet
+        RawDataCountContainerTO affyRemainingCountTO = null;
+        if (updatedWithCall || withExperiment || withAssay) {
+            affyRemainingCountTO = rawDataCountDAO.getAffymetrixCount(
+                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                    withExperiment, withAssay, updatedWithCall);
+        }
+        assert probesetCountTO != null || affyRemainingCountTO != null;
+        assert probesetCountTO == null || probesetCountTO.getCallCount() != null;
+
+        return log.traceExit(new AffymetrixCountContainer(
+                //experiment count
+                affyRemainingCountTO != null? affyRemainingCountTO.getExperimentCount(): null,
+                //assay count
+                affyRemainingCountTO != null? affyRemainingCountTO.getAssayCount(): null,
+                //call count
+                probesetCountTO != null? probesetCountTO.getCallCount():
+                    affyRemainingCountTO.getCallCount()));
     }
 
     private RawDataPostFilter loadAffymetrixPostFilter() {
@@ -410,311 +643,43 @@ public class RawDataLoader extends CommonService {
                 sexes, strains, DataType.AFFYMETRIX));
     }
 
-    public RawDataCountContainer loadDataCount(Collection<InformationType> infoTypes,
-            Collection<DataType> dataTypes) {
-        log.traceEntry("{}, {}", infoTypes, dataTypes);
-
-        EnumSet<InformationType> requestedInfoTypes = getInformationTypes(infoTypes);
-        final EnumSet<DataType> requestedDataTypes = getDataTypes(dataTypes);
-        // create booleans used to query the DAO
-        boolean withCall = requestedInfoTypes.contains(InformationType.CALL);
-        boolean withAssay = requestedInfoTypes.contains(InformationType.ASSAY);
-        boolean withExperiment = requestedInfoTypes.contains(InformationType.EXPERIMENT);
-        RawDataCountContainerTO countContainerTOWithNulls =
-                new RawDataCountContainerTO(null, null, null, null);
-        RawDataCountContainerTO noResultCountContainerTO = new RawDataCountContainerTO(
-                        withExperiment? 0: null,
-                        withAssay? 0: null,
-                        withCall? 0: null,
-                        //RNA-Seq library count
-                        withAssay? 0: null);
-
-        RawDataCountContainerTO affyCountTO = countContainerTOWithNulls;
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
-            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-                affyCountTO = noResultCountContainerTO;
-            }
-        } else {
-            if (requestedDataTypes.contains(DataType.AFFYMETRIX)) {
-                affyCountTO = this.loadAffymetrixDataCount(withExperiment, withAssay, withCall);
-            }
-        }
-
-        //TODO: count for est, insitu, bulk rnaseq and single cell rnaseq are not yet implemented
-        // in the DAO
-        RawDataCountContainerTO estCountTO = requestedDataTypes
-                .contains(DataType.EST)? countContainerTOWithNulls: countContainerTOWithNulls;
-        RawDataCountContainerTO inSituCountTO = requestedDataTypes
-                .contains(DataType.IN_SITU)? countContainerTOWithNulls: countContainerTOWithNulls;
-        RawDataCountContainerTO bulkRnaSeqCountTO = requestedDataTypes
-                .contains(DataType.RNA_SEQ)? countContainerTOWithNulls: countContainerTOWithNulls;
-        RawDataCountContainerTO singleCellRnaSeqCountTO = requestedDataTypes
-                .contains(DataType.FULL_LENGTH)? countContainerTOWithNulls: countContainerTOWithNulls;
-
-        return log.traceExit(new RawDataCountContainer(
-                affyCountTO.getExperimentCount(), affyCountTO.getAssayCount(),
-                affyCountTO.getCallCount(), inSituCountTO.getExperimentCount(),
-                inSituCountTO.getAssayCount(), inSituCountTO.getCallCount(),
-                estCountTO.getAssayCount(), estCountTO.getCallCount(),
-                bulkRnaSeqCountTO.getExperimentCount(), bulkRnaSeqCountTO.getAssayCount(),
-                bulkRnaSeqCountTO.getRnaSeqLibraryCount(), bulkRnaSeqCountTO.getCallCount(),
-                singleCellRnaSeqCountTO.getExperimentCount(), singleCellRnaSeqCountTO.getAssayCount(),
-                singleCellRnaSeqCountTO.getRnaSeqLibraryCount(),
-                singleCellRnaSeqCountTO.getCallCount()));
-    }
-
-//*****************************************************************************************
-//                     METHODS LOADING AFFYMETRIX RAW DATA
-//*****************************************************************************************
-
-    private AffyTempRawDataContainer loadAffymetrixData(InformationType infoType, int offset, int limit) {
-        log.traceEntry("{}, {}, {}", infoType, offset, limit);
-    
-        LinkedHashSet<AffymetrixProbesetTO> affyProbesetTOs = new LinkedHashSet<>();
-        LinkedHashSet<AffymetrixChipTO> affyChipTOs = new LinkedHashSet<>();
-        LinkedHashMap<String, AffymetrixExperiment> expIdToAffyExp = new LinkedHashMap<>();
-
-        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoRawDataFilters();
-        assert daoRawDataFilters != null;
-
-        Set<Integer> bgeeChipIds = new HashSet<>();
-        Set<Integer> bgeeGeneIds = new HashSet<>();
-        if (infoType == InformationType.CALL) {
-            AffymetrixProbesetTOResultSet probesetTORS = this.affymetrixProbesetDAO.getAffymetrixProbesets(
-                    daoRawDataFilters, offset, limit, null);
-            while (probesetTORS.next()) {
-                AffymetrixProbesetTO probesetTO = probesetTORS.getTO();
-                bgeeChipIds.add(probesetTO.getAssayId());
-                bgeeGeneIds.add(probesetTO.getBgeeGeneId());
-                affyProbesetTOs.add(probesetTO);
-            }
-        }
-
-        AffymetrixChipTOResultSet chipTORS = null;
-        Set<String> affyExpIds = new HashSet<>();
-        Set<Integer> rawDataCondIds = new HashSet<>();
-        //We need to write the test in this way, in case CALLs were requested, but there was
-        //no result retrieved
-        if (!bgeeChipIds.isEmpty()) {
-            chipTORS = this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds, null);
-        } else if (infoType == InformationType.ASSAY) {
-            chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit, null);
-        }
-        if (chipTORS != null) {
-            while (chipTORS.next()) {
-                AffymetrixChipTO chipTO = chipTORS.getTO();
-                affyExpIds.add(chipTO.getExperimentId());
-                rawDataCondIds.add(chipTO.getConditionId());
-                affyChipTOs.add(chipTO);
-            }
-        }
-
-        MicroarrayExperimentTOResultSet expTORS = null;
-        //Experiments should always be retrieved at this point if there is any result,
-        //but we need this check in case there was no result returned when requesting
-        //CALLs or ASSAYs.
-        if (!affyExpIds.isEmpty()) {
-            //we can use a new DAORawDataFilter to retrieve the requested experiments
-            expTORS = this.microarrayExperimentDAO.getExperiments(
-                    Set.of(new DAORawDataFilter(affyExpIds, null, null)), null, null, null);
-        } else if (infoType == InformationType.EXPERIMENT) {
-            //otherwise, it was the information requested originally
-            expTORS = this.microarrayExperimentDAO.getExperiments(daoRawDataFilters, offset, limit, null);
-        }
-        if (expTORS != null) {
-            //Now we create a map expId -> AffymetrixExperiment
-            expIdToAffyExp = expTORS.stream()
-                    .collect(Collectors.toMap(
-                            to -> to.getId(),
-                            to -> new AffymetrixExperiment(to.getId(), to.getName(),
-                                    to.getDescription(), getSourceById(to.getDataSourceId()), 0),
-                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
-                            LinkedHashMap::new));
-        }
-    
-        return log.traceExit(new AffyTempRawDataContainer(expIdToAffyExp, affyChipTOs, affyProbesetTOs,
-                rawDataCondIds, bgeeGeneIds));
-    }
-    private AffyTempRawDataContainer getNoResultAffymetrixTempContainer(InformationType infoType) {
-        log.traceEntry("{}", infoType);
-
-        //Null means "not requested", empty LinkedHashSet means "no result".
-        //We need to distinguish between both
-        LinkedHashSet<AffymetrixChipTO> affyChipTOs = null;
-        LinkedHashSet<AffymetrixProbesetTO> affyProbesetTOs = null;
-
-        if (infoType == InformationType.CALL) {
-            affyProbesetTOs = new LinkedHashSet<>();
-        }
-        //we also get the chips when we request the probesets
-        if (infoType == InformationType.CALL || infoType == InformationType.ASSAY) {
-            affyChipTOs = new LinkedHashSet<>();
-        }
-        //Experiments always end up being requested
-        LinkedHashMap<String, AffymetrixExperiment> expIdToAffyExp = new LinkedHashMap<>();
-
-        return log.traceExit(new AffyTempRawDataContainer(expIdToAffyExp, affyChipTOs, affyProbesetTOs,
-                new HashSet<>(), new HashSet<>()));
-    }
-
-    private RawDataContainer loadPartialAffymetrixRawDataContainer(
-            AffyTempRawDataContainer tempRawDataContainer, InformationType infoType,
-            Map<Integer, RawDataCondition> condMap, Map<Integer, Gene> geneMap) {
-        log.traceEntry("{}, {}, {}, {}", tempRawDataContainer, infoType, condMap, geneMap);
-
-        //Experiments are always needed
-        LinkedHashSet<AffymetrixExperiment> affymetrixExperiments =
-                new LinkedHashSet<>(tempRawDataContainer.experimentMap.values());
-
-        //Now we load the LinkedHashSets only if needed, to distinguish between
-        //null value = info not requested, and empty Collection = no result
-        LinkedHashSet<AffymetrixChip> affymetrixAssays = null;
-        LinkedHashSet<AffymetrixProbeset> affymetrixCalls = null;
-        if (infoType == InformationType.ASSAY || infoType == InformationType.CALL) {
-            //We create a Map bgeeChipId -> AffymetrixChip for easier instantiation
-            //of AffymetrixProbesets
-            LinkedHashMap<Integer, AffymetrixChip> affyChipMap = tempRawDataContainer.assayTOs
-                    .stream()
-                    .collect(Collectors.toMap(
-                            to -> to.getId(),
-
-                            to -> new AffymetrixChip(
-                                    to.getAffymetrixChipId(),
-                                    Optional.ofNullable(tempRawDataContainer.experimentMap
-                                            .get(to.getExperimentId()))
-                                    .orElseThrow(() -> new IllegalStateException(
-                                            "Missing experiment ID " + to.getExperimentId()
-                                            + " for chip ID " + to.getAffymetrixChipId())), 
-                                    new RawDataAnnotation(
-                                            Optional.ofNullable(condMap.get(to.getConditionId()))
-                                            .orElseThrow(() -> new IllegalStateException(
-                                                    "Missing RawDataCondition ID "
-                                                    + to.getConditionId()
-                                                    + " for chip ID " + to.getAffymetrixChipId())),
-                                            null, null, null),
-                                    new AffymetrixChipPipelineSummary(
-                                            to.getDistinctRankCount(), to.getMaxRank(), to.getScanDate(),
-                                            to.getNormalizationType().getStringRepresentation(),
-                                            to.getQualityScore(), to.getPercentPresent())),
-
-                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
-                            LinkedHashMap::new));
-            affymetrixAssays = new LinkedHashSet<>(affyChipMap.values());
-
-            if (infoType == InformationType.CALL) {
-                affymetrixCalls = tempRawDataContainer.callTOs
-                        .stream()
-                        .map(to -> new AffymetrixProbeset(
-                                to.getId(),
-                                Optional.ofNullable(affyChipMap.get(to.getAssayId()))
-                                .orElseThrow(() -> new IllegalStateException(
-                                        "Missing chip ID " + to.getAssayId()
-                                        + " for probeset ID " + to.getId())),
-                                new RawCall(
-                                        Optional.ofNullable(geneMap.get(to.getBgeeGeneId()))
-                                        .orElseThrow(() -> new IllegalStateException(
-                                                "Missing gene ID " + to.getBgeeGeneId()
-                                                + " for probeset ID " + to.getId())),
-                                        to.getPValue(),
-                                        to.getExpressionConfidence(),
-                                        ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().getStringRepresentation())),
-                                to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank()))
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-            }
-        }
-
-        return log.traceExit(new RawDataContainer(
-                affymetrixExperiments, affymetrixAssays, affymetrixCalls,
-                null, null, null, null,
-                null, null, null,
-                null, null));
-    }
-
-    private RawDataCountContainerTO loadAffymetrixDataCount(boolean withExperiment,
-            boolean withAssay, boolean withCall) {
-        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
-
-        RawDataFilter filter = this.getRawDataProcessedFilter().getRawDataFilter();
-        //If we don't need any filtering on assay information,
-        boolean noNeedChipInfo = filter.getAssayIds().isEmpty() &&
-                filter.getExperimentIds().isEmpty() &&
-                filter.getExperimentOrAssayIds().isEmpty() &&
-                filter.getConditionFilters().stream().allMatch(cf -> cf.areAllCondParamFiltersEmpty());
-        //and we don't need filtering on probeset information for counting assays or experiments,
-        boolean noProbesetFilteringForAssayExpCount = !withExperiment && !withAssay ||
-                filter.getGeneFilters().stream().allMatch(gf -> gf.getGeneIds().isEmpty());
-        //then, if requested, we count the probesets in a separate query for faster results.
-        //FIXME FB: actually, it should be the DAO doing this logic
-        RawDataCountContainerTO probesetCountTO = null;
-        boolean updatedWithCall = withCall;
-        if (withCall && noNeedChipInfo && noProbesetFilteringForAssayExpCount) {
-            probesetCountTO = rawDataCountDAO.getAffymetrixCount(
-                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
-                    false, false, true);
-            updatedWithCall = false;
-        }
-        //Now we do the "requested" call if we don't have the counts we need yet
-        RawDataCountContainerTO affyRemainingCountTO = null;
-        if (updatedWithCall || withExperiment || withAssay) {
-            affyRemainingCountTO = rawDataCountDAO.getAffymetrixCount(
-                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
-                    withExperiment, withAssay, updatedWithCall);
-        }
-        assert probesetCountTO != null || affyRemainingCountTO != null;
-        assert probesetCountTO == null || probesetCountTO.getCallCount() != null;
-
-        return log.traceExit(new RawDataCountContainerTO(
-                //experiment count
-                affyRemainingCountTO != null? affyRemainingCountTO.getExperimentCount(): null,
-                //assay count
-                affyRemainingCountTO != null? affyRemainingCountTO.getAssayCount(): null,
-                //call count
-                probesetCountTO != null? probesetCountTO.getCallCount():
-                    affyRemainingCountTO.getCallCount()));
-    }
-
 //*****************************************************************************************
 //                       METHODS NECESSARY FOR ALL DATA TYPES
 //*****************************************************************************************
 
-    private Map<Integer, RawDataCondition> loadCompleteRawDataConditionMap(Set<Integer> condIds) {
+    private void updateRawDataConditionMap(Set<Integer> condIds) {
         log.traceEntry("{}", condIds);
 
-        Map<Integer, RawDataCondition> requestedRawDataConditionMap =
-                this.getRawDataProcessedFilter().getRequestedRawDataConditionMap();
-        Map<Integer, Species> speciesMap = this.getRawDataProcessedFilter().getSpeciesMap();
-
         Set<Integer> missingCondIds = new HashSet<>(condIds);
-        missingCondIds.removeAll(requestedRawDataConditionMap.keySet());
+        missingCondIds.removeAll(this.rawDataConditionMap.keySet());
         if (missingCondIds.isEmpty()) {
-            return log.traceExit(requestedRawDataConditionMap);
+            log.traceExit(); return;
         }
+        Map<Integer, Species> speciesMap = this.getRawDataProcessedFilter().getSpeciesMap();
         Map<Integer, RawDataCondition> missingCondMap = loadRawDataConditionMapFromResultSet(
                         (attrs) -> this.rawDataConditionDAO.getRawDataConditionsFromIds(missingCondIds, attrs),
                         null, speciesMap.values(), anatEntityService, devStageService);
-        missingCondMap.putAll(requestedRawDataConditionMap);
+        //If the Map is going to grow too big, we keep only the entries needed
+        //for this method call
+        if (this.rawDataConditionMap.size() + missingCondMap.size() > MAX_ELEMENTS_IN_MAP) {
+            this.rawDataConditionMap.keySet().retainAll(condIds);
+        }
+        this.rawDataConditionMap.putAll(missingCondMap);
 
-        return log.traceExit(missingCondMap);
+        log.traceExit(); return;
     }
-    private Map<Integer, Gene> loadCompleteGeneMap(Set<Integer> bgeeGeneIds) {
+    private void updateGeneMap(Set<Integer> bgeeGeneIds) {
         log.traceEntry("{}", bgeeGeneIds);
 
-        Map<Integer, Gene> requestedGeneMap = this.getRawDataProcessedFilter()
-                .getRequestedGeneMap();
+        Set<Integer> missingGeneIds = new HashSet<>(bgeeGeneIds);
+        missingGeneIds.removeAll(this.geneMap.keySet());
+        if (missingGeneIds.isEmpty()) {
+            log.traceExit(); return;
+        }
         Map<Integer, Species> speciesMap = this.getRawDataProcessedFilter()
                 .getSpeciesMap();
         Map<Integer, GeneBioType> geneBioTypeMap = this.getRawDataProcessedFilter()
                 .getGeneBioTypeMap();
-
-        Set<Integer> missingGeneIds = new HashSet<>(bgeeGeneIds);
-        missingGeneIds.removeAll(requestedGeneMap.keySet());
-        if (missingGeneIds.isEmpty()) {
-            return log.traceExit(requestedGeneMap);
-        }
         Map<Integer, Gene> missingGeneMap = this.geneDAO.getGenesByBgeeIds(missingGeneIds).stream()
                 .collect(Collectors.toMap(gTO -> gTO.getId(), gTO -> mapGeneTOToGene(gTO,
                         Optional.ofNullable(speciesMap.get(gTO.getSpeciesId()))
@@ -722,9 +687,14 @@ public class RawDataLoader extends CommonService {
                         null, null,
                         Optional.ofNullable(geneBioTypeMap.get(gTO.getGeneBioTypeId()))
                         .orElseThrow(() -> new IllegalStateException("Missing gene biotype ID for gene")))));
-        missingGeneMap.putAll(requestedGeneMap);
+        //If the Map is going to grow too big, we keep only the entries needed
+        //for this method call
+        if (this.geneMap.size() + missingGeneMap.size() > MAX_ELEMENTS_IN_MAP) {
+            this.geneMap.keySet().retainAll(bgeeGeneIds);
+        }
+        this.geneMap.putAll(missingGeneMap);
 
-        return log.traceExit(missingGeneMap);
+        log.traceExit(); return;
     }
 
     private Source getSourceById(Integer sourceId) {
@@ -739,207 +709,6 @@ public class RawDataLoader extends CommonService {
         }
         return log.traceExit(source);
     }
-
-    private static EnumSet<DataType> getDataTypes(Collection<DataType> dataTypes) {
-        log.traceEntry("{}", dataTypes);
-        return log.traceExit(dataTypes == null || dataTypes.isEmpty()?
-                EnumSet.allOf(DataType.class): EnumSet.copyOf(dataTypes));
-    }
-    private static EnumSet<InformationType> getInformationTypes(Collection<InformationType> infoTypes) {
-        log.traceEntry("{}", infoTypes);
-        return log.traceExit(infoTypes == null || infoTypes.isEmpty()?
-                EnumSet.allOf(InformationType.class): EnumSet.copyOf(infoTypes));
-    }
-//
-//    /**
-//     * Load affymetrix experiments from the database
-//     * 
-//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix experiment IDs
-//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix chip IDs
-//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-//     *                                  defining information to retrieve in the 
-//     *                                  {@code MicroarrayExperiment}s.
-//     * @return  A {@code Stream} of {@code AffymetrixExperiment}s.
-//     *          If the {@code Stream} contains no element, it means that there were no data
-//     *          of this type for the requested parameters.
-//     */
-//    public Stream<AffymetrixExperiment> loadAffymetrixExperiments(Collection<String> affymetrixExperimentIds,
-//            Collection<String> affymetrixChipIds, Collection<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
-//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-//
-//        MicroarrayExperimentDAO expDAO = this.rawDataService.getServiceFactory()
-//                .getDAOManager().getMicroarrayExperimentDAO();
-//
-//        // return all datasources if required
-//        final Map<Integer,Source> dataSourceIdToDataSource = 
-//                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
-//                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
-//                    new HashMap<>();
-//
-//        // transform RawDataService Attributes to DAO attributes
-//        Set<MicroarrayExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(MicroarrayExperimentDAO
-//                .Attribute.class);
-//        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
-//            daoAttrs.remove(MicroarrayExperimentDAO.Attribute.DATA_SOURCE_ID);
-//        }
-//
-//        //generate AffymetrixExperiment objects and retrieve them
-//        //XXX FB: this should be managed through one single query to the DAO
-//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-//            return expDAO.getExperiments(clonedExpIds, clonedChipIds, filter, 
-//                    daoAttrs).stream()
-//                    .map(to -> new AffymetrixExperiment( to.getId(), to.getName(), 
-//                            to.getDescription(), to.getDataSourceId() == null ? null: 
-//                                dataSourceIdToDataSource.get(to.getDataSourceId())))
-//                    .collect(Collectors.toSet());
-//            }).flatMap(e -> e.stream()));
-//    }
-//
-//    /**
-//     * Load affymetrix chips from the database
-//     * 
-//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix experiment IDs
-//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix chip IDs
-//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-//     *                                  defining information to retrieve in the 
-//     *                                  {@code MicroarrayExperiment}s.
-//     * @return  A {@code Stream} of {@code AffymetrixChip}s.
-//     *          If the {@code Stream} contains no element, it means that there were no data
-//     *          of this type for the requested parameters.
-//     */
-//    public Stream<AffymetrixChip> loadAffymetrixChips(Collection<String> affymetrixExperimentIds, 
-//            Collection<String> affymetrixChipIds, Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}", affymetrixExperimentIds, affymetrixChipIds, attrs);
-//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-//
-//        // load Experiments
-//        final Map <String, AffymetrixExperiment> expIdToExperiments = 
-//                loadAffymetrixExperiments(clonedExpIds, clonedChipIds, clonedAttrs)
-//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-//
-//        // load conditions based on rawDataFilters if required
-//        Map<Integer, RawDataCondition> condIdToCond = 
-//                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION) == true?
-//                        rawDataConditionMap:
-//                    null;
-//
-//      //create dao affymetrix chip attributes from service attributes
-//        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(clonedAttrs);
-//
-//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
-//                    .getAffymetrixChips(clonedExpIds, clonedChipIds, filter, daoAttrs)
-//            .stream().map(to -> {
-//                return new AffymetrixChip( to.getAffymetrixChipId(), expIdToExperiments.get(to.getExperimentId()), 
-//                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null));
-//            }).collect(Collectors.toSet());
-//        }).flatMap(c -> c.stream()));
-//    }
-//
-//    private Map<Integer, AffymetrixChip> loadAffymetrixChipsByBgeeChipIds(Collection<String> affyExpIds,
-//            Collection<String> affyChipIds, Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}", affyExpIds, affyChipIds, attrs);
-//
-//        // load Experiments
-//        final Map <String, AffymetrixExperiment> expIdToExperiments = 
-//                loadAffymetrixExperiments(affyExpIds, affyChipIds, attrs)
-//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-//
-//        // load conditions based on rawDataFilters if required
-//        final Map<Integer, RawDataCondition> condIdToCond = 
-//                attrs.contains(RawDataService.Attribute.ANNOTATION) == true?
-//                        rawDataConditionMap:
-//                    null;
-//
-//        //create dao affymetrix chip attributes from service attributes
-//        Set<AffymetrixChipDAO.Attribute> daoAttrs = fromAttrsToAffyChipDAOAttrs(attrs);
-//
-//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixChipDAO()
-//                    .getAffymetrixChips(affyExpIds, affyChipIds, filter, daoAttrs)
-//                    .stream().collect(Collectors.toMap(to -> {Integer id = to.getId(); 
-//                    return id;
-//                    }, to -> {
-//                        RawDataAnnotation annotation = null;
-//                        if (to.getConditionId() != null) {
-//                            annotation = new RawDataAnnotation(condIdToCond.get(to.getConditionId()),
-//                                    null, null, null);
-//                        }
-//                        AffymetrixChip chip = new AffymetrixChip(to.getAffymetrixChipId(),
-//                                expIdToExperiments.containsKey(to.getExperimentId())? expIdToExperiments.get(to.getExperimentId()):null, 
-//                                        annotation);
-//                        return chip;
-//                    }));
-//        }).flatMap(a -> a.entrySet().stream())
-//                .collect(Collectors.toMap(q -> q.getKey(), q -> q.getValue())));
-//    }
-//
-//    /**
-//     * Load affymetrix probesets from the database
-//     * 
-//     * @param affymetrixProbesetIds     A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix probeset IDs
-//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix chip IDs
-//     * @param affymetrixExperimentIds   A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix experiment IDs
-//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-//     *                                  defining information to retrieve in the 
-//     *                                  {@code MicroarrayExperiment}s.
-//     * @return  A {@code Stream} of {@code AffymetrixProbeset}s.
-//     *          If the {@code Stream} contains no element, it means that there were no data
-//     *          of this type for the requested parameters.
-//     */
-//    public Stream<AffymetrixProbeset> loadAffymetrixProbesets(Collection<String> affymetrixExperimentIds,
-//            Collection<String> affymetrixChipIds, Collection<String> affymetrixProbesetIds,
-//            Collection<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}, {}", affymetrixExperimentIds, affymetrixChipIds,
-//                affymetrixProbesetIds, attrs);
-//        final Set<String> clonedProbesetIds =  Collections.unmodifiableSet(affymetrixProbesetIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixProbesetIds));
-//        final Set<String> clonedChipIds =  Collections.unmodifiableSet(affymetrixChipIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixChipIds));
-//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(affymetrixExperimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(affymetrixExperimentIds));
-//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-//
-//        // return all Assays by bgee chip ids
-//        final Map <Integer, AffymetrixChip> bgeeChipIdToAssay = 
-//            this.loadAffymetrixChipsByBgeeChipIds(clonedExpIds, clonedChipIds,clonedAttrs);
-//
-//        //from service attributes to dao attributes
-//        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = fromAttrsToAffyProbesetDAOAttrs(clonedAttrs);
-//        
-//        return this.daoRawDataFilters.stream().map( filter -> {
-//            return this.rawDataService.getServiceFactory().getDAOManager().getAffymetrixProbesetDAO()
-//                    .getAffymetrixProbesets(clonedExpIds, clonedChipIds, clonedProbesetIds, filter, daoAttrs)
-//            .stream().map(to -> {
-//                return new AffymetrixProbeset(to.getId(), 
-//                        bgeeChipIdToAssay.get(to.getAssayId()),
-//                            new RawCall(geneMap.get(to.getBgeeGeneId()), to.getPValue(),
-//                                    to.getExpressionConfidence(),
-//                                    ExclusionReason.convertToExclusionReason(to.getExclusionReason()
-//                                            .getStringRepresentation())),
-//                            to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank());
-//            }).collect(Collectors.toSet());
-//        }).flatMap(c -> c.stream());
-//    }
 //    
 //    private Map<Integer, RawDataCondition> loadRawDataConditionMap(
 //            Collection<RawDataFilter> dataFilters) {

@@ -14,6 +14,8 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
@@ -24,6 +26,8 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTLibraryDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituEvidenceDAO;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.insitu.MySQLInSituSpotDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixChipDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.microarray.MySQLAffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.rnaseq.MySQLRNASeqLibraryAnnotatedSampleDAO;
@@ -215,10 +219,97 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
     }
 
     @Override
-    public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> arg0, boolean arg1, boolean arg2,
-            boolean arg3) {
-        // TODO Auto-generated method stub
-        return null;
+    public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
+            boolean experimentCount, boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, assayCount, callCount);
+        if (!experimentCount && !assayCount && !callCount) {
+            throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
+                    + " callsCount can not be all false at the same time"));
+        }
+        final DAOProcessedRawDataFilter processedRawDataFilters = 
+                new DAOProcessedRawDataFilter(rawDataFilters);
+        StringBuilder sb = new StringBuilder();
+
+        // for insitu the condition is linked to a call
+        boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount ||
+                processedRawDataFilters.isNeedConditionId();
+
+        // generate SELECT clause
+        sb.append("SELECT STRAIGHT_JOIN");
+        boolean previousCount = false;
+        if (experimentCount) {
+            sb.append(" count(distinct ").append(MySQLInSituEvidenceDAO.TABLE_NAME).append(".")
+                    .append(InSituEvidenceDAO.Attribute.EXPERIMENT_ID.getTOFieldName()).append(") as ")
+                    .append(RawDataCountDAO.Attribute.EXP_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (assayCount) {
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(");
+            if (!callTable) {
+                //count(*) is faster than count(columnName)
+                //(see https://stackoverflow.com/a/3003482).
+                //If the spots were not required, then
+                //number of lines = number of inSituEvidenceId
+                //(primary key of the inSituEvidence table)
+                sb.append("*");
+            } else {
+                //If spots are needed, we need to add DISTINCT,
+                //because relation 1-to-many to table inSituSpot.
+                sb.append("distinct ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+                        .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName());
+            }
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (callCount) {
+            assert callTable;
+            if(previousCount) {
+                sb.append(",");
+            }
+            //Here, number of lines always equal to
+            //count(distinct inSituSpotId)
+            //(the primary key of the table that we need to count).
+            //We wouldn't need the DISTINCT.
+            //And count(*) is faster than count(columnName)
+            sb.append(" count(*) as ")
+              .append(RawDataCountDAO.Attribute.CALLS_COUNT.getTOFieldName());
+        }
+
+        // create the set of tables it is necessary to use in FROM clause even if no filter
+        // on those columns
+        Set<String> necessaryTables = new HashSet<>();
+        if (callCount) {
+            necessaryTables.add(MySQLInSituSpotDAO.TABLE_NAME);
+        }
+        if (experimentCount || assayCount && !callCount) {
+            necessaryTables.add(MySQLInSituEvidenceDAO.TABLE_NAME);
+        }
+
+        // generate FROM clause
+        RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
+                processedRawDataFilters, null, necessaryTables, DAODataType.IN_SITU);
+
+        // generate WHERE CLAUSE
+        if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
+            sb.append(" WHERE ")
+            .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
+                    filtersToDatabaseMapping));
+        }
+        try {
+            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
+                    processedRawDataFilters, DAODataType.IN_SITU, null, null);
+            MySQLRawDataCountContainerTOResultSet resultSet = new MySQLRawDataCountContainerTOResultSet(stmt);
+            resultSet.next();
+            RawDataCountContainerTO to = resultSet.getTO();
+            resultSet.close();
+            return log.traceExit(to);
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     @Override

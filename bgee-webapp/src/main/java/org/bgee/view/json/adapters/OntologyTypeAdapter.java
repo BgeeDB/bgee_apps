@@ -56,6 +56,11 @@ public class OntologyTypeAdapter<T extends NamedEntity<U> & OntologyElement<T, U
     @Override
     public void write(JsonWriter out, Ontology<T, U> value) throws IOException {
         log.traceEntry("{}, {}", out, value);
+        if (value == null) {
+            out.nullValue();
+            log.traceExit(); return;
+        }
+
         List<T> roots = value.getRootElements(EnumSet.of(RelationType.ISA_PARTOF))
                 .stream().collect(Collectors.toList());
         if (roots.isEmpty()) {

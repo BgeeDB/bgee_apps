@@ -98,9 +98,11 @@ implements RNASeqResultAnnotatedSampleDAO {
                 foundPrevious);
 
         // generate ORDER BY
-        sb.append(" ORDER BY")
-        .append(" " + TABLE_NAME + "." + RNASeqResultAnnotatedSampleDAO.Attribute
-                .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName());
+        sb.append(" ORDER BY ")
+        .append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
+                .LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName())
+        .append(", ").append(TABLE_NAME).append(".").append(RNASeqResultAnnotatedSampleDAO.Attribute
+                .BGEE_GENE_ID.getTOFieldName());
 
         //generate offset and limit
         if (limit != null) {

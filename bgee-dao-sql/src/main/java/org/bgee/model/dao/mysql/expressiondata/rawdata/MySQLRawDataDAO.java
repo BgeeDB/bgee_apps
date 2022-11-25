@@ -1146,7 +1146,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     protected boolean generateWhereClauseTechnologyRnaSeq(StringBuilder sb,
             Boolean isSingleCell, boolean foundPrevious) {
-        log.traceEntry("{}, {}", isSingleCell, foundPrevious);
+        log.traceEntry("{}, {}, {}", sb, isSingleCell, foundPrevious);
         if (isSingleCell != null) {
             if (foundPrevious) {
                 sb.append(" AND ");

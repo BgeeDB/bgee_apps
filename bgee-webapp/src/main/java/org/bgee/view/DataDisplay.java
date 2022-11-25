@@ -1,8 +1,8 @@
 package org.bgee.view;
 
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
@@ -26,10 +26,10 @@ public interface DataDisplay {
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails);
 
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
-            Map<DataType, List<ColumnDescription>> colDescriptions,
-            Map<DataType, RawDataContainer<?, ?>> rawDataContainers,
-            Map<DataType, RawDataCountContainer> rawDataCountContainers,
-            Map<DataType, RawDataPostFilter> rawDataPostFilters);
+            EnumMap<DataType, List<ColumnDescription>> colDescriptions,
+            EnumMap<DataType, RawDataContainer<?, ?>> rawDataContainers,
+            EnumMap<DataType, RawDataCountContainer> rawDataCountContainers,
+            EnumMap<DataType, RawDataPostFilter> rawDataPostFilters);
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);

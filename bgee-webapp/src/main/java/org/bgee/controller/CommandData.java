@@ -45,8 +45,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -284,10 +284,10 @@ public class CommandData extends CommandParent {
         log.traceEntry("{}, {}", speciesList, formDetails);
 
         log.debug("Action identified: {}", this.requestParameters.getAction());
-        Map<DataType, RawDataContainer<?, ?>> rawDataContainers = null;
-        Map<DataType, RawDataCountContainer> rawDataCountContainers = null;
-        Map<DataType, RawDataPostFilter> rawDataPostFilters = null;
-        Map<DataType, List<ColumnDescription>> colDescriptions = null;
+        EnumMap<DataType, RawDataContainer<?, ?>> rawDataContainers = null;
+        EnumMap<DataType, RawDataCountContainer> rawDataCountContainers = null;
+        EnumMap<DataType, RawDataPostFilter> rawDataPostFilters = null;
+        EnumMap<DataType, List<ColumnDescription>> colDescriptions = null;
 
         EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
 
@@ -636,7 +636,7 @@ public class CommandData extends CommandParent {
                 expOrAssayIds));
     }
 
-    private Map<DataType, RawDataContainer<?, ?>> loadRawDataResults(RawDataLoader rawDataLoader,
+    private EnumMap<DataType, RawDataContainer<?, ?>> loadRawDataResults(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes) throws InvalidRequestException {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
@@ -676,10 +676,12 @@ public class CommandData extends CommandParent {
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadData(finalInfoType,
-                                RawDataDataType.getRawDataDataType(dt), offset, limit))));
+                                RawDataDataType.getRawDataDataType(dt), offset, limit),
+                        (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
+                        () -> new EnumMap<>(DataType.class))));
     }
 
-    private Map<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,
+    private EnumMap<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes) {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
@@ -700,10 +702,12 @@ public class CommandData extends CommandParent {
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadDataCount(infoTypes,
-                                RawDataDataType.getRawDataDataType(dt)))));
+                                RawDataDataType.getRawDataDataType(dt)),
+                        (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
+                        () -> new EnumMap<>(DataType.class))));
     }
 
-    private Map<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
+    private EnumMap<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
             EnumSet<DataType> dataTypes) {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
@@ -712,14 +716,17 @@ public class CommandData extends CommandParent {
                 .filter(dt -> dt == DataType.AFFYMETRIX)
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)))));
+                        dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)),
+                        (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
+                        () -> new EnumMap<>(DataType.class))));
     }
 
-    private Map<DataType, List<ColumnDescription>> getColumnDescriptions(String action,
+    private EnumMap<DataType, List<ColumnDescription>> getColumnDescriptions(String action,
             EnumSet<DataType> dataTypes) throws InvalidRequestException {
         log.traceEntry("{}, {}", action, dataTypes);
-        Map<DataType, List<ColumnDescription>> dataTypeToColDescr = new HashMap<>();
-        Map<DataType, Supplier<List<ColumnDescription>>> dataTypeTolDescrSupplier = new HashMap<>();
+        EnumMap<DataType, List<ColumnDescription>> dataTypeToColDescr = new EnumMap<>(DataType.class);
+        EnumMap<DataType, Supplier<List<ColumnDescription>>> dataTypeTolDescrSupplier =
+                new EnumMap<>(DataType.class);
 
         if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,

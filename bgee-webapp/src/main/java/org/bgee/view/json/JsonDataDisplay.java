@@ -1,11 +1,11 @@
 package org.bgee.view.json;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +22,6 @@ import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainerWithExperiment;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.species.Species;
 import org.bgee.view.DataDisplay;
@@ -50,10 +49,10 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         log.traceExit();
     }
     public void displayDataPage(List<Species> speciesList, DataFormDetails formDetails,
-            Map<DataType, List<ColumnDescription>> colDescriptions,
-            Map<DataType, RawDataContainer<?, ?>> rawDataContainers,
-            Map<DataType, RawDataCountContainer> rawDataCountContainers,
-            Map<DataType, RawDataPostFilter> rawDataPostFilters) {
+            EnumMap<DataType, List<ColumnDescription>> colDescriptions,
+            EnumMap<DataType, RawDataContainer<?, ?>> rawDataContainers,
+            EnumMap<DataType, RawDataCountContainer> rawDataCountContainers,
+            EnumMap<DataType, RawDataPostFilter> rawDataPostFilters) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", speciesList, formDetails, colDescriptions,
                 rawDataContainers, rawDataCountContainers, rawDataPostFilters);
 
@@ -74,14 +73,6 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             //The Sets returned by rawDataContainer are backed-up by a LinkedHashSet,
             //iteration order is guaranteed
             LinkedHashMap<DataType, Set<?>> resultMap = new LinkedHashMap<>();
-            //for counts
-            final String expCountKey = "experimentCount";
-            final String assayCountKey = "assayCount";
-            final String callCountKey = "callCount";
-            LinkedHashMap<DataType, LinkedHashMap<String, Integer>> resultCountMap =
-                    new LinkedHashMap<>();
-            //For filters
-            LinkedHashMap<DataType, RawDataPostFilter> filterMap = new LinkedHashMap<>();
 
             for (DataType dt: EnumSet.allOf(DataType.class)) {
                 //********** Raw data *************
@@ -103,43 +94,16 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
                                 .getExperiments());
                     }
                 }
-
-                //********** Raw data counts *************
-                RawDataCountContainer countContainer = rawDataCountContainers.get(dt);
-                if (countContainer != null) {
-                    LinkedHashMap<String, Integer> counts = new LinkedHashMap<>();
-                    if (countContainer instanceof RawDataCountContainerWithExperiment &&
-                            ((RawDataCountContainerWithExperiment) countContainer)
-                            .getExperimentCount() != null) {
-                        counts.put(expCountKey, ((RawDataCountContainerWithExperiment) countContainer)
-                                .getExperimentCount());
-                    }
-                    if (countContainer.getAssayCount() != null) {
-                        counts.put(assayCountKey, countContainer.getAssayCount());
-                    }
-                    if (countContainer.getCallCount() != null) {
-                        counts.put(callCountKey, countContainer.getCallCount());
-                    }
-                    if (!counts.isEmpty()) {
-                        resultCountMap.put(dt, counts);
-                    }
-                }
-
-                //********** Post filters *************
-                RawDataPostFilter postFilter = rawDataPostFilters.get(dt);
-                if (postFilter != null) {
-                    filterMap.put(dt, postFilter);
-                }
             }
 
             if (!resultMap.isEmpty()) {
                 responseMap.put("results", resultMap);
             }
-            if (!resultCountMap.isEmpty()) {
-                responseMap.put("resultCount", resultCountMap);
+            if (rawDataCountContainers != null) {
+                responseMap.put("resultCount", rawDataCountContainers);
             }
-            if (!filterMap.isEmpty()) {
-                responseMap.put("filters", filterMap);
+            if (rawDataPostFilters != null) {
+                responseMap.put("filters", rawDataPostFilters);
             }
         }
 

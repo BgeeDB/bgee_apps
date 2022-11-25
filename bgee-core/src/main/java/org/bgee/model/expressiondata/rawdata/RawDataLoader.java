@@ -65,6 +65,7 @@ import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSu
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqCountContainer;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
@@ -352,6 +353,13 @@ public class RawDataLoader extends CommonService {
             rawDataCountContainer = rawDataCountContainerClass.cast(
                     this.loadAffymetrixCount(withExperiment, withAssay, withCall));
             break;
+        case RNA_SEQ:
+        case FULL_LENGTH:
+            rawDataCountContainer = rawDataCountContainerClass.cast(
+                    this.loadRnaSeqCount(
+                            requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
+                            withExperiment, withAssay, withCall));
+            break;
         default:
             //TODO: reenable the exception when all data types supported
             //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
@@ -380,6 +388,11 @@ public class RawDataLoader extends CommonService {
         switch (requestedDataType) {
         case AFFYMETRIX:
             return log.traceExit(this.loadAffymetrixPostFilter());
+        case RNA_SEQ:
+        case FULL_LENGTH:
+            return log.traceExit(this.loadRnaSeqPostFilter(
+                    requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
+                    requestedDataType));
         default:
             //TODO: reenable the exception when all data types supported and remove the return null
             //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
@@ -843,6 +856,39 @@ public class RawDataLoader extends CommonService {
                 infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
                 infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
                 infoType == InformationType.CALL? Set.of(): null));
+    }
+
+    private RnaSeqCountContainer loadRnaSeqCount(boolean isSingleCell, boolean withExperiment,
+            boolean withAssay, boolean withCall) {
+        log.traceEntry("{}, {}, {}, {}", isSingleCell, withExperiment, withAssay, withCall);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(new RnaSeqCountContainer(
+                    withExperiment? 0: null,
+                    withAssay? 0: null,
+                    withAssay? 0: null,
+                    withCall? 0: null));
+        }
+
+        RawDataCountContainerTO countTO = rawDataCountDAO.getRnaSeqCount(
+                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                isSingleCell, withExperiment, withAssay, withAssay, withCall);
+
+        return log.traceExit(new RnaSeqCountContainer(
+                countTO.getExperimentCount(),
+                countTO.getRnaSeqLibraryCount(),
+                countTO.getAssayCount(),
+                countTO.getCallCount()));
+    }
+
+    private RawDataPostFilter loadRnaSeqPostFilter(boolean isSingleCell, DataType dataType) {
+        log.traceEntry("{}, {}", isSingleCell, dataType);
+        return log.traceExit(this.loadConditionPostFilter(
+                (filters, attrs) -> this.rawDataConditionDAO
+                .getRNASeqRawDataConditions(filters, isSingleCell, attrs),
+                dataType));
     }
 
 //*****************************************************************************************

@@ -1,28 +1,7 @@
 package org.bgee.model.expressiondata.rawdata;
 
-//RnaSeqTechnology technology = clonedAttrs.contains(RawDataService.Attribute.TECHNOLOGY)?
-//        //TODO: implement protocol name in the database schema and in the dao
-//        new RnaSeqTechnology( null, libIdToLibTO.get(to.getLibraryId()).getId(),
-//                Strand.convertToStrand(to.getStrandSelection().getStringRepresentation()),
-//                SequencedTranscriptPart.convertToSequencedTranscriptPart(
-//                        to.getSequencedTranscriptPart().getStringRepresentation()),
-//                CellCompartment.convertToCellCompartment(
-//                        to.getCellCompartment().getStringRepresentation()),
-//                libIdToLibTO.get(to.getLibraryId()).isSampleMultiplexing(),
-//                libIdToLibTO.get(to.getLibraryId()).isLibraryMultiplexing(), 
-//                false, to.getBarcode()):
-//                    null;
-
-//if (!attrs.contains(RawDataService.Attribute.TECHNOLOGY)) {
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.CELL_COMPARTMENT);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.FRAGMENTATION);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.GENOTYPE_ID);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.STRAND_SELECTION);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.SEQUENCED_TRANSCRIPT_PART);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.POPULATION_CAPTURE_ID);
-//    daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.BARCODE);
-//}
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,8 +34,20 @@ import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbes
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO.AffymetrixProbesetTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO.MicroarrayExperimentTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO.RNASeqExperimentTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO.RNASeqLibraryAnnotatedSampleTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO.RNASeqLibraryAnnotatedSampleTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO.RNASeqResultAnnotatedSampleTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO.RNASeqResultAnnotatedSampleTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
@@ -65,10 +56,20 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.SequencedTranscriptPart;
+import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryPipelineSummary;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqTechnology;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample.AbundanceUnit;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixCountContainer;
 import org.bgee.model.gene.Gene;
@@ -188,6 +189,10 @@ public class RawDataLoader extends CommonService {
     private final MicroarrayExperimentDAO microarrayExperimentDAO;
     private final AffymetrixChipDAO affymetrixChipDAO;
     private final AffymetrixProbesetDAO affymetrixProbesetDAO;
+    private final RNASeqExperimentDAO rnaSeqExperimentDAO;
+    private final RNASeqLibraryDAO rnaSeqLibraryDAO;
+    private final RNASeqLibraryAnnotatedSampleDAO rnaSeqAssayDAO;
+    private final RNASeqResultAnnotatedSampleDAO rnaSeqCallDAO;
     private final RawDataConditionDAO rawDataConditionDAO;
     private final RawDataCountDAO rawDataCountDAO;
     private final GeneDAO geneDAO;
@@ -234,6 +239,10 @@ public class RawDataLoader extends CommonService {
         this.microarrayExperimentDAO = this.getDaoManager().getMicroarrayExperimentDAO();
         this.affymetrixChipDAO       = this.getDaoManager().getAffymetrixChipDAO();
         this.affymetrixProbesetDAO   = this.getDaoManager().getAffymetrixProbesetDAO();
+        this.rnaSeqExperimentDAO     = this.getDaoManager().getRnaSeqExperimentDAO();
+        this.rnaSeqLibraryDAO        = this.getDaoManager().getRnaSeqLibraryDAO();
+        this.rnaSeqAssayDAO          = this.getDaoManager().getRnaSeqLibraryAnnotatedSampleDAO();
+        this.rnaSeqCallDAO           = this.getDaoManager().getRnaSeqResultAnnotatedSampleDAO();
         this.rawDataConditionDAO     = this.getDaoManager().getRawDataConditionDAO();
         this.geneDAO                 = this.getDaoManager().getGeneDAO();
         this.anatEntityService       = this.getServiceFactory().getAnatEntityService();
@@ -301,6 +310,13 @@ public class RawDataLoader extends CommonService {
         case AFFYMETRIX:
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadAffymetrixData(infoType, newOffset, newLimit));
+            break;
+        case RNA_SEQ:
+        case FULL_LENGTH:
+            rawDataContainer = rawDataContainerClass.cast(
+                    this.loadRnaSeqData(infoType,
+                            requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
+                            newOffset, newLimit));
             break;
         default:
             //TODO: reenable the exception when all data types supported
@@ -391,7 +407,6 @@ public class RawDataLoader extends CommonService {
         Set<Integer> bgeeGeneIds = new HashSet<>();
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
                 .getDaoRawDataFilters();
-        assert daoRawDataFilters != null;
 
         //*********** Calls ***********
         if (infoType == InformationType.CALL) {
@@ -630,6 +645,241 @@ public class RawDataLoader extends CommonService {
 
         return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
                 sexes, strains, DataType.AFFYMETRIX));
+    }
+
+//*****************************************************************************************
+//                         METHODS LOADING RNA-SEQ RAW DATA
+//*****************************************************************************************
+
+    private RnaSeqContainer loadRnaSeqData(InformationType infoType, boolean isSingleCell,
+            int offset, int limit) {
+        log.traceEntry("{}, {}, {}, {}", infoType, isSingleCell, offset, limit);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(this.getNoResultRnaSeqContainer(infoType));
+        }
+
+        //************************************************************
+        // First, we retrieve all necessary TransferObjects
+        //************************************************************
+        LinkedHashSet<RNASeqResultAnnotatedSampleTO> callTOs = new LinkedHashSet<>();
+        LinkedHashSet<RNASeqLibraryAnnotatedSampleTO> assayTOs = new LinkedHashSet<>();
+        LinkedHashSet<RNASeqLibraryTO> libTOs = new LinkedHashSet<>();
+        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
+                .getDaoRawDataFilters();
+
+        //*********** Calls ***********
+        Set<Integer> bgeeAnnotatedSampleIds = new HashSet<>();
+        Set<Integer> bgeeGeneIds = new HashSet<>();
+        if (infoType == InformationType.CALL) {
+            RNASeqResultAnnotatedSampleTOResultSet callTORS = this.rnaSeqCallDAO.getResultAnnotatedSamples(
+                    daoRawDataFilters, isSingleCell, offset, limit, null);
+            while (callTORS.next()) {
+                RNASeqResultAnnotatedSampleTO callTO = callTORS.getTO();
+                bgeeAnnotatedSampleIds.add(callTO.getAssayId());
+                bgeeGeneIds.add(callTO.getBgeeGeneId());
+                callTOs.add(callTO);
+            }
+        }
+
+        //*********** Assays ***********
+        RNASeqLibraryAnnotatedSampleTOResultSet assayTORS = null;
+        //We need to write the test in this way, in case CALLs were requested, but there was
+        //no result retrieved
+        if (!bgeeAnnotatedSampleIds.isEmpty()) {
+            assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamplesFromLibraryAnnotatedSampleIds(
+                    bgeeAnnotatedSampleIds, null);
+        } else if (infoType == InformationType.ASSAY) {
+            assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamples(daoRawDataFilters,
+                    isSingleCell, offset, limit, null);
+        }
+        Set<String> libraryIds = new HashSet<>();
+        Set<Integer> rawDataCondIds = new HashSet<>();
+        if (assayTORS != null) {
+            while (assayTORS.next()) {
+                RNASeqLibraryAnnotatedSampleTO assayTO = assayTORS.getTO();
+                libraryIds.add(assayTO.getLibraryId());
+                rawDataCondIds.add(assayTO.getConditionId());
+                assayTOs.add(assayTO);
+            }
+        }
+
+        //*********** Libraries ***********
+        Set<String> expIds = new HashSet<>();
+        if (!libraryIds.isEmpty()) {
+            //we can use a new DAORawDataFilter to retrieve the requested libraries
+            DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
+            RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
+                    Collections.singleton(libFilter), null, null, null);
+
+            while (libTORS.next()) {
+                RNASeqLibraryTO libTO = libTORS.getTO();
+                expIds.add(libTO.getExperimentId());
+                libTOs.add(libTO);
+            }
+        }
+
+        //*********** Experiments ***********
+        RNASeqExperimentTOResultSet expTORS = null;
+        //Experiments should always be retrieved at this point if there is any result,
+        //but we need this check in case there was no result returned when requesting
+        //CALLs or ASSAYs.
+        if (!expIds.isEmpty()) {
+            //we can use a new DAORawDataFilter to retrieve the requested experiments
+            DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null);
+            expTORS = this.rnaSeqExperimentDAO.getExperiments(
+                    Collections.singleton(expFilter), null, null, null);
+        } else if (infoType == InformationType.EXPERIMENT) {
+            //otherwise, it was the information requested originally
+            expTORS = this.rnaSeqExperimentDAO.getExperiments(daoRawDataFilters, isSingleCell,
+                    offset, limit, null);
+        }
+        LinkedHashMap<String, RnaSeqExperiment> expIdToExp =
+                expTORS == null? new LinkedHashMap<>():
+                    expTORS.stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+                            to -> new RnaSeqExperiment(to.getId(), to.getName(),
+                                  to.getDescription(), getSourceById(to.getDataSourceId()), 0),
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+
+        //************************************************************
+        // Now, we load missing Genes and RawDataConditions
+        //************************************************************
+        this.updateRawDataConditionMap(rawDataCondIds);
+        this.updateGeneMap(bgeeGeneIds);
+
+
+        //************************************************************
+        // Finally, we instantiate all bgee-core objects necessary
+        //************************************************************
+        //Experiments are always needed
+        LinkedHashSet<RnaSeqExperiment> experiments =
+                new LinkedHashSet<>(expIdToExp.values());
+
+        //Now we load the LinkedHashSets only if needed, to distinguish between
+        //null value = info not requested, and empty Collection = no result
+        LinkedHashSet<RnaSeqLibraryAnnotatedSample> assays = null;
+        LinkedHashSet<RnaSeqLibrary> libs = null;
+        LinkedHashSet<RnaSeqResultAnnotatedSample> calls = null;
+        if (infoType == InformationType.ASSAY || infoType == InformationType.CALL) {
+            //We create a Map libId -> lib for easier instantiation
+            //of the assays
+            LinkedHashMap<String, RnaSeqLibrary> libMap = libTOs
+                    .stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+
+                            to -> new RnaSeqLibrary(
+                                    to.getId(),
+
+                                    new RnaSeqTechnology(
+                                            to.getTechnologyName(),
+                                            to.getSequencerName(),
+                                            Strand.convertToStrand(to.getStrandSelection()
+                                                    .getStringRepresentation()),
+                                            SequencedTranscriptPart.convertToSequencedTranscriptPart(
+                                                    to.getSequencedTranscriptPart()
+                                                    .getStringRepresentation()),
+                                            CellCompartment.convertToCellCompartment(
+                                                    to.getCellCompartment().getStringRepresentation()),
+                                            to.isSampleMultiplexing(),
+                                            to.isLibraryMultiplexing(),
+                                            to.getFragmentation(),
+                                            to.getLibraryType().getStringRepresentation()),
+
+                                    Optional.ofNullable(expIdToExp.get(to.getExperimentId()))
+                                    .orElseThrow(() -> new IllegalStateException(
+                                            "Missing experiment ID " + to.getExperimentId()
+                                            + " for lib ID " + to.getId()))),
+
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+            libs = new LinkedHashSet<>(libMap.values());
+
+            //We create a Map assayId -> assay for easier instantiation
+            //of calls
+            LinkedHashMap<Integer, RnaSeqLibraryAnnotatedSample> assayMap = assayTOs
+                    .stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+
+                            to -> new RnaSeqLibraryAnnotatedSample(
+                                    Optional.ofNullable(libMap.get(to.getLibraryId()))
+                                    .orElseThrow(() -> new IllegalStateException(
+                                            "Missing library ID " + to.getLibraryId()
+                                            + " for annotated sample ID " + to.getId())),
+                                    new RawDataAnnotation(
+                                            Optional.ofNullable(
+                                                    this.rawDataConditionMap.get(
+                                                            to.getConditionId()))
+                                            .orElseThrow(() -> new IllegalStateException(
+                                                    "Missing RawDataCondition ID "
+                                                    + to.getConditionId()
+                                                    + " for annotated sample ID " + to.getId())),
+                                            null, null, null),
+                                    new RnaSeqLibraryPipelineSummary(
+                                            to.getMeanAbundanceRefIntergenicDistribution(),
+                                            to.getSdAbundanceRefIntergenicDistribution(),
+                                            to.getpValueThreshold(),
+                                            to.getAllReadCount(),
+                                            to.getAllUMIsCount(),
+                                            to.getMappedReadCount(),
+                                            to.getMappedUMIsCount(),
+                                            to.getMinReadLength(),
+                                            to.getMaxReadLength(),
+                                            to.getMaxRank(),
+                                            to.getDistinctRankCount()),
+                                    to.getBarcode(),
+                                    to.getGenotype()),
+
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+            assays = new LinkedHashSet<>(assayMap.values());
+
+            if (infoType == InformationType.CALL) {
+                calls = callTOs
+                        .stream()
+                        .map(to -> new RnaSeqResultAnnotatedSample(
+                                Optional.ofNullable(assayMap.get(to.getAssayId()))
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "Missing assay ID " + to.getAssayId()
+                                        + " for Bgee gene ID " + to.getBgeeGeneId())),
+                                new RawCall(
+                                        Optional.ofNullable(this.geneMap.get(to.getBgeeGeneId()))
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                "Missing gene ID " + to.getBgeeGeneId()
+                                                + " for assay ID " + to.getAssayId())),
+                                        to.getPValue(),
+                                        to.getExpressionConfidence(),
+                                        ExclusionReason.convertToExclusionReason(
+                                                to.getExclusionReason().getStringRepresentation())),
+                                AbundanceUnit.convertToAbundanceUnit(
+                                        to.getAbundanceUnit().getStringRepresentation()),
+                                to.getAbundance(),
+                                to.getRank(),
+                                to.getReadCount(),
+                                to.getUmiCount(),
+                                to.getzScore()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+        }
+
+        return log.traceExit(new RnaSeqContainer(experiments, libs, assays, calls));
+    }
+    private RnaSeqContainer getNoResultRnaSeqContainer(InformationType infoType) {
+        log.traceEntry("{}", infoType);
+
+        return log.traceExit(new RnaSeqContainer(
+                //Experiments always end up being requested
+                Set.of(),
+                //We also get the libraries and the AnnotatedSamples when we request the calls
+                infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
+                infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
+                infoType == InformationType.CALL? Set.of(): null));
     }
 
 //*****************************************************************************************

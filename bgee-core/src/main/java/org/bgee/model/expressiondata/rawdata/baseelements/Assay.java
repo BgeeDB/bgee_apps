@@ -8,8 +8,8 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
  * @version Bgee 14 Jul. 2018
  * @since Bgee 14 Jul. 2018
  *
- * @param <T>   The type of ID of this assay.
  */
-public interface Assay<T extends Comparable<T>> {
-    public T getId();
+//Assays do not always have an ID, as for RnaSeqLibraryAnnotatedSample,
+//so we removed the getId() method from this interface
+public interface Assay {
 }

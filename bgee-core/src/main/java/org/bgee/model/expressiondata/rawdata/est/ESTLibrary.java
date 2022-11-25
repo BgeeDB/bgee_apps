@@ -8,7 +8,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataWithDataSource;
 import org.bgee.model.source.Source;
 
-public class ESTLibrary extends NamedEntity<String> implements Assay<String>, RawDataWithDataSource, 
+public class ESTLibrary extends NamedEntity<String> implements Assay, RawDataWithDataSource,
         RawDataAnnotated{
 
     private final RawDataAnnotation annotation;

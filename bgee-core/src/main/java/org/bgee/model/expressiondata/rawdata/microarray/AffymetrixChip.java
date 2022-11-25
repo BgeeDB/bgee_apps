@@ -9,7 +9,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 
-public class AffymetrixChip implements AssayPartOfExp<String, AffymetrixExperiment>, RawDataAnnotated {
+public class AffymetrixChip implements AssayPartOfExp<AffymetrixExperiment>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(AffymetrixChip.class.getName());
 
     private final String id;

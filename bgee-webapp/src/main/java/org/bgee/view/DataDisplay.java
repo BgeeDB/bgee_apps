@@ -31,6 +31,6 @@ public interface DataDisplay {
             Map<DataType, RawDataCountContainer> rawDataCountContainers,
             Map<DataType, RawDataPostFilter> rawDataPostFilters);
 
-    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
+    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);
 }

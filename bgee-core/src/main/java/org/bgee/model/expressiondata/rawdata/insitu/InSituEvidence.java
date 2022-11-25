@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.Entity;
 import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
 
-public class InSituEvidence extends Entity<String> implements AssayPartOfExp<String, InSituExperiment> {
+public class InSituEvidence extends Entity<String> implements AssayPartOfExp<InSituExperiment> {
     private final static Logger log = LogManager.getLogger(InSituEvidence.class.getName());
 
     private final InSituExperiment experiment;

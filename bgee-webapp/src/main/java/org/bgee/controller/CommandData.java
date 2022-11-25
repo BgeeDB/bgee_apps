@@ -383,7 +383,7 @@ public class CommandData extends CommandParent {
         }
         assert dataTypeWithResults != null;
         Experiment<?> experiment = container.getExperiments().iterator().next();
-        LinkedHashSet<Assay<?>> assays = new LinkedHashSet<>(container.getAssays());
+        LinkedHashSet<Assay> assays = new LinkedHashSet<>(container.getAssays());
         List<ColumnDescription> colDescr;
         try {
             colDescr = this.getColumnDescriptions(

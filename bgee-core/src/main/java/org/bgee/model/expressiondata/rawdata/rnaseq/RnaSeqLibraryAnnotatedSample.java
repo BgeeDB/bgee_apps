@@ -5,17 +5,15 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
 import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 
-// This object will merge information present in RNASeqLibraryTO and RNASeqLibraryAnnotatedSampleTO
-// from the DAO. The ID of RNASeqLibraryAnnotatedSampleTO is internal to Bgee, it is not meant to
-// be available in bgee-core. 
-public class RnaSeqLibraryAnnotatedSample extends Entity<String>
-        implements AssayPartOfExp<String, RnaSeqExperiment>, RawDataAnnotated{
+// The ID of RNASeqLibraryAnnotatedSampleTO is internal to Bgee, it is not meant to
+// be available in bgee-core, thus this class does not extend Entity.
+public class RnaSeqLibraryAnnotatedSample
+        implements AssayPartOfExp<RnaSeqExperiment>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(RnaSeqLibraryAnnotatedSample.class.getName());
 
     private final RnaSeqExperiment experiment;

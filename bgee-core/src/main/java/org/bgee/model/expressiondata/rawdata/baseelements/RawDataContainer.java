@@ -16,7 +16,7 @@ import java.util.Set;
  * @param <T>   The type of {@code Assay} contained.
  * @param <U>   The type of {@code RawCallSource} contained.
  */
-public abstract class RawDataContainer<T extends Assay<?>, U extends RawCallSource<T>>
+public abstract class RawDataContainer<T extends Assay, U extends RawCallSource<T>>
 extends DataContainerTemp {
 
     private final Set<T> assays;

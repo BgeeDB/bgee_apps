@@ -15,7 +15,7 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
  *
  * @param <T>   The type of {@code Assay} containing this {@code RawCallSource}
  */
-public interface RawCallSource<T extends Assay<?>> {
+public interface RawCallSource<T extends Assay> {
     public T getAssay();
     public RawCall getRawCall();
 }

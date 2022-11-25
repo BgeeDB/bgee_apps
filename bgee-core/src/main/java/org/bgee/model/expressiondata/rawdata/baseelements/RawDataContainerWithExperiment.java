@@ -19,7 +19,7 @@ import java.util.Set;
  * @param <V>   The type of {@code RawCallSource} contained.
  */
 public abstract class RawDataContainerWithExperiment<T extends Experiment<?>,
-U extends AssayPartOfExp<?, T>, V extends RawCallSource<U>>
+U extends AssayPartOfExp<T>, V extends RawCallSource<U>>
 extends RawDataContainer<U, V> {
 
     private final Set<T> experiments;

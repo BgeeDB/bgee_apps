@@ -12,9 +12,8 @@ package org.bgee.model.expressiondata.rawdata.baseelements;
  * @version Bgee 14 Jul. 2018
  * @since Bgee 14 Jul. 2018
  *
- * @param <T>   The type of ID of this {@code AssayPartOfExp}.
- * @param <U>   The type of the {@code Experiment} this {@code AssayPartOfExp} is part of.
+ * @param <T>   The type of the {@code Experiment} this {@code AssayPartOfExp} is part of.
  */
-public interface AssayPartOfExp<T extends Comparable<T>, U extends Experiment<?>> extends Assay<T> {
-    public U getExperiment();
+public interface AssayPartOfExp<T extends Experiment<?>> extends Assay {
+    public T getExperiment();
 }

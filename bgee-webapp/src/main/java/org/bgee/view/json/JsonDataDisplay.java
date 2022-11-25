@@ -147,7 +147,7 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         log.traceExit();
     }
 
-    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay<?>> assays,
+    public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions) {
         log.traceEntry("{}, {}, {}, {}", experiment, assays, dataType, columnDescriptions);
 

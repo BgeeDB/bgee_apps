@@ -530,7 +530,7 @@ public class RawDataLoader extends CommonService {
                                         to.getPValue(),
                                         to.getExpressionConfidence(),
                                         ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().getStringRepresentation())),
+                                                to.getExclusionReason().name())),
                                 to.getNormalizedSignalIntensity(), to.getqValue(), to.getRank()))
                         .collect(Collectors.toCollection(LinkedHashSet::new));
             }
@@ -779,13 +779,11 @@ public class RawDataLoader extends CommonService {
                                     new RnaSeqTechnology(
                                             to.getTechnologyName(),
                                             to.getSequencerName(),
-                                            Strand.convertToStrand(to.getStrandSelection()
-                                                    .getStringRepresentation()),
+                                            Strand.convertToStrand(to.getStrandSelection().name()),
                                             SequencedTranscriptPart.convertToSequencedTranscriptPart(
-                                                    to.getSequencedTranscriptPart()
-                                                    .getStringRepresentation()),
+                                                    to.getSequencedTranscriptPart().name()),
                                             CellCompartment.convertToCellCompartment(
-                                                    to.getCellCompartment().getStringRepresentation()),
+                                                    to.getCellCompartment().name()),
                                             to.isSampleMultiplexing(),
                                             to.isLibraryMultiplexing(),
                                             to.getFragmentation(),
@@ -856,9 +854,9 @@ public class RawDataLoader extends CommonService {
                                         to.getPValue(),
                                         to.getExpressionConfidence(),
                                         ExclusionReason.convertToExclusionReason(
-                                                to.getExclusionReason().getStringRepresentation())),
+                                                to.getExclusionReason().name())),
                                 AbundanceUnit.convertToAbundanceUnit(
-                                        to.getAbundanceUnit().getStringRepresentation()),
+                                        to.getAbundanceUnit().name()),
                                 to.getAbundance(),
                                 to.getRank(),
                                 to.getReadCount(),

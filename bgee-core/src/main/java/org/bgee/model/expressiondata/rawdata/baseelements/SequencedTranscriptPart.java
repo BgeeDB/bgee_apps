@@ -4,7 +4,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.BgeeEnum;
 
 public enum SequencedTranscriptPart implements BgeeEnumField {
-    NA("NA"), THREEPRIME("3prime"), FIVEPRIME("5prime"), FULLLENGTH("full length");
+    NA("NA"), THREE_PRIME("3prime"), FIVE_PRIME("5prime"), FULL_LENGTH("full length");
     
     private String name;
     

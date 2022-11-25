@@ -16,6 +16,9 @@ public class RnaSeqLibrary extends Entity<String>{
     public RnaSeqLibrary(String id, RnaSeqTechnology technology, RnaSeqExperiment experiment)
             throws IllegalArgumentException {
         super(id);
+        if (experiment == null) {
+            throw new IllegalArgumentException("An experiment must be provided");
+        }
         this.technology = technology;
         this.experiment = experiment;
     }
@@ -25,5 +28,4 @@ public class RnaSeqLibrary extends Entity<String>{
     public RnaSeqExperiment getExperiment() {
         return experiment;
     }
-
 }

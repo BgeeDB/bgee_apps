@@ -3,7 +3,6 @@ package org.bgee.model.expressiondata.rawdata.rnaseq;
 import java.util.Comparator;
 import java.util.Objects;
 
-import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO.RNASeqLibraryTO.LibraryType;
 import org.bgee.model.expressiondata.rawdata.baseelements.CellCompartment;
 import org.bgee.model.expressiondata.rawdata.baseelements.SequencedTranscriptPart;
 import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
@@ -21,7 +20,7 @@ public class RnaSeqTechnology {
             .thenComparing(t -> t.getStrand(), Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(t -> t.getSequencedTranscriptPart(), Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(t -> t.getCellCompartment(), Comparator.nullsLast(Comparator.naturalOrder()))
-            .thenComparing(t -> t.isFragmentation(), Comparator.nullsLast(Comparator.naturalOrder()));
+            .thenComparing(t -> t.getFragmentation(), Comparator.nullsLast(Comparator.naturalOrder()));
     
     
     private final String protocolName;
@@ -31,13 +30,14 @@ public class RnaSeqTechnology {
     private final CellCompartment cellCompartment;
     private final boolean isSampleMultiplexing;
     private final boolean isLibraryMultiplexing;
-    private final boolean fragmentation;
-    private final LibraryType libraryType;
+    private final Integer fragmentation;
+    //TODO: create an enum as for RNASeqLibraryDAO.LibraryType
+    private final String libraryType;
     
     public RnaSeqTechnology(String protocolName, String sequencingPlatformName,
             Strand strand, SequencedTranscriptPart sequencedTranscriptPart,
             CellCompartment cellCompartment, boolean isSampleMultiplexing, 
-            boolean isLibraryMultiplexing, boolean fragmentation, LibraryType libraryType) {
+            boolean isLibraryMultiplexing, Integer fragmentation, String libraryType) {
         this.protocolName = protocolName;
         this.strand = strand;
         this.sequencedTranscriptPart = sequencedTranscriptPart;
@@ -63,22 +63,24 @@ public class RnaSeqTechnology {
     public boolean isLibraryMultiplexing() {
         return isLibraryMultiplexing;
     }
-    public boolean isFragmentation() {
+    public Integer getFragmentation() {
         return fragmentation;
     }
     public String getProtocolName() {
         return protocolName;
     }
-    public LibraryType getLibraryType() {
+    public String getLibraryType() {
         return libraryType;
     }
     public String getSequencingPlatfomName() {
         return sequencingPlatfomName;
     }
+
     @Override
     public int hashCode() {
-        return Objects.hash(cellCompartment, fragmentation, isLibraryMultiplexing, isSampleMultiplexing, protocolName,
-                sequencedTranscriptPart, strand);
+        return Objects.hash(cellCompartment, fragmentation, isLibraryMultiplexing,
+                isSampleMultiplexing, libraryType,
+                protocolName, sequencedTranscriptPart, sequencingPlatfomName, strand);
     }
     @Override
     public boolean equals(Object obj) {
@@ -89,18 +91,31 @@ public class RnaSeqTechnology {
         if (getClass() != obj.getClass())
             return false;
         RnaSeqTechnology other = (RnaSeqTechnology) obj;
-        return cellCompartment == other.cellCompartment && fragmentation == other.fragmentation
+        return cellCompartment == other.cellCompartment
+                && Objects.equals(fragmentation, other.fragmentation)
                 && isLibraryMultiplexing == other.isLibraryMultiplexing
                 && isSampleMultiplexing == other.isSampleMultiplexing
+                && Objects.equals(libraryType, other.libraryType)
                 && Objects.equals(protocolName, other.protocolName)
-                && sequencedTranscriptPart == other.sequencedTranscriptPart && strand == other.strand;
+                && sequencedTranscriptPart == other.sequencedTranscriptPart
+                && Objects.equals(sequencingPlatfomName, other.sequencingPlatfomName)
+                && strand == other.strand;
     }
 
     @Override
     public String toString() {
-        return "RnaSeqTechnology [protocolName=" + protocolName + ", strand=" + strand + ", sequencedTranscriptPart="
-                + sequencedTranscriptPart + ", cellCompartment=" + cellCompartment + ", isSampleMultiplexing="
-                + isSampleMultiplexing + ", isLibraryMultiplexing=" + isLibraryMultiplexing + ", fragmentation="
-                + fragmentation + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("RnaSeqTechnology [")
+               .append("protocolName=").append(protocolName)
+               .append(", sequencingPlatfomName=").append(sequencingPlatfomName)
+               .append(", strand=").append(strand)
+               .append(", sequencedTranscriptPart=").append(sequencedTranscriptPart)
+               .append(", cellCompartment=").append(cellCompartment)
+               .append(", isSampleMultiplexing=").append(isSampleMultiplexing)
+               .append(", isLibraryMultiplexing=").append(isLibraryMultiplexing)
+               .append(", fragmentation=").append(fragmentation)
+               .append(", libraryType=").append(libraryType)
+               .append("]");
+        return builder.toString();
     }
 }

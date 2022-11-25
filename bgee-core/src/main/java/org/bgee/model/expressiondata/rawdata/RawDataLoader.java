@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,7 @@ import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO.RawDataCountContainerTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
@@ -348,7 +350,7 @@ public class RawDataLoader extends CommonService {
         switch (requestedDataType) {
         case AFFYMETRIX:
             rawDataCountContainer = rawDataCountContainerClass.cast(
-                    this.loadAffymetrixDataCount(withExperiment, withAssay, withCall));
+                    this.loadAffymetrixCount(withExperiment, withAssay, withCall));
             break;
         default:
             //TODO: reenable the exception when all data types supported
@@ -550,7 +552,7 @@ public class RawDataLoader extends CommonService {
                 infoType == InformationType.CALL? Set.of(): null));
     }
 
-    private AffymetrixCountContainer loadAffymetrixDataCount(boolean withExperiment,
+    private AffymetrixCountContainer loadAffymetrixCount(boolean withExperiment,
             boolean withAssay, boolean withCall) {
         log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
 
@@ -604,47 +606,10 @@ public class RawDataLoader extends CommonService {
 
     private RawDataPostFilter loadAffymetrixPostFilter() {
         log.traceEntry();
-        // retrieve anatEntities
-        Set<String> anatEntityIds = this.rawDataConditionDAO
-        .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
-        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
-        .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
-        Set<AnatEntity> anatEntities = anatEntityIds.isEmpty()?
-                new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityIds, false)
-                .collect(Collectors.toSet());
-
-        // retrieve cellTypes
-        Set<String> cellTypeIds = this.rawDataConditionDAO
-                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
-                .stream().map(c -> c.getCellTypeId()).collect(Collectors.toSet());
-        Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
-                new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)
-                .collect(Collectors.toSet());
-
-        //retrieve dev. stages
-        Set<String> stageIds = this.rawDataConditionDAO
-                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
-                .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
-        Set<DevStage> stages = stageIds.isEmpty()?
-                new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
-                .collect(Collectors.toSet());
-
-        // retrieve strains
-        Set<String> strains = this.rawDataConditionDAO
-                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
-                .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
-
-        //retrieve sexes
-        Set<RawDataSex> sexes = this.rawDataConditionDAO
-                .getAffymetrixRawDataConditionsFromRawDataFilters(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
-                .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
-
-        return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
-                sexes, strains, DataType.AFFYMETRIX));
+        return log.traceExit(this.loadConditionPostFilter(
+                (filters, attrs) -> this.rawDataConditionDAO
+                .getAffymetrixRawDataConditionsFromRawDataFilters(filters, attrs),
+                DataType.AFFYMETRIX));
     }
 
 //*****************************************************************************************
@@ -883,6 +848,49 @@ public class RawDataLoader extends CommonService {
 //*****************************************************************************************
 //                       METHODS NECESSARY FOR ALL DATA TYPES
 //*****************************************************************************************
+
+    private RawDataPostFilter loadConditionPostFilter(BiFunction<Collection<DAORawDataFilter>,
+            Collection<RawDataConditionDAO.Attribute>, RawDataConditionTOResultSet> condRequest,
+            DataType dataType) {
+        log.traceEntry("{}, {}", condRequest, dataType);
+
+        // retrieve anatEntities
+        Set<String> anatEntityIds = condRequest.apply(this.getRawDataProcessedFilter()
+        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
+        .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
+        Set<AnatEntity> anatEntities = anatEntityIds.isEmpty()?
+                new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityIds, false)
+                .collect(Collectors.toSet());
+
+        // retrieve cellTypes
+        Set<String> cellTypeIds = condRequest.apply(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
+                .stream().map(c -> c.getCellTypeId()).collect(Collectors.toSet());
+        Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
+                new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)
+                .collect(Collectors.toSet());
+
+        //retrieve dev. stages
+        Set<String> stageIds = condRequest.apply(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
+                .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
+        Set<DevStage> stages = stageIds.isEmpty()?
+                new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
+                .collect(Collectors.toSet());
+
+        // retrieve strains
+        Set<String> strains = condRequest.apply(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
+                .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
+
+        //retrieve sexes
+        Set<RawDataSex> sexes = condRequest.apply(this.getRawDataProcessedFilter()
+                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
+                .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
+
+        return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
+                sexes, strains, dataType));
+    }
 
     private void updateRawDataConditionMap(Set<Integer> condIds) {
         log.traceEntry("{}", condIds);

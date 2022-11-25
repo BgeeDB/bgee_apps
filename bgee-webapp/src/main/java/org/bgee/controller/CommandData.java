@@ -672,7 +672,8 @@ public class CommandData extends CommandParent {
         InformationType finalInfoType = infoType;
         return log.traceExit(dataTypes.stream()
                 //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .filter(dt -> dt == DataType.AFFYMETRIX ||
+                              dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadData(finalInfoType,
@@ -698,7 +699,8 @@ public class CommandData extends CommandParent {
         }
         return log.traceExit(dataTypes.stream()
                 //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .filter(dt -> dt == DataType.AFFYMETRIX ||
+                        dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadDataCount(infoTypes,
@@ -713,7 +715,8 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(dataTypes.stream()
                 //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX)
+                .filter(dt -> dt == DataType.AFFYMETRIX ||
+                        dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)),
@@ -731,12 +734,24 @@ public class CommandData extends CommandParent {
         if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixRawDataAnnotsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
+                    () -> getRnaSeqRawDataAnnotsColumnDescriptions(false));
+            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+                    () -> getRnaSeqRawDataAnnotsColumnDescriptions(true));
         } else if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixProcExprValuesColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
+                    () -> getRnaSeqProcExprValuesColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+                    () -> getRnaSeqProcExprValuesColumnDescriptions());
         } else if (RequestParameters.ACTION_EXPERIMENTS.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixExperimentsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
+                    () -> getRnaSeqExperimentsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+                    () -> getRnaSeqExperimentsColumnDescriptions());
         } else {
             throw log.throwing(new InvalidRequestException("Unsupported action for column definition: " +
                     this.requestParameters.getAction()));
@@ -744,7 +759,8 @@ public class CommandData extends CommandParent {
 
         for (DataType dataType: dataTypes) {
             //TODO: remove this check when all data types will be implemented
-            if (dataType != DataType.AFFYMETRIX) {
+            if (dataType != DataType.AFFYMETRIX
+                    && dataType != DataType.RNA_SEQ && dataType != DataType.FULL_LENGTH) {
                 continue;
             }
             Supplier<List<ColumnDescription>> supplier = dataTypeTolDescrSupplier.get(dataType);
@@ -757,6 +773,7 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(dataTypeToColDescr);
     }
+
     private List<ColumnDescription> getAffymetrixRawDataAnnotsColumnDescriptions() {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
@@ -777,11 +794,106 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(colDescr);
     }
+    private List<ColumnDescription> getRnaSeqRawDataAnnotsColumnDescriptions(boolean isSingleCell) {
+        log.traceEntry("{}", isSingleCell);
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.library.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Experiment name", null,
+                List.of("result.library.experiment.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Library ID", "Identifier of the RNA-Seq library",
+                List.of("result.library.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result"));
+
+        colDescr.add(new ColumnDescription("Technology", null,
+                List.of("result.library.technology.protocolName"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Sequencing platform", null,
+                List.of("result.library.technology.sequencingPlatfomName"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Sequenced transcript part",
+                "Possible values are: full length, all parts of the transcript are sequenced; "
+                + "3': only the 3' end of the transcript is sequenced; "
+                + "5': only the 5' end of the transcript is sequenced.",
+                List.of("result.library.technology.sequencedTranscriptPart"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        if (isSingleCell) {
+            colDescr.add(new ColumnDescription("Fractionation",
+                    "Possible values are: cell, transcripts are extracted from the cell; "
+                    + "nuclei, transcripts are extracted from the nucleus.",
+                            List.of("result.library.technology.cellCompartment"),
+                            ColumnDescription.ColumnType.STRING,
+                            null));
+        }
+        colDescr.add(new ColumnDescription("Fragmentation",
+                "Size of the RNA fragmentation",
+                List.of("result.library.technology.fragmentation"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Run sequencing type",
+                "Paired-end or single-read run",
+                List.of("result.library.technology.libraryType"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        colDescr.add(new ColumnDescription("Total read count",
+                "Total number of reads for the annotated sample.",
+                List.of("result.pipelineSummary.allReadsCount"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Mapped read count",
+                "Number of reads that could be mapped to the transcriptome.",
+                List.of("result.pipelineSummary.mappedReadsCount"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Total UMI count",
+                "Total number of individual RNA molecules (UMI) for the annotated sample. "
+                + "Only applicable for libraries producing UMIs.",
+                List.of("result.pipelineSummary.allUMIsCount"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Mapped UMI count",
+                "Number of UMIs that could be mapped to the transcriptome. "
+                + "Only applicable for libraries producing UMIs.",
+                List.of("result.pipelineSummary.mappedUMIsCount"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        colDescr.add(new ColumnDescription("Distinct rank count",
+                "When performing a fractional ranking of the genes in the annotated sample, "
+                + "based on their expression level, number of distinct ranks observed, "
+                + "to have a value of the power for distinguishing expression levels. "
+                + "Used as a weight to compute a weighted mean rank accross samples for each gene and "
+                + "compute expression scores in Bgee.",
+                List.of("result.pipelineSummary.distinctRankCount"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Max rank",
+                "When performing a fractional ranking of the genes in the annotated sample, "
+                + "based on their expression level, maximum rank attained in the sample. "
+                + "Used to normalize ranks accross samples and compute expression scores in Bgee.",
+                List.of("result.pipelineSummary.maxRank"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        return log.traceExit(colDescr);
+    }
+
     private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Experiment ID", null,
-                List.of("result.experiment.id"),
+                List.of("result.assay.experiment.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP));
         colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
@@ -816,6 +928,58 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(colDescr);
     }
+    private List<ColumnDescription> getRnaSeqProcExprValuesColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.annotatedSample.library.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Library ID", null,
+                List.of("result.annotatedSample.library.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Gene ID", null,
+                List.of("result.rawCall.gene.geneId"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE));
+        colDescr.add(new ColumnDescription("Gene name", null,
+                List.of("result.rawCall.gene.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Expression level",
+                "Expression level in the unit specified.",
+                List.of("result.abundance"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Expression level unit",
+                "Unit to apply to the expression levels.",
+                List.of("result.abundanceUnit"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Read count",
+                "Number of reads mapped to this gene.",
+                List.of("result.readCounts"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("UMI count",
+                "Number of UMIs mapped to this gene. "
+                + "Only applicable for libraries producing UMIs.",
+                List.of("result.umiCounts"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Expression p-value",
+                "P-value for the test of expression signal of the gene "
+                + "significantly different from background expression",
+                List.of("result.rawCall.pValue"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+
+        return log.traceExit(colDescr);
+    }
+
     private List<ColumnDescription> getAffymetrixExperimentsColumnDescriptions() {
         log.traceEntry();
 
@@ -834,6 +998,25 @@ public class CommandData extends CommandParent {
                 null));
         return log.traceExit(colDescr);
     }
+    private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions() {
+        log.traceEntry();
+
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Experiment name", null,
+                List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Description", null,
+                List.of("result.description"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        return log.traceExit(colDescr);
+    }
+
     private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart) {
         log.traceEntry("{}", attributeStart);
         List<ColumnDescription> colDescr = new ArrayList<>();

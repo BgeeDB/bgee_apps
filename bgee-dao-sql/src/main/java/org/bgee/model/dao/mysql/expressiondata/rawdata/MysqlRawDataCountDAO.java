@@ -416,10 +416,12 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 processedFilters, isSingleCell, necessaryTables, DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
+        if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
+            sb.append(" WHERE ");
+        }
         boolean foundPrevious = false;
         if(!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append(" WHERE ")
-            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
+            sb.append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
             foundPrevious = true;
         }
         foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);

@@ -15,8 +15,8 @@ public class RnaSeqCountContainer extends RawDataCountContainerWithExperiment {
 
     private final Integer libraryCount;
 
-    protected RnaSeqCountContainer(Integer experimentCount, Integer assayCount,
-            Integer libraryCount, Integer callCount) {
+    public RnaSeqCountContainer(Integer experimentCount, Integer libraryCount,
+            Integer assayCount, Integer callCount) {
         super(experimentCount, assayCount, callCount, libraryCount != null && libraryCount > 0);
 
         if (libraryCount != null && libraryCount < 0) {
@@ -58,8 +58,8 @@ public class RnaSeqCountContainer extends RawDataCountContainerWithExperiment {
         StringBuilder builder = new StringBuilder();
         builder.append("RnaSeqCountContainer [")
                 .append("getExperimentCount()=").append(getExperimentCount())
-                .append(", getAssayCount()=").append(getAssayCount())
                 .append(", libraryCount=").append(libraryCount)
+                .append(", getAssayCount()=").append(getAssayCount())
                 .append(", getCallCount()=").append(getCallCount())
                 .append(", isResultFound()=").append(isResultFound())
                 .append("]");

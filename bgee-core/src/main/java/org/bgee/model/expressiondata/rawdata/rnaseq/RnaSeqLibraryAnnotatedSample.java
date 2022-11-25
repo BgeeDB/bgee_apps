@@ -2,13 +2,11 @@ package org.bgee.model.expressiondata.rawdata.rnaseq;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.rawdata.baseelements.AssayPartOfExp;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotated;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 
 // The ID of RNASeqLibraryAnnotatedSampleTO is internal to Bgee, it is not meant to
 // be available in bgee-core, thus this class does not extend Entity.
@@ -16,29 +14,35 @@ public class RnaSeqLibraryAnnotatedSample
         implements AssayPartOfExp<RnaSeqExperiment>, RawDataAnnotated {
     private final static Logger log = LogManager.getLogger(RnaSeqLibraryAnnotatedSample.class.getName());
 
-    private final RnaSeqExperiment experiment;
+    private final RnaSeqLibrary library;
     private final RawDataAnnotation annotation;
     private final RnaSeqLibraryPipelineSummary pipelineSummary;
     private final String barcode;
     private final String genotype;
 
-    public RnaSeqLibraryAnnotatedSample (String libraryId, RnaSeqExperiment experiment,
+    public RnaSeqLibraryAnnotatedSample (RnaSeqLibrary library,
             RawDataAnnotation annotation, RnaSeqLibraryPipelineSummary pipelineSummary,
             String barcode, String genotype) {
-        super(libraryId);
-        if (StringUtils.isBlank(libraryId)) {
-            throw log.throwing(new IllegalArgumentException("library can not be blank"));
+        //library and the condition in the annotation are the primary key of a sample
+        if (library == null) {
+            throw log.throwing(new IllegalArgumentException("library can not be null"));
         }
-        this.experiment = experiment;
+        if (annotation == null) {
+            throw log.throwing(new IllegalArgumentException("annotation can not be null"));
+        }
+        this.library = library;
         this.annotation = annotation;
         this.pipelineSummary = pipelineSummary;
         this.barcode = barcode;
         this.genotype = genotype;
     }
 
+    public RnaSeqLibrary getLibrary() {
+        return this.library;
+    }
     @Override
     public RnaSeqExperiment getExperiment() {
-        return this.experiment;
+        return this.library.getExperiment();
     }
     @Override
     public RawDataAnnotation getAnnotation() {
@@ -54,37 +58,35 @@ public class RnaSeqLibraryAnnotatedSample
         return genotype;
     }
 
-    //TODO: check if the hashcode/equals are not outdated. For now we consider an annotated
-    // sample library to be unique for one libraryId with same annotated condition and technology
-    // (including barcode)
+    //For now we consider an annotated sample library to be unique for one libraryId
+    //with same condition
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        RawDataCondition condition = annotation != null? annotation.getRawDataCondition():null;
-        result = prime * result + Objects.hash(condition);
-        return result;
+        return Objects.hash(annotation.getRawDataCondition(), library);
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (!super.equals(obj))
+        if (obj == null)
             return false;
         if (getClass() != obj.getClass())
             return false;
         RnaSeqLibraryAnnotatedSample other = (RnaSeqLibraryAnnotatedSample) obj;
-        RawDataCondition OtherCond = other.getAnnotation() != null? other.getAnnotation()
-                .getRawDataCondition():null;
-        RawDataCondition condition = annotation != null? annotation.getRawDataCondition():null;
-        return Objects.equals(condition, OtherCond);
+        return Objects.equals(annotation.getRawDataCondition(), other.annotation.getRawDataCondition())
+               && Objects.equals(library, other.library);
     }
 
     @Override
     public String toString() {
-        return "RnaSeqLibraryAnnotatedSample [libraryId=" + super.getId() + ", experiment=" + experiment + ", annotation=" + annotation
-                + ", pipelineSummary=" + pipelineSummary + ", barcode=" + barcode + ", genotype=" + genotype + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("RnaSeqLibraryAnnotatedSample [")
+               .append("library=").append(library)
+               .append(", annotation=").append(annotation)
+               .append(", pipelineSummary=").append(pipelineSummary)
+               .append(", barcode=").append(barcode)
+               .append(", genotype=").append(genotype)
+               .append("]");
+        return builder.toString();
     }
-
 }

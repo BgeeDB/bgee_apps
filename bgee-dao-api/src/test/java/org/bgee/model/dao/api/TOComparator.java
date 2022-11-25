@@ -1261,7 +1261,7 @@ public class TOComparator {
         if (areCallSourceTOsEqual(to1, to2) &&
                 areBigDecimalEquals(to1.getAbundance(), to2.getAbundance()) &&
                 areBigDecimalEquals(to1.getReadCount(), to2.getReadCount()) &&
-                areBigDecimalEquals(to1.getUmisCount(), to2.getUmisCount()) &&
+                areBigDecimalEquals(to1.getUmiCount(), to2.getUmiCount()) &&
                 areBigDecimalEquals(to1.getPValue(), to2.getPValue()) &&
                 areBigDecimalEquals(to1.getzScore(), to2.getzScore()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank())) {

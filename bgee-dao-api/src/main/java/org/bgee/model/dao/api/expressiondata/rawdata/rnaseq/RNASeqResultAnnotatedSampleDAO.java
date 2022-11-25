@@ -147,7 +147,7 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
         private final AbundanceUnit abundanceUnit;
         private final BigDecimal abundance;
         private final BigDecimal readCount;
-        private final BigDecimal umisCount;
+        private final BigDecimal umiCount;
         private final BigDecimal zScore;
         /**
          * The {@code CallSourceDataTO} carrying the information about
@@ -164,14 +164,14 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
          */
         public RNASeqResultAnnotatedSampleTO(Integer rnaSeqLibraryAnnotatedSampleId, Integer bgeeGeneId,
                 AbundanceUnit abundanceUnit, BigDecimal abundance, BigDecimal rank,
-                BigDecimal readCount, BigDecimal umisCount, BigDecimal zScore, BigDecimal pValue,
+                BigDecimal readCount, BigDecimal umiCount, BigDecimal zScore, BigDecimal pValue,
                 Long expressionId, DataState expressionConfidence, ExclusionReason exclusionReason) {
             super();
             this.rnaSeqLibraryAnnotatedSampleId = rnaSeqLibraryAnnotatedSampleId;
             this.abundanceUnit = abundanceUnit;
             this.abundance = abundance;
             this.readCount = readCount;
-            this.umisCount = umisCount;
+            this.umiCount = umiCount;
             this.zScore = zScore;
             this.rank = rank;
             this.callSourceDataTO = new CallSourceDataTO(bgeeGeneId, pValue,
@@ -208,8 +208,8 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
         public BigDecimal getAbundance() {
             return abundance;
         }
-        public BigDecimal getUmisCount() {
-            return umisCount;
+        public BigDecimal getUmiCount() {
+            return umiCount;
         }
         public BigDecimal getzScore() {
             return zScore;
@@ -219,7 +219,7 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
         public String toString() {
             return "RNASeqResultTO [rnaSeqLibraryAnnotatedSampleId=" + rnaSeqLibraryAnnotatedSampleId
                     + ", abundanceUnit=" + abundanceUnit + ", abundance=" + abundance + ", readCount=" + readCount
-                    + ", umisCount=" + umisCount + ", zscore=" + zScore + ", callSourceDataTO=" + callSourceDataTO
+                    + ", umiCount=" + umiCount + ", zscore=" + zScore + ", callSourceDataTO=" + callSourceDataTO
                     + ", rank=" + rank + "]";
         }
 

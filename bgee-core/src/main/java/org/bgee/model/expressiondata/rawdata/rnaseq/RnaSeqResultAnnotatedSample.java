@@ -89,19 +89,19 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
     private final BigDecimal abundance;
     private final BigDecimal rawRank;
     private final BigDecimal readCounts;
-    private final BigDecimal UMIsCounts;
+    private final BigDecimal umiCounts;
     private final BigDecimal zScore;
 
-    public RnaSeqResultAnnotatedSample (RawCall rawCall, RnaSeqLibraryAnnotatedSample annotatedSample,
+    public RnaSeqResultAnnotatedSample (RnaSeqLibraryAnnotatedSample annotatedSample, RawCall rawCall,
             AbundanceUnit abundanceUnit, BigDecimal abundance, BigDecimal rawRank,
-            BigDecimal readCounts, BigDecimal UMISCounts, BigDecimal zscore) {
+            BigDecimal readCounts, BigDecimal umiCounts, BigDecimal zscore) {
         this.rawCall = rawCall;
         this.annotatedSample = annotatedSample;
         this.abundanceUnit = abundanceUnit;
         this.abundance = abundance;
         this.rawRank = rawRank;
         this.readCounts = readCounts;
-        this.UMIsCounts = UMISCounts;
+        this.umiCounts = umiCounts;
         this.zScore = zscore;
     }
 
@@ -130,8 +130,8 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
         return readCounts;
     }
 
-    public BigDecimal getUMIsCounts() {
-        return UMIsCounts;
+    public BigDecimal getUmiCounts() {
+        return umiCounts;
     }
 
     public BigDecimal getzScore() {
@@ -140,7 +140,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
 
     @Override
     public int hashCode() {
-        return Objects.hash(UMIsCounts, abundance, abundanceUnit, annotatedSample, rawCall, rawRank, readCounts,
+        return Objects.hash(umiCounts, abundance, abundanceUnit, annotatedSample, rawCall, rawRank, readCounts,
                 zScore);
     }
 
@@ -153,7 +153,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
         if (getClass() != obj.getClass())
             return false;
         RnaSeqResultAnnotatedSample other = (RnaSeqResultAnnotatedSample) obj;
-        return Objects.equals(UMIsCounts, other.UMIsCounts) && Objects.equals(abundance, other.abundance)
+        return Objects.equals(umiCounts, other.umiCounts) && Objects.equals(abundance, other.abundance)
                 && abundanceUnit == other.abundanceUnit && Objects.equals(annotatedSample, other.annotatedSample)
                 && Objects.equals(rawCall, other.rawCall) && Objects.equals(rawRank, other.rawRank)
                 && Objects.equals(readCounts, other.readCounts) && Objects.equals(zScore, other.zScore);
@@ -163,7 +163,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
     public String toString() {
         return "RnaSeqResultAnnotatedSample [annotatedSample=" + annotatedSample + ", rawCall=" + rawCall
                 + ", abundanceUnit=" + abundanceUnit + ", abundance=" + abundance + ", rawRank=" + rawRank
-                + ", readCounts=" + readCounts + ", UMIsCounts=" + UMIsCounts + ", zScore=" + zScore + "]";
+                + ", readCounts=" + readCounts + ", umiCounts=" + umiCounts + ", zScore=" + zScore + "]";
     }
 
 }

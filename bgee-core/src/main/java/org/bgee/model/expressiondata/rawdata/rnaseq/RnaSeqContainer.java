@@ -21,7 +21,7 @@ RnaSeqLibraryAnnotatedSample, RnaSeqResultAnnotatedSample> {
     private final Set<RnaSeqLibrary> libraries;
 
     public RnaSeqContainer(Collection<RnaSeqExperiment> experiments,
-            Collection<RnaSeqLibraryAnnotatedSample> assays, Collection<RnaSeqLibrary> libraries,
+            Collection<RnaSeqLibrary> libraries, Collection<RnaSeqLibraryAnnotatedSample> assays,
             Collection<RnaSeqResultAnnotatedSample> calls) {
         super(experiments, assays, calls, libraries != null && !libraries.isEmpty());
 

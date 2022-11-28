@@ -23,14 +23,16 @@ public class DAOProcessedRawDataFilter {
     private final boolean alwaysGeneId;
 
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters) {
-        this.rawDataFilters = Collections.unmodifiableSet(rawDataFilters == null ?
-                new LinkedHashSet<>() : new LinkedHashSet<>(rawDataFilters));
-        this.needSpeciesId = rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
-        this.needGeneId = rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
-        this.needAssayId = rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
+        if (rawDataFilters == null) {
+            throw log.throwing(new IllegalArgumentException("rawDataFilters can not be null"));
+        }
+        this.rawDataFilters = Collections.unmodifiableSet(new LinkedHashSet<>(rawDataFilters));
+        this.needSpeciesId = this.rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+        this.needGeneId = this.rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
+        this.needAssayId = this.rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
-        this.needConditionId = rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
-        this.needExperimentId = rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
+        this.needConditionId = this.rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
+        this.needExperimentId = this.rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
         //check filters always used
         //XXX The idea is to not start with result table if geneIds are asked in only one filter
@@ -38,8 +40,8 @@ public class DAOProcessedRawDataFilter {
         // decrease drastically the time needed to query. It is maybe overthinking as it is
         // probably also the case for other tables (especially the species table). The best
         // optimization is probably to query each DAORawDataFilter separately
-        this.alwaysGeneId = !rawDataFilters.isEmpty() //allMatch returns true if a stream is empty
-                && rawDataFilters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
+        this.alwaysGeneId = !this.rawDataFilters.isEmpty() //allMatch returns true if a stream is empty
+                && this.rawDataFilters.stream().allMatch(e -> !e.getGeneIds().isEmpty());
         assert !(alwaysGeneId && needSpeciesId):
             "In a RawDataDAOFilter, when bgeeGeneIds are provided, no species ID is provided";
         log.debug(this.toString());

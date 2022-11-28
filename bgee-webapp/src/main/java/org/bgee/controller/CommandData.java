@@ -605,11 +605,21 @@ public class CommandData extends CommandParent {
 
             geneFilter = new GeneFilter(speciesId, this.requestParameters.getGeneIds());
 
+            List<String> sexes = this.requestParameters.getSex();
+            if (sexes.contains(RequestParameters.ALL_VALUE) ||
+                    sexes.containsAll(
+                            EnumSet.allOf(SexEnum.class)
+                            .stream()
+                            .map(e -> e.name())
+                            .collect(Collectors.toSet()))) {
+                sexes = null;
+            }
+
             condFilter = new RawDataConditionFilter(speciesId,
                     this.requestParameters.getAnatEntity(),
                     this.requestParameters.getDevStage(),
                     this.requestParameters.getCellType(),
-                    this.requestParameters.getSex(),
+                    sexes,
                     this.requestParameters.getStrain(),
                     //includeSubAnatEntities
                     Boolean.TRUE.equals(this.requestParameters.getFirstValue(

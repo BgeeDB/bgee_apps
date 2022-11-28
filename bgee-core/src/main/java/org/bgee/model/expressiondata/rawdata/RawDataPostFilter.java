@@ -29,6 +29,9 @@ public class RawDataPostFilter {
     private final Set<String> strains;
     private final DataType requestedDataType;
 
+    public RawDataPostFilter(DataType requestedDataType) {
+        this(null, null, null, null, null, requestedDataType);
+    }
     /**
      * 
      * @param anatEntities      A {@code Collection} of {@code AnatEntity} specifying the anatomical
@@ -50,25 +53,25 @@ public class RawDataPostFilter {
         if (requestedDataType == null) {
             throw new IllegalArgumentException("requestedDataType cannot be null");
         }
-        this.anatEntities = anatEntities == null? null:
-            Collections.unmodifiableSet(anatEntities.stream()
-                    .sorted(Comparator.comparing(ae -> ae.getName()))
-                    .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
-        this.devStages = devStages == null? null:
-            Collections.unmodifiableSet(devStages.stream()
-                    .sorted(Comparator.comparing(ds -> ds.getName()))
-                    .collect(Collectors.<DevStage, LinkedHashSet<DevStage>>toCollection(LinkedHashSet::new)));
-        this.cellTypes = cellTypes == null? null:
-            Collections.unmodifiableSet(cellTypes.stream()
-                    .sorted(Comparator.comparing(ct -> ct.getName()))
-                    .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
-        this.sexes = sexes == null? null :
-            Collections.unmodifiableSet(sexes.stream()
-                    .sorted(Comparator.comparing(s -> s.getStringRepresentation()))
-                    .collect(Collectors.<RawDataSex, LinkedHashSet<RawDataSex>>toCollection(LinkedHashSet::new)));
-        this.strains = strains == null? null:
-            Collections.unmodifiableSet(strains.stream().sorted()
-                    .collect(Collectors.<String, LinkedHashSet<String>>toCollection(LinkedHashSet::new)));
+        this.anatEntities = Collections.unmodifiableSet(anatEntities == null? new LinkedHashSet<>():
+            anatEntities.stream()
+            .sorted(Comparator.comparing(ae -> ae.getName()))
+            .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
+        this.devStages = Collections.unmodifiableSet(devStages == null? new LinkedHashSet<>():
+            devStages.stream()
+            .sorted(Comparator.comparing(ds -> ds.getName()))
+            .collect(Collectors.<DevStage, LinkedHashSet<DevStage>>toCollection(LinkedHashSet::new)));
+        this.cellTypes = Collections.unmodifiableSet(cellTypes == null? new LinkedHashSet<>():
+            cellTypes.stream()
+            .sorted(Comparator.comparing(ct -> ct.getName()))
+            .collect(Collectors.<AnatEntity, LinkedHashSet<AnatEntity>>toCollection(LinkedHashSet::new)));
+        this.sexes = Collections.unmodifiableSet(sexes == null? new LinkedHashSet<>():
+            sexes.stream()
+            .sorted(Comparator.comparing(s -> s.getStringRepresentation()))
+            .collect(Collectors.<RawDataSex, LinkedHashSet<RawDataSex>>toCollection(LinkedHashSet::new)));
+        this.strains = Collections.unmodifiableSet(strains == null? new LinkedHashSet<>():
+            strains.stream().sorted()
+            .collect(Collectors.<String, LinkedHashSet<String>>toCollection(LinkedHashSet::new)));
         this.requestedDataType = requestedDataType;
     }
 

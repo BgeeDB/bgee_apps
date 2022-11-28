@@ -900,6 +900,12 @@ public class RawDataLoader extends CommonService {
             DataType dataType) {
         log.traceEntry("{}, {}", condRequest, dataType);
 
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(new RawDataPostFilter(dataType));
+        }
+
         // retrieve anatEntities
         Set<String> anatEntityIds = condRequest.apply(this.getRawDataProcessedFilter()
         .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()

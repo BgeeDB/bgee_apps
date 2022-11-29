@@ -1,6 +1,7 @@
 package org.bgee.view.json.adapters;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +43,8 @@ public final class RequestParameterTypeAdapter extends TypeAdapter<RequestParame
         //not following functional interface signatures. 
         URLParameters.Parameter<?> displayRpParam = rqParams.getUrlParametersInstance()
                 .getParamDisplayRequestParams();
+        List<URLParameters.Parameter<?>> storableParameters = new ArrayList<>();
+        List<URLParameters.Parameter<?>> nonStorableParameters = new ArrayList<>();
         for (URLParameters.Parameter<?> param: rqParams.getUrlParametersInstance().getList()) {
             log.trace("Iterating parameter {}", param);
             //we don't display the parameter requesting to display the parameters, 
@@ -78,6 +81,29 @@ public final class RequestParameterTypeAdapter extends TypeAdapter<RequestParame
             } else if (!hasValue) {
                 out.nullValue();
             }
+            if (hasValue) {
+                if (param.isStorable()) {
+                    storableParameters.add(param);
+                } else {
+                    nonStorableParameters.add(param);
+                }
+            }
+        }
+        if (!storableParameters.isEmpty()) {
+            out.name("storableParameters");
+            out.beginArray();
+            for (URLParameters.Parameter<?> param: storableParameters) {
+                out.value(param.getName());
+            }
+            out.endArray();
+        }
+        if (!nonStorableParameters.isEmpty()) {
+            out.name("nonStorableParameters");
+            out.beginArray();
+            for (URLParameters.Parameter<?> param: nonStorableParameters) {
+                out.value(param.getName());
+            }
+            out.endArray();
         }
 
         log.trace("End writing object RequestParameters.");

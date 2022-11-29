@@ -142,8 +142,9 @@ public class CommandTopAnat extends CommandParent {
                 JobService jobService, User user, long jobId, String jobTitle, String jobCreationDate, 
                 String sendToAddress, BgeeProperties props, MailSender mailSender, 
                 Supplier<ServiceFactory> serviceFactoryProvider) {
-            log.entry(topAnatParams, resultUrl, jobService, jobId, jobTitle, jobCreationDate, 
-                    sendToAddress, props, mailSender, serviceFactoryProvider);
+            log.traceEntry("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",topAnatParams, resultUrl,
+                    jobService, jobId, jobTitle, jobCreationDate, sendToAddress, props,
+                    mailSender, serviceFactoryProvider);
             this.topAnatParams = topAnatParams;
             
             this.resultUrl = resultUrl;
@@ -283,7 +284,8 @@ public class CommandTopAnat extends CommandParent {
         private void sendMail(long startTimeInMs, String jobCreationDate, 
                 int resultCount, int analysesWithResultCount, Exception exceptionThrown) 
                         throws UnsupportedEncodingException, MessagingException, InterruptedException {
-            log.entry(startTimeInMs, jobCreationDate, resultCount, analysesWithResultCount, exceptionThrown);
+            log.traceEntry("{}, {}, {}, {}, {}", startTimeInMs, jobCreationDate, resultCount,
+                    analysesWithResultCount, exceptionThrown);
             assert this.mailSender != null && StringUtils.isNotBlank(this.sendToAddress): "Cannot send mail";
             
             //build mail subject
@@ -573,7 +575,7 @@ public class CommandTopAnat extends CommandParent {
      * @throws TooManyJobsException     If the user already has too many running jobs.
      */
     private long launchNewJob(final TopAnatController controller) throws TooManyJobsException {
-        log.entry(controller);
+        log.traceEntry("{}", controller);
         
         //before formally registering a new job in another thread, we check whether 
         //the user has already too many running jobs. If we checked only in the other thread, 
@@ -583,10 +585,9 @@ public class CommandTopAnat extends CommandParent {
         log.debug("Results don't exist, launching job");
         
         //generate result URL, for sending it to the user
-        RequestParameters resultParams = new RequestParameters();
-        resultParams.setPage(RequestParameters.PAGE_TOP_ANAT);
-        resultParams.setURLHash("/result/" + this.requestParameters.getDataKey());
-        final String resultUrl = resultParams.getStableRequestURL();
+        //XXX does it worth creating a FrontendRequestParameters ?
+        final String resultUrl = this.prop.getFrontendUrl() + "/analysis/top-anat/" +
+                this.requestParameters.getDataKey();
         
         //OK, we need to launch the analyses. 
         //launch analysis in a different thread, otherwise the response will not be sent.
@@ -754,7 +755,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private GeneListResponse getGeneResponse(List<String> geneList, String paramName)
             throws InvalidRequestException {
-        log.entry(geneList, paramName);
+        log.traceEntry("{$, {}", geneList, paramName);
         
         if (geneList.isEmpty()) {
             throw log.throwing(new AssertionError("Code supposed to be unreachable."));
@@ -893,7 +894,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private String getGeneUploadResponseMessage(Set<String> submittedGeneIds, 
             LinkedHashMap<Species, Long> speciesToGeneCount, Set<String> undeterminedGeneIds) {
-        log.entry(submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
+        log.traceEntry("{}, {}, {}", submittedGeneIds, speciesToGeneCount, undeterminedGeneIds);
         
         StringBuilder msg = new StringBuilder();
         msg.append(submittedGeneIds.size());
@@ -926,7 +927,7 @@ public class CommandTopAnat extends CommandParent {
      */
     private Set<DevStage> getGroupingDevStages(Integer speciesId, Integer level) 
             throws IllegalStateException {
-        log.entry(speciesId, level);
+        log.traceEntry("{}, {}", speciesId, level);
         Set<DevStage> devStages = serviceFactory.getDevStageService().
                 loadGroupingDevStages(Arrays.asList(speciesId), level);
 
@@ -1111,7 +1112,7 @@ public class CommandTopAnat extends CommandParent {
      * @return              A {@code Set} of {@code String}s that are Bgee gene IDs.
      */
     private Set<String> cleanGeneIds(GeneListResponse geneResponse, Set<String> ids) {
-        log.entry(geneResponse, ids);
+        log.traceEntry("{}, {}", geneResponse, ids);
         
         Set<String> cleanGeneIds = new HashSet<>(ids);
         
@@ -1138,7 +1139,7 @@ public class CommandTopAnat extends CommandParent {
      * @throws InvalidRequestException  If at least one provided ID map to severals Bgee gene IDs.
      */
     private Set<String> loadBgeeIds(Collection<String> ids) {
-        log.entry(ids);
+        log.traceEntry("{}", ids);
 
         return log.traceExit(Collections.unmodifiableSet(
                 serviceFactory.getGeneService().loadGenesByAnyId(
@@ -1154,7 +1155,7 @@ public class CommandTopAnat extends CommandParent {
      * @return
      */
     private Set<String> cleanDevStages(GeneListResponse geneResponse, Set<String> devStageIds) {
-        log.entry(geneResponse, devStageIds);
+        log.traceEntry("{}, {}", geneResponse, devStageIds);
 
         Set<String> allDevStageIds = geneResponse.getStages().stream()
                 .map(DevStage::getId)
@@ -1227,8 +1228,8 @@ public class CommandTopAnat extends CommandParent {
                 TreeMap<Integer, Species> detectedSpecies, Integer selectedSpecies,
                 Collection<DevStage> stages, TreeSet<String> notInSelectedSpeciesGeneIds,
                 TreeSet<String> undeterminedGeneIds) {
-            log.entry(geneCount, detectedSpecies, selectedSpecies, stages,
-                    notInSelectedSpeciesGeneIds, undeterminedGeneIds);
+            log.traceEntry("{}, {}, {}, {}, {}, {}", geneCount, detectedSpecies, selectedSpecies,
+                    stages, notInSelectedSpeciesGeneIds, undeterminedGeneIds);
             this.geneCount= geneCount;
             this.detectedSpecies = detectedSpecies;
             this.selectedSpecies = selectedSpecies;
@@ -1371,7 +1372,7 @@ public class CommandTopAnat extends CommandParent {
          * @param data      A {@code String} representing the key of the parameters.
          */
         public JobResponse(long jobId, String jobStatus, String data) {
-            log.entry(jobId, jobStatus, data);
+            log.traceEntry("{}, {}, {}", jobId, jobStatus, data);
             this.jobId = jobId;
             this.jobStatus = jobStatus;
             this.data = data;

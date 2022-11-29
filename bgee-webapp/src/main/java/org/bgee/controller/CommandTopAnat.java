@@ -1050,7 +1050,6 @@ public class CommandTopAnat extends CommandParent {
         assert cleanFgIds != null && !cleanFgIds.isEmpty();
         assert devStageIds != null && !devStageIds.isEmpty();
         assert speciesId != null && speciesId >= 1;
-        assert callTypes == null || callTypes.isEmpty();
 
         // One TopAnat analyze has one call type and one dev. stage
         List<TopAnatParams> allTopAnatParams = new ArrayList<TopAnatParams>();

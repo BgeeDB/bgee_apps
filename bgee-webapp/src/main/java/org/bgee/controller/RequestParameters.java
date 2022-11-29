@@ -1293,16 +1293,18 @@ public class RequestParameters {
         // If there is a key already present, continue to work with a key
         String previousKey = this.getDataKey();
         boolean toStore = false;
-        if(StringUtils.isNotBlank(this.getDataKey())){
+        // Always use & as separator to generate the key, so the key is the same for
+        // the same parameters, no matter the separator provided.
+        // Also, never use searchOrHashParams provided, so that all the parameters are always
+        // in the search part of the URL to generate the key.
+        String storableParametersUrlPartForKey = this.generateParametersQuery(
+                null, true, false, "&", null, false);
+        if (StringUtils.isNotBlank(this.getDataKey())) {
             // Regenerate the key in case a storable param has changed
-            // Always use & as separator to generate the key, so the key is the same for 
-            // the same parameters, no matter the separator provided.
-            // Also, never use searchOrHashParams provided, so that all the parameters are always 
-            // in the search part of the URL to generate the key.
-            this.generateKey(this.generateParametersQuery(null, true, false,"&", null, false));
+            this.generateKey(storableParametersUrlPartForKey);
             // Regenerate the parameters query, with the non storable that include
             // the key parameter
-            this.parametersQuery = generateParametersQuery(null, false, true,parametersSeparator, 
+            this.parametersQuery = generateParametersQuery(null, false, true, parametersSeparator,
                     searchOrHashParams, areSearchParams);
             //if the key has changed, we need to store again this RequestParameters
             if (StringUtils.isNotBlank(this.getDataKey()) && !this.getDataKey().equals(previousKey)) {
@@ -1311,15 +1313,15 @@ public class RequestParameters {
         } else{
             // No key for the moment, generate the query and then evaluate if its
             // length is still under the threshold at which the key is used
-            this.parametersQuery = generateParametersQuery(null, true, true,parametersSeparator, 
+            this.parametersQuery = generateParametersQuery(null, true, true, parametersSeparator,
                     searchOrHashParams, areSearchParams);
-            if(this.isUrlTooLong()){
+            if (storableParametersUrlPartForKey.length() > prop.getUrlMaxLength()) {
                 // Generate the key, store the values and regenerate the query
                 // Always use & as separator to generate the key, so the key is the same for 
                 // the same parameters, no matter the separator provided. 
                 // Also, never use searchOrHashParams provided, so that all the parameters 
                 // are always in the search part of the URL to generate the key.
-                this.generateKey(this.generateParametersQuery(null, true, false,"&", null, false));
+                this.generateKey(storableParametersUrlPartForKey);
                 if(StringUtils.isNotBlank(this.getDataKey())){
                     toStore = true;
                 }
@@ -1515,28 +1517,6 @@ public class RequestParameters {
                 return parameter.getName() + "=" + this.urlEncode(value.toString());
             })
             .collect(Collectors.joining(parameterSeparator)));
-    }
-
-    /** 
-     * Determine whether the submitted {@code String}, representing an URL, 
-     * exceeds the URL length restriction. 
-     * See {@code BgeeProperties#getUrlMaxLength} for more details.
-     * 
-     * @return  {@code true} if the {@code String}, representing an URL, exceeds the max allowed
-     *          URL length. {@code false} otherwise.
-     *          
-     * @see BgeeProperties#getUrlMaxLength
-     */
-    private boolean isUrlTooLong() {
-        log.traceEntry();
-        if (log.isTraceEnabled()) {
-            log.trace("length of query: {} - max URL length: {}", 
-                    this.parametersQuery.length(), prop.getUrlMaxLength());
-        }
-        if (this.parametersQuery.length() > prop.getUrlMaxLength()) {
-            return log.traceExit(true);
-        }
-        return log.traceExit(false);
     }
 
     /**

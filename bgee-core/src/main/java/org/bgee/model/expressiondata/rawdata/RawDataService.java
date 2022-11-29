@@ -430,14 +430,8 @@ public class RawDataService extends CommonService {
                     this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
         }
 
-        //we prepare the info the Loader will need when calling its various "load" methods.
-
-        //First, we load all species that can potentially be queried:
-        Set<Integer> speciesIds = filter.getGeneFilters().stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet());
-        speciesIds.addAll(filter.getConditionFilters().stream().map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet()));
-        Map<Integer, Species> speciesMap = this.loadSpeciesMap(speciesIds, false, null);
+        Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
+                false, null);
 
         //Now, we load specific genes that can be queried (and not all genes of a species
         //if a GeneFilter contains no gene ID)
@@ -451,77 +445,100 @@ public class RawDataService extends CommonService {
         //of a species if a RawDataConditionFilter contains no filtering on condition parameters).
         Set<DAORawDataConditionFilter> daoCondFilters =
             convertRawDataConditionFilterToDAORawDataConditionFilter(filter.getConditionFilters(),
-                    this.ontService);
+                    this.ontService, filter.getSpeciesIdsConsidered());
         Set<DAORawDataConditionFilter> daoCondFiltersToUse = daoCondFilters.stream()
                 .filter(f -> !f.areAllCondParamFiltersEmpty())
                 .collect(Collectors.toSet());
-        Map<Integer, RawDataCondition> requestedRawDataCondMap = daoCondFiltersToUse.isEmpty()? new HashMap<>():
-            loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
-                null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
+        Map<Integer, RawDataCondition> requestedRawDataCondMap = daoCondFiltersToUse.isEmpty()?
+                new HashMap<>():
+                loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
+                        null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
+
         //Maybe we have no matching conditions for some RawDataConditionFilters,
         //it means we should have no result in the related species.
         //we have to identify the species for which it is the case, to discard them,
         //otherwise, with no condition IDs specified, we could retrieve all results
         //for that species instead of no result.
-        //We need this Set to implement the discarding below.
         //
         //Of note, we don't have this problem with gene IDs: users can only select valid gene IDs,
-        //and loadGeneMapFromGeneFilters throws an exception of a gene ID is not found.
+        //and loadGeneMapFromGeneFilters throws an exception if a gene ID is not found.
+        Set<Integer> speciesIdsWithCondFound = requestedRawDataCondMap.values().stream()
+                .map(c -> c.getSpeciesId())
+                .collect(Collectors.toSet());
         Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
                 .filter(cf -> !cf.areAllCondParamFiltersEmpty())
-                .map(f -> f.getSpeciesId())
+                //we use speciesMap.keySet() here, rather than filter.getSpeciesIdsConsidered(),
+                //because if filter.getSpeciesIdsConsidered() is null, speciesMap will contain
+                //all the species.
+                .flatMap(f -> f.getSpeciesId() == null? speciesMap.keySet().stream():
+                    Stream.of(f.getSpeciesId()))
                 .collect(Collectors.toSet());
+        Set<Integer> speciesIdsWithNoResult = new HashSet<>(speciesIdsWithCondRequested);
+        speciesIdsWithNoResult.removeAll(speciesIdsWithCondFound);
 
-        //Finally, we produce the DAORawDataFilters that will be used by the RawDataLoader
-        //when calling the raw data DAOs
-        Set<DAORawDataFilter> daoFilters = speciesIds.stream().map(speciesId -> {
-            Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
-                    .filter(e -> speciesId.equals(e.getValue().getSpecies().getId()))
-                    .map(e -> e.getKey())
-                    .collect(Collectors.toSet());
-            Set<Integer> rawCondIds = requestedRawDataCondMap.entrySet().stream()
-                    .filter(e -> speciesId == e.getValue().getSpeciesId())
-                    .map(e -> e.getKey())
-                    .collect(Collectors.toSet());
-            if (rawCondIds.isEmpty() && speciesIdsWithCondRequested.contains(speciesId)) {
-                //there should be no results in that species, since there was no condition
-                //matching the query. If we didn't return null, we could retrieve all results
-                //in that species, instead of no result.
-                //Of note, we don't have this problem with gene IDs: users can only select valid gene IDs,
-                //and loadGeneMapFromGeneFilters throws an exception of a gene ID is not found.
-                log.debug("No RawDataCondition matching the condition filters for species ID: {}",
-                        speciesId);
-                return null;
-            }
-            if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
-                return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
-            }
-            return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
-        })
-        .filter(f -> f != null)
-        .collect(Collectors.toSet());
-
-        if (!speciesIds.isEmpty() && daoFilters.isEmpty()) {
-            //it means that there is no conditions matching the query in all species,
-            //we make the daoFilter null to signal there will be no result at all,
-            //as opposed to when no filtering is requested (empty daoFilters as well)
-            daoFilters = null;
-        } else if (speciesIds.isEmpty() && filter.hasExperimentAssayIds()) {
-            //In case no species ID was targeted, we need to add a DAO filter
-            //for experiment/assay IDs if any was provided.
-            daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
+        //If some conditions were requested, but no condition was found, we can stop here,
+        //there will be no results (encoded by providing a null daoFilters collection
+        //to the RawDataProcessedFilter). We don't need to check what was provided
+        //in the GeneFilters, because the class RawDataFilter check the consistency
+        //between the species requested in GeneFilters and RawDataConditionFilters
+        if (!speciesIdsWithCondRequested.isEmpty() && speciesIdsWithCondFound.isEmpty()) {
+            return log.traceExit(new RawDataProcessedFilter(filter, null,
+                    requestedGeneMap, requestedRawDataCondMap,
+                    speciesMap, geneBioTypeMap, sourceMap));
         }
+
+        //if filter.getSpeciesIdsConsidered() is null, we can create just one DAORawDataFilter
+        //it means that there was no GeneFilter provided, only either a ConditionFilter targeting any species,
+        //and/or experiment/assay IDs targeting any species
+        Set<DAORawDataFilter> daoFilters = new HashSet<>();
+        if (filter.getSpeciesIdsConsidered() == null) {
+            assert filter.getGeneFilters().isEmpty() && requestedGeneMap.isEmpty();
+
+            if (requestedRawDataCondMap.isEmpty() && filter.hasExperimentAssayIds()) {
+                daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
+                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
+                log.debug("RawDataCondition created for for any species");
+            } else if (!requestedRawDataCondMap.isEmpty()) {
+                daoFilters.add(new DAORawDataFilter(null, requestedRawDataCondMap.keySet(),
+                        filter.getExperimentIds(), filter.getAssayIds(),
+                        filter.getExperimentOrAssayIds()));
+                log.debug("RawDataCondition created with at least some condition IDs");
+            }
+        } else {
+            daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
+                    .filter(speciesId -> !speciesIdsWithNoResult.contains(speciesId))
+                    .map(speciesId -> {
+                        Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
+                                .filter(e -> speciesId.equals(e.getValue().getSpecies().getId()))
+                                .map(e -> e.getKey())
+                                .collect(Collectors.toSet());
+                        Set<Integer> rawCondIds = requestedRawDataCondMap.entrySet().stream()
+                                .filter(e -> speciesId.equals(e.getValue().getSpeciesId()))
+                                .map(e -> e.getKey())
+                                .collect(Collectors.toSet());
+                        if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
+                            log.debug("RawDataCondition created for experiment/assay for species ID: {}",
+                                    speciesId);
+                            assert filter.hasExperimentAssayIds();
+                            return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
+                                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                        }
+                        log.debug("Complete RawDataCondition created for species ID: {}", speciesId);
+                        return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
+                                filter.getAssayIds(), filter.getExperimentOrAssayIds());
+                    })
+                    .collect(Collectors.toSet()));
+        }
+        log.debug("daoFilters: {}", daoFilters);
 
         return log.traceExit(new RawDataProcessedFilter(filter, daoFilters,
                 requestedGeneMap, requestedRawDataCondMap,
                 speciesMap, geneBioTypeMap, sourceMap));
     }
     private static Set<DAORawDataConditionFilter> convertRawDataConditionFilterToDAORawDataConditionFilter(
-            Collection<RawDataConditionFilter> condFilters, OntologyService ontService) {
-        log.traceEntry("{}, {}", condFilters, ontService);
+            Collection<RawDataConditionFilter> condFilters, OntologyService ontService,
+            Set<Integer> consideredSpeciesIds) {
+        log.traceEntry("{}, {}, {}", condFilters, ontService, consideredSpeciesIds);
         if (condFilters == null || condFilters.isEmpty()) {
             return log.traceExit(new HashSet<>());
         }
@@ -593,7 +610,11 @@ public class RawDataService extends CommonService {
             }
 
             DAORawDataConditionFilter daoFilter = new DAORawDataConditionFilter(
-                    Collections.singleton(filter.getSpeciesId()),
+                    //consideredSpeciesIds might itself be null, but it could have
+                    //the species IDs requested in GeneFilters, to query conditions
+                    //only in those species
+                    filter.getSpeciesId() == null? consideredSpeciesIds:
+                        Collections.singleton(filter.getSpeciesId()),
                     anatEntityIds, devStageIds, cellTypeIds,
                     //If simply the sex or strain root was requested including children terms,
                     //it simply means any sex or any strain, and the RawDataConditionFilter would return
@@ -605,9 +626,8 @@ public class RawDataService extends CommonService {
     
         //Now we filter the daoCondFilters: if one of them target a species with no additional parameters,
         //then we discard any other filter targeting the same species
-        Map<Integer, List<DAORawDataConditionFilter>> filtersPerSpecies = daoCondFilters.stream()
-                //we always have exactly one species in getSpeciesIds() at this point
-                .collect(Collectors.groupingBy(f -> f.getSpeciesIds().stream().findFirst().get()));
+        Map<Set<Integer>, List<DAORawDataConditionFilter>> filtersPerSpecies = daoCondFilters.stream()
+                .collect(Collectors.groupingBy(f -> f.getSpeciesIds()));
         return log.traceExit(
             filtersPerSpecies.values().stream().flatMap(l -> {
                     DAORawDataConditionFilter noFilter = l.stream()

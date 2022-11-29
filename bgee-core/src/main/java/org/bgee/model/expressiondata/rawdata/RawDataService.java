@@ -517,9 +517,8 @@ public class RawDataService extends CommonService {
                                 .map(e -> e.getKey())
                                 .collect(Collectors.toSet());
                         if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
-                            log.debug("RawDataCondition created for experiment/assay for species ID: {}",
+                            log.debug("RawDataCondition created without genes nor cond. for species ID: {}",
                                     speciesId);
-                            assert filter.hasExperimentAssayIds();
                             return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
                                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
                         }

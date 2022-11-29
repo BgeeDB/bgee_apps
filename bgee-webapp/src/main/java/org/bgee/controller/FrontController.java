@@ -297,7 +297,7 @@ public class FrontController extends HttpServlet {
                     .ifPresent(c -> response.addCookie(c));
                 } catch (IllegalArgumentException e) {
                     //we are not going to make the query fail for a cookie issue
-                    log.catching(Level.WARN, e);
+                    log.catching(Level.DEBUG, e);
                 }
             }
             

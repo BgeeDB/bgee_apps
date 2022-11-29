@@ -74,10 +74,12 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             //iteration order is guaranteed
             LinkedHashMap<DataType, Set<?>> resultMap = new LinkedHashMap<>();
 
-            for (DataType dt: EnumSet.allOf(DataType.class)) {
-                //********** Raw data *************
-                RawDataContainer<?, ?> rawDataContainer = rawDataContainers.get(dt);
-                if (rawDataContainer != null) {
+            if (rawDataContainers != null) {
+                for (DataType dt: EnumSet.allOf(DataType.class)) {
+                    RawDataContainer<?, ?> rawDataContainer = rawDataContainers.get(dt);
+                    if (rawDataContainer == null) {
+                        continue;
+                    }
                     //It is important to start from calls, then assay, then experiments,
                     //since if calls are populated, assays and experiments are as well,
                     //and if assays are populated, experiments are as well.

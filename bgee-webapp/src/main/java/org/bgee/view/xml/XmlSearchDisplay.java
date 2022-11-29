@@ -1,8 +1,6 @@
 package org.bgee.view.xml;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
@@ -61,9 +59,9 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 
 		// TODO find a way not to hardcode request parameters
 		// Does it worth creating a FrontendRequestParameters?
-		String url = this.prop.getFrontendUrl() + RequestParameters.PAGE_SEARCH
-		        + "/genes?" + RequestParameters.PAGE_SEARCH + "=";
-		url = url + searchTerm;
+		final String url = this.prop.getFrontendUrl() + RequestParameters.PAGE_SEARCH
+		        + "/genes?" + RequestParameters.PAGE_SEARCH + "=" + searchTerm;
+
 		this.writeln("<url>" + url + "</url>");
 
 		this.writeln("<description>Genes found in gene expression database Bgee</description>");

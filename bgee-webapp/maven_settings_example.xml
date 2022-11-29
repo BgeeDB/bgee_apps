@@ -55,9 +55,10 @@
       <!-- "From" address when sending mails at TopAnat job completions -->
       <filter.org.bgee.webapp.topAnatFromAddress>personal@email.com</filter.org.bgee.webapp.topAnatFromAddress>
       <!-- Root of the server to use. Important to generate correct links in emails -->
-      <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/</filter.org.bgee.webapp.bgeeRootDirectory>
-      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/</filter.org.bgee.webapp.bgeeStableRootDirectory>
-      <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.bgeeRootDirectory>http://test.com/api/</filter.org.bgee.webapp.bgeeRootDirectory>
+      <filter.org.bgee.webapp.bgeeStableRootDirectory>http://test.com/test14/api/</filter.org.bgee.webapp.bgeeStableRootDirectory>
+      <filter.org.bgee.webapp.bgeeCurrentUrl>http://test.com/api/</filter.org.bgee.webapp.bgeeCurrentUrl>
+      <filter.org.bgee.webapp.frontendUrl>http://test.com/</filter.org.bgee.webapp.frontendUrl>
       <filter.org.bgee.webapp.bgeeRootDomain>.test.com</filter.org.bgee.webapp.bgeeRootDomain>
     </properties>
   </profile>

@@ -301,7 +301,8 @@ public class CommandData extends CommandParent {
             try {
                 job = this.jobService.registerNewJob(this.user.getUUID().toString());
                 job.startJob();
-                RawDataLoader rawDataLoader = this.loadRawDataLoader();
+                //If filters are provided, they will be considered with this RawDataLoader
+                RawDataLoader rawDataLoader = this.loadRawDataLoader(true);
 
                 //Raw data results
                 if (this.requestParameters.isGetResults()) {
@@ -313,7 +314,16 @@ public class CommandData extends CommandParent {
                 }
                 //Filters
                 if (this.requestParameters.isGetFilters()) {
-                    rawDataPostFilters = this.loadRawDataPostFilters(rawDataLoader, dataTypes);
+                    //For requesting getFilters, well, the filter parameters must be ignored
+                    RawDataLoader loaderToUse = rawDataLoader;
+                    RawDataFilter noFilterParamFilter = this.loadRawDataFilter(false);
+                    //We try to avoid requesting a ProcessedFilter if not necessary,
+                    //by comparing the RawDataFilters
+                    if (!rawDataLoader.getRawDataProcessedFilter()
+                            .getRawDataFilter().equals(noFilterParamFilter)) {
+                        loaderToUse = this.loadRawDataLoader(noFilterParamFilter);
+                    }
+                    rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes);
                 }
 
                 job.completeWithSuccess();
@@ -334,13 +344,13 @@ public class CommandData extends CommandParent {
         log.traceExit();
     }
 
-    private void processExperimentPage() throws PageNotFoundException, IOException {
+    private void processExperimentPage() throws PageNotFoundException, IOException, InvalidRequestException {
         log.traceEntry();
 
         //We don't use the loadRawDataLoader method, because there is no complex processing
         //of the RawDataFilter, so that we don't want to put it in cache
         RawDataLoader rawDataLoader = this.serviceFactory.getRawDataService()
-                .loadRawDataLoader(this.loadRawDataFilter());
+                .loadRawDataLoader(this.loadRawDataFilter(false));
 
         //We don't know which data type the experiment belongs to,
         //so we test them all
@@ -570,10 +580,15 @@ public class CommandData extends CommandParent {
         return log.traceExit(genes);
     }
 
-    private RawDataLoader loadRawDataLoader() {
-        log.traceEntry();
+    private RawDataLoader loadRawDataLoader(boolean consideringFilters) throws InvalidRequestException {
+        log.traceEntry("{}", consideringFilters);
 
-        RawDataFilter filter = this.loadRawDataFilter();
+        return log.traceExit(this.loadRawDataLoader(this.loadRawDataFilter(consideringFilters)));
+    }
+
+    private RawDataLoader loadRawDataLoader(RawDataFilter filter) {
+        log.traceEntry("{}", filter);
+
         RawDataService rawDataService = this.serviceFactory.getRawDataService();
         //Try to get the processed filter from the cache.
         //We don't use the method computeIfAbsent, because that would probably block
@@ -592,50 +607,79 @@ public class CommandData extends CommandParent {
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
 
-    private RawDataFilter loadRawDataFilter() {
-        log.traceEntry();
+    private RawDataFilter loadRawDataFilter(boolean consideringFilters) throws InvalidRequestException {
+        log.traceEntry("{}", consideringFilters);
 
-        GeneFilter geneFilter = null;
-        RawDataConditionFilter condFilter = null;
         Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
         String experimentId = this.requestParameters.getExperimentId();
+        List<String> filterAnatEntityIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity());
+        List<String> filterDevStageIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterDevStage());
+        List<String> filterCellTypeIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterCellType());
+        List<String> filterSexIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterSex());
+        List<String> filterStrains = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterStrain());
 
-        if (this.requestParameters.getSpeciesId() != null) {
-            int speciesId = this.requestParameters.getSpeciesId();
+        Integer speciesId = this.requestParameters.getSpeciesId();
 
-            geneFilter = new GeneFilter(speciesId, this.requestParameters.getGeneIds());
+        GeneFilter geneFilter = speciesId == null? null:
+            new GeneFilter(speciesId, this.requestParameters.getGeneIds());
 
-            List<String> sexes = this.requestParameters.getSex();
-            if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE) ||
-                    sexes.containsAll(
-                            EnumSet.allOf(SexEnum.class)
-                            .stream()
-                            .map(e -> e.name())
-                            .collect(Collectors.toSet())))) {
-                sexes = null;
-            }
+        List<String> sexes = this.requestParameters.getSex();
+        if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE) ||
+                sexes.containsAll(
+                        EnumSet.allOf(SexEnum.class)
+                        .stream()
+                        .map(e -> e.name())
+                        .collect(Collectors.toSet())))) {
+            sexes = null;
+        }
 
+        RawDataConditionFilter condFilter = null;
+        try {
             condFilter = new RawDataConditionFilter(speciesId,
-                    this.requestParameters.getAnatEntity(),
-                    this.requestParameters.getDevStage(),
-                    this.requestParameters.getCellType(),
-                    sexes,
-                    this.requestParameters.getStrain(),
-                    //includeSubAnatEntities
-                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                            this.requestParameters.getUrlParametersInstance().getParamAnatEntityDescendant())),
-                    //includeSubDevStages
-                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                            this.requestParameters.getUrlParametersInstance().getParamStageDescendant())),
-                    //includeSubCellTypes
-                    Boolean.TRUE.equals(this.requestParameters.getFirstValue(
-                            this.requestParameters.getUrlParametersInstance().getParamCellTypeDescendant())),
+                    //Filters override the related parameter from the form
+                    filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty()?
+                            filterAnatEntityIds: this.requestParameters.getAnatEntity(),
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()?
+                            filterDevStageIds: this.requestParameters.getDevStage(),
+                    filterCellTypeIds != null && !filterCellTypeIds.isEmpty()?
+                            filterCellTypeIds: this.requestParameters.getCellType(),
+                    filterSexIds != null && !filterSexIds.isEmpty()?
+                            filterSexIds: sexes,
+                    filterStrains != null && !filterStrains.isEmpty()?
+                            filterStrains: this.requestParameters.getStrain(),
+                    //And we never include child terms when the parameter comes from a filter.
+                    filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty()?
+                            false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                    this.requestParameters.getUrlParametersInstance()
+                                    .getParamAnatEntityDescendant())),
+                    filterDevStageIds != null && !filterDevStageIds.isEmpty()?
+                            false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                    this.requestParameters.getUrlParametersInstance()
+                                    .getParamStageDescendant())),
+                    filterCellTypeIds != null && !filterCellTypeIds.isEmpty()?
+                            false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                    this.requestParameters.getUrlParametersInstance()
+                                    .getParamCellTypeDescendant())),
                     //sex descendant always false: requesting descendants of the root is equivalent
                     //to request all sexes, in which case we don't provide requested sex IDs
                     false,
                     //strain descendant always false: requesting descendants of the root is equivalent
                     //to request all strains, in which case we don't provide requested strains
                     false);
+        } catch (IllegalArgumentException e) {
+            //nothing to do, we just did not have the appropriate parameters to create
+            //a condition filter
+            log.catching(e);
         }
 
         return log.traceExit(new RawDataFilter(

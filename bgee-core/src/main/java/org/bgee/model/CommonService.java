@@ -872,7 +872,9 @@ public class CommonService extends Service {
                 sexIds.add(rawDataCondTO.getSex().getStringRepresentation());
             }
         }
-        
+
+        log.debug("usedSpeciesIds: {}",
+                usedSpeciesIds);
         //merge anat entities and cell types to call only once loadAnatEntities
         Set<String> anatAndCellIds = new HashSet<String>(anatEntityIds);
         anatAndCellIds.addAll(cellTypeIds);
@@ -881,8 +883,7 @@ public class CommonService extends Service {
             anatEntityService.loadAnatEntities(
                     usedSpeciesIds, true, anatAndCellIds, false)
             .collect(Collectors.toMap(a -> a.getId(), a -> a));
-        log.debug("usedSpeciesIds: {} - anatAndCellIds: {} - anatAndCellMap: {}",
-                usedSpeciesIds, anatAndCellIds, anatAndCellMap);
+        log.debug("anatAndCellIds: {} - anatAndCellMap: {}", anatAndCellIds, anatAndCellMap);
         if (!anatAndCellIds.isEmpty() && anatAndCellMap.size() != anatAndCellIds.size()) {
             anatAndCellIds.removeAll(anatAndCellMap.keySet());
             throw log.throwing(new IllegalStateException("Some anat. entities or cell type used in a condition "

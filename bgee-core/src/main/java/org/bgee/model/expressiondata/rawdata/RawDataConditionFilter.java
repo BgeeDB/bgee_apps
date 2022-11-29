@@ -27,7 +27,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
     /**
      * @see #getSpeciesId()
      */
-    private final int speciesId;
+    private final Integer speciesId;
 
     //XXX FB: why are sexes and strains not included in the BaseConditionFilter?
     //What are the differences as compared to sexIds and strainIds in ConditionFilter?
@@ -67,10 +67,13 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      * it is equivalent to requesting any term for this condition parameter,
      * and this {@code RawDataConditionFilter} will treat the {@code Collection} as being empty.
      *
-     * @param speciesId                 An {@code int} that is the ID of the species the parameters are requested for.
-     *                                  For instance, only terms valid in the requested species will be considered,
-     *                                  and if an {@code includeXXX} {@code boolean} is {@code true}, only the relations
+     * @param speciesId                 An {@code Integer} that is the ID of the species the parameters
+     *                                  are requested for. For instance, only terms valid in the requested
+     *                                  species will be considered, and if an {@code includeXXX}
+     *                                  {@code boolean} is {@code true}, only the relations
      *                                  valid in that species will be considered for retrieving children terms.
+     *                                  Can be {@code null} if all of the {@code includeXXX} arguments
+     *                                  are {@code false}.
      * @param anatEntityIds             A {@code Collection} of {@code String}s that are the IDs
      *                                  of the anatomical entities to use.
      * @param devStageIds               A {@code Collection} of {@code String}s that are the IDs
@@ -99,11 +102,13 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      * @param includeSubStrains         A {@code boolean} defining whether the child strains
      *                                  of the selected strains (see {@code strains}) must be retrieved.
      *                                  Applicable only if {@code strains} not null nor empty.
-     * @throws IllegalArgumentException If {@code speciesId} is less than or equal to 0,
-     *                                  or if all provided {@code Collection}s are empty or {@code null}
-     *                                  or contains only blank elements.
+     * @throws IllegalArgumentException If {@code speciesId} is {@code null} and any of the
+     *                                  {@code includeXXX} is {@code true}, and the corresponding
+     *                                  {@code Collection} attribute is non-null and not empty;
+     *                                  or if {@code speciesId} is non-null and is less than or equal to 0;
+     *                                  or if all provided {@code Collection}s are empty or {@code null}..
      */
-    public RawDataConditionFilter(int speciesId, Collection<String> anatEntityIds, Collection<String> devStageIds,
+    public RawDataConditionFilter(Integer speciesId, Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains,
             boolean includeSubAnatEntities, boolean includeSubDevStages, boolean includeSubCellTypes,
             boolean includeSubSexes, boolean includeSubStrains)
@@ -121,11 +126,6 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
               cellTypeIds != null &&
               cellTypeIds.contains(ConditionDAO.CELL_TYPE_ROOT_ID) &&
               includeSubCellTypes? null: cellTypeIds);
-
-        if (speciesId < 1) {
-            throw log.throwing(new IllegalArgumentException("speciesId must be greater than 0"));
-        }
-        this.speciesId = speciesId;
 
         this.sexes = Collections.unmodifiableSet(
                 sexes == null ||
@@ -147,15 +147,35 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         this.includeSubCellTypes = includeSubCellTypes;
         this.includeSubSexes = includeSubSexes;
         this.includeSubStrains = includeSubStrains;
+
+        if (this.areAllCondParamFiltersEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Some parameters must be provided"));
+        }
+
+        if (speciesId == null && (
+                !this.getAnatEntityIds().isEmpty() && this.includeSubAnatEntities ||
+                !this.getDevStageIds().isEmpty() && this.includeSubDevStages ||
+                !this.getCellTypeIds().isEmpty() && this.includeSubCellTypes ||
+                //not really necessary for sexes and strains, we don't have species-specific
+                //relations between terms, but we do the check for consistency
+                !this.getSexes().isEmpty() && this.includeSubSexes ||
+                !this.getStrains().isEmpty() && this.includeSubStrains)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A speciesId must be provided to retrieve sub-terms"));
+        }
+        if (speciesId != null && speciesId <= 0) {
+            throw log.throwing(new IllegalArgumentException("speciesId must be greater than 0"));
+        }
+        this.speciesId = speciesId;
     }
 
     /**
-     * @return  An {@code int} that is the ID of the species the parameters are requested for.
+     * @return  An {@code Integer} that is the ID of the species the parameters are requested for.
      *          For instance, only terms valid in the requested species will be considered,
      *          and if an {@code isIncludeXXX()} getter returns {@code true}, only the relations
      *          valid in that species will be considered for retrieving children terms.
      */
-    public int getSpeciesId() {
+    public Integer getSpeciesId() {
         return this.speciesId;
     }
     /**
@@ -226,9 +246,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(speciesId, sexes, strains,
-                includeSubAnatEntities, includeSubDevStages, includeSubCellTypes,
-                includeSubSexes, includeSubStrains);
+        result = prime * result + Objects.hash(includeSubAnatEntities, includeSubCellTypes,
+                includeSubDevStages, includeSubSexes, includeSubStrains, sexes, speciesId, strains);
         return result;
     }
     @Override
@@ -240,14 +259,14 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
         if (getClass() != obj.getClass())
             return false;
         RawDataConditionFilter other = (RawDataConditionFilter) obj;
-        return speciesId == other.speciesId
-                && Objects.equals(sexes, other.sexes)
-                && Objects.equals(strains, other.strains)
-                && includeSubAnatEntities == other.includeSubAnatEntities
-                && includeSubDevStages == other.includeSubDevStages
+        return includeSubAnatEntities == other.includeSubAnatEntities
                 && includeSubCellTypes == other.includeSubCellTypes
+                && includeSubDevStages == other.includeSubDevStages
                 && includeSubSexes == other.includeSubSexes
-                && includeSubStrains == other.includeSubStrains;
+                && includeSubStrains == other.includeSubStrains
+                && Objects.equals(sexes, other.sexes)
+                && speciesId == other.speciesId
+                && Objects.equals(strains, other.strains);
     }
 
     @Override

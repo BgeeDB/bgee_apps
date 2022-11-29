@@ -23,10 +23,8 @@ public class DAOProcessedRawDataFilter {
     private final boolean alwaysGeneId;
 
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters) {
-        if (rawDataFilters == null) {
-            throw log.throwing(new IllegalArgumentException("rawDataFilters can not be null"));
-        }
-        this.rawDataFilters = Collections.unmodifiableSet(new LinkedHashSet<>(rawDataFilters));
+        this.rawDataFilters = Collections.unmodifiableSet(rawDataFilters == null ?
+                new LinkedHashSet<>() : new LinkedHashSet<>(rawDataFilters));
         this.needSpeciesId = this.rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
         this.needGeneId = this.rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
         this.needAssayId = this.rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||

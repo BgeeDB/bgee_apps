@@ -23,6 +23,7 @@ import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 
 /**
  * This class is designed to declare and provide all {@code Parameter<T>} that
@@ -337,12 +338,18 @@ public class URLParameters {
                 .collect(Collectors.joining("|")) + ")", 
             String.class);
     /**
-     * A {@code Parameter<String>} that contains the developmental stages to be used 
-     * for TopAnat analysis.
+     * A {@code Parameter<String>} that contains the developmental stages to be used.
      * Corresponds to the URL parameter "stage_id".
      */
     private static final Parameter<String> DEV_STAGE = new Parameter<String>("stage_id",
             true, false, null, true, DEFAULT_IS_SECURE, 
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the developmental stages to be used in a filter.
+     * Corresponds to the URL parameter "filter_stage_id".
+     */
+    private static final Parameter<String> FILTER_DEV_STAGE = new Parameter<String>("filter_stage_id",
+            true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the anatomical entities to be used.
@@ -352,6 +359,13 @@ public class URLParameters {
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
+     * A {@code Parameter<String>} that contains the anatomical entities to be used in a filter.
+     * Corresponds to the URL parameter "filter_anat_entity_id".
+     */
+    private static final Parameter<String> FILTER_ANAT_ENTITY = new Parameter<String>(
+            "filter_anat_entity_id", true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
      * A {@code Parameter<String>} that contains the cell type IDs to be used.
      * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
      * and can be requested as such, but it is sometimes important to make the distinction.
@@ -359,6 +373,15 @@ public class URLParameters {
      */
     private static final Parameter<String> CELL_TYPE = new Parameter<>("cell_type_id",
             true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the cell type IDs to be used in a filter.
+     * Cell types are also anatomical entities (see {@link #ANAT_ENTITY}),
+     * and can be requested as such, but it is sometimes important to make the distinction.
+     * Corresponds to the URL parameter "filter_cell_type_id".
+     */
+    private static final Parameter<String> FILTER_CELL_TYPE = new Parameter<String>(
+            "filter_cell_type_id", true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the sexes requested.
@@ -374,10 +397,37 @@ public class URLParameters {
                 .collect(Collectors.joining("|")) + ")",
             String.class);
     /**
+     * A {@code Parameter<String>} that contains the sexes to be used in a filter.
+     * Corresponds to the URL parameter "filter_sex". As opposed to {@link #SEX},
+     * raw data sexes can be provided in this filter, not only global condition sexes.
+     */
+    private static final Parameter<String> FILTER_SEX = new Parameter<String>("filter_sex",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            Math.max(RequestParameters.ALL_VALUE.length(),
+                    Stream.concat(EnumSet.allOf(RawDataSex.class).stream(),
+                            EnumSet.allOf(SexEnum.class).stream())
+                    .distinct()
+                    .map(e -> e.name().length())
+                    .max(Comparator.naturalOrder()).get()),
+            "(?i:" + RequestParameters.ALL_VALUE + "|" +
+                    Stream.concat(EnumSet.allOf(RawDataSex.class).stream(),
+                            EnumSet.allOf(SexEnum.class).stream())
+                    .distinct()
+                    .map(e -> e.name())
+                    .collect(Collectors.joining("|")) + ")",
+            String.class);
+    /**
      * A {@code Parameter<String>} that contains the strains requested.
      * Corresponds to the URL parameter "strain".
      */
     private static final Parameter<String> STRAIN = new Parameter<>("strain",
+            true, false, null, true, DEFAULT_IS_SECURE,
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the strains requested to be used in a filter.
+     * Corresponds to the URL parameter "filter_strain".
+     */
+    private static final Parameter<String> FILTER_STRAIN = new Parameter<>("filter_strain",
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 
@@ -671,10 +721,15 @@ public class URLParameters {
             ATTRIBUTE_LIST,
 
             ANAT_ENTITY,
+            FILTER_ANAT_ENTITY,
             CELL_TYPE,
+            FILTER_CELL_TYPE,
             DEV_STAGE,
+            FILTER_DEV_STAGE,
             SEX,
+            FILTER_SEX,
             STRAIN,
+            FILTER_STRAIN,
             ANAT_ENTITY_DESCENDANT,
             CELL_TYPE_DESCENDANT,
             STAGE_DESCENDANT,
@@ -896,10 +951,17 @@ public class URLParameters {
     }
     /**
      * @return  A {@code Parameter<String>} defining a developmental stage.
-     *          Corresponds to the URL parameter "dev_stage".
+     *          Corresponds to the URL parameter "stage_id".
      */
     public Parameter<String> getParamDevStage() {
         return DEV_STAGE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a developmental stage used in a filter.
+     *          Corresponds to the URL parameter "filter_stage_id".
+     */
+    public Parameter<String> getParamFilterDevStage() {
+        return FILTER_DEV_STAGE;
     }
     /**
      * @return  A {@code Parameter<String>} defining an anatomical entity ID.
@@ -909,11 +971,25 @@ public class URLParameters {
         return ANAT_ENTITY;
     }
     /**
+     * @return  A {@code Parameter<String>} defining an anatomical entity ID used in a filter.
+     * Corresponds to the URL parameter "filter_anat_entity_id".
+     */
+    public Parameter<String> getParamFilterAnatEntity() {
+        return FILTER_ANAT_ENTITY;
+    }
+    /**
      * @return  A {@code Parameter<String>} defining a cell type ID.
      * Corresponds to the URL parameter "cell_type_id".
      */
     public Parameter<String> getParamCellType() {
         return CELL_TYPE;
+    }
+    /**
+     * @return  A {@code Parameter<String>} defining a cell type ID used in a filter.
+     * Corresponds to the URL parameter "filter_cell_type_id".
+     */
+    public Parameter<String> getParamFilterCellType() {
+        return FILTER_CELL_TYPE;
     }
     /**
      * @return  A {@code Parameter<String>} that contains the sexes requested.
@@ -923,11 +999,25 @@ public class URLParameters {
         return SEX;
     }
     /**
+     * @return  A {@code Parameter<String>} that contains the sexes requested in a filter.
+     *          Corresponds to the URL parameter "filter_sex".
+     */
+    public Parameter<String> getParamFilterSex() {
+        return FILTER_SEX;
+    }
+    /**
      * @return  A {@code Parameter<String>} that contains the strains requested.
      *          Corresponds to the URL parameter "strain".
      */
     public Parameter<String> getParamStrain() {
         return STRAIN;
+    }
+    /**
+     * @return  A {@code Parameter<String>} that contains the strains requested in a filter.
+     *          Corresponds to the URL parameter "filter_strain".
+     */
+    public Parameter<String> getParamFilterStrain() {
+        return FILTER_STRAIN;
     }
 
     /**

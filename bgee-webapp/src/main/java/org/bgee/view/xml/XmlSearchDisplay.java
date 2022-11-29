@@ -60,7 +60,7 @@ public class XmlSearchDisplay extends XmlParentDisplay implements SearchDisplay 
 		// TODO find a way not to hardcode request parameters
 		// Does it worth creating a FrontendRequestParameters?
 		final String url = this.prop.getFrontendUrl() + RequestParameters.PAGE_SEARCH
-		        + "/genes?" + RequestParameters.PAGE_SEARCH + "=" + searchTerm;
+		        + "/genes?search=" + searchTerm;
 
 		this.writeln("<url>" + url + "</url>");
 

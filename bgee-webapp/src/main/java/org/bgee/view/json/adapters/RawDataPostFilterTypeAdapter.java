@@ -2,11 +2,11 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters;
+import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 
@@ -38,33 +38,35 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         if (!value.getAnatEntities().isEmpty()) {
             out.name("anatEntities");
             this.writePostFilterNamedEntityParameter(out, "Anatomical entities",
-                    this.urlParameters.getParamAnatEntity().getName(), value.getAnatEntities());
+                    this.urlParameters.getParamFilterAnatEntity().getName(),
+                    value.getAnatEntities());
         }
 
         if (!value.getCellTypes().isEmpty()) {
             out.name("cellTypes");
             this.writePostFilterNamedEntityParameter(out, "Cell types",
-                    this.urlParameters.getParamCellType().getName(), value.getCellTypes());
+                    this.urlParameters.getParamFilterCellType().getName(),
+                    value.getCellTypes());
         }
 
         if (!value.getDevStages().isEmpty()) {
             out.name("devStages");
             this.writePostFilterNamedEntityParameter(out, "Developmental and life stages",
-                    this.urlParameters.getParamDevStage().getName(), value.getDevStages());
+                    this.urlParameters.getParamFilterDevStage().getName(),
+                    value.getDevStages());
         }
 
         if (!value.getSexes().isEmpty()) {
             out.name("sexes");
-            this.writePostFilterStringParameter(out, "Sexes",
-                    this.urlParameters.getParamSex().getName(),
-                    value.getSexes().stream().map(s -> s.getStringRepresentation())
-                    .collect(Collectors.toList()));
+            this.writePostFilterEnumParameter(out, "Sexes",
+                    this.urlParameters.getParamFilterSex().getName(),
+                    value.getSexes());
         }
 
         if (!value.getStrains().isEmpty()) {
             out.name("strains");
             this.writePostFilterStringParameter(out, "Strains",
-                    this.urlParameters.getParamStrain().getName(),
+                    this.urlParameters.getParamFilterStrain().getName(),
                     value.getStrains());
         }
 
@@ -85,6 +87,21 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         startWritePostFilterParameter(out, filterName, urlParameterName);
         for (NamedEntity<String> value: values) {
             this.utils.writeSimplifiedNamedEntity(out, value);
+        }
+        endWritePostFilterParameter(out);
+
+        log.traceExit();
+    }
+    private void writePostFilterEnumParameter(JsonWriter out, String filterName,
+            String urlParameterName, Collection<? extends BgeeEnumField> values) throws IOException {
+        log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
+
+        startWritePostFilterParameter(out, filterName, urlParameterName);
+        for (BgeeEnumField bgeeEnum: values) {
+            out.beginObject();
+            out.name("id").value(bgeeEnum.name());
+            out.name("name").value(bgeeEnum.getStringRepresentation());
+            out.endObject();
         }
         endWritePostFilterParameter(out);
 

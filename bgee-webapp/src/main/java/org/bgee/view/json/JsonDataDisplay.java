@@ -109,7 +109,7 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
             }
         }
 
-        this.sendResponse("Data page", responseMap);
+        this.sendResponse(HttpServletResponse.SC_OK, "Data page", responseMap, true);
         log.traceExit();
     }
 

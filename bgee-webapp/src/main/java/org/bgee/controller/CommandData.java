@@ -344,7 +344,7 @@ public class CommandData extends CommandParent {
         log.traceExit();
     }
 
-    private void processExperimentPage() throws PageNotFoundException, IOException, InvalidRequestException {
+    private void processExperimentPage() throws PageNotFoundException, IOException {
         log.traceEntry();
 
         //We don't use the loadRawDataLoader method, because there is no complex processing
@@ -580,7 +580,7 @@ public class CommandData extends CommandParent {
         return log.traceExit(genes);
     }
 
-    private RawDataLoader loadRawDataLoader(boolean consideringFilters) throws InvalidRequestException {
+    private RawDataLoader loadRawDataLoader(boolean consideringFilters) {
         log.traceEntry("{}", consideringFilters);
 
         return log.traceExit(this.loadRawDataLoader(this.loadRawDataFilter(consideringFilters)));
@@ -607,7 +607,7 @@ public class CommandData extends CommandParent {
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
 
-    private RawDataFilter loadRawDataFilter(boolean consideringFilters) throws InvalidRequestException {
+    private RawDataFilter loadRawDataFilter(boolean consideringFilters) {
         log.traceEntry("{}", consideringFilters);
 
         Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();

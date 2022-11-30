@@ -9,7 +9,15 @@
     <root level="off">
       <appender-ref ref="Console"/>
     </root>  
-    <logger name="org.bgee" level="DEBUG" additivity="false">
+	<logger name="org.bgee" level="DEBUG" additivity="false">
+      <Filters>
+        <MarkerFilter marker="THROWING" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <MarkerFilter marker="CATCHING" onMatch="DENY" onMismatch="NEUTRAL"/>
+      </Filters>
+      <appender-ref ref="Console"/>
+  </logger>
+  <logger name="org.bgee.controller.FrontController" level="ERROR" additivity="false">
+	  <MarkerFilter marker="THROWING" onMatch="DENY" onMismatch="NEUTRAL"/>
       <appender-ref ref="Console"/>
     </logger>
     <logger name="log4jdbc.log4j2" level="INFO" additivity="false">

@@ -84,7 +84,7 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
             String urlParameterName, Collection<? extends NamedEntity<String>> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
 
-        startWritePostFilterParameter(out, filterName, urlParameterName);
+        startWritePostFilterParameter(out, filterName, urlParameterName, true, true);
         for (NamedEntity<String> value: values) {
             this.utils.writeSimplifiedNamedEntity(out, value);
         }
@@ -96,7 +96,7 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
             String urlParameterName, Collection<? extends BgeeEnumField> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
 
-        startWritePostFilterParameter(out, filterName, urlParameterName);
+        startWritePostFilterParameter(out, filterName, urlParameterName, false, true);
         for (BgeeEnumField bgeeEnum: values) {
             out.beginObject();
             out.name("id").value(bgeeEnum.name());
@@ -111,7 +111,7 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
             String urlParameterName, Collection<String> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
 
-        startWritePostFilterParameter(out, filterName, urlParameterName);
+        startWritePostFilterParameter(out, filterName, urlParameterName, false, true);
         for (String value: values) {
             out.beginObject();
             out.name("id").value(value);
@@ -124,11 +124,14 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
     }
 
     private static void startWritePostFilterParameter(JsonWriter out, String filterName,
-            String urlParameterName) throws IOException {
-        log.traceEntry("{}, {}, {}", out, filterName, urlParameterName);
+            String urlParameterName, boolean informativeId, boolean informativeName) throws IOException {
+        log.traceEntry("{}, {}, {}, {}, {}", out, filterName, urlParameterName,
+                informativeId, informativeName);
         out.beginObject();
         out.name("filterName").value(filterName);
         out.name("urlParameterName").value(urlParameterName);
+        out.name("informativeId").value(informativeId);
+        out.name("informativeName").value(informativeName);
         out.name("values");
         out.beginArray();
         log.traceExit();

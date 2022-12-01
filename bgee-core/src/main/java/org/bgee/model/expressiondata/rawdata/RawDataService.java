@@ -497,12 +497,15 @@ public class RawDataService extends CommonService {
             if (requestedRawDataCondMap.isEmpty() && filter.hasExperimentAssayIds()) {
                 daoFilters.add(new DAORawDataFilter(filter.getExperimentIds(),
                     filter.getAssayIds(), filter.getExperimentOrAssayIds()));
-                log.debug("RawDataCondition created for for any species");
+                log.debug("DAORawDataFilter created for any species");
             } else if (!requestedRawDataCondMap.isEmpty()) {
                 daoFilters.add(new DAORawDataFilter(null, requestedRawDataCondMap.keySet(),
                         filter.getExperimentIds(), filter.getAssayIds(),
                         filter.getExperimentOrAssayIds()));
-                log.debug("RawDataCondition created with at least some condition IDs");
+                log.debug("DAORawDataFilter created with at least some condition IDs");
+            } else {
+                assert requestedRawDataCondMap.isEmpty() && !filter.hasExperimentAssayIds();
+                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
             }
         } else {
             daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
@@ -517,12 +520,12 @@ public class RawDataService extends CommonService {
                                 .map(e -> e.getKey())
                                 .collect(Collectors.toSet());
                         if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
-                            log.debug("RawDataCondition created without genes nor cond. for species ID: {}",
+                            log.debug("DAORawDataFilter created without genes nor cond. for species ID: {}",
                                     speciesId);
                             return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
                                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
                         }
-                        log.debug("Complete RawDataCondition created for species ID: {}", speciesId);
+                        log.debug("Complete DAORawDataFilter created for species ID: {}", speciesId);
                         return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
                                 filter.getAssayIds(), filter.getExperimentOrAssayIds());
                     })

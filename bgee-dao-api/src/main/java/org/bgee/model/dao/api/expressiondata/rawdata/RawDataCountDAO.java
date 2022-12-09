@@ -20,7 +20,8 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      */
     public enum Attribute implements DAO.Attribute {
         EXP_COUNT("expCount"), ASSAY_COUNT("assayCount"),
-        CALLS_COUNT("callsCount"), RNA_SEQ_LIBRARY_COUNT("rnaSeqLibraryCount");
+        CALLS_COUNT("callsCount"), RNA_SEQ_LIBRARY_COUNT("rnaSeqLibraryCount"),
+        INSITU_ASSAY_COND_COUNT("inSituAssayCondCount");
 
         /**
          * A {@code String} that is the corresponding field name in {@code ESTLibraryTO} class.
@@ -69,15 +70,18 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
      * Retrieve insitu count of experiment, assay and calls based on a {@code Collection} of 
      * {@code DAORawDataFilter}. 
      *
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} used to filter
-     *                          insitu data for which count are queried.
-     * @param experimentCount   A boolean defining rather experiment count has to be retrieved.
-     * @param assayCount        A boolean defining rather assay count has to be retrieved
-     * @param callCount         A boolean defining rather calls count has to be retrieved
-     * @return                  A {@code RawDataConditionTO} containing requested counts.
+     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} used to filter
+     *                              insitu data for which count are queried.
+     * @param experimentCount       A boolean defining rather experiment count has to be retrieved.
+     * @param assayCount            A boolean defining rather assay count has to be retrieved
+     * @param assayConditionCount   A boolean defining rather count of unique combination of assay
+     *                              and condition has to be retrieved.
+     * @param callCount             A boolean defining rather calls count has to be retrieved
+     * @return                      A {@code RawDataConditionTO} containing requested counts.
      */
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean resultCount);
+            boolean experimentCount, boolean assayCount, boolean assayConditionCount,
+            boolean resultCount);
 
     /**
      * Retrieve RNA-Seq count of experiment, assay and calls based on a {@code Collection} of 
@@ -131,18 +135,21 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         private final Integer assayCount;
         private final Integer callCount;
         private final Integer rnaSeqLibraryCount;
+        private final Integer insituAssayConditionCount;
         
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
                 Integer callCount) {
-            this(experimentCount, assayCount, callCount, null);
+            this(experimentCount, assayCount, callCount, null, null);
         }
 
         public RawDataCountContainerTO(Integer experimentCount, Integer assayCount,
-                Integer callCount, Integer rnaSeqLibraryCount) {
+                Integer callCount, Integer rnaSeqLibraryCount,
+                Integer insituAssayConditionCount) {
             this.experimentCount = experimentCount;
             this.assayCount = assayCount;
             this.callCount = callCount;
             this.rnaSeqLibraryCount = rnaSeqLibraryCount;
+            this.insituAssayConditionCount = insituAssayConditionCount;
         }
 
         public Integer getExperimentCount() {
@@ -153,6 +160,14 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         }
         public Integer getCallCount() {
             return callCount;
+        }
+        /**
+         * An {@code Integer} corresponding to insitu assay with unique condtion count. Not null only for {link RawDataCountDAO#getInSituCount}
+         * when the boolean assaConditionCount is true.
+         * @return
+         */
+        public Integer getInsituAssayConditionCount() {
+            return insituAssayConditionCount;
         }
         /**
          * An {@code Integer} corresponding to RNA-Seq library count. Not null only for {link RawDataCountDAO#getRnaSeqCount}
@@ -166,7 +181,9 @@ public interface RawDataCountDAO extends DAO<RawDataCountDAO.Attribute> {
         @Override
         public String toString() {
             return "RawDataCountContainerTO [experimentCount=" + experimentCount + ", assayCount=" + assayCount
-                    + ", callsCount=" + callCount + ", rnaSeqLibraryCount=" + rnaSeqLibraryCount + "]";
+                    + ", callCount=" + callCount + ", rnaSeqLibraryCount=" + rnaSeqLibraryCount
+                    + ", insituAssayConditionCount=" + insituAssayConditionCount + "]";
         }
+
     }
 }

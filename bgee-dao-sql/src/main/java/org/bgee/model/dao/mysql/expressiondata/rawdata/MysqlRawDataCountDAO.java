@@ -220,7 +220,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getInSituCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean callCount) {
+            boolean experimentCount, boolean assayCount, boolean assayConditionCount,
+            boolean callCount) {
         log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, assayCount, callCount);
         if (!experimentCount && !assayCount && !callCount) {
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
@@ -260,9 +261,23 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 //because relation 1-to-many to table inSituSpot.
                 sb.append("distinct ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
                         .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName());
+
             }
             sb.append(") as ")
               .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
+            previousCount = true;
+        }
+        if (assayConditionCount) {
+            if(previousCount) {
+                sb.append(",");
+            }
+            sb.append(" count(distinct ")
+            .append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+            .append(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID.getTOFieldName())
+            .append(", ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+            .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName());
+            sb.append(") as ")
+              .append(RawDataCountDAO.Attribute.INSITU_ASSAY_COND_COUNT.getTOFieldName());
             previousCount = true;
         }
         if (callCount) {
@@ -465,7 +480,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         protected RawDataCountContainerTO getNewTO() {
             log.traceEntry();
             Integer expCount = null, assayCount= null, callsCount = null,
-                    rnaSeqLibraryCount = null;
+                    rnaSeqLibraryCount = null, insituAssayConditionCount = null;
             // Get results
             for (Entry<Integer, String> column : this.getColumnLabels().entrySet()) {
                 try {
@@ -485,6 +500,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                             .getTOFieldName())) {
                         rnaSeqLibraryCount = this.getCurrentResultSet().getInt(column.getKey());
 
+                    } else if (column.getValue().equals(RawDataCountDAO.Attribute.INSITU_ASSAY_COND_COUNT
+                            .getTOFieldName())) {
+                        insituAssayConditionCount = this.getCurrentResultSet().getInt(column.getKey());
+
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }
@@ -494,7 +513,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             }
             // Set RawDataCountContainerTO
             return log.traceExit(new RawDataCountContainerTO(expCount, assayCount, callsCount,
-                    rnaSeqLibraryCount));
+                    rnaSeqLibraryCount, insituAssayConditionCount));
         }
     }
 }

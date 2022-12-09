@@ -7,6 +7,8 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.est.ESTDataType;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituDataType;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixDataType;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqDataType;
 
@@ -39,12 +41,16 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
     public final static AffymetrixDataType AFFYMETRIX = new AffymetrixDataType();
     public final static RnaSeqDataType BULK_RNA_SEQ = new RnaSeqDataType(DataType.RNA_SEQ);
     public final static RnaSeqDataType SC_RNA_SEQ = new RnaSeqDataType(DataType.FULL_LENGTH);
+    public final static ESTDataType EST = new ESTDataType();
+    public final static InSituDataType IN_SITU = new InSituDataType();
 
     private final static Map<DataType, RawDataDataType<?, ?>> DATA_TYPE_TO_RAW_DATA_DATA_TYPE =
             Collections.unmodifiableMap(Map.ofEntries(
                     Map.entry(AFFYMETRIX.getDataType(), AFFYMETRIX),
                     Map.entry(BULK_RNA_SEQ.getDataType(), BULK_RNA_SEQ),
-                    Map.entry(SC_RNA_SEQ.getDataType(), SC_RNA_SEQ)));
+                    Map.entry(SC_RNA_SEQ.getDataType(), SC_RNA_SEQ),
+                    Map.entry(EST.getDataType(), EST),
+                    Map.entry(IN_SITU.getDataType(), IN_SITU)));
 
     private final static Map<DataType,
     RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>,
@@ -52,7 +58,8 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
     DATA_TYPE_TO_RAW_DATA_DATA_TYPE_WITH_EXPERIMENT = Collections.unmodifiableMap(Map.ofEntries(
                     Map.entry(AFFYMETRIX.getDataType(), AFFYMETRIX),
                     Map.entry(BULK_RNA_SEQ.getDataType(), BULK_RNA_SEQ),
-                    Map.entry(SC_RNA_SEQ.getDataType(), SC_RNA_SEQ)));
+                    Map.entry(SC_RNA_SEQ.getDataType(), SC_RNA_SEQ),
+                    Map.entry(IN_SITU.getDataType(), IN_SITU)));
 
     public static RawDataDataType<?, ?> getRawDataDataType(DataType dataType) {
         log.traceEntry("{}", dataType);

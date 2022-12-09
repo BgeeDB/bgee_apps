@@ -80,8 +80,12 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
         sb.append(" ORDER BY")
         .append(" " + TABLE_NAME + "." + InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID
                 .getTOFieldName())
-        .append(", " + TABLE_NAME + "." + InSituSpotDAO.Attribute.ID
+        .append(", " + TABLE_NAME + "." + InSituSpotDAO.Attribute.CONDITION_ID
                 .getTOFieldName());
+        if (clonedAttrs.contains(InSituSpotDAO.Attribute.ID)) {
+            sb.append(", " + TABLE_NAME + "." + InSituSpotDAO.Attribute.ID
+                .getTOFieldName());
+        }
 
         //generate offset and limit
         if (limit != null) {

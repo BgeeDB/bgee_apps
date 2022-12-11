@@ -31,7 +31,7 @@ public interface InSituEvidenceDAO extends DAO<InSituEvidenceDAO.Attribute> {
      * </ul>
      */
     public enum Attribute implements DAO.Attribute {
-        IN_SITU_EVIDENCE_ID("inSItuEvidenceId"), EXPERIMENT_ID("inSituExperimentId"),
+        IN_SITU_EVIDENCE_ID("inSituEvidenceId"), EXPERIMENT_ID("inSituExperimentId"),
         EVIDENCE_DISTINGUISHABLE("evidenceDistinguishable"),
         EVIDENCE_URL_PART("inSituEvidenceUrlPart");
 

@@ -725,9 +725,6 @@ public class CommandData extends CommandParent {
         }
         InformationType finalInfoType = infoType;
         return log.traceExit(dataTypes.stream()
-                //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX ||
-                              dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadData(finalInfoType,
@@ -752,9 +749,6 @@ public class CommandData extends CommandParent {
             infoTypes.add(InformationType.CALL);
         }
         return log.traceExit(dataTypes.stream()
-                //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX ||
-                        dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadDataCount(infoTypes,
@@ -768,9 +762,6 @@ public class CommandData extends CommandParent {
         log.traceEntry("{}, {}", rawDataLoader, dataTypes);
 
         return log.traceExit(dataTypes.stream()
-                //TODO: remove this filter when all data types will be implemented
-                .filter(dt -> dt == DataType.AFFYMETRIX ||
-                        dt == DataType.RNA_SEQ || dt == DataType.FULL_LENGTH)
                 .collect(Collectors.toMap(
                         dt -> dt,
                         dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)),
@@ -792,6 +783,10 @@ public class CommandData extends CommandParent {
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(true));
+            dataTypeTolDescrSupplier.put(DataType.EST,
+                    () -> getESTRawDataAnnotsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.IN_SITU,
+                    () -> getInSituRawDataAnnotsColumnDescriptions());
         } else if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixProcExprValuesColumnDescriptions());
@@ -799,6 +794,10 @@ public class CommandData extends CommandParent {
                     () -> getRnaSeqProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
                     () -> getRnaSeqProcExprValuesColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.EST,
+                    () -> getESTProcExprValuesColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.IN_SITU,
+                    () -> getInSituProcExprValuesColumnDescriptions());
         } else if (RequestParameters.ACTION_EXPERIMENTS.equals(action)) {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixExperimentsColumnDescriptions());
@@ -806,17 +805,16 @@ public class CommandData extends CommandParent {
                     () -> getRnaSeqExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
                     () -> getRnaSeqExperimentsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.EST,
+                    () -> getESTExperimentsColumnDescriptions());
+            dataTypeTolDescrSupplier.put(DataType.IN_SITU,
+                    () -> getInSituExperimentsColumnDescriptions());
         } else {
             throw log.throwing(new InvalidRequestException("Unsupported action for column definition: " +
                     this.requestParameters.getAction()));
         }
 
         for (DataType dataType: dataTypes) {
-            //TODO: remove this check when all data types will be implemented
-            if (dataType != DataType.AFFYMETRIX
-                    && dataType != DataType.RNA_SEQ && dataType != DataType.FULL_LENGTH) {
-                continue;
-            }
             Supplier<List<ColumnDescription>> supplier = dataTypeTolDescrSupplier.get(dataType);
             if (supplier == null) {
                 throw log.throwing(new IllegalStateException(
@@ -942,6 +940,42 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(colDescr);
     }
+    private List<ColumnDescription> getESTRawDataAnnotsColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Library ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Library name", null,
+                List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Description", null,
+                List.of("result.description"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result"));
+
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getInSituRawDataAnnotsColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Evidence ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result"));
+
+        return log.traceExit(colDescr);
+    }
 
     private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
         log.traceEntry();
@@ -1033,6 +1067,69 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(colDescr);
     }
+    private List<ColumnDescription> getESTProcExprValuesColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Library ID", null,
+                List.of("result.assay.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Library name", null,
+                List.of("result.assay.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("EST ID", "Identifier of the Expressed Sequence Tag",
+                List.of("result.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Gene ID", null,
+                List.of("result.rawCall.gene.geneId"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE));
+        colDescr.add(new ColumnDescription("Gene name", null,
+                List.of("result.rawCall.gene.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Expression p-value",
+                "P-value for the test of expression signal of the gene "
+                + "significantly different from background expression",
+                List.of("result.rawCall.pValue"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getInSituProcExprValuesColumnDescriptions() {
+        log.traceEntry();
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.assay.experiment.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Evidence ID", null,
+                List.of("result.assay.id"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Gene ID", null,
+                List.of("result.rawCall.gene.geneId"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE));
+        colDescr.add(new ColumnDescription("Gene name", null,
+                List.of("result.rawCall.gene.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Expression p-value",
+                "P-value are defined based on the staining intensity reported from the source database",
+                List.of("result.rawCall.pValue"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+
+        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+
+        return log.traceExit(colDescr);
+    }
 
     private List<ColumnDescription> getAffymetrixExperimentsColumnDescriptions() {
         log.traceEntry();
@@ -1068,6 +1165,34 @@ public class CommandData extends CommandParent {
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
                 null));
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getESTExperimentsColumnDescriptions() {
+        log.traceEntry();
+
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Library ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+        colDescr.add(new ColumnDescription("Library name", null,
+                List.of("result.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Description", null,
+                List.of("result.description"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        return log.traceExit(colDescr);
+    }
+    private List<ColumnDescription> getInSituExperimentsColumnDescriptions() {
+        log.traceEntry();
+
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        colDescr.add(new ColumnDescription("Experiment ID", null,
+                List.of("result.id"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP));
         return log.traceExit(colDescr);
     }
 

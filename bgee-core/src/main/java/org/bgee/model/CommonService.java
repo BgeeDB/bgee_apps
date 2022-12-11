@@ -332,6 +332,28 @@ public class CommonService extends Service {
     }
 
 
+    protected static DAORawDataSex convertRawDataSexToDAORawDataSex(RawDataSex sex) {
+        log.traceEntry("{}", sex);
+        if (sex == null) {
+            log.traceExit(); return null;
+        }
+        switch(sex) {
+        case NOT_ANNOTATED:
+            return log.traceExit(DAORawDataSex.NOT_ANNOTATED);
+        case MIXED:
+            return log.traceExit(DAORawDataSex.MIXED);
+        case NA:
+            return log.traceExit(DAORawDataSex.NA);
+        case HERMAPHRODITE:
+            return log.traceExit(DAORawDataSex.HERMAPHRODITE);
+        case FEMALE:
+            return log.traceExit(DAORawDataSex.FEMALE);
+        case MALE:
+            return log.traceExit(DAORawDataSex.MALE);
+        default:
+            throw log.throwing(new IllegalStateException("Unrecognized RawDataSex: " + sex));
+        }
+    }
     protected static RawDataSex mapDAORawDataSexToRawDataSex(DAORawDataSex daoRawDataSex) {
         log.traceEntry("{}", daoRawDataSex);
         if (daoRawDataSex == null) {

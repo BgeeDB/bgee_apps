@@ -2,17 +2,21 @@ package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.expressiondata.BaseConditionFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 
 /**
  * A filter to parameterize queries retrieving information related to {@link RawDataCondition}s.
@@ -108,6 +112,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
      *                                  or if {@code speciesId} is non-null and is less than or equal to 0;
      *                                  or if all provided {@code Collection}s are empty or {@code null}..
      */
+    //XXX: should we accept RawDataSex as arguments rather than Strings for sexes?
     public RawDataConditionFilter(Integer speciesId, Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexes, Collection<String> strains,
             boolean includeSubAnatEntities, boolean includeSubDevStages, boolean includeSubCellTypes,
@@ -127,13 +132,23 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
               cellTypeIds.contains(ConditionDAO.CELL_TYPE_ROOT_ID) &&
               includeSubCellTypes? null: cellTypeIds);
 
+        EnumSet<RawDataSex> mappedSexes = (sexes == null? Stream.<String>empty(): sexes.stream())
+                .filter(s -> StringUtils.isNotBlank(s))
+                //special value that does not correspond to any annotation in raw data
+                .filter(s -> !s.equalsIgnoreCase(ConditionDAO.SEX_ROOT_ID))
+                .map(s -> BgeeEnum.convert(RawDataSex.class, s))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(RawDataSex.class)));
         this.sexes = Collections.unmodifiableSet(
                 sexes == null ||
                 //Requesting the sex root + includeSubSexes is equivalent to
                 //requesting any sex
-                sexes.contains(ConditionDAO.SEX_ROOT_ID) && includeSubSexes?
+                includeSubSexes &&
+                        sexes.stream().anyMatch(s -> s.equalsIgnoreCase(ConditionDAO.SEX_ROOT_ID)) ||
+                mappedSexes.equals(EnumSet.allOf(RawDataSex.class))?
                         new HashSet<>():
-                        sexes.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
+                        mappedSexes.stream()
+                                   .map(s -> s.getStringRepresentation())
+                                   .collect(Collectors.toSet()));
         this.strains = Collections.unmodifiableSet(
                 strains == null ||
                 //Requesting the strain root + includeStrains is equivalent to
@@ -167,6 +182,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
             throw log.throwing(new IllegalArgumentException("speciesId must be greater than 0"));
         }
         this.speciesId = speciesId;
+
+        log.debug("RawDataConditionFilter created: {}", this);
     }
 
     /**

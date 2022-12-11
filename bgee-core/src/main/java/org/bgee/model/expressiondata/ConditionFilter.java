@@ -116,6 +116,7 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      */
     //XXX: Should we add two booleans to ask for considering sub-structures and sub-stages?
     //Because it seems it can be managed through query of data propagation in CallFilter
+    //XXX: should we accept Sex as arguments rather than Strings for sexes?
     public ConditionFilter(Collection<String> anatEntityIds, Collection<String> devStageIds,
             Collection<String> cellTypeIds, Collection<String> sexIds, Collection<String> strainIds, 
             Collection<CallService.Attribute> observedCondForParams) throws IllegalArgumentException {

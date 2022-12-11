@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -24,6 +25,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -621,7 +623,13 @@ public class RawDataService extends CommonService {
                     //If simply the sex or strain root was requested including children terms,
                     //it simply means any sex or any strain, and the RawDataConditionFilter would return
                     //empty Sets in that case.
-                    filter.getSexes(), filter.getStrains());
+                    filter.getSexes()
+                          .stream()
+                          .map(s -> BgeeEnum.convert(RawDataSex.class, s))
+                          .map(sex -> convertRawDataSexToDAORawDataSex(sex))
+                          .map(daoSex -> daoSex.getStringRepresentation())
+                          .collect(Collectors.toSet()),
+                    filter.getStrains());
             log.debug("DAORawDataConditionFilter: {}", daoFilter);
             daoCondFilters.add(daoFilter);
         }

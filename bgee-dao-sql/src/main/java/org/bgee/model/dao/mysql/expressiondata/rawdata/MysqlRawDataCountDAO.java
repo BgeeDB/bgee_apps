@@ -233,7 +233,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // for insitu the condition is linked to a call
         boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount ||
-                processedRawDataFilters.isNeedConditionId();
+                processedRawDataFilters.isNeedConditionId() || assayConditionCount;
 
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
@@ -297,10 +297,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // create the set of tables it is necessary to use in FROM clause even if no filter
         // on those columns
         Set<String> necessaryTables = new HashSet<>();
-        if (callCount) {
+        if (callCount || assayConditionCount) {
             necessaryTables.add(MySQLInSituSpotDAO.TABLE_NAME);
         }
-        if (experimentCount || assayCount && !callCount) {
+        if (experimentCount || assayCount && !callCount && !assayConditionCount) {
             necessaryTables.add(MySQLInSituEvidenceDAO.TABLE_NAME);
         }
 

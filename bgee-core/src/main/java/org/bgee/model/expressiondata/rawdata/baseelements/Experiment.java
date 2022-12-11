@@ -12,18 +12,22 @@ import org.bgee.model.source.Source;
  *
  * @param <T>   The type of ID of this {@code Experiment}
  */
-public class Experiment<T extends Comparable<T>> extends NamedEntity<T> implements RawDataWithDataSource {
+public abstract class Experiment<T extends Comparable<T>> extends NamedEntity<T> implements RawDataWithDataSource {
 
     private final Source dataSource;
     private final XRef xRef;
     private final int assayCount;
 
-    public Experiment(T id, String name, String description, Source dataSource,
+    protected Experiment(T id, String name, String description, Source dataSource,
+            int assayCount) {
+        this(id, id, name, description, dataSource, assayCount);
+    }
+    protected Experiment(T id, T xRefId, String name, String description, Source dataSource,
             int assayCount) {
         super(id, name, description);
         this.dataSource = dataSource;
         if (dataSource != null) {
-            this.xRef = new XRef(id.toString(), name, dataSource, dataSource.getExperimentUrl());
+            this.xRef = new XRef(xRefId.toString(), name, dataSource, dataSource.getExperimentUrl());
         } else {
             this.xRef = null;
         }

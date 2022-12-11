@@ -1337,6 +1337,9 @@ public class RawDataLoader extends CommonService {
                         .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
                 .stream()
                 .map(c -> c.getCellTypeId())
+                //cell type is the only condition param that can be NULL,
+                //we end up requesting an anat. entity with ID "NULL"
+                .filter(s -> s != null)
                 .collect(Collectors.toSet());
         Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
                 new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -34,6 +35,14 @@ import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO.ESTLibraryTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO.InSituEvidenceTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO.InSituExperimentTOResultSet;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO.InSituSpotTOResultSet;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO.AffymetrixChipTOResultSet;
@@ -70,6 +79,11 @@ import org.bgee.model.expressiondata.rawdata.est.EST;
 import org.bgee.model.expressiondata.rawdata.est.ESTContainer;
 import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
 import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituContainer;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituCountContainer;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituExperiment;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituSpot;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChipPipelineSummary;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
@@ -208,6 +222,9 @@ public class RawDataLoader extends CommonService {
     private final RNASeqResultAnnotatedSampleDAO rnaSeqCallDAO;
     private final ESTLibraryDAO estLibraryDAO;
     private final ESTDAO estDAO;
+    private final InSituExperimentDAO inSituExperimentDAO;
+    private final InSituEvidenceDAO inSituEvidenceDAO;
+    private final InSituSpotDAO inSituSpotDAO;
     private final RawDataConditionDAO rawDataConditionDAO;
     private final RawDataCountDAO rawDataCountDAO;
     private final GeneDAO geneDAO;
@@ -260,6 +277,9 @@ public class RawDataLoader extends CommonService {
         this.rnaSeqCallDAO           = this.getDaoManager().getRnaSeqResultAnnotatedSampleDAO();
         this.estLibraryDAO           = this.getDaoManager().getESTLibraryDAO();
         this.estDAO                  = this.getDaoManager().getESTDAO();
+        this.inSituExperimentDAO     = this.getDaoManager().getInSituExperimentDAO();
+        this.inSituEvidenceDAO       = this.getDaoManager().getInSituEvidenceDAO();
+        this.inSituSpotDAO           = this.getDaoManager().getInSituSpotDAO();
         this.rawDataConditionDAO     = this.getDaoManager().getRawDataConditionDAO();
         this.geneDAO                 = this.getDaoManager().getGeneDAO();
         this.anatEntityService       = this.getServiceFactory().getAnatEntityService();
@@ -339,9 +359,12 @@ public class RawDataLoader extends CommonService {
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadESTData(infoType, newOffset, newLimit));
             break;
+        case IN_SITU:
+            rawDataContainer = rawDataContainerClass.cast(
+                    this.loadInSituData(infoType, newOffset, newLimit));
+            break;
         default:
-            //TODO: reenable the exception when all data types supported
-            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
+            throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
         }
 
         return log.traceExit(rawDataContainer);
@@ -382,9 +405,12 @@ public class RawDataLoader extends CommonService {
             rawDataCountContainer = rawDataCountContainerClass.cast(
                     this.loadESTCount(withExperiment, withAssay, withCall));
             break;
+        case IN_SITU:
+            rawDataCountContainer = rawDataCountContainerClass.cast(
+                    this.loadInSituCount(withExperiment, withAssay, withCall));
+            break;
         default:
-            //TODO: reenable the exception when all data types supported
-            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
+            throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
         }
 
         return log.traceExit(rawDataCountContainer);
@@ -417,10 +443,10 @@ public class RawDataLoader extends CommonService {
                     requestedDataType));
         case EST:
             return log.traceExit(this.loadESTPostFilter());
+        case IN_SITU:
+            return log.traceExit(this.loadInSituPostFilter());
         default:
-            //TODO: reenable the exception when all data types supported and remove the return null
-            //throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
-            return null;
+            throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
         }
     }
 
@@ -1071,6 +1097,219 @@ public class RawDataLoader extends CommonService {
     }
 
 //*****************************************************************************************
+//                             METHODS LOADING IN SITU RAW DATA
+//*****************************************************************************************
+
+    private InSituContainer loadInSituData(InformationType infoType, int offset, int limit) {
+        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(this.getNoResultInSituContainer(infoType));
+        }
+
+        //************************************************************
+        // First, we retrieve all necessary TransferObjects
+        //************************************************************
+        LinkedHashSet<InSituSpotTO> callTOs = new LinkedHashSet<>();
+        LinkedHashSet<InSituEvidenceTO> assayTOs = new LinkedHashSet<>();
+        Set<String> assayIds = new HashSet<>();
+        Set<Integer> bgeeGeneIds = new HashSet<>();
+        Set<Integer> rawDataCondIds = new HashSet<>();
+        Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
+                .getDaoRawDataFilters();
+
+        //*********** Calls (and "fake" assays) ***********
+        //If ASSAY is requested,
+        //We create one evidence for each condition retrieved from a spot
+        if (infoType == InformationType.CALL || infoType == InformationType.ASSAY) {
+            Collection<InSituSpotDAO.Attribute> attrs = null;
+            if (infoType == InformationType.ASSAY) {
+                attrs = EnumSet.of(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID,
+                        InSituSpotDAO.Attribute.CONDITION_ID);
+            }
+            //The offset and limit should correctly apply even if infoType is ASSAY,
+            //since in that case we request only IN_SITU_EVIDENCE_ID and CONDITION_ID
+            InSituSpotTOResultSet callTORS = this.inSituSpotDAO.getInSituSpots(
+                    daoRawDataFilters, offset, limit, attrs);
+            while (callTORS.next()) {
+                InSituSpotTO callTO = callTORS.getTO();
+                assayIds.add(callTO.getAssayId());
+                rawDataCondIds.add(callTO.getConditionId());
+                //We don't request the genes if infoType is ASSAY
+                if (callTO.getBgeeGeneId() != null) {
+                    bgeeGeneIds.add(callTO.getBgeeGeneId());
+                }
+                callTOs.add(callTO);
+            }
+        }
+
+        //*********** Assays ***********
+        InSituEvidenceTOResultSet assayTORS = null;
+        Set<String> expIds = new HashSet<>();
+        //We need to write the test in this way, in case there was no result retrieved
+        if (!assayIds.isEmpty()) {
+            assayTORS = this.inSituEvidenceDAO.getInSituEvidenceFromIds(assayIds, null);
+        }
+//        else if (infoType == InformationType.ASSAY) {
+//            assayTORS = this.inSituEvidenceDAO.getInSituEvidences(daoRawDataFilters, offset, limit, null);
+//        }
+        if (assayTORS != null) {
+            while (assayTORS.next()) {
+                InSituEvidenceTO assayTO = assayTORS.getTO();
+                expIds.add(assayTO.getExperimentId());
+                assayTOs.add(assayTO);
+            }
+        }
+
+        //*********** Experiments ***********
+        InSituExperimentTOResultSet expTORS = null;
+        //Experiments should always be retrieved at this point if there is any result,
+        //but we need this check in case there was no result returned when requesting
+        //CALLs or ASSAYs.
+        if (!expIds.isEmpty()) {
+            //we can use a new DAORawDataFilter to retrieve the requested experiments
+            expTORS = this.inSituExperimentDAO.getInSituExperiments(
+                    Set.of(new DAORawDataFilter(expIds, null, null)), null, null, null);
+        } else if (infoType == InformationType.EXPERIMENT) {
+            //otherwise, it was the information requested originally
+            expTORS = this.inSituExperimentDAO.getInSituExperiments(daoRawDataFilters, offset, limit, null);
+        }
+        LinkedHashMap<String, InSituExperiment> expIdToExp =
+                expTORS == null? new LinkedHashMap<>():
+                    expTORS.stream()
+                    .collect(Collectors.toMap(
+                            to -> to.getId(),
+                            to -> new InSituExperiment(to.getId(), to.getName(),
+                                    to.getDescription(), getSourceById(to.getDataSourceId()), 0),
+                            (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
+                            LinkedHashMap::new));
+
+        //************************************************************
+        // Now, we load missing Genes and RawDataConditions
+        //************************************************************
+        this.updateRawDataConditionMap(rawDataCondIds);
+        this.updateGeneMap(bgeeGeneIds);
+
+
+        //************************************************************
+        // Finally, we instantiate all bgee-core objects necessary
+        //************************************************************
+        //Experiments are always needed
+        LinkedHashSet<InSituExperiment> experiments =
+                new LinkedHashSet<>(expIdToExp.values());
+
+        //Now we load the LinkedHashSets only if needed, to distinguish between
+        //null value = info not requested, and empty Collection = no result
+        LinkedHashSet<InSituEvidence> assays = null;
+        LinkedHashSet<InSituSpot> calls = null;
+        if (infoType == InformationType.ASSAY || infoType == InformationType.CALL) {
+            Map<String, InSituEvidenceTO> idToAssayTO = assayTOs.stream()
+                    .collect(Collectors.toMap(to -> to.getId(), to -> to));
+            //We create a Map Entry<condId, assayId> -> assay for easier instantiations
+            LinkedHashMap<Entry<Integer, String>, InSituEvidence> assayMap = callTOs
+                    .stream()
+                    .collect(Collectors.toMap(
+                            to -> Map.entry(to.getConditionId(), to.getAssayId()),
+
+                            to -> new InSituEvidence(
+                                    to.getAssayId(),
+                                    Optional.ofNullable(expIdToExp.get(
+                                            Optional.ofNullable(idToAssayTO.get(to.getAssayId()))
+                                            .orElseThrow(() -> new IllegalStateException(
+                                                    "Missing evidence ID " + to.getAssayId()
+                                                    + " for spot ID " + to.getId()))
+                                            .getExperimentId()
+                                    ))
+                                    .orElseThrow(() -> new IllegalStateException(
+                                            "Missing experiment ID "
+                                            + idToAssayTO.get(to.getAssayId()).getExperimentId()
+                                            + " for assay ID " + to.getAssayId())),
+                                    new RawDataAnnotation(
+                                            Optional.ofNullable(
+                                                    this.rawDataConditionMap.get(to.getConditionId()))
+                                            .orElseThrow(() -> new IllegalStateException(
+                                                    "Missing RawDataCondition ID "
+                                                            + to.getConditionId()
+                                                            + " for spot ID " + to.getId())),
+                                            null, null, null)),
+
+                            (v1, v2) -> {
+                                //We do nothing special here, it means that an evidence
+                                //included several spots for different genes in the same condition
+                                return v1;
+                            },
+                            LinkedHashMap::new));
+            assays = new LinkedHashSet<>(assayMap.values());
+
+            if (infoType == InformationType.CALL) {
+                calls = callTOs.stream()
+                        .map(to -> new InSituSpot(
+                                to.getId(),
+                                Optional.ofNullable(assayMap.get(
+                                        Map.entry(to.getConditionId(), to.getAssayId())))
+                                .orElseThrow(() -> new IllegalStateException(
+                                        "Missing evidence ID " + to.getAssayId() + " in cond ID "
+                                        + to.getConditionId() + " for spot ID " + to.getId())),
+                                new RawCall(
+                                        Optional.ofNullable(geneMap.get(to.getBgeeGeneId()))
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                "Missing gene ID " + to.getBgeeGeneId()
+                                                + " for probeset ID " + to.getId())),
+                                        to.getPValue(),
+                                        to.getExpressionConfidence(),
+                                        ExclusionReason.convertToExclusionReason(
+                                                to.getExclusionReason().name()))))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+        }
+
+        return log.traceExit(new InSituContainer(experiments, assays, calls));
+    }
+    private InSituContainer getNoResultInSituContainer(InformationType infoType) {
+        log.traceEntry("{}", infoType);
+
+        return log.traceExit(new InSituContainer(
+                //Experiments always end up being requested
+                Set.of(),
+                //We also get the assays when we request the calls
+                infoType == InformationType.CALL || infoType == InformationType.ASSAY? Set.of(): null,
+                infoType == InformationType.CALL? Set.of(): null));
+    }
+
+    private InSituCountContainer loadInSituCount(boolean withExperiment,
+            boolean withAssay, boolean withCall) {
+        log.traceEntry("{}, {}, {}", withExperiment, withAssay, withCall);
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+            return log.traceExit(new InSituCountContainer(
+                    withExperiment? 0: null,
+                    withAssay? 0: null,
+                    withCall? 0: null));
+        }
+
+        RawDataCountContainerTO countTO = rawDataCountDAO.getInSituCount(
+                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                withExperiment, false, withAssay, withCall);
+
+        return log.traceExit(new InSituCountContainer(
+                countTO.getExperimentCount(),
+                countTO.getInsituAssayConditionCount(),
+                countTO.getCallCount()));
+    }
+
+    private RawDataPostFilter loadInSituPostFilter() {
+        log.traceEntry();
+        return log.traceExit(this.loadConditionPostFilter(
+                (filters, attrs) -> this.rawDataConditionDAO
+                .getInSituRawDataConditionsFromRawDataFilters(filters, attrs),
+                DataType.IN_SITU));
+    }
+
+//*****************************************************************************************
 //                       METHODS NECESSARY FOR ALL DATA TYPES
 //*****************************************************************************************
 
@@ -1096,7 +1335,9 @@ public class RawDataLoader extends CommonService {
         // retrieve cellTypes
         Set<String> cellTypeIds = condRequest.apply(this.getRawDataProcessedFilter()
                         .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
-                .stream().map(c -> c.getCellTypeId()).collect(Collectors.toSet());
+                .stream()
+                .map(c -> c.getCellTypeId())
+                .collect(Collectors.toSet());
         Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
                 new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)
                 .collect(Collectors.toSet());
@@ -1185,259 +1426,6 @@ public class RawDataLoader extends CommonService {
         }
         return log.traceExit(source);
     }
-//    
-//    private Map<Integer, RawDataCondition> loadRawDataConditionMap(
-//            Collection<RawDataFilter> dataFilters) {
-//        log.traceEntry("{}, {}", dataFilters);
-//        // combine condition filters coming from all dataFilters and retrieve corresponding 
-//        // dao condition filters
-//        AnatEntityService aeService = rawDataService.getServiceFactory().getAnatEntityService();
-//        DevStageService dsService = rawDataService.getServiceFactory().getDevStageService();
-//        Set<DAORawDataConditionFilter> condFiltersDAO = 
-//                convertRawDataConditionFiltersToDAORawDataConditionFilters(
-//                        dataFilters.stream().map(df -> df.getConditionFilters())
-//                        .flatMap(df -> df.stream()).collect(Collectors.toSet()));
-//        // combine geneFilters coming from all dataFilters and retrieve corresponding speciesMap
-//        final Map<Integer, Species> speciesMap = rawDataService.getServiceFactory()
-//                .getSpeciesService().loadSpeciesMapFromGeneFilters(dataFilters.stream()
-//                        .map(df -> df.getGeneFilters())
-//                        .flatMap(gf -> gf.stream()).collect(Collectors.toSet()), false);
-//
-//        final Map<String, AnatEntity> anatEntitiesMap = aeService.loadAnatEntities(
-//                speciesMap.keySet(), true, condFiltersDAO.stream()
-//                    .map(cf -> cf.getAnatEntityIds()).flatMap(aes -> aes.stream())
-//                    .collect(Collectors.toSet()), false)
-//                .collect(Collectors.toMap(ae -> ae.getId(), ae -> ae));
-//        final Map<String, AnatEntity> cellTypesMap = aeService.loadAnatEntities(
-//                speciesMap.keySet(), true, condFiltersDAO.stream()
-//                    .map(cf -> cf.getCellTypeIds()).flatMap(aes -> aes.stream())
-//                    .collect(Collectors.toSet()), false)
-//                .collect(Collectors.toMap(ct -> ct.getId(), ct -> ct));
-//        final Map<String,DevStage> devStagesMap = dsService.loadDevStages(
-//                speciesMap.keySet(), true, condFiltersDAO.stream()
-//                    .map(cf -> cf.getDevStageIds()).flatMap(aes -> aes.stream())
-//                    .collect(Collectors.toSet()), false)
-//                .collect(Collectors.toMap(ds -> ds.getId(), ds -> ds));
-//        final Map<String,RawDataSex> sexesMap = EnumSet.allOf(RawDataSex.class)
-//                .stream().collect(Collectors.toMap(s -> s.getStringRepresentation(), s -> s));
-//        //load raw data conditions
-//        RawDataConditionTOResultSet rawDataCondTOs = rawDataService.getServiceFactory().getDAOManager()
-//                .getRawDataConditionDAO().getRawDataConditions(speciesMap.keySet(),
-//                        condFiltersDAO, null);
-//        //create Map with condition ID as key and RawDataCondition as value
-//        return log.traceExit(rawDataCondTOs.stream().collect(Collectors
-//                .toMap(condTO -> condTO.getId(),
-//                        condTO -> 
-//                new RawDataCondition( anatEntitiesMap.get(condTO.getAnatEntityId()),
-//                        devStagesMap.get(condTO.getStageId()),
-//                        cellTypesMap.get(condTO.getCellTypeId()),
-//                        sexesMap.get(condTO.getSex().getStringRepresentation()),
-//                        condTO.getStrainId(), null)
-//                )));
-//    }
-//    
-//    private static Set<DAORawDataConditionFilter> 
-//    convertRawDataConditionFiltersToDAORawDataConditionFilters(
-//            Collection<RawDataConditionFilter> condFilters) {
-//        log.traceEntry("{}", condFilters);
-//        if (condFilters == null || condFilters.isEmpty()) {
-//            return log.traceExit(Set.of());
-//        }
-//        if (condFilters.contains(null)) {
-//            throw log.throwing(new IllegalArgumentException("no condition filter can be null"));
-//        }
-//        return log.traceExit(condFilters.stream().map(cf -> new DAORawDataConditionFilter(
-//                cf.getAnatEntityIds(),cf.getCellTypeIds(), cf.getDevStageIds(),
-//                cf.getSexes(), cf.getStrains(),
-//                cf.getIncludeSubConditions(), cf.getIncludeParentConditions()))
-//        .collect(Collectors.toSet()));
-//    }
-//
-//    // generate dao attributes from service Attribute
-//    private static Set<AffymetrixChipDAO.Attribute> fromAttrsToAffyChipDAOAttrs(Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}", attrs);
-//        Set<AffymetrixChipDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixChipDAO.Attribute.class);
-//        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
-//            daoAttrs.remove(AffymetrixChipDAO.Attribute.CONDITION_ID);
-//        }
-//        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
-//            daoAttrs.removeAll(Set.of(AffymetrixChipDAO.Attribute.DISTINCT_RANK_COUNT,
-//                    AffymetrixChipDAO.Attribute.MAX_RANK, 
-//                    AffymetrixChipDAO.Attribute.PERCENT_PRESENT));
-//        }
-//        return log.traceExit(daoAttrs);
-//    }
-//    
-//    // generate dao attributes from service Attribute
-//    private static Set<AffymetrixProbesetDAO.Attribute> fromAttrsToAffyProbesetDAOAttrs(Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}", attrs);
-//        Set<AffymetrixProbesetDAO.Attribute> daoAttrs = EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class);
-//        if (!attrs.contains(RawDataService.Attribute.RAWCALL_PIPELINE_SUMMARY)) {
-//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.NORMALIZED_SIGNAL_INTENSITY);
-//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.QVALUE);
-//            daoAttrs.remove(AffymetrixProbesetDAO.Attribute.RANK);
-//        }
-//        return log.traceExit(daoAttrs);
-//    }
-//        
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// METHODS LOADING RNA-SEQ RAW DATA ////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//    /**
-//     * Load rna-seq experiments from the database
-//     * 
-//     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
-//     *                                  on RNA-Seq experiment IDs
-//     * @param rnaSeqLibraryIds          A {@code Collection} of {@code String} allowing to filter
-//     *                                  on RNA-Seq library IDs
-//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-//     *                                  defining information to retrieve in the 
-//     *                                  {@code RnaSeqExperiment}s. 
-//     * @return  A {@code Stream} of {@code RnaSeqExperiment}s.
-//     *          If the {@code Stream} contains no element, it means that there were no data
-//     *          of this type for the requested parameters.
-//     */
-//    public Stream<RnaSeqExperiment> loadRnaSeqExperiments(Collection<String> rnaSeqExperimentIds,
-//            Collection<String> rnaSeqLibraryIds, Collection<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
-//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
-//        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
-//                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
-//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-//
-//        RNASeqExperimentDAO expDAO = this.rawDataService.getServiceFactory()
-//                .getDAOManager().getRnaSeqExperimentDAO();
-//
-//        // return all datasources if required
-//        final Map<Integer,Source> dataSourceIdToDataSource = 
-//                clonedAttrs.contains(RawDataService.Attribute.DATASOURCE) == true?
-//                this.rawDataService.getServiceFactory().getSourceService().loadSourcesByIds(null):
-//                    new HashMap<>();
-//
-//        // transform RnaSeqService Attributes to DAO attributes
-//        Set<RNASeqExperimentDAO.Attribute> daoAttrs = EnumSet.allOf(RNASeqExperimentDAO
-//                .Attribute.class);
-//        if (!clonedAttrs.contains(RawDataService.Attribute.DATASOURCE)) {
-//            daoAttrs.remove(RNASeqExperimentDAO.Attribute.DATA_SOURCE_ID);
-//        }
-//
-//        // load experiments
-//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-//            return expDAO.getExperiments(clonedExpIds, clonedLibIds, filter, 
-//                    daoAttrs).stream()
-//                    .map(to -> new RnaSeqExperiment( to.getId(), to.getName(), 
-//                            to.getDescription(), to.getDataSourceId() == null ? null: 
-//                                dataSourceIdToDataSource.get(to.getDataSourceId())))
-//                    .collect(Collectors.toSet());
-//            }).flatMap(e -> e.stream()));
-//    }
-//
-//    /**
-//     * Load Annotated libraries from the database.
-//     * 
-//     * @param rnaSeqExperimentIds       A {@code Collection} of {@code String} allowing to filter
-//     *                                  on rna-seq experiment IDs
-//     * @param affymetrixChipIds         A {@code Collection} of {@code String} allowing to filter
-//     *                                  on affymetrix chip IDs
-//     * @param attrs                     A {@code Collection}  of {@code RawDataService.Attribute}
-//     *                                  defining information to retrieve in the 
-//     *                                  {@code MicroarrayExperiment}s.
-//     * @return  A {@code Stream} of {@code AffymetrixChip}s.
-//     *          If the {@code Stream} contains no element, it means that there were no data
-//     *          of this type for the requested parameters.
-//     */
-//    public Stream<RnaSeqLibraryAnnotatedSample> loadRnaSeqLibraryAnnotatedSample(
-//            Collection<String> rnaSeqExperimentIds, Collection<String> rnaSeqLibraryIds,
-//            Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}, {}, {}", rnaSeqExperimentIds, rnaSeqLibraryIds, attrs);
-//        final Set<String> clonedExpIds =  Collections.unmodifiableSet(rnaSeqExperimentIds == null?
-//                new HashSet<String>(): new HashSet<String>(rnaSeqExperimentIds));
-//        final Set<String> clonedLibIds =  Collections.unmodifiableSet(rnaSeqLibraryIds == null?
-//                new HashSet<String>(): new HashSet<String>(rnaSeqLibraryIds));
-//        final Set<RawDataService.Attribute> clonedAttrs=  Collections.unmodifiableSet(attrs == null?
-//                EnumSet.allOf(RawDataService.Attribute.class) : EnumSet.copyOf(attrs));
-//
-//        // load Experiments if required
-//        final Map <String, RnaSeqExperiment> expIdToExperiments = 
-//                loadRnaSeqExperiments(clonedExpIds, clonedLibIds, clonedAttrs)
-//                .collect(Collectors.toMap(e -> e.getId(), e -> e));
-//
-//        // load conditions based on rawDataFilters if required
-//        Map<Integer, RawDataCondition> condIdToCond = 
-//                clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
-//                        rawDataConditionMap: null;
-//
-//        //generate dao attributes based on RawDataServiceAttributes
-//        final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
-//                fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(clonedAttrs);
-//        
-//        // load libraries 
-//        Map<String, RNASeqLibraryTO> libIdToLibTO = daoRawDataFilters.stream()
-//                .map(filter -> {
-//                    return rawDataService.getServiceFactory().getDAOManager().getRnaSeqLibraryDAO()
-//                            .getRnaSeqLibraries( clonedExpIds, clonedLibIds, filter, null)
-//                            .stream().collect(Collectors.toMap(l -> l.getId(), l -> l));
-//                }).flatMap(l -> l.entrySet().stream())
-//                .collect(Collectors.toMap(l -> l.getKey(), l -> l.getValue()));
-//        return log.traceExit(this.daoRawDataFilters.stream().map( filter -> {
-//            return this.rawDataService.getServiceFactory().getDAOManager()
-//                    .getRnaSeqLibraryAnnotatedSampleDAO()
-//                    .getRnaSeqLibraryAnnotatedSamples(clonedExpIds, clonedLibIds, filter, daoAttrs)
-//            .stream().map(to -> {
-//                //TODO: To continue. 
-//                
-//                RawDataAnnotation annotation = clonedAttrs.contains(RawDataService.Attribute.ANNOTATION)?
-//                        new RawDataAnnotation(condIdToCond.get(to.getConditionId()), null, null, null):
-//                            null;
-//                RnaSeqLibraryPipelineSummary pipelineSummary = clonedAttrs.contains(RawDataService
-//                        .Attribute.ASSAY_PIPELINE_SUMMARY)?
-//                        new RnaSeqLibraryPipelineSummary( to.getMeanAbundanceRefIntergenicDistribution(),
-//                                to.getSdAbundanceRefIntergenicDistribution(), to.getpValueThreshold(),
-//                                to.getAllReadCount(), to.getAllUMIsCount(), to.getMappedReadCount(),
-//                                to.getMappedUMIsCount(), to.getMinReadLength(), to.getMaxReadLength(),
-//                                to.getMaxRank(), to.getDistinctRankCount()):
-//                            null;
-//                return new RnaSeqLibraryAnnotatedSample( to.getLibraryId(),
-//                        expIdToExperiments.get(libIdToLibTO.get(to.getLibraryId()).getExperimentId()),
-//                        annotation, pipelineSummary, to.getBarcode(), to.getGenotype());
-//            }).collect(Collectors.toSet());
-//        }).flatMap(c -> c.stream()));
-//    }
-//
-//    // generate dao attributes from service Attribute
-//    private static Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> fromAttrsToRnaSeqLibAnnotSampleDAOAttrs(
-//            Set<RawDataService.Attribute> attrs) {
-//        log.traceEntry("{}", attrs);
-//        Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> daoAttrs = 
-//                EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class);
-//        if (!attrs.contains(RawDataService.Attribute.ASSAY_PIPELINE_SUMMARY)) {
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_THRESHOLD);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ABUNDANCE_UNIT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_GENES_PERCENT_PRESENT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_READ_COUNT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.ALL_UMIS_COUNT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.DISTINCT_RANK_COUNT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.INTERGENIC_REGION_PERCENT_PRESENT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_READ_COUNT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAPPED_UMIS_COUNT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_RANK);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MAX_READ_LENGTH);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MEAN_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.MIN_READ_LENGTH);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PROTEIN_CODING_GENES_PERCENT_PRESENT);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.PVALUE_THRESHOLD);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.SD_ABUNDANCE_REF_INTERGENIC_DISCTRIBUTION);
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.TMM_FACTOR);
-//        }
-//        
-//        if (!attrs.contains(RawDataService.Attribute.ANNOTATION)) {
-//            daoAttrs.remove(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID);
-//        }
-//        return log.traceExit(daoAttrs);
-//    }
 
     /**
      * Pre-processed information based on the {@code RawDataFilter} used to obtain

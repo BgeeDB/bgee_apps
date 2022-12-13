@@ -89,10 +89,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
                     null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
             assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
-            //if callTableAssayIds is empty, it means there were no matching result for this filter
-            if (callTableAssayIds != null && callTableAssayIds.isEmpty()) {
-                continue;
-            }
+
             // parameterize expIds
             // ESTs does not have experimentIds
             if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {

@@ -39,8 +39,8 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<MicroarrayExperimentDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(MicroarrayExperimentDAO.Attribute.class): EnumSet.copyOf(attrs));

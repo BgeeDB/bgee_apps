@@ -54,8 +54,8 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<InSituSpotDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(InSituSpotDAO.Attribute.class): EnumSet.copyOf(attrs));

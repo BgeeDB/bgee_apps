@@ -68,8 +68,8 @@ implements RNASeqResultAnnotatedSampleDAO {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));

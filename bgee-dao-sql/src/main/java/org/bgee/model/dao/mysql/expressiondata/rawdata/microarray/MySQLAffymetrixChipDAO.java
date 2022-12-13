@@ -43,8 +43,8 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<AffymetrixChipDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixChipDAO.Attribute.class): EnumSet.copyOf(attrs));

@@ -90,8 +90,8 @@ implements RNASeqLibraryAnnotatedSampleDAO{
             Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RNASeqLibraryAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(RNASeqLibraryAnnotatedSampleDAO.Attribute.class):

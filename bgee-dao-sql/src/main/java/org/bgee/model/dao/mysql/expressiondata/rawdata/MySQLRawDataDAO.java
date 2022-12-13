@@ -58,8 +58,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     //parameterize query without rnaSeqTechnologyIds
-    protected BgeePreparedStatement parameterizeQuery(String query,
-            DAOProcessedRawDataFilter processedFilters, DAODataType datatype, Integer offset, Integer limit)
+    protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
+            DAOProcessedRawDataFilter<U> processedFilters, DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}", query, processedFilters, datatype, offset, limit);
         return log.traceExit(this.parameterizeQuery(query, processedFilters, null, datatype,
@@ -67,8 +67,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     //parameterize query with rnaSeqTechnologyIds
-    protected BgeePreparedStatement parameterizeQuery(String query,
-            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
+    protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
+            DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
             DAODataType datatype, Integer offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
@@ -86,6 +86,13 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<String> expIds = rawDataFilter.getExperimentIds();
             Set<String> assayIds = rawDataFilter.getAssayIds();
             Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
+            Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
+                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
+            assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
+            //if callTableAssayIds is empty, it means there were no matching result for this filter
+            if (callTableAssayIds != null && callTableAssayIds.isEmpty()) {
+                continue;
+            }
             // parameterize expIds
             // ESTs does not have experimentIds
             if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
@@ -124,7 +131,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
         }
         // parameterize technologyIds only for rnaseq
-        if (datatype.equals(DAODataType.RNA_SEQ) && isSingleCell != null) {
+        if (datatype.equals(DAODataType.RNA_SEQ) && isSingleCell != null &&
+                processedFilters.getFilterToCallTableAssayIds() == null) {
             stmt.setBoolean(paramIndex, isSingleCell);
             paramIndex++;
         }
@@ -163,7 +171,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                                  SELECT clause.
      * @return                          A {@code String} that is the generated SELECT clause.
      */
-    protected String generateSelectClauseRawDataFilters(DAOProcessedRawDataFilter processedFilters,
+    protected <U extends Comparable<U>> String generateSelectClauseRawDataFilters(
+            DAOProcessedRawDataFilter<U> processedFilters,
             String tableName, Map<String, T> selectExprsToAttributes, boolean distinct,
             Set<T> attributes) {
         log.traceEntry("{}, {}, {}, {}, {}", processedFilters, tableName, selectExprsToAttributes,
@@ -202,20 +211,25 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                              and the mapping to both actual columns and tables names to use in
      *                              the query.
      */
-    protected RawDataFiltersToDatabaseMapping generateFromClauseRawData(StringBuilder sb,
-            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
+    @SuppressWarnings("unchecked")
+    protected <U extends Comparable<U>> RawDataFiltersToDatabaseMapping generateFromClauseRawData(
+            StringBuilder sb, DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
             Set<String> necessaryTables, DAODataType datatype) {
         log.traceEntry("{}, {}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables,
                 datatype);
         Map<RawDataColumn, String> ambiguousColToTable = new HashMap<>();
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
-            ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb, processedFilters, necessaryTables);
+            ambiguousColToTable = generateFromClauseRawDataAffymetrix(sb,
+                    (DAOProcessedRawDataFilter<Integer>) processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.IN_SITU)) {
-            ambiguousColToTable = generateFromClauseRawDataInSitu(sb, processedFilters, necessaryTables);
+            ambiguousColToTable = generateFromClauseRawDataInSitu(sb,
+                    (DAOProcessedRawDataFilter<String>) processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.EST)) {
-            ambiguousColToTable = generateFromClauseRawDataEst(sb, processedFilters, necessaryTables);
+            ambiguousColToTable = generateFromClauseRawDataEst(sb,
+                    (DAOProcessedRawDataFilter<String>) processedFilters, necessaryTables);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
-            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb, processedFilters, isSingleCell,
+            ambiguousColToTable = generateFromClauseRawDataRnaSeq(sb,
+                    (DAOProcessedRawDataFilter<Integer>) processedFilters, isSingleCell,
                     necessaryTables);
         } else {
             throw log.throwing(new IllegalStateException("dataType " + datatype
@@ -246,7 +260,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataAffymetrix(StringBuilder sb,
-            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+            DAOProcessedRawDataFilter<Integer> processedFilters, Set<String> necessaryTables) {
         log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
 
         if (necessaryTables.size() == 2 && !necessaryTables.containsAll(
@@ -355,7 +369,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataInSitu(StringBuilder sb,
-            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+            DAOProcessedRawDataFilter<String> processedFilters, Set<String> necessaryTables) {
         log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
 
         if (necessaryTables.size() == 2 && !necessaryTables.containsAll(
@@ -468,7 +482,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     private Map<RawDataColumn, String> generateFromClauseRawDataEst(StringBuilder sb,
-            DAOProcessedRawDataFilter processedFilters, Set<String> necessaryTables) {
+            DAOProcessedRawDataFilter<String> processedFilters, Set<String> necessaryTables) {
         log.traceEntry("{}, {}, {}", sb, processedFilters, necessaryTables);
 
         if (necessaryTables.size() > 1) {
@@ -819,7 +833,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
      *                          {@code String} as value defining the table to use.
      */
     protected Map<RawDataColumn, String> generateFromClauseRawDataRnaSeq(StringBuilder sb,
-            DAOProcessedRawDataFilter processedFilters, Boolean isSingleCell,
+            DAOProcessedRawDataFilter<Integer> processedFilters, Boolean isSingleCell,
             Set<String> necessaryTables) {
         log.traceEntry("{}, {}, {}, {}", sb, processedFilters, isSingleCell, necessaryTables);
 
@@ -1058,7 +1072,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         return log.traceExit(sb);
     }
 
-    protected String generateWhereClauseRawDataFilter(DAOProcessedRawDataFilter processedRawDataFilters,
+    protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
+            DAOProcessedRawDataFilter<U> processedRawDataFilters,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
         log.traceEntry("{}, {}", processedRawDataFilters, filtersToDatabaseMapping);
         String whereClause = processedRawDataFilters.getRawDataFilters().stream()

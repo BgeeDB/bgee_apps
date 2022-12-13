@@ -39,8 +39,8 @@ implements InSituExperimentDAO{
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<InSituExperimentDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(InSituExperimentDAO.Attribute.class): EnumSet.copyOf(attrs));

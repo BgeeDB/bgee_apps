@@ -48,8 +48,8 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<ESTDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(ESTDAO.Attribute.class): EnumSet.copyOf(attributes));

@@ -51,8 +51,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
-        final DAOProcessedRawDataFilter processedRawDataFilters = 
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedRawDataFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
         boolean probesetTable = processedRawDataFilters.isNeedGeneId() || callsCount;
@@ -142,8 +142,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
-        final DAOProcessedRawDataFilter processedRawDataFilters = 
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedRawDataFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
         boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount;
@@ -227,8 +227,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
-        final DAOProcessedRawDataFilter processedRawDataFilters = 
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedRawDataFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
         // for insitu the condition is linked to a call
@@ -340,7 +340,8 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
-        final DAOProcessedRawDataFilter processedFilters = new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
         boolean callTable = processedFilters.isNeedGeneId() || callCount;

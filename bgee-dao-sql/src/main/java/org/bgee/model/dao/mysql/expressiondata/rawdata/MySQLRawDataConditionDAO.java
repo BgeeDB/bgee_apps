@@ -121,8 +121,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}", rawDataFilters, attributes);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -169,8 +169,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}", rawDataFilters, attributes);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -218,8 +218,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}", rawDataFilters, attributes);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<String> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -266,8 +266,8 @@ implements RawDataConditionDAO {
             Collection<RawDataConditionDAO.Attribute> attributes) {
         log.traceEntry("{}, {}, {}", rawDataFilters, isSingleCell, attributes);
 
-        final DAOProcessedRawDataFilter processedFilters =
-                new DAOProcessedRawDataFilter(rawDataFilters);
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));

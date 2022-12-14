@@ -67,6 +67,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     //parameterize query with rnaSeqTechnologyIds
+    @SuppressWarnings("unchecked")
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
             DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
             DAODataType datatype, Integer offset, Integer limit)
@@ -87,22 +88,23 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<String> assayIds = rawDataFilter.getAssayIds();
             Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
             Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
-                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
+                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter) == null?
+                            new HashSet<U>(): processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
             assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
 
             // parameterize expIds
             // ESTs does not have experimentIds
-            if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
+            if (callTableAssayIds == null && !datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
                 stmt.setStrings(paramIndex, expIds, true);
                 paramIndex += expIds.size();
             }
             //parameterize assayIds
-            if (!assayIds.isEmpty()) {
+            if (callTableAssayIds == null && !assayIds.isEmpty()) {
                 stmt.setStrings(paramIndex, assayIds, true);
                 paramIndex += assayIds.size();
             }
             //parameterize assay or experiment IDs
-            if (!expOrAssayIds.isEmpty()) {
+            if (callTableAssayIds == null && !expOrAssayIds.isEmpty()) {
                 // ESTs does not have experimentIds
                 if (!datatype.equals(DAODataType.EST)) {
                     stmt.setStrings(paramIndex, expOrAssayIds, true);
@@ -112,14 +114,25 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 paramIndex += expOrAssayIds.size();
             }
             //parameterize speciesId
-            if (speciesId != null) {
+            if (callTableAssayIds == null && speciesId != null) {
                 stmt.setIntegers(paramIndex, Set.of(speciesId), false);
                 paramIndex++;
             }
             //parameterize rawDataCondIds
-            if (!rawDataCondIds.isEmpty()) {
+            if (callTableAssayIds == null && !rawDataCondIds.isEmpty()) {
                 stmt.setIntegers(paramIndex, rawDataCondIds, true);
                 paramIndex += rawDataCondIds.size();
+            }
+            // parameterize assayIds for call table
+            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+                if (callTableAssayIds.stream().allMatch(Integer.class::isInstance)) {
+                    stmt.setIntegers(paramIndex, (Set<Integer>) callTableAssayIds, true);
+                } else if (callTableAssayIds.stream().allMatch(String.class::isInstance)) {
+                    stmt.setStrings(paramIndex, (Set<String>) callTableAssayIds, true);
+                } else {
+                    throw log.throwing(new IllegalStateException("Can not cast properly"));
+                }
+                paramIndex += callTableAssayIds.size();
             }
             //parameterize geneIds
             if (!geneIds.isEmpty()) {

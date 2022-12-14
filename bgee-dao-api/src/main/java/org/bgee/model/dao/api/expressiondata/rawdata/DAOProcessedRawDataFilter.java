@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 /**
  *
@@ -30,10 +31,11 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
     private final boolean alwaysGeneId;
 
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters) {
-        this(rawDataFilters, null, null);
+        this(rawDataFilters, null, null, null);
     }
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters,
-            Map<DAORawDataFilter, Set<T>> filterToCallTableAssayIds, Class<T> callTableAssayIdType) {
+            Map<DAORawDataFilter, Set<T>> filterToCallTableAssayIds, Class<T> callTableAssayIdType,
+            DAODataType dataType) {
 
         this.filterToCallTableAssayIds = filterToCallTableAssayIds == null? null:
             Collections.unmodifiableMap(new HashMap<>(filterToCallTableAssayIds));
@@ -46,7 +48,8 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         this.rawDataFilters = Collections.unmodifiableSet(rawDataFilters == null ?
                 new LinkedHashSet<>() : new LinkedHashSet<>(rawDataFilters));
         if (this.filterToCallTableAssayIds != null &&
-                !this.filterToCallTableAssayIds.keySet().equals(this.rawDataFilters)) {
+                //containsAll rather than equals because a key can be null
+                !this.filterToCallTableAssayIds.keySet().containsAll(this.rawDataFilters)) {
             throw log.throwing(new IllegalArgumentException(
                     "Inconsistent DAORawDataFilters provided in filterToCallTableAssayIds"));
         }
@@ -60,22 +63,13 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         this.needAssayId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
-        this.needConditionId = this.filterToCallTableAssayIds != null? false:
+        //For in situ data, conditions are not linked to the assays
+        this.needConditionId = this.filterToCallTableAssayIds != null &&
+                (dataType == null || dataType.isAssayRelatedToCondition())? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
         this.needExperimentId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
-        //Assert to check the coherence of method DAORawDataFilter#hasFilteringNotConsideringGeneIds()
-        //with this constructor
-        assert(((this.needSpeciesId || this.needAssayId || this.needConditionId ||
-                  this.needExperimentId) &&
-                  this.filterToCallTableAssayIds == null &&
-                  this.rawDataFilters.stream().anyMatch(f -> f.hasFilteringNotConsideringGeneIds()))
-               ||
-               (!this.needSpeciesId && !this.needAssayId && !this.needConditionId &&
-                !this.needExperimentId &&
-                (this.filterToCallTableAssayIds != null ||
-                this.rawDataFilters.stream().noneMatch(f -> f.hasFilteringNotConsideringGeneIds()))));
 
         //Gene IDs always go through the call table, so we don't check filterToCallTableAssayIds
         this.needGeneId = this.rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
@@ -102,6 +96,8 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
      *          If a {@code Set} is empty, it means there were no result for the associated filter.
      *          If this {@code Map} is {@code null}, it means that the callAssayIds were not retrieved
      *          and the filters should be processed normally.
+     *          If a key is {@code null}, it means that the filtering of the assay IDs applies
+     *          to all filters.
      */
     public Map<DAORawDataFilter, Set<T>> getFilterToCallTableAssayIds() {
         return filterToCallTableAssayIds;

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO.RNASeqLibraryAnnotatedSampleTO.AbundanceUnit;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryAnnotatedSampleDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -56,8 +58,33 @@ implements RNASeqResultAnnotatedSampleDAO {
             Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attributes);
 
-        final DAOProcessedRawDataFilter<Integer> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
+        //It is very ugly, but for performance reasons, we use two queries:
+        //one for identifying the internal assay IDs, the second one to retrieve the calls.
+        //It is because the optimizer completely fail at generating a correct query plan,
+        //we really tried hard to fix this
+        //(see https://dba.stackexchange.com/questions/320207/optimization-with-subquery-not-working-as-expected).
+        //This logic is managed in the method processFilterForCallTableAssayIds,
+        //which returns the appropriate DAOProcessedRawDataFilter to be used in this method.
+        final MySQLRNASeqLibraryAnnotatedSampleDAO assayDAO =
+                new MySQLRNASeqLibraryAnnotatedSampleDAO(this.getManager());
+        DAOProcessedRawDataFilter<Integer> processedFilters = this.processFilterForCallTableAssayIds(
+                new DAOProcessedRawDataFilter<Integer>(rawDataFilters),
+                (s) -> assayDAO.getLibraryAnnotatedSamples(s, isSingleCell, null, null,
+                               Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.ID))
+                       .stream()
+                       .map(to -> to.getId())
+                    .  collect(Collectors.toSet()),
+                Integer.class, DAODataType.RNA_SEQ, isSingleCell);
+        if (processedFilters == null) {
+            try {
+                return log.traceExit(new MySQLRNASeqResultAnnotatedSampleTOResultSet(
+                        this.getManager().getConnection().prepareStatement(
+                            "SELECT NULL FROM " + TABLE_NAME + " WHERE FALSE")));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+
         final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -70,20 +97,22 @@ implements RNASeqResultAnnotatedSampleDAO {
 
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
-                processedFilters, isSingleCell, Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+                processedFilters,
+                //isSingleCell: at this point, it was already considered in the assay IDs
+                //obtained through processFilterForCallTableAssayIds
+                null,
+                Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
 
         // generate WHERE CLAUSE
-        if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
-            sb.append(" WHERE ");
+        if (!processedFilters.getRawDataFilters().isEmpty() ||
+                !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
+            sb.append(" WHERE ")
+              .append(generateWhereClauseRawDataFilter(processedFilters,
+                    filtersToDatabaseMapping, DAODataType.RNA_SEQ,
+                    //isSingleCell: at this point, it was already considered in the assay IDs
+                    //obtained through processFilterForCallTableAssayIds
+                    null));
         }
-        boolean foundPrevious = false;
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
-            foundPrevious = true;
-        }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell,
-                foundPrevious);
 
         // generate ORDER BY
         sb.append(" ORDER BY ")

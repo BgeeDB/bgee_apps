@@ -62,7 +62,7 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
                 f.getGeneIds().isEmpty() && f.getRawDataCondIds().isEmpty() &&
                 f.getSpeciesId() == null)) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.EST));
         }
 
         // generate ORDER BY

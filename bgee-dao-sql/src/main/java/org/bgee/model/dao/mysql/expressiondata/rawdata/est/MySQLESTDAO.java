@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -48,8 +50,32 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter<String> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
+        //It is very ugly, but for performance reasons, we use two queries:
+        //one for identifying the internal assay IDs, the second one to retrieve the calls.
+        //It is because the optimizer completely fail at generating a correct query plan,
+        //we really tried hard to fix this
+        //(see https://dba.stackexchange.com/questions/320207/optimization-with-subquery-not-working-as-expected).
+        //This logic is managed in the method processFilterForCallTableAssayIds,
+        //which returns the appropriate DAOProcessedRawDataFilter to be used in this method.
+        final MySQLESTLibraryDAO assayDAO = new MySQLESTLibraryDAO(this.getManager());
+        DAOProcessedRawDataFilter<String> processedFilters = this.processFilterForCallTableAssayIds(
+                new DAOProcessedRawDataFilter<String>(rawDataFilters),
+                (s) -> assayDAO.getESTLibraries(s, null, null,
+                               Set.of(ESTLibraryDAO.Attribute.ID))
+                       .stream()
+                       .map(to -> to.getId())
+                    .  collect(Collectors.toSet()),
+                String.class, DAODataType.EST, null);
+        if (processedFilters == null) {
+            try {
+                return log.traceExit(new MySQLESTTOResultSet(
+                        this.getManager().getConnection().prepareStatement(
+                            "SELECT NULL FROM " + TABLE_NAME + " WHERE FALSE")));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+
         final Set<ESTDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(ESTDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -73,7 +99,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
                 f.getGeneIds().isEmpty() && f.getRawDataCondIds().isEmpty() &&
                 f.getSpeciesId() == null)) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.EST));
         }
         // generate ORDER BY
         sb.append(" ORDER BY")

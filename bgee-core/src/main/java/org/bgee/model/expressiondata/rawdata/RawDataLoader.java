@@ -24,6 +24,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
@@ -671,7 +672,7 @@ public class RawDataLoader extends CommonService {
         log.traceEntry();
         return log.traceExit(this.loadConditionPostFilter(
                 (filters, attrs) -> this.rawDataConditionDAO
-                .getAffymetrixRawDataConditionsFromRawDataFilters(filters, attrs),
+                .getRawDataConditionsLinkedToDataType(filters, DAODataType.AFFYMETRIX, null, attrs),
                 DataType.AFFYMETRIX));
     }
 
@@ -937,7 +938,7 @@ public class RawDataLoader extends CommonService {
         log.traceEntry("{}, {}", isSingleCell, dataType);
         return log.traceExit(this.loadConditionPostFilter(
                 (filters, attrs) -> this.rawDataConditionDAO
-                .getRNASeqRawDataConditions(filters, isSingleCell, attrs),
+                .getRawDataConditionsLinkedToDataType(filters, DAODataType.RNA_SEQ, isSingleCell, attrs),
                 dataType));
     }
 
@@ -1092,7 +1093,7 @@ public class RawDataLoader extends CommonService {
         log.traceEntry();
         return log.traceExit(this.loadConditionPostFilter(
                 (filters, attrs) -> this.rawDataConditionDAO
-                .getESTRawDataConditionsFromRawDataFilters(filters, attrs),
+                .getRawDataConditionsLinkedToDataType(filters, DAODataType.EST, null, attrs),
                 DataType.EST));
     }
 
@@ -1305,7 +1306,7 @@ public class RawDataLoader extends CommonService {
         log.traceEntry();
         return log.traceExit(this.loadConditionPostFilter(
                 (filters, attrs) -> this.rawDataConditionDAO
-                .getInSituRawDataConditionsFromRawDataFilters(filters, attrs),
+                .getRawDataConditionsLinkedToDataType(filters, DAODataType.IN_SITU, null, attrs),
                 DataType.IN_SITU));
     }
 

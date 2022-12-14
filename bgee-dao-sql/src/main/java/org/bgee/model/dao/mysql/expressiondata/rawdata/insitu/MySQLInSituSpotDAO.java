@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -54,8 +56,34 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter<String> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
+        //It is very ugly, but for performance reasons, we use three queries:
+        //one for identifying the internal assay IDs, one for the retrieving conditionIds,
+        //the third one to retrieve the calls.
+        //It is because the optimizer completely fail at generating a correct query plan,
+        //we really tried hard to fix this
+        //(see https://dba.stackexchange.com/questions/320207/optimization-with-subquery-not-working-as-expected).
+        //This logic is managed in the method processFilterForCallTableAssayIds,
+        //which returns the appropriate DAOProcessedRawDataFilter to be used in this method.
+        final MySQLInSituEvidenceDAO assayDAO = new MySQLInSituEvidenceDAO(this.getManager());
+        DAOProcessedRawDataFilter<String> processedFilters = this.processFilterForCallTableAssayIds(
+                new DAOProcessedRawDataFilter<String>(rawDataFilters),
+                (s) -> assayDAO.getInSituEvidences(s, null, null,
+                               Set.of(InSituEvidenceDAO.Attribute.IN_SITU_EVIDENCE_ID))
+                       .stream()
+                       .map(to -> to.getId())
+                    .  collect(Collectors.toSet()),
+                String.class, DAODataType.IN_SITU, null);
+        if (processedFilters == null) {
+            try {
+                return log.traceExit(new MySQLInSituSpotTOResultSet(
+                        this.getManager().getConnection().prepareStatement(
+                            "SELECT NULL FROM " + TABLE_NAME + " WHERE FALSE")));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+
+        //Finally, we get back to the "regular" code
         final Set<InSituSpotDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(InSituSpotDAO.Attribute.class): EnumSet.copyOf(attrs));
@@ -73,7 +101,7 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.IN_SITU));
         }
 
         // generate ORDER BY

@@ -120,7 +120,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.AFFYMETRIX));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -203,7 +203,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.EST));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -312,7 +312,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.IN_SITU));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -433,14 +433,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
-            sb.append(" WHERE ");
+            sb.append(" WHERE ")
+              .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping,
+                    DAODataType.RNA_SEQ, isSingleCell));
         }
-        boolean foundPrevious = false;
-        if(!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
-            foundPrevious = true;
-        }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
                     isSingleCell, DAODataType.RNA_SEQ, null, null);

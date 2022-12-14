@@ -94,7 +94,7 @@ implements InSituEvidenceDAO{
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.IN_SITU));
         }
 
         // generate ORDER BY

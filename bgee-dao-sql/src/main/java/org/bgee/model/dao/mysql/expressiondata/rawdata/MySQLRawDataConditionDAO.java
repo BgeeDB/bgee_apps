@@ -116,155 +116,13 @@ implements RawDataConditionDAO {
     }
 
     @Override
-    public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters,
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}", rawDataFilters, attributes);
-
-        final DAOProcessedRawDataFilter<Integer> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
-        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-
-        StringBuilder sb = new StringBuilder();
-
-        // generate SELECT
-       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
-               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
-
-        //generate FROM
-        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, processedFilters, null,
-                Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
-
-        // generate WHERE
-        sb.append(" WHERE ");
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append("(")
-              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
-              .append(") AND ");
+    public RawDataConditionTOResultSet getRawDataConditionsLinkedToDataType(
+            Collection<DAORawDataFilter> rawDataFilters, DAODataType dataType,
+            Boolean isSingleCell, Collection<RawDataConditionDAO.Attribute> attributes) {
+        log.traceEntry("{}, {}, {}, {}", rawDataFilters, dataType, isSingleCell, attributes);
+        if (dataType == null) {
+            throw log.throwing(new IllegalArgumentException("dataType cannot be null"));
         }
-        //We at least always need to check that results are from conditions
-        //used in annotations of the requested data type.
-        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
-        //to the affymetrixChip table, we always add this clause:
-        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLAffymetrixChipDAO.TABLE_NAME)
-          .append(" WHERE ").append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
-          .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-          .append(")");
-
-        try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    DAODataType.AFFYMETRIX, null, null);
-            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    public RawDataConditionTOResultSet getESTRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters,
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}", rawDataFilters, attributes);
-
-        final DAOProcessedRawDataFilter<String> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
-        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-
-        StringBuilder sb = new StringBuilder();
-
-        // generate SELECT
-       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
-               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
-
-        //generate FROM
-        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, processedFilters, null,
-                Set.of(TABLE_NAME), DAODataType.EST);
-
-        // generate WHERE
-        sb.append(" WHERE ");
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append("(")
-              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
-              .append(") AND ");
-        }
-        //We at least always need to check that results are from conditions
-        //used in annotations of the requested data type.
-        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
-        //to the affymetrixChip table, we always add this clause:
-        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLESTLibraryDAO.TABLE_NAME)
-          .append(" WHERE ").append(MySQLESTLibraryDAO.TABLE_NAME).append(".")
-          .append(ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-          .append(")");
-
-        try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    DAODataType.EST, null, null);
-            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    @Override
-    public RawDataConditionTOResultSet getInSituRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters, 
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}", rawDataFilters, attributes);
-
-        final DAOProcessedRawDataFilter<String> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
-        final Set<RawDataConditionDAO.Attribute> clonedAttrs = Collections
-                .unmodifiableSet(attributes == null || attributes.isEmpty()?
-                EnumSet.allOf(RawDataConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
-
-        StringBuilder sb = new StringBuilder();
-
-        // generate SELECT
-       sb.append(generateSelectClauseRawDataFilters(processedFilters, TABLE_NAME,
-               getColToAttributesMap(RawDataConditionDAO.Attribute.class), true, clonedAttrs));
-
-        //generate FROM
-        RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
-                sb, processedFilters, null,
-                Set.of(TABLE_NAME), DAODataType.IN_SITU);
-
-        // generate WHERE
-        sb.append(" WHERE ");
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append("(")
-              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
-              .append(") AND ");
-        }
-        //We at least always need to check that results are from conditions
-        //used in annotations of the requested data type.
-        //Since it is annoying to check whether generateFromClauseRawData made indeed a join
-        //to the inSituSpot table, we always add this clause:
-        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLInSituSpotDAO.TABLE_NAME)
-          .append(" WHERE ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
-          .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-          .append(")");
-
-        try {
-            BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    DAODataType.IN_SITU, null, null);
-            return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
-        } catch (SQLException e) {
-            throw log.throwing(new DAOException(e));
-        }
-    }
-
-    public RawDataConditionTOResultSet getRNASeqRawDataConditions(
-            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Collection<RawDataConditionDAO.Attribute> attributes) {
-        log.traceEntry("{}, {}, {}", rawDataFilters, isSingleCell, attributes);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
@@ -281,40 +139,62 @@ implements RawDataConditionDAO {
         //generate FROM
         RawDataFiltersToDatabaseMapping rawDataFiltersToDatabaseMapping = generateFromClauseRawData(
                 sb, processedFilters, isSingleCell,
-                Set.of(TABLE_NAME), DAODataType.RNA_SEQ);
+                Set.of(TABLE_NAME), dataType);
 
         // generate WHERE
         sb.append(" WHERE ");
-        boolean foundPrevious = false;
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
+        if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append("(")
-              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping))
-              .append(")");
-            foundPrevious = true;
+              .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
+                      dataType, isSingleCell))
+              .append(") AND ");
         }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
-
         //We at least always need to check that results are from conditions
         //used in annotations of the requested data type.
         //Since it is annoying to check whether generateFromClauseRawData made indeed a join
-        //to the affymetrixChip table, we always add this clause:
-        if (foundPrevious) {
-            sb.append(" AND ");
+        //to the assay table, we always add this clause
+        switch(dataType) {
+        case AFFYMETRIX:
+            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLAffymetrixChipDAO.TABLE_NAME)
+              .append(" WHERE ").append(MySQLAffymetrixChipDAO.TABLE_NAME).append(".")
+              .append(AffymetrixChipDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+              .append(")");
+            break;
+        case EST:
+            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLESTLibraryDAO.TABLE_NAME)
+              .append(" WHERE ").append(MySQLESTLibraryDAO.TABLE_NAME).append(".")
+              .append(ESTLibraryDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+              .append(")");
+            break;
+        case IN_SITU:
+            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLInSituSpotDAO.TABLE_NAME)
+              .append(" WHERE ").append(MySQLInSituSpotDAO.TABLE_NAME).append(".")
+              .append(InSituSpotDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+              .append(")");
+            break;
+        case RNA_SEQ:
+            sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
+              .append(" WHERE ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME).append(".")
+              .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
+              .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
+              .append(")");
+            break;
+        default:
+            throw log.throwing(new IllegalStateException("Unsupported data type: " + dataType));
         }
-        sb.append(" EXISTS(SELECT 1 FROM ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME)
-          .append(" WHERE ").append(MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME).append(".")
-          .append(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID.getTOFieldName()).append(" = ")
-          .append(TABLE_NAME).append(".").append(RawDataConditionDAO.Attribute.ID.getTOFieldName())
-          .append(")");
 
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,
-                    isSingleCell, DAODataType.RNA_SEQ, null, null);
+                    isSingleCell, dataType, null, null);
             return log.traceExit(new MySQLRawDataConditionTOResultSet(stmt));
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
     }
+
     /**
      * Implementation of the {@code ConditionTOResultSet}. 
      * 

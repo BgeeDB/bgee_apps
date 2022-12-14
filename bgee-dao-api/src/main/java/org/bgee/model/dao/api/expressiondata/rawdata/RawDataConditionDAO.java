@@ -12,6 +12,7 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 /**
  * DAO defining queries using or retrieving {@link RawDataConditionTO}s.
@@ -110,6 +111,13 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *
      * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                              filters to use to retrieve <strong>raw</strong> condition.
+     * @param dataType              A {@code DAODataType} to retrieve only
+     *                              conditions used in annotation of the specified data type.
+     *                              Cannot be {@code null}.
+     * @param isSingleCell          A {@code Boolean} allowing to specify which type of data to retrieve.
+     *                              If <strong>true</strong> only single-cell data are retrieved.
+     *                              If <strong>false</strong> only bulk data are retrieved.
+     *                              If <strong>null</strong> all data of {@code dataType} are retrieved.
      * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
      *                              defining the attributes to populate in the returned
      *                              {@code RawDataConditionTO}s.
@@ -118,70 +126,9 @@ public interface RawDataConditionDAO extends DAO<RawDataConditionDAO.Attribute> 
      *                              {@code RawDataConditionDAO.Attribute}.
      * @throws DAOException         If an error occurred while accessing the data source.
      */
-    public RawDataConditionTOResultSet getAffymetrixRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters, Collection<Attribute> attributes);
-
-    /**
-     * Retrieves distinct EST raw conditions used in data annotations for requested raw data filters.
-     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
-     * are retrieved.
-     *
-     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                              filters to use to retrieve <strong>raw</strong> condition.
-     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
-     *                              defining the attributes to populate in the returned
-     *                              {@code RawDataConditionTO}s.
-     * @return                      A {@code RawDataConditionTOResultSet} containing the requested
-     *                              raw data conditions populated with the selected
-     *                              {@code RawDataConditionDAO.Attribute}.
-     * @throws DAOException         If an error occurred while accessing the data source.
-     */
-    public RawDataConditionTOResultSet getESTRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters, Collection<Attribute> attributes);
-
-    /**
-     * Retrieves distinct insitu raw conditions used in data annotations for requested raw data filters.
-     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
-     * are retrieved.
-     *
-     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                              filters to use to retrieve <strong>raw</strong> condition.
-     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
-     *                              defining the attributes to populate in the returned
-     *                              {@code RawDataConditionTO}s.
-     * @return                      A {@code RawDataConditionTOResultSet} containing the requested
-     *                              raw data conditions populated with the selected
-     *                              {@code RawDataConditionDAO.Attribute}.
-     * @throws DAOException         If an error occurred while accessing the data source.
-     */
-    public RawDataConditionTOResultSet getInSituRawDataConditionsFromRawDataFilters(
-            Collection<DAORawDataFilter> rawDataFilters, Collection<Attribute> attributes);
-
-    /**
-     * Retrieves distinct RNA-Seq raw conditions used in data annotations for requested raw data filters. 
-     * The conditions are retrieved and returned as a {@code RawDataConditionTOResultSet}.
-     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
-     * are retrieved.
-     *
-     * @param rawDataFilters        A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                              filters to use to retrieve <strong>raw</strong> condition.
-     * @param isSingleCell          A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
-     *                              If <strong>true</strong> only single-cell RNA-Seq are retrieved.
-     *                              If <strong>false</strong> only bulk RNA-Seq are retrieved.
-     *                              If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param attributes            A {@code Collection} of {@code RawDataConditionDAO.Attribute}s
-     *                              defining the attributes to populate in the returned
-     *                              {@code RawDataConditionTO}s.
-     * @return                      A {@code RawDataConditionTOResultSet} containing the requested
-     *                              raw data conditions populated with the selected 
-     *                              {@code RawDataConditionDAO.Attribute}.
-     * @throws DAOException         If an error occurred while accessing the data source.
-     */
-    public RawDataConditionTOResultSet getRNASeqRawDataConditions(
-            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Collection<Attribute> attributes);
+    public RawDataConditionTOResultSet getRawDataConditionsLinkedToDataType(
+            Collection<DAORawDataFilter> rawDataFilters, DAODataType dataType,
+            Boolean isSingleCell, Collection<Attribute> attributes);
 
     /**
      * {@code DAOResultSet} specifics to {@code RawDataConditionTO}s

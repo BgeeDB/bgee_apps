@@ -57,15 +57,10 @@ implements RNASeqExperimentDAO{
 
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
-            sb.append(" WHERE ");
+            sb.append(" WHERE ")
+              .append(generateWhereClauseRawDataFilter(processedFilters,
+                    filtersToDatabaseMapping, DAODataType.RNA_SEQ, isSingleCell));
         }
-        boolean foundPrevious = false;
-        if (!processedFilters.getRawDataFilters().isEmpty()) {
-            sb.append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
-            foundPrevious = true;
-        }
-        foundPrevious = generateWhereClauseTechnologyRnaSeq(sb, isSingleCell, foundPrevious);
 
         // generate ORDER BY
         sb.append(" ORDER BY")

@@ -59,7 +59,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
         // generate WHERE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.AFFYMETRIX));
         }
 
         // generate ORDER BY

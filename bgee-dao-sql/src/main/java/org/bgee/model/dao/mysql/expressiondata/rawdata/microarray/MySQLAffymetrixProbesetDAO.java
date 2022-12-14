@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCallSourceDAO.CallSourceDataTO.ExclusionReason;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -53,8 +54,32 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        DAOProcessedRawDataFilter<Integer> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
+        //It is very ugly, but for performance reasons, we use two queries:
+        //one for identifying the internal assay IDs, the second one to retrieve the calls.
+        //It is because the optimizer completely fail at generating a correct query plan,
+        //we really tried hard to fix this
+        //(see https://dba.stackexchange.com/questions/320207/optimization-with-subquery-not-working-as-expected).
+        //This logic is managed in the method processFilterForCallTableAssayIds,
+        //which returns the appropriate DAOProcessedRawDataFilter to be used in this method.
+        final MySQLAffymetrixChipDAO assayDAO = new MySQLAffymetrixChipDAO(this.getManager());
+        DAOProcessedRawDataFilter<Integer> processedFilters = this.processFilterForCallTableAssayIds(
+                new DAOProcessedRawDataFilter<Integer>(rawDataFilters),
+                (s) -> assayDAO.getAffymetrixChips(s, null, null,
+                               Set.of(AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID))
+                       .stream()
+                       .map(to -> to.getId())
+                    .  collect(Collectors.toSet()),
+                Integer.class, DAODataType.AFFYMETRIX, null);
+        if (processedFilters == null) {
+            try {
+                return log.traceExit(new MySQLAffymetrixProbesetTOResultSet(
+                        this.getManager().getConnection().prepareStatement(
+                            "SELECT NULL FROM " + TABLE_NAME + " WHERE FALSE")));
+            } catch (SQLException e) {
+                throw log.throwing(new DAOException(e));
+            }
+        }
+
         final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));
@@ -68,17 +93,22 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         // generate FROM
         RawDataFiltersToDatabaseMapping filtersToDatabaseMapping = generateFromClauseRawData(sb,
                 processedFilters, null, Set.of(TABLE_NAME), DAODataType.AFFYMETRIX);
+
         // generate WHERE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
+            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping,
+                    DAODataType.AFFYMETRIX));
         }
 
         // generate ORDER BY
         sb.append(" ORDER BY")
-        .append(" " + TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID
-                .getTOFieldName())
-        .append(", " + TABLE_NAME + "." + AffymetrixProbesetDAO.Attribute.ID.getTOFieldName());
+        .append(" ").append(TABLE_NAME).append(".")
+            .append(AffymetrixProbesetDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName())
+        .append(", ").append(TABLE_NAME).append(".")
+            .append(AffymetrixProbesetDAO.Attribute.ID.getTOFieldName())
+        .append(", ").append(TABLE_NAME).append(".")
+            .append(AffymetrixProbesetDAO.Attribute.BGEE_GENE_ID.getTOFieldName());
 
         //generate offset and limit
         if (limit != null) {

@@ -1,6 +1,8 @@
 package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.SQLException;
+import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +58,149 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     public MySQLRawDataDAO(MySQLDAOManager manager) throws IllegalArgumentException {
         super(manager);
+    }
+
+    /**
+     * This method is used to retrieve internal assay IDs used in a call table, in order to then
+     * retrieve requested calls in a second query. It is quite ugly to perform
+     * two-steps data retrieval, but is because the optimizer completely fail
+     * at generating a correct query plan, we really tried hard to fix this
+     * (see {@link https://dba.stackexchange.com/questions/320207/optimization-with-subquery-not-working-as-expected})
+     *
+     * @param <U>                           The type of assay IDs in the call table
+     * @param originalProcessedFilter       The {@code DAOProcessedRawDataFilter} originally produced
+     *                                      by the caller DAO.
+     * @param retrieveCallTableAssayIdsFun  A {@code Function} allowing to retrieve the assay IDs
+     *                                      from a {@code Set} of {@code DAORawDataFilter}s.
+     * @param callTableAssayIdType          The {@code Class} type of {@code U}.
+     * @return                              A {@code DAOProcessedRawDataFilter}, that can be either:
+     *                                      the one passed as argument if no filtering on assay IDs
+     *                                      was necessary; or {@code null} if there was no assays
+     *                                      matching the filters (caller DAO should then probably
+     *                                      return an empty {@code ResultSet});
+     *                                      or a new {@code DAOProcessedRawDataFilter}, containing
+     *                                      the {@code DAORawDataFilter}s for which there was
+     *                                      matching assays, and a {@code Map} associating each
+     *                                      {@code DAORawDataFilter} to a {@code Set<U>} containing
+     *                                      the matching assay IDs (see {@link DAOProcessedRawDataFilter#
+     *                                      getFilterToCallTableAssayIds()}.
+     */
+    protected <U extends Comparable<U>> DAOProcessedRawDataFilter<U> processFilterForCallTableAssayIds(
+            DAOProcessedRawDataFilter<U> originalProcessedFilter,
+            Function<Set<DAORawDataFilter>, Set<U>> retrieveCallTableAssayIdsFun,
+            Class<U> callTableAssayIdType, DAODataType dataType, Boolean isSingleCell) {
+        log.traceEntry("{}, {}, {}, {}, {}", originalProcessedFilter, retrieveCallTableAssayIdsFun,
+                callTableAssayIdType, dataType, isSingleCell);
+
+        if (!originalProcessedFilter.isNeedAssayId() &&
+                !originalProcessedFilter.isNeedExperimentId() &&
+                !originalProcessedFilter.isNeedSpeciesId() &&
+                isSingleCell == null &&
+                //For in situ data, condIds are not used to produce filterToAssayIds
+                (!originalProcessedFilter.isNeedConditionId() || !dataType.isAssayRelatedToCondition())) {
+            log.debug("No filtering on assay necessary, returning original DAOProcessedRawDataFilter");
+            return log.traceExit(originalProcessedFilter);
+        }
+        assert(!originalProcessedFilter.getRawDataFilters().isEmpty() || isSingleCell != null);
+
+        //First, retrieve conditionIds if necessary. The only case is if a speciesId is requested
+        //and the data type does not link assays to conditions
+        Set<DAORawDataFilter> newFilters = originalProcessedFilter.getRawDataFilters();
+        if (!dataType.isAssayRelatedToCondition() && originalProcessedFilter.isNeedSpeciesId()) {
+            MySQLRawDataConditionDAO condDAO = new MySQLRawDataConditionDAO(this.getManager());
+            newFilters = originalProcessedFilter.getRawDataFilters().stream()
+                    .map(f -> {
+                        //If no speciesId specify, we simply return the filter
+                        if (f.getSpeciesId() == null) {
+                            return f;
+                        }
+                        //otherwise, retrieve the cond IDs
+                        Set<Integer> condIds = condDAO.getRawDataConditionsLinkedToDataType(
+                                Set.of(f), dataType, null, Set.of(RawDataConditionDAO.Attribute.ID))
+                                .stream()
+                                .map(to -> to.getId())
+                                .collect(Collectors.toSet());
+                        //If no results, we return null
+                        if (condIds.isEmpty()) {
+                            return null;
+                        }
+                        //otherwise, return a new Filter, with no speciesId
+                        return new DAORawDataFilter(f.getGeneIds(), condIds, f.getExperimentIds(),
+                                f.getAssayIds(), f.getExprOrAssayIds());
+                    })
+                    //We skip the null filters, as it is because they would have been no result for them
+                    .filter(f -> f != null)
+                    .collect(Collectors.toSet());
+        }
+
+        //Now, we retrieve the assay IDs if necessary through the method processFilterForCallTableAssayIds
+        //We need to associate each Set of assay IDs to the filter it was obtained from
+        //(to maintain coherence with the genes requested)
+        Map<DAORawDataFilter, Set<U>> filterToAssayIds = newFilters
+                .stream()
+                //Super annoyingly, Collectors.toMap does not accept null values,
+                //see https://stackoverflow.com/questions/24630963/nullpointerexception-in-collectors-tomap-with-null-entry-values/
+                //so we first use an Entry to discard the filters that return no results
+                .map(f -> {
+                    //In case there is no need for filtering on assay IDs
+                    //XXX FB: not great to duplicate the logic of the booleans in
+                    //DAOProcessedRawDataFilter here, but we need to manage the special case
+                    //of in situ data type.
+                    if (f.getSpeciesId() == null && f.getAssayIds().isEmpty() &&
+                        f.getExperimentIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
+                        isSingleCell == null &&
+                        (f.getRawDataCondIds().isEmpty() || !dataType.isAssayRelatedToCondition())) {
+                        return Map.entry(f, Set.<U>of());
+                    }
+                    //Otherwise try to retrieve matching assay IDs
+                    Set<U> assayIds = retrieveCallTableAssayIdsFun.apply(Set.of(f));
+                    //In case there is no result, we return null, to distinguish from
+                    //"no filtering on assay ID needed".
+                    if (assayIds.isEmpty()) {
+                        //Map.entry also refuses null value, so we use AbstractMap
+                        return new AbstractMap.SimpleEntry<>(f, (Set<U>) null);
+                    }
+                    return Map.entry(f, assayIds);
+                })
+                //now we discard the filters with no results
+                .filter(e -> e.getValue() != null)
+                //and build the Map
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue()));
+        //special case for if there are no DAORawDataFilters
+        if (originalProcessedFilter.getRawDataFilters().isEmpty() && isSingleCell != null) {
+            //the value isSingleCell should already been taken into account in the function call
+            Set<U> assayIds = retrieveCallTableAssayIdsFun.apply(null);
+            if (!assayIds.isEmpty()) {
+                filterToAssayIds.put(null, assayIds);
+            }
+        }
+
+        //In case there are no result at all, we return a null DAOProcessedRawDataFilter,
+        //the DAO will have to return an empty resultset
+        if (Collections.disjoint(filterToAssayIds.keySet(), newFilters) &&
+                !filterToAssayIds.containsKey(null)) {
+            log.debug("No assay matching filters, returning null for DAOProcessedRawDataFilter");
+            return log.traceExit((DAOProcessedRawDataFilter<U>) null);
+        }
+
+        //In case there are results, we create a new DAOProcessedRawDataFilter,
+        //discarding the filter for which there is no result
+        DAOProcessedRawDataFilter<U> newProcessedFilters = new DAOProcessedRawDataFilter<U>(
+                newFilters
+                    .stream()
+                    .filter(f -> filterToAssayIds.containsKey(f))
+                    .collect(Collectors.toSet()),
+                filterToAssayIds.entrySet()
+                    .stream()
+                    .filter(e -> e.getValue() != null)
+                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
+                callTableAssayIdType, dataType);
+        assert(!newProcessedFilters.getRawDataFilters().isEmpty() ||
+                !newProcessedFilters.getFilterToCallTableAssayIds().isEmpty());
+        log.debug("returns a new DAOProcessedRawDataFilter");
+        return log.traceExit(newProcessedFilters);
     }
 
     //parameterize query without rnaSeqTechnologyIds
@@ -117,14 +263,18 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     stmt.setIntegers(paramIndex, Set.of(speciesId), false);
                     paramIndex++;
                 }
-                //parameterize rawDataCondIds
-                if (!rawDataCondIds.isEmpty()) {
-                    stmt.setIntegers(paramIndex, rawDataCondIds, true);
-                    paramIndex += rawDataCondIds.size();
-                }
+            }
+            //parameterize rawDataCondIds
+            //For in situ data, condIds are not used to produce callTableAssayIds,
+            //so even if callTableAssayIds were provided, they did not override
+            //the rawDataCondIds for in situ data
+            if ((callTableAssayIds == null || !datatype.isAssayRelatedToCondition())
+                    && !rawDataCondIds.isEmpty()) {
+                stmt.setIntegers(paramIndex, rawDataCondIds, true);
+                paramIndex += rawDataCondIds.size();
             }
             // parameterize assayIds for call table
-            else if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
                 stmt.setObjects(paramIndex, callTableAssayIds, true,
                         processedFilters.getCallTableAssayIdType());
                 paramIndex += callTableAssayIds.size();
@@ -134,13 +284,30 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 stmt.setIntegers(paramIndex, geneIds, true);
                 paramIndex += geneIds.size();
             }
+            // parameterize technologyIds only for rnaseq
+            if (callTableAssayIds == null && isSingleCell != null) {
+                stmt.setBoolean(paramIndex, isSingleCell);
+                paramIndex++;
+            }
         }
-        // parameterize technologyIds only for rnaseq
-        if (datatype.equals(DAODataType.RNA_SEQ) && isSingleCell != null &&
-                processedFilters.getFilterToCallTableAssayIds() == null) {
+
+        // special cases outside of the DAORawDataFilters
+        if (processedFilters.getRawDataFilters().isEmpty() && isSingleCell != null &&
+                (processedFilters.getFilterToCallTableAssayIds() == null ||
+                !processedFilters.getFilterToCallTableAssayIds().containsKey(null))) {
             stmt.setBoolean(paramIndex, isSingleCell);
             paramIndex++;
         }
+        if (processedFilters.getFilterToCallTableAssayIds() != null &&
+                processedFilters.getFilterToCallTableAssayIds().containsKey(null)) {
+            Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds().get(null);
+            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+                stmt.setObjects(paramIndex, callTableAssayIds, true,
+                        processedFilters.getCallTableAssayIdType());
+                paramIndex += callTableAssayIds.size();
+            }
+        }
+
         //parameterize offset and limit
         if (offset != null) {
             stmt.setIntegers(paramIndex, Set.of(offset), false);
@@ -1097,31 +1264,63 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
             DAOProcessedRawDataFilter<U> processedRawDataFilters,
-            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
-        log.traceEntry("{}, {}", processedRawDataFilters, filtersToDatabaseMapping);
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping,
+            DAODataType dataType) {
+        log.traceEntry("{}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping, dataType);
+        return log.traceExit(this.generateWhereClauseRawDataFilter(processedRawDataFilters,
+                filtersToDatabaseMapping, dataType, null));
+    }
+    protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
+            DAOProcessedRawDataFilter<U> processedRawDataFilters,
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping,
+            DAODataType dataType, Boolean isSingleCell) {
+        log.traceEntry("{}, {}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
+                dataType, isSingleCell);
 
         String whereClause = processedRawDataFilters.getRawDataFilters().stream()
                 .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping,
                         processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
-                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e)))
+                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e),
+                        dataType, isSingleCell))
                 .collect(Collectors.joining(") OR (", " (", ")"));
-        return whereClause;
+
+        //Special case if there are no filters
+        if (processedRawDataFilters.getRawDataFilters().isEmpty() && isSingleCell != null ||
+                processedRawDataFilters.getFilterToCallTableAssayIds() != null
+                && processedRawDataFilters.getFilterToCallTableAssayIds().get(null) != null &&
+                !processedRawDataFilters.getFilterToCallTableAssayIds().get(null).isEmpty()) {
+
+            whereClause = this.generateOneFilterWhereClause(null, filtersToDatabaseMapping,
+                    processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
+                        processedRawDataFilters.getFilterToCallTableAssayIds().get(null),
+                    dataType, isSingleCell);
+        }
+        return log.traceExit(whereClause);
     }
 
     private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
-            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds) {
-        log.traceEntry("{}, {}, {}", rawDataFilter, filtersToDatabaseMapping, callTableAssayIds);
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds,
+            DAODataType dataType, Boolean isSingleCell) {
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilter, filtersToDatabaseMapping,
+                callTableAssayIds, dataType, isSingleCell);
 
-        Integer speId = callTableAssayIds == null? rawDataFilter.getSpeciesId(): null;
-        Set<Integer> geneIds = rawDataFilter.getGeneIds();
-        Set<Integer> rawDataCondIds = callTableAssayIds == null?
-            rawDataFilter.getRawDataCondIds(): new HashSet<>();
-        Set<String> expIds = callTableAssayIds == null?
+        Integer speId = callTableAssayIds == null && rawDataFilter != null?
+                rawDataFilter.getSpeciesId(): null;
+        Set<String> expIds = callTableAssayIds == null && rawDataFilter != null?
                 rawDataFilter.getExperimentIds(): new HashSet<>();
-        Set<String> assayIds = callTableAssayIds == null?
+        Set<String> assayIds = callTableAssayIds == null && rawDataFilter != null?
             rawDataFilter.getAssayIds(): new HashSet<>();
-        Set<String> expOrAssayIds = callTableAssayIds == null?
+        Set<String> expOrAssayIds = callTableAssayIds == null && rawDataFilter != null?
             rawDataFilter.getExprOrAssayIds(): new HashSet<>();
+        //For in situ data, condIds are not used to produce callTableAssayIds,
+        //so even if callTableAssayIds were provided, they do not override
+        //the rawDataCondIds for in situ data
+        Set<Integer> rawDataCondIds =
+                (callTableAssayIds == null || !dataType.isAssayRelatedToCondition()) && rawDataFilter != null?
+                rawDataFilter.getRawDataCondIds(): new HashSet<>();
+        //We never override the gene IDs based on callTableAssayIds
+        Set<Integer> geneIds =  rawDataFilter != null? rawDataFilter.getGeneIds(): new HashSet<>();
+
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
@@ -1208,22 +1407,16 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             .append(")");
             filterFound = true;
         }
-        return log.traceExit(sb.toString());
-    }
-
-    protected boolean generateWhereClauseTechnologyRnaSeq(StringBuilder sb,
-            Boolean isSingleCell, boolean foundPrevious) {
-        log.traceEntry("{}, {}, {}", sb, isSingleCell, foundPrevious);
-        if (isSingleCell != null) {
-            if (foundPrevious) {
+        if (callTableAssayIds == null && isSingleCell != null) {
+            if (filterFound) {
                 sb.append(" AND ");
             }
             sb.append(MySQLRNASeqLibraryDAO.TABLE_NAME).append(".")
-            .append(RNASeqLibraryDAO.Attribute.IS_SINGLE_CELL.getTOFieldName())
-            .append(" = ?");
-            foundPrevious = true;
+              .append(RNASeqLibraryDAO.Attribute.IS_SINGLE_CELL.getTOFieldName())
+              .append(" = ?");
+            filterFound = true;
         }
-        return log.traceExit(foundPrevious);
+        return log.traceExit(sb.toString());
     }
 
     private String generateExpAssayIdFilter(Set<String> expIds, Set<String> assayIds,

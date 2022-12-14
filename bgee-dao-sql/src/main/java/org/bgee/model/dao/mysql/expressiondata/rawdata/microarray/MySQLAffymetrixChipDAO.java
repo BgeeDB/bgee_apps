@@ -62,7 +62,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping));
+                    filtersToDatabaseMapping, DAODataType.AFFYMETRIX));
         }
 
         // generate ORDER BY

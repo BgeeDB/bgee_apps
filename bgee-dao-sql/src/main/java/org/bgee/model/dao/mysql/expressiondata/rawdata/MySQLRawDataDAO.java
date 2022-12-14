@@ -1073,21 +1073,32 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             DAOProcessedRawDataFilter<U> processedRawDataFilters,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
         log.traceEntry("{}, {}", processedRawDataFilters, filtersToDatabaseMapping);
+
         String whereClause = processedRawDataFilters.getRawDataFilters().stream()
-                .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping))
+                .map(e -> {
+                    Set<U> callTableAssayIds = processedRawDataFilters.getFilterToCallTableAssayIds() == null?
+                        null: processedRawDataFilters.getFilterToCallTableAssayIds().get(e) == null? new HashSet<>():
+                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e);
+          assert(processedRawDataFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
+                    return this.generateOneFilterWhereClause(e, filtersToDatabaseMapping, callTableAssayIds);
+                 })
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;
     }
 
-    private String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
-            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
-        log.traceEntry("{}, {}", rawDataFilter, filtersToDatabaseMapping);
-        Integer speId = rawDataFilter.getSpeciesId();
+    private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds) {
+        log.traceEntry("{}, {}", rawDataFilter, filtersToDatabaseMapping, callTableAssayIds);
+        Integer speId = callTableAssayIds == null? rawDataFilter.getSpeciesId(): null;
         Set<Integer> geneIds = rawDataFilter.getGeneIds();
-        Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
-        Set<String> expIds = rawDataFilter.getExperimentIds();
-        Set<String> assayIds = rawDataFilter.getAssayIds();
-        Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
+        Set<Integer> rawDataCondIds = callTableAssayIds == null?
+            rawDataFilter.getRawDataCondIds(): new HashSet<Integer>();
+        Set<String> expIds = callTableAssayIds == null?
+                rawDataFilter.getExperimentIds(): new HashSet<String>();
+        Set<String> assayIds = callTableAssayIds == null?
+            rawDataFilter.getAssayIds(): new HashSet<String>();
+        Set<String> expOrAssayIds = callTableAssayIds == null?
+            rawDataFilter.getExprOrAssayIds(): new HashSet<String>();
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS
@@ -1131,6 +1142,27 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             .append(" IN (")
             .append(BgeePreparedStatement.generateParameterizedQueryString(rawDataCondIds
                     .size()))
+            .append(")");
+            filterFound = true;
+        }
+        // FILTER ON ASSAY IDS FROM CALL TABLE
+        // used to improve performance of SQL queries. Only used when querying the calls table
+        if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+            if(filterFound) {
+                throw log.throwing(new IllegalStateException("Should not filter on raw condition IDs,"
+                        + "species IDs or exp/assay IDs when filtering on assay IDs from call table."));
+            }
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.CALL_TABLE_ASSAY_ID)))
+            .append(".")
+            .append((Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.CALL_TABLE_ASSAY_ID))))
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(callTableAssayIds.size()))
             .append(")");
             filterFound = true;
         }

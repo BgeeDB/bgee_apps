@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAOProcessedRawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO.ESTTOResultSet;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
@@ -46,10 +48,19 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
     public ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
             Collection<ESTDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
+        return log.traceExit(this.getESTs(rawDataFilters, null, offset, limit, attributes));
+    }
+
+    @Override
+    public  <U extends Comparable<U>> ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters,
+            Map<DAORawDataFilter, Set<U>> filterToCallTableAssayIds, Integer offset, Integer limit,
+            Collection<ESTDAO.Attribute> attributes) throws DAOException {
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, filterToCallTableAssayIds, offset,
+                limit, attributes);
         checkOffsetAndLimit(offset, limit);
 
-        final DAOProcessedRawDataFilter<String> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters);
+        final DAOProcessedRawDataFilter<U> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters, filterToCallTableAssayIds);
         final Set<ESTDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(ESTDAO.Attribute.class): EnumSet.copyOf(attributes));

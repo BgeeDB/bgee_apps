@@ -67,7 +67,6 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     }
 
     //parameterize query with rnaSeqTechnologyIds
-    @SuppressWarnings("unchecked")
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
             DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
             DAODataType datatype, Integer offset, Integer limit)
@@ -125,13 +124,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             }
             // parameterize assayIds for call table
             if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
-                if (callTableAssayIds.stream().allMatch(Integer.class::isInstance)) {
-                    stmt.setIntegers(paramIndex, (Set<Integer>) callTableAssayIds, true);
-                } else if (callTableAssayIds.stream().allMatch(String.class::isInstance)) {
-                    stmt.setStrings(paramIndex, (Set<String>) callTableAssayIds, true);
-                } else {
-                    throw log.throwing(new IllegalStateException("Can not cast properly"));
-                }
+                stmt.setObjects(paramIndex, callTableAssayIds, true,
+                        processedFilters.getCallTableAssayIdType());
                 paramIndex += callTableAssayIds.size();
             }
             //parameterize geneIds

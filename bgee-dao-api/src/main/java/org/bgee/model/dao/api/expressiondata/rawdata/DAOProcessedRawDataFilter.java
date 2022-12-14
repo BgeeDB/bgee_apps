@@ -21,6 +21,7 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
     private final static Logger log = LogManager.getLogger(DAOProcessedRawDataFilter.class.getName());
     private final Set<DAORawDataFilter> rawDataFilters;
     private final Map<DAORawDataFilter, Set<T>> filterToCallTableAssayIds;
+    private final Class<T> callTableAssayIdType;
     private final boolean needGeneId;
     private final boolean needAssayId;
     private final boolean needExperimentId;
@@ -29,13 +30,18 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
     private final boolean alwaysGeneId;
 
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters) {
-        this(rawDataFilters, null);
+        this(rawDataFilters, null, null);
     }
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters,
-            Map<DAORawDataFilter, Set<T>> filterToCallTableAssayIds) {
+            Map<DAORawDataFilter, Set<T>> filterToCallTableAssayIds, Class<T> callTableAssayIdType) {
 
         this.filterToCallTableAssayIds = filterToCallTableAssayIds == null? null:
             Collections.unmodifiableMap(new HashMap<>(filterToCallTableAssayIds));
+        if (filterToCallTableAssayIds != null && callTableAssayIdType == null) {
+            throw log.throwing(new IllegalArgumentException(
+                    "The class type of callTableAssayIds must be provided"));
+        }
+        this.callTableAssayIdType = callTableAssayIdType;
 
         this.rawDataFilters = Collections.unmodifiableSet(rawDataFilters == null ?
                 new LinkedHashSet<>() : new LinkedHashSet<>(rawDataFilters));
@@ -125,13 +131,17 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         return alwaysGeneId;
     }
 
+    public Class<T> getCallTableAssayIdType() {
+        return callTableAssayIdType;
+    }
 
+    //We don't consider callTableAssayIdType in these hashCode/equals method,
+    //Class does not implement equals
     @Override
     public int hashCode() {
         return Objects.hash(alwaysGeneId, filterToCallTableAssayIds, needAssayId,
                 needConditionId, needExperimentId, needGeneId, needSpeciesId, rawDataFilters);
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -155,6 +165,7 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         builder.append("DAOProcessedRawDataFilter [")
                .append("rawDataFilters=").append(rawDataFilters)
                .append(", filterToCallTableAssayIds=").append(filterToCallTableAssayIds)
+               .append(", callTableAssayIdType=").append(callTableAssayIdType)
                .append(", needGeneId=").append(needGeneId)
                .append(", needAssayId=").append(needAssayId)
                .append(", needExperimentId=").append(needExperimentId)

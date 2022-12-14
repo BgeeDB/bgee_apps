@@ -293,7 +293,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean expTable = necessaryTables.contains(MySQLMicroarrayExperimentDAO.TABLE_NAME);
         boolean probesetTable = necessaryTables.contains(MySQLAffymetrixProbesetDAO.TABLE_NAME) ||
-                processedFilters.isNeedGeneId();
+                processedFilters.isNeedGeneId() ||
+                processedFilters.getFilterToCallTableAssayIds() != null;
+        assert !(processedFilters.getFilterToCallTableAssayIds() != null &&
+                !necessaryTables.contains(MySQLAffymetrixProbesetDAO.TABLE_NAME)): "affymetrixProbeset should"
+                        + " be a mandatory table if filterToCallTableAssayIds is not null";
         boolean chipTable = necessaryTables.contains(MySQLAffymetrixChipDAO.TABLE_NAME) ||
                 processedFilters.isNeedAssayId() || !expTable && processedFilters.isNeedExperimentId() ||
                 !condTable && processedFilters.isNeedConditionId() ||
@@ -404,11 +408,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         processedFilters.isNeedGeneId());
         boolean callTable = necessaryTables.contains(MySQLInSituSpotDAO.TABLE_NAME) ||
                 processedFilters.isNeedGeneId() ||
+                processedFilters.getFilterToCallTableAssayIds() != null ||
                 // for insitu condition are at the call level.
                 processedFilters.isNeedConditionId() &&
                 !necessaryTables.contains(MySQLRawDataConditionDAO.TABLE_NAME) ||
                 processedFilters.isNeedAssayId() && !assayTable ||
                 assayTable && condTable;
+        assert !(processedFilters.getFilterToCallTableAssayIds() != null &&
+                !necessaryTables.contains(MySQLInSituSpotDAO.TABLE_NAME)): "inSituSpot should"
+                        + " be a mandatory table if filterToCallTableAssayIds is not null";
 
         log.debug("condTable: {}, expTable: {}, assayTable: {}, callTable: {}",
                 condTable, expTable, assayTable, callTable);
@@ -507,11 +515,15 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         boolean geneTable = processedFilters.isNeedSpeciesId() && necessaryTables.size() == 1 &&
                 necessaryTables.contains(MySQLESTDAO.TABLE_NAME)
                 && !processedFilters.isNeedAssayId() && !processedFilters.isNeedConditionId();
-        boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable || necessaryTables.contains(
-                MySQLRawDataConditionDAO.TABLE_NAME);
+        boolean condTable = processedFilters.isNeedSpeciesId() && !geneTable || necessaryTables
+                .contains(MySQLRawDataConditionDAO.TABLE_NAME);
         assert !(geneTable && condTable): "We should never need both cond and gene table";
         boolean callTable = necessaryTables.contains(MySQLESTDAO.TABLE_NAME) ||
-                processedFilters.isNeedGeneId();
+                processedFilters.isNeedGeneId() ||
+                processedFilters.getFilterToCallTableAssayIds() != null;
+        assert !(processedFilters.getFilterToCallTableAssayIds() != null &&
+                !necessaryTables.contains(MySQLESTDAO.TABLE_NAME)): "expressedSequenceTag should"
+                        + " be a mandatory table if filterToCallTableAssayIds is not null";
         boolean assayTable = necessaryTables.contains(MySQLESTLibraryDAO.TABLE_NAME) ||
                 !condTable && processedFilters.isNeedConditionId() ||
                 condTable && callTable;
@@ -884,7 +896,13 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         processedFilters.isNeedAssayId() || processedFilters.isNeedSpeciesId()) ||
                 !expTable && processedFilters.isNeedExperimentId();
         boolean resultAnnotatedSampleTable = necessaryTables
-                .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) || processedFilters.isNeedGeneId();
+                .contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME) ||
+                processedFilters.isNeedGeneId() ||
+                processedFilters.getFilterToCallTableAssayIds() != null;
+        assert !(processedFilters.getFilterToCallTableAssayIds() != null &&
+                !necessaryTables.contains(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME)):
+                    "rnaSeqLibraryAnnotatedSampleGeneResult should be a mandatory table if"
+                    + " filterToCallTableAssayIds is not null";
         boolean libraryAnnotatedSampleTable = necessaryTables.contains(
                 MySQLRNASeqLibraryAnnotatedSampleDAO.TABLE_NAME) ||
                 processedFilters.isNeedAssayId() && !libraryTable ||

@@ -2,6 +2,8 @@ package org.bgee.model.dao.api.expressiondata.rawdata.rnaseq;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
@@ -97,6 +99,39 @@ public interface RNASeqResultAnnotatedSampleDAO extends DAO<RNASeqResultAnnotate
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(Collection<DAORawDataFilter> rawDataFilters,
             Boolean isSingleCell, Integer offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
+
+    /**
+     * Allows to retrieve {@code RNASeqResultAnnotatedSampleTO}s according to the provided filters.
+     * <p>
+     * The {@code RNASeqResultAnnotatedSampleTO}s are retrieved and returned as a
+     * {@code RNASeqResultAnnotatedSampleTOResultSet}. It is the responsibility of the caller to close this
+     * {@code DAOResultSet} once results are retrieved.
+     *
+     * @param rawDataFilters            A {@code Collection} of {@code DAORawDataFilter} allowing to specify
+     *                                  how to filter annotated samples results to retrieve. The query uses
+     *                                  AND between elements of a same filter and uses OR between filters.
+     * @param filterToCallTableAssayIds A {@code Map} with {@code DAORawDataFilter} as key and a {@code Set}
+     *                                  of {@code U extends Comparable<U>} as value. If not null it will allow
+     *                                  to retrieve calls based on annotated sample IDs retrieved in a previous
+     *                                  query to the database.
+     * @param isSingleCell              A {@code Boolean} allowing to specify which RNA-Seq to retrieve.
+     *                                  If <strong>true</strong> only single-cell RNA-Seq are retrieved.
+     *                                  If <strong>false</strong> only bulk RNA-Seq are retrieved.
+     *                                  If <strong>null</strong> all RNA-Seq are retrieved.
+     * @param offset                    An {@code Integer} used to specify which row to start from retrieving data
+     *                                  in the result of a query. If null, retrieve data from the first row. If
+     *                                  not null, a limit should be also provided
+     * @param limit                     An {@code Integer} used to limit the number of rows returned in a query
+     *                                  result. If null, all results are returned.
+     * @param attributes                A {@code Collection} of {@code Attribute}s to specify the information
+     *                                  to retrieve from the data source.
+     * @return                          A {@code RNASeqResultAnnotatedSampleTOResultSet} allowing to retrieve the
+     *                                  targeted {@code RNASeqResultAnnotatedSampleTOResultSet}s.
+     * @throws DAOException             If an error occurred while accessing the data source.
+     */
+    public <U extends Comparable<U>> RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
+            Collection<DAORawDataFilter> rawDataFilters, Map<DAORawDataFilter, Set<U>> filterToCallTableAssayIds,
+            Boolean isSingleCell, Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * Allows to retrieve {@code RNASeqResultAnnotatedSampleTO}s according to the provided filters.

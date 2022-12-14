@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -52,23 +51,13 @@ implements RNASeqResultAnnotatedSampleDAO {
 
     @Override
     public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
-            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
-            Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes)
-            throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
-        return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, null, offset, limit,
-                attributes));
-    }
-
-    @Override
-    public <U extends Comparable<U>> RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
-            Collection<DAORawDataFilter> rawDataFilters, Map<DAORawDataFilter,
-            Set<U>> filterToCallTableAssayIds, Boolean isSingleCell, Integer offset, Integer limit,
+            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
+            Integer offset, Integer limit,
             Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", rawDataFilters, filterToCallTableAssayIds,
-                isSingleCell, offset, limit, attributes);
-        final DAOProcessedRawDataFilter<U> processedFilters =
-                new DAOProcessedRawDataFilter<U>(rawDataFilters, filterToCallTableAssayIds);
+        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attributes);
+
+        final DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<RNASeqResultAnnotatedSampleDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attributes == null || attributes.isEmpty()?
                 EnumSet.allOf(RNASeqResultAnnotatedSampleDAO.Attribute.class): EnumSet.copyOf(attributes));
@@ -115,18 +104,6 @@ implements RNASeqResultAnnotatedSampleDAO {
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
-    }
-
-    @Override
-    public RNASeqResultAnnotatedSampleTOResultSet getResultAnnotatedSamples(
-            Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell, Integer offset,
-            Integer limit, Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes)
-                    throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
-                attributes);
-        return log.traceExit(this.getResultAnnotatedSamples(rawDataFilters, null, isSingleCell,
-                offset, limit, attributes));
-        
     }
 
     class MySQLRNASeqResultAnnotatedSampleTOResultSet

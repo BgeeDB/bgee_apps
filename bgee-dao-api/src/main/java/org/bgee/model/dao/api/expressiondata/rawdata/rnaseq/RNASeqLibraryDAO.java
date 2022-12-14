@@ -95,28 +95,6 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
             Collection<Attribute> attributes) throws DAOException;
 
     /**
-     * Retrieve from a data source a set of {@code RNASeqLibraryTO}s according to the provided filters,
-     * ordered by experiment IDs and RNA-Seq library IDs.
-     * 
-     * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
-     *                          which library to retrieve. The query uses AND between elements of a
-     *                          same filter and uses OR between filters.
-     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
-     *                          in the result of a query. If null, retrieve data from the first row.
-     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
-     *                          result. If null, all results are returned.
-     * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
-     *                          to retrieve from the library.
-     * @return  A {@code RNASeqLibraryTO}, encapsulating all the data
-     *          related to the RNA-Seq library retrieved from the data source,
-     *          or {@code null} if none could be found.
-     * @throws DAOException     If an error occurred when accessing the data source.
-     */
-    public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<Attribute> attributes)
-            throws DAOException;
-
-    /**
      * {@code DAOResultSet} for {@code RNASeqExperimentTO}s
      * 
      * @author  Julien Wollbrett

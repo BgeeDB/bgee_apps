@@ -740,7 +740,7 @@ public class RawDataLoader extends CommonService {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
             DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
-                    Collections.singleton(libFilter), null, null, null);
+                    Collections.singleton(libFilter), null, null, null, null);
 
             while (libTORS.next()) {
                 RNASeqLibraryTO libTO = libTORS.getTO();
@@ -758,7 +758,7 @@ public class RawDataLoader extends CommonService {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null);
             expTORS = this.rnaSeqExperimentDAO.getExperiments(
-                    Collections.singleton(expFilter), null, null, null);
+                    Collections.singleton(expFilter), null, null, null, null);
         } else if (infoType == InformationType.EXPERIMENT) {
             //otherwise, it was the information requested originally
             expTORS = this.rnaSeqExperimentDAO.getExperiments(daoRawDataFilters, isSingleCell,

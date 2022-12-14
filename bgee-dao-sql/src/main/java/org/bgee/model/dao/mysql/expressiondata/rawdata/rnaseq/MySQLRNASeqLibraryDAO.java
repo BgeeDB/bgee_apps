@@ -38,15 +38,6 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         super(manager);
     }
 
-    @Override
-    public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<RNASeqLibraryDAO.Attribute> attributes)
-            throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
-        return log.traceExit(this.getRnaSeqLibrary(rawDataFilters, null, offset, limit,
-                attributes));
-    }
-
 
     @Override
     public RNASeqLibraryTOResultSet getRnaSeqLibrary(Collection<DAORawDataFilter> rawDataFilters,

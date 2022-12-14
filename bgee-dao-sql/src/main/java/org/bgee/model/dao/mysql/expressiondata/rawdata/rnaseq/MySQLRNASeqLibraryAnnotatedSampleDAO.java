@@ -39,15 +39,6 @@ implements RNASeqLibraryAnnotatedSampleDAO{
     }
 
     @Override
-    public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
-            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
-            Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs) throws DAOException {
-        log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
-        return log.traceExit(this.getLibraryAnnotatedSamples(rawDataFilters, null, offset, limit,
-                attrs));
-    }
-
-    @Override
     public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamplesFromLibraryAnnotatedSampleIds(
             Collection<Integer> libraryAnnotatedSampleIds, 
             Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs)

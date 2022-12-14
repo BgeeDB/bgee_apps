@@ -59,6 +59,17 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         this.needExperimentId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
+        //Assert to check the coherence of method DAORawDataFilter#hasFilteringNotConsideringGeneIds()
+        //with this constructor
+        assert(((this.needSpeciesId || this.needAssayId || this.needConditionId ||
+                  this.needExperimentId) &&
+                  this.filterToCallTableAssayIds == null &&
+                  this.rawDataFilters.stream().anyMatch(f -> f.hasFilteringNotConsideringGeneIds()))
+               ||
+               (!this.needSpeciesId && !this.needAssayId && !this.needConditionId &&
+                !this.needExperimentId &&
+                (this.filterToCallTableAssayIds != null ||
+                this.rawDataFilters.stream().noneMatch(f -> f.hasFilteringNotConsideringGeneIds()))));
 
         //Gene IDs always go through the call table, so we don't check filterToCallTableAssayIds
         this.needGeneId = this.rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());

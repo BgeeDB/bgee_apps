@@ -47,25 +47,14 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
     }
 
     @Override
-    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<AffymetrixProbesetDAO.Attribute> attrs)
-            throws DAOException {
+    public AffymetrixProbesetTOResultSet getAffymetrixProbesets(
+            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
+            Collection<AffymetrixProbesetDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
-        return log.traceExit(this.getAffymetrixProbesets(rawDataFilters,null, offset, limit, attrs));
-    }
-
-    @Override
-    public <U extends Comparable<U>> AffymetrixProbesetTOResultSet getAffymetrixProbesets(
-            Collection<DAORawDataFilter> rawDataFilters, 
-            Map<DAORawDataFilter, Set<U>> filterToCallTableAssayIds, Integer offset, 
-            Integer limit, Collection<AffymetrixProbesetDAO.Attribute> attrs)
-                    throws DAOException {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, filterToCallTableAssayIds,
-                offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);
 
-        DAOProcessedRawDataFilter<U> processedFilters =
-                new DAOProcessedRawDataFilter<>(rawDataFilters, filterToCallTableAssayIds);
+        DAOProcessedRawDataFilter<Integer> processedFilters =
+                new DAOProcessedRawDataFilter<>(rawDataFilters);
         final Set<AffymetrixProbesetDAO.Attribute> clonedAttrs = Collections
                 .unmodifiableSet(attrs == null || attrs.isEmpty()?
                 EnumSet.allOf(AffymetrixProbesetDAO.Attribute.class): EnumSet.copyOf(attrs));

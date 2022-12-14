@@ -173,7 +173,11 @@ public class DAORawDataFilter {
         return exprOrAssayIds;
     }
 
-    
+    public boolean hasFilteringNotConsideringGeneIds() {
+        return this.getSpeciesId() != null || !this.getAssayIds().isEmpty() ||
+                !this.getRawDataCondIds().isEmpty() || !this.getExperimentIds().isEmpty() ||
+                !this.getExprOrAssayIds().isEmpty();
+    }
 
     @Override
     public int hashCode() {

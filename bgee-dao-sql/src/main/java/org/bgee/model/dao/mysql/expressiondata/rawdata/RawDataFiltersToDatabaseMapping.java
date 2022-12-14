@@ -10,13 +10,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTLibraryDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituEvidenceDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituExperimentDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.insitu.InSituSpotDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixChipDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.microarray.AffymetrixProbesetDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.microarray.MicroarrayExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqExperimentDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqLibraryDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.rnaseq.RNASeqResultAnnotatedSampleDAO;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.dao.api.species.SpeciesDAO;
 import org.bgee.model.dao.mysql.expressiondata.rawdata.est.MySQLESTDAO;
@@ -49,7 +53,7 @@ public class RawDataFiltersToDatabaseMapping {
      * @since Bgee 15.0, Nov. 2022
      */
     public static enum RawDataColumn {SPECIES_ID, EXPERIMENT_ID, COND_ID,
-        ASSAY_ID, CALL_ID, GENE_ID}
+        ASSAY_ID, CALL_TABLE_ASSAY_ID, GENE_ID}
 
     public RawDataFiltersToDatabaseMapping(Map<RawDataColumn, String> ambiguousColToTableName,
             DAODataType datatype) {
@@ -89,11 +93,15 @@ public class RawDataFiltersToDatabaseMapping {
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
             finalColToTable.put(RawDataColumn.ASSAY_ID, MySQLAffymetrixChipDAO.TABLE_NAME);
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLAffymetrixProbesetDAO.TABLE_NAME);
+            finalColToTable.put(RawDataColumn.CALL_TABLE_ASSAY_ID, MySQLAffymetrixProbesetDAO.TABLE_NAME);
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
+            finalColToTable.put(RawDataColumn.CALL_TABLE_ASSAY_ID, MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         } else if (datatype.equals(DAODataType.EST)) {
+            finalColToTable.put(RawDataColumn.CALL_TABLE_ASSAY_ID, MySQLESTDAO.TABLE_NAME);
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLESTDAO.TABLE_NAME);
         } else if (datatype.equals(DAODataType.IN_SITU)) {
+            finalColToTable.put(RawDataColumn.CALL_TABLE_ASSAY_ID, MySQLInSituSpotDAO.TABLE_NAME);
             finalColToTable.put(RawDataColumn.GENE_ID, MySQLInSituSpotDAO.TABLE_NAME);
             finalColToTable.put(RawDataColumn.SPECIES_ID, MySQLRawDataConditionDAO.TABLE_NAME);
         } else {
@@ -116,11 +124,15 @@ public class RawDataFiltersToDatabaseMapping {
         if (datatype.equals(DAODataType.AFFYMETRIX)) {
             finalColToColName.put(RawDataColumn.ASSAY_ID, AffymetrixChipDAO.Attribute
                     .AFFYMETRIX_CHIP_ID.getTOFieldName());
+            finalColToColName.put(RawDataColumn.CALL_TABLE_ASSAY_ID, AffymetrixProbesetDAO.Attribute
+                    .BGEE_AFFYMETRIX_CHIP_ID.getTOFieldName());
             finalColToColName.put(RawDataColumn.EXPERIMENT_ID, MicroarrayExperimentDAO.Attribute
                     .ID.getTOFieldName());
         } else if (datatype.equals(DAODataType.RNA_SEQ)) {
             finalColToColName.put(RawDataColumn.EXPERIMENT_ID, RNASeqExperimentDAO.Attribute
                     .ID.getTOFieldName());
+            finalColToColName.put(RawDataColumn.CALL_TABLE_ASSAY_ID, RNASeqResultAnnotatedSampleDAO
+                    .Attribute.LIBRARY_ANNOTATED_SAMPLE_ID.getTOFieldName());
             // for RNA-Seq the filtering is done on library IDs
             finalColToColName.put(RawDataColumn.ASSAY_ID, RNASeqLibraryDAO.Attribute
                     .ID.getTOFieldName());
@@ -128,8 +140,12 @@ public class RawDataFiltersToDatabaseMapping {
             // for RNA-Seq the filtering is done on library IDs
             finalColToColName.put(RawDataColumn.ASSAY_ID, ESTLibraryDAO.Attribute
                     .ID.getTOFieldName());
+            finalColToColName.put(RawDataColumn.CALL_TABLE_ASSAY_ID, ESTDAO.Attribute
+                    .EST_LIBRARY_ID.getTOFieldName());
         } else if (datatype.equals(DAODataType.IN_SITU)) {
             finalColToColName.put(RawDataColumn.ASSAY_ID, InSituEvidenceDAO.Attribute
+                    .IN_SITU_EVIDENCE_ID.getTOFieldName());
+            finalColToColName.put(RawDataColumn.CALL_TABLE_ASSAY_ID, InSituSpotDAO.Attribute
                     .IN_SITU_EVIDENCE_ID.getTOFieldName());
             finalColToColName.put(RawDataColumn.EXPERIMENT_ID, InSituExperimentDAO.Attribute
                     .ID.getTOFieldName());

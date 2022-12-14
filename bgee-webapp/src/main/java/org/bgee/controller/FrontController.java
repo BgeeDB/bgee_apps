@@ -341,7 +341,7 @@ public class FrontController extends HttpServlet {
             //with the proper log4j2 Marker "CATCHING".
             try {
                 String url = requestParameters.getRequestURL();
-                log.log(logLevel, "URL requested for Exception: ", url);
+                log.log(logLevel, "URL requested for Exception: {}", url);
             } catch (Exception eUrl) {
                 realException = eUrl;
                 logLevel = Level.ERROR;

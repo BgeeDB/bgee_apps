@@ -87,43 +87,44 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             Set<String> assayIds = rawDataFilter.getAssayIds();
             Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
             Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
-                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter) == null?
-                            new HashSet<U>(): processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
+                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
             assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
 
-            // parameterize expIds
-            // ESTs does not have experimentIds
-            if (callTableAssayIds == null && !datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
-                stmt.setStrings(paramIndex, expIds, true);
-                paramIndex += expIds.size();
-            }
-            //parameterize assayIds
-            if (callTableAssayIds == null && !assayIds.isEmpty()) {
-                stmt.setStrings(paramIndex, assayIds, true);
-                paramIndex += assayIds.size();
-            }
-            //parameterize assay or experiment IDs
-            if (callTableAssayIds == null && !expOrAssayIds.isEmpty()) {
+            if (callTableAssayIds == null) {
+                // parameterize expIds
                 // ESTs does not have experimentIds
-                if (!datatype.equals(DAODataType.EST)) {
+                if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
+                    stmt.setStrings(paramIndex, expIds, true);
+                    paramIndex += expIds.size();
+                }
+                //parameterize assayIds
+                if (!assayIds.isEmpty()) {
+                    stmt.setStrings(paramIndex, assayIds, true);
+                    paramIndex += assayIds.size();
+                }
+                //parameterize assay or experiment IDs
+                if (!expOrAssayIds.isEmpty()) {
+                    // ESTs does not have experimentIds
+                    if (!datatype.equals(DAODataType.EST)) {
+                        stmt.setStrings(paramIndex, expOrAssayIds, true);
+                        paramIndex += expOrAssayIds.size();
+                    }
                     stmt.setStrings(paramIndex, expOrAssayIds, true);
                     paramIndex += expOrAssayIds.size();
                 }
-                stmt.setStrings(paramIndex, expOrAssayIds, true);
-                paramIndex += expOrAssayIds.size();
-            }
-            //parameterize speciesId
-            if (callTableAssayIds == null && speciesId != null) {
-                stmt.setIntegers(paramIndex, Set.of(speciesId), false);
-                paramIndex++;
-            }
-            //parameterize rawDataCondIds
-            if (callTableAssayIds == null && !rawDataCondIds.isEmpty()) {
-                stmt.setIntegers(paramIndex, rawDataCondIds, true);
-                paramIndex += rawDataCondIds.size();
+                //parameterize speciesId
+                if (speciesId != null) {
+                    stmt.setIntegers(paramIndex, Set.of(speciesId), false);
+                    paramIndex++;
+                }
+                //parameterize rawDataCondIds
+                if (!rawDataCondIds.isEmpty()) {
+                    stmt.setIntegers(paramIndex, rawDataCondIds, true);
+                    paramIndex += rawDataCondIds.size();
+                }
             }
             // parameterize assayIds for call table
-            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+            else if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
                 stmt.setObjects(paramIndex, callTableAssayIds, true,
                         processedFilters.getCallTableAssayIdType());
                 paramIndex += callTableAssayIds.size();
@@ -1100,30 +1101,27 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.traceEntry("{}, {}", processedRawDataFilters, filtersToDatabaseMapping);
 
         String whereClause = processedRawDataFilters.getRawDataFilters().stream()
-                .map(e -> {
-                    Set<U> callTableAssayIds = processedRawDataFilters.getFilterToCallTableAssayIds() == null?
-                        null: processedRawDataFilters.getFilterToCallTableAssayIds().get(e) == null? new HashSet<>():
-                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e);
-          assert(processedRawDataFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
-                    return this.generateOneFilterWhereClause(e, filtersToDatabaseMapping, callTableAssayIds);
-                 })
+                .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping,
+                        processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
+                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e)))
                 .collect(Collectors.joining(") OR (", " (", ")"));
         return whereClause;
     }
 
     private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds) {
-        log.traceEntry("{}, {}", rawDataFilter, filtersToDatabaseMapping, callTableAssayIds);
+        log.traceEntry("{}, {}, {}", rawDataFilter, filtersToDatabaseMapping, callTableAssayIds);
+
         Integer speId = callTableAssayIds == null? rawDataFilter.getSpeciesId(): null;
         Set<Integer> geneIds = rawDataFilter.getGeneIds();
         Set<Integer> rawDataCondIds = callTableAssayIds == null?
-            rawDataFilter.getRawDataCondIds(): new HashSet<Integer>();
+            rawDataFilter.getRawDataCondIds(): new HashSet<>();
         Set<String> expIds = callTableAssayIds == null?
-                rawDataFilter.getExperimentIds(): new HashSet<String>();
+                rawDataFilter.getExperimentIds(): new HashSet<>();
         Set<String> assayIds = callTableAssayIds == null?
-            rawDataFilter.getAssayIds(): new HashSet<String>();
+            rawDataFilter.getAssayIds(): new HashSet<>();
         Set<String> expOrAssayIds = callTableAssayIds == null?
-            rawDataFilter.getExprOrAssayIds(): new HashSet<String>();
+            rawDataFilter.getExprOrAssayIds(): new HashSet<>();
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
         // FILTER ON EXPERIMENT/ASSAY IDS

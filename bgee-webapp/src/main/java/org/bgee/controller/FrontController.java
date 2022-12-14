@@ -211,7 +211,13 @@ public class FrontController extends HttpServlet {
             request.setCharacterEncoding(RequestParameters.CHAR_ENCODING); 
             requestParameters = new RequestParameters(request, this.urlParameters,
                     this.prop, true, "&");
-            log.debug("Analyzed URL: {} - POST data? {}", requestParameters.getRequestURL(), postData);
+            //calling requestParameters.getRequestURL() can produce an error,
+            //since we don't want to produce one in production just for logging,
+            //we add a isDebugEnabled check
+            if (log.isDebugEnabled()) {
+                log.debug("Analyzed URL: {} - POST data? {}",
+                        requestParameters.getRequestURL(), postData);
+            }
             
             //Load a User instance to track users between requests
             User user = this.userService.createNewUser(request, requestParameters);
@@ -313,18 +319,6 @@ public class FrontController extends HttpServlet {
                     realException instanceof TooManyJobsException) {
                 logLevel = Level.DEBUG;
             }
-            log.catching(logLevel, realException);
-            //to know the URL of the error
-            //Retrieve the URL in a try-catch to make sure it cannot create any more problems.
-            //We still use the method 'catching' on the previous line, so that the exception is caught
-            //with the proper log4j2 Marker "CATCHING".
-            try {
-                String url = requestParameters.getRequestURL();
-                log.log(logLevel, "URL requested {} for Exception {}", url, e.getStackTrace());
-            } catch (Exception eUrl) {
-                //We'll just do nothing in that case
-                log.catching(eUrl);
-            }
             
             //get an ErrorDisplay of the appropriate display type. 
             //We don't acquire the ErrorDisplay before any Exception is thrown, 
@@ -336,14 +330,35 @@ public class FrontController extends HttpServlet {
             try {
                 errorDisplay = this.viewFactoryProvider.getFactory(response, displayType, requestParameters)
                         .getErrorDisplay();
-            } catch (IOException e1) {
-                e1.initCause(realException);
+            } catch (Throwable e1) {
                 realException = e1;
+                logLevel = Level.ERROR;
             }
+
+            //to know the URL of the error
+            //Retrieve the URL in a try-catch to make sure it cannot create any more problems.
+            //We still use the method 'catching' on the previous line, so that the exception is caught
+            //with the proper log4j2 Marker "CATCHING".
+            try {
+                String url = requestParameters.getRequestURL();
+                log.log(logLevel, "URL requested for Exception: ", url);
+            } catch (Exception eUrl) {
+                realException = eUrl;
+                logLevel = Level.ERROR;
+            }
+            log.catching(logLevel, realException);
+
             if (errorDisplay == null) {
-                log.error("Could not display error message to caller: {}", realException);
-                log.traceExit();
-                return;
+                //In that case we directly send to user an error response from here,
+                //just text as we can't have a view from the proper requested format
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                try {
+                    response.getWriter().print("Internal server error");
+                } catch (IOException e1) {
+                    //we just swallow the exception here
+                }
+                log.error("Could not display error message to caller with the correct ErrorDisplay");
+                log.traceExit(); return;
             }
             
             if (realException instanceof InvalidFormatException) {

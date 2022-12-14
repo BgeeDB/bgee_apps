@@ -45,17 +45,25 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
     @Override
     public RawDataCountContainerTO getAffymetrixCount(Collection<DAORawDataFilter> rawDataFilters,
-            boolean experimentCount, boolean assayCount, boolean callsCount) {
-        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, assayCount, callsCount);
-        if (!experimentCount && !assayCount && !callsCount) {
+            boolean experimentCount, boolean assayCount, boolean callCount) {
+        log.traceEntry("{}, {},{}, {}", rawDataFilters, experimentCount, assayCount, callCount);
+        if (!experimentCount && !assayCount && !callCount) {
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
+        }
+        //If callsCount is requested along with other count, we separate that in two queries
+        //for faster results
+        boolean newCallCount = callCount;
+        RawDataCountContainerTO callCountTO = null;
+        if (callCount && (experimentCount || assayCount)) {
+            callCountTO = this.getAffymetrixCount(rawDataFilters, false, false, true);
+            newCallCount = false;
         }
         final DAOProcessedRawDataFilter<Integer> processedRawDataFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
-        boolean probesetTable = processedRawDataFilters.isNeedGeneId() || callsCount;
+        boolean probesetTable = processedRawDataFilters.isNeedGeneId() || newCallCount;
 
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
@@ -88,7 +96,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
             previousCount = true;
         }
-        if (callsCount) {
+        if (newCallCount) {
             assert probesetTable;
             if(previousCount) {
                 sb.append(",");
@@ -105,10 +113,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // create the set of tables it is necessary to use in FROM clause even if no filter
         // on those columns
         Set<String> necessaryTables = new HashSet<>();
-        if (callsCount) {
+        if (newCallCount) {
             necessaryTables.add(MySQLAffymetrixProbesetDAO.TABLE_NAME);
         }
-        if (experimentCount || assayCount && !callsCount) {
+        if (experimentCount || assayCount && !newCallCount) {
             necessaryTables.add(MySQLAffymetrixChipDAO.TABLE_NAME);
         }
 
@@ -129,6 +137,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();
             resultSet.close();
+            if (callCountTO != null) {
+                return log.traceExit(new RawDataCountContainerTO(to.getExperimentCount(),
+                        to.getAssayCount(), callCountTO.getCallCount()));
+            }
             return log.traceExit(to);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -142,11 +154,19 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
+        //If callsCount is requested along with other count, we separate that in two queries
+        //for faster results
+        boolean newCallCount = callCount;
+        RawDataCountContainerTO callCountTO = null;
+        if (callCount && assayCount) {
+            callCountTO = this.getESTCount(rawDataFilters, false, true);
+            newCallCount = false;
+        }
         final DAOProcessedRawDataFilter<String> processedRawDataFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
-        boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount;
+        boolean callTable = processedRawDataFilters.isNeedGeneId() || newCallCount;
 
         // generate SELECT clause
         sb.append("SELECT STRAIGHT_JOIN");
@@ -170,7 +190,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
             previousCount = true;
         }
-        if (callCount) {
+        if (newCallCount) {
             assert callTable;
             if(previousCount) {
                 sb.append(",");
@@ -186,9 +206,9 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
 
         // create the set of tables it is necessary to use in FROM clause even if no filter
         // on those columns.
-        // If callCount then all count can be retrieved from the call table
+        // If newCallCount then all count can be retrieved from the call table
         Set<String> necessaryTables = new HashSet<>();
-        if (callCount) {
+        if (newCallCount) {
             necessaryTables.add(MySQLESTDAO.TABLE_NAME);
         } else {
             assert assayCount;
@@ -212,6 +232,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();
             resultSet.close();
+            if (callCountTO != null) {
+                return log.traceExit(new RawDataCountContainerTO(to.getExperimentCount(),
+                        to.getAssayCount(), callCountTO.getCallCount()));
+            }
             return log.traceExit(to);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -227,16 +251,26 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             throw log.throwing(new IllegalArgumentException("experimentCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
+        //We make separate queries for assayConditionCount/callCount
+        //for faster results
+        boolean newCallCount = callCount;
+        boolean newAssayConditionCount = assayConditionCount;
+        RawDataCountContainerTO callCountTO = null;
+        if ((callCount || assayConditionCount) && (experimentCount || assayCount)) {
+            callCountTO = this.getInSituCount(rawDataFilters, false, false, assayConditionCount, callCount);
+            newCallCount = false;
+            newAssayConditionCount = false;
+        }
         final DAOProcessedRawDataFilter<String> processedRawDataFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
         // for insitu the condition is linked to a call
-        boolean callTable = processedRawDataFilters.isNeedGeneId() || callCount ||
-                processedRawDataFilters.isNeedConditionId() || assayConditionCount;
+        boolean callTable = processedRawDataFilters.isNeedGeneId() || newCallCount ||
+                processedRawDataFilters.isNeedConditionId() || newAssayConditionCount;
 
         // generate SELECT clause
-        sb.append("SELECT STRAIGHT_JOIN");
+        sb.append("SELECT ");
         boolean previousCount = false;
         if (experimentCount) {
             sb.append(" count(distinct ").append(MySQLInSituEvidenceDAO.TABLE_NAME).append(".")
@@ -267,7 +301,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
             previousCount = true;
         }
-        if (assayConditionCount) {
+        if (newAssayConditionCount) {
             if(previousCount) {
                 sb.append(",");
             }
@@ -280,7 +314,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.INSITU_ASSAY_COND_COUNT.getTOFieldName());
             previousCount = true;
         }
-        if (callCount) {
+        if (newCallCount) {
             assert callTable;
             if(previousCount) {
                 sb.append(",");
@@ -297,10 +331,10 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // create the set of tables it is necessary to use in FROM clause even if no filter
         // on those columns
         Set<String> necessaryTables = new HashSet<>();
-        if (callCount || assayConditionCount) {
+        if (newCallCount || newAssayConditionCount) {
             necessaryTables.add(MySQLInSituSpotDAO.TABLE_NAME);
         }
-        if (experimentCount || assayCount && !callCount && !assayConditionCount) {
+        if (experimentCount || assayCount && !newCallCount && !newAssayConditionCount) {
             necessaryTables.add(MySQLInSituEvidenceDAO.TABLE_NAME);
         }
 
@@ -321,6 +355,11 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();
             resultSet.close();
+            if (callCountTO != null) {
+                return log.traceExit(new RawDataCountContainerTO(to.getExperimentCount(),
+                        to.getAssayCount(), callCountTO.getCallCount(), to.getRnaSeqLibraryCount(),
+                        callCountTO.getInsituAssayConditionCount()));
+            }
             return log.traceExit(to);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
@@ -338,13 +377,21 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                     "experimentCount, libraryCount, assayCount and"
                     + " callsCount can not be all false at the same time"));
         }
+        //We make separate queries for callCount
+        //for faster results
+        boolean newCallCount = callCount;
+        RawDataCountContainerTO callCountTO = null;
+        if (callCount && (experimentCount || assayCount || libraryCount)) {
+            callCountTO = this.getRnaSeqCount(rawDataFilters, isSingleCell, false, false, false, true);
+            newCallCount = false;
+        }
         // force to have a list in order to keep order of elements. It is mandatory to be able
         // to first generate a parameterised query and then add values.
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
         StringBuilder sb = new StringBuilder();
 
-        boolean callTable = processedFilters.isNeedGeneId() || callCount;
+        boolean callTable = processedFilters.isNeedGeneId() || newCallCount;
         // used to know if it is possible to do a count(*) for rnaSeqLibrary count
         boolean assayOrCallTable = callTable || assayCount || processedFilters.isNeedConditionId();
 
@@ -401,7 +448,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
               .append(RawDataCountDAO.Attribute.ASSAY_COUNT.getTOFieldName());
             previousCount = true;
         }
-        if (callCount) {
+        if (newCallCount) {
             assert callTable;
             if(previousCount) {
                 sb.append(",");
@@ -418,7 +465,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         // create the set of tables it is necessary to use in FROM clause even if no filter
         // on those columns
         Set<String> necessaryTables = new HashSet<>();
-        if (callCount) {
+        if (newCallCount) {
             necessaryTables.add(MySQLRNASeqResultAnnotatedSampleDAO.TABLE_NAME);
         }
         if (libraryCount || assayCount) {
@@ -444,6 +491,11 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
             resultSet.next();
             RawDataCountContainerTO to = resultSet.getTO();
             resultSet.close();
+            if (callCountTO != null) {
+                return log.traceExit(new RawDataCountContainerTO(to.getExperimentCount(),
+                        to.getAssayCount(), callCountTO.getCallCount(), to.getRnaSeqLibraryCount(),
+                        to.getInsituAssayConditionCount()));
+            }
             return log.traceExit(to);
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));

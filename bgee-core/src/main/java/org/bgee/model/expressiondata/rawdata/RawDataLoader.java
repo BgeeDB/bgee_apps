@@ -629,43 +629,14 @@ public class RawDataLoader extends CommonService {
                     withCall? 0: null));
         }
 
-        RawDataFilter filter = this.getRawDataProcessedFilter().getRawDataFilter();
-        //If we don't need any filtering on assay information,
-        boolean noNeedChipInfo = filter.getAssayIds().isEmpty() &&
-                filter.getExperimentIds().isEmpty() &&
-                filter.getExperimentOrAssayIds().isEmpty() &&
-                filter.getConditionFilters().stream().allMatch(cf -> cf.areAllCondParamFiltersEmpty());
-        //and we don't need filtering on probeset information for counting assays or experiments,
-        boolean noProbesetFilteringForAssayExpCount = !withExperiment && !withAssay ||
-                filter.getGeneFilters().stream().allMatch(gf -> gf.getGeneIds().isEmpty());
-        //then, if requested, we count the probesets in a separate query for faster results.
-        //FIXME FB: actually, it should be the DAO doing this logic
-        RawDataCountContainerTO probesetCountTO = null;
-        boolean updatedWithCall = withCall;
-        if (withCall && noNeedChipInfo && noProbesetFilteringForAssayExpCount) {
-            probesetCountTO = rawDataCountDAO.getAffymetrixCount(
-                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
-                    false, false, true);
-            updatedWithCall = false;
-        }
-        //Now we do the "requested" call if we don't have the counts we need yet
-        RawDataCountContainerTO affyRemainingCountTO = null;
-        if (updatedWithCall || withExperiment || withAssay) {
-            affyRemainingCountTO = rawDataCountDAO.getAffymetrixCount(
-                    this.getRawDataProcessedFilter().getDaoRawDataFilters(),
-                    withExperiment, withAssay, updatedWithCall);
-        }
-        assert probesetCountTO != null || affyRemainingCountTO != null;
-        assert probesetCountTO == null || probesetCountTO.getCallCount() != null;
+        RawDataCountContainerTO countTO = this.rawDataCountDAO.getAffymetrixCount(
+                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                withExperiment, withAssay, withCall);
 
         return log.traceExit(new AffymetrixCountContainer(
-                //experiment count
-                affyRemainingCountTO != null? affyRemainingCountTO.getExperimentCount(): null,
-                //assay count
-                affyRemainingCountTO != null? affyRemainingCountTO.getAssayCount(): null,
-                //call count
-                probesetCountTO != null? probesetCountTO.getCallCount():
-                    affyRemainingCountTO.getCallCount()));
+                countTO.getExperimentCount(),
+                countTO.getAssayCount(),
+                countTO.getCallCount()));
     }
 
     private RawDataPostFilter loadAffymetrixPostFilter() {

@@ -600,7 +600,9 @@ public class CommandData extends CommandParent {
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
             processedFilter = rawDataService.processRawDataFilter(filter);
+            log.debug("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
             RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+            log.debug("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
         } else {
             log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
         }
@@ -791,9 +793,9 @@ public class CommandData extends CommandParent {
             dataTypeTolDescrSupplier.put(DataType.AFFYMETRIX,
                     () -> getAffymetrixProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
-                    () -> getRnaSeqProcExprValuesColumnDescriptions());
+                    () -> getRnaSeqProcExprValuesColumnDescriptions(false));
             dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
-                    () -> getRnaSeqProcExprValuesColumnDescriptions());
+                    () -> getRnaSeqProcExprValuesColumnDescriptions(true));
             dataTypeTolDescrSupplier.put(DataType.EST,
                     () -> getESTProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.IN_SITU,
@@ -842,7 +844,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result"));
+        colDescr.addAll(getConditionColumnDescriptions("result", false));
 
         return log.traceExit(colDescr);
     }
@@ -862,7 +864,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result"));
+        colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell));
 
         colDescr.add(new ColumnDescription("Technology", null,
                 List.of("result.library.technology.protocolName"),
@@ -956,7 +958,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result"));
+        colDescr.addAll(getConditionColumnDescriptions("result", false));
 
         return log.traceExit(colDescr);
     }
@@ -972,7 +974,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result"));
+        colDescr.addAll(getConditionColumnDescriptions("result", false));
 
         return log.traceExit(colDescr);
     }
@@ -1012,11 +1014,11 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.NUMERIC,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
         return log.traceExit(colDescr);
     }
-    private List<ColumnDescription> getRnaSeqProcExprValuesColumnDescriptions() {
+    private List<ColumnDescription> getRnaSeqProcExprValuesColumnDescriptions(boolean isSingleCell) {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Experiment ID", null,
@@ -1063,7 +1065,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.NUMERIC,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
 
         return log.traceExit(colDescr);
     }
@@ -1097,7 +1099,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.NUMERIC,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
         return log.traceExit(colDescr);
     }
@@ -1126,7 +1128,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.NUMERIC,
                 null));
 
-        colDescr.addAll(getConditionColumnDescriptions("result.assay"));
+        colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
         return log.traceExit(colDescr);
     }
@@ -1196,22 +1198,42 @@ public class CommandData extends CommandParent {
         return log.traceExit(colDescr);
     }
 
-    private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart) {
-        log.traceEntry("{}", attributeStart);
+    private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart,
+            boolean displayCellType) {
+        log.traceEntry("{}, {}", attributeStart, displayCellType);
         List<ColumnDescription> colDescr = new ArrayList<>();
-        colDescr.add(new ColumnDescription("Anat. entity",
-                "Annotation of the anatomical localization of the sample",
-                List.of(attributeStart + ".annotation.rawDataCondition.cellType.id",
-                        attributeStart + ".annotation.rawDataCondition.cellType.name",
-                        attributeStart + ".annotation.rawDataCondition.anatEntity.id",
-                        attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
+
+        if (displayCellType) {
+            colDescr.add(new ColumnDescription("Cell type ID",
+                    "ID of the cell type of the sample",
+                    List.of(attributeStart + ".annotation.rawDataCondition.cellType.id"),
+                    ColumnDescription.ColumnType.ANAT_ENTITY,
+                    null));
+            colDescr.add(new ColumnDescription("Cell type name",
+                    "Name of the cell type of the sample",
+                    List.of(attributeStart + ".annotation.rawDataCondition.cellType.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+        }
+        colDescr.add(new ColumnDescription("Anat. entity ID",
+                "ID of the anatomical localization of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.id"),
                 ColumnDescription.ColumnType.ANAT_ENTITY,
                 null));
-        colDescr.add(new ColumnDescription("Stage",
-                "Annotation of the developmental and life stage of the sample",
-                List.of(attributeStart + ".annotation.rawDataCondition.devStage.id",
-                        attributeStart + ".annotation.rawDataCondition.devStage.name"),
+        colDescr.add(new ColumnDescription("Anat. entity name",
+                "Name of the anatomical localization of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Stage ID",
+                "ID of the developmental and life stage of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.devStage.id"),
                 ColumnDescription.ColumnType.DEV_STAGE,
+                null));
+        colDescr.add(new ColumnDescription("Stage name",
+                "Name of the developmental and life stage of the sample",
+                List.of(attributeStart + ".annotation.rawDataCondition.devStage.name"),
+                ColumnDescription.ColumnType.STRING,
                 null));
         colDescr.add(new ColumnDescription("Sex",
                 "Annotation of the sex of the sample",

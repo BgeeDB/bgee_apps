@@ -1277,10 +1277,28 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         log.traceEntry("{}, {}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
                 dataType, isSingleCell);
 
+        //ESTs can't have results if an experiment ID is requested
+        //(ESTs don't have experiments)
+        //If all filters request an experiment, we return a FALSE clause;
+        //otherwise, we discard the filters that have an experiment ID,
+        //because the method generateOneFilterWhereClause will skip the experimentId field
+        //for ESTs, and we would obtain some results why we should not
+        if (DAODataType.EST.equals(dataType) &&
+                processedRawDataFilters.isAlwaysExactlyExperimentId()) {
+            log.debug("Returning FALSE where clause for EST because experiment IDs");
+            return log.traceExit(" FALSE");
+        }
         String whereClause = processedRawDataFilters.getRawDataFilters().stream()
-                .map(e -> this.generateOneFilterWhereClause(e, filtersToDatabaseMapping,
+                .filter(f -> {
+                    if (DAODataType.EST.equals(dataType) && !f.getExperimentIds().isEmpty()) {
+                        log.debug("Skipping DAORawDataFilter for EST because experiment IDs: {}", f);
+                        return false;
+                    }
+                    return true;
+                })
+                .map(f -> this.generateOneFilterWhereClause(f, filtersToDatabaseMapping,
                         processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
-                            processedRawDataFilters.getFilterToCallTableAssayIds().get(e),
+                            processedRawDataFilters.getFilterToCallTableAssayIds().get(f),
                         dataType, isSingleCell))
                 .collect(Collectors.joining(") OR (", " (", ")"));
 
@@ -1429,23 +1447,21 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         boolean filterFound = false;
         // filter on experiment for all datatypes except est as no such concept exists
-        if (!filtersToDatabaseMapping.getDatatype().equals(DAODataType.EST)) {
-            if (!expIds.isEmpty()) {
-                //retrieve table to use for experimentId
-                sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
-                        .get(RawDataColumn.EXPERIMENT_ID))
-                        .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                                + RawDataColumn.EXPERIMENT_ID)))
-                .append(".")
-                .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
-                        .get(RawDataColumn.EXPERIMENT_ID))
-                        .orElseThrow(() -> new IllegalStateException("no column name associated to column"
-                                + RawDataColumn.EXPERIMENT_ID)))
-                .append(" IN (")
-                .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
-                sb.append(")");
-                filterFound = true;
-            }
+        if (!expIds.isEmpty() && !filtersToDatabaseMapping.getDatatype().equals(DAODataType.EST)) {
+            //retrieve table to use for experimentId
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.EXPERIMENT_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.EXPERIMENT_ID)))
+            .append(".")
+            .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.EXPERIMENT_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.EXPERIMENT_ID)))
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(expIds.size()));
+            sb.append(")");
+            filterFound = true;
         }
         // FILTER ON assay IDS
         // Specific case for RNASeq. An assay corresponds to a library annotated sample. No public

@@ -185,6 +185,14 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         }
         final DAOProcessedRawDataFilter<String> processedRawDataFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);
+        //If all filters always target some experiment IDs, there can be no results, as EST
+        //don't have experiments. Since we don't have to return a ResultSet,
+        //we don't even bother performing a query with a FALSE where clause.
+        if (processedRawDataFilters.isAlwaysExactlyExperimentId()) {
+            return log.traceExit(new RawDataCountContainerTO(null,
+                    assayCount? 0: null, callCount? 0: null));
+        }
+
         StringBuilder sb = new StringBuilder();
 
         boolean callTable = processedRawDataFilters.isNeedGeneId() || newCallCount;

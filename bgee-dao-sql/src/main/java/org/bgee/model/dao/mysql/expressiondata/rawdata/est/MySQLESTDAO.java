@@ -91,13 +91,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
                 processedFilters, null, Set.of(TABLE_NAME), DAODataType.EST);
 
         // generate WHERE CLAUSE
-        // ESTs does not have experiment IDs. A WHERE clause has to be added only
-        // if not only filtering on experiment IDs.
-        if (!processedFilters.getRawDataFilters().isEmpty() &&
-                !processedFilters.getRawDataFilters().stream().allMatch(f ->
-                f.getAssayIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
-                f.getGeneIds().isEmpty() && f.getRawDataCondIds().isEmpty() &&
-                f.getSpeciesId() == null)) {
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
                     filtersToDatabaseMapping, DAODataType.EST));
         }

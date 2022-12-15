@@ -56,11 +56,7 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
                 processedFilters, null, Set.of(TABLE_NAME), DAODataType.EST);
 
         // generate WHERE CLAUSE
-        if (!processedFilters.getRawDataFilters().isEmpty() &&
-                !processedFilters.getRawDataFilters().stream().allMatch(f ->
-                f.getAssayIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
-                f.getGeneIds().isEmpty() && f.getRawDataCondIds().isEmpty() &&
-                f.getSpeciesId() == null)) {
+        if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
                     filtersToDatabaseMapping, DAODataType.EST));
         }

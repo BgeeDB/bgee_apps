@@ -29,6 +29,7 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
     private final boolean needSpeciesId;
     private final boolean needConditionId;
     private final boolean alwaysGeneId;
+    private final boolean alwaysExactlyExperimentId;
 
     public DAOProcessedRawDataFilter(Collection<DAORawDataFilter> rawDataFilters) {
         this(rawDataFilters, null, null, null);
@@ -70,6 +71,9 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         this.needExperimentId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
+        this.alwaysExactlyExperimentId = this.filterToCallTableAssayIds != null? false:
+            !this.rawDataFilters.isEmpty() &&
+            this.rawDataFilters.stream().allMatch(e -> !e.getExperimentIds().isEmpty());
 
         //Gene IDs always go through the call table, so we don't check filterToCallTableAssayIds
         this.needGeneId = this.rawDataFilters.stream().anyMatch(e -> !e.getGeneIds().isEmpty());
@@ -115,6 +119,10 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         return needExperimentId;
     }
 
+    public boolean isAlwaysExactlyExperimentId() {
+        return alwaysExactlyExperimentId;
+    }
+
     public boolean isNeedSpeciesId() {
         return needSpeciesId;
     }
@@ -136,7 +144,8 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
     @Override
     public int hashCode() {
         return Objects.hash(alwaysGeneId, filterToCallTableAssayIds, needAssayId,
-                needConditionId, needExperimentId, needGeneId, needSpeciesId, rawDataFilters);
+                needConditionId, needExperimentId, alwaysExactlyExperimentId, needGeneId,
+                needSpeciesId, rawDataFilters);
     }
     @Override
     public boolean equals(Object obj) {
@@ -149,8 +158,11 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         DAOProcessedRawDataFilter<?> other = (DAOProcessedRawDataFilter<?>) obj;
         return alwaysGeneId == other.alwaysGeneId
                 && Objects.equals(filterToCallTableAssayIds, other.filterToCallTableAssayIds)
-                && needAssayId == other.needAssayId && needConditionId == other.needConditionId
-                && needExperimentId == other.needExperimentId && needGeneId == other.needGeneId
+                && needAssayId == other.needAssayId
+                && needConditionId == other.needConditionId
+                && needExperimentId == other.needExperimentId
+                && alwaysExactlyExperimentId == other.alwaysExactlyExperimentId
+                && needGeneId == other.needGeneId
                 && needSpeciesId == other.needSpeciesId
                 && Objects.equals(rawDataFilters, other.rawDataFilters);
     }
@@ -165,6 +177,7 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
                .append(", needGeneId=").append(needGeneId)
                .append(", needAssayId=").append(needAssayId)
                .append(", needExperimentId=").append(needExperimentId)
+               .append(", alwaysExactlyExperimentId=").append(alwaysExactlyExperimentId)
                .append(", needSpeciesId=").append(needSpeciesId)
                .append(", needConditionId=").append(needConditionId)
                .append(", alwaysGeneId=").append(alwaysGeneId)

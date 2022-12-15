@@ -83,7 +83,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
     private final static Logger log = LogManager
             .getLogger(RnaSeqResultAnnotatedSample.class.getName());
 
-    private final RnaSeqLibraryAnnotatedSample annotatedSample;
+    private final RnaSeqLibraryAnnotatedSample assay;
     private final RawCall rawCall;
     private final AbundanceUnit abundanceUnit;
     private final BigDecimal abundance;
@@ -92,11 +92,11 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
     private final BigDecimal umiCounts;
     private final BigDecimal zScore;
 
-    public RnaSeqResultAnnotatedSample (RnaSeqLibraryAnnotatedSample annotatedSample, RawCall rawCall,
+    public RnaSeqResultAnnotatedSample (RnaSeqLibraryAnnotatedSample assay, RawCall rawCall,
             AbundanceUnit abundanceUnit, BigDecimal abundance, BigDecimal rawRank,
             BigDecimal readCounts, BigDecimal umiCounts, BigDecimal zscore) {
         this.rawCall = rawCall;
-        this.annotatedSample = annotatedSample;
+        this.assay = assay;
         this.abundanceUnit = abundanceUnit;
         this.abundance = abundance;
         this.rawRank = rawRank;
@@ -107,7 +107,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
 
     @Override
     public RnaSeqLibraryAnnotatedSample getAssay() {
-        return annotatedSample;
+        return assay;
     }
 
     public RawCall getRawCall() {
@@ -140,7 +140,7 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
 
     @Override
     public int hashCode() {
-        return Objects.hash(umiCounts, abundance, abundanceUnit, annotatedSample, rawCall, rawRank, readCounts,
+        return Objects.hash(umiCounts, abundance, abundanceUnit, assay, rawCall, rawRank, readCounts,
                 zScore);
     }
 
@@ -154,14 +154,14 @@ public class RnaSeqResultAnnotatedSample implements RawCallSource<RnaSeqLibraryA
             return false;
         RnaSeqResultAnnotatedSample other = (RnaSeqResultAnnotatedSample) obj;
         return Objects.equals(umiCounts, other.umiCounts) && Objects.equals(abundance, other.abundance)
-                && abundanceUnit == other.abundanceUnit && Objects.equals(annotatedSample, other.annotatedSample)
+                && abundanceUnit == other.abundanceUnit && Objects.equals(assay, other.assay)
                 && Objects.equals(rawCall, other.rawCall) && Objects.equals(rawRank, other.rawRank)
                 && Objects.equals(readCounts, other.readCounts) && Objects.equals(zScore, other.zScore);
     }
 
     @Override
     public String toString() {
-        return "RnaSeqResultAnnotatedSample [annotatedSample=" + annotatedSample + ", rawCall=" + rawCall
+        return "RnaSeqResultAnnotatedSample [assay=" + assay + ", rawCall=" + rawCall
                 + ", abundanceUnit=" + abundanceUnit + ", abundance=" + abundance + ", rawRank=" + rawRank
                 + ", readCounts=" + readCounts + ", umiCounts=" + umiCounts + ", zScore=" + zScore + "]";
     }

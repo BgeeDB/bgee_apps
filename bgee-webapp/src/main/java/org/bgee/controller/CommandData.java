@@ -1040,11 +1040,11 @@ public class CommandData extends CommandParent {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Experiment ID", null,
-                List.of("result.annotatedSample.library.experiment.id"),
+                List.of("result.assay.library.experiment.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP));
         colDescr.add(new ColumnDescription("Library ID", null,
-                List.of("result.annotatedSample.library.id"),
+                List.of("result.assay.library.id"),
                 ColumnDescription.ColumnType.STRING,
                 null));
         colDescr.add(new ColumnDescription("Gene ID", null,

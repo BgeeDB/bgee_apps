@@ -101,7 +101,7 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, DAODataType.IN_SITU));
+                    filtersToDatabaseMapping));
         }
 
         // generate ORDER BY

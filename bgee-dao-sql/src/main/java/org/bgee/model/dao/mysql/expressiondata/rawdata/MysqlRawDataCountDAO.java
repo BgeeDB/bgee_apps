@@ -149,7 +149,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping, DAODataType.AFFYMETRIX));
+                    filtersToDatabaseMapping));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -252,7 +252,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping, DAODataType.EST));
+                    filtersToDatabaseMapping));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -375,7 +375,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
         if(!processedRawDataFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
             .append(generateWhereClauseRawDataFilter(processedRawDataFilters,
-                    filtersToDatabaseMapping, DAODataType.IN_SITU));
+                    filtersToDatabaseMapping));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), 
@@ -537,7 +537,7 @@ public class MysqlRawDataCountDAO extends MySQLRawDataDAO<RawDataCountDAO.Attrib
                 !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping,
-                    DAODataType.RNA_SEQ, newIsSingleCell));
+                    newIsSingleCell));
         }
         try {
             BgeePreparedStatement stmt = this.parameterizeQuery(sb.toString(), processedFilters,

@@ -66,7 +66,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, DAODataType.RNA_SEQ, isSingleCell));
+                    filtersToDatabaseMapping, isSingleCell));
         }
 
         // generate ORDER BY

@@ -146,7 +146,7 @@ implements RawDataConditionDAO {
         if (!processedFilters.getRawDataFilters().isEmpty() || isSingleCell != null) {
             sb.append("(")
               .append(generateWhereClauseRawDataFilter(processedFilters, rawDataFiltersToDatabaseMapping,
-                      dataType, isSingleCell))
+                      isSingleCell))
               .append(") AND ");
         }
         //We at least always need to check that results are from conditions

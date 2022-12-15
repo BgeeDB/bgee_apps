@@ -1264,19 +1264,19 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
             DAOProcessedRawDataFilter<U> processedRawDataFilters,
-            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping,
-            DAODataType dataType) {
-        log.traceEntry("{}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping, dataType);
+            RawDataFiltersToDatabaseMapping filtersToDatabaseMapping) {
+        log.traceEntry("{}, {}}", processedRawDataFilters, filtersToDatabaseMapping);
         return log.traceExit(this.generateWhereClauseRawDataFilter(processedRawDataFilters,
-                filtersToDatabaseMapping, dataType, null));
+                filtersToDatabaseMapping, null));
     }
     protected <U extends Comparable<U>> String generateWhereClauseRawDataFilter(
             DAOProcessedRawDataFilter<U> processedRawDataFilters,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping,
-            DAODataType dataType, Boolean isSingleCell) {
-        log.traceEntry("{}, {}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
-                dataType, isSingleCell);
+            Boolean isSingleCell) {
+        log.traceEntry("{}, {}, {}", processedRawDataFilters, filtersToDatabaseMapping,
+                isSingleCell);
 
+        DAODataType dataType = filtersToDatabaseMapping.getDatatype();
         //ESTs can't have results if an experiment ID is requested
         //(ESTs don't have experiments)
         //If all filters request an experiment, we return a FALSE clause;
@@ -1299,7 +1299,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .map(f -> this.generateOneFilterWhereClause(f, filtersToDatabaseMapping,
                         processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
                             processedRawDataFilters.getFilterToCallTableAssayIds().get(f),
-                        dataType, isSingleCell))
+                        isSingleCell))
                 .collect(Collectors.joining(") OR (", " (", ")"));
 
         //Special case if there are no filters
@@ -1311,17 +1311,18 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             whereClause = this.generateOneFilterWhereClause(null, filtersToDatabaseMapping,
                     processedRawDataFilters.getFilterToCallTableAssayIds() == null? null:
                         processedRawDataFilters.getFilterToCallTableAssayIds().get(null),
-                    dataType, isSingleCell);
+                    isSingleCell);
         }
         return log.traceExit(whereClause);
     }
 
     private <U extends Comparable<U>> String generateOneFilterWhereClause(DAORawDataFilter rawDataFilter,
             RawDataFiltersToDatabaseMapping filtersToDatabaseMapping, Set<U> callTableAssayIds,
-            DAODataType dataType, Boolean isSingleCell) {
-        log.traceEntry("{}, {}, {}, {}, {}", rawDataFilter, filtersToDatabaseMapping,
-                callTableAssayIds, dataType, isSingleCell);
+            Boolean isSingleCell) {
+        log.traceEntry("{}, {}, {}, {}", rawDataFilter, filtersToDatabaseMapping,
+                callTableAssayIds, isSingleCell);
 
+        DAODataType dataType = filtersToDatabaseMapping.getDatatype();
         Integer speId = callTableAssayIds == null && rawDataFilter != null?
                 rawDataFilter.getSpeciesId(): null;
         Set<String> expIds = callTableAssayIds == null && rawDataFilter != null?

@@ -93,7 +93,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
         // generate WHERE CLAUSE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ").append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, DAODataType.EST));
+                    filtersToDatabaseMapping));
         }
         // generate ORDER BY
         sb.append(" ORDER BY")

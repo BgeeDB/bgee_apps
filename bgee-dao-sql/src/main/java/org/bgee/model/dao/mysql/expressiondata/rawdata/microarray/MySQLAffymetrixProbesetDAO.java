@@ -97,8 +97,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
         // generate WHERE
         if (!processedFilters.getRawDataFilters().isEmpty()) {
             sb.append(" WHERE ")
-            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping,
-                    DAODataType.AFFYMETRIX));
+            .append(generateWhereClauseRawDataFilter(processedFilters, filtersToDatabaseMapping));
         }
 
         // generate ORDER BY

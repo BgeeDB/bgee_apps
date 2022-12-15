@@ -108,7 +108,7 @@ implements RNASeqResultAnnotatedSampleDAO {
                 !processedFilters.getFilterToCallTableAssayIds().isEmpty()) {
             sb.append(" WHERE ")
               .append(generateWhereClauseRawDataFilter(processedFilters,
-                    filtersToDatabaseMapping, DAODataType.RNA_SEQ,
+                    filtersToDatabaseMapping,
                     //isSingleCell: at this point, it was already considered in the assay IDs
                     //obtained through processFilterForCallTableAssayIds
                     null));

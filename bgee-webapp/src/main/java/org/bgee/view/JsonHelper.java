@@ -10,6 +10,7 @@ import org.bgee.model.XRef;
 import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
+import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.job.Job;
@@ -17,6 +18,7 @@ import org.bgee.model.species.Species;
 import org.bgee.model.topanat.TopAnatResults;
 import org.bgee.view.json.adapters.BgeeTypeAdapterFactory;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
+import org.bgee.view.json.adapters.ESTCountContainerTypeAdapter;
 import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
 import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
@@ -154,6 +156,7 @@ public class JsonHelper {
                         this.utils, this.requestParameters.getUrlParametersInstance()))
                 .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
                         this.utils))
+                .registerTypeAdapter(ESTCountContainer.class, new ESTCountContainerTypeAdapter())
                 .registerTypeAdapterFactory(new BgeeTypeAdapterFactory(s -> this.urlEncode(s),
                         () -> getNewRequestParameters(), this.utils))
                 .setPrettyPrinting()

@@ -513,7 +513,7 @@ public class RawDataService extends ExpressionDataService {
                         if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
                             log.debug("DAORawDataFilter created without genes nor cond. for species ID: {}",
                                     speciesId);
-                            return new DAORawDataFilter(speciesId, filter.getExperimentIds(),
+                            return new DAORawDataFilter(Set.of(speciesId), filter.getExperimentIds(),
                                     filter.getAssayIds(), filter.getExperimentOrAssayIds());
                         }
                         log.debug("Complete DAORawDataFilter created for species ID: {}", speciesId);

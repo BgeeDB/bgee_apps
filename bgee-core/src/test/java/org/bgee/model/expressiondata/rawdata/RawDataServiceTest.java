@@ -105,7 +105,7 @@ public class RawDataServiceTest extends TestAncestor {
                 filter,
                 Set.of(
                         new DAORawDataFilter(Set.of(1, 2), null),
-                        new DAORawDataFilter(3, null, null, null),
+                        new DAORawDataFilter(Set.of(3), null, null, null),
                         new DAORawDataFilter(null, Set.of(6))
                         ),
                 GENES.entrySet().stream().filter(e -> Set.of("geneId1", "geneId2").contains(

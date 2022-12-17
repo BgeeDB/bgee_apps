@@ -111,7 +111,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             newFilters = originalProcessedFilter.getRawDataFilters().stream()
                     .map(f -> {
                         //If no speciesId specify, we simply return the filter
-                        if (f.getSpeciesId() == null) {
+                        if (f.getSpeciesIds().isEmpty()) {
                             return f;
                         }
                         //otherwise, retrieve the cond IDs
@@ -146,10 +146,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     //XXX FB: not great to duplicate the logic of the booleans in
                     //DAOProcessedRawDataFilter here, but we need to manage the special case
                     //of in situ data type.
-                    if (f.getSpeciesId() == null && f.getAssayIds().isEmpty() &&
+                    if (f.getSpeciesIds().isEmpty() && f.getAssayIds().isEmpty() &&
                         f.getExperimentIds().isEmpty() && f.getExprOrAssayIds().isEmpty() &&
                         isSingleCell == null &&
-                        (f.getRawDataCondIds().isEmpty() || !dataType.isAssayRelatedToCondition())) {
+                        (f.getConditionIds().isEmpty() || !dataType.isAssayRelatedToCondition())) {
                         return Map.entry(f, Set.<U>of());
                     }
                     //Otherwise try to retrieve matching assay IDs
@@ -227,14 +227,21 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         int paramIndex = 1;
         for(DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
             Set<Integer> geneIds = rawDataFilter.getGeneIds();
-            Integer speciesId = rawDataFilter.getSpeciesId();
-            Set<Integer> rawDataCondIds = rawDataFilter.getRawDataCondIds();
+            Set<Integer> speciesIds = rawDataFilter.getSpeciesIds();
+            Set<Integer> rawDataCondIds = rawDataFilter.getConditionIds();
             Set<String> expIds = rawDataFilter.getExperimentIds();
             Set<String> assayIds = rawDataFilter.getAssayIds();
             Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
             Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
                     null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
             assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
+
+            // parameterize assayIds for call table
+            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+                stmt.setObjects(paramIndex, callTableAssayIds, true,
+                        processedFilters.getCallTableAssayIdType());
+                paramIndex += callTableAssayIds.size();
+            }
 
             if (callTableAssayIds == null) {
                 // parameterize expIds
@@ -259,9 +266,9 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     paramIndex += expOrAssayIds.size();
                 }
                 //parameterize speciesId
-                if (speciesId != null) {
-                    stmt.setIntegers(paramIndex, Set.of(speciesId), false);
-                    paramIndex++;
+                if (!speciesIds.isEmpty()) {
+                    stmt.setIntegers(paramIndex, speciesIds, true);
+                    paramIndex += speciesIds.size();
                 }
             }
             //parameterize rawDataCondIds
@@ -272,12 +279,6 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                     && !rawDataCondIds.isEmpty()) {
                 stmt.setIntegers(paramIndex, rawDataCondIds, true);
                 paramIndex += rawDataCondIds.size();
-            }
-            // parameterize assayIds for call table
-            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
-                stmt.setObjects(paramIndex, callTableAssayIds, true,
-                        processedFilters.getCallTableAssayIdType());
-                paramIndex += callTableAssayIds.size();
             }
             //parameterize geneIds
             if (!geneIds.isEmpty()) {
@@ -1323,8 +1324,8 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 callTableAssayIds, isSingleCell);
 
         DAODataType dataType = filtersToDatabaseMapping.getDatatype();
-        Integer speId = callTableAssayIds == null && rawDataFilter != null?
-                rawDataFilter.getSpeciesId(): null;
+        Set<Integer> speIds = callTableAssayIds == null && rawDataFilter != null?
+                rawDataFilter.getSpeciesIds(): new HashSet<>();
         Set<String> expIds = callTableAssayIds == null && rawDataFilter != null?
                 rawDataFilter.getExperimentIds(): new HashSet<>();
         Set<String> assayIds = callTableAssayIds == null && rawDataFilter != null?
@@ -1336,40 +1337,71 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         //the rawDataCondIds for in situ data
         Set<Integer> rawDataCondIds =
                 (callTableAssayIds == null || !dataType.isAssayRelatedToCondition()) && rawDataFilter != null?
-                rawDataFilter.getRawDataCondIds(): new HashSet<>();
+                rawDataFilter.getConditionIds(): new HashSet<>();
         //We never override the gene IDs based on callTableAssayIds
         Set<Integer> geneIds =  rawDataFilter != null? rawDataFilter.getGeneIds(): new HashSet<>();
 
         boolean filterFound = false;
         StringBuilder sb = new StringBuilder();
+
+        // FILTER ON ASSAY IDS FROM CALL TABLE
+        // used to improve performance of SQL queries. Only used when querying the calls table
+        if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
+                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
+                            + RawDataColumn.CALL_TABLE_ASSAY_ID)))
+            .append(".")
+            .append((Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
+                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
+                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
+                            + RawDataColumn.CALL_TABLE_ASSAY_ID))))
+            .append(" IN (")
+            .append(BgeePreparedStatement.generateParameterizedQueryString(callTableAssayIds.size()))
+            .append(")");
+            filterFound = true;
+        }
+
         // FILTER ON EXPERIMENT/ASSAY IDS
         String expAssayIdFilter = this.generateExpAssayIdFilter(expIds, assayIds, expOrAssayIds,
                 filtersToDatabaseMapping);
         if (!expAssayIdFilter.isEmpty()) {
+            //We should never configure both callTableAssayIds and expAssayIdFilter
+            //at the same time, not need for "AND"
+            assert callTableAssayIds == null;
             sb.append(expAssayIdFilter);
             filterFound = true;
         }
-        // FILTER ON SPECIES ID
-        if (speId != null) {
+
+        if (!speIds.isEmpty() || !rawDataCondIds.isEmpty() || !geneIds.isEmpty()) {
             if(filterFound) {
                 sb.append(" AND ");
             }
+            sb.append(" (");
+        }
+        // FILTER ON SPECIES ID
+        if (!speIds.isEmpty()) {
+            assert callTableAssayIds == null;
             sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
                     .get(RawDataColumn.SPECIES_ID))
                     .orElseThrow(() -> new IllegalStateException("no table associated to column"
                             + RawDataColumn.SPECIES_ID)))
-            .append(".")
+              .append(".")
               .append(Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
                       .get(RawDataColumn.SPECIES_ID))
                       .orElseThrow(() -> new IllegalStateException("no column name associated to column" +
                       RawDataColumn.SPECIES_ID)))
-              .append(" = ?");
+              .append(" IN (")
+              .append(BgeePreparedStatement.generateParameterizedQueryString(speIds
+                      .size()))
+              .append(")");
               filterFound = true;
         }
         // FILTER ON RAW CONDITION IDS
         if (!rawDataCondIds.isEmpty()) {
-            if(filterFound) {
-                sb.append(" AND ");
+            assert callTableAssayIds == null;
+            if (!speIds.isEmpty()) {
+                sb.append(" OR ");
             }
             sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
                     .get(RawDataColumn.COND_ID))
@@ -1386,30 +1418,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             .append(")");
             filterFound = true;
         }
-        // FILTER ON ASSAY IDS FROM CALL TABLE
-        // used to improve performance of SQL queries. Only used when querying the calls table
-        if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
-            if(filterFound) {
-                throw log.throwing(new IllegalStateException("Should not filter on raw condition IDs,"
-                        + "species IDs or exp/assay IDs when filtering on assay IDs from call table."));
-            }
-            sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
-                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
-                    .orElseThrow(() -> new IllegalStateException("no table associated to column"
-                            + RawDataColumn.CALL_TABLE_ASSAY_ID)))
-            .append(".")
-            .append((Optional.ofNullable(filtersToDatabaseMapping.getColToColumnName()
-                    .get(RawDataColumn.CALL_TABLE_ASSAY_ID))
-                    .orElseThrow(() -> new IllegalStateException("no column name associated to column"
-                            + RawDataColumn.CALL_TABLE_ASSAY_ID))))
-            .append(" IN (")
-            .append(BgeePreparedStatement.generateParameterizedQueryString(callTableAssayIds.size()))
-            .append(")");
-            filterFound = true;
-        }
         // FILTER ON GENE IDS
         if (!geneIds.isEmpty()) {
-            if(filterFound) {
+            if (!speIds.isEmpty() && rawDataCondIds.isEmpty()) {
+                sb.append(" OR ");
+            } else if (!rawDataCondIds.isEmpty()) {
                 sb.append(" AND ");
             }
             sb.append(Optional.ofNullable(filtersToDatabaseMapping.getColToTableName()
@@ -1426,6 +1439,10 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
             .append(")");
             filterFound = true;
         }
+        if (!speIds.isEmpty() || !rawDataCondIds.isEmpty() || !geneIds.isEmpty()) {
+            sb.append(") ");
+        }
+
         if (callTableAssayIds == null && isSingleCell != null) {
             if (filterFound) {
                 sb.append(" AND ");

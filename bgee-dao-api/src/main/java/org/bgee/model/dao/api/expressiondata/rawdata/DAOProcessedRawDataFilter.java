@@ -60,14 +60,14 @@ public class DAOProcessedRawDataFilter<T extends Comparable<T>> {
         //But for now, for performance reasons, we go through the assay table
         //if any callTableAssayIds are provided
         this.needSpeciesId = this.filterToCallTableAssayIds != null? false:
-            this.rawDataFilters.stream().anyMatch(e -> e.getSpeciesId() != null);
+            this.rawDataFilters.stream().anyMatch(e -> !e.getSpeciesIds().isEmpty());
         this.needAssayId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getAssayIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());
         //For in situ data, conditions are not linked to the assays
         this.needConditionId = this.filterToCallTableAssayIds != null &&
                 (dataType == null || dataType.isAssayRelatedToCondition())? false:
-            this.rawDataFilters.stream().anyMatch(e -> !e.getRawDataCondIds().isEmpty());
+            this.rawDataFilters.stream().anyMatch(e -> !e.getConditionIds().isEmpty());
         this.needExperimentId = this.filterToCallTableAssayIds != null? false:
             this.rawDataFilters.stream().anyMatch(e -> !e.getExperimentIds().isEmpty() ||
                 !e.getExprOrAssayIds().isEmpty());

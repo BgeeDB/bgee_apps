@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

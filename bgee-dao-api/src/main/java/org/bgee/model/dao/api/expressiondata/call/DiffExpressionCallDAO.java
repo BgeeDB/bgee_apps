@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -10,7 +10,7 @@ import org.bgee.model.dao.api.OrderingDAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
 
 /**
  * DAO defining queries using or retrieving {@link DiffExpressionCallTO}s. 

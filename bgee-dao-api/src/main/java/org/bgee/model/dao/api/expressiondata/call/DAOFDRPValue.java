@@ -1,10 +1,11 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 public class DAOFDRPValue extends DAOBigDecimalLinkedToDataTypes implements Comparable<DAOFDRPValue> {
     private final static Logger log = LogManager.getLogger(DAOFDRPValue.class.getName());

@@ -12,7 +12,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -26,7 +26,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
  * @version Bgee 14, Feb. 2017
- * @see     org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO
+ * @see     org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO
  * @since   Bgee 14, Feb. 2017
  */
 public class MySQLRawExpressionCallDAO extends MySQLDAO<RawExpressionCallDAO.Attribute> 

@@ -1166,7 +1166,7 @@ create table globalExpression (
 -- (see 'SELF' expression summaries below), because we need to distinguish between
 -- data propagated along a condition parameter (e.g., a developmental stage),
 -- but observed in another (e.g., an anat. entity).
--- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.DAOPropagationState.
+-- Note that these enum values must stay in sync with org.bgee.model.dao.api.expressiondata.call.DAOPropagationState.
 -- And these enum are null when the expression calls were propagated without taking into account
 -- the related condition parameter.
 -- Note that for EST data, there is no propagation of ABSENT calls from parent conditions,

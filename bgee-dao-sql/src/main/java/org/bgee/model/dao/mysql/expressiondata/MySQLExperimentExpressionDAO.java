@@ -12,9 +12,9 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallDirection;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO.CallQuality;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -28,7 +28,7 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Feb. 2017
- * @see org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO.ExperimentExpressionTO
+ * @see org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO.ExperimentExpressionTO
  * @since   Bgee 14, Dec. 2016
  */
 public class MySQLExperimentExpressionDAO extends MySQLDAO<ExperimentExpressionDAO.Attribute> 

@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import java.math.BigDecimal;
 import java.util.Collection;

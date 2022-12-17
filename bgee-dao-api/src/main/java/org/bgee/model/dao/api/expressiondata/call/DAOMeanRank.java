@@ -1,7 +1,9 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 public class DAOMeanRank extends DAOBigDecimalLinkedToDataTypes {
 

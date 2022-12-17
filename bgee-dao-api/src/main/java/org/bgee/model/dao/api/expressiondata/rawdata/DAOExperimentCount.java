@@ -1,10 +1,12 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.rawdata;
 
 import java.util.EnumSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 
 /**
  * Class allowing to store the count of experiments in support of {@link GlobalExpressionCallTO}s.

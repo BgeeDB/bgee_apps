@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -17,7 +17,9 @@ import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO.RawExpressionCallTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
 
 /**
  * DAO defining queries using or retrieving {@link GlobalExpressionCallTO}s, 

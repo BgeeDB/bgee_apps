@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -18,6 +18,8 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.DAOResultSet;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
+import org.bgee.model.dao.api.expressiondata.BaseConditionTO;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 /**
  * DAO defining queries using or retrieving {@link ConditionTO}s, used for global expression calls

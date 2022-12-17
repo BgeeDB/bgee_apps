@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAOBaseConditionFilter;
 
 /**
  * A filter to parameterize queries using expression data conditions. 

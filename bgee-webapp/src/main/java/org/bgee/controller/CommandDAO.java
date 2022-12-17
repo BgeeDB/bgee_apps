@@ -21,13 +21,13 @@
 //import org.bgee.model.dao.api.DAOManager;
 //import org.bgee.model.dao.api.anatdev.AnatEntityDAO;
 //import org.bgee.model.dao.api.anatdev.AnatEntityDAO.AnatEntityTOResultSet;
-//import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-//import org.bgee.model.dao.api.expressiondata.DAOConditionFilter;
-//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO;
-//import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO;
-//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTO;
-//import org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.ExpressionCallTOResultSet;
-//import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
+//import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
+//import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
+//import org.bgee.model.dao.api.expressiondata.call.ExpressionCallDAO;
+//import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO;
+//import org.bgee.model.dao.api.expressiondata.call.ExpressionCallDAO.ExpressionCallTO;
+//import org.bgee.model.dao.api.expressiondata.call.ExpressionCallDAO.ExpressionCallTOResultSet;
+//import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
 //import org.bgee.model.dao.api.ontologycommon.RelationDAO;
 //import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTO;
 //import org.bgee.model.dao.api.ontologycommon.RelationDAO.RelationTOResultSet;
@@ -89,7 +89,7 @@
 //        try {
 //            //XXX: we should certainly have something using reflection API, 
 //            //for now we simply hardcode DAO methods that are supported
-//            if ("org.bgee.model.dao.api.expressiondata.ExpressionCallDAO.getExpressionCalls".equals(
+//            if ("org.bgee.model.dao.api.expressiondata.call.ExpressionCallDAO.getExpressionCalls".equals(
 //                    this.requestParameters.getAction())) {
 //                
 //                this.processGetExpressionCalls();

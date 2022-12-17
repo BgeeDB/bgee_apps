@@ -1,10 +1,11 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.util.Collection;
 import java.util.EnumSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 /**
  * A filter to request expression calls based on their observation status in a condition:
@@ -45,7 +46,7 @@ public class CallObservedDataDAOFilter implements Comparable<CallObservedDataDAO
      *                                  If {@code null} or empty, all data types are considered.
      * @param condParams                A {@code Collection} of {@code ConditionDAO.Attribute}s
      *                                  that are condition parameters (see {@link
-     *                                  org.bgee.model.dao.api.expressiondata.ConditionDAO.Attribute
+     *                                  org.bgee.model.dao.api.expressiondata.call.ConditionDAO.Attribute
      *                                  #isConditionParameter() ConditionDAO.Attribute#isConditionParameter()})
      *                                  specifying which condition parameters to consider to determine
      *                                  whether the call was observed or not.

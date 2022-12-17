@@ -27,12 +27,12 @@ import org.bgee.model.dao.api.anatdev.mapping.RawSimilarityAnnotationDAO;
 import org.bgee.model.dao.api.anatdev.mapping.StageGroupingDAO;
 import org.bgee.model.dao.api.anatdev.mapping.SummarySimilarityAnnotationDAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO;
-import org.bgee.model.dao.api.expressiondata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataCountDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.est.ESTDAO;
@@ -1031,12 +1031,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewRelationDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO}, 
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.call.ConditionDAO ConditionDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code ConditionDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO
+     * @see org.bgee.model.dao.api.expressiondata.call.ConditionDAO ConditionDAO
      */
     public ConditionDAO getConditionDAO() {
         log.traceEntry();
@@ -1044,7 +1044,7 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewConditionDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.ConditionDAO ConditionDAO}, 
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.call.ConditionDAO ConditionDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code RawDataConditionDAO}.
@@ -1070,12 +1070,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewSexDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO}, 
+     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code RawExpressionCallDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO
+     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO
      */
     public RawExpressionCallDAO getRawExpressionCallDAO() {
         log.traceEntry();
@@ -1083,12 +1083,12 @@ public abstract class DAOManager implements AutoCloseable
         return log.traceExit(this.getNewRawExpressionCallDAO());
     }
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO}, 
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO GlobalExpressionCallDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code GlobalExpressionCallDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO
+     * @see org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO GlobalExpressionCallDAO
      */
     public GlobalExpressionCallDAO getGlobalExpressionCallDAO() {
         log.traceEntry();
@@ -1097,12 +1097,12 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO}, 
+     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code ExperimentExpressionDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO
+     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO
      */
     public ExperimentExpressionDAO getExperimentExpressionDAO() {
         log.traceEntry();
@@ -1111,12 +1111,12 @@ public abstract class DAOManager implements AutoCloseable
     }
     
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO}, 
+     * Get a new {@link org.org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO SamplePValueDAO}, 
      * unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code SamplePValueDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO
+     * @see org.org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO SamplePValueDAO
      */
     public SamplePValueDAO getSamplePValueDAO() {
         log.traceEntry();
@@ -1125,12 +1125,12 @@ public abstract class DAOManager implements AutoCloseable
     }
 
     /**
-     * Get a new {@link org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO 
+     * Get a new {@link org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO 
      * DiffExpressionCallDAO}, unless this {@code DAOManager} is already closed. 
      * 
      * @return  a new {@code DiffExpressionCallDAO}.
      * @throws IllegalStateException    If this {@code DAOManager} is already closed.
-     * @see org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO DiffExpressionCallDAO
+     * @see org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO DiffExpressionCallDAO
      */
     public DiffExpressionCallDAO getDiffExpressionCallDAO() {
         log.traceEntry();
@@ -1678,7 +1678,7 @@ public abstract class DAOManager implements AutoCloseable
      */
     protected abstract RelationDAO getNewRelationDAO();
     /**
-     * Service provider must return a new {@link org.bgee.model.dao.api.expressiondata.ConditionDAO 
+     * Service provider must return a new {@link org.bgee.model.dao.api.expressiondata.call.ConditionDAO 
      * ConditionDAO} instance when this method is called. 
      * 
      * @return  A new {@code ConditionDAO}
@@ -1700,7 +1700,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract SexDAO getNewSexDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.RawExpressionCallDAO RawExpressionCallDAO} 
+     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO RawExpressionCallDAO} 
      * instance when this method is called. 
      * 
      * @return  A new {@code RawExpressionCallDAO}
@@ -1708,7 +1708,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract RawExpressionCallDAO getNewRawExpressionCallDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO GlobalExpressionCallDAO} 
+     * {@link org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO GlobalExpressionCallDAO} 
      * instance when this method is called. 
      * 
      * @return  A new {@code GlobalExpressionCallDAO}
@@ -1716,7 +1716,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract GlobalExpressionCallDAO getNewGlobalExpressionCallDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.ExperimentExpressionDAO ExperimentExpressionDAO} 
+     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.ExperimentExpressionDAO ExperimentExpressionDAO} 
      * instance when this method is called. 
      * 
      * @return  A new {@code ExperimentExpressionDAO}
@@ -1724,7 +1724,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract ExperimentExpressionDAO getNewExperimentExpressionDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.SamplePValueDAO SamplePValueDAO} 
+     * {@link org.org.bgee.model.dao.api.expressiondata.rawdata.SamplePValueDAO SamplePValueDAO} 
      * instance when this method is called. 
      * 
      * @return  A new {@code SamplePValueDAO}
@@ -1732,7 +1732,7 @@ public abstract class DAOManager implements AutoCloseable
     protected abstract SamplePValueDAO getNewSamplePValueDAO();
     /**
      * Service provider must return a new 
-     * {@link org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO DiffExpressionCallDAO} 
+     * {@link org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO DiffExpressionCallDAO} 
      * instance when this method is called. 
      * 
      * @return  A new {@code DiffExpressionCallDAO}

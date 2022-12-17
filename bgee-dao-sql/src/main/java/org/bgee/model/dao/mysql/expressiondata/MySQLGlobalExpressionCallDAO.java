@@ -22,15 +22,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
-import org.bgee.model.dao.api.expressiondata.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.CallObservedDataDAOFilter;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
+import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.DAOFDRPValue;
-import org.bgee.model.dao.api.expressiondata.DAOFDRPValueFilter;
-import org.bgee.model.dao.api.expressiondata.DAOMeanRank;
-import org.bgee.model.dao.api.expressiondata.DAOPropagationState;
-import org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO;
+import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValue;
+import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter;
+import org.bgee.model.dao.api.expressiondata.call.DAOMeanRank;
+import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
+import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.mysql.MySQLDAO;
 import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
@@ -44,8 +44,8 @@ import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 15.0, Dec. 2021
- * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionCallTO
- * @see org.bgee.model.dao.api.expressiondata.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
+ * @see org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO
+ * @see org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionToRawExpressionTO
  * @since   Bgee 14, Feb. 2017
  */
 public class MySQLGlobalExpressionCallDAO extends MySQLDAO<GlobalExpressionCallDAO.Attribute> 

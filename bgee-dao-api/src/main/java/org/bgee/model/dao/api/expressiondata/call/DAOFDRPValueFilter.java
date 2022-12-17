@@ -1,4 +1,4 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -8,6 +8,8 @@ import java.util.LinkedHashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
 
 /**
  * Class allowing to filter the retrieval of {@link GlobalExpressionCallTO}s

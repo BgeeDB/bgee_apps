@@ -1,8 +1,10 @@
-package org.bgee.model.dao.api.expressiondata;
+package org.bgee.model.dao.api.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.EnumSet;
+
+import org.bgee.model.dao.api.expressiondata.DAODataType;
 
 /**
  * Parent class of all classes that need to store a {@code BigDecimal} value and that depends

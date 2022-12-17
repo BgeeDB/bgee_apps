@@ -13,8 +13,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState;
-import org.bgee.model.dao.api.expressiondata.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
+import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.dao.api.expressiondata.call.DiffExpressionCallDAO.DiffExpressionCallTO.ComparisonFactor;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -589,7 +589,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     }
 
     /**
-     * Convert a {@code org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState}
+     * Convert a {@code org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState}
      * into a {@code String}. This is because its method {@code getStringRepresentation}
      * is not convenient for display in files.
      * 
@@ -608,7 +608,7 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
     }
 
     /**
-     * Convert a {@code String} into a {@code org.bgee.model.dao.api.expressiondata.CallDAO.CallTO.DataState}
+     * Convert a {@code String} into a {@code org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState}
      * This is because its method {@code getStringRepresentation} is not convenient for display in files.
      * 
      * @param string    A {@code String} to be converted.

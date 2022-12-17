@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 
 /**
  * This {@code enum} allows to retrieve table and field names corresponding to specific 

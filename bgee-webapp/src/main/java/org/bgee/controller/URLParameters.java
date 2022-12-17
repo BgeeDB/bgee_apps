@@ -17,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandRPackage.PropagationParam;
 import org.bgee.model.anatdev.Sex.SexEnum;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;

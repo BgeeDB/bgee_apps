@@ -1,8 +1,8 @@
 package org.bgee.view;
 
 import org.bgee.model.SearchResult;
-import org.bgee.model.expressiondata.SingleSpeciesExprAnalysis;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.SingleSpeciesExprAnalysis;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis;
 import org.bgee.model.gene.Gene;
 
 /**

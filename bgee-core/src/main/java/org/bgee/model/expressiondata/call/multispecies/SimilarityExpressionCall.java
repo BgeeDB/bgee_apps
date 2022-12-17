@@ -1,7 +1,7 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
-import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.gene.Gene;
 
 import java.util.Collection;

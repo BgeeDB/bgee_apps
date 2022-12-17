@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
-import org.bgee.model.expressiondata.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
 import org.bgee.model.gene.Gene;
 
 import com.google.gson.TypeAdapter;

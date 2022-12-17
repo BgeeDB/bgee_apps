@@ -14,16 +14,13 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
-import org.bgee.model.CommonService;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.anatdev.DevStageService;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.gene.GeneDAO;
+import org.bgee.model.expressiondata.ExpressionDataService;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.gene.Gene;
@@ -35,7 +32,7 @@ import org.bgee.model.ontology.RelationType;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
-public class RawDataService extends CommonService {
+public class RawDataService extends ExpressionDataService {
     private final static Logger log = LogManager.getLogger(RawDataService.class.getName());
 
 //    /**
@@ -345,19 +342,11 @@ public class RawDataService extends CommonService {
 //                ));
 //    }
 
-    private final GeneDAO geneDAO;
     private final RawDataConditionDAO rawDataCondDAO;
-    private final OntologyService ontService;
-    private final AnatEntityService anatEntityService;
-    private final DevStageService devStageService;
 
     public RawDataService(ServiceFactory serviceFactory) {
         super(serviceFactory);
-        this.geneDAO = this.getDaoManager().getGeneDAO();
         this.rawDataCondDAO = this.getDaoManager().getRawDataConditionDAO();
-        this.ontService = serviceFactory.getOntologyService();
-        this.anatEntityService = serviceFactory.getAnatEntityService();
-        this.devStageService = serviceFactory.getDevStageService();
     }
 
     public RawDataLoader loadRawDataLoader(RawDataFilter filter) {

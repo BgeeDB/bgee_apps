@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.gene.Gene;

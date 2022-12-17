@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 

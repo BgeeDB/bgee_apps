@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;

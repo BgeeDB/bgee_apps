@@ -31,7 +31,7 @@ import org.bgee.model.dao.api.file.SpeciesDataGroupDAO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesDataGroupTO;
 import org.bgee.model.dao.api.file.SpeciesDataGroupDAO.SpeciesToDataGroupTO;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.file.SpeciesDataGroup;
 import org.bgee.model.species.Species;

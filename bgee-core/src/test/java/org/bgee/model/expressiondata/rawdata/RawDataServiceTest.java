@@ -19,7 +19,7 @@ import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO.GeneTOResultSet;
-import org.bgee.model.expressiondata.ConditionTest;
+import org.bgee.model.expressiondata.call.ConditionTest;
 import org.bgee.model.gene.GeneFilter;
 import org.junit.Test;
 

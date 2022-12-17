@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import org.bgee.model.gene.Gene;
 
@@ -10,12 +10,12 @@ import java.util.Map;
  * belonging to a single species. See {@link MultiGeneExprAnalysis} for more details.
  * This class extends {@code MultiGeneExprAnalysis} by defining its generic type
  * as {@code Condition}.
- * See {@link org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis}
+ * See {@link org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis}
  * for comparisons in several species.
  *
  * @author Frederic Bastian
  * @version Bgee 14 May 2019
- * @see org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis
+ * @see org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis
  * @since Bgee 14 May 2019
  */
 public class SingleSpeciesExprAnalysis extends MultiGeneExprAnalysis<Condition> {

@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +17,7 @@ import org.bgee.model.gene.Gene;
  * The genes can belong to a single species, in which case the class used, for retrieving
  * results of the gene expression comparison, is the extending class {@link SingleSpeciesExprAnalysis};
  * or they can belong to different species, in which case the extending class used is
- * {@link org.bgee.model.expressiondata.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis}.
+ * {@link org.bgee.model.expressiondata.call.multispecies.MultiSpeciesExprAnalysis MultiSpeciesExprAnalysis}.
  * {@code SingleSpeciesExprAnalysis} returns the comparisons using {@code Condition}s,
  * while {@code MultiSpeciesExprAnalysis} returns the comparison using {@code MultiSpeciesCondition}s.
  *

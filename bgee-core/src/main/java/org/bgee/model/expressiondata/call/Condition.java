@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -15,6 +15,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
+import org.bgee.model.expressiondata.BaseCondition;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.species.Species;
 

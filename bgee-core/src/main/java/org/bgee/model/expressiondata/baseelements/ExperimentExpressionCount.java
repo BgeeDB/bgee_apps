@@ -9,12 +9,12 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 
 /**
  * This class allows to store the number of experiments that participated in the production
- * of a given global summary {@link org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall}.
+ * of a given global summary {@link org.bgee.model.expressiondata.call.Call.ExpressionCall ExpressionCall}.
  * Experiments participating in the production of a call can produce different {@code CallType}s
  * and {@code DataQuality}s, that are all together taken into account to define the global summary
  * {@code ExpressionCall}. Objects of this class should be associated to the {@code DataType}
  * of the experiments (most likely in an 
- * {@link org.bgee.model.expressiondata.CallData.ExpressionCallData ExpressionCallData} object).
+ * {@link org.bgee.model.expressiondata.call.CallData.ExpressionCallData ExpressionCallData} object).
  * 
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian

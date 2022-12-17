@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;
@@ -24,8 +24,6 @@ import org.apache.commons.math3.ml.distance.CanberraDistance;
 import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.CallData.DiffExpressionCallData;
-import org.bgee.model.expressiondata.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -36,6 +34,8 @@ import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.CallData.DiffExpressionCallData;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 

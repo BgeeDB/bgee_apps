@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import java.util.Collection;
 import java.util.Collections;

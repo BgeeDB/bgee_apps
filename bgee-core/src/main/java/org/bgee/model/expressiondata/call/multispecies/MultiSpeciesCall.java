@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Call;
+import org.bgee.model.expressiondata.call.Call;
 import org.bgee.model.gene.Gene;
 
 /**

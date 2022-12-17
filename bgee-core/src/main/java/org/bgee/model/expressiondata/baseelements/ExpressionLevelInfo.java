@@ -8,15 +8,15 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.gene.Gene;
 
 /**
  * A class providing information about the expression level of an
- * {@link org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall}.
+ * {@link org.bgee.model.expressiondata.call.Call.ExpressionCall ExpressionCall}.
  *
  * @author Frederic Bastian
- * @see org.bgee.model.expressiondata.Call.ExpressionCall
+ * @see org.bgee.model.expressiondata.call.Call.ExpressionCall
  * @since Bgee 14 Feb. 2019
  * @version Bgee 14 Feb. 2019
  */

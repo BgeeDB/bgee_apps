@@ -1,3 +1,4 @@
+package org.bgee.model.expressiondata.call;
 //package org.bgee.model.expressiondata;
 //
 //import static org.junit.Assert.assertEquals;

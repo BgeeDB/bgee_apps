@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
@@ -7,13 +7,16 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityTaxonSummary;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.Condition;
-import org.bgee.model.expressiondata.ConditionFilter;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
+import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCondition;
+import org.bgee.model.expressiondata.call.multispecies.SimilarityExpressionCall;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;

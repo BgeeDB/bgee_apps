@@ -9,7 +9,7 @@ import org.bgee.model.dao.api.exception.QueryInterruptedException;
 import org.bgee.model.dao.api.expressiondata.ConditionDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO;
 import org.bgee.model.dao.api.file.DownloadFileDAO.DownloadFileTO;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 import java.util.Collection;
 import java.util.EnumSet;

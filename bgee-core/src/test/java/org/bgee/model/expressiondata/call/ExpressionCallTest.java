@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -17,8 +17,10 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.TestAncestor;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionGraph;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;

@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +12,8 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.species.Species;
 import org.junit.Test;

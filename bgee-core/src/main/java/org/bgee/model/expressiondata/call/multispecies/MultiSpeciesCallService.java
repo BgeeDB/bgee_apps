@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,15 +37,15 @@ import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarity;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityService;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarity;
 import org.bgee.model.anatdev.multispemapping.DevStageSimilarityService;
-import org.bgee.model.expressiondata.Call;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
-import org.bgee.model.expressiondata.CallFilter.ExpressionCallFilter;
-import org.bgee.model.expressiondata.CallService;
-import org.bgee.model.expressiondata.ConditionFilter;
-import org.bgee.model.expressiondata.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.Call;
+import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.ConditionFilter;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.MultiGeneExprAnalysis.MultiGeneExprCounts;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneFilter;

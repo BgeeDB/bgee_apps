@@ -4,7 +4,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Call.ExpressionCall;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 
 /**
  * This class loads the properties for Bgee webapp and extends {@link BgeeProperties} from
@@ -1439,7 +1439,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * @return  A {@code String} corresponding to the name of the clustering method to use 
      *          to cluster {@code ExpressionCall}s based on their mean rank score. 
-     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall.ClusteringMethod} 
+     *          See {@code org.bgee.model.expressiondata.call.Call.ExpressionCall.ClusteringMethod} 
      *          for list of valid method names. 
      * @see #GENE_SCORE_CLUSTERING_METHOD_KEY
      * @see #GENE_SCORE_CLUSTERING_METHOD_DEFAULT
@@ -1450,7 +1450,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
     /**
      * @return  A {@code Double} corresponding to the distance threshold used by methods 
      *          for clustering {@code ExpressionCall}s, based on their mean rank score. 
-     *          See {@code org.bgee.model.expressiondata.Call.ExpressionCall
+     *          See {@code org.bgee.model.expressiondata.call.Call.ExpressionCall
      *          .generateMeanRankScoreClustering(Collection, ClusteringMethod, double)}. 
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_KEY
      * @see #GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT

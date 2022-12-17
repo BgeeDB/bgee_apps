@@ -13,19 +13,19 @@ import org.bgee.model.expressiondata.baseelements.PropagationState;
 
 /**
  * This interface is used to type the summary call types associated to 
- * {@link org.bgee.model.expressiondata.Call Call}s. They represent an overall summary 
+ * {@link org.bgee.model.expressiondata.call.Call Call}s. They represent an overall summary 
  * of the {@link CallType}s from individual data types, associated to a same {@code Call}.
  * 
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @version Bgee 14, Apr. 2017
  * @see CallType
- * @see org.bgee.model.expressiondata.Call Call
+ * @see org.bgee.model.expressiondata.call.Call Call
  * @since Bgee 13 Sept. 2015
  */
 public interface SummaryCallType extends CallType {
     /**
-     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.ExpressionCall 
+     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.call.Call.ExpressionCall 
      * ExpressionCall}s. They represent an overall summary of the {@link CallType.Expression Expression}
      * calls from individual data types, associated to a same {@code ExpressionCall}.
      * <ul>
@@ -52,7 +52,7 @@ public interface SummaryCallType extends CallType {
      * @author Frederic Bastian
      * @version Bgee 14 Mar. 2017
      * @see CallType.Expression 
-     * @see org.bgee.model.expressiondata.Call.ExpressionCall ExpressionCall
+     * @see org.bgee.model.expressiondata.call.Call.ExpressionCall ExpressionCall
      * @since Bgee 13 Sept. 2015
      */
     //XXX: although there is no more "ambiguity" status starting from Bgee 14,
@@ -136,7 +136,7 @@ public interface SummaryCallType extends CallType {
         }
     }
     /**
-     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.Call.DiffExpressionCall 
+     * {@link SummaryCallType} associated to {@link org.bgee.model.expressiondata.call.Call.DiffExpressionCall 
      * DiffExpressionCall}s. They represent an overall summary of the {@link CallType.DiffExpression 
      * DiffExpression} calls from individual data types, associated to a same {@code DiffExpressionCall}.
      * <ul>
@@ -173,7 +173,7 @@ public interface SummaryCallType extends CallType {
      * @author Frederic Bastian
      * @version Bgee 14 Mar. 2017
      * @see CallType.DiffExpression 
-     * @see org.bgee.model.expressiondata.Call.DiffExpressionCall DiffExpressionCall
+     * @see org.bgee.model.expressiondata.call.Call.DiffExpressionCall DiffExpressionCall
      * @since Bgee 13 Sept. 2015
      */
     public static enum DiffExpressionSummary implements SummaryCallType, BgeeEnumField {

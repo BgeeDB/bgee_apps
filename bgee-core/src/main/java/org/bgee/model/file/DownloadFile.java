@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.expressiondata.CallService;
+import org.bgee.model.expressiondata.call.CallService;
 
 /**
  * A file (available for download), providing information such as size, category.

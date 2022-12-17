@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -9,7 +9,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.expressiondata.Condition.ConditionEntities;
+import org.bgee.model.expressiondata.BaseConditionFilter;
+import org.bgee.model.expressiondata.call.Condition.ConditionEntities;
 
 /**
  * A filter to parameterize queries using expression data {@link Condition}s.

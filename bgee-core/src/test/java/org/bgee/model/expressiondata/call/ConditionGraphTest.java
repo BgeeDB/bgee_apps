@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -21,6 +21,9 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionGraph;
+import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;

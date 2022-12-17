@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata;
+package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
-import org.bgee.model.expressiondata.Condition.ConditionEntities;
+import org.bgee.model.expressiondata.call.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
 
 /**

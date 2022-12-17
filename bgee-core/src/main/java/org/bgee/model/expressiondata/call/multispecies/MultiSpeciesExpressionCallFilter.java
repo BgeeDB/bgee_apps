@@ -1,4 +1,4 @@
-package org.bgee.model.expressiondata.multispecies;
+package org.bgee.model.expressiondata.call.multispecies;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.bgee.model.expressiondata.Call;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.call.Call;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.species.TaxonomyFilter;
 

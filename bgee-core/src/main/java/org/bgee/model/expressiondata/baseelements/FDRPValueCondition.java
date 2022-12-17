@@ -3,7 +3,7 @@ package org.bgee.model.expressiondata.baseelements;
 import java.math.BigDecimal;
 import java.util.Collection;
 
-import org.bgee.model.expressiondata.Condition;
+import org.bgee.model.expressiondata.call.Condition;
 
 /**
  * Store a FDR corrected p-value, produced by retrieving all p-values

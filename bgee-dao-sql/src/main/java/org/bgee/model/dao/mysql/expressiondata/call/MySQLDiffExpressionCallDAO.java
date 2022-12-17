@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.expressiondata;
+package org.bgee.model.dao.mysql.expressiondata.call;
 
 import java.sql.SQLException;
 import java.util.Map.Entry;

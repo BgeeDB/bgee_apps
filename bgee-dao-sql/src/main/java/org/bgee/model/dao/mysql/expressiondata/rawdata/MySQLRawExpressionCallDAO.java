@@ -1,4 +1,4 @@
-package org.bgee.model.dao.mysql.expressiondata;
+package org.bgee.model.dao.mysql.expressiondata.rawdata;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,6 +18,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.call.MySQLConditionDAO;
 import org.bgee.model.dao.mysql.gene.MySQLGeneDAO;
 
 /**

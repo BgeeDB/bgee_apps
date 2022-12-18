@@ -173,10 +173,10 @@ public class DAORawDataFilter extends DAODataFilter2 {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("DAORawDataFilter [")
-               .append(", getSpeciesIds()=").append(getSpeciesIds())
+               .append("getSpeciesIds()=").append(getSpeciesIds())
                .append(", getGeneIds()=").append(getGeneIds())
                .append(", getConditionIds()=").append(getConditionIds())
-               .append("experimentIds=").append(experimentIds)
+               .append(", experimentIds=").append(experimentIds)
                .append(", assayIds=").append(assayIds)
                .append(", exprOrAssayIds=").append(exprOrAssayIds)
                .append("]");

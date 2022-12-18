@@ -81,6 +81,8 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         return cellTypeIds;
     }
 
+    public abstract boolean areAllCondParamFiltersEmpty();
+
     @Override
     public int hashCode() {
         final int prime = 31;

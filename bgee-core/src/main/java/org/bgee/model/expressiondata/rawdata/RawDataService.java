@@ -478,11 +478,11 @@ public class RawDataService extends ExpressionDataService {
                     speciesMap, geneBioTypeMap, sourceMap));
         }
 
-        //if filter.getSpeciesIdsConsidered() is null, we can create just one DAORawDataFilter
+        //if filter.getSpeciesIdsConsidered() is empty, we can create just one DAORawDataFilter
         //it means that there was no GeneFilter provided, only either a ConditionFilter targeting any species,
         //and/or experiment/assay IDs targeting any species
         Set<DAORawDataFilter> daoFilters = new HashSet<>();
-        if (filter.getSpeciesIdsConsidered() == null) {
+        if (filter.getSpeciesIdsConsidered().isEmpty()) {
             assert filter.getGeneFilters().isEmpty() && requestedGeneMap.isEmpty();
 
             if (requestedRawDataCondMap.isEmpty() && filter.hasExperimentAssayIds()) {

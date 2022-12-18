@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,47 +26,12 @@ import org.bgee.model.gene.GeneFilter;
 public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
     private final static Logger log = LogManager.getLogger(RawDataFilter.class.getName());
 
-    private final Set<String> experimentIds;
-    private final Set<String> assayIds;
-    private final Set<String> experimentOrAssayIds;
-    private final Set<Integer> speciesIdsConsidered;
+    private static Set<Integer> checkAndLoadSpeciesIdsConsidered(Collection<GeneFilter> geneFilters,
+            Collection<RawDataConditionFilter> conditionFilters) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", geneFilters, conditionFilters);
 
-    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
-        this(geneFilters, conditionFilters, null, null, null);
-    }
-    /**
-     * @param geneFilters           A {@code Collection} of {@code GeneFilter}s specifying
-     *                              the species to target, or some specific genes to target.
-     * @param conditionFilters      A {@code Collection} of {@code RawDataConditionFilter}s specifying
-     *                              the species to target, or some specific conditions to target.
-     * @param experimentIds         A {@code Collection} of {@code String}s that are IDs of experiments
-     *                              to consider. Only results part of these experiments will be returned.
-     * @param assayIds              A {@code Collection} of {@code String}s that are IDs of assays
-     *                              to consider. Only results part of these assays will be returned.
-     * @param experimentOrAssayIds  A {@code Collection} of {@code String}s that are IDs of either
-     *                              experiments or assays, in case it is not known which {@code String}s
-     *                              are experiment IDs, and which are assay IDs.
-     *                              Only results part of these experiments and/or assays will be returned.
-     * @throws IllegalArgumentException If a RawDataConditionFilter queries all conditions in a species,
-                                        while another RawDataConditionFilter queries
-                                        some more specific conditions in that species.
-                                        Or if a species is present in more than one {@code GeneFilter}.
-                                        Or if not the same species are requested in {@code geneFilters}
-                                        and {@code conditionFilters}.
-     */
-    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
-            Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
-                    throws IllegalArgumentException {
-        super(geneFilters, conditionFilters);
-
-        this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>():
-            new HashSet<>(experimentIds));
-        this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>():
-            new HashSet<>(assayIds));
-        this.experimentOrAssayIds = Collections.unmodifiableSet(experimentOrAssayIds == null? new HashSet<>():
-            new HashSet<>(experimentOrAssayIds));
-
-        Map<Integer, List<RawDataConditionFilter>> condFiltersPerSpecies = this.getConditionFilters().stream()
+        Map<Integer, List<RawDataConditionFilter>> condFiltersPerSpecies =
+                (conditionFilters == null? Stream.<RawDataConditionFilter>of(): conditionFilters.stream())
                 //Collectors.groupingBy doesn't accept null keys, we replace null key with 0.
                 //Alternatively we could use an Optional.ofNullable
                 .collect(Collectors.groupingBy(f -> f.getSpeciesId() == null? 0: f.getSpeciesId()));
@@ -87,7 +53,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                     + "in that species"));
         }
 
-        Set<Integer> geneFilterSpeciesIds = this.getGeneFilters().stream()
+        Set<Integer> geneFilterSpeciesIds = (geneFilters == null? Stream.<GeneFilter>of(): geneFilters.stream())
                 .map(gf -> gf.getSpeciesId())
                 .collect(Collectors.toSet());
 
@@ -115,23 +81,55 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                 }
             }
         }
-// It is OK to have all the parameters empty, to request all data
-//        if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty() &&
-//                !this.hasExperimentAssayIds()) {
-//            throw log.throwing(new IllegalArgumentException("Some parameters must be provided"));
-//        }
 
-        if (geneFilterSpeciesIds.isEmpty() && condFiltersPerSpecies.keySet().contains(0)) {
-            this.speciesIdsConsidered = null;
-        } else if (!geneFilterSpeciesIds.isEmpty()) {
-            this.speciesIdsConsidered = geneFilterSpeciesIds;
-        } else if (!condFiltersPerSpecies.isEmpty()) {
-            this.speciesIdsConsidered = condFiltersPerSpecies.keySet();
-        } else {
-            this.speciesIdsConsidered = null;
+        Set<Integer> speciesIdsConsidered = new HashSet<>();
+        if (!geneFilterSpeciesIds.isEmpty()) {
+            speciesIdsConsidered = geneFilterSpeciesIds;
+        } else if (!condFiltersPerSpecies.isEmpty() && !condFiltersPerSpecies.keySet().contains(0)) {
+            speciesIdsConsidered = condFiltersPerSpecies.keySet();
         }
-        assert this.speciesIdsConsidered == null || !this.speciesIdsConsidered.isEmpty():
-            "speciesIdsConsidered, if non-null, should never be empty.";
+        return log.traceExit(speciesIdsConsidered);
+    }
+
+    private final Set<String> experimentIds;
+    private final Set<String> assayIds;
+    private final Set<String> experimentOrAssayIds;
+
+    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
+        this(geneFilters, conditionFilters, null, null, null);
+    }
+    /**
+     * @param geneFilters           A {@code Collection} of {@code GeneFilter}s specifying
+     *                              the species to target, or some specific genes to target.
+     * @param conditionFilters      A {@code Collection} of {@code RawDataConditionFilter}s specifying
+     *                              the species to target, or some specific conditions to target.
+     * @param experimentIds         A {@code Collection} of {@code String}s that are IDs of experiments
+     *                              to consider. Only results part of these experiments will be returned.
+     * @param assayIds              A {@code Collection} of {@code String}s that are IDs of assays
+     *                              to consider. Only results part of these assays will be returned.
+     * @param experimentOrAssayIds  A {@code Collection} of {@code String}s that are IDs of either
+     *                              experiments or assays, in case it is not known which {@code String}s
+     *                              are experiment IDs, and which are assay IDs.
+     *                              Only results part of these experiments and/or assays will be returned.
+     * @throws IllegalArgumentException If a RawDataConditionFilter queries all conditions in a species,
+                                        while another RawDataConditionFilter queries
+                                        some more specific conditions in that species.
+                                        Or if a species is present in more than one {@code GeneFilter}.
+                                        Or if not the same species are requested in {@code geneFilters}
+                                        and {@code conditionFilters}.
+     */
+    public RawDataFilter(Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters,
+            Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
+                    throws IllegalArgumentException {
+        super(geneFilters, conditionFilters,
+                checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters));
+
+        this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>():
+            new HashSet<>(experimentIds));
+        this.assayIds = Collections.unmodifiableSet(assayIds == null? new HashSet<>():
+            new HashSet<>(assayIds));
+        this.experimentOrAssayIds = Collections.unmodifiableSet(experimentOrAssayIds == null? new HashSet<>():
+            new HashSet<>(experimentOrAssayIds));
     }
 
     /**
@@ -169,24 +167,11 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         return experimentOrAssayIds;
     }
 
-    /**
-     * @return  A {@code Set} of {@code Integer}s that are the IDs of species considered
-     *          in this {@code RawDataFilter}. If {@code null}, it means that either
-     *          a {@code RawDataConditionFilter} was provided targeting any species
-     *          and there was no {@code GeneFilter} provided, or there was no
-     *          {@code RawDataConditionFilter} nor {@code GeneFilter} provided
-     *          ({@link #hasExperimentAssayIds()} should then return {@code true}).
-     */
-    public Set<Integer> getSpeciesIdsConsidered() {
-        return this.speciesIdsConsidered;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(assayIds, experimentIds,
-                experimentOrAssayIds, speciesIdsConsidered);
+        result = prime * result + Objects.hash(assayIds, experimentIds, experimentOrAssayIds);
         return result;
     }
     @Override
@@ -198,12 +183,9 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         if (getClass() != obj.getClass())
             return false;
         RawDataFilter other = (RawDataFilter) obj;
-        return Objects.equals(assayIds, other.assayIds)
-                && Objects.equals(experimentIds, other.experimentIds)
-                && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds)
-                && Objects.equals(speciesIdsConsidered, other.speciesIdsConsidered);
+        return Objects.equals(assayIds, other.assayIds) && Objects.equals(experimentIds, other.experimentIds)
+                && Objects.equals(experimentOrAssayIds, other.experimentOrAssayIds);
     }
-
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -212,7 +194,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
                .append(", experimentIds=").append(experimentIds)
                .append(", assayIds=").append(assayIds)
                .append(", experimentOrAssayIds=").append(experimentOrAssayIds)
-               .append(", speciesIdsConsidered=").append(speciesIdsConsidered)
+               .append(", speciesIdsConsidered=").append(getSpeciesIdsConsidered())
                .append("]");
         return builder.toString();
     }

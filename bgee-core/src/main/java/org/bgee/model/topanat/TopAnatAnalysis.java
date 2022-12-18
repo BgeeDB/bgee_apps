@@ -37,6 +37,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.expressiondata.call.CallFilter;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.Condition;
+import org.bgee.model.expressiondata.call.ConditionFilter;
 import org.bgee.model.expressiondata.call.ConditionGraph;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
@@ -136,7 +137,7 @@ public class TopAnatAnalysis extends CommonService {
      * 
      */
     private final TopAnatController controller;
-    private final CallFilter<?, ?> callFilter;
+    private final CallFilter<?, ?, ConditionFilter> callFilter;
 
     /**
      * @param params

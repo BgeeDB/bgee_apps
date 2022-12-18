@@ -5,15 +5,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.DataFilter;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
@@ -59,10 +63,79 @@ import org.bgee.model.gene.GeneFilter;
 //(e.g., calls including substructures for Affymetrix, not including substructures for RNA-Seq).
 //If these two points wanted to be achieved, we could use the new fields of, e.g., ExpressionCallData: 
 // absentHighParentExpCount, presentHighDescExpCount, etc.
-public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType>
-extends DataFilter<ConditionFilter> {
+public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType,
+V extends ConditionFilterCondParam<?>> extends DataFilter<V> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
-    
+
+    private static <T extends ConditionFilterCondParam<?>> Set<Integer>
+    checkAndLoadSpeciesIdsConsidered(Collection<GeneFilter> geneFilters, Collection<T> conditionFilters) {
+        log.traceEntry("{}, {}", geneFilters, conditionFilters);
+
+        Set<Integer> speciesIdsWithNoParams = new HashSet<>();
+        boolean allSpeciesWithNoParams = false;
+        Set<Integer> speciesIdsWithParams = new HashSet<>();
+        boolean allSpeciesWithParams = false;
+        boolean condAllSpeciesSelected = false;
+        for (T f: (conditionFilters == null? new HashSet<T>(): conditionFilters)) {
+            Set<Integer> speciesIds = f.getSpeciesIds();
+            if (speciesIds.isEmpty()) {
+                condAllSpeciesSelected = true;
+            }
+            if (f.areAllCondParamFiltersEmpty()) {
+                speciesIdsWithNoParams.addAll(speciesIds);
+                if (speciesIds.isEmpty()) {
+                    allSpeciesWithNoParams = true;
+                }
+            } else {
+                speciesIdsWithParams.addAll(speciesIds);
+                if (speciesIds.isEmpty()) {
+                    allSpeciesWithParams = true;
+                }
+            }
+        }
+        if (!Collections.disjoint(speciesIdsWithNoParams, speciesIdsWithParams) ||
+                allSpeciesWithNoParams && (!speciesIdsWithParams.isEmpty() || allSpeciesWithParams) ||
+                !speciesIdsWithNoParams.isEmpty() && allSpeciesWithParams) {
+            throw log.throwing(new IllegalArgumentException(
+                    "A ConditionFilter queries all conditions in a species, "
+                    + "while another ConditionFilter queries some more specific conditions "
+                    + "in that species"));
+        }
+
+        Set<Integer> geneFilterSpeciesIds = (geneFilters == null? Stream.<GeneFilter>of(): geneFilters.stream())
+                .map(gf -> gf.getSpeciesId())
+                .collect(Collectors.toSet());
+        Set<Integer> condFilterSpeciesIds = new HashSet<>(speciesIdsWithNoParams);
+        condFilterSpeciesIds.addAll(speciesIdsWithParams);
+
+        if (!geneFilterSpeciesIds.isEmpty() && !condFilterSpeciesIds.isEmpty() &&
+                !condAllSpeciesSelected) {
+            Set<Integer> condSpeciesNotFoundInGene = condFilterSpeciesIds.stream()
+                    .filter(id -> !geneFilterSpeciesIds.contains(id))
+                    .collect(Collectors.toSet());
+            if (!condSpeciesNotFoundInGene.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Some species IDs were requested in conditionFilters but not in geneFilters: "
+                                + condSpeciesNotFoundInGene));
+            }
+            Set<Integer> geneSpeciesNotFoundInCond = geneFilterSpeciesIds.stream()
+                    .filter(id -> !condFilterSpeciesIds.contains(id))
+                    .collect(Collectors.toSet());
+            if (!geneSpeciesNotFoundInCond.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Some species IDs were requested in geneFilters but not in conditionFilters: "
+                                + geneSpeciesNotFoundInCond));
+            }
+        }
+
+        Set<Integer> speciesIdsConsidered = new HashSet<>(condFilterSpeciesIds);
+        speciesIdsConsidered.addAll(geneFilterSpeciesIds);
+        if (geneFilterSpeciesIds.isEmpty() && condAllSpeciesSelected) {
+            speciesIdsConsidered = new HashSet<>();
+        }
+
+        return log.traceExit(speciesIdsConsidered);
+    }
     /**
      * A {@code CallFilter} for {@code ExpressionCall}.
      * 
@@ -71,8 +144,9 @@ extends DataFilter<ConditionFilter> {
      * @version Bgee 14, Mar. 2017
      * @since   Bgee 13
      */
-    public static class ExpressionCallFilter
-    extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary> implements Predicate<ExpressionCall> {
+    protected static class ExpressionCallFilterBase<T extends Enum<T>, U extends ConditionFilterCondParam<T>>
+    extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary, U>
+    implements Predicate<ExpressionCall> {
 
         /**
          * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
@@ -130,14 +204,8 @@ extends DataFilter<ConditionFilter> {
 
         //XXX: maybe we can only allow to request observed calls (and not as well non-observed calls)
         //so that this Map would simply be an EnumSet (easier to use to instantiate a CallFilter)
-        private final Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter;
+        private final Map<EnumSet<T>, Boolean> callObservedDataFilter;
 
-        public ExpressionCallFilter(
-                Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Collection<GeneFilter> geneFilters,
-                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter) {
-            this(summaryCallTypeQualityFilter, geneFilters, null, null, callObservedDataFilter);
-        }
         /**
          * @param summaryCallTypeQualityFilter  A {@code Map} where keys are
          *                                      {@code SummaryCallType.ExpressionSummary}
@@ -199,18 +267,17 @@ extends DataFilter<ConditionFilter> {
          *                                      {@code CallService.Attribute}s that are not
          *                                      condition parameters, or a value is {@code null}.
          */
-        public ExpressionCallFilter(
+        protected ExpressionCallFilterBase(
                 Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+                Collection<GeneFilter> geneFilters, Collection<U> conditionFilters,
                 Collection<DataType> dataTypeFilter,
-                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter)
+                Map<EnumSet<T>, Boolean> callObservedDataFilter)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.ExpressionSummary.class);
 
             if (callObservedDataFilter != null && callObservedDataFilter.entrySet().stream()
-                    .anyMatch(e -> e.getKey() == null || e.getKey().isEmpty() || e.getValue() == null ||
-                                  e.getKey().stream().anyMatch(a -> !a.isConditionParameter()))) {
+                    .anyMatch(e -> e.getKey() == null || e.getKey().isEmpty() || e.getValue() == null)) {
                 throw log.throwing(new IllegalArgumentException("Only condition parameters, non-null, "
                         + "and non-null Booleans are accepted in the Map of callObservedDataFilter"));
             }
@@ -219,21 +286,6 @@ extends DataFilter<ConditionFilter> {
             this.callObservedDataFilter = callObservedDataFilter == null? new HashMap<>():
                 callObservedDataFilter.entrySet().stream()
                 .collect(Collectors.toMap(e -> EnumSet.copyOf(e.getKey()), e -> e.getValue()));
-
-            try {
-                this.checkEmptyFilters();
-            } catch (IllegalStateException e) {
-                throw log.throwing(new IllegalArgumentException("Incorrect filters provided", e));
-            }
-        }
-
-        @Override
-        protected void checkEmptyFilters() throws IllegalStateException {
-            log.traceEntry();
-            //nothing special in this subclass, the observedData filter alone is not enough,
-            //so we let the superclass decide whether it's happy about the filters it manages.
-            super.checkEmptyFilters();
-            log.traceExit();
         }
 
         /**
@@ -249,7 +301,7 @@ extends DataFilter<ConditionFilter> {
          *          The {@code Boolean} values are never {@code null}.
          *          The filtering used only the data types defined in this {@code ExpressionCallFilter}.
          */
-        public Map<EnumSet<CallService.Attribute>, Boolean> getCallObservedDataFilter() {
+        public Map<EnumSet<T>, Boolean> getCallObservedDataFilter() {
             //defensive copying, there is no unmodifiable EnumSet
             return callObservedDataFilter.entrySet().stream()
                     .collect(Collectors.toMap(e -> EnumSet.copyOf(e.getKey()), e -> e.getValue()));
@@ -321,30 +373,19 @@ extends DataFilter<ConditionFilter> {
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result
-                    + ((callObservedDataFilter == null) ? 0 : callObservedDataFilter.hashCode());
+            result = prime * result + Objects.hash(callObservedDataFilter);
             return result;
         }
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) {
+            if (this == obj)
                 return true;
-            }
-            if (!super.equals(obj)) {
+            if (!super.equals(obj))
                 return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (getClass() != obj.getClass())
                 return false;
-            }
-            ExpressionCallFilter other = (ExpressionCallFilter) obj;
-            if (callObservedDataFilter == null) {
-                if (other.callObservedDataFilter != null) {
-                    return false;
-                }
-            } else if (!callObservedDataFilter.equals(other.callObservedDataFilter)) {
-                return false;
-            }
-            return true;
+            ExpressionCallFilterBase<?, ?> other = (ExpressionCallFilterBase<?, ?>) obj;
+            return Objects.equals(callObservedDataFilter, other.callObservedDataFilter);
         }
 
         @Override
@@ -358,8 +399,62 @@ extends DataFilter<ConditionFilter> {
                    .append(", conditionFilters=").append(getConditionFilters())
                    .append(", dataTypeFilters=").append(getDataTypeFilters())
                    .append(", summaryCallTypeQualityFilter=").append(getSummaryCallTypeQualityFilter())
+                   .append(", speciesIdsConsidered=").append(getSpeciesIdsConsidered())
                    .append("]");
             return builder.toString();
+        }
+    }
+    /**
+     * A {@code CallFilter} for {@code ExpressionCall}.
+     *
+     * @author  Frederic Bastian
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Mar. 2017
+     * @since   Bgee 13
+     */
+    public static class ExpressionCallFilter
+    extends ExpressionCallFilterBase<CallService.Attribute, ConditionFilter>
+    implements Predicate<ExpressionCall> {
+
+        public ExpressionCallFilter(
+                Map<SummaryCallType.ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Collection<GeneFilter> geneFilters,
+                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter) {
+            this(summaryCallTypeQualityFilter, geneFilters, null, null, callObservedDataFilter);
+        }
+        public ExpressionCallFilter(Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+                Collection<DataType> dataTypeFilter,
+                Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter)
+                throws IllegalArgumentException {
+            super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
+                    callObservedDataFilter);
+            if (this.getCallObservedDataFilter().entrySet().stream()
+                    .anyMatch(e -> e.getKey().stream().anyMatch(a -> !a.isConditionParameter()))) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Only condition parameters are accepted in the Map of callObservedDataFilter"));
+            }
+        }
+    }
+    /**
+     * A {@code CallFilter} for {@code ExpressionCall}.
+     *
+     * @author  Frederic Bastian
+     * @author  Valentine Rech de Laval
+     * @version Bgee 14, Mar. 2017
+     * @since   Bgee 13
+     */
+    public static class ExpressionCallFilter2
+    extends ExpressionCallFilterBase<ConditionParameter, ConditionFilter2>
+    implements Predicate<ExpressionCall> {
+
+        public ExpressionCallFilter2(Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
+                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters,
+                Collection<DataType> dataTypeFilter,
+                Map<EnumSet<ConditionParameter>, Boolean> callObservedDataFilter)
+                throws IllegalArgumentException {
+            super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
+                    callObservedDataFilter);
         }
     }
     
@@ -372,7 +467,8 @@ extends DataFilter<ConditionFilter> {
      * @since   Bgee 13
      */
     public static class DiffExpressionCallFilter
-    extends CallFilter<ExpressionCallData, SummaryCallType.DiffExpressionSummary> implements Predicate<DiffExpressionCall> {
+    extends CallFilter<ExpressionCallData, SummaryCallType.DiffExpressionSummary, ConditionFilter>
+    implements Predicate<DiffExpressionCall> {
         /**
          * See {@link CallFilter#CallFilter(GeneFilter, Collection, Collection, SummaryQuality, SummaryCallType)}.
          */
@@ -382,11 +478,11 @@ extends DataFilter<ConditionFilter> {
             Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
                     SummaryCallType.DiffExpressionSummary.class);
-            try {
-                this.checkEmptyFilters();
-            } catch (IllegalStateException e) {
-                throw log.throwing(new IllegalArgumentException("Incorrect filters provided", e));
-            }
+        }
+
+        @Override
+        public Set<Integer> getSpeciesIdsConsidered() {
+            throw log.throwing(new UnsupportedOperationException("Not implemented for this class"));
         }
 
         @Override
@@ -483,9 +579,10 @@ extends DataFilter<ConditionFilter> {
     //use in it super.checkEmptyFilters(), and call it in their constructor (this cannot be done
     //in this constructor, as subclasses might need to set their own attributes before calling checkEmptyFilters)
     protected CallFilter(Map<U, SummaryQuality> summaryCallTypeQualityFilter,
-            Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
+            Collection<GeneFilter> geneFilters, Collection<V> conditionFilters,
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls) throws IllegalArgumentException {
-        super(geneFilters, conditionFilters);
+        super(geneFilters, conditionFilters,
+                checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters));
 
         if (dataTypeFilter != null && dataTypeFilter.contains(null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
@@ -521,25 +618,6 @@ extends DataFilter<ConditionFilter> {
         }
 
     }
-    
-    /** 
-     * Check fitlers.
-     * 
-     * @throws IllegalStateException    If some filters are not satisfactory.
-     */
-    //IMPORTANT: note that subclasses must override checkEmptyFilters as needed,
-    //use in it super.checkEmptyFilters(), and call it in their constructor
-    //(this cannot be done in the sub-class constructor, as subclasses might need
-    //to set their own attributes before calling checkEmptyFilters)
-    protected void checkEmptyFilters() throws IllegalStateException {
-        log.traceEntry();
-        //To make sure we never pull all data in the database at once.
-        if (this.getGeneFilters().isEmpty() && this.getConditionFilters().isEmpty()) {
-            throw log.throwing(new IllegalStateException(
-                    "At least a GeneFilter or a ConditionFilter must be provided."));
-        }
-        log.traceExit();
-    }
 
     /**
      * @return  An {@code EnumSet} of {@code DataType}s, allowing to configure
@@ -562,38 +640,20 @@ extends DataFilter<ConditionFilter> {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((dataTypeFilters == null) ? 0 : dataTypeFilters.hashCode());
-        result = prime * result
-                + ((summaryCallTypeQualityFilter == null) ? 0 : summaryCallTypeQualityFilter.hashCode());
+        result = prime * result + Objects.hash(dataTypeFilters, summaryCallTypeQualityFilter);
         return result;
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (!super.equals(obj)) {
+        if (!super.equals(obj))
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
-        CallFilter<?, ?> other = (CallFilter<?, ?>) obj;
-        if (dataTypeFilters == null) {
-            if (other.dataTypeFilters != null) {
-                return false;
-            }
-        } else if (!dataTypeFilters.equals(other.dataTypeFilters)) {
-            return false;
-        }
-        if (summaryCallTypeQualityFilter == null) {
-            if (other.summaryCallTypeQualityFilter != null) {
-                return false;
-            }
-        } else if (!summaryCallTypeQualityFilter.equals(other.summaryCallTypeQualityFilter)) {
-            return false;
-        }
-        return true;
+        CallFilter<?, ?, ?> other = (CallFilter<?, ?, ?>) obj;
+        return Objects.equals(dataTypeFilters, other.dataTypeFilters)
+                && Objects.equals(summaryCallTypeQualityFilter, other.summaryCallTypeQualityFilter);
     }
 
     @Override
@@ -603,6 +663,7 @@ extends DataFilter<ConditionFilter> {
                .append(", dataTypeFilters=").append(dataTypeFilters)
                .append(", geneFilters=").append(getGeneFilters())
                .append(", conditionFilters=").append(getConditionFilters())
+               .append(", speciesIdsConsidered=").append(getSpeciesIdsConsidered())
                .append("]");
         return builder.toString();
     }

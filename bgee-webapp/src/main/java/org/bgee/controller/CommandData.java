@@ -326,7 +326,7 @@ public class CommandData extends CommandParent {
                     //We try to avoid requesting a ProcessedFilter if not necessary,
                     //by comparing the RawDataFilters
                     if (!rawDataLoader.getRawDataProcessedFilter()
-                            .getRawDataFilter().equals(noFilterParamFilter)) {
+                            .getSourceFilter().equals(noFilterParamFilter)) {
                         loaderToUse = this.loadRawDataLoader(noFilterParamFilter);
                     }
                     rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes);

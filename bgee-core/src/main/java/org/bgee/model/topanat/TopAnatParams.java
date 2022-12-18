@@ -602,7 +602,7 @@ public class TopAnatParams {
      * 
      * @return A {@code CallFilter} to be used for the analysis
      */
-    public CallFilter<?, ?> convertRawParametersToCallFilter() {
+    public CallFilter<?, ?, ConditionFilter> convertRawParametersToCallFilter() {
         log.traceEntry();
         
         GeneFilter geneFilter = new GeneFilter(this.speciesId, this.submittedBackgroundIds);

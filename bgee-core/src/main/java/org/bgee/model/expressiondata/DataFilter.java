@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,11 +41,25 @@ public abstract class DataFilter<T extends BaseConditionFilter<?>> {
     //XXX: all parameters are OR conditions
     private final Set<T> conditionFilters;
 
-    protected DataFilter(Collection<GeneFilter> geneFilters, Collection<T> conditionFilters) {
+    private final Set<Integer> speciesIdsConsidered;
+
+    protected DataFilter(Collection<GeneFilter> geneFilters, Collection<T> conditionFilters,
+            Set<Integer> speciesIdsConsidered) {
         this.geneFilters = Collections.unmodifiableSet(geneFilters == null? new HashSet<>():
-            geneFilters.stream().filter(f -> f != null).collect(Collectors.toSet()));
+            new HashSet<>(geneFilters));
         this.conditionFilters = Collections.unmodifiableSet(conditionFilters == null? new HashSet<>():
-            conditionFilters.stream().filter(f -> f != null).collect(Collectors.toSet()));
+            new HashSet<>(conditionFilters));
+        this.speciesIdsConsidered = Collections.unmodifiableSet(speciesIdsConsidered == null? new HashSet<>():
+            new HashSet<>(speciesIdsConsidered));
+        if (this.geneFilters.stream().anyMatch(f -> f == null)) {
+            throw log.throwing(new IllegalArgumentException("No GeneFilter can be null"));
+        }
+        if (this.conditionFilters.stream().anyMatch(f -> f == null)) {
+            throw log.throwing(new IllegalArgumentException("No condition filter can be null"));
+        }
+        if (this.speciesIdsConsidered.stream().anyMatch(id -> id == null || id < 1)) {
+            throw log.throwing(new IllegalArgumentException("No species ID considered can be null or less than 1"));
+        }
 
         //make sure we don't have a same species in different GeneFilters
         if (this.geneFilters.stream().collect(Collectors.groupingBy(gf -> gf.getSpeciesId()))
@@ -71,41 +86,29 @@ public abstract class DataFilter<T extends BaseConditionFilter<?>> {
         return conditionFilters;
     }
 
+    /**
+     * @return  A {@code Set} of {@code Integer}s that are the IDs of species considered
+     *          in this {@code DataFilter}. If {@code empty} it means that any species is targeted.
+     */
+    public Set<Integer> getSpeciesIdsConsidered() {
+        return this.speciesIdsConsidered;
+    }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((conditionFilters == null) ? 0 : conditionFilters.hashCode());
-        result = prime * result + ((geneFilters == null) ? 0 : geneFilters.hashCode());
-        return result;
+        return Objects.hash(conditionFilters, geneFilters, speciesIdsConsidered);
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (!(obj instanceof DataFilter)) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         DataFilter<?> other = (DataFilter<?>) obj;
-        if (conditionFilters == null) {
-            if (other.conditionFilters != null) {
-                return false;
-            }
-        } else if (!conditionFilters.equals(other.conditionFilters)) {
-            return false;
-        }
-        if (geneFilters == null) {
-            if (other.geneFilters != null) {
-                return false;
-            }
-        } else if (!geneFilters.equals(other.geneFilters)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(conditionFilters, other.conditionFilters)
+                && Objects.equals(geneFilters, other.geneFilters)
+                && Objects.equals(speciesIdsConsidered, other.speciesIdsConsidered);
     }
 }

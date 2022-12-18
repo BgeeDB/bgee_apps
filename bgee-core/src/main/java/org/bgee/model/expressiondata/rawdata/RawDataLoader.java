@@ -293,7 +293,7 @@ public class RawDataLoader extends CommonService {
         //from the processed filter.
         //We keep the speciesMap and geneBiotypeMap inside the rawDataProcessedFilter,
         //as there will be no update to them by this RawDataLoader.
-        this.rawDataConditionMap.putAll(this.rawDataProcessedFilter.getRequestedRawDataConditionMap());
+        this.rawDataConditionMap.putAll(this.rawDataProcessedFilter.getRequestedConditionMap());
         this.geneMap.putAll(this.rawDataProcessedFilter.getRequestedGeneMap());
     }
 
@@ -460,7 +460,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(this.getNoResultAffymetrixContainer(infoType));
         }
 
@@ -472,7 +472,7 @@ public class RawDataLoader extends CommonService {
         Set<Integer> bgeeChipIds = new HashSet<>();
         Set<Integer> bgeeGeneIds = new HashSet<>();
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoRawDataFilters();
+                .getDaoFilters();
 
         //*********** Calls ***********
         if (infoType == InformationType.CALL) {
@@ -622,7 +622,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(new AffymetrixCountContainer(
                     withExperiment? 0: null,
                     withAssay? 0: null,
@@ -630,7 +630,7 @@ public class RawDataLoader extends CommonService {
         }
 
         RawDataCountContainerTO countTO = this.rawDataCountDAO.getAffymetrixCount(
-                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                this.getRawDataProcessedFilter().getDaoFilters(),
                 withExperiment, withAssay, withCall);
 
         return log.traceExit(new AffymetrixCountContainer(
@@ -657,7 +657,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(this.getNoResultRnaSeqContainer(infoType));
         }
 
@@ -668,7 +668,7 @@ public class RawDataLoader extends CommonService {
         LinkedHashSet<RNASeqLibraryAnnotatedSampleTO> assayTOs = new LinkedHashSet<>();
         LinkedHashSet<RNASeqLibraryTO> libTOs = new LinkedHashSet<>();
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoRawDataFilters();
+                .getDaoFilters();
 
         //*********** Calls ***********
         Set<Integer> bgeeAnnotatedSampleIds = new HashSet<>();
@@ -886,7 +886,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(new RnaSeqCountContainer(
                     withExperiment? 0: null,
                     withAssay? 0: null,
@@ -895,7 +895,7 @@ public class RawDataLoader extends CommonService {
         }
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getRnaSeqCount(
-                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                this.getRawDataProcessedFilter().getDaoFilters(),
                 isSingleCell, withExperiment, withAssay, withAssay, withCall);
 
         return log.traceExit(new RnaSeqCountContainer(
@@ -922,7 +922,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(this.getNoResultESTContainer(infoType));
         }
 
@@ -932,7 +932,7 @@ public class RawDataLoader extends CommonService {
         LinkedHashSet<ESTTO> callTOs = new LinkedHashSet<>();
         LinkedHashSet<ESTLibraryTO> assayTOs = new LinkedHashSet<>();
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoRawDataFilters();
+                .getDaoFilters();
 
         //*********** Calls ***********
         Set<String> estLibraryIds = new HashSet<>();
@@ -1045,14 +1045,14 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(new ESTCountContainer(
                     withExperiment || withAssay? 0: null,
                     withCall? 0: null));
         }
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getESTCount(
-                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                this.getRawDataProcessedFilter().getDaoFilters(),
                 withExperiment || withAssay, withCall);
 
         return log.traceExit(new ESTCountContainer(
@@ -1077,7 +1077,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(this.getNoResultInSituContainer(infoType));
         }
 
@@ -1090,7 +1090,7 @@ public class RawDataLoader extends CommonService {
         Set<Integer> bgeeGeneIds = new HashSet<>();
         Set<Integer> rawDataCondIds = new HashSet<>();
         Set<DAORawDataFilter> daoRawDataFilters = this.getRawDataProcessedFilter()
-                .getDaoRawDataFilters();
+                .getDaoFilters();
 
         //*********** Calls (and "fake" assays) ***********
         //If ASSAY is requested,
@@ -1256,7 +1256,7 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(new InSituCountContainer(
                     withExperiment? 0: null,
                     withAssay? 0: null,
@@ -1264,7 +1264,7 @@ public class RawDataLoader extends CommonService {
         }
 
         RawDataCountContainerTO countTO = rawDataCountDAO.getInSituCount(
-                this.getRawDataProcessedFilter().getDaoRawDataFilters(),
+                this.getRawDataProcessedFilter().getDaoFilters(),
                 withExperiment, false, withAssay, withCall);
 
         return log.traceExit(new InSituCountContainer(
@@ -1292,13 +1292,13 @@ public class RawDataLoader extends CommonService {
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoRawDataFilters() == null) {
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
             return log.traceExit(new RawDataPostFilter(dataType));
         }
 
         // retrieve anatEntities
         Set<String> anatEntityIds = condRequest.apply(this.getRawDataProcessedFilter()
-        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
+        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
         .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
         Set<AnatEntity> anatEntities = anatEntityIds.isEmpty()?
                 new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityIds, false)
@@ -1306,7 +1306,7 @@ public class RawDataLoader extends CommonService {
 
         // retrieve cellTypes
         Set<String> cellTypeIds = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
+                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
                 .stream()
                 .map(c -> c.getCellTypeId())
                 //cell type is the only condition param that can be NULL,
@@ -1319,7 +1319,7 @@ public class RawDataLoader extends CommonService {
 
         //retrieve dev. stages
         Set<String> stageIds = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
+                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
                 .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
         Set<DevStage> stages = stageIds.isEmpty()?
                 new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
@@ -1327,12 +1327,12 @@ public class RawDataLoader extends CommonService {
 
         // retrieve strains
         Set<String> strains = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
+                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
                 .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
 
         //retrieve sexes
         Set<RawDataSex> sexes = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoRawDataFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
+                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
                 .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
 
         return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,

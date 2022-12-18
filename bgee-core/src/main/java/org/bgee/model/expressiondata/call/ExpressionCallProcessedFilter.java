@@ -1,42 +1,24 @@
-package org.bgee.model.expressiondata.rawdata;
+package org.bgee.model.expressiondata.call;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
+import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.expressiondata.ProcessedFilter;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 
-/**
- * Class holding pre-processed information generated from a {@link RawDataFilter},
- * in order not to re-process this information when obtaining different {@link RawDataLoader}s
- * for the same parameters.
- * <p>
- * This class has been created to store this information outside of a {@link RawDataLoader},
- * because a {@code RawDataLoader} is a {@code Service}, and holds a connection to a data source.
- * If we wanted to store this pre-processed information to be reused by different threads,
- * storing it in a {@code RawDataLoader} could maintain the connection open.
- *
- * @author Frederic Bastian
- * @version Bgee 15.0, Nov. 2022
- * @since Bgee 15.0, Nov. 2022
- * @see #getRawDataFilter()
- * @see RawDataLoader#getRawDataProcessedFilter()
- * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
- * @see RawDataService#loadRawDataLoader(RawDataFilter)
- */
-//Most methods and constructors are protected, so that only the {@link RawDataService}
-//can instantiate this class, and only {@link RawDataLoader} use it.
-public class RawDataProcessedFilter extends ProcessedFilter<RawDataFilter,
-DAORawDataFilter, RawDataCondition> {
-    RawDataProcessedFilter(RawDataFilter sourceFilter,
-            Collection<DAORawDataFilter> daoFilters, Map<Integer, Gene> requestedGeneMap,
-            Map<Integer, RawDataCondition> requestedConditionMap,
+//Most methods and constructors are protected, so that only the {@link ExpressionCallService}
+//can instantiate this class, and only {@link ExpressionCallLoader} use it.
+public class ExpressionCallProcessedFilter extends ProcessedFilter<ExpressionCallFilter,
+DAOCallFilter, Condition> {
+    ExpressionCallProcessedFilter(ExpressionCallFilter sourceFilter,
+            Collection<DAOCallFilter> daoFilters, Map<Integer, Gene> requestedGeneMap,
+            Map<Integer, Condition> requestedConditionMap,
             Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap,
             Map<Integer, Source> sourceMap) {
         super(sourceFilter, daoFilters, requestedGeneMap, requestedConditionMap,
@@ -44,7 +26,7 @@ DAORawDataFilter, RawDataCondition> {
     }
 
     @Override
-    protected Set<DAORawDataFilter> getDaoFilters() {
+    protected Set<DAOCallFilter> getDaoFilters() {
         return super.getDaoFilters();
     }
     @Override
@@ -52,7 +34,7 @@ DAORawDataFilter, RawDataCondition> {
         return super.getRequestedGeneMap();
     }
     @Override
-    protected Map<Integer, RawDataCondition> getRequestedConditionMap() {
+    protected Map<Integer, Condition> getRequestedConditionMap() {
         return super.getRequestedConditionMap();
     }
     @Override
@@ -86,7 +68,7 @@ DAORawDataFilter, RawDataCondition> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("RawDataProcessedFilter [")
+        builder.append("ExpressionCallProcessedFilter [")
                .append("getSourceFilter()=").append(getSourceFilter())
                .append(", getDaoFilters()=").append(getDaoFilters())
                .append(", getRequestedGeneMap()=").append(getRequestedGeneMap())

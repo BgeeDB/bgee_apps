@@ -14,8 +14,8 @@ import org.bgee.model.expressiondata.ExpressionDataService;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.ServiceFactory;
 
-public class CallService2 extends ExpressionDataService {
-    private final static Logger log = LogManager.getLogger(CallService2.class.getName());
+public class ExpressionCallService extends ExpressionDataService {
+    private final static Logger log = LogManager.getLogger(ExpressionCallService.class.getName());
     /**
      * {@code Enum} defining the condition parameters that can be requested.
      * Results are different depending on the condition parameters, it is not
@@ -75,12 +75,12 @@ public class CallService2 extends ExpressionDataService {
 
     private final ConditionDAO condDAO;
 
-    public CallService2(ServiceFactory serviceFactory) {
+    public ExpressionCallService(ServiceFactory serviceFactory) {
         super(serviceFactory);
         this.condDAO = this.getDaoManager().getConditionDAO();
     }
 
-    public CallLoader loadCallLoader(ExpressionCallFilter filter) {
+    public ExpressionCallLoader loadCallLoader(ExpressionCallFilter filter) {
         log.traceEntry("{}", filter);
         //TODO
         return null;

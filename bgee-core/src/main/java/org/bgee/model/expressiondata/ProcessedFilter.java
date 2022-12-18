@@ -141,7 +141,7 @@ V extends BaseCondition<V>> {
      *          {@code V} condition, that were requested to retrieve data.
      *          Only conditions that were explicitly requested are present
      *          in this {@code Map}, for easier instantiation of the objects returned by this class.
-     *          If all conditions of a species were requested, they are not present 
+     *          If all conditions of a species were requested, they are not present
      *          in this {@code Map} and they should be retrieved as needed.
      */
     protected Map<Integer, V> getRequestedConditionMap() {

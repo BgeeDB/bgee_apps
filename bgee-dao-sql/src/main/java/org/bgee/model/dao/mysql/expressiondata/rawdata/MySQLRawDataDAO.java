@@ -1399,7 +1399,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
         }
         // FILTER ON RAW CONDITION IDS
         if (!rawDataCondIds.isEmpty()) {
-            assert callTableAssayIds == null;
+            assert callTableAssayIds == null || !dataType.isAssayRelatedToCondition();
             if (!speIds.isEmpty()) {
                 sb.append(" OR ");
             }

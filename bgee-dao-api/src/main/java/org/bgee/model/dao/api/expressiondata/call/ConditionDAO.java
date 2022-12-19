@@ -60,6 +60,13 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
      */
     public final static String STRAIN_ROOT_ID = "wild-type";
 
+    public enum ConditionParameter {
+        ANAT_ENTITY(),
+        CELL_TYPE(),
+        STAGE(),
+        SEX(),
+        STRAIN()
+    }
     /**
      * {@code Enum} used to define the attributes to populate in the {@code ConditionTO}s 
      * obtained from this {@code ConditionDAO}.

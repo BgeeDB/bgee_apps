@@ -13,13 +13,13 @@ import org.bgee.model.dao.api.expressiondata.DAODataFilter2;
 public class DAOCallFilter extends DAODataFilter2 {
     private final static Logger log = LogManager.getLogger(DAOCallFilter.class.getName());
 
-    private final LinkedHashSet<CallObservedDataDAOFilter> callObservedDataFilters;
-    private final LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter>> pValueFilters;
+    private final LinkedHashSet<CallObservedDataDAOFilter2> callObservedDataFilters;
+    private final LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter2>> pValueFilters;
 
-    protected DAOCallFilter(Collection<Integer> speciesIds, Collection<Integer> geneIds,
+    public DAOCallFilter(Collection<Integer> speciesIds, Collection<Integer> geneIds,
             Collection<Integer> conditionIds,
-            Collection<CallObservedDataDAOFilter> callObservedDataFilters,
-            Collection<Set<DAOFDRPValueFilter>> pValueFilters) throws IllegalArgumentException {
+            Collection<CallObservedDataDAOFilter2> callObservedDataFilters,
+            Collection<Set<DAOFDRPValueFilter2>> pValueFilters) throws IllegalArgumentException {
         super(speciesIds, geneIds, conditionIds);
         log.traceEntry("{}, {}, {}, {}, {}", geneIds, speciesIds, conditionIds,
                 callObservedDataFilters, pValueFilters);
@@ -41,7 +41,7 @@ public class DAOCallFilter extends DAODataFilter2 {
             //DAOFDRPValueFilter implements Comparable.
             pValueFilters.stream()
             .map(s -> s.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new)))
-            .sorted(new DAOFDRPValueFilter.DAOFDRPvalueFilterLinkedHashSetComparator())
+            .sorted(new DAOFDRPValueFilterBase.DAOFDRPvalueFilterLinkedHashSetComparator2())
             .collect(Collectors.toCollection(LinkedHashSet::new));
         log.traceExit();
     }
@@ -55,11 +55,11 @@ public class DAOCallFilter extends DAODataFilter2 {
      *          for different data types. Provided as a {@code LinkedHashSet} for convenience,
      *          to consistently set parameters in queries.
      */
-    public LinkedHashSet<CallObservedDataDAOFilter> getCallObservedDataFilters() {
+    public LinkedHashSet<CallObservedDataDAOFilter2> getCallObservedDataFilters() {
         //defensive copying, no unmodifiable LinkedHashSet
         return new LinkedHashSet<>(callObservedDataFilters);
     }
-    public LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter>> getFDRPValueFilters() {
+    public LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter2>> getFDRPValueFilters() {
         //defensive copying, no unmodifiable LinkedHashSet
         return pValueFilters.stream().map(s -> new LinkedHashSet<>(s))
                 .collect(Collectors.toCollection(LinkedHashSet::new));

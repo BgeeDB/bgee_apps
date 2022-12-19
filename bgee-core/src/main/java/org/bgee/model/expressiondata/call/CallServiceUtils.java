@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -11,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
+import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
@@ -25,16 +28,18 @@ public class CallServiceUtils {
     private final static Logger log = LogManager.getLogger(CallServiceUtils.class.getName());
 
 
-    public EnumSet<DAODataType> convertDataTypeToDAODataType(Set<DataType> dts) 
+    public EnumSet<DAODataType> convertDataTypeToDAODataType(Collection<DataType> dts)
             throws IllegalStateException{
         log.traceEntry("{}", dts);
         
         if (dts == null || dts.isEmpty()) {
             return log.traceExit(EnumSet.allOf(DAODataType.class));
         }
-        return log.traceExit(dts.stream()
-            .map(dt -> {
-                switch(dt) {
+        return log.traceExit(
+                //We create an EnumSet not to iterate over potentially redundant elements
+                EnumSet.copyOf(dts).stream()
+                .map(dt -> {
+                    switch(dt) {
                     case AFFYMETRIX: 
                         return log.traceExit(DAODataType.AFFYMETRIX);
                     case EST: 
@@ -47,17 +52,22 @@ public class CallServiceUtils {
                         return log.traceExit(DAODataType.FULL_LENGTH);
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
-                }
-        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
+                    }
+                }).collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
     }
 
     public EnumSet<ConditionDAO.ConditionParameter> convertCondParamToDAOCondParams(
-            EnumSet<ConditionParameter> condParams) {
+            Collection<ConditionParameter> condParams) {
         log.traceEntry("{}", condParams);
         if (condParams == null) {
-            return log.traceExit(EnumSet.allOf(ConditionDAO.ConditionParameter.class));
+            return log.traceExit((EnumSet<ConditionDAO.ConditionParameter>) null);
         }
-        return log.traceExit(condParams.stream()
+        if (condParams.isEmpty()) {
+            return log.traceExit(EnumSet.noneOf(ConditionDAO.ConditionParameter.class));
+        }
+        return log.traceExit(
+                //We create an EnumSet not to iterate over potentially redundant elements
+                EnumSet.copyOf(condParams).stream()
                 .map(a -> convertCondParamToDAOCondParam(a))
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(
                         ConditionDAO.ConditionParameter.class))));
@@ -83,7 +93,7 @@ public class CallServiceUtils {
     }
 
     public Set<Set<DAOFDRPValueFilter2>> generateExprQualDAOPValFilters(
-            ExpressionCallFilter2 callFilter, EnumSet<ConditionDAO.ConditionParameter> condParams,
+            ExpressionCallFilter2 callFilter, Collection<ConditionParameter> condParams,
             BigDecimal presentLowThreshold, BigDecimal presentHighThreshold,
             BigDecimal absentLowThreshold, BigDecimal absentHighThreshold) {
         log.traceEntry("{}, {}, {}, {}, {}, {}", callFilter, condParams, presentLowThreshold,
@@ -91,6 +101,9 @@ public class CallServiceUtils {
 
         EnumSet<DAODataType> daoDataTypes = this.convertDataTypeToDAODataType(
                 callFilter == null? null: callFilter.getDataTypeFilters());
+        EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
+                this.convertCondParamToDAOCondParams(condParams);
+
         return log.traceExit((callFilter == null? ExpressionCallFilter.ALL_CALLS:
                                                   callFilter.getSummaryCallTypeQualityFilter())
         .entrySet().stream()
@@ -109,7 +122,7 @@ public class CallServiceUtils {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, condParams)));
+                                    false, daoCondParams)));
                 } else {
                     //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
                     //we'll get calls SILVER or GOLD
@@ -118,7 +131,7 @@ public class CallServiceUtils {
                                     daoDataTypes,
                                     DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, condParams)));
+                                    false, daoCondParams)));
                     //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
                     //in a descendant condition. We end up with the following conditions:
                     // * FDR-corrected p-value in condition including sub-conditions <= 0.05
@@ -130,7 +143,7 @@ public class CallServiceUtils {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                         DAOPropagationState.DESCENDANT,
-                                        false, condParams)));
+                                        false, daoCondParams)));
                     }
                 }
 
@@ -156,27 +169,27 @@ public class CallServiceUtils {
                                         daoDataTypes,
                                         DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                         DAOPropagationState.SELF_AND_DESCENDANT,
-                                        true, condParams));
+                                        true, daoCondParams));
                 } else {
                     if (qual.equals(SummaryQuality.GOLD)) {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
+                                true, daoCondParams));
                         //we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
+                                true, daoCondParams));
                     } else {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentLowThreshold,
                                 daoDataTypes,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
+                                true, daoCondParams));
                         //Unless we request BRONZE quality, we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         if (qual.equals(SummaryQuality.SILVER)) {
@@ -184,7 +197,7 @@ public class CallServiceUtils {
                                     daoDataTypesTrustedForNotExpressed,
                                     DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
-                                    true, condParams));
+                                    true, daoCondParams));
                         }
                     }
                     //in all cases, we don't want PRESENT calls in a sub-condition
@@ -192,7 +205,7 @@ public class CallServiceUtils {
                             daoDataTypes,
                             DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                             DAOPropagationState.DESCENDANT,
-                            false, condParams));
+                            false, daoCondParams));
                     //And unless we request BRONZE, we want the same to hold true
                     //with only the data types we trust to produce ABSENT calls
                     if (!qual.equals(SummaryQuality.BRONZE)) {
@@ -200,7 +213,7 @@ public class CallServiceUtils {
                                 daoDataTypesTrustedForNotExpressed,
                                 DAOFDRPValueFilter.Qualifier.GREATER_THAN,
                                 DAOPropagationState.DESCENDANT,
-                                false, condParams));
+                                false, daoCondParams));
                     }
                 }
                 pValFilters.add(absentAndFilters);
@@ -210,7 +223,7 @@ public class CallServiceUtils {
     }
 
     public EnumSet<DAODataType> convertTrustedAbsentDataTypesToDAODataTypes(
-            Set<DataType> dts) throws IllegalStateException {
+            Collection<DataType> dts) throws IllegalStateException {
         log.traceEntry("{}", dts);
 
         //Find DataTypes that can be trusted for absent calls. Maybe there will be none among
@@ -218,8 +231,11 @@ public class CallServiceUtils {
         //by checking if dataTypesToConsider is empty, because the method
         //convertDataTypeToDAODataType returns all DAODataTypes when the provided argument
         //of DataTypes is empty or null.
-        Set<DataType> dataTypesToConsider = (dts == null || dts.isEmpty()? EnumSet.allOf(DataType.class):
-            dts).stream().filter(dt -> dt.isTrustedForAbsentCalls()).collect(Collectors.toSet());
+        Set<DataType> dataTypesToConsider =
+                (dts == null || dts.isEmpty()? EnumSet.allOf(DataType.class): EnumSet.copyOf(dts))
+                .stream()
+                .filter(dt -> dt.isTrustedForAbsentCalls())
+                .collect(Collectors.toSet());
         return log.traceExit(dataTypesToConsider.isEmpty()? EnumSet.noneOf(DAODataType.class):
             this.convertDataTypeToDAODataType(dataTypesToConsider));
     }

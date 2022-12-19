@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.expressiondata.ProcessedFilter;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -14,9 +14,9 @@ import org.bgee.model.species.Species;
 
 //Most methods and constructors are protected, so that only the {@link ExpressionCallService}
 //can instantiate this class, and only {@link ExpressionCallLoader} use it.
-public class ExpressionCallProcessedFilter extends ProcessedFilter<ExpressionCallFilter,
+public class ExpressionCallProcessedFilter extends ProcessedFilter<ExpressionCallFilter2,
 DAOCallFilter, Condition> {
-    ExpressionCallProcessedFilter(ExpressionCallFilter sourceFilter,
+    ExpressionCallProcessedFilter(ExpressionCallFilter2 sourceFilter,
             Collection<DAOCallFilter> daoFilters, Map<Integer, Gene> requestedGeneMap,
             Map<Integer, Condition> requestedConditionMap,
             Map<Integer, Species> speciesMap, Map<Integer, GeneBioType> geneBioTypeMap,

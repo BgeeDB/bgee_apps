@@ -70,6 +70,7 @@ import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall;
 import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
 import org.bgee.model.expressiondata.call.CallService;
+import org.bgee.model.expressiondata.call.CallServiceUtils;
 import org.bgee.model.expressiondata.call.Condition;
 import org.bgee.model.expressiondata.call.ConditionGraph;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
@@ -1222,7 +1223,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
+        private void insertPropagatedCalls(Set<PipelineCall> propagatedCalls,
             Map<Condition, Integer> condMap, GlobalExpressionCallDAO dao) {
             log.traceEntry("{}, {}, {}", propagatedCalls, condMap, dao);
         
@@ -1285,7 +1286,7 @@ public class InsertPropagatedCalls extends CallService {
             log.traceExit();
         }
 
-        private static GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(long exprId, 
+        private GlobalExpressionCallTO convertPipelineCallToGlobalExprCallTO(long exprId, 
                 Map<Condition, Integer> condMap, PipelineCall pipelineCall) {
             log.traceEntry("{}, {}, {}", exprId, condMap, pipelineCall);
             
@@ -1327,7 +1328,7 @@ public class InsertPropagatedCalls extends CallService {
 
         }
         
-        private static Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(
+        private Set<GlobalExpressionCallDataTO> convertPipelineCallToExpressionCallDataTOs(
                 PipelineCall pipelineCall) {
             log.traceEntry("{}", pipelineCall);
 
@@ -1342,7 +1343,8 @@ public class InsertPropagatedCalls extends CallService {
                         
                         return new GlobalExpressionCallDataTO(
                                 //data type
-                                convertDataTypeToDAODataType(Collections.singleton(cd.getDataType())).iterator().next(),
+                                this.callPropagator.utils.convertDataTypeToDAODataType(
+                                        Collections.singleton(cd.getDataType())).iterator().next(),
                                 //self p-value observation counts
                                 cd.getDataPropagation().getSelfObservationCounts().entrySet().stream()
                                 .collect(Collectors.toMap(
@@ -1774,11 +1776,16 @@ public class InsertPropagatedCalls extends CallService {
     //Note: actually as of Bgee 14.2 we do not propagate absent calls to substructures anymore
     private final ConcurrentMap<Condition, Set<Condition>> condToDescendants;
 
-
     public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
             Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
             boolean computeAndInsertGlobalCond) {
-        super(serviceFactorySupplier.get());
+        this(serviceFactorySupplier, condParams, speciesId, geneOffset, geneRowCount,
+                computeAndInsertGlobalCond, new CallServiceUtils());
+    }
+    public InsertPropagatedCalls(Supplier<ServiceFactory> serviceFactorySupplier, 
+            Set<ConditionDAO.Attribute> condParams, int speciesId, int geneOffset, int geneRowCount,
+            boolean computeAndInsertGlobalCond, CallServiceUtils utils) {
+        super(serviceFactorySupplier.get(), utils);
         if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Condition attributes should not be empty"));
         }

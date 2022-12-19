@@ -25,15 +25,10 @@ import java.util.stream.StreamSupport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
-import org.bgee.model.CommonService;
 import org.bgee.model.ElementGroupFromListSpliterator;
 import org.bgee.model.Service;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.anatdev.AnatEntityService;
-import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.anatdev.SexService;
-import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter;
@@ -46,7 +41,6 @@ import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallDataTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
-import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
 import org.bgee.model.expressiondata.baseelements.PropagationState;
 import org.bgee.model.expressiondata.baseelements.QualitativeExpressionLevel;
@@ -96,7 +90,7 @@ import org.bgee.model.species.Species;
 // - If true, retrieve results only in homologous structure/comparable stages, always.
 //    private final boolean forceHomology;
 //******************
-public class CallService extends CommonService {
+public class CallService extends CallServiceParent {
     private final static Logger log = LogManager.getLogger(CallService.class.getName());
 
     //*************************************************
@@ -301,26 +295,6 @@ public class CallService extends CommonService {
     //XXX: As of Bgee 15.0, we always use global ranks rather than self ranks,
     //But we could allow to parameterize that in the future.
     private final static boolean GLOBAL_RANK = true;
-    /**
-     * A {@code BigDecimal} that is the value a FDR-corrected p-value must be less than or equal to
-     * for PRESENT LOW QUALITY.
-     */
-    public final static BigDecimal PRESENT_LOW_LESS_THAN_OR_EQUALS_TO = new BigDecimal("0.05");
-    /**
-     * A {@code BigDecimal} that is the value a FDR-corrected p-value must be less than or equal to
-     * for PRESENT HIGH QUALITY.
-     */
-    public final static BigDecimal PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO = new BigDecimal("0.01");
-    /**
-     * A {@code BigDecimal} that is the value a FDR-corrected p-value must be greater than
-     * for ABSENT HIGH QUALITY.
-     */
-    public final static BigDecimal ABSENT_HIGH_GREATER_THAN = new BigDecimal("0.1");
-    /**
-     * A {@code BigDecimal} that is the value a FDR-corrected p-value must be greater than
-     * for ABSENT LOW QUALITY.
-     */
-    public final static BigDecimal ABSENT_LOW_GREATER_THAN = PRESENT_LOW_LESS_THAN_OR_EQUALS_TO;
 
     protected final static Set<PropagationState> ALLOWED_PROP_STATES = EnumSet.of(
             //As of Bgee 14.2 we do not propagate absent calls to substructures anymore
@@ -345,13 +319,6 @@ public class CallService extends CommonService {
     //*************************************************
     // INSTANCE ATTRIBUTES AND CONSTRUCTOR
     //*************************************************
-    protected final ConditionDAO conditionDAO;
-    private final GeneDAO geneDAO;
-    private final GlobalExpressionCallDAO globalExprCallDAO;
-    private final AnatEntityService anatEntityService;
-    private final DevStageService devStageService;
-    private final SexService sexService;
-    private final StrainService strainService;
 //    /**
 //     * @param serviceFactory            The {@code ServiceFactory} to be used to obtain {@code Service}s 
 //     *                                  and {@code DAOManager}.
@@ -374,14 +341,10 @@ public class CallService extends CommonService {
 //     *                          all conditions and data types. Can be {@code null}.
      */
     public CallService(ServiceFactory serviceFactory) {
-        super(serviceFactory);
-        this.conditionDAO = this.getDaoManager().getConditionDAO();
-        this.geneDAO = this.getDaoManager().getGeneDAO();
-        this.globalExprCallDAO = this.getDaoManager().getGlobalExpressionCallDAO();
-        this.anatEntityService = this.getServiceFactory().getAnatEntityService();
-        this.devStageService = this.getServiceFactory().getDevStageService();
-        this.sexService = this.getServiceFactory().getSexService();
-        this.strainService = this.getServiceFactory().getStrainService();
+        this(serviceFactory, new CallServiceUtils());
+    }
+    public CallService(ServiceFactory serviceFactory, CallServiceUtils utils) {
+        super(serviceFactory, utils);
     }
 
     //*************************************************
@@ -1066,7 +1029,7 @@ public class CallService extends CommonService {
 
         //Perform query and map TOs to EntityMinMaxRanks
         return log.traceExit(this.globalExprCallDAO.getMinMaxRanksPerGene(
-                convertDataTypeToDAODataType(newFilter == null? null: newFilter.getDataTypeFilters()),
+                this.utils.convertDataTypeToDAODataType(newFilter == null? null: newFilter.getDataTypeFilters()),
                 Arrays.asList(daoFilter))
                 .stream()
                 .map(minMaxRanksTO -> new EntityMinMaxRanks<Gene>(
@@ -1440,7 +1403,7 @@ public class CallService extends CommonService {
     //*************************************************************************
     // HELPER METHODS CONVERTING INFORMATION FROM Call LAYER to DAO LAYER
     //*************************************************************************
-    private static CallDAOFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
+    private CallDAOFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
             ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParamCombination) {
         log.traceEntry("{}, {}, {}", geneMap, callFilter, condParamCombination);
 
@@ -1475,7 +1438,7 @@ public class CallService extends CommonService {
         //**********************************
         Set<CallObservedDataDAOFilter> daoObservedDataFilters = callFilter.getCallObservedDataFilter()
                 .entrySet().stream().map(e -> new CallObservedDataDAOFilter(
-                        convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
+                        this.utils.convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
                         convertCondParamAttrsToCondDAOAttrs(e.getKey()),
                         e.getValue())
                 ).collect(Collectors.toSet());
@@ -1484,7 +1447,9 @@ public class CallService extends CommonService {
         // P-value filters
         //**********************************
         Collection<Set<DAOFDRPValueFilter>> pValueFilters = generateExprQualDAOPValFilters(
-                callFilter, condParamCombination);
+                callFilter, condParamCombination, PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
+                PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
+                ABSENT_HIGH_GREATER_THAN);
 
 
         // *********************************
@@ -1502,6 +1467,133 @@ public class CallService extends CommonService {
                     //DAOFDRPValueFilters
                     pValueFilters
                 ));
+    }
+
+    public Set<Set<DAOFDRPValueFilter>> generateExprQualDAOPValFilters(
+            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParams,
+            BigDecimal presentLowThreshold, BigDecimal presentHighThreshold,
+            BigDecimal absentLowThreshold, BigDecimal absentHighThreshold) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", callFilter, condParams, presentLowThreshold,
+                presentHighThreshold, absentLowThreshold, absentHighThreshold);
+
+        EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(
+                callFilter == null? null: callFilter.getDataTypeFilters());
+        return log.traceExit((callFilter == null? ExpressionCallFilter.ALL_CALLS:
+                                                  callFilter.getSummaryCallTypeQualityFilter())
+        .entrySet().stream()
+        .flatMap(e -> {
+            SummaryCallType.ExpressionSummary callType = e.getKey();
+            SummaryQuality qual = e.getValue();
+            //DAOFDRPValueFilters in the inner sets are seen as "AND" conditions,
+            //the Sets in the outer Set are seen as "OR" conditions.
+            Set<Set<DAOFDRPValueFilter>> pValFilters = new HashSet<>();
+
+            if (callType.equals(SummaryCallType.ExpressionSummary.EXPRESSED)) {
+                if (qual.equals(SummaryQuality.GOLD)) {
+                    //If minimum GOLD is requested, we only want calls with FDR-corrected p-value <= 0.1
+                    pValFilters.add(Collections.singleton(
+                            new DAOFDRPValueFilter(presentHighThreshold,
+                                    daoDataTypes,
+                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                    DAOPropagationState.SELF_AND_DESCENDANT,
+                                    false, condParams)));
+                } else {
+                    //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
+                    //we'll get calls SILVER or GOLD
+                    pValFilters.add(Collections.singleton(
+                            new DAOFDRPValueFilter(presentLowThreshold,
+                                    daoDataTypes,
+                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                    DAOPropagationState.SELF_AND_DESCENDANT,
+                                    false, condParams)));
+                    //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
+                    //in a descendant condition. We end up with the following conditions:
+                    // * FDR-corrected p-value in condition including sub-conditions <= 0.05
+                    //   (SILVER or GOLD)
+                    // * OR FDR-corrected p-value in at least one sub-condition <= 0.05 (BRONZE)
+                    if (qual.equals(SummaryQuality.BRONZE)) {
+                        pValFilters.add(Collections.singleton(
+                                new DAOFDRPValueFilter(presentLowThreshold,
+                                        daoDataTypes,
+                                        DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                        DAOPropagationState.DESCENDANT,
+                                        false, condParams)));
+                    }
+                }
+
+            } else if (callType.equals(SummaryCallType.ExpressionSummary.NOT_EXPRESSED)) {
+                //For NOT_EXPRESSED, we request that the p-value of the call is non-significant,
+                //But also that it is still non-significant when removing data types
+                //that we don't trust to produce absent calls (except for BRONZE absent calls).
+                //Requirement both for the p-value coming from the condition and its sub-conditions,
+                //and the best p-value among the sub-conditions.
+                EnumSet<DAODataType> daoDataTypesTrustedForNotExpressed =
+                        this.utils.convertTrustedAbsentDataTypesToDAODataTypes(callFilter.getDataTypeFilters());
+                Set<DAOFDRPValueFilter> absentAndFilters = new HashSet<>();
+                //If we request SILVER or GOLD, and there is no data type requested
+                //that we trust for generating ABSENT calls, we make an impossible condition
+                //so that it returns no result
+                //FIXME: the use of this boolean selfObservationRequired in DAOFDRPValueFilter
+                //is maybe problematic, probably we should allow to target a specific combination
+                //of condition parameters to assess whether there are observed data? I'm not sure,
+                //to think about. Or actually, do we still really want this filtering that we must
+                //have observed data? (yes, maybe)
+                if (daoDataTypesTrustedForNotExpressed.isEmpty() && !qual.equals(SummaryQuality.BRONZE)) {
+                    absentAndFilters.add(new DAOFDRPValueFilter(new BigDecimal("1"),
+                                        daoDataTypes,
+                                        DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                        DAOPropagationState.SELF_AND_DESCENDANT,
+                                        true, condParams));
+                } else {
+                    if (qual.equals(SummaryQuality.GOLD)) {
+                        absentAndFilters.add(new DAOFDRPValueFilter(absentHighThreshold,
+                                daoDataTypes,
+                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOPropagationState.SELF_AND_DESCENDANT,
+                                true, condParams));
+                        //we want the same condition without considering
+                        //the data types that we don't trust to produce absent calls
+                        absentAndFilters.add(new DAOFDRPValueFilter(absentHighThreshold,
+                                daoDataTypesTrustedForNotExpressed,
+                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOPropagationState.SELF_AND_DESCENDANT,
+                                true, condParams));
+                    } else {
+                        absentAndFilters.add(new DAOFDRPValueFilter(absentLowThreshold,
+                                daoDataTypes,
+                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOPropagationState.SELF_AND_DESCENDANT,
+                                true, condParams));
+                        //Unless we request BRONZE quality, we want the same condition without considering
+                        //the data types that we don't trust to produce absent calls
+                        if (qual.equals(SummaryQuality.SILVER)) {
+                            absentAndFilters.add(new DAOFDRPValueFilter(absentLowThreshold,
+                                    daoDataTypesTrustedForNotExpressed,
+                                    DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                    DAOPropagationState.SELF_AND_DESCENDANT,
+                                    true, condParams));
+                        }
+                    }
+                    //in all cases, we don't want PRESENT calls in a sub-condition
+                    absentAndFilters.add(new DAOFDRPValueFilter(presentLowThreshold,
+                            daoDataTypes,
+                            DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                            DAOPropagationState.DESCENDANT,
+                            false, condParams));
+                    //And unless we request BRONZE, we want the same to hold true
+                    //with only the data types we trust to produce ABSENT calls
+                    if (!qual.equals(SummaryQuality.BRONZE)) {
+                        absentAndFilters.add(new DAOFDRPValueFilter(presentLowThreshold,
+                                daoDataTypesTrustedForNotExpressed,
+                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOPropagationState.DESCENDANT,
+                                false, condParams));
+                    }
+                }
+                pValFilters.add(absentAndFilters);
+            }
+            return pValFilters.stream();
+        }).collect(Collectors.toSet()));
     }
     /**
      * 
@@ -1596,130 +1688,6 @@ public class CallService extends CommonService {
         return log.traceExit(daoCondParamComb);
     }
 
-    private static Set<Set<DAOFDRPValueFilter>> generateExprQualDAOPValFilters(
-            ExpressionCallFilter callFilter, EnumSet<ConditionDAO.Attribute> condParams) {
-        log.traceEntry("{}, {}", callFilter, condParams);
-
-        EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(
-                callFilter == null? null: callFilter.getDataTypeFilters());
-        return log.traceExit((callFilter == null? ExpressionCallFilter.ALL_CALLS:
-                                                  callFilter.getSummaryCallTypeQualityFilter())
-        .entrySet().stream()
-        .flatMap(e -> {
-            SummaryCallType.ExpressionSummary callType = e.getKey();
-            SummaryQuality qual = e.getValue();
-            //DAOFDRPValueFilters in the inner sets are seen as "AND" conditions,
-            //the Sets in the outer Set are seen as "OR" conditions.
-            Set<Set<DAOFDRPValueFilter>> pValFilters = new HashSet<>();
-
-            if (callType.equals(SummaryCallType.ExpressionSummary.EXPRESSED)) {
-                if (qual.equals(SummaryQuality.GOLD)) {
-                    //If minimum GOLD is requested, we only want calls with FDR-corrected p-value <= 0.1
-                    pValFilters.add(Collections.singleton(
-                            new DAOFDRPValueFilter(PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO,
-                                    daoDataTypes,
-                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
-                                    DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, condParams)));
-                } else {
-                    //If minimum SILVER is requested, we want calls with FDR-corrected p-value <= 0.05,
-                    //we'll get calls SILVER or GOLD
-                    pValFilters.add(Collections.singleton(
-                            new DAOFDRPValueFilter(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
-                                    daoDataTypes,
-                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
-                                    DAOPropagationState.SELF_AND_DESCENDANT,
-                                    false, condParams)));
-                    //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
-                    //in a descendant condition. We end up with the following conditions:
-                    // * FDR-corrected p-value in condition including sub-conditions <= 0.05
-                    //   (SILVER or GOLD)
-                    // * OR FDR-corrected p-value in at least one sub-condition <= 0.05 (BRONZE)
-                    if (qual.equals(SummaryQuality.BRONZE)) {
-                        pValFilters.add(Collections.singleton(
-                                new DAOFDRPValueFilter(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
-                                        daoDataTypes,
-                                        DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
-                                        DAOPropagationState.DESCENDANT,
-                                        false, condParams)));
-                    }
-                }
-
-            } else if (callType.equals(SummaryCallType.ExpressionSummary.NOT_EXPRESSED)) {
-                //For NOT_EXPRESSED, we request that the p-value of the call is non-significant,
-                //But also that it is still non-significant when removing data types
-                //that we don't trust to produce absent calls (except for BRONZE absent calls).
-                //Requirement both for the p-value coming from the condition and its sub-conditions,
-                //and the best p-value among the sub-conditions.
-                EnumSet<DAODataType> daoDataTypesTrustedForNotExpressed =
-                        convertTrustedAbsentDataTypesToDAODataTypes(callFilter.getDataTypeFilters());
-                Set<DAOFDRPValueFilter> absentAndFilters = new HashSet<>();
-                //If we request SILVER or GOLD, and there is no data type requested
-                //that we trust for generating ABSENT calls, we make an impossible condition
-                //so that it returns no result
-                //FIXME: the use of this boolean selfObservationRequired in DAOFDRPValueFilter
-                //is maybe problematic, probably we should allow to target a specific combination
-                //of condition parameters to assess whether there are observed data? I'm not sure,
-                //to think about. Or actually, do we still really want this filtering that we must
-                //have observed data? (yes, maybe)
-                if (daoDataTypesTrustedForNotExpressed.isEmpty() && !qual.equals(SummaryQuality.BRONZE)) {
-                    absentAndFilters.add(new DAOFDRPValueFilter(new BigDecimal("1"),
-                                        daoDataTypes,
-                                        DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                        DAOPropagationState.SELF_AND_DESCENDANT,
-                                        true, condParams));
-                } else {
-                    if (qual.equals(SummaryQuality.GOLD)) {
-                        absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
-                                daoDataTypes,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
-                        //we want the same condition without considering
-                        //the data types that we don't trust to produce absent calls
-                        absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_HIGH_GREATER_THAN,
-                                daoDataTypesTrustedForNotExpressed,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
-                    } else {
-                        absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_LOW_GREATER_THAN,
-                                daoDataTypes,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                DAOPropagationState.SELF_AND_DESCENDANT,
-                                true, condParams));
-                        //Unless we request BRONZE quality, we want the same condition without considering
-                        //the data types that we don't trust to produce absent calls
-                        if (qual.equals(SummaryQuality.SILVER)) {
-                            absentAndFilters.add(new DAOFDRPValueFilter(ABSENT_LOW_GREATER_THAN,
-                                    daoDataTypesTrustedForNotExpressed,
-                                    DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                    DAOPropagationState.SELF_AND_DESCENDANT,
-                                    true, condParams));
-                        }
-                    }
-                    //in all cases, we don't want PRESENT calls in a sub-condition
-                    absentAndFilters.add(new DAOFDRPValueFilter(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
-                            daoDataTypes,
-                            DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                            DAOPropagationState.DESCENDANT,
-                            false, condParams));
-                    //And unless we request BRONZE, we want the same to hold true
-                    //with only the data types we trust to produce ABSENT calls
-                    if (!qual.equals(SummaryQuality.BRONZE)) {
-                        absentAndFilters.add(new DAOFDRPValueFilter(PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
-                                daoDataTypesTrustedForNotExpressed,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
-                                DAOPropagationState.DESCENDANT,
-                                false, condParams));
-                    }
-                }
-                pValFilters.add(absentAndFilters);
-            }
-            return pValFilters.stream();
-        }).collect(Collectors.toSet()));
-    }
-
     private static EnumSet<ConditionDAO.Attribute> convertCondParamOrderingAttrsToCondDAOAttrs(
             Set<OrderingAttribute> attrs) {
         log.traceEntry("{}", attrs);
@@ -1744,15 +1712,15 @@ public class CallService extends CommonService {
                 }).collect(Collectors.toCollection(() -> EnumSet.noneOf(ConditionDAO.Attribute.class))));
     }
 
-    private static Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
+    private Set<GlobalExpressionCallDAO.AttributeInfo> convertServiceAttrToGlobalExprDAOAttr(
         Set<Attribute> attributes, ExpressionCallFilter callFilter,
         EnumSet<ConditionDAO.Attribute> condParamCombination) {
         log.traceEntry("{}, {}, {}", attributes, callFilter, condParamCombination);
 
-        EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(callFilter == null? null:
+        EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(callFilter == null? null:
             callFilter.getDataTypeFilters());
         EnumSet<DAODataType> daoDataTypesTrustedForAbsentCalls =
-                convertTrustedAbsentDataTypesToDAODataTypes(callFilter == null? null:
+                this.utils.convertTrustedAbsentDataTypesToDAODataTypes(callFilter == null? null:
                     callFilter.getDataTypeFilters());
 
         return log.traceExit(attributes.stream().flatMap(attr -> {
@@ -1827,13 +1795,13 @@ public class CallService extends CommonService {
         }).collect(Collectors.toSet()));
     }
 
-    private static LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>
+    private LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>
     convertServiceOrderingAttrToGlobalExprDAOOrderingAttr(
             LinkedHashMap<CallService.OrderingAttribute, Service.Direction> orderingAttributes,
             ExpressionCallFilter callFilter) {
         log.traceEntry("{}, {}", orderingAttributes, callFilter);
 
-        EnumSet<DAODataType> daoDataTypes = convertDataTypeToDAODataType(
+        EnumSet<DAODataType> daoDataTypes = this.utils.convertDataTypeToDAODataType(
                 callFilter == null? null: callFilter.getDataTypeFilters());
 
         return log.traceExit(orderingAttributes.entrySet().stream().collect(Collectors.toMap(
@@ -1879,46 +1847,6 @@ public class CallService extends CommonService {
                 }, 
                 (v1, v2) -> {throw log.throwing(new IllegalStateException("No key collision possible"));}, 
                 () -> new LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction>())));
-    }
-
-    protected static EnumSet<DAODataType> convertDataTypeToDAODataType(Set<DataType> dts) 
-            throws IllegalStateException{
-        log.traceEntry("{}", dts);
-        
-        if (dts == null || dts.isEmpty()) {
-            return log.traceExit(EnumSet.allOf(DAODataType.class));
-        }
-        return log.traceExit(dts.stream()
-            .map(dt -> {
-                switch(dt) {
-                    case AFFYMETRIX: 
-                        return log.traceExit(DAODataType.AFFYMETRIX);
-                    case EST: 
-                        return log.traceExit(DAODataType.EST);
-                    case IN_SITU: 
-                        return log.traceExit(DAODataType.IN_SITU);
-                    case RNA_SEQ: 
-                        return log.traceExit(DAODataType.RNA_SEQ);
-                    case FULL_LENGTH: 
-                        return log.traceExit(DAODataType.FULL_LENGTH);
-                    default: 
-                        throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));
-                }
-        }).collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
-    }
-    private static EnumSet<DAODataType> convertTrustedAbsentDataTypesToDAODataTypes(
-            Set<DataType> dts) throws IllegalStateException {
-        log.traceEntry("{}", dts);
-
-        //Find DataTypes that can be trusted for absent calls. Maybe there will be none among
-        //the requested data types. So we need to convert to DAODataTypes in two steps,
-        //by checking if dataTypesToConsider is empty, because the method
-        //convertDataTypeToDAODataType returns all DAODataTypes when the provided argument
-        //of DataTypes is empty or null.
-        Set<DataType> dataTypesToConsider = (dts == null || dts.isEmpty()? EnumSet.allOf(DataType.class):
-            dts).stream().filter(dt -> dt.isTrustedForAbsentCalls()).collect(Collectors.toSet());
-        return log.traceExit(dataTypesToConsider.isEmpty()? EnumSet.noneOf(DAODataType.class):
-            convertDataTypeToDAODataType(dataTypesToConsider));
     }
 
     /**
@@ -2016,7 +1944,7 @@ public class CallService extends CommonService {
     //*************************************************************************
     // METHODS MAPPING GlobalExpressionCallTOs TO ExpressionCalls
     //*************************************************************************
-    private static ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
+    private ExpressionCall mapGlobalCallTOToExpressionCall(GlobalExpressionCallTO globalCallTO, 
             Map<Integer, Gene> geneMap, Map<Integer, Condition> condMap,
             ExpressionCallFilter callFilter, Map<Integer, ConditionRankInfoTO> maxRankPerSpecies,
             Map<Condition, EntityMinMaxRanks<Condition>> anatEntityMinMaxRanks,
@@ -2066,7 +1994,7 @@ public class CallService extends CommonService {
                 throw log.throwing(new IllegalStateException("No max rank could be retrieved for call " + globalCallTO));
             }
         }
-        EnumSet<DAODataType> requestedDAODataTypes = convertDataTypeToDAODataType(
+        EnumSet<DAODataType> requestedDAODataTypes = this.utils.convertDataTypeToDAODataType(
                 dataTypeFilters);
 
         //Retrieve mean rank for the requested data types if needed

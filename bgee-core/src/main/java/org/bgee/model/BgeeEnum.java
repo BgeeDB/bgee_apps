@@ -193,7 +193,7 @@ public abstract class BgeeEnum {
 
     public static final <T extends Enum<T>> Set<EnumSet<T>> getAllPossibleEnumCombinations(
             Class<T> enumClass, Collection<T> enums) {
-        log.traceEntry("{}", enums);
+        log.traceEntry("{}, {}", enumClass, enums);
         if (enums == null || enums.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some values must be provided."));
         }

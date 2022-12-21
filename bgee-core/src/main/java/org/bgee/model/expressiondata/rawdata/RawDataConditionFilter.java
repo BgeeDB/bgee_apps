@@ -25,6 +25,8 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDa
  * @version Bgee 15, Sept 2022
  * @since   Bgee 14, Sept 2018
  */
+//TODO: implement new RawDataConditionFilter based on new baseConditionFilter2,
+//the RawDataService is recent it should be straightforward
 public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition> {
     private final static Logger log = LogManager.getLogger(RawDataConditionFilter.class.getName());
 

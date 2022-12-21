@@ -1,7 +1,5 @@
 package org.bgee.model;
 
-import java.util.Comparator;
-
 /**
  * Parent class of all classes corresponding to real entities in the Bgee database. 
  * For instance, a {@code Gene}, a {@code Species}, 
@@ -36,11 +34,11 @@ public abstract class Entity<T extends Comparable<T>> {
      * {@code id} cannot be {@code null}, otherwise an {@code IllegalArgumentException} is thrown. 
      * 
      * @param id	A {@code T} representing the ID of this {@code Entity}.
-     * @throws IllegalArgumentException 	if {@code id} is blank. 
+     * @throws IllegalArgumentException 	if {@code id} is null. 
      */
     public Entity(T id) throws IllegalArgumentException {
         if (id == null) {
-            throw new IllegalArgumentException("the ID provided cannot be blank.");
+            throw new IllegalArgumentException("the ID provided cannot be null.");
         }
         this.id = id;
     }

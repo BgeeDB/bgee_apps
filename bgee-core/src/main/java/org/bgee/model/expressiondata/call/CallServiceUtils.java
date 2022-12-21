@@ -12,16 +12,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
-import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 
 public class CallServiceUtils {
@@ -56,7 +53,7 @@ public class CallServiceUtils {
                 }).collect(Collectors.toCollection(() -> EnumSet.noneOf(DAODataType.class))));
     }
 
-    public EnumSet<ConditionDAO.ConditionParameter> convertCondParamToDAOCondParams(
+    public EnumSet<ConditionDAO.ConditionParameter> convertCondParamsToDAOCondParams(
             Collection<ConditionParameter> condParams) {
         log.traceEntry("{}", condParams);
         if (condParams == null) {
@@ -102,9 +99,9 @@ public class CallServiceUtils {
         EnumSet<DAODataType> daoDataTypes = this.convertDataTypeToDAODataType(
                 callFilter == null? null: callFilter.getDataTypeFilters());
         EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
-                this.convertCondParamToDAOCondParams(condParams);
+                this.convertCondParamsToDAOCondParams(condParams);
 
-        return log.traceExit((callFilter == null? ExpressionCallFilter.ALL_CALLS:
+        return log.traceExit((callFilter == null? ExpressionCallFilter2.ALL_CALLS:
                                                   callFilter.getSummaryCallTypeQualityFilter())
         .entrySet().stream()
         .flatMap(e -> {
@@ -120,7 +117,7 @@ public class CallServiceUtils {
                     pValFilters.add(Collections.singleton(
                             new DAOFDRPValueFilter2(presentHighThreshold,
                                     daoDataTypes,
-                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                    DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
                                     false, daoCondParams)));
                 } else {
@@ -129,7 +126,7 @@ public class CallServiceUtils {
                     pValFilters.add(Collections.singleton(
                             new DAOFDRPValueFilter2(presentLowThreshold,
                                     daoDataTypes,
-                                    DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                    DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
                                     false, daoCondParams)));
                     //Then, if minimum BRONZE is requested, we also accept calls that are SILVER or GOLD
@@ -141,7 +138,7 @@ public class CallServiceUtils {
                         pValFilters.add(Collections.singleton(
                                 new DAOFDRPValueFilter2(presentLowThreshold,
                                         daoDataTypes,
-                                        DAOFDRPValueFilter.Qualifier.LESS_THAN_OR_EQUALS_TO,
+                                        DAOFDRPValueFilter2.Qualifier.LESS_THAN_OR_EQUALS_TO,
                                         DAOPropagationState.DESCENDANT,
                                         false, daoCondParams)));
                     }
@@ -167,27 +164,27 @@ public class CallServiceUtils {
                 if (daoDataTypesTrustedForNotExpressed.isEmpty() && !qual.equals(SummaryQuality.BRONZE)) {
                     absentAndFilters.add(new DAOFDRPValueFilter2(new BigDecimal("1"),
                                         daoDataTypes,
-                                        DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                        DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                         DAOPropagationState.SELF_AND_DESCENDANT,
                                         true, daoCondParams));
                 } else {
                     if (qual.equals(SummaryQuality.GOLD)) {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypes,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
                                 true, daoCondParams));
                         //we want the same condition without considering
                         //the data types that we don't trust to produce absent calls
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentHighThreshold,
                                 daoDataTypesTrustedForNotExpressed,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
                                 true, daoCondParams));
                     } else {
                         absentAndFilters.add(new DAOFDRPValueFilter2(absentLowThreshold,
                                 daoDataTypes,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.SELF_AND_DESCENDANT,
                                 true, daoCondParams));
                         //Unless we request BRONZE quality, we want the same condition without considering
@@ -195,7 +192,7 @@ public class CallServiceUtils {
                         if (qual.equals(SummaryQuality.SILVER)) {
                             absentAndFilters.add(new DAOFDRPValueFilter2(absentLowThreshold,
                                     daoDataTypesTrustedForNotExpressed,
-                                    DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                    DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                     DAOPropagationState.SELF_AND_DESCENDANT,
                                     true, daoCondParams));
                         }
@@ -203,7 +200,7 @@ public class CallServiceUtils {
                     //in all cases, we don't want PRESENT calls in a sub-condition
                     absentAndFilters.add(new DAOFDRPValueFilter2(presentLowThreshold,
                             daoDataTypes,
-                            DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                            DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                             DAOPropagationState.DESCENDANT,
                             false, daoCondParams));
                     //And unless we request BRONZE, we want the same to hold true
@@ -211,7 +208,7 @@ public class CallServiceUtils {
                     if (!qual.equals(SummaryQuality.BRONZE)) {
                         absentAndFilters.add(new DAOFDRPValueFilter2(presentLowThreshold,
                                 daoDataTypesTrustedForNotExpressed,
-                                DAOFDRPValueFilter.Qualifier.GREATER_THAN,
+                                DAOFDRPValueFilter2.Qualifier.GREATER_THAN,
                                 DAOPropagationState.DESCENDANT,
                                 false, daoCondParams));
                     }
@@ -238,5 +235,59 @@ public class CallServiceUtils {
                 .collect(Collectors.toSet());
         return log.traceExit(dataTypesToConsider.isEmpty()? EnumSet.noneOf(DAODataType.class):
             this.convertDataTypeToDAODataType(dataTypesToConsider));
+    }
+
+    public Set<DAOConditionFilter2> convertConditionFiltersToDAOConditionFilters(
+            Collection<ConditionFilter2> condFilters, Collection<ConditionParameter> condParamCombination) {
+        log.traceEntry("{}, {}", condFilters, condParamCombination);
+        if (condFilters == null || condFilters.isEmpty()) {
+            DAOConditionFilter2 filter = convertConditionFilterToDAOConditionFilter(
+                    null, condParamCombination);
+            if (filter == null) {
+                return log.traceExit(new HashSet<>());
+            }
+            //Collections.singleton makes the Set immutable,
+            //so we use it in HashSet constructor
+            return log.traceExit(new HashSet<>(Collections.singleton(filter)));
+        }
+        return log.traceExit(condFilters.stream()
+                .map(condFilter -> convertConditionFilterToDAOConditionFilter(
+                        condFilter, condParamCombination))
+                .filter(f -> f != null)
+                .collect(Collectors.toSet()));
+    }
+    public DAOConditionFilter2 convertConditionFilterToDAOConditionFilter(
+            ConditionFilter2 condFilter, Collection<ConditionParameter> condParamCombination) {
+        log.traceEntry("{}, {}", condFilter, condParamCombination);
+
+        EnumSet<ConditionParameter> comb =
+                condParamCombination == null || condParamCombination.isEmpty()?
+                        EnumSet.allOf(ConditionParameter.class): EnumSet.copyOf(condParamCombination);
+        if (condFilter == null && condParamCombination.equals(
+                EnumSet.allOf(ConditionParameter.class))) {
+            return log.traceExit((DAOConditionFilter2) null);
+        }
+
+        DAOConditionFilter2 daoCondFilter = new DAOConditionFilter2(
+                !comb.contains(ConditionParameter.ANAT_ENTITY)?
+                        Collections.singleton(ConditionDAO.ANAT_ENTITY_ROOT_ID):
+                            condFilter != null? condFilter.getAnatEntityIds(): null,
+                !comb.contains(ConditionParameter.DEV_STAGE)?
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID):
+                            condFilter != null? condFilter.getDevStageIds(): null,
+                !comb.contains(ConditionParameter.CELL_TYPE)?
+                        Collections.singleton(ConditionDAO.CELL_TYPE_ROOT_ID):
+                            condFilter != null? condFilter.getCellTypeIds(): null,
+                !comb.contains(ConditionParameter.SEX)?
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID):
+                            condFilter != null? condFilter.getSexIds(): null,
+                !comb.contains(ConditionParameter.STRAIN)?
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID):
+                            condFilter != null? condFilter.getStrainIds(): null,
+                condFilter != null?
+                        convertCondParamsToDAOCondParams(condFilter.getObservedCondForParams()): null);
+        log.debug("ConditionFilter: {} - condParamCombination: {} - Generated DAOConditionFilter: {}",
+                condFilter, condParamCombination, daoCondFilter);
+        return log.traceExit(daoCondFilter);
     }
 }

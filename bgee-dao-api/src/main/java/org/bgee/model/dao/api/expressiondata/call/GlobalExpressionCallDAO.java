@@ -18,7 +18,6 @@ import org.bgee.model.dao.api.EntityTO;
 import org.bgee.model.dao.api.TransferObject;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawExpressionCallDAO.RawExpressionCallTO;
 
 /**
@@ -435,8 +434,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
                     throws DAOException, IllegalArgumentException;
 
     /**
-     * Retrieves global calls from data source in the appropriate table specified by
-     * {@code conditionParameters}.
+     * Retrieves global calls from data source.
      * <p>
      * The global calls are retrieved and returned as a {@code GlobalExpressionCallTOResultSet}.
      * It is the responsibility of the caller to close this {@code DAOResultSet} once results
@@ -475,6 +473,25 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             Collection<DAOCallFilter> callFilters, Collection<AttributeInfo> attributes,
             LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes, Integer offset,
             Integer limit)
+                    throws DAOException, IllegalArgumentException;
+
+    /**
+     * Retrieves global calls count from data source.
+     * <p>
+     * The global calls count is retrieved and returned as an {@code Integer}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
+     * are retrieved.
+     *
+     * @param callFilters           A {@code Collection} of {@code DAOCallFilter}s,
+     *                              allowing to configure this query. If several
+     *                              {@code CallDAOFilter}s are provided, they are seen
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @return                      An {@code Integer} containing global
+     *                              calls count from the data source.
+     * @throws DAOException         If an error occurred when accessing the data source.
+     */
+    public Integer getGlobalExpressionCallsCount(
+            Collection<DAOCallFilter> callFilters)
                     throws DAOException, IllegalArgumentException;
 
     /**

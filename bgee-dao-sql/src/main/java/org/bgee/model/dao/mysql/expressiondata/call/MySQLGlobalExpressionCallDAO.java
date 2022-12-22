@@ -1597,7 +1597,7 @@ implements GlobalExpressionCallDAO {
         //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
         boolean geneTableFirst = MySQLGeneDAO.TABLE_NAME.equals(speciesIdFilterTableName);
         if (geneTableFirst) {
-            sb.append("gene AS ").append(MySQLGeneDAO.TABLE_NAME);
+            sb.append(MySQLGeneDAO.TABLE_NAME);
         }
         if (geneTableFirst) {
             sb.append(" INNER JOIN ");
@@ -1609,11 +1609,7 @@ implements GlobalExpressionCallDAO {
         }
         if (globalCondSortOrAttrs) {
             sb.append(" INNER JOIN ")
-            .append(MySQLConditionDAO.TABLE_NAME)
-            .append(" ON ").append(TABLE_NAME).append(".")
-            .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)
-            .append(" = ").append(MySQLConditionDAO.TABLE_NAME).append(".")
-            .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+            .append(globalCondTableToGlobalExprTableJoinClause);
         }
         if (geneSort && !geneTableFirst)  {
             sb.append(" INNER JOIN ").append(MySQLGeneDAO.TABLE_NAME).append(" ON ")
@@ -1974,14 +1970,14 @@ implements GlobalExpressionCallDAO {
                 orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
 
         //sanity checks
-        performSanityChecks2(clonedCallFilters);
+        performSanityChecks2(clonedCallFilters, offset, limit);
 
 
         //******************************************
         // GENERATE QUERY
         //******************************************
         //Do we need a filter to the globalCond table
-        boolean globalCondFilter = clonedOrderingAttrs.keySet().stream()
+        boolean globalCondSortOrAttr = clonedOrderingAttrs.keySet().stream()
                 .anyMatch(a -> a.getAttribute().isRequireExtraGlobalCondInfo()) ||
                 clonedAttrs.stream().anyMatch(ai -> ai.getAttribute().isRequireExtraGlobalCondInfo());
         //do we need a join to the gene table
@@ -1994,12 +1990,12 @@ implements GlobalExpressionCallDAO {
         //depending on the other necessary joins. Preferentially filtered on the gene table,
         //since the clustered index is (bgeeGeneId, globalConditionId).
         String speciesIdFilterTableName = getSpeciesIdFilterTableName2(speciesIdFilter,
-                globalCondFilter, geneSort);
+                globalCondSortOrAttr, geneSort);
 
         StringBuilder sb = new StringBuilder();
         sb.append(generateSelectClause2(clonedAttrs, clonedOrderingAttrs.keySet(),
                 globalRank));
-        sb.append(generateTableReferences2(speciesIdFilterTableName, globalCondFilter,
+        sb.append(generateTableReferences2(speciesIdFilterTableName, globalCondSortOrAttr,
                 geneSort));
         sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName));
         

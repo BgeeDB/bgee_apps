@@ -15,7 +15,6 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     private final static Logger log = LogManager.getLogger(ConditionFilter2.class.getName());
 
     private final Set<ConditionParameter<?, ?>> condParamCombination;
-    private final Set<ConditionParameter<?, ?>> condParamIncludeChildTerms;
     private final Set<ConditionParameter<?, ?>> observedCondForParams;
     /**
      * @param speciesId             An {@code Integer} that is the IDs
@@ -35,9 +34,6 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
      *                                      The provided argument can be null, or empty, or not contain
      *                                      all {@code ConditionParameter}s, or have {@code null} values.
      *                                      It should not contain {@code null} keys.
-     * @param condParamIncludeChildTerms    TODO javodoc: include child terms for requested cond. params.
-     *                                      taken into accont for a cond. param only if there are IDs
-     *                                      requested for this cond. param in condParamToFilterIds
      * @param condParamCombination          TODO javadoc: the cond parameter combination targeted
      * @param observedCondForParams A {@code Collection} of
      *                              {@code ExpressionCallService.ConditionParameter}s specifying
@@ -58,10 +54,6 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     public ConditionFilter2(Integer speciesId,
             Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds,
             Collection<ConditionParameter<?, ?>> condParamCombination,
-            //TODO: the use of condParamIncludeChildTerms could be used to BaseConditionFilter,
-            //to be use as well in the new RawDataConditionFilter: in the existing one,
-            //we still provide one Boolean per condition parameter.
-            Collection<ConditionParameter<?, ?>> condParamIncludeChildTerms,
             Collection<ConditionParameter<?, ?>> observedCondForParams)
                     throws IllegalArgumentException {
         super(speciesId, condParamToComposedFilterIds);
@@ -70,30 +62,27 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
         this.condParamCombination = Collections.unmodifiableSet(
                 condParamCombination == null || condParamCombination.isEmpty()?
                 ConditionParameter.allOf(): ConditionParameter.copyOf(condParamCombination));
-        this.condParamIncludeChildTerms = Collections.unmodifiableSet(
-                condParamIncludeChildTerms == null || condParamIncludeChildTerms.isEmpty()?
-                ConditionParameter.noneOf(): ConditionParameter.copyOf(condParamIncludeChildTerms));
         this.observedCondForParams = Collections.unmodifiableSet(
                 observedCondForParams == null || observedCondForParams.isEmpty()?
                 ConditionParameter.noneOf(): ConditionParameter.copyOf(observedCondForParams));
-        if (condParamCombination != null && condParamCombination.contains(null) ) {
-            throw log.throwing(new IllegalArgumentException(
-                    "No ConditionParameter can be null in condParamCombination."));
-        }
-        if (speciesId == null && this.condParamIncludeChildTerms.stream()
-                .anyMatch(param -> !this.getCondParamToComposedFilterIds().get(param).isEmpty())) {
+        if (speciesId == null && this.getCondParamToComposedFilterIds().values().stream()
+                .anyMatch(compo -> compo.getComposedFilterIds().stream()
+                        .anyMatch(f -> f.isIncludeChildTerms()))) {
             throw log.throwing(new IllegalArgumentException(
                     "A species ID must be provided if children terms of specified terms are requested."));
+        }
+        if (ConditionParameter.allOf().stream()
+                .anyMatch(param -> !this.getComposedFilterIds(param).isEmpty() &&
+                        !this.condParamCombination.contains(param))) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Some filters are defined for a ConditionParameter, but it is not part "
+                    + "of the requested ConditionParameter combination"));
         }
     }
 
     //TODO javadoc
     public Set<ConditionParameter<?, ?>> getCondParamCombination() {
         return condParamCombination;
-    }
-    //TODO javadoc
-    public Set<ConditionParameter<?, ?>> getCondParamIncludeChildTerms() {
-        return condParamIncludeChildTerms;
     }
     /**
      * @return  An {@code Set} of condition parameters, allowing
@@ -115,7 +104,9 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
     public boolean areAllCondParamFiltersEmpty() {
         log.traceEntry();
         return log.traceExit(super.areAllCondParamFiltersEmpty() &&
-                this.observedCondForParams.isEmpty());
+                this.observedCondForParams.isEmpty() &&
+                (this.condParamCombination.isEmpty() ||
+                        this.condParamCombination.containsAll(ConditionParameter.allOf())));
     }
 
     @Override
@@ -123,7 +114,7 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + Objects.hash(condParamCombination,
-                condParamIncludeChildTerms, observedCondForParams);
+                observedCondForParams);
         return result;
     }
     @Override
@@ -136,7 +127,6 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
             return false;
         ConditionFilter2 other = (ConditionFilter2) obj;
         return Objects.equals(condParamCombination, other.condParamCombination)
-                && Objects.equals(condParamIncludeChildTerms, other.condParamIncludeChildTerms)
                 && Objects.equals(observedCondForParams, other.observedCondForParams);
     }
 
@@ -147,7 +137,6 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
                .append("speciesId=").append(getSpeciesId())
                .append(", condParamToFilterIds=").append(getCondParamToComposedFilterIds())
                .append(", condParamCombination=").append(condParamCombination)
-               .append(", condParamIncludeChildTerms=").append(condParamIncludeChildTerms)
                .append(", observedCondForParams=").append(observedCondForParams)
                .append("]");
         return builder.toString();

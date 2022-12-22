@@ -293,6 +293,34 @@ V> extends DataFilter<V> {
     public static class ExpressionCallFilter2
     extends CallFilter<ExpressionCallData, SummaryCallType.ExpressionSummary, ConditionFilter2> {
 
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request PRESENT expression calls of at least SILVER quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> SILVER_PRESENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.EXPRESSED, SummaryQuality.SILVER);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request ABSENT expression calls of at least SILVER quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> SILVER_ABSENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.NOT_EXPRESSED, SummaryQuality.SILVER);
+        /**
+         * Convenient {@code Map} to provide to {@code ExpressionCallFilter} constructor
+         * to request PRESENT expression calls of at least BRONZE quality.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> BRONZE_PRESENT_ARGUMENT =
+                Collections.singletonMap(ExpressionSummary.EXPRESSED, SummaryQuality.BRONZE);
+        /**
+         * Convenient {@code Map} to request all calls (present and absent of at least bronze quality).
+         * Not necessary to instantiate an {@code ExpressionCallFilter}, has a {@code null} value
+         * can be provided as argument and would do the same, but useful in other contexts.
+         */
+        public static final Map<ExpressionSummary, SummaryQuality> ALL_CALLS =
+                Collections.unmodifiableMap(EnumSet.allOf(SummaryCallType.ExpressionSummary.class)
+                        .stream()
+                        .collect(Collectors.toMap(c -> c, c -> SummaryQuality.values()[0])));
+
         //TODO: once we get rid of the "ExpressionCallFilter"(1), probably this method
         //should go back to the CallFilter parent
         private static Set<Integer> checkAndLoadSpeciesIdsConsidered(

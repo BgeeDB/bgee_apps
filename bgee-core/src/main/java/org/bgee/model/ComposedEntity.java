@@ -1,7 +1,9 @@
 package org.bgee.model;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @param <T>   The type of {@code Entity} used in this post-composition.
  */
-public abstract class ComposedEntity<T extends Entity<?>> extends Entity<String> {
+public class ComposedEntity<T extends Entity<?>> extends Entity<String> {
     /**
      * A {@code String} used a separator between the IDs of the {@code Entity}s part of
      * a {@code ComposedEntity}. Used to generate a sort of ID for {@code ComposedEntity}s.
@@ -32,7 +34,10 @@ public abstract class ComposedEntity<T extends Entity<?>> extends Entity<String>
     private final LinkedHashSet<T> entities;
     private final Class<T> entityType;
 
-    protected ComposedEntity(LinkedHashSet<T> entities, Class<T> entityType) {
+    public ComposedEntity(T entity, Class<T> entityType) {
+        this(entity == null? null: new LinkedHashSet<>(Set.of(entity)), entityType);
+    }
+    public ComposedEntity(LinkedHashSet<T> entities, Class<T> entityType) {
         //create an "ID"
         super(entities == null? "": entities.stream()
                 .map(e -> e.getId().toString())

@@ -88,15 +88,16 @@ public class ExpressionCallService extends CallServiceParent {
         //Now, we load specific conditions that can be queried (and not all conditions
         //of a species if a condition filter contains no filtering on condition parameters).
         Set<DAOConditionFilter2> daoCondFilters =
-            convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
+            this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
                     this.ontService, filter.getSpeciesIdsConsidered());
         Set<DAOConditionFilter2> daoCondFiltersToUse = daoCondFilters.stream()
-                .filter(f -> !f.areAllCondParamFiltersEmpty())
+                .filter(f -> !f.areAllFiltersExceptSpeciesEmpty())
                 .collect(Collectors.toSet());
-        Map<Integer, Condition> requestedCondMap = daoCondFiltersToUse.isEmpty()?
+        Map<Integer, Condition2> requestedCondMap = daoCondFiltersToUse.isEmpty()?
                 new HashMap<>():
-                loadGlobalConditionMap(speciesMap.values(), daoCondFiltersToUse,
-                        null, this.conditionDAO, this.anatEntityService, this.devStageService);
+                this.utils.loadGlobalConditionMap(speciesMap.values(), daoCondFiltersToUse,
+                        null, this.conditionDAO, this.anatEntityService, this.devStageService,
+                        this.sexService, this.strainService);
 
         //Maybe we have no matching conditions for some condition filters,
         //it means we should have no result in the related species.
@@ -151,6 +152,8 @@ public class ExpressionCallService extends CallServiceParent {
                 log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
             }
         } else {
+            //XXX: actually I think we could create one DAOFilter for all species at once
+            //(since I have changed the SQL query to make a where clause `(speciesIds OR geneIds AND condIds)`)
             daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
                     .filter(speciesId -> !speciesIdsWithNoResult.contains(speciesId))
                     .map(speciesId -> {

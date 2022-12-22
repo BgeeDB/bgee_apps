@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,109 +17,159 @@ import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     private final static Logger log = LogManager.getLogger(BaseConditionFilter2.class.getName());
 
-    public static class ComposedFilterIds<T extends Comparable<T>> {
-        private final List<Set<T>> composedFilterIds;
+    public static class FilterIds<T extends Comparable<T>> {
+        private final Set<T> filterIds;
+        private final boolean includeChildTerms;
 
-        public static final <T extends Comparable<T>> ComposedFilterIds<T> of() {
-            return new ComposedFilterIds<>((Collection<T>) null);
+        /**
+         * @param filterIds         A {@code Collection} of {@code T}s to configure a filter.
+         *                          Can be {@code null} or empty for no filtering.
+         *                          Cannot contain null elements, otherwise an
+         *                          {@code IllegalArgumentException} is thrown.
+         * @param includeChildTerms A {@code boolean} to request, when {@code true},
+         *                          to retrieve child terms of the IDs provided
+         *                          in {@code filterIds}. Always considered as {@code false}
+         *                          if {@code filterIds} is {@code null} or empty.
+         */
+        public FilterIds(Collection<T> filterIds, boolean includeChildTerms) {
+            if (filterIds != null && filterIds.contains(null)) {
+                throw log.throwing(new IllegalArgumentException("No ID can be null"));
+            }
+            //Set.of and Set.copyOf already returns immutable Sets
+            //(But Set.copyOf is not tolerant to null values, this is why we did a check first)
+            this.filterIds = filterIds == null? Set.of(): Set.copyOf(filterIds);
+            this.includeChildTerms = this.filterIds.isEmpty()? false: includeChildTerms;
+        }
+
+        /**
+         * @return  An immutable {@code Set} containing the IDs requested for filtering.
+         *          Can be empty.
+         * @see #isIncludeChildTerms()
+         */
+        public Set<T> getIds() {
+            return filterIds;
         }
         /**
-         * 
-         * @param <T>
-         * @param filterIds Can be null or empty
-         * @return
+         * @return  A {@code boolean} to request, when {@code true}, to retrieve child terms
+         *          of the IDs provided in {@link #getIds()}. Always {@code false}
+         *          when {@link #getIds()} returns an empty {@code Set}.
+         * @see #getIds()
          */
-        public static final <T extends Comparable<T>> ComposedFilterIds<T> of(
-                Collection<T> filterIds) {
-            return new ComposedFilterIds<>(filterIds);
+        public boolean isIncludeChildTerms() {
+            return includeChildTerms;
         }
         /**
-         * 
-         * @param <T>
-         * @param filterIds1 cannot be null nor empty
-         * @param filterIds2 cannot be null nor empty
-         * @return
+         * Convenient shortcut method.
+         *
+         * @return  A {@code boolean} that is the value returned by
+         *          {@code getFilterIds().isEmpty()}.
          */
-        public static final <T extends Comparable<T>> ComposedFilterIds<T> of(
-                Collection<T> filterIds1, Collection<T> filterIds2) {
-            return new ComposedFilterIds<>(
-                    //List.of not tolerant to null elements, we create empty HashSet if collection null,
-                    //correct check on null/empty collections will be performed in the main constructor
-                    List.of(
-                    //new HashSet is tolerant to null element, Set.of is not.
-                    //Checks on null elements, empty collections, etc will be performed
-                    //in the main constructor
-                    filterIds1 == null? new HashSet<>(): new HashSet<>(filterIds1),
-                    filterIds2 == null? new HashSet<>(): new HashSet<>(filterIds2)));
+        public boolean isEmpty() {
+            return this.getIds().isEmpty();
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(filterIds, includeChildTerms);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            FilterIds<?> other = (FilterIds<?>) obj;
+            return Objects.equals(filterIds, other.filterIds)
+                    && includeChildTerms == other.includeChildTerms;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("FilterIds [")
+                   .append("filterIds=").append(filterIds)
+                   .append(", includeChildTerms=").append(includeChildTerms)
+                   .append("]");
+            return builder.toString();
+        }
+    }
+    
+    public static class ComposedFilterIds<T extends Comparable<T>> {
+        private final List<FilterIds<T>> composedFilterIds;
+
         /**
-         * 
-         * @param <T>
-         * @param filterIds1 cannot be null nor empty
-         * @param filterIds2 cannot be null nor empty
-         * @param filterIds3 cannot be null nor empty
-         * @return
+         * Creates an empty {@code ComposedFilterIds}.
          */
-        public static final <T extends Comparable<T>> ComposedFilterIds<T> of(
-                Collection<T> filterIds1, Collection<T> filterIds2, Collection<T> filterIds3) {
-            return new ComposedFilterIds<>(
-                    //List.of not tolerant to null elements, we create empty HashSet if collection null,
-                    //correct check on null/empty collections will be performed in the main constructor
-                    List.of(
-                    //new HashSet is tolerant to null element, Set.of is not.
-                    //Checks on null elements, empty collections, etc will be performed
-                    //in the main constructor
-                    filterIds1 == null? new HashSet<>(): new HashSet<>(filterIds1),
-                    filterIds2 == null? new HashSet<>(): new HashSet<>(filterIds2),
-                    filterIds3 == null? new HashSet<>(): new HashSet<>(filterIds3)));
+        public ComposedFilterIds() {
+            this((List<FilterIds<T>>) null);
         }
         /**
          * Convenient constructor when no composition is required.
          *
          * @param filterIds         A {@code Collection} of {@code T}s to configure a filter.
          *                          Can be {@code null} or empty for no filtering.
-         *                          Cannot contain null elements, otherwise an
-         *                          {@code IllegalArgumentException} is thrown.
          */
-        public ComposedFilterIds(Collection<T> filterIds) {
+        public ComposedFilterIds(FilterIds<T> filterIds) {
             this(filterIds == null || filterIds.isEmpty()? null:
                 //new HashSet is tolerant to null element, Set.of is not.
                 //Checks on null elements will be performed in the main constructor
-                List.of(new HashSet<>(filterIds)));
+                List.of(filterIds));
         }
         /**
          * Constructor allowing to create a composed filter.
          *
-         * @param composedFilterIds A {@code List} of {@code Set}s of {@code T}s,
-         *                          where each inner {@code Set} is a filter,
-         *                          the list representing the composition.
+         * @param composedFilterIds A {@code List} of {@code FilterIds}s of {@code T}s,
+         *                          used to create a composed filter. Each {@code FilterIds} element
+         *                          itself contains potentially multiple IDs, seen as "OR" conditions
+         *                          between them, while this {@code ComposedFilterIds} generates
+         *                          "AND" condition between the {@code FilterIds}s.
          *                          The {@code List} can be {@code null} or empty for no filtering.
-         *                          The inner {@code Set}s cannot be null, empty,
-         *                          or contain null elements, otherwise an
+         *                          The inner {@code FilterIds}s cannot be null, or empty
+         *                          according to their {@code isEmpty()} method, otherwise an
          *                          {@code IllegalArgumentException} is thrown.
          */
-        public ComposedFilterIds(List<Set<T>> composedFilterIds) {
+        public ComposedFilterIds(List<FilterIds<T>> composedFilterIds) {
             if (composedFilterIds != null && composedFilterIds.stream()
-                    .anyMatch(c -> c == null || c.isEmpty() || c.contains(null))) {
+                    .anyMatch(c -> c == null || c.isEmpty())) {
                 throw log.throwing(new IllegalArgumentException(
-                        "Invalid inner collection"));
+                        "Invalid inner FilterIds"));
             }
-            this.composedFilterIds = Collections.unmodifiableList(composedFilterIds == null?
-                    //List.of is already immutable, but not Collectors.toList() below
-                    List.of():
-                    composedFilterIds.stream()
-                    .map(c -> Set.copyOf(c)) //Set.copyOf returns an immutableSet, so we're good
-                    .collect(Collectors.toList()));
+            //List.of and List.copyOf already returns immutable Lists
+            this.composedFilterIds = composedFilterIds == null? List.of():
+                List.copyOf(composedFilterIds);
         }
 
-        public List<Set<T>> getComposedFilterIds() {
+        public List<FilterIds<T>> getComposedFilterIds() {
             return composedFilterIds;
         }
-        public Set<T> getFirstFilterIds() {
-            if (composedFilterIds.isEmpty()) {
-                return log.traceExit(Set.of());
+        /**
+         * Returns the {@code FilterIds} of {@code T}s at the index provided,
+         * from the {@code List} returns by {@link #getComposedFilterIds()}.
+         * Unlike the method {@code List.get(int)}, this method returns {@code null}
+         * if the index is out of bond, instead of throwing an {@code IndexOutOfBoundsException}.
+         *
+         * @param index The {@code int} that is the index of the {@code FilterIds} to return.
+         * @return      The {@code FilterIds} of {@code T}s at the specified position
+         *              in the composed filter list.
+         */
+        public FilterIds<T> getFilterIds(int index) {
+            log.traceEntry();
+            try {
+                return log.traceExit(composedFilterIds.get(index));
+            } catch (IndexOutOfBoundsException e) {
+                log.catching(e);
+                return log.traceExit((FilterIds<T>) null);
             }
-            return log.traceExit(composedFilterIds.get(0));
+        }
+        public Set<T> getIds(int index) {
+            log.traceEntry();
+            FilterIds<T> filterIds = this.getFilterIds(index);
+            if (filterIds == null) {
+                return log.traceExit((Set<T>) null);
+            }
+            return log.traceExit(filterIds.getIds());
         }
         public boolean isComposed() {
             return getComposedFilterIds().size() > 1;
@@ -195,11 +244,11 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
                         c -> c,
                         c -> {
                             if (condParamToComposedFilterIds == null) {
-                                return ComposedFilterIds.of();
+                                return new ComposedFilterIds<>();
                             }
                             ComposedFilterIds<String> f = condParamToComposedFilterIds.get(c);
                             if (f == null) {
-                                return ComposedFilterIds.of();
+                                return new ComposedFilterIds<>();
                             }
                             return f;
                         })));
@@ -230,6 +279,9 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
     public Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> getCondParamToComposedFilterIds() {
         return condParamToComposedFilterIds;
     }
+    public ComposedFilterIds<String> getComposedFilterIds(ConditionParameter<?, ?> condParam) {
+        return condParamToComposedFilterIds.get(condParam);
+    }
 
     public boolean areAllCondParamFiltersEmpty() {
         log.traceEntry();
@@ -246,7 +298,9 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
                 .map(param -> this.getCondParamToComposedFilterIds().get(param))
                 .filter(composedIds -> !composedIds.isEmpty())
                 .map(composedIds -> composedIds.getComposedFilterIds().stream()
-                        .flatMap(ids -> ids.stream().sorted())
+                        .map(filterIds -> filterIds.getIds().stream().sorted()
+                                .collect(Collectors.joining("_"))
+                                + (filterIds.isIncludeChildTerms()? "_with_child_terms": ""))
                         .collect(Collectors.joining("_"))
                         .replaceAll(" ", "_").replaceAll(":", "_"))
                 .collect(Collectors.joining("_")));

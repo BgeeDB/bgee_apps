@@ -2014,4 +2014,33 @@ implements GlobalExpressionCallDAO {
         }
     }
 
+    public Integer getGlobalExpressionCallsCount(
+            Collection<DAOCallFilter> callFilters)
+                    throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}", callFilters);
+
+        //needs a LinkedHashSet for consistent settings of the parameters. 
+        LinkedHashSet<DAOCallFilter> clonedCallFilters = callFilters == null?
+                new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
+        boolean speciesIdFilter = clonedCallFilters.stream()
+                .anyMatch(callFilter ->
+                !callFilter.getSpeciesIds().isEmpty());
+        String speciesIdFilterTableName = speciesIdFilter? MySQLGeneDAO.TABLE_NAME : null;
+        StringBuilder sb = new StringBuilder();
+        // generate select clause
+        sb.append("SELECT COUNT(*) AS countCalls");
+        sb.append(generateTableReferences2(speciesIdFilterTableName, false,
+                false));
+        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName));
+        try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())){
+            configureCallStatement2(stmt, clonedCallFilters, null, null);
+            ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
+            if(rs.next()) {
+                return log.traceExit(rs.getInt("countCalls"));
+            }
+            throw log.throwing(new IllegalStateException("empty ResultSet"));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
 }

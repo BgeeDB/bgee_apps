@@ -26,7 +26,6 @@ import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionParameter;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValue;
@@ -1349,30 +1348,10 @@ implements GlobalExpressionCallDAO {
        log.traceEntry("{}, {}, {}", dataType, condParams, selfObsCount);
        return log.traceExit((selfObsCount? GLOBAL_SELF_OBS_COUNT_PREFIX: GLOBAL_DESCENDANT_OBS_COUNT_PREFIX)
                + dataType.getFieldNamePart()
-               + getFieldNamePartFromCondParams2(condParams));
+               + MySQLConditionDAO.getFieldNamePartFromCondParams2(condParams));
    }
    //TODO: update this method when ConditionDAO.ConditionParameter will allow to retrieve field name
-   private static String getFieldNamePartFromCondParams2(EnumSet<ConditionDAO.ConditionParameter> condParams) {
-       log.traceEntry("{}", condParams);
-       return log.traceExit(condParams.stream().map(cp -> {
-           if (cp.equals(ConditionParameter.ANAT_ENTITY)) {
-               return ConditionDAO.Attribute.ANAT_ENTITY_ID.getFieldNamePart().toString();
-           }
-           if (cp.equals(ConditionParameter.CELL_TYPE)) {
-               return ConditionDAO.Attribute.CELL_TYPE_ID.getFieldNamePart().toString();
-           }
-           if (cp.equals(ConditionParameter.STAGE)) {
-               return ConditionDAO.Attribute.STAGE_ID.getFieldNamePart().toString();
-           }
-           if (cp.equals(ConditionParameter.SEX)) {
-               return ConditionDAO.Attribute.SEX_ID.getFieldNamePart().toString();
-           }
-           if (cp.equals(ConditionParameter.STRAIN)) {
-               return ConditionDAO.Attribute.STRAIN_ID.getFieldNamePart().toString();
-           }
-           throw log.throwing(new IllegalStateException("condition parameter not recognized"));
-           }).collect(Collectors.joining()));
-   }
+   
    private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters)
            throws IllegalArgumentException {
        log.traceEntry("{}", callFilters);

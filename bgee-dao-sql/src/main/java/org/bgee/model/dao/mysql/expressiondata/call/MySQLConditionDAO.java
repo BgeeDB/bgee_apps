@@ -578,6 +578,28 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         return log.traceExit(offsetParamIndex);
     }
 
+    public static String getFieldNamePartFromCondParams2(EnumSet<ConditionDAO.ConditionParameter> condParams) {
+        log.traceEntry("{}", condParams);
+        return log.traceExit(condParams.stream().map(cp -> {
+            if (cp.equals(ConditionParameter.ANAT_ENTITY)) {
+                return ConditionDAO.Attribute.ANAT_ENTITY_ID.getFieldNamePart().toString();
+            }
+            if (cp.equals(ConditionParameter.CELL_TYPE)) {
+                return ConditionDAO.Attribute.CELL_TYPE_ID.getFieldNamePart().toString();
+            }
+            if (cp.equals(ConditionParameter.STAGE)) {
+                return ConditionDAO.Attribute.STAGE_ID.getFieldNamePart().toString();
+            }
+            if (cp.equals(ConditionParameter.SEX)) {
+                return ConditionDAO.Attribute.SEX_ID.getFieldNamePart().toString();
+            }
+            if (cp.equals(ConditionParameter.STRAIN)) {
+                return ConditionDAO.Attribute.STRAIN_ID.getFieldNamePart().toString();
+            }
+            throw log.throwing(new IllegalStateException("condition parameter not recognized"));
+            }).collect(Collectors.joining()));
+    }
+
     @Override
     public int getMaxGlobalConditionId() throws DAOException {
         log.traceEntry();

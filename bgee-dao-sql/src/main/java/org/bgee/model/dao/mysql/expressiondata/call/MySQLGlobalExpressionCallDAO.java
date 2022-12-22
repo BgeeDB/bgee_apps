@@ -1560,9 +1560,9 @@ implements GlobalExpressionCallDAO {
     }
 
     private static String generateTableReferences2(
-            final String speciesIdFilterTableName, final boolean globalCondFiltering,
+            final String speciesIdFilterTableName, final boolean globalCondSortOrAttrs,
             final boolean geneSort) {
-        log.traceEntry("{}, {}, {}", speciesIdFilterTableName, globalCondFiltering, geneSort);
+        log.traceEntry("{}, {}, {}", speciesIdFilterTableName, globalCondSortOrAttrs, geneSort);
 
         //****************************************
         // Create the necessary joins
@@ -1599,44 +1599,30 @@ implements GlobalExpressionCallDAO {
         if (geneTableFirst) {
             sb.append("gene AS ").append(MySQLGeneDAO.TABLE_NAME);
         }
-        if (globalCondFiltering) {
-            if (geneTableFirst) {
-                sb.append(" INNER JOIN ");
-            }
-            sb.append(MySQLConditionDAO.TABLE_NAME);
-            if (geneTableFirst) {
-                sb.append(" ON ").append(MySQLGeneDAO.TABLE_NAME).append(".")
-                .append(MySQLGeneDAO.SPECIES_ID)
-                .append(" = ").append(MySQLConditionDAO.TABLE_NAME).append(".")
-                .append(MySQLGeneDAO.SPECIES_ID);
-            }
-        }
-
-        if (geneTableFirst || globalCondFiltering) {
+        if (geneTableFirst) {
             sb.append(" INNER JOIN ");
         }
         sb.append(TABLE_NAME);
-        if (geneTableFirst || globalCondFiltering) {
-            sb.append(" ON ");
-            if (geneTableFirst) {
-                sb.append(geneTableToGlobalExprTableJoinClause);
-                if (globalCondFiltering) {
-                    sb.append(" AND ");
-                }
-            }
-            if (globalCondFiltering) {
-                sb.append(globalCondTableToGlobalExprTableJoinClause);
-            }
+        if (geneTableFirst) {
+            sb.append(" ON ")
+            .append(geneTableToGlobalExprTableJoinClause);
         }
-
+        if (globalCondSortOrAttrs) {
+            sb.append(" INNER JOIN ")
+            .append(MySQLConditionDAO.TABLE_NAME)
+            .append(" ON ").append(TABLE_NAME).append(".")
+            .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD)
+            .append(" = ").append(MySQLConditionDAO.TABLE_NAME).append(".")
+            .append(MySQLConditionDAO.GLOBAL_COND_ID_FIELD);
+        }
         if (geneSort && !geneTableFirst)  {
             sb.append(" INNER JOIN ").append(MySQLGeneDAO.TABLE_NAME).append(" ON ")
               .append(geneTableToGlobalExprTableJoinClause);
         }
-
         sb.append(" ");
         return log.traceExit(sb.toString());
     }
+
     private static String generateWhereClause2(final LinkedHashSet<DAOCallFilter> callFilters,
             final String speciesIdFilterTableName) {
         log.traceEntry("{}, {}, {}, {}", callFilters, speciesIdFilterTableName);

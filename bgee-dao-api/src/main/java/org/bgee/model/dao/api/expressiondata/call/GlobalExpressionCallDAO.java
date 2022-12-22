@@ -321,7 +321,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
             this.targetedDataTypes = targetedDataTypes == null || targetedDataTypes.isEmpty()?
                     EnumSet.allOf(DAODataType.class): EnumSet.copyOf(targetedDataTypes);
             this.targetedCondParams = targetedCondParams == null || targetedCondParams.isEmpty()?
-                    EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(targetedCondParams);
+                    ConditionDAO.Attribute.getCondParams(): EnumSet.copyOf(targetedCondParams);
         }
         public T getAttribute() {
             return attribute;
@@ -432,6 +432,49 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls(
             Collection<CallDAOFilter> callFilters, Collection<AttributeInfo> attributes,
             LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes)
+                    throws DAOException, IllegalArgumentException;
+
+    /**
+     * Retrieves global calls from data source in the appropriate table specified by
+     * {@code conditionParameters}.
+     * <p>
+     * The global calls are retrieved and returned as a {@code GlobalExpressionCallTOResultSet}.
+     * It is the responsibility of the caller to close this {@code DAOResultSet} once results
+     * are retrieved.
+     *
+     * @param callFilters           A {@code Collection} of {@code DAOCallFilter}s,
+     *                              allowing to configure this query. If several
+     *                              {@code CallDAOFilter}s are provided, they are seen
+     *                              as "OR" conditions. Can be {@code null} or empty.
+     * @param attributes            A {@code Collection} of {@code GlobalExpressionCallDAO.AttributeInfo}s
+     *                              defining the attributes to populate in the returned
+     *                              {@code GlobalExpressionCallTO}s, associated to the requested
+     *                              {@code DAODataType}s if necessary. If {@code null} or empty,
+     *                              all attributes are populated, with all {@code DAODataType}s
+     *                              when applicable.
+     * @param orderingAttributes    A {@code LinkedHashMap} where keys are
+     *                              {@code GlobalExpressionCallDAO.OrderingAttributeInfo}s defining
+     *                              the attributes used to order the returned {@code GlobalExpressionCallTO}s,
+     *                              the associated value being a {@code DAO.Direction}
+     *                              defining whether the ordering should be ascendant or descendant.
+     *                              If {@code null} or empty, no ordering is performed.
+     * @param offset                An {@code Integer} used to specify which row to start from retrieving data
+     *                              in the result of a query. If null, retrieve data from the first row.
+     * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
+     *                              result. If null, all results are returned.
+     * @return                      A {@code GlobalExpressionCallTOResultSet} containing global
+     *                              calls from data source according to {@code attributes} and
+     *                              {@code conditionParameters}.
+     * @throws DAOException         If an error occurred when accessing the data source.
+     * @throws IllegalArgumentException If {@code callFilters} is {@code null} or empty,
+     *                                  or if one of the {@code Attribute}s in {@code conditionParameters}
+     *                                  is not a condition parameter attributes (see
+     *                                  {@link ConditionDAO.Attribute#isConditionParameter()}).
+     */
+    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls2(
+            Collection<DAOCallFilter> callFilters, Collection<AttributeInfo> attributes,
+            LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes, Integer offset,
+            Integer limit)
                     throws DAOException, IllegalArgumentException;
 
     /**

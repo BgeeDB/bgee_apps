@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
+import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
@@ -242,6 +243,171 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         } catch (SQLException e) {
             throw log.throwing(new DAOException(e));
         }
+    }
+
+
+    @Override
+    public ConditionTOResultSet getGlobalConditions(Collection<DAOConditionFilter2> condFilters,
+            Collection<ConditionDAO.Attribute> attrs) throws DAOException {
+        log.traceEntry("{}, {}", condFilters, attrs);
+
+        final Set<DAOConditionFilter2> clonedCondFilters = Collections.unmodifiableSet(
+                condFilters == null?
+                new LinkedHashSet<>(): new LinkedHashSet<>(condFilters));
+        final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attrs == null? 
+                EnumSet.noneOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attrs));
+
+        // generate SELECT
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
+        .append(" FROM ").append(TABLE_NAME);
+
+        // generate WHERE CLAUSE
+        //XXX should we forbid to retrieve all conditions ?
+        // FILTER ON CONDITION PARAMETERS
+        if (!clonedCondFilters.isEmpty()) {
+            sb.append(" WHERE ")
+            .append(clonedCondFilters.stream().map(cf -> {
+                return generateOneConditionFilter(cf);
+            }).collect(Collectors.joining(" OR ")));
+        }
+        //parameterize query
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            int paramIndex = 1;
+            configureRawDataConditionFiltersStmt(stmt, clonedCondFilters, paramIndex);
+            return log.traceExit(new MySQLConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
+    //TODO: same approach as in MysqlRawDataCondtionDAO. Should refactor
+    private String generateOneConditionFilter(DAOConditionFilter2 condFilter) {
+        log.traceEntry("{}", condFilter);
+        StringBuilder sb = new StringBuilder();
+        if(condFilter == null) {
+            throw log.throwing(new IllegalArgumentException("condFilter can not be null"));
+        }
+
+        Set<String> anatEntityIds = condFilter.getAnatEntityIds();
+        Set<String> cellIds = condFilter.getCellTypeIds();
+
+        // It is possible that cell type terms are used to annotate the anat. entities.
+        // In order to solve this potential issue, we always check anat. entities and cell types
+        // in both columns.
+        Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
+        anatEntityCellTypeIds.addAll(cellIds);
+        boolean previousCond = false;
+        if (!anatEntityCellTypeIds.isEmpty()) {
+            sb.append("(")
+            .append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.ANAT_ENTITY_ID,
+                    anatEntityCellTypeIds, previousCond));
+            if (!anatEntityIds.isEmpty() && !cellIds.isEmpty()) {
+                sb.append(" AND ");
+            } else {
+                sb.append(" OR ");
+            }
+            sb.append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.CELL_TYPE_ID,
+                    anatEntityCellTypeIds, previousCond))
+            .append(")");
+            previousCond = true;
+        }
+
+        if (!condFilter.getSpeciesIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.SPECIES_ID,
+                    condFilter.getSpeciesIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getDevStageIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.STAGE_ID,
+                    condFilter.getDevStageIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getSexIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.SEX_ID,
+                    condFilter.getSexIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getStrainIds().isEmpty()) {
+            sb.append(generateOneConditionParameterWhereClause(
+                    ConditionDAO.Attribute.STRAIN_ID,
+                    condFilter.getStrainIds(), previousCond));
+            previousCond = true;
+        }
+        if (!condFilter.getObservedCondForParams().isEmpty()) {
+            if (previousCond) {
+                sb.append(" AND ");
+            }
+            previousCond = true;
+            sb.append(condFilter.getObservedCondForParams().stream()
+                    .map(condParam -> TABLE_NAME + ".condObserved"
+                                      + getFieldNamePartFromCondParams2(EnumSet.of(condParam)) + " = 1")
+                    .collect(Collectors.joining(" AND ")));
+        }
+        return log.traceExit(sb.toString());
+    }
+
+    private String generateOneConditionParameterWhereClause(ConditionDAO.Attribute attr,
+            Set<?> condValues, boolean previousFilter) {
+        log.traceEntry("{}, {}, {}", attr, condValues, previousFilter);
+        StringBuffer sb = new StringBuffer();
+        if(previousFilter) {
+            sb.append(" AND ");
+        }
+        sb.append(MySQLConditionDAO.TABLE_NAME).append(".")
+        .append(attr.getTOFieldName()).append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(condValues.size()))
+        .append(")");
+        return log.traceExit(sb.toString());
+    }
+
+    protected static int configureRawDataConditionFiltersStmt(BgeePreparedStatement stmt,
+            Collection<DAOConditionFilter2> conditionFilters, int paramIndex)
+                    throws SQLException {
+        log.traceEntry("{}, {}, {}", stmt, conditionFilters, paramIndex);
+
+        if (conditionFilters == null) {
+            throw log.throwing(new IllegalArgumentException("conditionFilters can not be null"));
+        }
+        int offsetParamIndex = paramIndex;
+        for (DAOConditionFilter2 condFilter: conditionFilters) {
+            // It is possible that cell type terms are used to annotate the anat. entities.
+            // In order to solve this potential issue, we always check anat. entities and cell types
+            // in both columns.
+            Set<String> anatEntityCellTypeIds = new HashSet<>(condFilter.getAnatEntityIds());
+            anatEntityCellTypeIds.addAll(condFilter.getCellTypeIds());
+
+            if (!anatEntityCellTypeIds.isEmpty()) {
+                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
+                offsetParamIndex += anatEntityCellTypeIds.size();
+                stmt.setStrings(offsetParamIndex, anatEntityCellTypeIds, true);
+                offsetParamIndex += anatEntityCellTypeIds.size();
+            }
+            if (!condFilter.getSpeciesIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, condFilter.getSpeciesIds(), true);
+                offsetParamIndex += condFilter.getSpeciesIds().size();
+            }
+            if (!condFilter.getDevStageIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getDevStageIds(), true);
+                offsetParamIndex += condFilter.getDevStageIds().size();
+            }
+            if (!condFilter.getSexIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getSexIds(), true);
+                offsetParamIndex += condFilter.getSexIds().size();
+            }
+            if (!condFilter.getStrainIds().isEmpty()) {
+                stmt.setStrings(offsetParamIndex, condFilter.getStrainIds(), true);
+                offsetParamIndex += condFilter.getStrainIds().size();
+            }
+        }
+        return log.traceExit(offsetParamIndex);
     }
 
     //Note: currently, we use the fields 'condObservedXXX' in the globalCond table to filter

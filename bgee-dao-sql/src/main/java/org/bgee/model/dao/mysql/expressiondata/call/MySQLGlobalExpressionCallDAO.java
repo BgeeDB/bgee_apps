@@ -1887,12 +1887,7 @@ implements GlobalExpressionCallDAO {
         log.traceEntry("{}", orderingAttrs);
 
         if (orderingAttrs.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            return log.traceExit(sb.append(" ORDER BY ").append(TABLE_NAME).append(".")
-                    .append(GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID.getFieldName())
-                    .append(", ").append(TABLE_NAME).append(".")
-                    .append(GlobalExpressionCallDAO.OrderingAttribute.GLOBAL_CONDITION_ID.getFieldName())
-                    .toString());
+            return log.traceExit("");
         }
 
         return log.traceExit(orderingAttrs.entrySet().stream()

@@ -1659,7 +1659,7 @@ implements GlobalExpressionCallDAO {
                     if (!firstCond) {
                         sb.append(" OR ");
                     }
-                    sb.append(MySQLConditionDAO.TABLE_NAME).append(".globalConditionId IN (")
+                    sb.append(TABLE_NAME).append(".globalConditionId IN (")
                     .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getConditionIds().size()))
                     .append(") ");
                     firstCond = false;

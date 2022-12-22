@@ -1352,11 +1352,16 @@ implements GlobalExpressionCallDAO {
    }
    //TODO: update this method when ConditionDAO.ConditionParameter will allow to retrieve field name
    
-   private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters)
+   private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters, Integer offset,
+           Integer limit)
            throws IllegalArgumentException {
-       log.traceEntry("{}", callFilters);
-       if (callFilters.isEmpty()) {
-           throw log.throwing(new IllegalArgumentException("Some DAOCallFilters must be provided"));
+       log.traceEntry("{}, {}, {}", callFilters, offset, limit);
+       if (offset != null && offset < 0 || limit != null && limit < 1) {
+           throw log.throwing(new IllegalStateException("offset can not be < 0 and limit can not be < 1"));
+       }
+       if (callFilters.isEmpty() && limit == null) {
+           throw log.throwing(new IllegalArgumentException("At least a DAOCallFilters or a limit must"
+                   + " be provided"));
        }
        log.traceExit();
    }

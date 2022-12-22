@@ -24,10 +24,14 @@ import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.exception.DAOException;
 import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter;
+import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionParameter;
+import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValue;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter;
+import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOMeanRank;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
@@ -62,6 +66,8 @@ implements GlobalExpressionCallDAO {
     private static final String MIN_MAX_RANK_ENTITY_ID_FIELD = "entitiyId";
     private static final String MIN_MAX_RANK_MIN_RANK_FIELD = "minRank";
     private static final String MIN_MAX_RANK_MAX_RANK_FIELD = "maxRank";
+
+    private static final String TABLE_NAME = "globalExpression";
 
 
     private static String generateSelectClause(Collection<GlobalExpressionCallDAO.AttributeInfo> attrs,
@@ -1332,4 +1338,706 @@ implements GlobalExpressionCallDAO {
             }
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////// Methods specific to new approach where conditionIds /////////////////
+    ////////////// are retrieved separately                            /////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
+
+   private static String getObsCountFieldName2(DAODataType dataType,
+           EnumSet<ConditionDAO.ConditionParameter> condParams, boolean selfObsCount) {
+       log.traceEntry("{}, {}, {}", dataType, condParams, selfObsCount);
+       return log.traceExit((selfObsCount? GLOBAL_SELF_OBS_COUNT_PREFIX: GLOBAL_DESCENDANT_OBS_COUNT_PREFIX)
+               + dataType.getFieldNamePart()
+               + getFieldNamePartFromCondParams2(condParams));
+   }
+   //TODO: update this method when ConditionDAO.ConditionParameter will allow to retrieve field name
+   private static String getFieldNamePartFromCondParams2(EnumSet<ConditionDAO.ConditionParameter> condParams) {
+       log.traceEntry("{}", condParams);
+       return log.traceExit(condParams.stream().map(cp -> {
+           if (cp.equals(ConditionParameter.ANAT_ENTITY)) {
+               return ConditionDAO.Attribute.ANAT_ENTITY_ID.getFieldNamePart().toString();
+           }
+           if (cp.equals(ConditionParameter.CELL_TYPE)) {
+               return ConditionDAO.Attribute.CELL_TYPE_ID.getFieldNamePart().toString();
+           }
+           if (cp.equals(ConditionParameter.STAGE)) {
+               return ConditionDAO.Attribute.STAGE_ID.getFieldNamePart().toString();
+           }
+           if (cp.equals(ConditionParameter.SEX)) {
+               return ConditionDAO.Attribute.SEX_ID.getFieldNamePart().toString();
+           }
+           if (cp.equals(ConditionParameter.STRAIN)) {
+               return ConditionDAO.Attribute.STRAIN_ID.getFieldNamePart().toString();
+           }
+           throw log.throwing(new IllegalStateException("condition parameter not recognized"));
+           }).collect(Collectors.joining()));
+   }
+   private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters)
+           throws IllegalArgumentException {
+       log.traceEntry("{}", callFilters);
+       if (callFilters.isEmpty()) {
+           throw log.throwing(new IllegalArgumentException("Some DAOCallFilters must be provided"));
+       }
+       log.traceExit();
+   }
+
+    private static String generateSelectClause2(Collection<GlobalExpressionCallDAO.AttributeInfo> attrs,
+            Collection<GlobalExpressionCallDAO.OrderingAttributeInfo> orderingAttrs, boolean globalRank) {
+        log.traceEntry("{}, {}, {}", attrs, orderingAttrs, globalRank);
+        
+        LinkedHashSet<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = new LinkedHashSet<>(attrs);
+        //fix for #173, see also the end of this method for columns having no corresponding attributes
+        for (GlobalExpressionCallDAO.OrderingAttributeInfo a: orderingAttrs) {
+            switch (a.getAttribute()) {
+            case BGEE_GENE_ID:
+                clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                        GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID));
+                break;
+            case GLOBAL_CONDITION_ID:
+                clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID));
+                break;
+            case MEAN_RANK:
+                if (clonedAttrs.stream().noneMatch(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.MEAN_RANK) &&
+                        ai.getTargetedDataTypes().equals(a.getTargetedDataTypes()))) {
+                    clonedAttrs.add(new GlobalExpressionCallDAO.AttributeInfo(
+                            GlobalExpressionCallDAO.Attribute.MEAN_RANK, a.getTargetedDataTypes(),
+                            null));
+                }
+                break;
+            default:
+                //other ordering attributes do not have a corresponding select attribute
+                break;
+            }
+        }
+        clonedAttrs = clonedAttrs.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+
+        if (clonedAttrs.stream().noneMatch(ai -> ai.getAttribute()
+                .equals(GlobalExpressionCallDAO.Attribute.BGEE_GENE_ID)) ||
+                clonedAttrs.stream().noneMatch(ai -> ai.getAttribute().equals(
+                        GlobalExpressionCallDAO.Attribute.GLOBAL_CONDITION_ID))
+                ) {
+            sb.append("DISTINCT ");
+        }
+        //XXX: check whether with the last mysql version the optimizer does a better job
+        //at choosing the join order
+        sb.append("STRAIGHT_JOIN ");
+
+        sb.append(clonedAttrs.stream().map(ai -> {
+            switch (ai.getAttribute()) {
+            case BGEE_GENE_ID:
+                return TABLE_NAME + "." + MySQLGeneDAO.BGEE_GENE_ID;
+            case GLOBAL_CONDITION_ID:
+                return TABLE_NAME + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
+            case MEAN_RANK:
+                return generateMeanRankClause2(ai.getTargetedDataTypes(), globalRank)
+                        +" AS " + GLOBAL_MEAN_RANK_FIELD
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
+
+            case DATA_TYPE_RANK_INFO:
+                return ai.getTargetedDataTypes().stream()
+                        .map(dataType -> dataType.getRankFieldName(globalRank)
+                                + ", " + dataType.getRankNormFieldName(globalRank)
+                                + ", " + (dataType.isRankWeightRelatedToCondition()?
+                                        MySQLConditionDAO.TABLE_NAME + ".": "")
+                                + dataType.getRankWeightFieldName(globalRank))
+                        .collect(Collectors.joining(", "));
+
+            case FDR_P_VALUE_COND_INFO:
+                return GLOBAL_P_VALUE_FIELD_START
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
+
+            case FDR_P_VALUE_DESCENDANT_COND_INFO:
+                return GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START
+                        + getFieldNamePartFromDataTypes(ai.getTargetedDataTypes());
+
+            case DATA_TYPE_OBSERVATION_COUNT_INFO:
+                return ai.getTargetedDataTypes().stream().map(dataType -> {
+                    EnumSet<ConditionDAO.Attribute> allCondParams =
+                            ConditionDAO.Attribute.getCondParams();
+                    String allCondParamsSelfObsCountField = getObsCountFieldName(dataType,
+                            allCondParams, true);
+                    String allCondParamsDescObsCountField = getObsCountFieldName(dataType,
+                            allCondParams, false);
+
+                    EnumSet<ConditionDAO.Attribute> requestedCondParamCombination =
+                            ai.getTargetedCondParams();
+                    if (requestedCondParamCombination.equals(allCondParams)) {
+                        return allCondParamsSelfObsCountField + ", " + allCondParamsDescObsCountField;
+                    }
+
+                    String requestedCondParamsSelfObsCountField = getObsCountFieldName(dataType,
+                            requestedCondParamCombination, true);
+
+                    return requestedCondParamsSelfObsCountField
+                           + ", "
+                           + "(" + allCondParamsSelfObsCountField + " + "
+                           + allCondParamsDescObsCountField + " - "
+                           + requestedCondParamsSelfObsCountField + ") AS "
+                           + getObsCountFieldName(dataType, requestedCondParamCombination, false);
+                }).collect(Collectors.joining(", "));
+
+            default:
+                throw log.throwing(new IllegalStateException("Unsupported attribute: " + ai.getAttribute()));
+            }
+        }).collect(Collectors.joining(", ")));
+
+
+        //fix for #173, see also beginning of this method
+        String selectOrderBy = orderingAttrs.stream()
+        .filter(a -> {
+            switch(a.getAttribute()) {
+                case BGEE_GENE_ID:
+                case GLOBAL_CONDITION_ID:
+                case MEAN_RANK:
+                    //These ordering attributes have a correspondence in the select Attributes
+                    //and are already dealt with at the beginning of this method
+                    return false;
+                default:
+                    return true;
+            }
+        })
+        .map(a -> {
+            StringBuilder sb2 = new StringBuilder();
+            //FIXME: need to have a species ID ordering attribute
+            //We need that for our ElementSpliterator.
+            //In that case, we wouldn't need that species condition for PUBLIC_GENE_ID
+            if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)) {
+                sb2.append(MySQLGeneDAO.TABLE_NAME).append(".speciesId, ")
+                .append(MySQLGeneDAO.TABLE_NAME).append(".geneId");
+                return sb2.toString();
+            }
+            if (a.getAttribute().isRequireExtraGlobalCondInfo()) {
+                sb2.append(MySQLConditionDAO.TABLE_NAME);
+            } else if (a.getAttribute().isRequireExtraGeneInfo()) {
+                sb2.append(MySQLGeneDAO.TABLE_NAME);
+            } else {
+                sb2.append(MySQLConditionDAO.TABLE_NAME);
+            }
+            sb2.append(".").append(a.getAttribute().getFieldName());
+            return sb2.toString();
+        })
+        .collect(Collectors.joining(", "));
+        if (StringUtils.isNotBlank(selectOrderBy)) {
+            sb.append(", ").append(selectOrderBy);
+        }
+
+        return log.traceExit(sb.toString());
+    }
+
+    private static String generateMeanRankClause2(Set<DAODataType> dataTypes, boolean globalRank) {
+        log.traceEntry("{}, {}", dataTypes, globalRank);
+
+        return log.traceExit(dataTypes.stream()
+                //to avoid division by 0
+                //generate, e.g.:
+                //IF (globalExpression.estRankNorm IS NULL AND globalExpression.affymetrixMeanRankNorm IS NULL, NULL, 
+                .map(dt -> TABLE_NAME + "." + dt.getRankNormFieldName(globalRank) + " IS NULL")
+                .collect(Collectors.joining(" AND ", "IF (", ", NULL, "))
+                //generate, e.g.:
+                //(CAST((
+                //IF (globalExpression.estRankNorm IS NULL, 0, globalExpression.estRankNorm * globalCond.estMaxRank)
+                // + IF (globalExpression.affymetrixMeanRankNorm IS NULL, 0, 
+                //globalExpression.affymetrixMeanRankNorm * globalExpression.affymetrixDistinctRankSum)
+                //)
+                + dataTypes.stream()
+                .map(dataType -> {
+                    String rankSql = TABLE_NAME + "."
+                            + dataType.getRankNormFieldName(globalRank);
+                    String weightSql = (dataType.isRankWeightRelatedToCondition()?
+                            MySQLConditionDAO.TABLE_NAME: TABLE_NAME) + "."
+                            + dataType.getRankWeightFieldName(globalRank);
+                    return "IF (" + rankSql + " IS NULL, 0, " + rankSql + " * " + weightSql + ")";
+                })
+                //add CAST of meanRank as a decimal to avoid floating point calculation by MySQL 
+                //that was generating ranks lower than 1. The mean rank is returned with a decimal(9,2) 
+                //because it is the same type than the one used to save the rank per datatype in the 
+                //database (no precision problem).
+                .collect(Collectors.joining(" + ", "(CAST((", ")"))
+                //generate, e.g.:
+                // / (
+                //IF(globalExpression.estMaxRank IS NULL, 0, globalCond.estMaxRank)
+                // + IF(globalExpression.affymetrixDistinctRankSum IS NULL, 0, globalExpression.affymetrixDistinctRankSum)
+                // ) AS DECIMAL(9,2))))
+                + dataTypes.stream()
+                .map(dataType -> {
+                    String rankSql = TABLE_NAME + "."
+                            + dataType.getRankNormFieldName(globalRank);
+                    String weightSql = (dataType.isRankWeightRelatedToCondition()?
+                            MySQLConditionDAO.TABLE_NAME: TABLE_NAME) + "."
+                            + dataType.getRankWeightFieldName(globalRank);
+                    return "IF(" + rankSql + " IS NULL, 0, " + weightSql + ")";})
+                .collect(Collectors.joining(" + ", "/ (", ") AS DECIMAL(9,2))))")));
+    }
+
+    private static String generateTableReferences2(
+            final String speciesIdFilterTableName, final boolean globalCondFiltering,
+            final boolean geneSort) {
+        log.traceEntry("{}, {}, {}", speciesIdFilterTableName, globalCondFiltering, geneSort);
+
+        //****************************************
+        // Create the necessary joins
+        //****************************************
+        String geneTableToGlobalExprTableJoinClause = MySQLGeneDAO.TABLE_NAME + "."
+                + MySQLGeneDAO.BGEE_GENE_ID + " = " + TABLE_NAME + "."
+                + MySQLGeneDAO.BGEE_GENE_ID;
+        String globalCondTableToGlobalExprTableJoinClause = MySQLConditionDAO.TABLE_NAME + "."
+                + MySQLConditionDAO.GLOBAL_COND_ID_FIELD + " = " + TABLE_NAME
+                + "." + MySQLConditionDAO.GLOBAL_COND_ID_FIELD;
+
+
+
+        //****************************************
+        // Start generating the table references
+        //****************************************
+        StringBuilder sb = new StringBuilder();
+        //the order of the tables is important in case we use a STRAIGHT_JOIN clause
+        sb.append(" FROM ");
+
+        //Note that there is a clustered index for the globalExpression table that is
+        //PRIMAR KEY(bgeeGeneId, globalConditionId). So we try as much as possible to have bgeeGeneIds
+        //as filters, in order to use this clustered index.
+        // We filter genes based on the bgeeGeneId rather than the public geneId,
+        // to avoid joins to gene table when it is not needed because in reality,
+        // at the time of writing, queries take much more time. For instance,
+        // to retrieve calls in zebrafish, using gene table it took 22 minutes
+        // while without gene table it took 3 minutes.
+        //But if we have filtering based on species IDs in the query, we optimize the joins:
+        //start with the gene table if the globalCond table is not needed, or if both are needed
+        //(again, we have a clustered index (bgeeGeneId, globalConditionId), and we might use
+        //a STRAIGHT_JOIN if the MySQL optimizer does a bad job).
+        boolean geneTableFirst = MySQLGeneDAO.TABLE_NAME.equals(speciesIdFilterTableName);
+        if (geneTableFirst) {
+            sb.append("gene AS ").append(MySQLGeneDAO.TABLE_NAME);
+        }
+        if (globalCondFiltering) {
+            if (geneTableFirst) {
+                sb.append(" INNER JOIN ");
+            }
+            sb.append(MySQLConditionDAO.TABLE_NAME);
+            if (geneTableFirst) {
+                sb.append(" ON ").append(MySQLGeneDAO.TABLE_NAME).append(".")
+                .append(MySQLGeneDAO.SPECIES_ID)
+                .append(" = ").append(MySQLConditionDAO.TABLE_NAME).append(".")
+                .append(MySQLGeneDAO.SPECIES_ID);
+            }
+        }
+
+        if (geneTableFirst || globalCondFiltering) {
+            sb.append(" INNER JOIN ");
+        }
+        sb.append(TABLE_NAME);
+        if (geneTableFirst || globalCondFiltering) {
+            sb.append(" ON ");
+            if (geneTableFirst) {
+                sb.append(geneTableToGlobalExprTableJoinClause);
+                if (globalCondFiltering) {
+                    sb.append(" AND ");
+                }
+            }
+            if (globalCondFiltering) {
+                sb.append(globalCondTableToGlobalExprTableJoinClause);
+            }
+        }
+
+        if (geneSort && !geneTableFirst)  {
+            sb.append(" INNER JOIN ").append(MySQLGeneDAO.TABLE_NAME).append(" ON ")
+              .append(geneTableToGlobalExprTableJoinClause);
+        }
+
+        sb.append(" ");
+        return log.traceExit(sb.toString());
+    }
+    private static String generateWhereClause2(final LinkedHashSet<DAOCallFilter> callFilters,
+            final String speciesIdFilterTableName) {
+        log.traceEntry("{}, {}, {}, {}", callFilters, speciesIdFilterTableName);
+        
+        StringBuilder sb = new StringBuilder();
+
+        if (!callFilters.isEmpty()) {
+            sb.append(" WHERE ");
+            boolean firstCallFilter = true;
+
+            for (DAOCallFilter callFilter: callFilters) {
+                if (!firstCallFilter) {
+                    sb.append(" OR ");
+                }
+                firstCallFilter = false;
+                sb.append("(");
+                boolean firstCond = true;
+                // manage speciesId. firstCond can not be true
+                if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                    sb.append(speciesIdFilterTableName).append(".speciesId IN (")
+                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getSpeciesIds().size()))
+                    .append(") ");
+                    firstCond = false;
+                }
+                // manage conditionIds
+                if (callFilter.getConditionIds() != null && !callFilter.getConditionIds().isEmpty()) {
+                    if (!firstCond) {
+                        sb.append(" OR ");
+                    }
+                    sb.append(MySQLConditionDAO.TABLE_NAME).append(".globalConditionId IN (")
+                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getConditionIds().size()))
+                    .append(") ");
+                    firstCond = false;
+                }
+                // manage geneIds
+                if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                    if(!firstCond) {
+                        if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty() &&
+                                callFilter.getConditionIds() == null || callFilter.getConditionIds().isEmpty()) {
+                            sb.append(" OR ");
+                        } else if (callFilter.getConditionIds() != null && !callFilter.getConditionIds().isEmpty()) {
+                            sb.append(" AND ");
+                        }
+                    }
+                    firstCond = false;
+                    sb.append(TABLE_NAME).append(".").append(MySQLGeneDAO.BGEE_GENE_ID)
+                    .append(" IN (")
+                    .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
+                    .append(")");
+                }
+            
+                if (callFilter.getCallObservedDataFilters() != null &&
+                        !callFilter.getCallObservedDataFilters().isEmpty()) {
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    sb.append("(");
+                    firstCond = false;
+                    sb.append(generateObservedDataFilters2(callFilter.getCallObservedDataFilters()));
+                    sb.append(")");
+                }
+
+                if (callFilter.getFDRPValueFilters() != null &&
+                        !callFilter.getFDRPValueFilters().isEmpty()) {
+                    if (!firstCond) {
+                        sb.append(" AND ");
+                    }
+                    sb.append("(");
+                    firstCond = false;
+                    sb.append(generatePValueFilters2(callFilter.getFDRPValueFilters()));
+                    sb.append(")");
+                }
+
+                sb.append(")");
+            }
+        }
+        return log.traceExit(sb.toString());
+    }
+
+    private static String generateObservedDataFilters2(
+            final LinkedHashSet<CallObservedDataDAOFilter2> observedDataFilters) {
+        log.traceEntry("{}, {}", observedDataFilters);
+
+        return observedDataFilters.stream()
+            .map(dataFilter -> {
+                StringBuilder sb = new StringBuilder();
+
+                sb.append(dataFilter.getDataTypes().stream()
+                        .map(d -> {
+                            String fieldname = TABLE_NAME + "."
+                                    + getObsCountFieldName2(d, dataFilter.getCondParams(), true);
+                            if (dataFilter.isCallObservedData()) {
+                                return fieldname + " > 0";
+                            }
+                            return fieldname + " = 0";
+                        })
+                        .collect(Collectors.joining(
+                                //If we request observed data, it can be observed
+                                //by any data type => OR delimiter
+                                //If we request non-observed data, it must be non-observed
+                                //by each data type => AND delimiter
+                                dataFilter.isCallObservedData()? " OR ": " AND ", "(", ")"))
+                );
+
+                //If we request non-observed data, it must be non-observed
+                //by each data type => AND delimiter between data types.
+                //But we need to account for the fact that not all data types might
+                //support the call (the field value will be 0 then).
+                //AND WE NEED TO MAKE SURE WE HAVE DATA FOR AT LEAST ONE OF THE REQUESTED DATA TYPES,
+                //otherwise, if not all data types are requested,
+                //we might retrieve calls with observed data and/or from other data types
+                if (!dataFilter.isCallObservedData() &&
+                        !dataFilter.getDataTypes().equals(EnumSet.allOf(DAODataType.class))) {
+                    //Only for all condition parameters there is a field descendant observation count.
+                    //And this is why we sum the self and descendant observation counts
+                    //using all condition parameters to determine whether there are data
+                    //for this data type. Maybe we could use the FDR field instead?
+                    EnumSet<ConditionDAO.Attribute> allCondParams = ConditionDAO.Attribute.getCondParams();
+                    sb.append(
+                            dataFilter.getDataTypes().stream()
+                            .map(d -> "(" + TABLE_NAME + "."
+                                    + getObsCountFieldName(d, allCondParams, true)
+                                    + " + "
+                                    + TABLE_NAME + "."
+                                    + getObsCountFieldName(d, allCondParams, false)
+                                    + ") > 0")
+                            .collect(Collectors.joining(" OR ", " AND (", ")"))
+                            );
+                }
+                
+                return sb.toString();
+            })
+           .collect(Collectors.joining(" OR ", "(", ")"));
+    }
+
+    private static String generatePValueFilters2(
+            final LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter2>> pValFilters) {
+        log.traceEntry("{}", pValFilters);
+
+        return log.traceExit(pValFilters.stream()
+            .map(pValOrFilterCollection -> pValOrFilterCollection.stream()
+                    .map(pValFilter -> {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(TABLE_NAME).append(".");
+
+                        if (pValFilter.getPropagationState().equals(
+                                DAOPropagationState.SELF_AND_DESCENDANT)) {
+                            sb.append(GLOBAL_P_VALUE_FIELD_START);
+                        } else if (pValFilter.getPropagationState().equals(
+                                DAOPropagationState.DESCENDANT)) {
+                            sb.append(GLOBAL_BEST_DESCENDANT_P_VALUE_FIELD_START);
+                        } else {
+                            throw log.throwing(new IllegalArgumentException(
+                                    "Unsupported propagation state in PValueFilter: "
+                                    + pValFilter.getPropagationState()));
+                        }
+                        EnumSet<DAODataType> dataTypes =
+                                pValFilter.getFDRPValue().getDataTypes().isEmpty()?
+                                EnumSet.allOf(DAODataType.class):
+                                pValFilter.getFDRPValue().getDataTypes();
+                        sb.append(getFieldNamePartFromDataTypes(dataTypes))
+                          .append(" ").append(pValFilter.getQualifier().getSymbol())
+                          .append(" ?");
+
+                        if (pValFilter.isSelfObservationRequired()) {
+                            sb.append(dataTypes.stream()
+                                    .map(d -> getObsCountFieldName2(d, pValFilter.getCondParams(), true))
+                                    .collect(Collectors.joining(" + ", " AND (", ") > 0")));
+                        }
+
+                        return sb.toString();
+                    })
+                    .collect(Collectors.joining(" AND "))
+            )
+            .collect(Collectors.joining(" OR ")));
+    }
+
+    private static void configureCallStatement2(BgeePreparedStatement stmt, LinkedHashSet<DAOCallFilter> callFilters,
+            Integer offset, Integer limit)
+            throws SQLException {
+        log.traceEntry("{}, {}, {}, {}", stmt, callFilters, offset, limit);
+
+        int offsetParamIndex = 1;
+        for (DAOCallFilter callFilter: callFilters) {
+            if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, callFilter.getSpeciesIds(), true);
+                offsetParamIndex += callFilter.getSpeciesIds().size();
+            }
+            if (callFilter.getConditionIds() != null && !callFilter.getConditionIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, callFilter.getConditionIds(), true);
+                offsetParamIndex += callFilter.getConditionIds().size();
+            }
+            if (callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                stmt.setIntegers(offsetParamIndex, callFilter.getGeneIds(), true);
+                offsetParamIndex += callFilter.getGeneIds().size();
+            }
+
+            for (LinkedHashSet<DAOFDRPValueFilter2> pValOrFilter: callFilter.getFDRPValueFilters()) {
+                for (DAOFDRPValueFilter2 pValFilter : pValOrFilter) {
+                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getFDRPValue().getFdrPValue());
+                    offsetParamIndex++;
+                }
+            }
+        }
+        if (offset != null) {
+            stmt.setInt(offsetParamIndex, offset);
+            offsetParamIndex++;
+        }
+        if (limit != null) {
+            stmt.setInt(offsetParamIndex, limit);
+            offsetParamIndex++;
+        }
+        log.traceExit();
+    }
+
+    /**
+     * Determines on which table to perform the species ID filtering, if any.
+     *
+     * @param speciesIdFilter           A {@code boolean} defining whether filtering on species IDs
+     *                                  is required. If {@code false}, this method always returns
+     *                                  {@code null}.
+     * @param globalCondFilter          A {@code boolean} defining whether filtering on info
+     *                                  in globalCond table is necessary for the query.
+     * @param geneSort                  A {@code boolean} defining whether sorting based on info
+     *                                  in gene table is necessary for the query.
+     * @return                          A {@code String} that is the name of the table to use
+     *                                  to filter based on species IDs. Equals to {@code null}
+     *                                  if {@code speciesIdFilter} is false, or either to
+     *                                  {@code globalCondTableName} or {@code geneTableName}.
+     */
+    private static String getSpeciesIdFilterTableName2(boolean speciesIdFilter, boolean globalCondFilter,
+            boolean geneSort) {
+        log.traceEntry("{}, {}, {}, {}", speciesIdFilter, globalCondFilter, geneSort);
+        if (!speciesIdFilter) {
+            return log.traceExit((String) null);
+        }
+        //If we need a join to the globalCond table but not the gene table
+        if (globalCondFilter && !geneSort) {
+            return log.traceExit(MySQLConditionDAO.TABLE_NAME);
+        }
+        //If we need a join to the gene table but not to the globalCond table.
+        //Or if we need a join to both, priority is given to gene table considering
+        //the clustered index (bgeeGeneId, globalConditionId)
+        return log.traceExit(MySQLGeneDAO.TABLE_NAME);
+    }
+
+    private static String generateOrderByClause2(
+            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderingAttrs) {
+        log.traceEntry("{}", orderingAttrs);
+
+        if (orderingAttrs.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            return log.traceExit(sb.append(" ORDER BY ").append(TABLE_NAME).append(".")
+                    .append(GlobalExpressionCallDAO.OrderingAttribute.BGEE_GENE_ID.getFieldName())
+                    .append(", ").append(TABLE_NAME).append(".")
+                    .append(GlobalExpressionCallDAO.OrderingAttribute.GLOBAL_CONDITION_ID.getFieldName())
+                    .toString());
+        }
+
+        return log.traceExit(orderingAttrs.entrySet().stream()
+                .map(entry -> {
+                    GlobalExpressionCallDAO.OrderingAttributeInfo a = entry.getKey();
+                    StringBuilder sb = new StringBuilder();
+                    //FIXME: need to have a species ID ordering attribute
+                    //We need that for our ElementSpliterator.
+                    //In that case, we wouldn't need that species condition for PUBLIC_GENE_ID
+                    if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.PUBLIC_GENE_ID)) {
+                        sb.append(MySQLGeneDAO.TABLE_NAME).append(".speciesId, ")
+                        .append(MySQLGeneDAO.TABLE_NAME).append(".geneId");
+                    //We need that special case for MEAN_RANK since the name varies depending on
+                    //the data type selection.
+                    } else if (a.getAttribute().equals(GlobalExpressionCallDAO.OrderingAttribute.MEAN_RANK)) {
+                        sb.append(GLOBAL_MEAN_RANK_FIELD)
+                          .append(getFieldNamePartFromDataTypes(a.getTargetedDataTypes()));
+                    //Otherwise, no special case needed.
+                    } else {
+                        if (a.getAttribute().isRequireExtraGlobalCondInfo()) {
+                            sb.append(MySQLConditionDAO.TABLE_NAME);
+                        } else if (a.getAttribute().isRequireExtraGeneInfo()) {
+                            sb.append(MySQLGeneDAO.TABLE_NAME);
+                        } else {
+                            sb.append(TABLE_NAME);
+                        }
+                        sb.append(".").append(a.getAttribute().getFieldName());
+                    }
+                    switch(entry.getValue()) {
+                        case DESC:
+                            sb.append(" desc");
+                            break;
+                        case ASC:
+                            sb.append(" asc");
+                            break;
+                    }
+                    return sb.toString();
+                })
+                .collect(Collectors.joining(", ", " ORDER BY ", "")));
+    }
+
+    private String generateOffsetLimitClause(Integer offset, Integer limit) {
+        log.traceEntry("{}, {}", offset, limit);
+        if(offset == null && limit == null) {
+            return log.traceExit("");
+        }
+        if (offset == null) {
+            return log.traceExit(" LIMIT ?");
+        }
+        if (limit == null) {
+            throw log.throwing(new IllegalStateException("limit can not be null when offset is not null"));
+        }
+        return log.traceExit(" LIMIT ?, ?");
+    }
+
+    @Override
+    public GlobalExpressionCallTOResultSet getGlobalExpressionCalls2(
+            Collection<DAOCallFilter> callFilters,
+            Collection<GlobalExpressionCallDAO.AttributeInfo> attributes,
+            LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderingAttributes,
+            Integer offset, Integer limit)
+                    throws DAOException, IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", callFilters, attributes, orderingAttributes);
+
+        //As of Bgee 15.0, we always use globalRanks. We could add the possibility
+        //to parameterize that in the configuration file, or the possibility to choose between
+        //self and global ranks
+        boolean globalRank = true;
+        //******************************************
+        // CLONE ARGUMENTS AND SANITY CHECKS
+        //******************************************
+        //needs a LinkedHashSet for consistent settings of the parameters. 
+        LinkedHashSet<DAOCallFilter> clonedCallFilters = callFilters == null?
+                new LinkedHashSet<>(): new LinkedHashSet<>(callFilters);
+        //attributes
+        Set<GlobalExpressionCallDAO.AttributeInfo> clonedAttrs = attributes != null && !attributes.isEmpty()?
+                new HashSet<>(attributes): Arrays.stream(GlobalExpressionCallDAO.Attribute.values())
+                .map(a -> a.isDataTypeDependent()? new GlobalExpressionCallDAO.AttributeInfo(
+                        a, null, null):
+                        new GlobalExpressionCallDAO.AttributeInfo(a))
+                .collect(Collectors.toSet());
+        //ordering attributes
+        LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> clonedOrderingAttrs =
+                orderingAttributes == null? new LinkedHashMap<>(): new LinkedHashMap<>(orderingAttributes);
+
+        //sanity checks
+        performSanityChecks2(clonedCallFilters);
+
+
+        //******************************************
+        // GENERATE QUERY
+        //******************************************
+        //Do we need a filter to the globalCond table
+        boolean globalCondFilter = clonedOrderingAttrs.keySet().stream()
+                .anyMatch(a -> a.getAttribute().isRequireExtraGlobalCondInfo()) ||
+                clonedAttrs.stream().anyMatch(ai -> ai.getAttribute().isRequireExtraGlobalCondInfo());
+        //do we need a join to the gene table
+        boolean geneSort = clonedOrderingAttrs.keySet().stream()
+                .anyMatch(a -> a.getAttribute().isRequireExtraGeneInfo());
+        boolean speciesIdFilter = clonedCallFilters.stream()
+                .anyMatch(callFilter ->
+                !callFilter.getSpeciesIds().isEmpty());
+        //We filter on speciesIds either on the globalCond table or on the gene table
+        //depending on the other necessary joins. Preferentially filtered on the gene table,
+        //since the clustered index is (bgeeGeneId, globalConditionId).
+        String speciesIdFilterTableName = getSpeciesIdFilterTableName2(speciesIdFilter,
+                globalCondFilter, geneSort);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause2(clonedAttrs, clonedOrderingAttrs.keySet(),
+                globalRank));
+        sb.append(generateTableReferences2(speciesIdFilterTableName, globalCondFilter,
+                geneSort));
+        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName));
+        
+        sb.append(generateOrderByClause2(clonedOrderingAttrs));
+        sb.append(generateOffsetLimitClause(offset, limit));
+
+        //we don't use a try-with-resource, because we return a pointer to the results,
+        //not the actual results, so we should not close this BgeePreparedStatement.
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString());
+            configureCallStatement2(stmt, clonedCallFilters, offset, limit);
+            return log.traceExit(new MySQLGlobalExpressionCallTOResultSet(stmt));
+
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
+    }
+
 }

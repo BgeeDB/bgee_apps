@@ -1670,6 +1670,13 @@ implements GlobalExpressionCallDAO {
                 firstCallFilter = false;
                 sb.append("(");
                 boolean firstCond = true;
+
+                if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty() ||
+                        callFilter.getConditionIds() != null && !callFilter.getConditionIds().isEmpty() ||
+                        callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                    sb.append("(");
+                }
+
                 // manage speciesId. firstCond can not be true
                 if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty()) {
                     sb.append(speciesIdFilterTableName).append(".speciesId IN (")
@@ -1703,7 +1710,13 @@ implements GlobalExpressionCallDAO {
                     .append(BgeePreparedStatement.generateParameterizedQueryString(callFilter.getGeneIds().size()))
                     .append(")");
                 }
-            
+
+                if (callFilter.getSpeciesIds() != null && !callFilter.getSpeciesIds().isEmpty() ||
+                        callFilter.getConditionIds() != null && !callFilter.getConditionIds().isEmpty() ||
+                        callFilter.getGeneIds() != null && !callFilter.getGeneIds().isEmpty()) {
+                    sb.append(")");
+                }
+
                 if (callFilter.getCallObservedDataFilters() != null &&
                         !callFilter.getCallObservedDataFilters().isEmpty()) {
                     if (!firstCond) {

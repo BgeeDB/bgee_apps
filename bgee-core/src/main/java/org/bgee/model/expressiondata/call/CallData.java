@@ -14,6 +14,7 @@ import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
 import org.bgee.model.expressiondata.baseelements.CallType;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.DataPropagation2;
 import org.bgee.model.expressiondata.baseelements.CallType.DiffExpression;
 import org.bgee.model.expressiondata.baseelements.CallType.Expression;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
@@ -126,7 +127,8 @@ public abstract class CallData<T extends Enum<T> & CallType> {
 
     }
 
-    public static class ExpressionCallData extends CallData<Expression> {
+    //T: DataPropagation or DataPropagation2, to remove after refactoring
+    public static class ExpressionCallDataBase<T> extends CallData<Expression> {
         //********************************************
         // STATIC ATTRIBUTES AND METHODS
         //********************************************
@@ -180,7 +182,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         //********************************************
         // INSTANCE ATTRIBUTES AND CONSTRUCTORS
         //********************************************
-        private final DataPropagation dataPropagation;
+        private final T dataPropagation;
 
         private final List<BigDecimal> selfPValues;
         private final List<BigDecimal> descendantPValues;
@@ -195,29 +197,29 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         private final BigDecimal weightForMeanRank;
 
         //Self and descendant observation counts are contained in the DataPropagation object
-        public ExpressionCallData(DataType dataType,
+        public ExpressionCallDataBase(DataType dataType,
                 Collection<BigDecimal> selfPValues,
                 Collection<BigDecimal> descendantPValues,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
-                DataPropagation dataPropagation) {
+                T dataPropagation) {
             this(dataType, selfPValues, descendantPValues, null, null, 
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         //Self and descendant observation counts are contained in the DataPropagation object
-        public ExpressionCallData(DataType dataType,
+        public ExpressionCallDataBase(DataType dataType,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
-                DataPropagation dataPropagation) {
+                T dataPropagation) {
             this(dataType, null, null, fdrPValue, bestDescendantFDRPValue,
                     rank, normalizedRank, weightForMeanRank, dataPropagation);
         }
         //Self and descendant observation counts are contained in the DataPropagation object
-        public ExpressionCallData(DataType dataType,
+        public ExpressionCallDataBase(DataType dataType,
                 Collection<BigDecimal> selfPValues,
                 Collection<BigDecimal> descendantPValues,
                 BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
                 BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
-                DataPropagation dataPropagation) {
+                T dataPropagation) {
             super(dataType, inferCallType(dataType, fdrPValue, bestDescendantFDRPValue));
 
             //Sort the p-values
@@ -250,7 +252,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
         // GETTERS
         //********************************************
 
-        public DataPropagation getDataPropagation() {
+        public T getDataPropagation() {
             return dataPropagation;
         }
 
@@ -343,7 +345,7 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            ExpressionCallData other = (ExpressionCallData) obj;
+            ExpressionCallDataBase<?> other = (ExpressionCallDataBase<?>) obj;
             //comparison based on equals of BigDecimal while it would be better to use compareTo
             //But what about hashCode?
             if (allPValues == null) {
@@ -430,7 +432,62 @@ public abstract class CallData<T extends Enum<T> & CallType> {
             return builder.toString();
         }
     }
-
+    public static class ExpressionCallData extends ExpressionCallDataBase<DataPropagation> {
+        public ExpressionCallData(DataType dataType,
+                Collection<BigDecimal> selfPValues,
+                Collection<BigDecimal> descendantPValues,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
+            this(dataType, selfPValues, descendantPValues, null, null, 
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+        //Self and descendant observation counts are contained in the DataPropagation object
+        public ExpressionCallData(DataType dataType,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
+            this(dataType, null, null, fdrPValue, bestDescendantFDRPValue,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+        //Self and descendant observation counts are contained in the DataPropagation object
+        public ExpressionCallData(DataType dataType,
+                Collection<BigDecimal> selfPValues,
+                Collection<BigDecimal> descendantPValues,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation dataPropagation) {
+            super(dataType, selfPValues, descendantPValues, fdrPValue, bestDescendantFDRPValue,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+    }
+    public static class ExpressionCallData2 extends ExpressionCallDataBase<DataPropagation2> {
+        public ExpressionCallData2(DataType dataType,
+                Collection<BigDecimal> selfPValues,
+                Collection<BigDecimal> descendantPValues,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation2 dataPropagation) {
+            this(dataType, selfPValues, descendantPValues, null, null, 
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+        //Self and descendant observation counts are contained in the DataPropagation object
+        public ExpressionCallData2(DataType dataType,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation2 dataPropagation) {
+            this(dataType, null, null, fdrPValue, bestDescendantFDRPValue,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+        //Self and descendant observation counts are contained in the DataPropagation object
+        public ExpressionCallData2(DataType dataType,
+                Collection<BigDecimal> selfPValues,
+                Collection<BigDecimal> descendantPValues,
+                BigDecimal fdrPValue, BigDecimal bestDescendantFDRPValue,
+                BigDecimal rank, BigDecimal normalizedRank, BigDecimal weightForMeanRank,
+                DataPropagation2 dataPropagation) {
+            super(dataType, selfPValues, descendantPValues, fdrPValue, bestDescendantFDRPValue,
+                    rank, normalizedRank, weightForMeanRank, dataPropagation);
+        }
+    }
 
     //**********************************************
     //   INSTANCE ATTRIBUTES AND CONSTRUCTORS

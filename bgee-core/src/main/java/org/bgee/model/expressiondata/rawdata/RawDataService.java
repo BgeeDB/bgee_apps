@@ -445,7 +445,7 @@ public class RawDataService extends ExpressionDataService {
                 loadRawDataConditionMap(speciesMap.values(), daoCondFiltersToUse,
                         null, this.rawDataCondDAO, this.anatEntityService, this.devStageService);
 
-        //Maybe we have no matching conditions for some RawDataConditionFilters,
+        //Maybe we have no matching conditions at all for some species,
         //it means we should have no result in the related species.
         //we have to identify the species for which it is the case, to discard them,
         //otherwise, with no condition IDs specified, we could retrieve all results
@@ -456,6 +456,8 @@ public class RawDataService extends ExpressionDataService {
         Set<Integer> speciesIdsWithCondFound = requestedRawDataCondMap.values().stream()
                 .map(c -> c.getSpeciesId())
                 .collect(Collectors.toSet());
+        //Thanks to checks in the original filter, we know for sure that if a species
+        //has specific conds requested, there are no filter requesting any cond for that species.
         Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
                 .filter(cf -> !cf.areAllCondParamFiltersEmpty())
                 //we use speciesMap.keySet() here, rather than filter.getSpeciesIdsConsidered(),
@@ -467,12 +469,12 @@ public class RawDataService extends ExpressionDataService {
         Set<Integer> speciesIdsWithNoResult = new HashSet<>(speciesIdsWithCondRequested);
         speciesIdsWithNoResult.removeAll(speciesIdsWithCondFound);
 
-        //If some conditions were requested, but no condition was found, we can stop here,
-        //there will be no results (encoded by providing a null daoFilters collection
-        //to the RawDataProcessedFilter). We don't need to check what was provided
-        //in the GeneFilters, because the class RawDataFilter check the consistency
-        //between the species requested in GeneFilters and RawDataConditionFilters
-        if (!speciesIdsWithCondRequested.isEmpty() && speciesIdsWithCondFound.isEmpty()) {
+        //If some specific conditions were requested for all species, but no condition was found,
+        //we can stop here, there will be no results (encoded by providing a null daoFilters collection
+        //to the ProcessedFilter). We don't need to check what was provided
+        //in the GeneFilters, because the class DataFilter check the consistency
+        //between the species requested in GeneFilters and ConditionFilters
+        if (speciesMap.keySet().equals(speciesIdsWithCondRequested) && speciesIdsWithCondFound.isEmpty()) {
             return log.traceExit(new RawDataProcessedFilter(filter, null,
                     requestedGeneMap, requestedRawDataCondMap,
                     speciesMap, geneBioTypeMap, sourceMap));
@@ -499,6 +501,8 @@ public class RawDataService extends ExpressionDataService {
                 log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
             }
         } else {
+            //XXX: actually I think we could create one DAOFilter for all species at once
+            //(since I have changed the SQL query to make a where clause `(speciesIds OR geneIds AND condIds)`)
             daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
                     .filter(speciesId -> !speciesIdsWithNoResult.contains(speciesId))
                     .map(speciesId -> {
@@ -649,7 +653,7 @@ public class RawDataService extends ExpressionDataService {
 //        if (filters == null || filters.isEmpty()) {
 //            throw log.throwing(new IllegalArgumentException("A RawDataFilter must be provided"));
 //        }
-//        if (filters.contains(null)) {
+//        if (filters.stream().anyMatch(e -> e == null)) {
 //            throw log.throwing(new IllegalArgumentException("No RawDataFilter can be null"));
 //        }
 //

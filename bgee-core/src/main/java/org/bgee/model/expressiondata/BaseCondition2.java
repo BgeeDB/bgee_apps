@@ -43,9 +43,9 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
                     "No condition parameter key or object can be null"));
         }
         //Check deactivated on purpose
-//      if (species == null) {
-//          throw log.throwing(new IllegalArgumentException("The species cannot be null."));
-//      }
+        if (species == null) {
+            throw log.throwing(new IllegalArgumentException("The species cannot be null."));
+        }
         //Specific subclasses will have to check the validity of the class types
         //in values, in relation to their key
         this.conditionParameterObjects = Collections.unmodifiableMap(
@@ -65,6 +65,9 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
 
     public Species getSpecies() {
         return species;
+    }
+    public int getSpeciesId() {
+        return species.getId();
     }
 
     @Override

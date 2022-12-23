@@ -1609,6 +1609,7 @@ implements GlobalExpressionCallDAO {
         }
         if (globalCondSortOrAttrs) {
             sb.append(" INNER JOIN ")
+            .append(MySQLConditionDAO.TABLE_NAME).append(" ON ")
             .append(globalCondTableToGlobalExprTableJoinClause);
         }
         if (geneSort && !geneTableFirst)  {

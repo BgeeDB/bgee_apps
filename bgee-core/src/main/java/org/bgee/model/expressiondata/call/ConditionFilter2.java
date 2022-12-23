@@ -78,6 +78,9 @@ public class ConditionFilter2 extends BaseConditionFilter2<Condition2> {
                     "Some filters are defined for a ConditionParameter, but it is not part "
                     + "of the requested ConditionParameter combination"));
         }
+        if (speciesId == null && this.areAllCondParamFiltersEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Empty filter"));
+        }
     }
 
     //TODO javadoc

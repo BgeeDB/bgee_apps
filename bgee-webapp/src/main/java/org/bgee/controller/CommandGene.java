@@ -523,7 +523,9 @@ public class CommandGene extends CommandParent {
 
             return log.traceExit(new GeneExpressionResponse(calls, callType, condParamAttrs, dataTypes,
                     true, clustering));
-            
+        //FIXME: actually catching IllegalArgumentException leads to masking real errors.
+        //I think it was done because a missing gene can lead to an IllegalArgumentException.
+        //To deactivate catching of IllegalArgumentException and to check!
         } catch (IllegalArgumentException | GeneNotFoundException e) {
             log.catching(e);
             throw log.throwing(new PageNotFoundException("No gene corresponding to " + geneId

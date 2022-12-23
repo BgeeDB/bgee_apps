@@ -246,18 +246,18 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreAnatEntityTOEqual() {
         AnatEntityTO to1 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         AnatEntityTO to2 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         assertTrue(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
         
         to2 = new AnatEntityTO("ID1", "name1", "desc1", 
-                "stage:1", "stage:2", true);
+                "stage:1", "stage:2", true, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         
         to2 = new AnatEntityTO("ID2", "name1", "desc1", 
-                "stage:1", "stage:2", false);
+                "stage:1", "stage:2", false, false);
         assertFalse(TOComparator.areTOsEqual(to1, to2, true));
         assertTrue(TOComparator.areTOsEqual(to1, to2, false));
     }
@@ -546,20 +546,20 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void testAreTOCollectionsEqual() {
         Collection<AnatEntityTO> c1 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         Collection<AnatEntityTO> c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
         
         c2 = Arrays.asList(
-                new AnatEntityTO("ID4", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID4", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID2", "name2", "desc2", "stage:2", "stage:3", true, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
     }
@@ -572,20 +572,20 @@ public class TOComparatorTest extends TestAncestor {
     @Test
     public void regressionTestAreTOCollectionsEqual() {
         Collection<AnatEntityTO> c1 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         Collection<AnatEntityTO> c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false), 
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false), 
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertTrue(TOComparator.areTOCollectionsEqual(c1, c2, false));
         
         c2 = Arrays.asList(
-                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false), 
-                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false));
+                new AnatEntityTO("ID1", "name1", "desc1", "stage:1", "stage:2", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false), 
+                new AnatEntityTO("ID3", "name3", "desc3", "stage:3", "stage:4", false, false));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, true));
         assertFalse(TOComparator.areTOCollectionsEqual(c1, c2, false));
     }

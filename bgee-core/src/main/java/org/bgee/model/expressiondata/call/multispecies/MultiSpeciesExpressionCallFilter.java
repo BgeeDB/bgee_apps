@@ -24,7 +24,7 @@ import org.bgee.model.species.TaxonomyFilter;
 * @param U The type of {@code SummaryCallType} to be used by this {@code MultiSpeciesExpresionCallFilter}.
 */
 
-public class MultiSpeciesExpressionCallFilter implements Predicate<MultiSpeciesCall<Call<?,?>>>{
+public class MultiSpeciesExpressionCallFilter implements Predicate<MultiSpeciesCall<Call<?,?, ?>>>{
 	
 	private final MultiSpeciesConditionFilter multiSpeciesCondFilter;
 	
@@ -60,7 +60,7 @@ public class MultiSpeciesExpressionCallFilter implements Predicate<MultiSpeciesC
 	}
 
 	@Override
-	public boolean test(MultiSpeciesCall<Call<?, ?>> t) {
+	public boolean test(MultiSpeciesCall<Call<?, ?, ?>> t) {
 		// TODO Auto-generated method stub
 		return false;
 	}

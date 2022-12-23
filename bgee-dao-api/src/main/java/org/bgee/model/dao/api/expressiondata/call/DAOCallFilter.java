@@ -24,11 +24,13 @@ public class DAOCallFilter extends DAODataFilter2 {
         log.traceEntry("{}, {}, {}, {}, {}", geneIds, speciesIds, conditionIds,
                 callObservedDataFilters, pValueFilters);
 
-        if (callObservedDataFilters != null && callObservedDataFilters.contains(null)) {
+        if (callObservedDataFilters != null &&
+                //We cannot call contains(null) on Collections refusing null values
+                callObservedDataFilters.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalArgumentException("No callObservedDataFilter can be null"));
         }
         if (pValueFilters != null && pValueFilters.stream()
-                .anyMatch(s -> s == null || s.isEmpty() || s.contains(null))) {
+                .anyMatch(s -> s == null || s.isEmpty() || s.stream().anyMatch(e -> e == null))) {
             throw log.throwing(new IllegalArgumentException("No DAOFDRPValueFilter can be null"));
         }
 

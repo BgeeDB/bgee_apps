@@ -47,14 +47,14 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
     public static class AnatEntityCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, AnatEntity.class, (o) -> o.getId(), (o) -> o.getId(),
-                    "anat_entity", "Anat. entity");
+                    "anatEntity", "Anat. entity");
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
         private DevStageCondParam() {
             super(DevStage.class, DevStage.class,
                     (o) -> o.getId(), (o) -> o.getId(),
-                    "dev_stage", "Dev. stage");
+                    "devStage", "Dev. stage");
         }
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
@@ -120,7 +120,8 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
             throw log.throwing(new NullPointerException(
                     "The provided Collection cannot be null"));
         }
-        if (c.contains(null)) {
+        //We cannot call .contains(null) on Collections not accepting null values
+        if (c.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new NullPointerException(
                     "The provided Collection cannot contain null elements"));
         }
@@ -128,6 +129,14 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
         return log.traceExit(ALL_OF.stream()
                 .filter(param -> c.contains(param))
                 .collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
+    }
+    public static final LinkedHashSet<ConditionParameter<?, ?>> getCondParams(
+            Collection<ConditionParameter<?, ?>> c) {
+        log.traceEntry("{}", c);
+        if (c == null || c.isEmpty()) {
+            return log.traceExit(allOf());
+        }
+        return log.traceExit(copyOf(c));
     }
 
     public static final Set<LinkedHashSet<ConditionParameter<?, ?>>> getAllPossibleCombinations() {
@@ -142,7 +151,8 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
         if (condParams == null || condParams.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some values must be provided."));
         }
-        if (condParams.contains(null)) {
+        //We cannot call .contains(null) on Collections not accepting null values
+        if (condParams.stream().anyMatch(e -> e == null)) {
             //Set.copyOf refuses null values
             throw log.throwing(new IllegalArgumentException("No value can be null."));
         }
@@ -215,6 +225,10 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
     }
     public String getDisplayName() {
         return displayName;
+    }
+    @Override
+    public String toString() {
+        return this.getStringRepresentation();
     }
 
 

@@ -283,6 +283,14 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         }
     }
 
+    @Override
+    public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> arg0,
+            Collection<org.bgee.model.dao.api.expressiondata.call.ConditionDAO.Attribute> arg1)
+            throws DAOException, IllegalArgumentException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     //TODO: same approach as in MysqlRawDataCondtionDAO. Should refactor
     private String generateOneConditionFilter(DAOConditionFilter2 condFilter) {
         log.traceEntry("{}", condFilter);

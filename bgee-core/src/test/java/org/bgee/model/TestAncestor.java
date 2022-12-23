@@ -306,27 +306,27 @@ public abstract class TestAncestor {
 
     protected static final Map<String, AnatEntityTO> ANAT_ENTITY_TOS = unmodifiableLinkedHashMap(List.of(
             Map.entry("bgeeRootId", new AnatEntityTO("bgeeRootId", "bgeeRootName", "bgeeRootDescription",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true, false)),
             Map.entry(ConditionDAO.ANAT_ENTITY_ROOT_ID, new AnatEntityTO(ConditionDAO.ANAT_ENTITY_ROOT_ID, "anatName1", "anatDescription1",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true, false)),
             Map.entry("anatId2", new AnatEntityTO("anatId2", "anatName2", "anatDescription2",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, false)),
             Map.entry("anatId3", new AnatEntityTO("anatId3", "anatName3", "anatDescription3",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, false)),
             Map.entry("anatId4", new AnatEntityTO("anatId4", "anatName4", "anatDescription4",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, false)),
             Map.entry("anatId5", new AnatEntityTO("anatId5", "anatName5", "anatDescription5",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, false)),
             Map.entry(ConditionDAO.CELL_TYPE_ROOT_ID, new AnatEntityTO(ConditionDAO.CELL_TYPE_ROOT_ID, "cellTypeName1", "cellTypeDescription1",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, true, true)),
             Map.entry("cellTypeId2", new AnatEntityTO("cellTypeId2", "cellTypeName2", "cellTypeDescription2",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, true)),
             Map.entry("cellTypeId3", new AnatEntityTO("cellTypeId3", "cellTypeName3", "cellTypeDescription3",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, true)),
             Map.entry("cellTypeId4", new AnatEntityTO("cellTypeId4", "cellTypeName4", "cellTypeDescription4",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false)),
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, true)),
             Map.entry("cellTypeId5", new AnatEntityTO("cellTypeId5", "cellTypeName5", "cellTypeDescription5",
-                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false))));
+                    ConditionDAO.DEV_STAGE_ROOT_ID, ConditionDAO.DEV_STAGE_ROOT_ID, false, true))));
     protected static final Map<String, AnatEntity> ANAT_ENTITIES = unmodifiableLinkedHashMap(
             ANAT_ENTITY_TOS.values().stream().map(to ->
                     Map.entry(to.getId(), new AnatEntity(to.getId(), to.getName(), to.getDescription())))

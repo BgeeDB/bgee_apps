@@ -1,34 +1,20 @@
 package org.bgee.model.expressiondata.call;
 
-import java.util.Collection;
-import java.util.EnumSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.dao.api.expressiondata.call.CallDAOFilter;
-import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter;
 import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
-import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
-import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter;
-import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
-import org.bgee.model.expressiondata.ExpressionDataService;
-import org.bgee.model.expressiondata.baseelements.ConditionParameter;
-import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfoTO;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.rawdata.RawDataProcessedFilter;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.gene.GeneFilter;
@@ -36,6 +22,14 @@ import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.ServiceFactory;
 
+//TODO: create class Attribute with only a subset of the CallService.Attributes,
+//and a new Attribute CONDITION, rather than the list of the condition parameters.
+//See comment on top of method ExpressionCallLoader.loadData.
+//These Attributes should be accepted by the method loadCallLoader, along with
+//the selected condition parameters (that will affect both the call filter AND
+//the Condition attributes retrieved).
+//Obviously, then both the attributes and the condition parameters should be stored
+//in the ExpressionCallProcessedFilter (maybe choose a better name then?)
 public class ExpressionCallService extends CallServiceParent {
     private final static Logger log = LogManager.getLogger(ExpressionCallService.class.getName());
 
@@ -46,10 +40,13 @@ public class ExpressionCallService extends CallServiceParent {
         super(serviceFactory, utils);
     }
 
-    public ExpressionCallLoader loadCallLoader(ExpressionCallFilter filter) {
+    public ExpressionCallLoader loadCallLoader(ExpressionCallFilter2 filter) {
         log.traceEntry("{}", filter);
-        //TODO
-        return null;
+        return log.traceExit(this.getCallLoader(this.processExpressionCallFilter(filter)));
+    }
+    public ExpressionCallLoader getCallLoader(ExpressionCallProcessedFilter processedFilter) {
+        log.traceEntry("{}", processedFilter);
+        return log.traceExit(new ExpressionCallLoader(processedFilter, this.getServiceFactory()));
     }
 
     public ExpressionCallProcessedFilter processExpressionCallFilter(ExpressionCallFilter2 filter) {
@@ -61,8 +58,8 @@ public class ExpressionCallService extends CallServiceParent {
         Map<Integer, Source> sourceMap = this.getServiceFactory().getSourceService()
                 .loadSourcesByIds(null);
 
-        //It's OK that the filter is null if we want to retrieve any raw data
-        if (filter == null) {
+        //It's OK that the filter is null or empty if we want to retrieve any raw data
+        if (filter == null || filter.isEmptyFilter()) {
             return log.traceExit(new ExpressionCallProcessedFilter(filter,
                     //Important to provide a HashSet here, a null value means
                     //"we could not find conditions matching the parameters,
@@ -71,11 +68,30 @@ public class ExpressionCallService extends CallServiceParent {
                     new HashSet<>(),
                     null, null,
                     //load all Species, gene biotypes, and sources
-                    this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap));
+                    this.loadSpeciesMap(null, false, null), geneBioTypeMap, sourceMap,
+                    conditionDAO
+                    .getMaxRanks(null,
+                            //We always request the max rank over all data types,
+                            //independently of the data types requested in the query,
+                            //because ranks are all normalized based on the max rank over all data types
+                            null),
+                    GLOBAL_RANK, EXPRESSION_SCORE_MIN_VALUE, EXPRESSION_SCORE_MAX_VALUE,
+                    PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
+                    PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
+                    ABSENT_HIGH_GREATER_THAN));
         }
 
         Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
                 false, null);
+        //Retrieve max rank for the requested species if EXPRESSION_SCORE requested
+        //(the max rank is required to convert mean ranks into expression scores)
+        //TODO: in a future version with Attributes, to retrieve only if necessary
+        Map<Integer, ConditionRankInfoTO> maxRankPerSpecies = conditionDAO
+                .getMaxRanks(speciesMap.keySet(),
+                        //We always request the max rank over all data types,
+                        //independently of the data types requested in the query,
+                        //because ranks are all normalized based on the max rank over all data types
+                        null);
 
         //Now, we load specific genes that can be queried (and not all genes of a species
         //if a GeneFilter contains no gene ID)
@@ -99,7 +115,7 @@ public class ExpressionCallService extends CallServiceParent {
                         null, this.conditionDAO, this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService);
 
-        //Maybe we have no matching conditions for some condition filters,
+        //Maybe we have no matching conditions at all for some species,
         //it means we should have no result in the related species.
         //we have to identify the species for which it is the case, to discard them,
         //otherwise, with no condition IDs specified, we could retrieve all results
@@ -110,148 +126,78 @@ public class ExpressionCallService extends CallServiceParent {
         Set<Integer> speciesIdsWithCondFound = requestedCondMap.values().stream()
                 .map(c -> c.getSpeciesId())
                 .collect(Collectors.toSet());
+        //Thanks to checks in the original filter, we know for sure that if a species
+        //has specific conds requested, there are no filter requesting any cond for that species.
         Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
                 .filter(cf -> !cf.areAllCondParamFiltersEmpty())
                 //we use speciesMap.keySet() here, rather than filter.getSpeciesIdsConsidered(),
                 //because if filter.getSpeciesIdsConsidered() is empty, speciesMap will contain
                 //all the species.
-                .flatMap(f -> f.getSpeciesIds().isEmpty()? speciesMap.keySet().stream():
-                    f.getSpeciesIds().stream())
+                .flatMap(f -> f.getSpeciesId() == null? speciesMap.keySet().stream():
+                    Stream.of(f.getSpeciesId()))
                 .collect(Collectors.toSet());
+        assert Collections.disjoint(filter.getSpeciesIdsWithNoParams(), speciesIdsWithCondRequested);
         Set<Integer> speciesIdsWithNoResult = new HashSet<>(speciesIdsWithCondRequested);
         speciesIdsWithNoResult.removeAll(speciesIdsWithCondFound);
 
-        //If some conditions were requested, but no condition was found, we can stop here,
-        //there will be no results (encoded by providing a null daoFilters collection
+        //If some specific conditions were requested for all species, but no condition was found,
+        //we can stop here, there will be no results (encoded by providing a null daoFilters collection
         //to the ProcessedFilter). We don't need to check what was provided
         //in the GeneFilters, because the class DataFilter check the consistency
         //between the species requested in GeneFilters and ConditionFilters
-        if (!speciesIdsWithCondRequested.isEmpty() && speciesIdsWithCondFound.isEmpty()) {
+        if (speciesMap.keySet().equals(speciesIdsWithCondRequested) && speciesIdsWithCondFound.isEmpty()) {
             return log.traceExit(new ExpressionCallProcessedFilter(filter, null,
                     requestedGeneMap, requestedCondMap,
-                    speciesMap, geneBioTypeMap, sourceMap));
+                    speciesMap, geneBioTypeMap, sourceMap, maxRankPerSpecies,
+                    GLOBAL_RANK, EXPRESSION_SCORE_MIN_VALUE, EXPRESSION_SCORE_MAX_VALUE,
+                    PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
+                    PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
+                    ABSENT_HIGH_GREATER_THAN));
         }
 
-        //if filter.getSpeciesIdsConsidered() is empty, we can create just one DAO DataFilter
-        //it means that there was no GeneFilter provided, only ConditionFilters targeting any species
-        Set<DAOCallFilter> daoFilters = new HashSet<>();
-        if (filter.getSpeciesIdsConsidered().isEmpty()) {
-            assert filter.getGeneFilters().isEmpty() && requestedGeneMap.isEmpty();
+        //*************************************
+        // Create the DAO filter
+        //*************************************
+//        //Actually, if there is any filtering going on, we need to use the PK
+//        //for performance issues (specific to MySQL but only here we can manage it)
+//        //So, if there are no geneIds, but conditionIds, we provide the species IDs
+//        //of the conditions anyway.
+//        //First, we need to remove gene IDs for which we know there will be no results
+//        Set<Integer> bgeeGeneIds = 
+//                requestedGeneMap.entrySet().stream()
+//                .filter(e -> !speciesIdsWithNoResult.contains(
+//                        e.getValue().getSpecies().getId()))
+//                .map(e -> e.getKey())
+//                .collect(Collectors.toSet());
+//        Set<Integer> speciesIdsToAdd = !bgeeGeneIds.isEmpty()? Set.of():
+//            requestedCondMap
+//            FAUT QUE JE REGLE CE PROBLEME DE PERF SI PAS DE GENE ID
+        CallObservedDataDAOFilter2 obsDataFilter = this.utils.convertCallObservedDataToDAO(filter);
+        DAOCallFilter daoFilter = new DAOCallFilter(
+                //We know for sure that these species had no specific conditions requested,
+                //thus we don't have to filter out speciesIdsWithNoResult
+                filter.getSpeciesIdsWithNoParams(),
+                //But we need to remove gene IDs for which we know there will be no results
+                requestedGeneMap.entrySet().stream()
+                        .filter(e -> !speciesIdsWithNoResult.contains(
+                                e.getValue().getSpecies().getId()))
+                        .map(e -> e.getKey())
+                        .collect(Collectors.toSet()),
+                requestedCondMap.keySet(),
+                obsDataFilter == null? Set.of(): Set.of(obsDataFilter),
+                this.utils.generateExprQualDAOPValFilters(
+                        filter, PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
+                        PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
+                        ABSENT_HIGH_GREATER_THAN)
+                );
+        log.debug("daoFilter: {}", daoFilter);
 
-            if (requestedCondMap.isEmpty() && filter.hasExperimentAssayIds()) {
-                daoFilters.add(new DAOCallFilter(filter.getExperimentIds(),
-                    filter.getAssayIds(), filter.getExperimentOrAssayIds()));
-                log.debug("DAORawDataFilter created for any species");
-            } else if (!requestedRawDataCondMap.isEmpty()) {
-                daoFilters.add(new DAOCallFilter(null, requestedRawDataCondMap.keySet(),
-                        filter.getExperimentIds(), filter.getAssayIds(),
-                        filter.getExperimentOrAssayIds()));
-                log.debug("DAORawDataFilter created with at least some condition IDs");
-            } else {
-                assert requestedRawDataCondMap.isEmpty() && !filter.hasExperimentAssayIds();
-                log.debug("No DAORawDataFilter created: no species, no genes, no conds, no exp/assay IDs");
-            }
-        } else {
-            //XXX: actually I think we could create one DAOFilter for all species at once
-            //(since I have changed the SQL query to make a where clause `(speciesIds OR geneIds AND condIds)`)
-            daoFilters.addAll(filter.getSpeciesIdsConsidered().stream()
-                    .filter(speciesId -> !speciesIdsWithNoResult.contains(speciesId))
-                    .map(speciesId -> {
-                        Set<Integer> bgeeGeneIds = requestedGeneMap.entrySet().stream()
-                                .filter(e -> speciesId.equals(e.getValue().getSpecies().getId()))
-                                .map(e -> e.getKey())
-                                .collect(Collectors.toSet());
-                        Set<Integer> rawCondIds = requestedRawDataCondMap.entrySet().stream()
-                                .filter(e -> speciesId.equals(e.getValue().getSpeciesId()))
-                                .map(e -> e.getKey())
-                                .collect(Collectors.toSet());
-                        if (bgeeGeneIds.isEmpty() && rawCondIds.isEmpty()) {
-                            log.debug("DAORawDataFilter created without genes nor cond. for species ID: {}",
-                                    speciesId);
-                            return new DAORawDataFilter(Set.of(speciesId), filter.getExperimentIds(),
-                                    filter.getAssayIds(), filter.getExperimentOrAssayIds());
-                        }
-                        log.debug("Complete DAORawDataFilter created for species ID: {}", speciesId);
-                        return new DAORawDataFilter(bgeeGeneIds, rawCondIds, filter.getExperimentIds(),
-                                filter.getAssayIds(), filter.getExperimentOrAssayIds());
-                    })
-                    .collect(Collectors.toSet()));
-        }
-        log.debug("daoFilters: {}", daoFilters);
-
-        return log.traceExit(new ExpressionCallProcessedFilter(filter, daoFilters,
-                requestedGeneMap, requestedRawDataCondMap,
-                speciesMap, geneBioTypeMap, sourceMap));
-    }
-
-    private DAOCallFilter convertCallFilterToCallDAOFilter(Map<Integer, Gene> geneMap,
-            Map<Integer, Condition> condMap, ExpressionCallFilter2 callFilter,
-            EnumSet<ConditionParameter> condParamCombination) {
-        log.traceEntry("{}, {}, {}, {}", geneMap, condMap, callFilter, condParamCombination);
-
-        if (callFilter == null) {
-            return log.traceExit((DAOCallFilter) null);
-        }
-        Set<Integer> speciesIds = new HashSet<>();
-        // *********************************
-        // Gene and species IDs filters
-        //**********************************
-        //Retrieve the species IDs for which no gene IDs are specified
-        speciesIds.addAll(callFilter.getGeneFilters().stream()
-                .filter(f -> f.getGeneIds().isEmpty())
-                .map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet()));
-        //For the gene filters for which gene IDs were specified,
-        //they should already have been retrieve into geneMap
-        Set<Integer> bgeeGeneIds = geneMap.keySet();
-
-        // *********************************
-        // Condition filter
-        //**********************************
-        //Retrieve the species IDs for which no other condition parameters are specified
-        speciesIds.addAll(callFilter.getConditionFilters().stream()
-                .filter(f -> f.areAllCondParamFiltersEmpty())
-                .flatMap(f -> f.getSpeciesIds().stream())
-                .collect(Collectors.toSet()));
-        //For the condition filters for which parameters were specified,
-        //they should already have been retrieve into condMap
-        Set<Integer> condIds = condMap.keySet();
-
-        // *********************************
-        // Call observed data filter
-        //**********************************
-        Set<CallObservedDataDAOFilter2> daoObservedDataFilters = callFilter.getCallObservedDataFilter()
-                .entrySet().stream().map(e -> new CallObservedDataDAOFilter2(
-                        this.utils.convertDataTypeToDAODataType(callFilter.getDataTypeFilters()),
-                        this.utils.convertCondParamsToDAOCondParams(e.getKey()),
-                        e.getValue())
-                ).collect(Collectors.toSet());
-
-        // *********************************
-        // P-value filters
-        //**********************************
-        EnumSet<ConditionDAO.ConditionParameter> convertedCondParamComb =
-                this.utils.convertCondParamsToDAOCondParams(condParamCombination);
-        Collection<Set<DAOFDRPValueFilter2>> pValueFilters = this.utils.generateExprQualDAOPValFilters(
-                callFilter, convertedCondParamComb, PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
+        return log.traceExit(new ExpressionCallProcessedFilter(filter, Set.of(daoFilter),
+                requestedGeneMap, requestedCondMap,
+                speciesMap, geneBioTypeMap, sourceMap, maxRankPerSpecies,
+                GLOBAL_RANK, EXPRESSION_SCORE_MIN_VALUE, EXPRESSION_SCORE_MAX_VALUE,
+                PRESENT_LOW_LESS_THAN_OR_EQUALS_TO,
                 PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
-                ABSENT_HIGH_GREATER_THAN);
-
-
-        // *********************************
-        // Final result
-        //**********************************
-        return log.traceExit(new DAOCallFilter(
-                //species
-                speciesIds,
-                // gene IDs
-                bgeeGeneIds,
-                //condition IDs
-                condIds,
-                //CallObservedDataDAOFilters
-                daoObservedDataFilters,
-                //DAOFDRPValueFilters
-                pValueFilters
-                ));
+                ABSENT_HIGH_GREATER_THAN));
     }
 }

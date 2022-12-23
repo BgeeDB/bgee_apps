@@ -25,17 +25,20 @@ import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.DataPropagation;
+import org.bgee.model.expressiondata.baseelements.DataPropagation2;
 import org.bgee.model.expressiondata.baseelements.DataQuality;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DiffExpressionFactor;
 import org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo;
 import org.bgee.model.expressiondata.baseelements.FDRPValue;
 import org.bgee.model.expressiondata.baseelements.FDRPValueCondition;
+import org.bgee.model.expressiondata.baseelements.FDRPValueCondition2;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.DiffExpressionSummary;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
 import org.bgee.model.expressiondata.call.CallData.DiffExpressionCallData;
 import org.bgee.model.expressiondata.call.CallData.ExpressionCallData;
+import org.bgee.model.expressiondata.call.CallData.ExpressionCallData2;
 import org.bgee.model.expressiondata.baseelements.SummaryQuality;
 import org.bgee.model.gene.Gene;
 
@@ -51,13 +54,15 @@ import org.bgee.model.gene.Gene;
  */
 //XXX: and what if it was a multi-species query? Should we use something like a MultiSpeciesCondition?
 //TODO: move inner classes to different files
-public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallData<?>> {
+public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallData<?>,
+//TODO V for condition, to remove after refactoring
+V> {
     private final static Logger log = LogManager.getLogger(Call.class.getName());
 
     //**********************************************
     //   INNER CLASSES
     //**********************************************
-    public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData> {
+    public static class ExpressionCall extends Call<ExpressionSummary, ExpressionCallData, Condition> {
 
         //**********************************************************
         //   INNER CLASSES, STATIC ATTRIBUTES AND METHODS, 
@@ -906,7 +911,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
                 Collection<ExpressionCall> sourceCalls) {
             super(gene, condition, summaryCallType, summaryQual, callData,
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
-                    .map(c -> (Call<ExpressionSummary, ExpressionCallData>) c)
+                    .map(c -> (Call<ExpressionSummary, ExpressionCallData, Condition>) c)
                     .collect(Collectors.toSet()));
             this.expressionLevelInfo = expressionLevelInfo;
             this.dataPropagation = dataPropagation;
@@ -1155,10 +1160,302 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             return builder.toString();
         }
     }
+
+    public static class ExpressionCall2 extends Call<ExpressionSummary, ExpressionCallData2, Condition2> {
+
+        public static final int MAX_EXPRESSION_SCORE = 100;
+
+        //*******************************************
+        // INSTANCE ATTRIBUTES AND METHODS
+        //*******************************************
+
+        private final DataPropagation2 dataPropagation;
+        private final Set<FDRPValue> pValues;
+        private final Set<FDRPValueCondition2> bestDescendantPValues;
+        /**
+         * See {@link #getExpressionLevelInfo()}
+         */
+        //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+        private final ExpressionLevelInfo expressionLevelInfo;
+
+        public ExpressionCall2(Gene gene, Condition2 condition, DataPropagation2 dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition2> bestDescendantPValues,
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData2> callData,
+                ExpressionLevelInfo expressionLevelInfo) {
+            this(gene, condition, dataPropagation, pValues, bestDescendantPValues,
+                    summaryCallType, summaryQual, callData, expressionLevelInfo, null);
+        }
+
+        public ExpressionCall2(Gene gene, Condition2 condition, DataPropagation2 dataPropagation, 
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData2> callData,
+                ExpressionLevelInfo expressionLevelInfo,
+                Collection<ExpressionCall2> sourceCalls) {
+            this(gene, condition, dataPropagation, null, null, summaryCallType, summaryQual, callData,
+                    expressionLevelInfo, sourceCalls);
+        }
+        public ExpressionCall2(Gene gene, Condition2 condition, DataPropagation2 dataPropagation,
+                Collection<FDRPValue> pValues, Collection<FDRPValueCondition2> bestDescendantPValues,
+                ExpressionSummary summaryCallType, SummaryQuality summaryQual, 
+                Collection<ExpressionCallData2> callData,
+                ExpressionLevelInfo expressionLevelInfo,
+                Collection<ExpressionCall2> sourceCalls) {
+            super(gene, condition, summaryCallType, summaryQual, callData,
+                sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
+                    .map(c -> (Call<ExpressionSummary, ExpressionCallData2, Condition2>) c)
+                    .collect(Collectors.toSet()));
+            this.expressionLevelInfo = expressionLevelInfo;
+            this.dataPropagation = dataPropagation;
+            this.pValues = Collections.unmodifiableSet(pValues == null?
+                    new HashSet<>(): pValues.stream().filter(p -> p != null).collect(Collectors.toSet()));
+            this.bestDescendantPValues = Collections.unmodifiableSet(bestDescendantPValues == null?
+                    new HashSet<>(): bestDescendantPValues.stream().filter(p -> p != null)
+                    .collect(Collectors.toSet()));
+        }
+
+        public DataPropagation2 getDataPropagation() {
+            return dataPropagation;
+        }
+        /**
+         * @return  A {@code Set} of {@code FDRPValue}s storing FDR-corrected p-values
+         *          for different combination of {@code DataType}s. These FDR-corrected p-values
+         *          are produced by correcting all p-values resulting from tests to detect
+         *          active signal of expression of a gene in a condition and its descendant conditions,
+         *          using the {@code DataType}s stored in the {@code FDRPValue} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValue> getPValues() {
+            return pValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValue} from the {@code Set} returned by {@link #getPValues()}.
+         *          Useful when we know that only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getPValues()} is empty.
+         */
+        public FDRPValue getFirstPValue() {
+            return pValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValue} produced by using exactly this combination
+         *                  of {@code DataType}s. {@code null} if no FDR-corrected p-value
+         *                  was produced using this exact combination of {@code DataType}s.
+         * @see #getPValues()
+         */
+        public FDRPValue getPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(pValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValue}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValue}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getPValues()
+         */
+        public Set<FDRPValue> getPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(pValues, dataTypes);
+        }
+
+        /**
+         * @return  A {@code Set} of {@code FDRPValueCondition}s storing the best FDR-corrected p-value
+         *          over all descendant conditions of the condition considered
+         *          in this {@code ExpressionCall}, for different combination of {@code DataType}s.
+         *          It means that depending on the combination of {@code DataType}s,
+         *          maybe the best FDR-corrected p-values could come from different descendant conditions.
+         *          The {@code Condition} where the p-value comes from can be retrieved from
+         *          the returned {@code FDRPValueCondition}s.
+         *          These FDR-corrected p-values are produced by correcting all p-values
+         *          resulting from tests to detect active signal of expression of a gene
+         *          in a condition and its descendant conditions, using the {@code DataType}s
+         *          stored in the {@code FDRPValueCondition} instance.
+         *          Most likely, only one combination of {@code DataType}s will have been requested,
+         *          so that this {@code Set} will contain only one value.
+         */
+        public Set<FDRPValueCondition2> getBestDescendantPValues() {
+            return bestDescendantPValues;
+        }
+        /**
+         * @return  Return one {@code FDRPValueCondition} from the {@code Set} returned by
+         *          {@link #getBestDescendantPValues()}. Useful when we know that
+         *          only one combination of {@code DataType}s was requested
+         *          to retrieve FDR-corrected p-values associated to calls.
+         *          {@code null} if the {@code Set} returned by {@link #getBestDescendantPValues()}
+         *          is empty.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValueCondition2 getFirstBestDescendantPValue() {
+            return bestDescendantPValues.stream().findFirst().orElse(null);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
+         *                  {@link #getBestDescendantPValues()}. Cannot be {@code null} or empty.
+         * @return          the {@code FDRPValueCondition} produced by using exactly this combination
+         *                  of {@code DataType}s among the {@code FDRPValueCondition}s returned by
+         *                  {@link #getBestDescendantPValues()}. {@code null}
+         *                  if no FDR-corrected p-value was produced using
+         *                  this exact combination of {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public FDRPValueCondition2 getBestDescendantPValueWithEqualDataTypes(Collection<DataType> dataTypes) {
+            return getPValueWithEqualDataTypes(bestDescendantPValues, dataTypes);
+        }
+        /**
+         * @param dataTypes A {@code Collection} containing the {@code DataType}s to retrieve
+         *                  the {@code FDRPValueCondition}s produced by using a combination
+         *                  of {@code DataType}s that includes all this requested {@code DataType}s,
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
+         *                  Cannot be {@code null} or empty.
+         * @return          A {@code Set} of {@code FDRPValueCondition}s produced by using combinations
+         *                  of {@code DataType}s that include all this requested {@code DataType}s,
+         *                  among the {@code FDRPValueCondition}s returned by {@link #getBestDescendantPValues()}.
+         *                  Return an empty {@code Set} if no FDR-corrected p-value
+         *                  was produced using a combination that contains all these {@code DataType}s.
+         * @see #getBestDescendantPValues()
+         */
+        public Set<FDRPValueCondition2> getBestDescendantPValuesContainingAllDataTypes(Collection<DataType> dataTypes) {
+            return getPValuesContainingAllDataTypes(bestDescendantPValues, dataTypes);
+        }
+
+        private static <F extends FDRPValue> F getPValueWithEqualDataTypes(
+                Set<F> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().equals(EnumSet.copyOf(dataTypes)))
+                    .findFirst().orElse(null));
+        }
+        private static <F extends FDRPValue> Set<F> getPValuesContainingAllDataTypes(
+                Collection<F> pValues, Collection<DataType> dataTypes) {
+            log.traceEntry("{}, {}", pValues, dataTypes);
+            if (dataTypes == null || dataTypes.isEmpty()) {
+                throw log.throwing(new IllegalArgumentException("Data types must be provided"));
+            }
+            return log.traceExit(pValues.stream()
+                    .filter(p -> p.getDataTypes().containsAll(dataTypes))
+                    .collect(Collectors.toSet()));
+        }
+
+        /**
+         * @return  An {@code ExpressionLevelInfo} providing information
+         *          about the expression level of this {@code ExpressionCall}.
+         */
+        //ATTRIBUTE NOT TAKEN INTO ACCOUNT IN HASHCODE/EQUALS METHODS.
+        public ExpressionLevelInfo getExpressionLevelInfo() {
+            return expressionLevelInfo;
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         * ExpressionLevelInfo.getRank()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getRank()
+         *          ExpressionLevelInfo.getRank()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getFormattedMeanRank()
+         */
+        public BigDecimal getMeanRank() {
+            return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getRank();
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
+         * ExpressionLevelInfo.getFormattedRank()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedRank()
+         *          ExpressionLevelInfo.getFormattedRank()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getMeanRank()
+         */
+        public String getFormattedMeanRank() {
+            log.traceEntry();
+            return log.traceExit(this.getExpressionLevelInfo() == null? null:
+                this.getExpressionLevelInfo().getFormattedRank());
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getExpressionScore()
+         * ExpressionLevelInfo.getExpressionScore()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getExpressionScore()
+         *          ExpressionLevelInfo.getExpressionScore()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getMeanRank()
+         * @see #getFormattedExpressionScore()
+         */
+        public BigDecimal getExpressionScore() {
+            return this.getExpressionLevelInfo() == null? null: this.getExpressionLevelInfo().getExpressionScore();
+        }
+        /**
+         * Helper method delegated to {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedExpressionScore()
+         * ExpressionLevelInfo.getFormattedExpressionScore()} from {@link #getExpressionLevelInfo()}.
+         * @return  See {@link org.bgee.model.expressiondata.baseelements.ExpressionLevelInfo#getFormattedExpressionScore()
+         *          ExpressionLevelInfo.getFormattedExpressionScore()}.
+         * @see #getExpressionLevelInfo()
+         * @see #getExpressionScore()
+         */
+        public String getFormattedExpressionScore() {
+            log.traceEntry();
+            return log.traceExit(this.getExpressionLevelInfo() == null? null:
+                this.getExpressionLevelInfo().getFormattedExpressionScore());
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((dataPropagation == null) ? 0 : dataPropagation.hashCode());
+            //we don't take into account rank information for hashCode/equals methods
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!super.equals(obj)) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ExpressionCall other = (ExpressionCall) obj;
+            if (dataPropagation == null) {
+                if (other.dataPropagation != null)
+                    return false;
+            } else if (!dataPropagation.equals(other.dataPropagation))
+                return false;
+            //we don't take into account rank information for hashCode/equals methods
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExpressionCall [gene=").append(getGene())
+                   .append(", condition=").append(getCondition())
+                   .append(", summaryCallType=").append(getSummaryCallType())
+                   .append(", summaryQuality=").append(getSummaryQuality())
+                   .append(", pValues=").append(getPValues())
+                   .append(", bestDescendantPValues=").append(getBestDescendantPValues())
+                   .append(", expressionLevelInfo=").append(expressionLevelInfo)
+                   .append(", dataPropagation=").append(getDataPropagation())
+                   .append(", callData=").append(getCallData())
+                   .append(", sourceCalls()=").append(getSourceCalls())
+                   .append("]");
+            return builder.toString();
+        }
+    }
     
     //TODO: check that all DiffExpressionCallData 
     //have the same DiffExpressionFactor, consistent with the DiffExpressionCall
-    public static class DiffExpressionCall extends Call<DiffExpressionSummary, DiffExpressionCallData> {
+    public static class DiffExpressionCall extends Call<DiffExpressionSummary, DiffExpressionCallData, Condition> {
         /**
          * @see #getDiffExpressionFactor()
          */
@@ -1176,7 +1473,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
             Collection<DiffExpressionCall> sourceCalls) {
             super(gene, condition, summaryCallType, summaryQual, callData, 
                 sourceCalls == null ? new HashSet<>() : sourceCalls.stream()
-                .map(c -> (Call<DiffExpressionSummary, DiffExpressionCallData>) c)
+                .map(c -> (Call<DiffExpressionSummary, DiffExpressionCallData, Condition>) c)
                 .collect(Collectors.toSet()));
             this.diffExpressionFactor = factor;
         }
@@ -1231,7 +1528,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     
     private final Gene gene;
     
-    private final Condition condition;
+    private final V condition;
     
     private final T summaryCallType;
     
@@ -1240,11 +1537,11 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     private final Set<U> callData;
 
     //XXX: not used yet. We keep it to later be able to display the "raw" calls used to generate this "global" call.
-    private final Set<Call<T, U>> sourceCalls;
+    private final Set<Call<T, U, V>> sourceCalls;
 
-    private Call(Gene gene, Condition condition,
+    private Call(Gene gene, V condition,
         T summaryCallType, SummaryQuality summaryQuality, Collection<U> callData, 
-        Set<Call<T, U>> sourceCalls) {
+        Set<Call<T, U, V>> sourceCalls) {
         if (DataQuality.NODATA.equals(summaryQuality)) {
             throw log.throwing(new IllegalArgumentException("An actual DataQuality must be provided."));
         }
@@ -1276,7 +1573,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public Gene getGene() {
         return gene;
     }
-    public Condition getCondition() {
+    public V getCondition() {
         return condition;
     }
     public T getSummaryCallType() {
@@ -1288,7 +1585,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
     public Set<U> getCallData() {
         return callData;
     }
-    public Set<Call<T, U>> getSourceCalls() {
+    public Set<Call<T, U, V>> getSourceCalls() {
         return sourceCalls;
     }
     
@@ -1316,7 +1613,7 @@ public abstract class Call<T extends Enum<T> & SummaryCallType, U extends CallDa
         if (getClass() != obj.getClass()) {
             return false;
         }
-        Call<?, ?> other = (Call<?, ?>) obj;
+        Call<?, ?, ?> other = (Call<?, ?, ?>) obj;
         if (gene == null) {
             if (other.gene != null) {
                 return false;

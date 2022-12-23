@@ -247,6 +247,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 return log.traceExit("endStageId");
             case NON_INFORMATIVE: 
                 return log.traceExit("nonInformative");
+//            case CELL_TYPE: 
+//                return log.traceExit("cellType");
             default: 
                 throw log.throwing(new IllegalArgumentException("The attribute provided (" + 
                        attribute.toString() + ") is unknown for " + AnatEntityDAO.class.getName()));
@@ -320,7 +322,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
             
             String anatEntityId = null, anatEntityName = null, anatEntityDescription = null, 
                     startStageId = null, endStageId = null;
-            Boolean nonInformative = null;
+            Boolean nonInformative = null, cellType = null;
             
             for (Entry<Integer, String> column: this.getColumnLabels().entrySet()) {
                 try {
@@ -336,6 +338,8 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                         endStageId = this.getCurrentResultSet().getString(column.getKey());
                     } else if (column.getValue().equals("nonInformative")) {
                         nonInformative = this.getCurrentResultSet().getBoolean(column.getKey());
+                    } else if (column.getValue().equals("cellType")) {
+                        cellType = this.getCurrentResultSet().getBoolean(column.getKey());
                     } else {
                         throw log.throwing(new UnrecognizedColumnException(column.getValue()));
                     }           
@@ -344,7 +348,7 @@ public class MySQLAnatEntityDAO extends MySQLDAO<AnatEntityDAO.Attribute> implem
                 }
             }
             return log.traceExit(new AnatEntityTO(anatEntityId, anatEntityName, anatEntityDescription, 
-                    startStageId, endStageId, nonInformative));
+                    startStageId, endStageId, nonInformative, cellType));
         }
     }
 }

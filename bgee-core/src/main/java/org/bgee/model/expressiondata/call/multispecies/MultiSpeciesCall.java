@@ -19,7 +19,7 @@ import org.bgee.model.gene.Gene;
  * @version Bgee 14, Mar. 2019
  * @since   Bgee 13, Apr. 2016
  */
-public class MultiSpeciesCall<T extends Call<?, ?>> {
+public class MultiSpeciesCall<T extends Call<?, ?, ?>> {
 
     private static final Logger log = LogManager.getLogger(MultiSpeciesCall.class.getName());
     

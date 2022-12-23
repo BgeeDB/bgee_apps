@@ -1,7 +1,6 @@
 package org.bgee.model.expressiondata.call;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -28,8 +27,8 @@ import org.bgee.model.anatdev.SexService;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
+import org.bgee.model.dao.api.expressiondata.call.CallObservedDataDAOFilter2;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
-import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOFDRPValueFilter2;
 import org.bgee.model.dao.api.expressiondata.call.DAOPropagationState;
@@ -87,7 +86,7 @@ public class CallServiceUtils {
         if (condParams.isEmpty()) {
             return log.traceExit(EnumSet.noneOf(ConditionDAO.ConditionParameter.class));
         }
-        if (condParams.contains(null)) {
+        if (condParams.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new UnsupportedOperationException(
                     "No Condition parameter can be null"));
         }
@@ -119,7 +118,7 @@ public class CallServiceUtils {
         if (condParams.isEmpty()) {
             return log.traceExit(EnumSet.noneOf(ConditionDAO.Attribute.class));
         }
-        if (condParams.contains(null)) {
+        if (condParams.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new UnsupportedOperationException(
                     "No Condition parameter can be null"));
         }
@@ -144,19 +143,25 @@ public class CallServiceUtils {
     }
 
     public Set<Set<DAOFDRPValueFilter2>> generateExprQualDAOPValFilters(
-            ExpressionCallFilter2 callFilter, Collection<ConditionParameter<?, ?>> condParams,
-            BigDecimal presentLowThreshold, BigDecimal presentHighThreshold,
-            BigDecimal absentLowThreshold, BigDecimal absentHighThreshold) {
-        log.traceEntry("{}, {}, {}, {}, {}, {}", callFilter, condParams, presentLowThreshold,
+            ExpressionCallFilter2 callFilter, BigDecimal presentLowThreshold,
+            BigDecimal presentHighThreshold, BigDecimal absentLowThreshold,
+            BigDecimal absentHighThreshold) {
+        log.traceEntry("{}, {}, {}, {}, {}", callFilter, presentLowThreshold,
                 presentHighThreshold, absentLowThreshold, absentHighThreshold);
 
         EnumSet<DAODataType> daoDataTypes = this.convertDataTypeToDAODataType(
                 callFilter == null? null: callFilter.getDataTypeFilters());
+        Set<ConditionParameter<?, ?>> condParams = callFilter == null? ConditionParameter.allOf():
+            callFilter.getCondParamCombination();
         EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
                 this.convertCondParamsToDAOCondParams(condParams);
 
-        return log.traceExit((callFilter == null? ExpressionCallFilter2.ALL_CALLS:
-                                                  callFilter.getSummaryCallTypeQualityFilter())
+        if (callFilter == null ||
+                callFilter.getSummaryCallTypeQualityFilter().equals(ExpressionCallFilter2.ALL_CALLS)) {
+            return new HashSet<>();
+        }
+
+        return log.traceExit(callFilter.getSummaryCallTypeQualityFilter()
         .entrySet().stream()
         .flatMap(e -> {
             SummaryCallType.ExpressionSummary callType = e.getKey();
@@ -313,11 +318,11 @@ public class CallServiceUtils {
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(0);
             FilterIds<String> cellTypeFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.ANAT_ENTITY_CELL_TYPE).getFilterIds(1);
-            if (anatEntityFilterIds.isIncludeChildTerms()) {
+            if (anatEntityFilterIds != null && anatEntityFilterIds.isIncludeChildTerms()) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(anatEntityFilterIds.getIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
-            if (cellTypeFilterIds.isIncludeChildTerms()) {
+            if (cellTypeFilterIds != null && cellTypeFilterIds.isIncludeChildTerms()) {
                 anatEntityAndCellTypeIdsWithChildrenRequested.addAll(cellTypeFilterIds.getIds());
                 speciesIdsWithAnatCellChildrenRequested.add(filter.getSpeciesId());
             }
@@ -325,7 +330,7 @@ public class CallServiceUtils {
             assert !filter.getComposedFilterIds(ConditionParameter.DEV_STAGE).isComposed();
             FilterIds<String> devStageFilterIds = filter.getComposedFilterIds(
                     ConditionParameter.DEV_STAGE).getFilterIds(0);
-            if (devStageFilterIds.isIncludeChildTerms()) {
+            if (devStageFilterIds != null && devStageFilterIds.isIncludeChildTerms()) {
                 devStageIdsWithChildrenRequested.addAll(devStageFilterIds.getIds());
                 speciesIdsWithDevStageChildrenRequested.add(filter.getSpeciesId());
             }
@@ -444,6 +449,17 @@ public class CallServiceUtils {
                     return l.stream();
             }).collect(Collectors.toSet())
         );
+    }
+
+    public CallObservedDataDAOFilter2 convertCallObservedDataToDAO(ExpressionCallFilter2 filter) {
+        log.traceEntry("{}", filter);
+        if (filter == null || filter.getCallObservedDataCondParams().isEmpty()) {
+            return log.traceExit((CallObservedDataDAOFilter2) null);
+        }
+        return log.traceExit(new CallObservedDataDAOFilter2(
+                this.convertDataTypeToDAODataType(filter.getDataTypeFilters()),
+                this.convertCondParamsToDAOCondParams(filter.getCallObservedDataCondParams()),
+                filter.getCallObservedDataFilter()));
     }
 
     public Map<Integer, Condition2> loadGlobalConditionMap(Collection<Species> species,
@@ -571,11 +587,11 @@ public class CallServiceUtils {
                                 .orElseThrow(() -> new IllegalStateException(
                                         "Anat. entity not found: " + cTO.getCellTypeId()));
                             LinkedHashSet<AnatEntity> anatEntitiesCellTypes = new LinkedHashSet<>();
-                            if (anatEntity != null) {
-                                anatEntitiesCellTypes.add(anatEntity);
-                            }
                             if (cellType != null) {
                                 anatEntitiesCellTypes.add(cellType);
+                            }
+                            if (anatEntity != null) {
+                                anatEntitiesCellTypes.add(anatEntity);
                             }
                             if (!anatEntitiesCellTypes.isEmpty()) {
                                 condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE,

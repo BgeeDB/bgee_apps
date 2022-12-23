@@ -2222,7 +2222,7 @@ public class CallService extends CallServiceParent {
     protected static DataPropagation mergeDataPropagations(Collection<DataPropagation> dataProps) {
         log.traceEntry("{}", dataProps);
 
-        if (dataProps == null || dataProps.isEmpty() || dataProps.contains(null)) {
+        if (dataProps == null || dataProps.isEmpty() || dataProps.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalArgumentException("Invalid DataPropagations"));
         }
         Map<EnumSet<CallService.Attribute>, Integer> selfObservationCounts = dataProps.stream()

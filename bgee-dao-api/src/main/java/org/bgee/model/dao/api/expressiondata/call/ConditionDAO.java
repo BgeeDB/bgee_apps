@@ -219,6 +219,9 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             Collection<Attribute> attributes)
             throws DAOException;
 
+    public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> condIds,
+            Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;
+
     /**
      * Retrieve the correspondence between raw condition and global conditions, represented as
      * {@code GlobalConditionToRawConditionTO}s.

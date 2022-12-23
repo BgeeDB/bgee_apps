@@ -62,6 +62,7 @@ import org.bgee.model.gene.GeneFilter;
 //If these two points wanted to be achieved, we could use the new fields of, e.g., ExpressionCallData: 
 // absentHighParentExpCount, presentHighDescExpCount, etc.
 public abstract class CallFilter<T extends CallData<?>, U extends Enum<U> & SummaryCallType,
+//TODO put back V extends BaseConditionFilter2 or something, once refactoring is done
 V> extends DataFilter<V> {
     private final static Logger log = LogManager.getLogger(CallFilter.class.getName());
 
@@ -423,8 +424,10 @@ V> extends DataFilter<V> {
             return log.traceExit(speciesIdsWithNoParams);
         }
 
+        private final Set<ConditionParameter<?, ?>> condParamCombination;
         private final Set<ConditionParameter<?, ?>> callObservedDataCondParams;
         private final Boolean callObservedDataFilter;
+        private final boolean emptyFilter;
 
         /**
          * @param summaryCallTypeQualityFilter  A {@code Map} where keys are
@@ -456,7 +459,7 @@ V> extends DataFilter<V> {
          *                                      or empty, all data types will be considered.
          * @param condParamCombination          A {@code Collection} of {@code ConditionParameter}s
          *                                      specifying the combination of condition parameters to target.
-         *                                      It means that
+         *                                      If null or empty, all {@code ConditionParameter}s are used.
          * @param callObservedDataCondParams    A {@code Set} representing a combination of
          *                                      {@code ConditionParameter}s, to specify
          *                                      whether calls retrieved should have been observed or not
@@ -501,6 +504,7 @@ V> extends DataFilter<V> {
         public ExpressionCallFilter2(Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
                 Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters,
                 Collection<DataType> dataTypeFilter,
+                Collection<ConditionParameter<?, ?>> condParamCombination,
                 Collection<ConditionParameter<?, ?>> callObservedDataCondParams,
                 Boolean callObservedDataFilter)
                 throws IllegalArgumentException {
@@ -509,15 +513,47 @@ V> extends DataFilter<V> {
                     checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters),
                     loadSpeciesIdsWithNoParams(geneFilters, conditionFilters));
 
+            //ConditionParameter.copyOf also does a sanitary check for presence of null elements
+            this.condParamCombination = condParamCombination == null || condParamCombination.isEmpty()?
+                    ConditionParameter.allOf(): ConditionParameter.copyOf(condParamCombination);
             this.callObservedDataCondParams = callObservedDataCondParams == null?
                     ConditionParameter.noneOf(): ConditionParameter.copyOf(callObservedDataCondParams);
-            if (!this.callObservedDataCondParams.isEmpty() && callObservedDataFilter == null) {
+            this.callObservedDataFilter = callObservedDataFilter;
+
+            if (!this.callObservedDataCondParams.isEmpty() && this.callObservedDataFilter == null) {
                 throw log.throwing(new IllegalArgumentException(
                         "The boolean callObservedDataFilter must be non-null"));
             }
-            this.callObservedDataFilter = callObservedDataFilter;
+            if (this.callObservedDataCondParams.stream()
+                    .anyMatch(param -> !this.condParamCombination.contains(param))) {
+                throw log.throwing(new IllegalArgumentException("A condition parameter was targeted "
+                        + "for observation status but was not part of the requested combination."));
+            }
+            Set<Set<ConditionParameter<?, ?>>> allCombParamCombs = this.getConditionFilters()
+                    .stream().map(f -> f.getCondParamCombination())
+                    .collect(Collectors.toSet());
+            if (allCombParamCombs.size() > 1) {
+                throw log.throwing(new IllegalArgumentException(
+                        "The ConditionFilters do not all target the same condition parameter combination."));
+            }
+            if (!allCombParamCombs.isEmpty() &&
+                    !this.condParamCombination.equals(allCombParamCombs.iterator().next())) {
+                throw log.throwing(new IllegalArgumentException("Inconsistent condition parameter "
+                        + "combination requested in ExpressionCallFilter and ConditionFilters."));
+            }
+
+            this.emptyFilter =
+                    this.getDataTypeFilters().equals(EnumSet.allOf(DataType.class)) &&
+                    this.getSummaryCallTypeQualityFilter().equals(ALL_CALLS) &&
+                    this.getCondParamCombination().containsAll(ConditionParameter.allOf()) &&
+                    this.getCallObservedDataCondParams().isEmpty() &&
+                    this.getGeneFilters().isEmpty() &&
+                    this.getConditionFilters().isEmpty();
         }
 
+        public Set<ConditionParameter<?, ?>> getCondParamCombination() {
+            return condParamCombination;
+        }
         public Set<ConditionParameter<?, ?>> getCallObservedDataCondParams() {
             return callObservedDataCondParams;
         }
@@ -525,11 +561,16 @@ V> extends DataFilter<V> {
             return callObservedDataFilter;
         }
 
+        public boolean isEmptyFilter() {
+            return emptyFilter;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = super.hashCode();
-            result = prime * result + Objects.hash(callObservedDataCondParams, callObservedDataFilter);
+            result = prime * result + Objects.hash(condParamCombination,
+                    callObservedDataCondParams, callObservedDataFilter);
             return result;
         }
         @Override
@@ -541,7 +582,8 @@ V> extends DataFilter<V> {
             if (getClass() != obj.getClass())
                 return false;
             ExpressionCallFilter2 other = (ExpressionCallFilter2) obj;
-            return Objects.equals(callObservedDataCondParams, other.callObservedDataCondParams)
+            return Objects.equals(condParamCombination, other.condParamCombination)
+                    && Objects.equals(callObservedDataCondParams, other.callObservedDataCondParams)
                     && Objects.equals(callObservedDataFilter, other.callObservedDataFilter);
         }
 
@@ -554,6 +596,7 @@ V> extends DataFilter<V> {
                    .append(", geneFilters=").append(getGeneFilters())
                    .append(", conditionFilters=").append(getConditionFilters())
                    .append(", speciesIdsConsidered=").append(getSpeciesIdsConsidered())
+                   .append(", condParamCombination=").append(condParamCombination)
                    .append(", callObservedDataCondParams=").append(callObservedDataCondParams)
                    .append(", callObservedDataFilter=").append(callObservedDataFilter)
                    .append("]");
@@ -688,15 +731,15 @@ V> extends DataFilter<V> {
                     throws IllegalArgumentException {
         super(geneFilters, conditionFilters, speciesIdsConsidered, speciesIdsWithNoParams);
 
-        if (dataTypeFilter != null && dataTypeFilter.contains(null)) {
+        if (dataTypeFilter != null && dataTypeFilter.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
         }
         if (summaryCallTypeQualityFilter != null &&
-                summaryCallTypeQualityFilter.keySet().contains(null)) {
+                summaryCallTypeQualityFilter.keySet().stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
         }
         if (summaryCallTypeQualityFilter != null &&
-                summaryCallTypeQualityFilter.values().contains(null)) {
+                summaryCallTypeQualityFilter.values().stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
         }
 
@@ -711,13 +754,13 @@ V> extends DataFilter<V> {
 
                         new HashMap<>(summaryCallTypeQualityFilter));
         
-        if (this.dataTypeFilters.contains(null)) {
+        if (this.dataTypeFilters.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));
         }
-        if (this.summaryCallTypeQualityFilter.keySet().contains(null)) {
+        if (this.summaryCallTypeQualityFilter.keySet().stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No SummaryCallType can be null."));
         }
-        if (this.summaryCallTypeQualityFilter.values().contains(null)) {
+        if (this.summaryCallTypeQualityFilter.values().stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No SummaryQuality can be null."));
         }
 
@@ -738,7 +781,6 @@ V> extends DataFilter<V> {
     public Map<U, SummaryQuality> getSummaryCallTypeQualityFilter() {
         return summaryCallTypeQualityFilter;
     }
-
 
     @Override
     public int hashCode() {

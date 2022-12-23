@@ -32,7 +32,8 @@ import org.bgee.model.species.Species;
  * @see #getSourceFilter()
  */
 public abstract class ProcessedFilter<T extends DataFilter<?>, U extends DAODataFilter2,
-V extends BaseCondition<V>> {
+//TODO: reestablish V extends BaseCondition<V> when code will be refactored
+V> {
     private final static Logger log = LogManager.getLogger(ProcessedFilter.class.getName());
 
     private final T sourceFilter;

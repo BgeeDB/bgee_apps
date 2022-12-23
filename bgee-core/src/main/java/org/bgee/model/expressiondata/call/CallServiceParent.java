@@ -34,6 +34,16 @@ public class CallServiceParent extends ExpressionDataService {
      * for ABSENT LOW QUALITY.
      */
     public final static BigDecimal ABSENT_LOW_GREATER_THAN = PRESENT_LOW_LESS_THAN_OR_EQUALS_TO;
+    
+    public static final boolean GLOBAL_RANK = true;
+    /**
+     * A {@code BigDecimal} representing the minimum value that can take an expression score.
+     */
+    public final static BigDecimal EXPRESSION_SCORE_MIN_VALUE = new BigDecimal("0.01");
+    /**
+     * A {@code BigDecimal} representing the maximum value that can take an expression score.
+     */
+    public final static BigDecimal EXPRESSION_SCORE_MAX_VALUE = new BigDecimal("100");
 
     protected final CallServiceUtils utils;
 

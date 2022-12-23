@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
@@ -21,6 +22,12 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
         private final Set<T> filterIds;
         private final boolean includeChildTerms;
 
+        public FilterIds(T id) {
+            this(id, false);
+        }
+        public FilterIds(T id, boolean includeChildTerms) {
+            this(id == null? null: Set.of(id), includeChildTerms);
+        }
         /**
          * @param filterIds         A {@code Collection} of {@code T}s to configure a filter.
          *                          Can be {@code null} or empty for no filtering.
@@ -32,7 +39,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
          *                          if {@code filterIds} is {@code null} or empty.
          */
         public FilterIds(Collection<T> filterIds, boolean includeChildTerms) {
-            if (filterIds != null && filterIds.contains(null)) {
+            if (filterIds != null && filterIds.stream().anyMatch(e -> e == null)) {
                 throw log.throwing(new IllegalArgumentException("No ID can be null"));
             }
             //Set.of and Set.copyOf already returns immutable Sets
@@ -159,7 +166,7 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
             try {
                 return log.traceExit(composedFilterIds.get(index));
             } catch (IndexOutOfBoundsException e) {
-                log.catching(e);
+                log.catching(Level.DEBUG, e);
                 return log.traceExit((FilterIds<T>) null);
             }
         }
@@ -234,7 +241,9 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
         }
         this.speciesId = speciesId;
 
-        if (condParamToComposedFilterIds != null && condParamToComposedFilterIds.containsKey(null)) {
+        if (condParamToComposedFilterIds != null &&
+                //Cannot call containsKey(null) if the Map does not accept null values
+                condParamToComposedFilterIds.keySet().stream().anyMatch(k -> k == null)) {
             throw log.throwing(new IllegalArgumentException(
                     "condParamToComposedFilterIds cannot contain null keys."));
         }

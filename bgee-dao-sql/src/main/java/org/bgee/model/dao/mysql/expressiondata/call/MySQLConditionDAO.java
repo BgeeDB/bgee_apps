@@ -26,6 +26,7 @@ import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
+import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -33,6 +34,7 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
+import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO.MySQLRawDataConditionTOResultSet;
 
 /**
  * An {@code ConditionDAO} for MySQL. 
@@ -284,11 +286,35 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
     }
 
     @Override
-    public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> arg0,
-            Collection<org.bgee.model.dao.api.expressiondata.call.ConditionDAO.Attribute> arg1)
+    public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> conditionIds,
+            Collection<ConditionDAO.Attribute> attributes)
             throws DAOException, IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        log.traceEntry("{}, {}", conditionIds, attributes);
+        if (conditionIds == null || conditionIds.isEmpty()) {
+            throw log.throwing(new IllegalArgumentException("Should provide at least one condition ID"));
+        }
+        final Set<Integer> clonedConditionIds = Collections.unmodifiableSet(
+                conditionIds.stream().sorted()
+                .collect(Collectors.toCollection(() -> new LinkedHashSet<>(conditionIds))));
+        final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attributes == null?
+                EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
+
+        // generate query
+        StringBuilder sb = new StringBuilder();
+        sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, clonedAttrs))
+        .append(" FROM ").append(TABLE_NAME).append(" WHERE ")
+        .append(ConditionDAO.Attribute.ID.getTOFieldName())
+        .append(" IN (")
+        .append(BgeePreparedStatement.generateParameterizedQueryString(clonedConditionIds.size()))
+        .append(")");
+        try {
+            BgeePreparedStatement stmt = this.getManager().getConnection()
+                    .prepareStatement(sb.toString());
+            stmt.setIntegers(1, clonedConditionIds, true);
+            return log.traceExit(new MySQLConditionTOResultSet(stmt));
+        } catch (SQLException e) {
+            throw log.throwing(new DAOException(e));
+        }
     }
 
     //TODO: same approach as in MysqlRawDataCondtionDAO. Should refactor

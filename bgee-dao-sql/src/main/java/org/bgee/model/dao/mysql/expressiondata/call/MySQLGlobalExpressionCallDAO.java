@@ -2015,7 +2015,7 @@ implements GlobalExpressionCallDAO {
         }
     }
 
-    public Integer getGlobalExpressionCallsCount(
+    public long getGlobalExpressionCallsCount(
             Collection<DAOCallFilter> callFilters)
                     throws DAOException, IllegalArgumentException {
         log.traceEntry("{}", callFilters);
@@ -2037,7 +2037,7 @@ implements GlobalExpressionCallDAO {
             configureCallStatement2(stmt, clonedCallFilters, null, null);
             ResultSet rs = stmt.getRealPreparedStatement().executeQuery();
             if(rs.next()) {
-                return log.traceExit(rs.getInt("countCalls"));
+                return log.traceExit(rs.getLong("countCalls"));
             }
             throw log.throwing(new IllegalStateException("empty ResultSet"));
         } catch (SQLException e) {

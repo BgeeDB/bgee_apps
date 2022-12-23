@@ -222,7 +222,7 @@ public class ExpressionCallLoader extends CommonService {
         
     }
 
-    public int loadDataCount() {
+    public long loadDataCount() {
         log.traceEntry();
         return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
                 this.processedFilter.getDaoFilters()));

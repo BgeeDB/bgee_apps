@@ -486,11 +486,11 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              allowing to configure this query. If several
      *                              {@code CallDAOFilter}s are provided, they are seen
      *                              as "OR" conditions. Can be {@code null} or empty.
-     * @return                      An {@code Integer} containing global
+     * @return                      A {@code long} containing global
      *                              calls count from the data source.
      * @throws DAOException         If an error occurred when accessing the data source.
      */
-    public Integer getGlobalExpressionCallsCount(
+    public long getGlobalExpressionCallsCount(
             Collection<DAOCallFilter> callFilters)
                     throws DAOException, IllegalArgumentException;
 

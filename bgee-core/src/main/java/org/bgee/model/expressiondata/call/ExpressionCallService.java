@@ -1,6 +1,5 @@
 package org.bgee.model.expressiondata.call;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,7 +16,6 @@ import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionRankInfo
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
-import org.bgee.model.gene.GeneFilter;
 import org.bgee.model.source.Source;
 import org.bgee.model.species.Species;
 import org.bgee.model.ServiceFactory;
@@ -80,6 +78,13 @@ public class ExpressionCallService extends CallServiceParent {
                     PRESENT_HIGH_LESS_THAN_OR_EQUALS_TO, ABSENT_LOW_GREATER_THAN,
                     ABSENT_HIGH_GREATER_THAN));
         }
+        //At this point, there should always be at least a GeneFilter, it is mandatory
+        //to provide one if the filter is not empty (checked just above).
+        assert filter.getGeneFilter() != null;
+        //And there should be exactly one species selected.
+        //NOTE: the code below is still written as if it was permitted to have several species,
+        //but it is not the case
+        assert filter.getSpeciesIdsConsidered().size() == 1;
 
         Map<Integer, Species> speciesMap = this.loadSpeciesMap(filter.getSpeciesIdsConsidered(),
                 false, null);
@@ -93,25 +98,19 @@ public class ExpressionCallService extends CallServiceParent {
                         //because ranks are all normalized based on the max rank over all data types
                         null);
 
-        //Now, we load specific genes that can be queried (and not all genes of a species
-        //if a GeneFilter contains no gene ID)
-        Set<GeneFilter> geneFiltersToUse = filter.getGeneFilters().stream()
-                .filter(f -> !f.getGeneIds().isEmpty())
-                .collect(Collectors.toSet());
-        Map<Integer, Gene> requestedGeneMap = geneFiltersToUse.isEmpty()? new HashMap<>():
-            loadGeneMapFromGeneFilters(geneFiltersToUse, speciesMap, geneBioTypeMap, this.geneDAO);
+        //To configure the DAOCallFilter we need to always have bgeeGeneIds,
+        //so we retrieve all genes of the requested species.
+        Map<Integer, Gene> requestedGeneMap = loadGeneMapFromGeneFilters(filter.getGeneFilters(),
+                speciesMap, geneBioTypeMap, this.geneDAO);
 
-        //Now, we load specific conditions that can be queried (and not all conditions
-        //of a species if a condition filter contains no filtering on condition parameters).
+        //Now, we load specific conditions that can be queried. Again, we need to retrieve
+        //all of them to configure the DAOCallFilter, even if there is a large number.
         Set<DAOConditionFilter2> daoCondFilters =
             this.utils.convertConditionFiltersToDAOConditionFilters(filter.getConditionFilters(),
                     this.ontService, filter.getSpeciesIdsConsidered());
-        Set<DAOConditionFilter2> daoCondFiltersToUse = daoCondFilters.stream()
-                .filter(f -> !f.areAllFiltersExceptSpeciesEmpty())
-                .collect(Collectors.toSet());
-        Map<Integer, Condition2> requestedCondMap = daoCondFiltersToUse.isEmpty()?
+        Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
-                this.utils.loadGlobalConditionMap(speciesMap.values(), daoCondFiltersToUse,
+                this.utils.loadGlobalConditionMap(speciesMap.values(), daoCondFilters,
                         null, this.conditionDAO, this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService);
 
@@ -126,17 +125,13 @@ public class ExpressionCallService extends CallServiceParent {
         Set<Integer> speciesIdsWithCondFound = requestedCondMap.values().stream()
                 .map(c -> c.getSpeciesId())
                 .collect(Collectors.toSet());
-        //Thanks to checks in the original filter, we know for sure that if a species
-        //has specific conds requested, there are no filter requesting any cond for that species.
         Set<Integer> speciesIdsWithCondRequested = filter.getConditionFilters().stream()
-                .filter(cf -> !cf.areAllCondParamFiltersEmpty())
                 //we use speciesMap.keySet() here, rather than filter.getSpeciesIdsConsidered(),
                 //because if filter.getSpeciesIdsConsidered() is empty, speciesMap will contain
                 //all the species.
                 .flatMap(f -> f.getSpeciesId() == null? speciesMap.keySet().stream():
                     Stream.of(f.getSpeciesId()))
                 .collect(Collectors.toSet());
-        assert Collections.disjoint(filter.getSpeciesIdsWithNoParams(), speciesIdsWithCondRequested);
         Set<Integer> speciesIdsWithNoResult = new HashSet<>(speciesIdsWithCondRequested);
         speciesIdsWithNoResult.removeAll(speciesIdsWithCondFound);
 
@@ -158,31 +153,21 @@ public class ExpressionCallService extends CallServiceParent {
         //*************************************
         // Create the DAO filter
         //*************************************
-//        //Actually, if there is any filtering going on, we need to use the PK
-//        //for performance issues (specific to MySQL but only here we can manage it)
-//        //So, if there are no geneIds, but conditionIds, we provide the species IDs
-//        //of the conditions anyway.
-//        //First, we need to remove gene IDs for which we know there will be no results
-//        Set<Integer> bgeeGeneIds = 
-//                requestedGeneMap.entrySet().stream()
-//                .filter(e -> !speciesIdsWithNoResult.contains(
-//                        e.getValue().getSpecies().getId()))
-//                .map(e -> e.getKey())
-//                .collect(Collectors.toSet());
-//        Set<Integer> speciesIdsToAdd = !bgeeGeneIds.isEmpty()? Set.of():
-//            requestedCondMap
-//            FAUT QUE JE REGLE CE PROBLEME DE PERF SI PAS DE GENE ID
+        //We need to remove gene IDs for which we know there will be no results
+        //(a bit useless now, with the new system only one species can be targeted at most,
+        //we would have already exited the method)
+        Set<Integer> bgeeGeneIds =
+                requestedGeneMap.entrySet().stream()
+                .filter(e -> !speciesIdsWithNoResult.contains(
+                        e.getValue().getSpecies().getId()))
+                .map(e -> e.getKey())
+                .collect(Collectors.toSet());
+        assert !bgeeGeneIds.isEmpty();
         CallObservedDataDAOFilter2 obsDataFilter = this.utils.convertCallObservedDataToDAO(filter);
         DAOCallFilter daoFilter = new DAOCallFilter(
-                //We know for sure that these species had no specific conditions requested,
-                //thus we don't have to filter out speciesIdsWithNoResult
-                filter.getSpeciesIdsWithNoParams(),
-                //But we need to remove gene IDs for which we know there will be no results
-                requestedGeneMap.entrySet().stream()
-                        .filter(e -> !speciesIdsWithNoResult.contains(
-                                e.getValue().getSpecies().getId()))
-                        .map(e -> e.getKey())
-                        .collect(Collectors.toSet()),
+                //this speciesIds argument should be removed from the DAOCallFilter
+                null,
+                bgeeGeneIds,
                 requestedCondMap.keySet(),
                 obsDataFilter == null? Set.of(): Set.of(obsDataFilter),
                 this.utils.generateExprQualDAOPValFilters(

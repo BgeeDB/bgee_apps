@@ -44,18 +44,15 @@ public abstract class DataFilter<T> {
     private final Set<T> conditionFilters;
 
     private final Set<Integer> speciesIdsConsidered;
-    private final Set<Integer> speciesIdsWithNoParams;
 
     protected DataFilter(Collection<GeneFilter> geneFilters, Collection<T> conditionFilters,
-            Collection<Integer> speciesIdsConsidered, Collection<Integer> speciesIdsWithNoParams) {
+            Collection<Integer> speciesIdsConsidered) {
         this.geneFilters = Collections.unmodifiableSet(geneFilters == null?
                 new HashSet<>(): new HashSet<>(geneFilters));
         this.conditionFilters = Collections.unmodifiableSet(conditionFilters == null?
                 new HashSet<>(): new HashSet<>(conditionFilters));
         this.speciesIdsConsidered = Collections.unmodifiableSet(speciesIdsConsidered == null?
                 new HashSet<>(): new HashSet<>(speciesIdsConsidered));
-        this.speciesIdsWithNoParams = Collections.unmodifiableSet(speciesIdsWithNoParams == null?
-                new HashSet<>(): new HashSet<>(speciesIdsWithNoParams));
         if (this.geneFilters.stream().anyMatch(f -> f == null)) {
             throw log.throwing(new IllegalArgumentException("No GeneFilter can be null"));
         }
@@ -65,10 +62,6 @@ public abstract class DataFilter<T> {
         if (this.speciesIdsConsidered.stream().anyMatch(id -> id == null || id < 1)) {
             throw log.throwing(new IllegalArgumentException(
                     "No species ID considered can be null or less than 1"));
-        }
-        if (this.speciesIdsWithNoParams.stream().anyMatch(id -> id == null || id < 1)) {
-            throw log.throwing(new IllegalArgumentException(
-                    "No species ID without params can be null or less than 1"));
         }
 
         //make sure we don't have a same species in different GeneFilters
@@ -103,20 +96,11 @@ public abstract class DataFilter<T> {
     public Set<Integer> getSpeciesIdsConsidered() {
         return this.speciesIdsConsidered;
     }
-    /**
-     * @return  A {@code Set} of {@code Integer}s that are the IDs of species requested
-     *          that cannot be filtered by the use of specific gene IDs or condition IDs.
-     *          If {@code empty}, and {@link #getSpeciesIdsConsidered()} is also empty,
-     *          it means that any species were requested.
-     */
-    public Set<Integer> getSpeciesIdsWithNoParams() {
-        return this.speciesIdsWithNoParams;
-    }
 
     @Override
     public int hashCode() {
         return Objects.hash(conditionFilters, geneFilters,
-                speciesIdsConsidered, speciesIdsWithNoParams);
+                speciesIdsConsidered);
     }
     @Override
     public boolean equals(Object obj) {
@@ -129,8 +113,7 @@ public abstract class DataFilter<T> {
         DataFilter<?> other = (DataFilter<?>) obj;
         return Objects.equals(conditionFilters, other.conditionFilters)
                 && Objects.equals(geneFilters, other.geneFilters)
-                && Objects.equals(speciesIdsConsidered, other.speciesIdsConsidered)
-                && Objects.equals(speciesIdsWithNoParams, other.speciesIdsWithNoParams);
+                && Objects.equals(speciesIdsConsidered, other.speciesIdsConsidered);
     }
 
     @Override
@@ -140,7 +123,6 @@ public abstract class DataFilter<T> {
                .append("geneFilters=").append(geneFilters)
                .append(", conditionFilters=").append(conditionFilters)
                .append(", speciesIdsConsidered=").append(speciesIdsConsidered)
-               .append(", speciesIdsWithNoParams=").append(speciesIdsWithNoParams)
                .append("]");
         return builder.toString();
     }

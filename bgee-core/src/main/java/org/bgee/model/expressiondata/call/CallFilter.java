@@ -5,13 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -204,8 +202,7 @@ V> extends DataFilter<V> {
                 Map<EnumSet<CallService.Attribute>, Boolean> callObservedDataFilter)
                         throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
-                    SummaryCallType.ExpressionSummary.class,
-                    null, null);
+                    SummaryCallType.ExpressionSummary.class, null);
 
             if (callObservedDataFilter != null && callObservedDataFilter.entrySet().stream()
                     .anyMatch(e -> e.getKey() == null || e.getKey().isEmpty() ||e.getValue() == null ||
@@ -241,10 +238,6 @@ V> extends DataFilter<V> {
 
         @Override
         public Set<Integer> getSpeciesIdsConsidered() {
-            throw log.throwing(new UnsupportedOperationException("Not implemented for this class"));
-        }
-        @Override
-        public Set<Integer> getSpeciesIdsWithNoParams() {
             throw log.throwing(new UnsupportedOperationException("Not implemented for this class"));
         }
 
@@ -324,105 +317,107 @@ V> extends DataFilter<V> {
 
         //TODO: once we get rid of the "ExpressionCallFilter"(1), probably this method
         //should go back to the CallFilter parent
-        private static Set<Integer> checkAndLoadSpeciesIdsConsidered(
-                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters) {
-            log.traceEntry("{}, {}", geneFilters, conditionFilters);
-
-            Set<Integer> speciesIdsWithNoParams = new HashSet<>();
-            boolean allSpeciesWithNoParams = false;
-            Set<Integer> speciesIdsWithParams = new HashSet<>();
-            boolean allSpeciesWithParams = false;
-            boolean condAllSpeciesSelected = false;
-            for (ConditionFilter2 f: (conditionFilters == null?
-                    new HashSet<ConditionFilter2>(): conditionFilters)) {
-                Integer speciesId = f.getSpeciesId();
-                if (speciesId == null) {
-                    condAllSpeciesSelected = true;
-                }
-                if (f.areAllCondParamFiltersEmpty()) {
-                    if (speciesId == null) {
-                        allSpeciesWithNoParams = true;
-                    } else {
-                        speciesIdsWithNoParams.add(speciesId);
-                    }
-                } else {
-                    if (speciesId == null) {
-                        allSpeciesWithParams = true;
-                    } else {
-                        speciesIdsWithParams.add(speciesId);
-                    }
-                }
-            }
-            if (!Collections.disjoint(speciesIdsWithNoParams, speciesIdsWithParams) ||
-                    allSpeciesWithNoParams && (!speciesIdsWithParams.isEmpty() || allSpeciesWithParams) ||
-                    !speciesIdsWithNoParams.isEmpty() && allSpeciesWithParams) {
-                throw log.throwing(new IllegalArgumentException(
-                        "A ConditionFilter queries all conditions in a species, "
-                        + "while another ConditionFilter queries some more specific conditions "
-                        + "in that species"));
-            }
-            Set<Integer> condFilterSpeciesIds = new HashSet<>(speciesIdsWithNoParams);
-            condFilterSpeciesIds.addAll(speciesIdsWithParams);
-
-            Set<Integer> geneFilterSpeciesIds = (geneFilters == null?
-                    Stream.<GeneFilter>of(): geneFilters.stream())
-                    .map(gf -> gf.getSpeciesId())
-                    .collect(Collectors.toSet());
-
-            if (!geneFilterSpeciesIds.isEmpty() && !condFilterSpeciesIds.isEmpty() &&
-                    !condAllSpeciesSelected) {
-                Set<Integer> condSpeciesNotFoundInGene = condFilterSpeciesIds.stream()
-                        .filter(id -> !geneFilterSpeciesIds.contains(id))
-                        .collect(Collectors.toSet());
-                if (!condSpeciesNotFoundInGene.isEmpty()) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "Some species IDs were requested in conditionFilters but not in geneFilters: "
-                                    + condSpeciesNotFoundInGene));
-                }
-                Set<Integer> geneSpeciesNotFoundInCond = geneFilterSpeciesIds.stream()
-                        .filter(id -> !condFilterSpeciesIds.contains(id))
-                        .collect(Collectors.toSet());
-                if (!geneSpeciesNotFoundInCond.isEmpty()) {
-                    throw log.throwing(new IllegalArgumentException(
-                            "Some species IDs were requested in geneFilters but not in conditionFilters: "
-                                    + geneSpeciesNotFoundInCond));
-                }
-            }
-
-            Set<Integer> speciesIdsConsidered = new HashSet<>(condFilterSpeciesIds);
-            speciesIdsConsidered.addAll(geneFilterSpeciesIds);
-            if (geneFilterSpeciesIds.isEmpty() && condAllSpeciesSelected) {
-                speciesIdsConsidered = new HashSet<>();
-            }
-
-            return log.traceExit(speciesIdsConsidered);
-        }
-        private static Set<Integer> loadSpeciesIdsWithNoParams(
-                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters) {
-            log.traceEntry("{}, {}", geneFilters, conditionFilters);
-
-            Set<Integer> geneFilterSpeciesIdsWithNoParams = (geneFilters == null?
-                    Stream.<GeneFilter>of(): geneFilters.stream())
-                    .filter(f -> f.getGeneIds().isEmpty())
-                    .map(gf -> gf.getSpeciesId())
-                    .collect(Collectors.toSet());
-            Set<Integer> condFilterSpeciesIdsWithNoParams = (conditionFilters == null?
-                    Stream.<ConditionFilter2>of(): conditionFilters.stream())
-                    .filter(f -> f.areAllCondParamFiltersEmpty() && f.getSpeciesId() != null)
-                    .map(f -> f.getSpeciesId())
-                    .collect(Collectors.toSet());
-            boolean condAllSpeciesSelected = (conditionFilters == null?
-                    Stream.<ConditionFilter2>of(): conditionFilters.stream())
-                    .anyMatch(f -> f.getSpeciesId() == null);
-
-            Set<Integer> speciesIdsWithNoParams = new HashSet<>(geneFilterSpeciesIdsWithNoParams);
-            speciesIdsWithNoParams.addAll(condFilterSpeciesIdsWithNoParams);
-            if (geneFilterSpeciesIdsWithNoParams.isEmpty() && condAllSpeciesSelected) {
-                speciesIdsWithNoParams = new HashSet<>();
-            }
-
-            return log.traceExit(speciesIdsWithNoParams);
-        }
+        //NOTE: actually, we don't even use it now that only one GeneFilter is allowed,
+        //and is mandatory in case any other parameters are requested
+//        private static Set<Integer> checkAndLoadSpeciesIdsConsidered(
+//                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters) {
+//            log.traceEntry("{}, {}", geneFilters, conditionFilters);
+//
+//            Set<Integer> speciesIdsWithNoParams = new HashSet<>();
+//            boolean allSpeciesWithNoParams = false;
+//            Set<Integer> speciesIdsWithParams = new HashSet<>();
+//            boolean allSpeciesWithParams = false;
+//            boolean condAllSpeciesSelected = false;
+//            for (ConditionFilter2 f: (conditionFilters == null?
+//                    new HashSet<ConditionFilter2>(): conditionFilters)) {
+//                Integer speciesId = f.getSpeciesId();
+//                if (speciesId == null) {
+//                    condAllSpeciesSelected = true;
+//                }
+//                if (f.areAllCondParamFiltersEmpty()) {
+//                    if (speciesId == null) {
+//                        allSpeciesWithNoParams = true;
+//                    } else {
+//                        speciesIdsWithNoParams.add(speciesId);
+//                    }
+//                } else {
+//                    if (speciesId == null) {
+//                        allSpeciesWithParams = true;
+//                    } else {
+//                        speciesIdsWithParams.add(speciesId);
+//                    }
+//                }
+//            }
+//            if (!Collections.disjoint(speciesIdsWithNoParams, speciesIdsWithParams) ||
+//                    allSpeciesWithNoParams && (!speciesIdsWithParams.isEmpty() || allSpeciesWithParams) ||
+//                    !speciesIdsWithNoParams.isEmpty() && allSpeciesWithParams) {
+//                throw log.throwing(new IllegalArgumentException(
+//                        "A ConditionFilter queries all conditions in a species, "
+//                        + "while another ConditionFilter queries some more specific conditions "
+//                        + "in that species"));
+//            }
+//            Set<Integer> condFilterSpeciesIds = new HashSet<>(speciesIdsWithNoParams);
+//            condFilterSpeciesIds.addAll(speciesIdsWithParams);
+//
+//            Set<Integer> geneFilterSpeciesIds = (geneFilters == null?
+//                    Stream.<GeneFilter>of(): geneFilters.stream())
+//                    .map(gf -> gf.getSpeciesId())
+//                    .collect(Collectors.toSet());
+//
+//            if (!geneFilterSpeciesIds.isEmpty() && !condFilterSpeciesIds.isEmpty() &&
+//                    !condAllSpeciesSelected) {
+//                Set<Integer> condSpeciesNotFoundInGene = condFilterSpeciesIds.stream()
+//                        .filter(id -> !geneFilterSpeciesIds.contains(id))
+//                        .collect(Collectors.toSet());
+//                if (!condSpeciesNotFoundInGene.isEmpty()) {
+//                    throw log.throwing(new IllegalArgumentException(
+//                            "Some species IDs were requested in conditionFilters but not in geneFilters: "
+//                                    + condSpeciesNotFoundInGene));
+//                }
+//                Set<Integer> geneSpeciesNotFoundInCond = geneFilterSpeciesIds.stream()
+//                        .filter(id -> !condFilterSpeciesIds.contains(id))
+//                        .collect(Collectors.toSet());
+//                if (!geneSpeciesNotFoundInCond.isEmpty()) {
+//                    throw log.throwing(new IllegalArgumentException(
+//                            "Some species IDs were requested in geneFilters but not in conditionFilters: "
+//                                    + geneSpeciesNotFoundInCond));
+//                }
+//            }
+//
+//            Set<Integer> speciesIdsConsidered = new HashSet<>(condFilterSpeciesIds);
+//            speciesIdsConsidered.addAll(geneFilterSpeciesIds);
+//            if (geneFilterSpeciesIds.isEmpty() && condAllSpeciesSelected) {
+//                speciesIdsConsidered = new HashSet<>();
+//            }
+//
+//            return log.traceExit(speciesIdsConsidered);
+//        }
+//        private static Set<Integer> loadSpeciesIdsWithNoParams(
+//                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters) {
+//            log.traceEntry("{}, {}", geneFilters, conditionFilters);
+//
+//            Set<Integer> geneFilterSpeciesIdsWithNoParams = (geneFilters == null?
+//                    Stream.<GeneFilter>of(): geneFilters.stream())
+//                    .filter(f -> f.getGeneIds().isEmpty())
+//                    .map(gf -> gf.getSpeciesId())
+//                    .collect(Collectors.toSet());
+//            Set<Integer> condFilterSpeciesIdsWithNoParams = (conditionFilters == null?
+//                    Stream.<ConditionFilter2>of(): conditionFilters.stream())
+//                    .filter(f -> f.areAllCondParamFiltersEmpty() && f.getSpeciesId() != null)
+//                    .map(f -> f.getSpeciesId())
+//                    .collect(Collectors.toSet());
+//            boolean condAllSpeciesSelected = (conditionFilters == null?
+//                    Stream.<ConditionFilter2>of(): conditionFilters.stream())
+//                    .anyMatch(f -> f.getSpeciesId() == null);
+//
+//            Set<Integer> speciesIdsWithNoParams = new HashSet<>(geneFilterSpeciesIdsWithNoParams);
+//            speciesIdsWithNoParams.addAll(condFilterSpeciesIdsWithNoParams);
+//            if (geneFilterSpeciesIdsWithNoParams.isEmpty() && condAllSpeciesSelected) {
+//                speciesIdsWithNoParams = new HashSet<>();
+//            }
+//
+//            return log.traceExit(speciesIdsWithNoParams);
+//        }
 
         private final Set<ConditionParameter<?, ?>> condParamCombination;
         private final Set<ConditionParameter<?, ?>> callObservedDataCondParams;
@@ -430,6 +425,17 @@ V> extends DataFilter<V> {
         private final boolean emptyFilter;
 
         /**
+         * Either this filter can be totally empty without any parameter,
+         * or a {@code GeneFilter} must be provided, otherwise an {@code IllegalArgumentException}
+         * is thrown. When a {@code GeneFilter} is provided:
+         * <ul>
+         * <li>The {@code GeneFilter} must target some genes.
+         * <li>all the provided {@code ConditionFilter}s must either target the same species,
+         * or no species at all, otherwise an {@code IllegalArgumentException} is thrown.
+         * <li> if some {@code ConditionFilter}s are provided without targeting a species,
+         * they will be rewritten to target the same species as in the {@code GeneFilter}.
+         * </ul>
+         *
          * @param summaryCallTypeQualityFilter  A {@code Map} where keys are
          *                                      {@code SummaryCallType.ExpressionSummary}
          *                                      listing the call types requested,
@@ -440,12 +446,11 @@ V> extends DataFilter<V> {
          *                                      {@code SummaryCallType.ExpressionSummary}s
          *                                      will be requested with the first level
          *                                      in {@code SummaryQuality} as minimum quality.
-         * @param geneFilters                   A {@code Collection} of {@code GeneFilter}s
-         *                                      allowing to specify the genes or species
-         *                                      to consider. If a same species ID is present
-         *                                      in several {@code GeneFilter}s, or if {@code geneFilters}
-         *                                      contains a {@code null} element, an
-         *                                      {@code IllegalArgumentException} is thrown.
+         * @param geneFilter                    A {@code GeneFilter} allowing to specify the genes
+         *                                      or species to consider. Can be {@code null} only
+         *                                      and only if no other non-default parameters
+         *                                      are requested. If non-null it must target some
+         *                                      specific genes.
          * @param conditionFilters              A {@code Collection} of {@code ConditionFilter2}s
          *                                      allowing to specify the requested parameters regarding
          *                                      conditions related to the expression calls. If several
@@ -453,6 +458,13 @@ V> extends DataFilter<V> {
          *                                      as "OR" conditions. Can be {@code null} or empty.
          *                                      if contains a {@code null} element, an
          *                                      {@code IllegalArgumentException} is thrown.
+         *                                      If a {@code geneFilter} is provided and some
+         *                                      of the {@code conditionFilters} explicitly target
+         *                                      a different species, an {@code IllegalArgumentException}
+         *                                      is thrown. If a {@code geneFilter} is provided,
+         *                                      the {@code ConditionFilters} targeting no specific
+         *                                      species will be rewritten to target the same species
+         *                                      as in the {@code geneFilter}.
          * @param dataTypeFilter                A {@code Collection} of {@code DataType}s
          *                                      allowing to specify the data types to consider
          *                                      to retrieve expression calls. If {@code null}
@@ -502,16 +514,23 @@ V> extends DataFilter<V> {
          *                                      and contains a null value.
          */
         public ExpressionCallFilter2(Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter,
-                Collection<GeneFilter> geneFilters, Collection<ConditionFilter2> conditionFilters,
+                GeneFilter geneFilter, Collection<ConditionFilter2> conditionFilters,
                 Collection<DataType> dataTypeFilter,
                 Collection<ConditionParameter<?, ?>> condParamCombination,
                 Collection<ConditionParameter<?, ?>> callObservedDataCondParams,
                 Boolean callObservedDataFilter)
                 throws IllegalArgumentException {
-            super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
-                    SummaryCallType.ExpressionSummary.class,
-                    checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters),
-                    loadSpeciesIdsWithNoParams(geneFilters, conditionFilters));
+            super(summaryCallTypeQualityFilter, geneFilter == null? Set.of(): Set.of(geneFilter),
+                    //For conditionFilters, if a geneFilter is provided, we recreate the condition filters
+                    //so that null species IDs are replaced with the same species as in the gene filter
+                    geneFilter == null || conditionFilters == null? conditionFilters:
+                        conditionFilters.stream()
+                        .map(f -> f.getSpeciesId() != null? f: new ConditionFilter2(
+                                geneFilter.getSpeciesId(), f.getCondParamToComposedFilterIds(),
+                                f.getCondParamCombination(), f.getObservedCondForParams()))
+                        .collect(Collectors.toSet()),
+                    dataTypeFilter, SummaryCallType.ExpressionSummary.class,
+                    geneFilter == null? Set.of(): Set.of(geneFilter.getSpeciesId()));
 
             //ConditionParameter.copyOf also does a sanitary check for presence of null elements
             this.condParamCombination = condParamCombination == null || condParamCombination.isEmpty()?
@@ -549,6 +568,19 @@ V> extends DataFilter<V> {
                     this.getCallObservedDataCondParams().isEmpty() &&
                     this.getGeneFilters().isEmpty() &&
                     this.getConditionFilters().isEmpty();
+            if (!this.emptyFilter && (this.getGeneFilters().isEmpty() ||
+                    this.getGeneFilter().getGeneIds().isEmpty())) {
+                throw log.throwing(new IllegalArgumentException(
+                        "A GeneFilter must be provided and targets some genes if any other parameters are requested"));
+            }
+            if (this.getGeneFilter() != null) {
+                Integer speciesId = this.getGeneFilter().getSpeciesId();
+                if (this.getConditionFilters().stream()
+                        .anyMatch(f -> f.getSpeciesId() == null || !f.getSpeciesId().equals(speciesId))) {
+                    throw log.throwing(new IllegalArgumentException(
+                            "Not possible to specify different species in GeneFiter and ConditionFilters"));
+                }
+            }
         }
 
         public Set<ConditionParameter<?, ?>> getCondParamCombination() {
@@ -559,6 +591,23 @@ V> extends DataFilter<V> {
         }
         public Boolean getCallObservedDataFilter() {
             return callObservedDataFilter;
+        }
+        /**
+         * Note that no more than 1 {@code GeneFilter} can be present in the returned {@code Set}.
+         * This signature is conserved for compatibility with other classes,
+         * but see {@link #getGeneFilter()}.
+         */
+        //Override to redefine javadoc
+        @Override
+        public Set<GeneFilter> getGeneFilters() {
+            return super.getGeneFilters();
+        }
+        /**
+         * @return  Either the {@code GeneFilter} configuring this {@code ExpressionCallFilter2},
+         *          or {@code null} if none was provided.
+         */
+        public GeneFilter getGeneFilter() {
+            return super.getGeneFilters().stream().findAny().orElse(null);
         }
 
         public boolean isEmptyFilter() {
@@ -622,16 +671,11 @@ V> extends DataFilter<V> {
                 Collection<GeneFilter> geneFilters, Collection<ConditionFilter> conditionFilters,
             Collection<DataType> dataTypeFilter) throws IllegalArgumentException {
             super(summaryCallTypeQualityFilter, geneFilters, conditionFilters, dataTypeFilter,
-                    SummaryCallType.DiffExpressionSummary.class,
-                    null, null);
+                    SummaryCallType.DiffExpressionSummary.class, null);
         }
 
         @Override
         public Set<Integer> getSpeciesIdsConsidered() {
-            throw log.throwing(new UnsupportedOperationException("Not implemented for this class"));
-        }
-        @Override
-        public Set<Integer> getSpeciesIdsWithNoParams() {
             throw log.throwing(new UnsupportedOperationException("Not implemented for this class"));
         }
 
@@ -727,9 +771,8 @@ V> extends DataFilter<V> {
     protected CallFilter(Map<U, SummaryQuality> summaryCallTypeQualityFilter,
             Collection<GeneFilter> geneFilters, Collection<V> conditionFilters,
             Collection<DataType> dataTypeFilter, Class<U> callTypeCls,
-            Collection<Integer> speciesIdsConsidered, Collection<Integer> speciesIdsWithNoParams)
-                    throws IllegalArgumentException {
-        super(geneFilters, conditionFilters, speciesIdsConsidered, speciesIdsWithNoParams);
+            Collection<Integer> speciesIdsConsidered) throws IllegalArgumentException {
+        super(geneFilters, conditionFilters, speciesIdsConsidered);
 
         if (dataTypeFilter != null && dataTypeFilter.stream().anyMatch(e -> e == null)) {
             throw log.throwing(new IllegalStateException("No DataTypeFilter can be null."));

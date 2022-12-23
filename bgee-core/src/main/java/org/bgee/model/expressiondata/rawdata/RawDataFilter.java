@@ -92,32 +92,33 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
         return log.traceExit(speciesIdsConsidered);
     }
     //TODO refactor with method in ExpressionCallFilter2, it is the exact same implementation
-    private static Set<Integer> loadSpeciesIdsWithNoParams(
-            Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
-        log.traceEntry("{}, {}", geneFilters, conditionFilters);
-
-        Set<Integer> geneFilterSpeciesIdsWithNoParams = (geneFilters == null?
-                Stream.<GeneFilter>of(): geneFilters.stream())
-                .filter(f -> f.getGeneIds().isEmpty())
-                .map(gf -> gf.getSpeciesId())
-                .collect(Collectors.toSet());
-        Set<Integer> condFilterSpeciesIdsWithNoParams = (conditionFilters == null?
-                Stream.<RawDataConditionFilter>of(): conditionFilters.stream())
-                .filter(f -> f.areAllCondParamFiltersEmpty() && f.getSpeciesId() != null)
-                .map(f -> f.getSpeciesId())
-                .collect(Collectors.toSet());
-        boolean condAllSpeciesSelected = (conditionFilters == null?
-                Stream.<RawDataConditionFilter>of(): conditionFilters.stream())
-                .anyMatch(f -> f.getSpeciesId() == null);
-
-        Set<Integer> speciesIdsWithNoParams = new HashSet<>(geneFilterSpeciesIdsWithNoParams);
-        speciesIdsWithNoParams.addAll(condFilterSpeciesIdsWithNoParams);
-        if (geneFilterSpeciesIdsWithNoParams.isEmpty() && condAllSpeciesSelected) {
-            speciesIdsWithNoParams = new HashSet<>();
-        }
-
-        return log.traceExit(speciesIdsWithNoParams);
-    }
+    //Actually not used anymore
+//    private static Set<Integer> loadSpeciesIdsWithNoParams(
+//            Collection<GeneFilter> geneFilters, Collection<RawDataConditionFilter> conditionFilters) {
+//        log.traceEntry("{}, {}", geneFilters, conditionFilters);
+//
+//        Set<Integer> geneFilterSpeciesIdsWithNoParams = (geneFilters == null?
+//                Stream.<GeneFilter>of(): geneFilters.stream())
+//                .filter(f -> f.getGeneIds().isEmpty())
+//                .map(gf -> gf.getSpeciesId())
+//                .collect(Collectors.toSet());
+//        Set<Integer> condFilterSpeciesIdsWithNoParams = (conditionFilters == null?
+//                Stream.<RawDataConditionFilter>of(): conditionFilters.stream())
+//                .filter(f -> f.areAllCondParamFiltersEmpty() && f.getSpeciesId() != null)
+//                .map(f -> f.getSpeciesId())
+//                .collect(Collectors.toSet());
+//        boolean condAllSpeciesSelected = (conditionFilters == null?
+//                Stream.<RawDataConditionFilter>of(): conditionFilters.stream())
+//                .anyMatch(f -> f.getSpeciesId() == null);
+//
+//        Set<Integer> speciesIdsWithNoParams = new HashSet<>(geneFilterSpeciesIdsWithNoParams);
+//        speciesIdsWithNoParams.addAll(condFilterSpeciesIdsWithNoParams);
+//        if (geneFilterSpeciesIdsWithNoParams.isEmpty() && condAllSpeciesSelected) {
+//            speciesIdsWithNoParams = new HashSet<>();
+//        }
+//
+//        return log.traceExit(speciesIdsWithNoParams);
+//    }
 
     private final Set<String> experimentIds;
     private final Set<String> assayIds;
@@ -150,8 +151,7 @@ public class RawDataFilter extends DataFilter<RawDataConditionFilter> {
             Collection<String> experimentIds, Collection<String> assayIds, Collection<String> experimentOrAssayIds)
                     throws IllegalArgumentException {
         super(geneFilters, conditionFilters,
-                checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters),
-                loadSpeciesIdsWithNoParams(geneFilters, conditionFilters));
+                checkAndLoadSpeciesIdsConsidered(geneFilters, conditionFilters));
 
         this.experimentIds = Collections.unmodifiableSet(experimentIds == null? new HashSet<>():
             new HashSet<>(experimentIds));

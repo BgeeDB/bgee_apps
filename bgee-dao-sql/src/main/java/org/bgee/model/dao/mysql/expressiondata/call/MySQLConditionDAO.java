@@ -26,7 +26,6 @@ import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter;
 import org.bgee.model.dao.api.expressiondata.call.DAOConditionFilter2;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.GlobalConditionToRawConditionTO.ConditionRelationOrigin;
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataConditionFilter;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
 import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTO;
 import org.bgee.model.dao.mysql.MySQLDAO;
@@ -34,7 +33,6 @@ import org.bgee.model.dao.mysql.connector.BgeePreparedStatement;
 import org.bgee.model.dao.mysql.connector.MySQLDAOManager;
 import org.bgee.model.dao.mysql.connector.MySQLDAOResultSet;
 import org.bgee.model.dao.mysql.exception.UnrecognizedColumnException;
-import org.bgee.model.dao.mysql.expressiondata.rawdata.MySQLRawDataConditionDAO.MySQLRawDataConditionTOResultSet;
 
 /**
  * An {@code ConditionDAO} for MySQL. 
@@ -293,9 +291,7 @@ public class MySQLConditionDAO extends MySQLDAO<ConditionDAO.Attribute> implemen
         if (conditionIds == null || conditionIds.isEmpty()) {
             throw log.throwing(new IllegalArgumentException("Should provide at least one condition ID"));
         }
-        final Set<Integer> clonedConditionIds = Collections.unmodifiableSet(
-                conditionIds.stream().sorted()
-                .collect(Collectors.toCollection(() -> new LinkedHashSet<>(conditionIds))));
+        final Set<Integer> clonedConditionIds = Set.copyOf(conditionIds);
         final Set<ConditionDAO.Attribute> clonedAttrs = Collections.unmodifiableSet(attributes == null?
                 EnumSet.allOf(ConditionDAO.Attribute.class): EnumSet.copyOf(attributes));
 

@@ -83,7 +83,7 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
     //XXX: retrieval of ConditionRankInfoTOs associated to a ConditionTO not yet implemented,
     //to be added when needed.
     public enum Attribute implements DAO.Attribute {
-        ID("id", null, null, false),
+        ID("globalConditionId", null, null, false),
         SPECIES_ID("speciesId", null, null, false),
         //The order of the condition parameters is important and is used to generate field names
         ANAT_ENTITY_ID("anatEntityId", "AnatEntity", ANAT_ENTITY_ROOT_ID, true),

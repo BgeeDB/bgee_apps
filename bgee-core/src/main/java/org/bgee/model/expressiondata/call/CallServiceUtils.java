@@ -149,17 +149,24 @@ public class CallServiceUtils {
         log.traceEntry("{}, {}, {}, {}, {}", callFilter, presentLowThreshold,
                 presentHighThreshold, absentLowThreshold, absentHighThreshold);
 
+        if (callFilter == null ||
+                (callFilter.getSummaryCallTypeQualityFilter().equals(ExpressionCallFilter2.ALL_CALLS) &&
+                //We still need the PValueFilters if only some data types are requested:
+                //it is how we filter for data types supporting a call
+                (callFilter.getDataTypeFilters().isEmpty() ||
+                        callFilter.getDataTypeFilters().equals(EnumSet.allOf(DataType.class)))) &&
+                //Same if only specific condition parameter combination is requested
+                (callFilter.getCondParamCombination().isEmpty() ||
+                        callFilter.getCondParamCombination().containsAll(ConditionParameter.allOf()))) {
+            return new HashSet<>();
+        }
+
         EnumSet<DAODataType> daoDataTypes = this.convertDataTypeToDAODataType(
                 callFilter == null? null: callFilter.getDataTypeFilters());
         Set<ConditionParameter<?, ?>> condParams = callFilter == null? ConditionParameter.allOf():
             callFilter.getCondParamCombination();
         EnumSet<ConditionDAO.ConditionParameter> daoCondParams =
                 this.convertCondParamsToDAOCondParams(condParams);
-
-        if (callFilter == null ||
-                callFilter.getSummaryCallTypeQualityFilter().equals(ExpressionCallFilter2.ALL_CALLS)) {
-            return new HashSet<>();
-        }
 
         return log.traceExit(callFilter.getSummaryCallTypeQualityFilter()
         .entrySet().stream()

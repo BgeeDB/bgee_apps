@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.model.ComposedEntity;
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.BaseCondition2;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
@@ -31,14 +31,22 @@ public class Condition2 extends BaseCondition2 {
     public Condition2(Map<ConditionParameter<?, ?>, ComposedEntity<?>> conditionParameterObjects,
             Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) {
-        super(// we do this t case from Map<ConditionParameter<?, ?>, ComposedEntity<?>>
+        super(// we do this to cast from Map<ConditionParameter<?, ?>, ComposedEntity<?>>
               //to Map<ConditionParameter<?, ?>, Object>.
-              //we'll check correct types anyway in this constructor
+              //we'll check correct types anyway in this constructor.
+              //We also want to have an entry for all condition parameters.
               conditionParameterObjects == null? null:
-                  conditionParameterObjects.entrySet()
-                  .stream()
-                  .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
-              species);
+                  ConditionParameter.allOf().stream()
+                  .collect(Collectors.toMap(
+                          param -> param,
+                          param -> {
+                              ComposedEntity<?> compEnt = conditionParameterObjects.get(param);
+                              if (compEnt == null) {
+                                  return new ComposedEntity<>(param.getCondValueType());
+                              }
+                              return compEnt;
+                          })),
+                  species);
         if (this.conditionParameterObjects.entrySet().stream()
                 .anyMatch(e -> !ComposedEntity.class.isInstance(e.getValue()) ||
                         !e.getKey().getCondValueType().isAssignableFrom(
@@ -66,7 +74,7 @@ public class Condition2 extends BaseCondition2 {
     //Suppress unchecked because we make the verification of proper casting
     //in the constructor
     @SuppressWarnings("unchecked")
-    public <T extends Entity<?>> ComposedEntity<T> getConditionParameterValue(
+    public <T extends NamedEntity<?>> ComposedEntity<T> getConditionParameterValue(
             ConditionParameter<T, ?> condParam) {
         log.traceEntry("{}", condParam);
         Object value = this.conditionParameterObjects.get(condParam);
@@ -77,7 +85,7 @@ public class Condition2 extends BaseCondition2 {
     }
 
     @Override
-    public <T extends Entity<?>, U> String getConditionParameterId(
+    public <T extends NamedEntity<?>, U> String getConditionParameterId(
             ConditionParameter<T, U> condParam) {
         log.traceEntry("{}", condParam);
         ComposedEntity<T> value = this.getConditionParameterValue(condParam);

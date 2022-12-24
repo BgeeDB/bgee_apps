@@ -1269,8 +1269,10 @@ implements GlobalExpressionCallDAO {
                     }
                 }
             }
-            if (!infoFound || (selfObservationCount.isEmpty()
-                    && descendantObservationCount.isEmpty()
+            if (!infoFound ||
+                    //allMatch also returns true if the stream is empty, this is what we want
+                    (selfObservationCount.values().stream().allMatch(c -> c == null || c == 0)
+                    && descendantObservationCount.values().stream().allMatch(c -> c == null || c == 0)
                     && fdrPValue == null
                     && bestDescendantFDRPValue == null
                     && rank == null

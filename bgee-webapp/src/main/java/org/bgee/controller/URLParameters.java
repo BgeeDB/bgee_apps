@@ -19,6 +19,7 @@ import org.bgee.controller.CommandRPackage.PropagationParam;
 import org.bgee.model.anatdev.Sex.SexEnum;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.baseelements.CallType;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.baseelements.DecorrelationType;
 import org.bgee.model.expressiondata.baseelements.SummaryCallType;
@@ -620,10 +621,29 @@ public class URLParameters {
             true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
             //We don't check precisely the length since we can have several cond. parameters
             //provided in one query parameter
-            100, 
+            255, 
             "(?i:" + RequestParameters.ALL_VALUE + "|" 
                    + CallService.Attribute.getAllConditionParameters().stream()
                     .map(a -> a.getCondParamName())
+                    .collect(Collectors.joining("|"))
+                   + "|"
+                   + DEFAULT_SEPARATORS.stream()
+                    .map(Pattern::quote).collect(Collectors.joining("|"))
+                   + ")*", 
+             String.class);
+    /**
+     * A {@code Parameter<String>} that contains the NEW condition parameters to be used 
+     * for pages displaying expression results.
+     * Corresponds to the URL parameter "cond_param2".
+     */
+    private static final Parameter<String> COND_PARAM2 = new Parameter<String>("cond_param2",
+            true, true, DEFAULT_SEPARATORS, true, DEFAULT_IS_SECURE,
+            //We don't check precisely the length since we can have several cond. parameters
+            //provided in one query parameter
+            255, 
+            "(?i:" + RequestParameters.ALL_VALUE + "|" 
+                   + ConditionParameter.allOf().stream()
+                    .map(a -> a.getParameterName())
                     .collect(Collectors.joining("|"))
                    + "|"
                    + DEFAULT_SEPARATORS.stream()
@@ -702,6 +722,7 @@ public class URLParameters {
             SPECIES_ID,
             QUERY,
             COND_PARAM,
+            COND_PARAM2,
             // Species request
             SPECIES_LIST,
             // Anat. similarity analyze params
@@ -1155,6 +1176,9 @@ public class URLParameters {
     }
     public Parameter<String> getCondParam() {
         return COND_PARAM;
+    }
+    public Parameter<String> getCondParam2() {
+        return COND_PARAM2;
     }
     /**
      * @return  A {@code Parameter<String>} defining a propagation.

@@ -1,12 +1,9 @@
 package org.bgee.model;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * A class allowing for entities to be post-composed, for instance, for describing
@@ -22,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @param <T>   The type of {@code Entity} used in this post-composition.
  */
-public class ComposedEntity<T extends Entity<?>> extends Entity<String> {
+public class ComposedEntity<T extends NamedEntity<?>> extends Entity<String> {
     /**
      * A {@code String} used a separator between the IDs of the {@code Entity}s part of
      * a {@code ComposedEntity}. Used to generate a sort of ID for {@code ComposedEntity}s.
@@ -34,26 +31,23 @@ public class ComposedEntity<T extends Entity<?>> extends Entity<String> {
     private final LinkedHashSet<T> entities;
     private final Class<T> entityType;
 
+    public ComposedEntity(Class<T> entityType) {
+        this((T) null, entityType);
+    }
     public ComposedEntity(T entity, Class<T> entityType) {
         this(entity == null? null: new LinkedHashSet<>(Set.of(entity)), entityType);
     }
     public ComposedEntity(LinkedHashSet<T> entities, Class<T> entityType) {
         //create an "ID"
-        super(entities == null? "": entities.stream()
+        super(entities == null || entities.isEmpty()? "": entities.stream()
                 .map(e -> e.getId().toString())
                 .collect(Collectors.joining(ENTITY_ID_SEPARATOR)));
 
-        if (entities == null || entities.isEmpty()) {
-            throw new IllegalArgumentException("The provided entities cannot be null nor empty");
-        }
-        if (StringUtils.isBlank(this.getId())) {
-            throw new IllegalArgumentException("The provided entities do not allow to produce an ID");
-        }
         if (entityType == null) {
             throw new IllegalArgumentException("The entity type cannot be null");
         }
         //We will use defensive copying, there is no unmodifiableLinkedHashSet
-        this.entities = new LinkedHashSet<>(entities);
+        this.entities = entities == null? new LinkedHashSet<>(): new LinkedHashSet<>(entities);
         this.entityType = entityType;
     }
 
@@ -69,11 +63,27 @@ public class ComposedEntity<T extends Entity<?>> extends Entity<String> {
         //defensive copying, there is no unmodifiableLinkedHashSet
         return new LinkedHashSet<>(entities);
     }
-    public T getFirstEntity() {
-        return entities.iterator().next();
+    /**
+     * Returns the {@code T} at the index provided,
+     * from the {@code List} returns by {@link #getEntities()}.
+     * Unlike the method {@code List.get(int)}, this method returns {@code null}
+     * if the index is out of bond, instead of throwing an {@code IndexOutOfBoundsException}.
+     *
+     * @param index The {@code int} that is the index of the {@code T} to return.
+     * @return      The {@code T} at the specified position
+     *              in the composed entity list.
+     */
+    public T getEntity(int index) {
+        return entities.stream().skip(index).findFirst().orElse(null);
     }
     public boolean isComposed() {
         return entities.size() > 1;
+    }
+    public int size() {
+        return entities.size();
+    }
+    public boolean isEmpty() {
+        return entities.isEmpty();
     }
     public Class<T> getEntityType() {
         return entityType;

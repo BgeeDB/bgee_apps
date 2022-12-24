@@ -63,7 +63,7 @@ class CallMapping {
         // ExpressionCallData
         //***********************************
         Set<ExpressionCallData2> callData = mapGlobalCallTOToExpressionCallData(globalCallTO,
-                attrs, dataTypeFilters);
+                attrs, dataTypeFilters, callFilter.getCondParamCombination());
 
         //***********************************
         // Gene and Condition
@@ -196,10 +196,11 @@ class CallMapping {
 
     private static Set<ExpressionCallData2> mapGlobalCallTOToExpressionCallData(
             GlobalExpressionCallTO globalCallTO, Set<CallService.Attribute> attrs,
-            Set<DataType> requestedDataTypes) {
-        log.traceEntry("{}, {}, {}", globalCallTO, attrs, requestedDataTypes);
+            Set<DataType> requestedDataTypes, Set<ConditionParameter<?, ?>> condParamComb) {
+        log.traceEntry("{}, {}, {}, {}", globalCallTO, attrs, requestedDataTypes, condParamComb);
         
         if (globalCallTO.getCallDataTOs() == null || globalCallTO.getCallDataTOs().isEmpty()) {
+            log.debug("No CallData available");
             return log.traceExit((Set<ExpressionCallData2>) null);
         }
 
@@ -233,13 +234,13 @@ class CallMapping {
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
-                    getObsCount? mapDAOCallDataTOToDataPropagation(cdTO): null);
+                    getObsCount? mapDAOCallDataTOToDataPropagation(cdTO, condParamComb): null);
         }).collect(Collectors.toSet()));
     }
 
     private static DataPropagation2 mapDAOCallDataTOToDataPropagation(
-            GlobalExpressionCallDataTO callDataTO) {
-        log.traceEntry("{}", callDataTO);
+            GlobalExpressionCallDataTO callDataTO, Set<ConditionParameter<?, ?>> condParamComb) {
+        log.traceEntry("{}, {}", callDataTO, condParamComb);
 
         if (callDataTO == null || callDataTO.getSelfObservationCount() == null ||
                 callDataTO.getDescendantObservationCount() == null ||
@@ -249,11 +250,37 @@ class CallMapping {
         }
 
         return log.traceExit(new DataPropagation2(
-                callDataTO.getSelfObservationCount().entrySet().stream().collect(Collectors.toMap(
-                        e -> mapCondDAOAttrsToCondParams(e.getKey()),
+                callDataTO.getSelfObservationCount().entrySet().stream()
+                //For now, the DAO cond params anatEntity and cellType both map to
+                //ConditionParameter.ANAT_ENTITY_CELL_TYPE, creating a key collision,
+                //but really we are only interested in the post-composition of them,
+                //so we discard any combination with only the individual ones
+                .filter(e -> e.getKey().contains(ConditionDAO.Attribute.ANAT_ENTITY_ID) &&
+                                e.getKey().contains(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                                !e.getKey().contains(ConditionDAO.Attribute.ANAT_ENTITY_ID) &&
+                                !e.getKey().contains(ConditionDAO.Attribute.CELL_TYPE_ID))
+                //And really we are only interested in the requested combination
+                //XXX: are we?
+                .map(e -> Map.entry(mapCondDAOAttrsToCondParams(e.getKey()), e.getValue()))
+                .filter(e -> condParamComb.containsAll(e.getKey()) && e.getKey().containsAll(condParamComb))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
                         e -> e.getValue())),
-                callDataTO.getDescendantObservationCount().entrySet().stream().collect(Collectors.toMap(
-                        e -> mapCondDAOAttrsToCondParams(e.getKey()),
+                callDataTO.getDescendantObservationCount().entrySet().stream()
+                //For now, the DAO cond params anatEntity and cellType both map to
+                //ConditionParameter.ANAT_ENTITY_CELL_TYPE, creating a key collision,
+                //but really we are only interested in the post-composition of them,
+                //so we discard any combination with only the individual ones
+                .filter(e -> e.getKey().contains(ConditionDAO.Attribute.ANAT_ENTITY_ID) &&
+                                e.getKey().contains(ConditionDAO.Attribute.CELL_TYPE_ID) ||
+                                !e.getKey().contains(ConditionDAO.Attribute.ANAT_ENTITY_ID) &&
+                                !e.getKey().contains(ConditionDAO.Attribute.CELL_TYPE_ID))
+                //And really we are only interested in the requested combination
+                //XXX: are we?
+                .map(e -> Map.entry(mapCondDAOAttrsToCondParams(e.getKey()), e.getValue()))
+                .filter(e -> condParamComb.containsAll(e.getKey()) && e.getKey().containsAll(condParamComb))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
                         e -> e.getValue()))));
     }
     private static Set<ConditionParameter<?, ?>> mapCondDAOAttrsToCondParams(

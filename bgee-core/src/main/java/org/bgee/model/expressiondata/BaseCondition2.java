@@ -8,7 +8,7 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.species.Species;
 
@@ -60,7 +60,7 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
     }
     //We could still another generic type to ConditionParameter if we wanted to specify
     //the type of ID of each condition parameter value
-    public abstract <T extends Entity<?>, U> String getConditionParameterId(
+    public abstract <T extends NamedEntity<?>, U> String getConditionParameterId(
             ConditionParameter<T, U> condParam);
 
     public Species getSpecies() {

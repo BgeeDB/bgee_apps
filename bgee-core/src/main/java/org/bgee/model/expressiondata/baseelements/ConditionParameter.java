@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
@@ -41,34 +41,34 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataSex;
  *              the method {@code BaseCondition2#getCondParamValue(ConditionParameter)}
  *              using this {@code ConditionParameter}.
  */
-public abstract class ConditionParameter<T extends Entity<?>, U> {
+public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     private final static Logger log = LogManager.getLogger(ConditionParameter.class.getName());
 
     public static class AnatEntityCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, AnatEntity.class, (o) -> o.getId(), (o) -> o.getId(),
-                    "anatEntity", "Anat. entity");
+                    "anatEntity", "Anat. entity", "anat_entity_cell_type");
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
         private DevStageCondParam() {
             super(DevStage.class, DevStage.class,
                     (o) -> o.getId(), (o) -> o.getId(),
-                    "devStage", "Dev. stage");
+                    "devStage", "Dev. stage", "dev_stage");
         }
     }
     public static class SexCondParam extends ConditionParameter<Sex, RawDataSex> {
         private SexCondParam() {
             super(Sex.class, RawDataSex.class,
                     (o) -> o.getId(), (o) -> o.getStringRepresentation(),
-                    "sex", "Sex");
+                    "sex", "Sex", "sex");
         }
     }
     public static class StrainCondParam extends ConditionParameter<Strain, String> {
         private StrainCondParam() {
             super(Strain.class, String.class,
                     (o) -> o.getId(), (o) -> o,
-                    "strain", "Strain");
+                    "strain", "Strain", "strain");
         }
     }
 
@@ -91,12 +91,12 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
     /**
      * @return  The returned {@code LinkedHashSet} can be safely modified.
      */
-    public static final LinkedHashSet<ConditionParameter<?, ?>> allOf() {
+    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> allOf() {
         log.traceEntry();
         //defensive copying, we don't want to return an unmodifiable Set
         return log.traceExit(new LinkedHashSet<>(ALL_OF));
     }
-    public static final LinkedHashSet<ConditionParameter<?, ?>> noneOf() {
+    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> noneOf() {
         log.traceEntry();
         return log.traceExit(new LinkedHashSet<>());
     }
@@ -112,7 +112,7 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
      * @throws NullPointerException     if {@code c} is {@code null}
      *                                  or contains a {@code null} element.
      */
-    public static final LinkedHashSet<ConditionParameter<?, ?>> copyOf(
+    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> copyOf(
             Collection<ConditionParameter<?, ?>> c) {
         log.traceEntry("{}", c);
         //to mimic the behavior of EnumSet.copyOf
@@ -130,7 +130,7 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
                 .filter(param -> c.contains(param))
                 .collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
     }
-    public static final LinkedHashSet<ConditionParameter<?, ?>> getCondParams(
+    public static final LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>> getCondParams(
             Collection<ConditionParameter<?, ?>> c) {
         log.traceEntry("{}", c);
         if (c == null || c.isEmpty()) {
@@ -139,13 +139,13 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
         return log.traceExit(copyOf(c));
     }
 
-    public static final Set<LinkedHashSet<ConditionParameter<?, ?>>> getAllPossibleCombinations() {
+    public static final Set<LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>>> getAllPossibleCombinations() {
         //defensive copying
         return ALL_COND_PARAM_COMBINATIONS.stream()
                 .map(s -> copyOf(s))
                 .collect(Collectors.toSet());
     }
-    public static final Set<LinkedHashSet<ConditionParameter<?, ?>>> getAllPossibleCombinations(
+    public static final Set<LinkedHashSet<ConditionParameter<? extends NamedEntity<?>, ?>>> getAllPossibleCombinations(
             Collection<ConditionParameter<?, ?>> condParams) {
         log.traceEntry("{}", condParams);
         if (condParams == null || condParams.isEmpty()) {
@@ -196,16 +196,18 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
     private final Function<U, String> rawDataCondValueIdFun;
     private final String stringRepresentation;
     private final String displayName;
+    private final String parameterName;
 
     private ConditionParameter(Class<T> condValueType, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
-            String stringRepresentation, String displayName) {
+            String stringRepresentation, String displayName, String parameterName) {
         this.condValueType = condValueType;
         this.rawDataCondValueType = rawDataCondValueType;
         this.condValueIdFun = condValueIdFun;
         this.rawDataCondValueIdFun = rawDataCondValueIdFun;
         this.stringRepresentation = stringRepresentation;
         this.displayName = displayName;
+        this.parameterName = parameterName;
     }
 
     public Class<T> getCondValueType() {
@@ -225,6 +227,9 @@ public abstract class ConditionParameter<T extends Entity<?>, U> {
     }
     public String getDisplayName() {
         return displayName;
+    }
+    public String getParameterName() {
+        return parameterName;
     }
     @Override
     public String toString() {

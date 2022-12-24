@@ -111,7 +111,8 @@ public class ExpressionCallService extends CallServiceParent {
         Map<Integer, Condition2> requestedCondMap = daoCondFilters.isEmpty()?
                 new HashMap<>():
                 this.utils.loadGlobalConditionMap(speciesMap.values(), daoCondFilters,
-                        null, this.conditionDAO, this.anatEntityService, this.devStageService,
+                        this.utils.convertCondParamsToDAOCondAttributes(filter.getCondParamCombination()),
+                        this.conditionDAO, this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService);
 
         //Maybe we have no matching conditions at all for some species,

@@ -6,7 +6,9 @@ import java.util.List;
 
 import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
+import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
@@ -30,6 +32,10 @@ public interface DataDisplay {
             EnumMap<DataType, RawDataContainer<?, ?>> rawDataContainers,
             EnumMap<DataType, RawDataCountContainer> rawDataCountContainers,
             EnumMap<DataType, RawDataPostFilter> rawDataPostFilters);
+
+    public void displayExprCallPage(List<Species> speciesList, DataFormDetails formDetails,
+            List<ColumnDescription> colDescriptions, ExpressionCallResponse callresponse,
+            Long callCount, ExpressionCallPostFilter postFilter);
 
     public void displayExperimentPage(Experiment<?> experiment, LinkedHashSet<Assay> assays,
             DataType dataType, List<ColumnDescription> columnDescriptions);

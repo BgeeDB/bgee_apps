@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.controller.CommandGene.GeneExpressionResponse;
 import org.bgee.controller.RequestParameters;
 import org.bgee.model.anatdev.multispemapping.AnatEntitySimilarityAnalysis;
@@ -116,6 +117,11 @@ public class BgeeTypeAdapterFactory implements TypeAdapterFactory {
         if (AffymetrixProbeset.class.isAssignableFrom(rawClass)) {
             @SuppressWarnings("unchecked")
             TypeAdapter<T> result = (TypeAdapter<T>) new AffymetrixProbesetTypeAdapter(gson);
+            return log.traceExit(result);
+        }
+        if (ExpressionCallResponse.class.isAssignableFrom(rawClass)) {
+            @SuppressWarnings("unchecked")
+            TypeAdapter<T> result = (TypeAdapter<T>) new ExpressionCallResponseTypeAdapter(gson, this.utils);
             return log.traceExit(result);
         }
 

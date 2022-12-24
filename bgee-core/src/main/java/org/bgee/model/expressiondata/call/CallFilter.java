@@ -424,6 +424,9 @@ V> extends DataFilter<V> {
         private final Boolean callObservedDataFilter;
         private final boolean emptyFilter;
 
+        public ExpressionCallFilter2() {
+            this(null, null, null, null, null, null, null);
+        }
         /**
          * Either this filter can be totally empty without any parameter,
          * or a {@code GeneFilter} must be provided, otherwise an {@code IllegalArgumentException}
@@ -525,6 +528,7 @@ V> extends DataFilter<V> {
                     //so that null species IDs are replaced with the same species as in the gene filter
                     geneFilter == null || conditionFilters == null? conditionFilters:
                         conditionFilters.stream()
+                        .filter(f -> !f.areAllCondParamFiltersEmpty())
                         .map(f -> f.getSpeciesId() != null? f: new ConditionFilter2(
                                 geneFilter.getSpeciesId(), f.getCondParamToComposedFilterIds(),
                                 f.getCondParamCombination(), f.getObservedCondForParams()))

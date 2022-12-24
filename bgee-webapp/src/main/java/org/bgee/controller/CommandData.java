@@ -1,18 +1,32 @@
 package org.bgee.controller;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
 import org.bgee.controller.utils.LRUCache;
+import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Sex.SexEnum;
+import org.bgee.model.expressiondata.BaseConditionFilter2.ComposedFilterIds;
+import org.bgee.model.expressiondata.BaseConditionFilter2.FilterIds;
+import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.baseelements.SummaryCallType.ExpressionSummary;
+import org.bgee.model.expressiondata.baseelements.SummaryQuality;
+import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
+import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
+import org.bgee.model.expressiondata.call.ConditionFilter2;
+import org.bgee.model.expressiondata.call.ExpressionCallLoader;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallProcessedFilter;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.ExperimentAssay;
@@ -47,10 +61,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -67,6 +83,30 @@ import javax.servlet.http.HttpServletResponse;
 public class CommandData extends CommandParent {
     private final static Logger log = LogManager.getLogger(CommandData.class.getName());
 
+    public static class ExpressionCallResponse {
+
+        private final List<ExpressionCall2> calls;
+        private final LinkedHashSet<ConditionParameter<?, ?>> condParams;
+        private final EnumSet<DataType> requestedDataTypes;
+
+        public ExpressionCallResponse(List<ExpressionCall2> calls,
+                LinkedHashSet<ConditionParameter<?, ?>> condParams,
+                EnumSet<DataType> requestedDataTypes) {
+            this.calls = calls;
+            this.condParams = condParams;
+            this.requestedDataTypes = requestedDataTypes;
+        }
+
+        public List<ExpressionCall2> getCalls() {
+            return calls;
+        }
+        public LinkedHashSet<ConditionParameter<?, ?>> getCondParams() {
+            return condParams;
+        }
+        public EnumSet<DataType> getRequestedDataTypes() {
+            return requestedDataTypes;
+        }
+    }
     public static class ColumnDescription {
         public static enum ColumnType {
             STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE
@@ -134,6 +174,7 @@ public class CommandData extends CommandParent {
         }
     }
 
+    //TODO: add call types, qualities, cond parameters
     public static class DataFormDetails {
         private final Species requestedSpecies;
         private final Ontology<DevStage, String> requestedSpeciesDevStageOntology;
@@ -216,12 +257,25 @@ public class CommandData extends CommandParent {
      */
     private final static Map<RawDataFilter, RawDataProcessedFilter> RAW_DATA_PROCESSED_FILTER_CACHE =
             Collections.synchronizedMap(new LRUCache<RawDataFilter, RawDataProcessedFilter>(20));
+    /**
+     * A {@code Map} used as a LRU cache to retrieve {@code ExpressionCallProcessedFilter} from a
+     * {@code ExpressionCallFilter2}. The {@code Map} can hold max 20 entries.
+     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
+     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
+     * Maybe we should use a Guava cache instead.
+     */
+    private final static Map<ExpressionCallFilter2, ExpressionCallProcessedFilter> EXPR_CALL_PROCESSED_FILTER_CACHE =
+            Collections.synchronizedMap(new LRUCache<ExpressionCallFilter2, ExpressionCallProcessedFilter>(20));
 
     //Static initializer
     {
         if (LIMIT_MAX > RawDataLoader.LIMIT_MAX) {
             throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
                     + "is greater than the maximum limit allowed by the RawDataLoader."));
+        }
+        if (LIMIT_MAX > ExpressionCallLoader.LIMIT_MAX) {
+            throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
+                    + "is greater than the maximum limit allowed by the ExpressionCallLoader."));
         }
         if (DEFAULT_LIMIT > LIMIT_MAX) {
             throw log.throwing(new IllegalStateException("The default limit is greater than the max. limit."));
@@ -268,6 +322,10 @@ public class CommandData extends CommandParent {
                 RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
 
             this.processRawDataPage(speciesList, formDetails);
+
+        } else if (RequestParameters.ACTION_EXPR_CALLS.equals(this.requestParameters.getAction())) {
+
+            this.processExprCallPage(speciesList, formDetails);
 
         } else if (this.requestParameters.getExperimentId() != null) {
 
@@ -346,6 +404,98 @@ public class CommandData extends CommandParent {
         DataDisplay display = viewFactory.getDataDisplay();
         display.displayDataPage(speciesList, formDetails, colDescriptions,
                 rawDataContainers, rawDataCountContainers, rawDataPostFilters);
+
+        log.traceExit();
+    }
+
+    private void processExprCallPage(List<Species> speciesList, DataFormDetails formDetails)
+            throws InvalidRequestException, ThreadAlreadyWorkingException,
+            TooManyJobsException, IOException {
+        log.traceEntry("{}, {}", speciesList, formDetails);
+
+        log.debug("Action identified: {}", this.requestParameters.getAction());
+        List<ColumnDescription> colDescriptions = null;
+        List<ExpressionCall2> calls = null;
+        Long count = null;
+        ExpressionCallPostFilter postFilter = null;
+
+        URLParameters urlParameters = requestParameters.getUrlParametersInstance();
+        //Condition parameters
+        Set<String> selectedCondParams = new HashSet<>(
+                Optional.ofNullable(requestParameters.getValues(urlParameters.getCondParam2()))
+                .orElse(Collections.emptyList()));
+        LinkedHashSet<ConditionParameter<?, ?>> condParams = selectedCondParams.isEmpty()?
+                //default value
+                ConditionParameter.allOf():
+                //otherwise retrieve condition parameters from request
+                ConditionParameter.allOf()
+                    .stream().filter(a -> selectedCondParams.contains(a.getParameterName()))
+                    .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+        log.debug("Condition parameters: {}", condParams);
+        EnumSet<DataType> dataTypes = this.checkAndGetDataTypes();
+        log.debug("Requested data types: {}", dataTypes);
+        
+
+        //Queries that required an ExpressionCallLoader
+        if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
+                this.requestParameters.isGetFilters()) {
+            log.debug("Loading ExpressionCallLoader");
+            //try...finally block to manage number of jobs per users,
+            //to limit the concurrent number of queries a user can make
+            Job job = null;
+            try {
+                job = this.jobService.registerNewJob(this.user.getUUID().toString());
+                job.startJob();
+                //If filters are provided, they will be considered with this ExpressionCallLoader
+                ExpressionCallLoader callLoader = this.loadExprCallLoader(true, condParams, dataTypes);
+
+                //results
+                if (this.requestParameters.isGetResults()) {
+                    Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+                        this.requestParameters.getLimit();
+                    if (limit > LIMIT_MAX) {
+                        throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                                + LIMIT_MAX + " results."));
+                    }
+                    Integer offset = this.requestParameters.getOffset();
+                    if (offset != null && offset < 0) {
+                        throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
+                    }
+                    calls = callLoader.loadData(offset, limit);
+                }
+                //Raw data counts
+                if (this.requestParameters.isGetResultCount()) {
+                    count = callLoader.loadDataCount();
+                }
+                //Filters
+                if (this.requestParameters.isGetFilters()) {
+                    //TODO not yet implemented
+//                    //For requesting getFilters, well, the filter parameters must be ignored
+//                    RawDataLoader loaderToUse = rawDataLoader;
+//                    RawDataFilter noFilterParamFilter = this.loadRawDataFilter(false);
+//                    //We try to avoid requesting a ProcessedFilter if not necessary,
+//                    //by comparing the RawDataFilters
+//                    if (!rawDataLoader.getRawDataProcessedFilter()
+//                            .getSourceFilter().equals(noFilterParamFilter)) {
+//                        loaderToUse = this.loadRawDataLoader(noFilterParamFilter);
+//                    }
+//                    rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes);
+                }
+
+                job.completeWithSuccess();
+            } finally {
+                if (job != null) {
+                    job.release();
+                }
+            }
+        }
+        if (this.requestParameters.isGetColumnDefinition()) {
+            colDescriptions = this.getExprCallColumnDescriptions(condParams);
+        }
+        DataDisplay display = viewFactory.getDataDisplay();
+        log.debug("Count: {} - Calls: {}", count, calls);
+        display.displayExprCallPage(speciesList, formDetails, colDescriptions,
+                new ExpressionCallResponse(calls, condParams, dataTypes), count, postFilter);
 
         log.traceExit();
     }
@@ -591,6 +741,14 @@ public class CommandData extends CommandParent {
 
         return log.traceExit(this.loadRawDataLoader(this.loadRawDataFilter(consideringFilters)));
     }
+    private ExpressionCallLoader loadExprCallLoader(boolean consideringFilters,
+            Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)
+                    throws InvalidRequestException {
+        log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
+
+        return log.traceExit(this.loadExprCallLoader(
+                this.loadExprCallFilter(consideringFilters, condParams, dataTypes)));
+    }
 
     private RawDataLoader loadRawDataLoader(RawDataFilter filter) {
         log.traceEntry("{}", filter);
@@ -613,6 +771,28 @@ public class CommandData extends CommandParent {
             log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
         }
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
+    }
+    private ExpressionCallLoader loadExprCallLoader(ExpressionCallFilter2 filter) {
+        log.traceEntry("{}", filter);
+
+        ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
+        //Try to get the processed filter from the cache.
+        //We don't use the method computeIfAbsent, because that would probably block
+        //the whole cache while the computation of ExpressionCallProcessedFilter is done,
+        //since we simply used Collections.synchronizedMap to make the cache thread-safe.
+        //It is a simple optimization, we don't care so much if several threads
+        //are computing the same ExpressionCallProcessedFilter.
+        ExpressionCallProcessedFilter processedFilter = EXPR_CALL_PROCESSED_FILTER_CACHE.get(filter);
+        if (processedFilter == null) {
+            log.debug("Cache miss for filter: {}", filter);
+            processedFilter = callService.processExpressionCallFilter(filter);
+            log.debug("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+            EXPR_CALL_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+            log.debug("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+        } else {
+            log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
+        }
+        return log.traceExit(callService.getCallLoader(processedFilter));
     }
 
     private RawDataFilter loadRawDataFilter(boolean consideringFilters) {
@@ -696,6 +876,176 @@ public class CommandData extends CommandParent {
                 experimentId != null? Collections.singleton(experimentId): null,
                 null, //assay IDs
                 expOrAssayIds));
+    }
+    private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,
+            Set<ConditionParameter<?, ?>> condParams, EnumSet<DataType> dataTypes)
+                    throws InvalidRequestException {
+        log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
+
+        //Either there is no filtering at all, or some genes must be requested
+        Integer speciesId = this.requestParameters.getSpeciesId();
+        if (speciesId == null) {
+            log.debug("No filter present, returning an empty ExpressionCallFilter2");
+            return log.traceExit(new ExpressionCallFilter2());
+        }
+        GeneFilter geneFilter = new GeneFilter(speciesId, this.requestParameters.getGeneIds());
+        if (geneFilter.getGeneIds().isEmpty()) {
+            throw log.throwing(new InvalidRequestException("Some genes must be selected."));
+        }
+
+        List<String> filterAnatEntityIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity());
+        List<String> filterDevStageIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterDevStage());
+        List<String> filterCellTypeIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterCellType());
+        List<String> filterSexIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterSex());
+        List<String> filterStrains = !consideringFilters? null:
+            this.requestParameters.getValues(
+                this.requestParameters.getUrlParametersInstance().getParamFilterStrain());
+
+        List<String> sexes = this.requestParameters.getSex();
+        if (sexes != null && (sexes.contains(RequestParameters.ALL_VALUE) ||
+                sexes.containsAll(
+                        EnumSet.allOf(SexEnum.class)
+                        .stream()
+                        .map(e -> e.name())
+                        .collect(Collectors.toSet())))) {
+            sexes = null;
+        }
+
+        Map<ConditionParameter<?, ?>, ComposedFilterIds<String>> condParamToComposedFilterIds =
+                new HashMap<>();
+
+        //ANAT ENTITY AND CELL TYPE
+        FilterIds<String> anatEntityFilter = new FilterIds<>(
+                //Filters override the related parameter from the form
+                filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty()?
+                        filterAnatEntityIds: this.requestParameters.getAnatEntity(),
+                //And we never include child terms when the parameter comes from a filter.
+                filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty() ||
+                this.requestParameters.getAnatEntity() == null ||
+                this.requestParameters.getAnatEntity().isEmpty()?
+                        false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                this.requestParameters.getUrlParametersInstance()
+                                .getParamAnatEntityDescendant())));
+        FilterIds<String> cellTypeFilter = new FilterIds<>(
+                //Filters override the related parameter from the form
+                filterCellTypeIds != null && !filterCellTypeIds.isEmpty()?
+                        filterCellTypeIds: this.requestParameters.getCellType(),
+                //And we never include child terms when the parameter comes from a filter.
+                filterCellTypeIds != null && !filterCellTypeIds.isEmpty() ||
+                this.requestParameters.getCellType() == null ||
+                this.requestParameters.getCellType().isEmpty()?
+                        false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                this.requestParameters.getUrlParametersInstance()
+                                .getParamCellTypeDescendant())));
+        ComposedFilterIds<String> anatComposedFilter = new ComposedFilterIds<>(
+                List.of(anatEntityFilter, cellTypeFilter).stream()
+                .filter(f -> !f.isEmpty())
+                .collect(Collectors.toList()));
+        condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatComposedFilter);
+
+        //DEV. STAGE
+        FilterIds<String> devStageFilter = new FilterIds<>(
+                //Filters override the related parameter from the form
+                filterDevStageIds != null && !filterDevStageIds.isEmpty()?
+                        filterDevStageIds: this.requestParameters.getDevStage(),
+                //And we never include child terms when the parameter comes from a filter.
+                filterDevStageIds != null && !filterDevStageIds.isEmpty() ||
+                this.requestParameters.getDevStage() == null ||
+                this.requestParameters.getDevStage().isEmpty()?
+                        false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
+                                this.requestParameters.getUrlParametersInstance()
+                                .getParamStageDescendant())));
+        condParamToComposedFilterIds.put(ConditionParameter.DEV_STAGE,
+                new ComposedFilterIds<>(devStageFilter));
+
+        //SEX
+        FilterIds<String> sexFilter = new FilterIds<>(
+                //Filters override the related parameter from the form
+                filterSexIds != null && !filterSexIds.isEmpty()?
+                        filterSexIds: sexes,
+                //sex descendant always false: requesting descendants of the root is equivalent
+                //to request all sexes, in which case we don't provide requested sex IDs
+                false);
+        condParamToComposedFilterIds.put(ConditionParameter.SEX,
+                new ComposedFilterIds<>(sexFilter));
+
+        //STRAIN
+        FilterIds<String> strainFilter = new FilterIds<>(
+                //Filters override the related parameter from the form
+                filterStrains != null && !filterStrains.isEmpty()?
+                        filterStrains: this.requestParameters.getStrain(),
+                //strain descendant always false: requesting descendants of the root is equivalent
+                //to request all strains, in which case we don't provide requested strains
+                false);
+        condParamToComposedFilterIds.put(ConditionParameter.STRAIN,
+                new ComposedFilterIds<>(strainFilter));
+
+        ConditionFilter2 condFilter = null;
+        try {
+            condFilter = new ConditionFilter2(speciesId,
+                    condParamToComposedFilterIds,
+                    condParams,
+                    null);
+            if (condFilter.areAllCondParamFiltersEmpty()) {
+                //To request a species a GeneFilter is mandatory,
+                //so if there are no other filters, we can discard this ConditionFilter
+                condFilter = null;
+            }
+        } catch (IllegalArgumentException e) {
+            log.catching(e);
+            throw log.throwing(new InvalidRequestException(e.getMessage()));
+        }
+
+        //ExpressionSummary and SummaryQuality
+        SummaryQuality tmpQual = SummaryQuality.values()[0];
+        if (this.requestParameters.getDataQuality() != null &&
+                !this.requestParameters.getDataQuality().isBlank()) {
+            try {
+                tmpQual = BgeeEnum.convert(SummaryQuality.class, this.requestParameters.getDataQuality());
+            } catch (IllegalArgumentException e) {
+                log.catching(Level.DEBUG, e);
+                throw log.throwing(new InvalidRequestException(
+                        "Unrecognized data quality: " + this.requestParameters.getDataQuality()));
+            }
+        }
+        SummaryQuality qual = tmpQual;
+        Map<ExpressionSummary, SummaryQuality> summaryCallTypeQualityFilter = new HashMap<>();
+        if (this.requestParameters.getExprType() == null || this.requestParameters.getExprType().isEmpty() ||
+                this.requestParameters.getExprType().contains(RequestParameters.ALL_VALUE)) {
+            summaryCallTypeQualityFilter = EnumSet.allOf(ExpressionSummary.class).stream()
+                    .collect(Collectors.toMap(es -> es, es -> qual));
+        } else {
+            try {
+            summaryCallTypeQualityFilter = this.requestParameters.getExprType().stream()
+                    .collect(Collectors.toMap(
+                            s -> BgeeEnum.convert(ExpressionSummary.class, s),
+                            s -> qual));
+            } catch (IllegalArgumentException e) {
+                log.catching(Level.DEBUG, e);
+                throw log.throwing(new InvalidRequestException(
+                        "Unrecognized call types: " + this.requestParameters.getExprType()));
+            }
+        }
+        try {
+            return log.traceExit(new ExpressionCallFilter2(
+                    summaryCallTypeQualityFilter,
+                    geneFilter,
+                    condFilter != null? Set.of(condFilter): null,
+                    dataTypes,
+                    condParams,
+                    null, null));
+        } catch (IllegalArgumentException e) {
+            log.catching(Level.DEBUG, e);
+            throw log.throwing(new InvalidRequestException("Incorrect parameters"));
+        }
     }
 
     private EnumMap<DataType, RawDataContainer<?, ?>> loadRawDataResults(RawDataLoader rawDataLoader,
@@ -835,6 +1185,31 @@ public class CommandData extends CommandParent {
         }
 
         return log.traceExit(dataTypeToColDescr);
+    }
+    private List<ColumnDescription> getExprCallColumnDescriptions(Set<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}", condParams);
+        List<ColumnDescription> colDescr = new ArrayList<>();
+        //TODO
+        return colDescr;
+//        if (withExperimentInfo) {
+//            colDescr.add(new ColumnDescription("Experiment ID", null,
+//                    List.of("result.experiment.id"),
+//                    ColumnDescription.ColumnType.INTERNAL_LINK,
+//                    ColumnDescription.INTERNAL_LINK_TARGET_EXP));
+//            colDescr.add(new ColumnDescription("Experiment name", null,
+//                    List.of("result.experiment.name"),
+//                    ColumnDescription.ColumnType.STRING,
+//                    null));
+//        }
+//        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
+//                List.of("result.id"),
+//                ColumnDescription.ColumnType.STRING,
+//                null));
+//
+//        colDescr.addAll(getConditionColumnDescriptions("result", false));
+//
+//
+//        return log.traceExit(dataTypeToColDescr);
     }
 
     private List<ColumnDescription> getAffymetrixRawDataAnnotsColumnDescriptions(

@@ -15,6 +15,7 @@ import org.bgee.model.dao.api.DAOManager;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.expressiondata.call.ConditionGraphService;
 import org.bgee.model.expressiondata.call.ConditionService;
+import org.bgee.model.expressiondata.call.ExpressionCallService;
 import org.bgee.model.expressiondata.call.multispecies.MultiSpeciesCallService;
 import org.bgee.model.expressiondata.rawdata.RawDataService;
 import org.bgee.model.file.DownloadFileService;
@@ -27,7 +28,6 @@ import org.bgee.model.search.SearchMatchResultService;
 import org.bgee.model.source.SourceService;
 import org.bgee.model.species.SpeciesService;
 import org.bgee.model.species.TaxonService;
-import org.sphx.api.SphinxClient;
 
 /**
  * Factory allowing to obtain {@link Service}s. 
@@ -142,6 +142,14 @@ public class ServiceFactory implements AutoCloseable {
     public RawDataService getRawDataService() {
         log.traceEntry();
         return log.traceExit(new RawDataService(this));
+    }
+
+    /**
+     * @return  A newly instantiated {@code ExpressionCallService}
+     */
+    public ExpressionCallService getExpressionCallService() {
+        log.traceEntry();
+        return log.traceExit(new ExpressionCallService(this));
     }
 
     /**

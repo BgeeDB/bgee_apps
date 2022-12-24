@@ -16,7 +16,9 @@ import org.bgee.controller.BgeeProperties;
 import org.bgee.controller.RequestParameters;
 import org.bgee.controller.CommandData.ColumnDescription;
 import org.bgee.controller.CommandData.DataFormDetails;
+import org.bgee.controller.CommandData.ExpressionCallResponse;
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
@@ -110,6 +112,35 @@ public class JsonDataDisplay extends JsonParentDisplay implements DataDisplay {
         }
 
         this.sendResponse(HttpServletResponse.SC_OK, "Data page", responseMap, true);
+        log.traceExit();
+    }
+
+    @Override
+    public void displayExprCallPage(List<Species> speciesList, DataFormDetails formDetails,
+            List<ColumnDescription> colDescriptions, ExpressionCallResponse callresponse,
+            Long callCount, ExpressionCallPostFilter postFilter) {
+        log.traceEntry("{}, {}, {}, {}, {}, {}", speciesList, formDetails, colDescriptions,
+                callresponse, callCount, postFilter);
+        LinkedHashMap<String, Object> responseMap = new LinkedHashMap<String, Object>();
+        if (speciesList != null && !speciesList.isEmpty()) {
+            responseMap.put("speciesList", speciesList);
+        }
+        if (formDetails != null && formDetails.containsAnyInformation()) {
+            responseMap.put("requestDetails", formDetails);
+        }
+        if (colDescriptions != null && !colDescriptions.isEmpty()) {
+            responseMap.put("columnDescriptions", colDescriptions);
+        }
+        if (callresponse != null) {
+            responseMap.put("expressionData", callresponse);
+        }
+        if (callCount != null) {
+            responseMap.put("expressionCallCount", callCount);
+        }
+        if (postFilter != null) {
+            responseMap.put("filters", postFilter);
+        }
+        this.sendResponse(HttpServletResponse.SC_OK, "Expression call page", responseMap, true);
         log.traceExit();
     }
 

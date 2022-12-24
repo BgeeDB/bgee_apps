@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.bgee.model.Entity;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 
 public class ExpressionCallPostFilter {
@@ -38,7 +38,7 @@ public class ExpressionCallPostFilter {
     }
 
     //We already checked the correct types in the constructor
-    public <T extends Entity<?>> LinkedHashSet<T> getEntities(ConditionParameter<T, ?> param) {
+    public <T extends NamedEntity<?>> LinkedHashSet<T> getEntities(ConditionParameter<T, ?> param) {
         //need to iterate the Stream to cast
         return this.conditionParameterEntities.get(param).stream()
                 .map(o -> param.getCondValueType().cast(o))

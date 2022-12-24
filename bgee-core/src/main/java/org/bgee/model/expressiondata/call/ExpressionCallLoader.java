@@ -224,6 +224,11 @@ public class ExpressionCallLoader extends CommonService {
 
     public long loadDataCount() {
         log.traceEntry();
+        //FIXME: this value, and maybe also per species, must be inserted in a new table of the database,
+        //and getGlobalExpressionCallsCount to detect when the filter is empty and use that table
+        if (this.processedFilter.getSourceFilter().isEmptyFilter()) {
+            return log.traceExit(5207425780L);
+        }
         return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
                 this.processedFilter.getDaoFilters()));
     }
@@ -293,7 +298,9 @@ public class ExpressionCallLoader extends CommonService {
         Map<Integer, Species> speciesMap = this.processedFilter.getSpeciesMap();
         Map<Integer, Condition2> missingCondMap = this.utils.loadConditionMapFromResultSet(
                         (attrs) -> this.condDAO.getGlobalConditionsFromIds(missingCondIds, attrs),
-                        null, speciesMap.values(), this.anatEntityService, this.devStageService,
+                        this.utils.convertCondParamsToDAOCondAttributes(
+                                this.processedFilter.getSourceFilter().getCondParamCombination()),
+                        speciesMap.values(), this.anatEntityService, this.devStageService,
                         this.sexService, this.strainService);
         //If the Map is going to grow too big, we keep only the entries needed
         //for this method call
@@ -341,6 +348,12 @@ public class ExpressionCallLoader extends CommonService {
                 CallService.Attribute.CALL_TYPE,
                 CallService.Attribute.DATA_QUALITY,
                 CallService.Attribute.EXPRESSION_SCORE,
+                //to know how the propagation status of the call
+                CallService.Attribute.OBSERVED_DATA,
+                //We need the p-value info per data type to know which data types
+                //produced the calls
+                CallService.Attribute.P_VALUE_INFO_EACH_DATA_TYPE,
+                //We also want to know the global FDR-corrected p-value
                 CallService.Attribute.P_VALUE_INFO_ALL_DATA_TYPES);
         attributes.addAll(callFilter.getCondParamCombination().stream()
                 .flatMap(param -> {

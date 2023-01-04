@@ -309,20 +309,9 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         sb.append(generateSelectClause(TABLE_NAME, getColToAttributesMap(), true, true, clonedAttrs));
         
         // generate FROM clause
-        // if clonedCallFilters onlyContain speciesId and globalConditionIds then no 
-        // JOIN on gene/globalExpression tables are required
-        if (!clonedCallFilters.isEmpty() && globalExpTableName) {
-            sb.append(MySQLGlobalExpressionCallDAO.generateTableReferences2(
-                    speciesIdFilterTableName, false, geneTableName != null,
-                    globalExpTableName));
-            // manually add JOIN to globalCond table in last position
-            sb.append(" INNER JOIN ").append(TABLE_NAME).append(" ON ")
-            .append(MySQLGlobalExpressionCallDAO.TABLE_NAME).append(".")
-            .append(ConditionDAO.Attribute.ID.getTOFieldName())
-            .append(" = ").append(TABLE_NAME).append(".").append(ConditionDAO.Attribute.ID.getTOFieldName());
-        } else {
-            sb.append(" FROM ").append(TABLE_NAME);
-        }
+        sb.append(MySQLGlobalExpressionCallDAO.generateTableReferences2(
+                speciesIdFilterTableName, true, geneTableName != null,
+                globalExpTableName));
         
         // generate WHERE clause
         sb.append(MySQLGlobalExpressionCallDAO.generateWhereClause2(clonedCallFilters,

@@ -125,14 +125,6 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         super(manager);
     }
 
-    //TODO: check whether this method is to moved/has been moved to RawDataConditionDAO?
-//    @Override
-//    public ConditionTOResultSet getRawConditionsBySpeciesIds(Collection<Integer> speciesIds,
-//            Collection<ConditionDAO.Attribute> attributes) throws DAOException {
-//        log.entry(speciesIds, attributes);
-//        return log.traceExit(this.getConditionsBySpeciesIds(false, speciesIds, null, attributes));
-//    }
-
     @Override
     public GlobalConditionToRawConditionTOResultSet getGlobalCondToRawCondBySpeciesIds(
             Collection<Integer> speciesIds, Collection<ConditionDAO.Attribute> conditionParameters)

@@ -56,6 +56,11 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
         log.traceEntry("{}, {}, {}, {}", speciesIdFilterTableName, globalCondSortOrAttrs, geneSort,
                 globalExprFilter);
 
+        // sanity check in order not to join to gene table without having globalExpression table.
+        if (!globalExprFilter && (geneSort || speciesIdFilterTableName.equals(MySQLGeneDAO.TABLE_NAME))) {
+            throw log.throwing(new IllegalStateException("globalExprFilter can not be false when "
+                    + "geneSort is true or speciesIdFilterTableName is equal to the name of the gene table."));
+        }
         //****************************************
         // Create the necessary joins
         //****************************************

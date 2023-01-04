@@ -36,18 +36,21 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
     }
 
     /**
-     * Method used to generate the FROM clause of MySQL queries
+     * Method used to generate the FROM clause of MySQL queries to retrieve global expression
+     * or global conditions
      * 
      * @param speciesIdFilterTableName  A {@code String} corresponding to the name of the
-     *                                  table used to filter on speciesIds
+     *                                  table used to filter on speciesIds. Can not be the name
+     *                                  of the gene table if globalExprFilter is false.
      * @param globalCondSortOrAttrs     A {@code boolean} defining if filtering on globalCond
      *                                  table is necessary or not. If true, will join to
      *                                  the globalCond table
      * @param geneSort                  A {@code boolean} defining if sorting on gene
-     *                                  table is necessary. If true, join to the gene table
+     *                                  table is necessary. If true, join to the gene table. Can
+     *                                  not be true if globalExprFilter is false.
      * @param globalExprFilter          A {@code boolean} defining if filtering on globalExpression
      *                                  table is necessary. If true, join to the globalExpression
-     *                                  table
+     *                                  table.
      * @return
      */
     protected static String generateTableReferences2(

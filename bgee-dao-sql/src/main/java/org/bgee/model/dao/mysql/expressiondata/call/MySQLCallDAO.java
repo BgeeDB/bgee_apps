@@ -331,7 +331,7 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
                 + MySQLConditionDAO.getFieldNamePartFromCondParams2(condParams));
     }
 
-    protected static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters, Integer offset,
+    protected static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters, Long offset,
             Integer limit)
             throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}", callFilters, offset, limit);
@@ -346,7 +346,7 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
     }
 
     protected static void configureCallStatement2(BgeePreparedStatement stmt, LinkedHashSet<DAOCallFilter> callFilters,
-            Integer offset, Integer limit)
+            Long offset, Integer limit)
             throws SQLException {
         log.traceEntry("{}, {}, {}, {}", stmt, callFilters, offset, limit);
 
@@ -373,7 +373,7 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
             }
         }
         if (offset != null) {
-            stmt.setInt(offsetParamIndex, offset);
+            stmt.setLong(offsetParamIndex, offset);
             offsetParamIndex++;
         }
         if (limit != null) {

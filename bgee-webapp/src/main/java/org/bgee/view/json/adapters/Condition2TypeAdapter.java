@@ -34,7 +34,13 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
         out.beginObject();
 
         for (ConditionParameter<? extends NamedEntity<?>, ?> condParam: ConditionParameter.allOf()) {
-            if (condParam.equals(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+            //XXX: This shows that we need to manage the display differently:
+            //For each ConditionParameter, the value should be an array of entity.
+            //For displaying the JSON response in the table, the number of columns
+            //should adapt to the number of entities. This would become truly generalized
+            //for post-composition
+            if (condParam.equals(ConditionParameter.ANAT_ENTITY_CELL_TYPE) &&
+                    !value.getConditionParameterValue(condParam).isEmpty()) {
                 ComposedEntity<AnatEntity> compEnt = value.getConditionParameterValue(
                         ConditionParameter.ANAT_ENTITY_CELL_TYPE);
                 //If there is only one term, we put in in anatEntity.
@@ -43,34 +49,26 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
                 assert compEnt.size() <= 2;
                 AnatEntity anatEntity = compEnt.size() > 1? compEnt.getEntity(1): compEnt.getEntity(0);
                 AnatEntity cellType = compEnt.size() > 1? compEnt.getEntity(0): null;
+                out.name("anatEntity");
                 if (anatEntity != null) {
-                    out.name("anatEntity");
                     this.utils.writeSimplifiedNamedEntity(out, anatEntity);
+                } else {
+                    out.value("NA");
                 }
+                out.name("cellType");
                 if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
-                    out.name("cellType");
                     this.utils.writeSimplifiedNamedEntity(out, cellType);
+                } else {
+                    out.value("NA");
                 }
             } else {
                 //For now none of the remaining cond params cannot be post-composed
                 if (!value.getConditionParameterValue(condParam).isEmpty()) {
                     assert !value.getConditionParameterValue(condParam).isComposed();
-                    if (condParam.equals(ConditionParameter.DEV_STAGE)) {
-                        out.name("devStage");
-                        this.utils.writeSimplifiedNamedEntity(out,
-                                value.getConditionParameterValue(ConditionParameter.DEV_STAGE)
-                                .getEntity(0));
-                    } else if (condParam.equals(ConditionParameter.SEX)) {
-                        out.name("sex");
-                        this.utils.writeSimplifiedNamedEntity(out,
-                                value.getConditionParameterValue(ConditionParameter.SEX)
-                                .getEntity(0));
-                    } else if (condParam.equals(ConditionParameter.STRAIN)) {
-                        out.name("strain");
-                        this.utils.writeSimplifiedNamedEntity(out,
-                                value.getConditionParameterValue(ConditionParameter.STRAIN)
-                                .getEntity(0));
-                    }
+                    out.name(condParam.getAttributeName());
+                    this.utils.writeSimplifiedNamedEntity(out,
+                            value.getConditionParameterValue(condParam)
+                            .getEntity(0));
                 }
             }
         }

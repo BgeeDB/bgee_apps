@@ -60,7 +60,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
         out.name("expressionCalls");
         out.beginArray();
         for (ExpressionCall2 call: value.getCalls()) {
-            Set<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
+            EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
             dataTypesWithData.addAll(dataTypes);
             boolean highQualScore = false;
@@ -100,11 +100,11 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
             //                    .anyMatch(comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0))
             //                .map(c -> c.getDataType())
             //                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-            out.beginArray();
-            for (DataType d: dataTypes) {
-                out.value(d.getStringRepresentation());
+            out.beginObject();
+            for (DataType d: EnumSet.allOf(DataType.class)) {
+                out.name(d.name()).value(dataTypes.contains(d));
             }
-            out.endArray();
+            out.endObject();
 
             out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
             out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());

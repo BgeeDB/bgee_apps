@@ -109,7 +109,7 @@ public class CommandData extends CommandParent {
     }
     public static class ColumnDescription {
         public static enum ColumnType {
-            STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE
+            STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE, DATA_TYPE_SOURCE
         }
         public static final String INTERNAL_LINK_TARGET_EXP = "experiment";
         public static final String INTERNAL_LINK_TARGET_GENE = "gene";
@@ -174,7 +174,6 @@ public class CommandData extends CommandParent {
         }
     }
 
-    //TODO: add call types, qualities, cond parameters
     public static class DataFormDetails {
         private final Species requestedSpecies;
         private final Ontology<DevStage, String> requestedSpeciesDevStageOntology;
@@ -885,6 +884,10 @@ public class CommandData extends CommandParent {
         //Either there is no filtering at all, or some genes must be requested
         Integer speciesId = this.requestParameters.getSpeciesId();
         if (speciesId == null) {
+            if (!condParams.isEmpty() && !condParams.containsAll(ConditionParameter.allOf()) ||
+                    !dataTypes.isEmpty() && !dataTypes.equals(EnumSet.allOf(DataType.class))) {
+                throw log.throwing(new InvalidRequestException("Some genes must be selected."));
+            }
             log.debug("No filter present, returning an empty ExpressionCallFilter2");
             return log.traceExit(new ExpressionCallFilter2());
         }
@@ -1189,27 +1192,102 @@ public class CommandData extends CommandParent {
     private List<ColumnDescription> getExprCallColumnDescriptions(Set<ConditionParameter<?, ?>> condParams) {
         log.traceEntry("{}", condParams);
         List<ColumnDescription> colDescr = new ArrayList<>();
-        //TODO
-        return colDescr;
-//        if (withExperimentInfo) {
-//            colDescr.add(new ColumnDescription("Experiment ID", null,
-//                    List.of("result.experiment.id"),
-//                    ColumnDescription.ColumnType.INTERNAL_LINK,
-//                    ColumnDescription.INTERNAL_LINK_TARGET_EXP));
-//            colDescr.add(new ColumnDescription("Experiment name", null,
-//                    List.of("result.experiment.name"),
-//                    ColumnDescription.ColumnType.STRING,
-//                    null));
-//        }
-//        colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
-//                List.of("result.id"),
-//                ColumnDescription.ColumnType.STRING,
-//                null));
-//
-//        colDescr.addAll(getConditionColumnDescriptions("result", false));
-//
-//
-//        return log.traceExit(dataTypeToColDescr);
+
+        colDescr.add(new ColumnDescription("Gene ID", null,
+                List.of("result.gene.geneId"),
+                ColumnDescription.ColumnType.INTERNAL_LINK,
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE));
+        colDescr.add(new ColumnDescription("Gene name", null,
+                List.of("result.gene.name"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        //Call information
+        colDescr.add(new ColumnDescription("Present/absent call", null,
+                List.of("result.expressionState"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Call quality", null,
+                List.of("result.expressionQuality"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("FDR",
+                "FDR-corrected p-value of the test of significance of the gene being expressed in the condition.",
+                List.of("result.fdr"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Expression score",
+                "Normalized expression level information. Highest expression level: 100; lowest expression level: 0.",
+                List.of("result.expressionScore.expressionScore"),
+                ColumnDescription.ColumnType.NUMERIC,
+                null));
+        colDescr.add(new ColumnDescription("Expression score confidence",
+                "Confidence in the validity of the expression score. Two values possible: \"low\" and \"high\".",
+                List.of("result.expressionScore.expressionScoreConfidence"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+        colDescr.add(new ColumnDescription("Supporting data types",
+                "Data types used to produce the present/absent expression call.",
+                List.of("result.dataTypesWithData"),
+                ColumnDescription.ColumnType.DATA_TYPE_SOURCE,
+                null));
+
+        //Condition
+        if (condParams.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+            colDescr.add(new ColumnDescription("Anat. entity ID",
+                    "ID of the anatomical localization of the sample",
+                    List.of("result.condition.anatEntity.id"),
+                    ColumnDescription.ColumnType.ANAT_ENTITY,
+                    null));
+            colDescr.add(new ColumnDescription("Anat. entity name",
+                    "Name of the anatomical localization of the sample",
+                    List.of("result.condition.anatEntity.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+            colDescr.add(new ColumnDescription("Cell type ID",
+                    "ID of the cell type of the sample",
+                    List.of("result.condition.cellType.id"),
+                    ColumnDescription.ColumnType.ANAT_ENTITY,
+                    null));
+            colDescr.add(new ColumnDescription("Cell type name",
+                    "Name of the cell type of the sample",
+                    List.of("result.condition.cellType.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+        }
+        if (condParams.contains(ConditionParameter.DEV_STAGE)) {
+            colDescr.add(new ColumnDescription("Stage ID",
+                    "ID of the developmental and life stage of the sample",
+                    List.of("result.condition.devStage.id"),
+                    ColumnDescription.ColumnType.DEV_STAGE,
+                    null));
+            colDescr.add(new ColumnDescription("Stage name",
+                    "Name of the developmental and life stage of the sample",
+                    List.of("result.condition.devStage.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+        }
+        if (condParams.contains(ConditionParameter.SEX)) {
+            colDescr.add(new ColumnDescription("Sex",
+                    "Annotation of the sex of the sample",
+                    List.of("result.condition.sex.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+        }
+        if (condParams.contains(ConditionParameter.STRAIN)) {
+            colDescr.add(new ColumnDescription("Strain",
+                    "Annotation of the strain of the sample",
+                    List.of("result.condition.strain.name"),
+                    ColumnDescription.ColumnType.STRING,
+                    null));
+        }
+        colDescr.add(new ColumnDescription("Species", null,
+                List.of("result.condition.species.genus",
+                        "result.condition.species.speciesName"),
+                ColumnDescription.ColumnType.STRING,
+                null));
+
+        return log.traceExit(colDescr);
     }
 
     private List<ColumnDescription> getAffymetrixRawDataAnnotsColumnDescriptions(

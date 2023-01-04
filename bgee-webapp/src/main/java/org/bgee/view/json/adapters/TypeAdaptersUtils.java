@@ -248,7 +248,7 @@ public class TypeAdaptersUtils {
         out.endArray(); // end Map
         log.traceExit();
     }
-    public void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<String> namedEntity)
+    public void writeSimplifiedNamedEntity(JsonWriter out, NamedEntity<?> namedEntity)
             throws IOException {
         log.traceEntry("{}, {}", out, namedEntity);
         if (namedEntity == null) {
@@ -256,7 +256,7 @@ public class TypeAdaptersUtils {
             log.traceExit(); return;
         }
         out.beginObject();
-        out.name("id").value(namedEntity.getId());
+        out.name("id").value(namedEntity.getId().toString());
         out.name("name").value(namedEntity.getName());
         out.endObject();
         log.traceExit();

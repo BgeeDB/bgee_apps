@@ -47,7 +47,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     public static class AnatEntityCondParam extends ConditionParameter<AnatEntity, AnatEntity> {
         private AnatEntityCondParam() {
             super(AnatEntity.class, AnatEntity.class, (o) -> o.getId(), (o) -> o.getId(),
-                    "anatEntity", "Anat. entity", "anat_entity_cell_type");
+                    "anatEntity", "Anat. entity", "anat_entity");
         }
     }
     public static class DevStageCondParam extends ConditionParameter<DevStage, DevStage> {
@@ -194,18 +194,18 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     //a type of ID different from String
     private final Function<T, String> condValueIdFun;
     private final Function<U, String> rawDataCondValueIdFun;
-    private final String stringRepresentation;
+    private final String attributeName;
     private final String displayName;
     private final String parameterName;
 
     private ConditionParameter(Class<T> condValueType, Class<U> rawDataCondValueType,
             Function<T, String> condValueIdFun, Function<U, String> rawDataCondValueIdFun,
-            String stringRepresentation, String displayName, String parameterName) {
+            String attributeName, String displayName, String parameterName) {
         this.condValueType = condValueType;
         this.rawDataCondValueType = rawDataCondValueType;
         this.condValueIdFun = condValueIdFun;
         this.rawDataCondValueIdFun = rawDataCondValueIdFun;
-        this.stringRepresentation = stringRepresentation;
+        this.attributeName = attributeName;
         this.displayName = displayName;
         this.parameterName = parameterName;
     }
@@ -222,8 +222,8 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     public Function<U, String> getRawDataCondValueIdFun() {
         return rawDataCondValueIdFun;
     }
-    public String getStringRepresentation() {
-        return stringRepresentation;
+    public String getAttributeName() {
+        return attributeName;
     }
     public String getDisplayName() {
         return displayName;
@@ -233,7 +233,7 @@ public abstract class ConditionParameter<T extends NamedEntity<?>, U> {
     }
     @Override
     public String toString() {
-        return this.getStringRepresentation();
+        return this.getAttributeName();
     }
 
 

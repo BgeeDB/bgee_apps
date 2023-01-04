@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.BgeeProperties;
 import org.bgee.model.expressiondata.call.CallService;
 import org.bgee.model.file.DownloadFile;
-import org.bgee.view.JsonHelper;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

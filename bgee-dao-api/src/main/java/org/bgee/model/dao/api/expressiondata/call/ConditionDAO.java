@@ -219,6 +219,26 @@ public interface ConditionDAO extends DAO<ConditionDAO.Attribute> {
             Collection<Attribute> attributes)
             throws DAOException;
 
+    /**
+     * Retrieves global conditions belonging to the provided {@code Collection} of
+     * {@code DAOCallFilter}.
+     * <p>
+     * The conditions are retrieved and returned as a {@code ConditionTOResultSet}. It is the
+     * responsibility of the caller to close this {@code DAOResultSet} once results are retrieved.
+     *
+     * @param callFilters      A {@code Collection} of {@code DAOCallFilter}s to configure
+     *                         the filtering of conditions. If several {@code DAOCallFilter}s
+     *                         are provided, they are seen as "OR" conditions.
+     * @param attributes       A {@code Collection} of {@code ConditionDAO.Attribute}s defining the
+     *                         attributes to populate in the returned {@code ConditionTO}s.
+     *                         If {@code null} or empty, all attributes are populated.
+     * @return                 A {@code ConditionTOResultSet} containing the requested conditions
+     *                         retrieved from the data source.
+     * @throws DAOException If an error occurred while accessing the data source.
+     */
+    public ConditionTOResultSet getGlobalConditionsFromCallFilters(Collection<DAOCallFilter> callFilters, 
+            Collection<Attribute> attributes) throws DAOException;
+
     public ConditionTOResultSet getGlobalConditionsFromIds(Collection<Integer> condIds,
             Collection<Attribute> attributes) throws DAOException, IllegalArgumentException;
 

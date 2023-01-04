@@ -93,20 +93,23 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
         }
         if (globalExprFilter) {
             if (geneTableFirst) {
-                sb.append(" INNER JOIN ");
-            }
-            sb.append(MySQLGlobalExpressionCallDAO.TABLE_NAME);
-            if (geneTableFirst) {
-                sb.append(" ON ")
-                .append(geneTableToGlobalExprTableJoinClause);
+                sb.append(" INNER JOIN ")
+                .append(MySQLGlobalExpressionCallDAO.TABLE_NAME)
+                .append(" ON ").append(geneTableToGlobalExprTableJoinClause);
+            } else {
+                sb.append(MySQLGlobalExpressionCallDAO.TABLE_NAME);
             }
         }
         if (globalCondSortOrAttrs) {
-            sb.append(" INNER JOIN ")
-            .append(MySQLConditionDAO.TABLE_NAME).append(" ON ")
-            .append(globalCondTableToGlobalExprTableJoinClause);
+            if (globalExprFilter || geneTableFirst) {
+                sb.append(" INNER JOIN ")
+                .append(MySQLConditionDAO.TABLE_NAME).append(" ON ")
+                .append(globalCondTableToGlobalExprTableJoinClause);
+            } else {
+                sb.append(MySQLConditionDAO.TABLE_NAME);
+            }
         }
-        if (geneSort && !geneTableFirst)  {
+        if (geneSort && !geneTableFirst) {
             sb.append(" INNER JOIN ").append(MySQLGeneDAO.TABLE_NAME).append(" ON ")
               .append(geneTableToGlobalExprTableJoinClause);
         }

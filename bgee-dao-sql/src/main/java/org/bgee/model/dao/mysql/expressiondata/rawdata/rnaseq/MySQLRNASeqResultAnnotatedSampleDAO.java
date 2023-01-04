@@ -57,6 +57,7 @@ implements RNASeqResultAnnotatedSampleDAO {
             Long offset, Integer limit,
             Collection<RNASeqResultAnnotatedSampleDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attributes);
+        checkOffsetAndLimit(offset, limit);
 
         //It is very ugly, but for performance reasons, we use two queries:
         //one for identifying the internal assay IDs, the second one to retrieve the calls.

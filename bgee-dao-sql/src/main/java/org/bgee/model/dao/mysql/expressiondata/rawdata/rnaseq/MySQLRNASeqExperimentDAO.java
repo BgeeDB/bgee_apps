@@ -37,6 +37,7 @@ implements RNASeqExperimentDAO{
             Boolean isSingleCell, Long offset, Integer limit,
             Collection<RNASeqExperimentDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);

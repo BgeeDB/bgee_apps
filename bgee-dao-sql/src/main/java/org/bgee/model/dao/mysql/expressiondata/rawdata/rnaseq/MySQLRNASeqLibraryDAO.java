@@ -45,6 +45,7 @@ public class MySQLRNASeqLibraryDAO extends MySQLRawDataDAO<RNASeqLibraryDAO.Attr
             Collection<RNASeqLibraryDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit,
                 attributes);
+        checkOffsetAndLimit(offset, limit);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);

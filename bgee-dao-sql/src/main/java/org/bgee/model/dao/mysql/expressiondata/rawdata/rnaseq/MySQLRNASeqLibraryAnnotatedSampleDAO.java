@@ -80,6 +80,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
             Long offset, Integer limit,
             Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
+        checkOffsetAndLimit(offset, limit);
 
         final DAOProcessedRawDataFilter<Integer> processedFilters =
                 new DAOProcessedRawDataFilter<>(rawDataFilters);

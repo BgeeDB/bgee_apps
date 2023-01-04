@@ -168,6 +168,13 @@ public class ExpressionCallLoader extends CommonService {
     //the filtering in the query and the fields retrieved in the returned Conditions.
     public List<ExpressionCall2> loadData(Integer offset, Integer limit) {
         log.traceEntry("{}, {}", offset, limit);
+
+        //If the DAOCallFilters are null (different from: not-null and empty)
+        //it means there was no matching conds and thus no result for sure
+        if (this.processedFilter.getDaoFilters() == null) {
+            return log.traceExit(new ArrayList<>());
+        }
+
         if (offset != null && offset < 0) {
             throw log.throwing(new IllegalArgumentException("offset cannot be less than 0"));
         }
@@ -224,6 +231,12 @@ public class ExpressionCallLoader extends CommonService {
 
     public long loadDataCount() {
         log.traceEntry();
+
+        //If the DAOCallFilters are null (different from: not-null and empty)
+        //it means there was no matching conds and thus no result for sure
+        if (this.processedFilter.getDaoFilters() == null) {
+            return log.traceExit(0L);
+        }
         //FIXME: this value, and maybe also per species, must be inserted in a new table of the database,
         //and getGlobalExpressionCallsCount to detect when the filter is empty and use that table
         if (this.processedFilter.getSourceFilter().isEmptyFilter()) {

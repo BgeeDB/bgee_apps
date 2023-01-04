@@ -34,7 +34,7 @@ implements RNASeqExperimentDAO{
 
     @Override
     public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, Integer offset, Integer limit,
+            Boolean isSingleCell, Long offset, Integer limit,
             Collection<RNASeqExperimentDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
 

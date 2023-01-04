@@ -456,8 +456,10 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      *                              the associated value being a {@code DAO.Direction}
      *                              defining whether the ordering should be ascendant or descendant.
      *                              If {@code null} or empty, no ordering is performed.
-     * @param offset                An {@code Integer} used to specify which row to start from retrieving data
+     * @param offset                A {@code Long} used to specify which row to start from retrieving data
      *                              in the result of a query. If null, retrieve data from the first row.
+     *                              It is a {@code Long} because sometimes the number of potential results
+     *                              can be very large.
      * @param limit                 An {@code Integer} used to limit the number of rows returned in a query
      *                              result. If null, all results are returned.
      * @return                      A {@code GlobalExpressionCallTOResultSet} containing global
@@ -471,7 +473,7 @@ public interface GlobalExpressionCallDAO extends DAO<GlobalExpressionCallDAO.Att
      */
     public GlobalExpressionCallTOResultSet getGlobalExpressionCalls2(
             Collection<DAOCallFilter> callFilters, Collection<AttributeInfo> attributes,
-            LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes, Integer offset,
+            LinkedHashMap<OrderingAttributeInfo, DAO.Direction> orderingAttributes, Long offset,
             Integer limit)
                     throws DAOException, IllegalArgumentException;
 

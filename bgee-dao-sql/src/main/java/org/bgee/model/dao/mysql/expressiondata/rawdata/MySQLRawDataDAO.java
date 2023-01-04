@@ -205,7 +205,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
     //parameterize query without rnaSeqTechnologyIds
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
-            DAOProcessedRawDataFilter<U> processedFilters, DAODataType datatype, Integer offset, Integer limit)
+            DAOProcessedRawDataFilter<U> processedFilters, DAODataType datatype, Long offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}", query, processedFilters, datatype, offset, limit);
         return log.traceExit(this.parameterizeQuery(query, processedFilters, null, datatype,
@@ -215,7 +215,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     //parameterize query with rnaSeqTechnologyIds
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
             DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
-            DAODataType datatype, Integer offset, Integer limit)
+            DAODataType datatype, Long offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
                 datatype, offset, limit);
@@ -311,11 +311,11 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
 
         //parameterize offset and limit
         if (offset != null) {
-            stmt.setIntegers(paramIndex, Set.of(offset), false);
+            stmt.setLong(paramIndex, offset);
             paramIndex++;
         }
         if (limit != null) {
-            stmt.setIntegers(paramIndex, Set.of(limit), false);
+            stmt.setInt(paramIndex, limit);
             paramIndex++;
         }
         return log.traceExit(stmt);
@@ -1558,7 +1558,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                 .collect(Collectors.toMap(a -> a.getTOFieldName(), a -> a)));
     }
 
-    protected void checkOffsetAndLimit(Integer offset, Integer limit) {
+    protected void checkOffsetAndLimit(Long offset, Integer limit) {
         log.traceEntry("{}, {}", offset, limit);
         if (offset != null && limit == null) {
             throw log.throwing(new IllegalArgumentException("limit can not be null when offset is"

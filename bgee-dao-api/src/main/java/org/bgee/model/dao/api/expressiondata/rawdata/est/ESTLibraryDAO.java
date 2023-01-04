@@ -62,8 +62,10 @@ public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
      * @param rawDataFilters    A {@code Collection} of {@code DAORawDataFilter} allowing to specify
      *                          how to filter EST libraries to retrieve. The query uses AND between elements
      *                          of a same filter and uses OR between filters.
-     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     * @param offset            A {@code Long} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
      * @param limit             An {@code Integer} used to limit the number of rows returned in a query
      *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
@@ -73,7 +75,7 @@ public interface ESTLibraryDAO extends DAO<ESTLibraryDAO.Attribute> {
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public ESTLibraryTOResultSet getESTLibraries(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
+            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     /**
      * {@code DAOResultSet} specifics to {@code ESTLibraryTO}s

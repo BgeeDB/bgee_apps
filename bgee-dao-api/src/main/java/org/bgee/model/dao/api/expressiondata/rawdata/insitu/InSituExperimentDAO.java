@@ -62,8 +62,10 @@ public interface InSituExperimentDAO extends DAO<InSituExperimentDAO.Attribute> 
      *                          uses OR between filters.
      * @param offset            An {@code Integer} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row.
-     * @param limit             An {@code Integer} used to limit the number of rows returned in a query
+     * @param limit             A {@code Long} used to limit the number of rows returned in a query
      *                          result. If null, all results are returned.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
      *                          to retrieve from the data source.
      * @return                  A {@code InSituExperimentTOResultSet} allowing to retrieve the targeted
@@ -71,7 +73,7 @@ public interface InSituExperimentDAO extends DAO<InSituExperimentDAO.Attribute> 
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public InSituExperimentTOResultSet getInSituExperiments(Collection<DAORawDataFilter> rawDatafilters,
-            Integer offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
+            Long offset, Integer limit, Collection<Attribute> attributes) throws DAOException;
 
     public interface InSituExperimentTOResultSet extends DAOResultSet<InSituExperimentTO> {}
 

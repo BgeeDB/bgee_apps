@@ -697,12 +697,13 @@ public class URLParameters {
     private static final Parameter<Boolean> GET_FILTERS = new Parameter<Boolean>(
             "get_filters", false, false, null, false, false, 5, DEFAULT_FORMAT, Boolean.class);
     /**
-     * A {@code Parameter<Integer>} used to define offset to retrieve data results.
-     * Corresponds to the URL parameter "offset".
+     * A {@code Parameter<Long>} used to define offset to retrieve data results.
+     * Corresponds to the URL parameter "offset". Needs to be a {@code Long}
+     * since sometimes the number of results is very large.
      */
-    private static final Parameter<Integer> OFFSET = new Parameter<Integer>("offset",
+    private static final Parameter<Long> OFFSET = new Parameter<Long>("offset",
             false, false, null, false, DEFAULT_IS_SECURE,
-            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
+            DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Long.class);
     /**
      * A {@code Parameter<Integer>} used to define the limit on number of data results retrieved.
      * Corresponds to the URL parameter "limit".
@@ -1237,10 +1238,11 @@ public class URLParameters {
         return GET_FILTERS;
     }
     /**
-     * @return  A {@code Parameter<Integer>} used to define offset to retrieve data results.
-     *          Corresponds to the URL parameter "offset".
+     * @return  A {@code Parameter<Long>} used to define offset to retrieve data results.
+     *          Corresponds to the URL parameter "offset". The type is {@code Long} because
+     *          the number of potential results can sometimes be very large.
      */
-    public Parameter<Integer> getParamOffset(){
+    public Parameter<Long> getParamOffset(){
         return OFFSET;
     }
     /**

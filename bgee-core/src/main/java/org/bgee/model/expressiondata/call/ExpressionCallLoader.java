@@ -166,7 +166,9 @@ public class ExpressionCallLoader extends CommonService {
     //One of the Attribute could be "CONDITION", rather than the detail of the condition parameters.
     //And then there would be another argument, the condition parameters, that would affect both
     //the filtering in the query and the fields retrieved in the returned Conditions.
-    public List<ExpressionCall2> loadData(Integer offset, Integer limit) {
+    //
+    //offset is a Long because sometimes the number of potential results can be very large.
+    public List<ExpressionCall2> loadData(Long offset, Integer limit) {
         log.traceEntry("{}, {}", offset, limit);
 
         //If the DAOCallFilters are null (different from: not-null and empty)
@@ -186,7 +188,7 @@ public class ExpressionCallLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
                     + LIMIT_MAX));
         }
-        int newOffset = offset == null? 0: offset;
+        long newOffset = offset == null? 0L: offset;
         int newLimit = limit == null? LIMIT_MAX: limit;
 
         //We obtain the results from the data source

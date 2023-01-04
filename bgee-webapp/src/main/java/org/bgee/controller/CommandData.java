@@ -456,7 +456,7 @@ public class CommandData extends CommandParent {
                         throw log.throwing(new InvalidRequestException("It is not possible to request more than "
                                 + LIMIT_MAX + " results."));
                     }
-                    Integer offset = this.requestParameters.getOffset();
+                    Long offset = this.requestParameters.getOffset();
                     if (offset != null && offset < 0) {
                         throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
                     }
@@ -524,7 +524,7 @@ public class CommandData extends CommandParent {
                     //The experiment itself will be retrieved along the way
                     InformationType.ASSAY,
                     rdt,
-                    0,
+                    0L,
                     //RawDataLoader.LIMIT_MAX should always be defined to remain above
                     //the max number of assays in an experiment
                     RawDataLoader.LIMIT_MAX);
@@ -1061,7 +1061,7 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException("It is not possible to request more than "
                     + LIMIT_MAX + " results."));
         }
-        Integer offset = this.requestParameters.getOffset();
+        Long offset = this.requestParameters.getOffset();
         if (offset != null && offset < 0) {
             throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }

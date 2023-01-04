@@ -49,7 +49,7 @@ public class MySQLAffymetrixProbesetDAO extends MySQLRawDataDAO<AffymetrixProbes
 
     @Override
     public AffymetrixProbesetTOResultSet getAffymetrixProbesets(
-            Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
+            Collection<DAORawDataFilter> rawDataFilters, Long offset, Integer limit,
             Collection<AffymetrixProbesetDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);

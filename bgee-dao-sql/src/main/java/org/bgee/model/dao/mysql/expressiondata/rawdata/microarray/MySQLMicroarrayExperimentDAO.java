@@ -34,7 +34,7 @@ public class MySQLMicroarrayExperimentDAO extends MySQLRawDataDAO<MicroarrayExpe
 
     @Override
     public MicroarrayExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<MicroarrayExperimentDAO.Attribute> attrs)
+            Long offset, Integer limit, Collection<MicroarrayExperimentDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);

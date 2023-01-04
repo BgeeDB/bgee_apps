@@ -305,9 +305,10 @@ public class RawDataLoader extends CommonService {
      * @param infoType          The {@code InformationType} to load.
      * @param rawDataDataType   A {@code RawDataDataType} for which to retrieve
      *                          {@code InformationType}.
-     * @param offset            An {@code Integer} specifying at which index to start getting results
+     * @param offset            A {@code Long} specifying at which index to start getting results
      *                          of the type {@code infoType}. If {@code null}, equivalent to {@code 0}
-     *                          (first index).
+     *                          (first index). {@code Long} because sometimes the number of
+     *                          potential results can be very large.
      * @param limit             An {@code Integer} specifying the number of results of type
      *                          {@code infoType} to retrieve. Cannot be greater than {@link #LIMIT_MAX}.
      *                          If {@code null}, equivalent to {@link #LIMIT_MAX}.
@@ -318,7 +319,7 @@ public class RawDataLoader extends CommonService {
      *                                  or greater than {@link #LIMIT_MAX}.
      */
     public <T extends RawDataContainer<?, ?>> T loadData(InformationType infoType,
-            RawDataDataType<T, ?> rawDataDataType, Integer offset, Integer limit)
+            RawDataDataType<T, ?> rawDataDataType, Long offset, Integer limit)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}", infoType, rawDataDataType, offset, limit);
         if (infoType == null) {
@@ -338,7 +339,7 @@ public class RawDataLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
                     + LIMIT_MAX));
         }
-        int newOffset = offset == null? 0: offset;
+        long newOffset = offset == null? 0L: offset;
         int newLimit = limit == null? LIMIT_MAX: limit;
 
         DataType requestedDataType = rawDataDataType.getDataType();
@@ -455,7 +456,7 @@ public class RawDataLoader extends CommonService {
 //                       METHODS LOADING AFFYMETRIX RAW DATA
 //*****************************************************************************************
 
-    private AffymetrixContainer loadAffymetrixData(InformationType infoType, int offset, int limit) {
+    private AffymetrixContainer loadAffymetrixData(InformationType infoType, long offset, int limit) {
         log.traceEntry("{}, {}, {}", infoType, offset, limit);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -652,7 +653,7 @@ public class RawDataLoader extends CommonService {
 //*****************************************************************************************
 
     private RnaSeqContainer loadRnaSeqData(InformationType infoType, boolean isSingleCell,
-            int offset, int limit) {
+            long offset, int limit) {
         log.traceEntry("{}, {}, {}, {}", infoType, isSingleCell, offset, limit);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -917,7 +918,7 @@ public class RawDataLoader extends CommonService {
 //                           METHODS LOADING EST RAW DATA
 //*****************************************************************************************
 
-    private ESTContainer loadESTData(InformationType infoType, int offset, int limit) {
+    private ESTContainer loadESTData(InformationType infoType, long offset, int limit) {
         log.traceEntry("{}, {}, {}", infoType, offset, limit);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -1072,7 +1073,7 @@ public class RawDataLoader extends CommonService {
 //                             METHODS LOADING IN SITU RAW DATA
 //*****************************************************************************************
 
-    private InSituContainer loadInSituData(InformationType infoType, int offset, int limit) {
+    private InSituContainer loadInSituData(InformationType infoType, long offset, int limit) {
         log.traceEntry("{}, {}, {}", infoType, offset, limit);
 
         //If the DaoRawDataFilters are null it means there was no matching conds

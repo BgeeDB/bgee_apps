@@ -45,7 +45,7 @@ public class MySQLESTDAO extends MySQLRawDataDAO<ESTDAO.Attribute> implements ES
     }
 
     @Override
-    public ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters, Integer offset, Integer limit,
+    public ESTTOResultSet getESTs(Collection<DAORawDataFilter> rawDataFilters, Long offset, Integer limit,
             Collection<ESTDAO.Attribute> attributes) throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attributes);
         checkOffsetAndLimit(offset, limit);

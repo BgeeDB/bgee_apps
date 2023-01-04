@@ -77,7 +77,7 @@ implements RNASeqLibraryAnnotatedSampleDAO{
     @Override
     public RNASeqLibraryAnnotatedSampleTOResultSet getLibraryAnnotatedSamples(
             Collection<DAORawDataFilter> rawDataFilters, Boolean isSingleCell,
-            Integer offset, Integer limit,
+            Long offset, Integer limit,
             Collection<RNASeqLibraryAnnotatedSampleDAO.Attribute> attrs) throws DAOException {
         log.traceEntry("{}, {}, {}, {}, {}", rawDataFilters, isSingleCell, offset, limit, attrs);
 

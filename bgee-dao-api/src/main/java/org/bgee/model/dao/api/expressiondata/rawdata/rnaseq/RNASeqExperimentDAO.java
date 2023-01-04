@@ -64,9 +64,11 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      *                          If <strong>true</strong> only single-cell RNA-Seq are retrieved.
      *                          If <strong>false</strong> only bulk RNA-Seq are retrieved.
      *                          If <strong>null</strong> all RNA-Seq are retrieved.
-     * @param offset            An {@code Integer} used to specify which row to start from retrieving data
+     * @param offset            A {@code Long} used to specify which row to start from retrieving data
      *                          in the result of a query. If null, retrieve data from the first row. If
-     *                          not null, a limit should be also provided
+     *                          not null, a limit should be also provided.
+     *                          {@code Long} because sometimes the number of potential results
+     *                          can be very large.
      * @param limit             An {@code Integer} used to limit the number of rows returned in a query
      *                          result. If null, all results are returned.
      * @param attributes        A {@code Collection} of {@code Attribute}s to specify the information
@@ -76,7 +78,7 @@ public interface RNASeqExperimentDAO extends DAO<RNASeqExperimentDAO.Attribute> 
      * @throws DAOException     If an error occurred while accessing the data source.
      */
     public RNASeqExperimentTOResultSet getExperiments(Collection<DAORawDataFilter> rawDataFilters,
-            Boolean isSingleCell, Integer offset, Integer limit,
+            Boolean isSingleCell, Long offset, Integer limit,
             Collection<Attribute> attributes) throws DAOException;
 
     /**

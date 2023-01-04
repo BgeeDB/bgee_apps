@@ -38,7 +38,7 @@ public class MySQLAffymetrixChipDAO extends MySQLRawDataDAO<AffymetrixChipDAO.At
 
     @Override
     public AffymetrixChipTOResultSet getAffymetrixChips(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)
+            Long offset, Integer limit, Collection<AffymetrixChipDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);

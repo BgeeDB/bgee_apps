@@ -34,7 +34,7 @@ public class MySQLESTLibraryDAO extends MySQLRawDataDAO<ESTLibraryDAO.Attribute>
 
     @Override
     public ESTLibraryTOResultSet getESTLibraries(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<ESTLibraryDAO.Attribute> attrs)
+            Long offset, Integer limit, Collection<ESTLibraryDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);

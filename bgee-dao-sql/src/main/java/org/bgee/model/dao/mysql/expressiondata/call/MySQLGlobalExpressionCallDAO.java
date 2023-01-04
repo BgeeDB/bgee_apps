@@ -1354,7 +1354,7 @@ implements GlobalExpressionCallDAO {
    }
    //TODO: update this method when ConditionDAO.ConditionParameter will allow to retrieve field name
    
-   private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters, Integer offset,
+   private static void performSanityChecks2(LinkedHashSet<DAOCallFilter> callFilters, Long offset,
            Integer limit)
            throws IllegalArgumentException {
        log.traceEntry("{}, {}, {}", callFilters, offset, limit);
@@ -1813,7 +1813,7 @@ implements GlobalExpressionCallDAO {
     }
 
     private static void configureCallStatement2(BgeePreparedStatement stmt, LinkedHashSet<DAOCallFilter> callFilters,
-            Integer offset, Integer limit)
+            Long offset, Integer limit)
             throws SQLException {
         log.traceEntry("{}, {}, {}, {}", stmt, callFilters, offset, limit);
 
@@ -1840,7 +1840,7 @@ implements GlobalExpressionCallDAO {
             }
         }
         if (offset != null) {
-            stmt.setInt(offsetParamIndex, offset);
+            stmt.setLong(offsetParamIndex, offset);
             offsetParamIndex++;
         }
         if (limit != null) {
@@ -1928,7 +1928,7 @@ implements GlobalExpressionCallDAO {
                 .collect(Collectors.joining(", ", " ORDER BY ", "")));
     }
 
-    private String generateOffsetLimitClause(Integer offset, Integer limit) {
+    private String generateOffsetLimitClause(Long offset, Integer limit) {
         log.traceEntry("{}, {}", offset, limit);
         if(offset == null && limit == null) {
             return log.traceExit("");
@@ -1947,7 +1947,7 @@ implements GlobalExpressionCallDAO {
             Collection<DAOCallFilter> callFilters,
             Collection<GlobalExpressionCallDAO.AttributeInfo> attributes,
             LinkedHashMap<GlobalExpressionCallDAO.OrderingAttributeInfo, DAO.Direction> orderingAttributes,
-            Integer offset, Integer limit)
+            Long offset, Integer limit)
                     throws DAOException, IllegalArgumentException {
         log.traceEntry("{}, {}, {}", callFilters, attributes, orderingAttributes);
 

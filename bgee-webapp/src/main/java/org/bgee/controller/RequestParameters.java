@@ -1036,6 +1036,8 @@ public class RequestParameters {
                                 return value;
                             } else if (parameter.getType().equals(Integer.class)){
                                 return Integer.parseInt(value);
+                            } else if (parameter.getType().equals(Long.class)){
+                                return Long.parseLong(value);
                             } else if (parameter.getType().equals(Boolean.class)){
                                 return castToBoolean(value);
                             } else if (parameter.getType().equals(Double.class)){
@@ -2565,10 +2567,12 @@ public class RequestParameters {
      * {@link URLParameters#getParamOffset()}. Equivalent to calling
      * {@link #getFirstValue(URLParameters.Parameter)} for this parameter.
      *
-     * @return  An {@code Integer} that is the value for the
+     * @return  A {@code Long} that is the value for the
      *          {@code offset} URL parameter. Can be {@code null}.
+     *          {@code Long} because sometimes the number of potential results
+     *          can be very large.
      */
-    public Integer getOffset() {
+    public Long getOffset() {
         return this.getFirstValue(this.getUrlParametersInstance().getParamOffset());
     }
     /**

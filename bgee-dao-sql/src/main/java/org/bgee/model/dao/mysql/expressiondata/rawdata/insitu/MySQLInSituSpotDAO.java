@@ -51,7 +51,7 @@ public class MySQLInSituSpotDAO extends MySQLRawDataDAO<InSituSpotDAO.Attribute>
 
     @Override
     public InSituSpotTOResultSet getInSituSpots(Collection<DAORawDataFilter> rawDataFilters,
-            Integer offset, Integer limit, Collection<InSituSpotDAO.Attribute> attrs)
+            Long offset, Integer limit, Collection<InSituSpotDAO.Attribute> attrs)
             throws DAOException {
         log.traceEntry("{}, {}, {}, {}", rawDataFilters, offset, limit, attrs);
         checkOffsetAndLimit(offset, limit);

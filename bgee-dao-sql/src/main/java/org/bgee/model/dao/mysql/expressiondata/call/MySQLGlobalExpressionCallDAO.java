@@ -1670,8 +1670,8 @@ implements GlobalExpressionCallDAO {
         sb.append(generateSelectClause2(clonedAttrs, clonedOrderingAttrs.keySet(),
                 globalRank));
         sb.append(generateTableReferences2(speciesIdFilterTableName, globalCondSortOrAttr,
-                geneSort));
-        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName));
+                geneSort, true));
+        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName, TABLE_NAME));
         
         sb.append(generateOrderByClause2(clonedOrderingAttrs));
         sb.append(generateOffsetLimitClause(offset, limit));
@@ -1704,8 +1704,8 @@ implements GlobalExpressionCallDAO {
         // generate select clause
         sb.append("SELECT COUNT(*) AS countCalls");
         sb.append(generateTableReferences2(speciesIdFilterTableName, false,
-                false));
-        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName));
+                false, true));
+        sb.append(generateWhereClause2(clonedCallFilters, speciesIdFilterTableName, TABLE_NAME));
         try (BgeePreparedStatement stmt = this.getManager().getConnection().prepareStatement(sb.toString())){
             configureCallStatement2(stmt, clonedCallFilters, null, null);
             ResultSet rs = stmt.getRealPreparedStatement().executeQuery();

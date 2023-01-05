@@ -215,6 +215,13 @@ public class URLParameters {
     private static final Parameter<Integer> SPECIES_ID = 
             new Parameter<Integer>("species_id", false, false, null, true, false, 10,
                     DEFAULT_FORMAT, Integer.class);
+    /**
+     * A {@code Parameter<Integer>} representing species IDs to apply to a filter for raw data.
+     * Corresponds to the URL parameter "filter_species_id".
+     */
+    private static final Parameter<Integer> FILTER_SPECIES_ID =
+            new Parameter<Integer>("filter_species_id", true, false, null, true, DEFAULT_IS_SECURE,
+                    DEFAULT_MAX_SIZE, DEFAULT_FORMAT, Integer.class);
     
     /**
      * A {@code Parameter<String>} representing a query search, typically for the gene page.
@@ -665,6 +672,20 @@ public class URLParameters {
     private static final Parameter<String> EXPERIMENT_ID = new Parameter<String>("exp_id",
             false, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE, DEFAULT_FORMAT,
             String.class);
+    /**
+     * A {@code Parameter<String>} that contains the experiment IDs to be used in a filter.
+     * Corresponds to the URL parameter "filter_exp_id".
+     */
+    private static final Parameter<String> FILTER_EXPERIMENT_ID = new Parameter<String>(
+            "filter_exp_id", true, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE,
+            DEFAULT_FORMAT, String.class);
+    /**
+     * A {@code Parameter<String>} that contains the assay IDs to be used in a filter.
+     * Corresponds to the URL parameter "filter_assay_id".
+     */
+    private static final Parameter<String> FILTER_ASSAY_ID = new Parameter<String>(
+            "filter_assay_id", true, false, null, true, DEFAULT_IS_SECURE, DEFAULT_MAX_SIZE,
+            DEFAULT_FORMAT, String.class);
 
     /**
      * A {@code Parameter<Boolean>} used to define whether to obtain the list of species.
@@ -721,6 +742,7 @@ public class URLParameters {
             ACTION,
             GENE_ID,
             SPECIES_ID,
+            FILTER_SPECIES_ID,
             QUERY,
             COND_PARAM,
             COND_PARAM2,
@@ -757,6 +779,8 @@ public class URLParameters {
             STAGE_DESCENDANT,
             EXP_ASSAY_ID,
             EXPERIMENT_ID,
+            FILTER_EXPERIMENT_ID,
+            FILTER_ASSAY_ID,
             GET_SPECIES_LIST,
             GET_RESULTS,
             GET_RESULT_COUNT,
@@ -877,6 +901,12 @@ public class URLParameters {
      public Parameter<Integer> getParamSpeciesId() {
          return SPECIES_ID;
      }
+     /**
+      * @return  A {@code Parameter<Integer>} that contains the species Ids to use in filters.
+      */
+      public Parameter<Integer> getParamFilterSpeciesId() {
+          return FILTER_SPECIES_ID;
+      }
      
     /**
      * @return  A {@code Parameter<String>} that contains the search text.
@@ -1201,6 +1231,20 @@ public class URLParameters {
      */
     public Parameter<String> getParamExperimentId(){
         return EXPERIMENT_ID;
+    }
+    /**
+     * @return  A {@code Parameter<String>} that contains the experiment IDs to be used in a filter.
+     *          Corresponds to the URL parameter "filter_exp_id".
+     */
+    public Parameter<String> getParamFilterExperimentId(){
+        return FILTER_EXPERIMENT_ID;
+    }
+    /**
+     * @return  A {@code Parameter<String>} that contains the assay IDs to be used in a filter.
+     *          Corresponds to the URL parameter "filter_assay_id".
+     */
+    public Parameter<String> getParamFilterAssayId(){
+        return FILTER_ASSAY_ID;
     }
     /**
      * @return  A {@code Parameter<Boolean>} used to define whether to obtain the list of species.

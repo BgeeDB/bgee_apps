@@ -501,9 +501,25 @@ public class CommandData extends CommandParent {
                 //If filters are provided, they will be considered with this RawDataLoader
                 RawDataLoader rawDataLoader = this.loadRawDataLoader(true);
 
+                InformationType infoType = null;
+                switch (this.requestParameters.getAction()) {
+                case RequestParameters.ACTION_EXPERIMENTS:
+                    infoType = InformationType.EXPERIMENT;
+                    break;
+                case RequestParameters.ACTION_RAW_DATA_ANNOTS:
+                    infoType = InformationType.ASSAY;
+                    break;
+                case RequestParameters.ACTION_PROC_EXPR_VALUES:
+                    infoType = InformationType.CALL;
+                    break;
+                default:
+                    throw log.throwing(new UnsupportedOperationException("Unsupported action: "
+                            + this.requestParameters.getAction()));
+                }
+
                 //Raw data results
                 if (this.requestParameters.isGetResults()) {
-                    rawDataContainers = this.loadRawDataResults(rawDataLoader, dataTypes);
+                    rawDataContainers = this.loadRawDataResults(rawDataLoader, dataTypes, infoType);
                 }
                 //Raw data counts
                 if (this.requestParameters.isGetResultCount()) {
@@ -520,7 +536,7 @@ public class CommandData extends CommandParent {
                             .getSourceFilter().equals(noFilterParamFilter)) {
                         loaderToUse = this.loadRawDataLoader(noFilterParamFilter);
                     }
-                    rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes);
+                    rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes, infoType);
                 }
 
                 job.completeWithSuccess();
@@ -1186,8 +1202,8 @@ public class CommandData extends CommandParent {
     }
 
     private EnumMap<DataType, RawDataContainer<?, ?>> loadRawDataResults(RawDataLoader rawDataLoader,
-            EnumSet<DataType> dataTypes) throws InvalidRequestException {
-        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
+            EnumSet<DataType> dataTypes, InformationType infoType) throws InvalidRequestException {
+        log.traceEntry("{}, {}, {}", rawDataLoader, dataTypes, infoType);
 
         Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
             this.requestParameters.getLimit();
@@ -1203,26 +1219,10 @@ public class CommandData extends CommandParent {
         if (this.requestParameters.getAction() == null) {
             throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
         }
-        InformationType infoType = null;
-        switch (this.requestParameters.getAction()) {
-        case RequestParameters.ACTION_EXPERIMENTS:
-            infoType = InformationType.EXPERIMENT;
-            break;
-        case RequestParameters.ACTION_RAW_DATA_ANNOTS:
-            infoType = InformationType.ASSAY;
-            break;
-        case RequestParameters.ACTION_PROC_EXPR_VALUES:
-            infoType = InformationType.CALL;
-            break;
-        default:
-            throw log.throwing(new UnsupportedOperationException("Unsupported action: "
-                    + this.requestParameters.getAction()));
-        }
-        InformationType finalInfoType = infoType;
         return log.traceExit(dataTypes.stream()
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> rawDataLoader.loadData(finalInfoType,
+                        dt -> rawDataLoader.loadData(infoType,
                                 RawDataDataType.getRawDataDataType(dt), offset, limit),
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
@@ -1253,13 +1253,22 @@ public class CommandData extends CommandParent {
     }
 
     private EnumMap<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
-            EnumSet<DataType> dataTypes) {
-        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
+            EnumSet<DataType> dataTypes, InformationType infoType) {
+        log.traceEntry("{}, {}, {}", rawDataLoader, dataTypes, infoType);
 
         return log.traceExit(dataTypes.stream()
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> rawDataLoader.loadPostFilter(RawDataDataType.getRawDataDataType(dt)),
+                        dt -> {
+                            RawDataPostFilter postFilter = rawDataLoader.loadPostFilter(
+                                    RawDataDataType.getRawDataDataType(dt));
+                            //We create a new Filter if only experiments were requested,
+                            //because the assay filter is also always loaded.
+                            if (InformationType.EXPERIMENT.equals(infoType)) {
+                                postFilter = RawDataPostFilter.cloneWithoutAssayFilter(postFilter);
+                            }
+                            return postFilter;
+                        },
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
     }

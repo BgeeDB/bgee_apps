@@ -35,9 +35,6 @@ public class AffymetrixChip implements AssayPartOfExp<AffymetrixExperiment>, Raw
             throw log.throwing(new IllegalArgumentException("Experiment cannot be null"));
         }
         this.experiment = experiment;
-        if (annotation == null) {
-            throw log.throwing(new IllegalArgumentException("Annotation cannot be null"));
-        }
         this.annotation = annotation;
         this.chipType = chipType;
         this.pipelineSummary = pipelineSummary;

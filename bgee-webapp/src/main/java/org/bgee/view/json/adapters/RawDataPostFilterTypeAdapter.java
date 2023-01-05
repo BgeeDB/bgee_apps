@@ -2,6 +2,8 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import org.bgee.controller.URLParameters;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -34,6 +37,13 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
             log.traceExit(); return;
         }
         out.beginObject();
+
+        if (!value.getSpecies().isEmpty()) {
+            out.name("species");
+            this.writePostFilterNamedEntityParameter(out, "Species",
+                    this.urlParameters.getParamFilterSpeciesId().getName(),
+                    value.getSpecies());
+        }
 
         if (!value.getAnatEntities().isEmpty()) {
             out.name("anatEntities");
@@ -70,6 +80,32 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
                     value.getStrains());
         }
 
+        if (!value.getExperiments().isEmpty()) {
+            out.name("experiments");
+            this.writePostFilterNamedEntityParameter(out, "Experiments",
+                    this.urlParameters.getParamFilterExperimentId().getName(),
+                    value.getExperiments());
+        }
+
+        if (!value.getAssays().isEmpty()) {
+            out.name("assays");
+            if (value.getAssays().iterator().next() instanceof AffymetrixChip) {
+                startWritePostFilterParameter(out, "Assays",
+                        this.urlParameters.getParamFilterAssayId().getName(),
+                        true, false);
+                List<AffymetrixChip> chips = value.getAssays().stream()
+                        .map(a -> AffymetrixChip.class.cast(a))
+                        .collect(Collectors.toList());
+                for (AffymetrixChip c: chips) {
+                    out.beginObject();
+                    out.name("id").value(c.getId());
+                    out.name("name").value(c.getId());
+                    out.endObject();
+                }
+                endWritePostFilterParameter(out);
+            }
+        }
+
         out.endObject();
         log.traceExit();
     }
@@ -81,11 +117,11 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
     }
 
     private void writePostFilterNamedEntityParameter(JsonWriter out, String filterName,
-            String urlParameterName, Collection<? extends NamedEntity<String>> values) throws IOException {
+            String urlParameterName, Collection<? extends NamedEntity<?>> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
 
         startWritePostFilterParameter(out, filterName, urlParameterName, true, true);
-        for (NamedEntity<String> value: values) {
+        for (NamedEntity<?> value: values) {
             this.utils.writeSimplifiedNamedEntity(out, value);
         }
         endWritePostFilterParameter(out);

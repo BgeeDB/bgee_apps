@@ -179,7 +179,7 @@ public class CallServiceUtils {
 
             if (callType.equals(SummaryCallType.ExpressionSummary.EXPRESSED)) {
                 if (qual.equals(SummaryQuality.GOLD)) {
-                    //If minimum GOLD is requested, we only want calls with FDR-corrected p-value <= 0.1
+                    //If minimum GOLD is requested, we only want calls with FDR-corrected p-value <= 0.01
                     pValFilters.add(Collections.singleton(
                             new DAOFDRPValueFilter2(presentHighThreshold,
                                     daoDataTypes,

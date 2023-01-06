@@ -90,7 +90,7 @@ public interface AffymetrixChipTypeDAO extends DAO<AffymetrixChipTypeDAO.Attribu
         private final String affymetrixChipTypeName;
         private final String cdfName;
 
-        private final boolean isCompatible;
+        private final Boolean isCompatible;
         private final BigDecimal qualityScoreThreshold;
         private final BigDecimal percentPresentThreshold;
         private final BigDecimal chipTypeMaxRank;
@@ -117,7 +117,7 @@ public interface AffymetrixChipTypeDAO extends DAO<AffymetrixChipTypeDAO.Attribu
         public String getCdfName() {
             return cdfName;
         }
-        public boolean isCompatible() {
+        public Boolean getIsCompatible() {
             return isCompatible;
         }
         public BigDecimal getQualityScoreThreshold() {
@@ -137,10 +137,5 @@ public interface AffymetrixChipTypeDAO extends DAO<AffymetrixChipTypeDAO.Attribu
                     + ", percentPresentThreshold=" + percentPresentThreshold + ", chipTypeMaxRank=" + chipTypeMaxRank
                     + "]";
         }
-
-        
-
-        
-        
     }
 }

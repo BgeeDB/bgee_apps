@@ -111,7 +111,8 @@ public class CommandData extends CommandParent {
     public static class ColumnDescription {
         public static enum ColumnType {
             STRING, NUMERIC, INTERNAL_LINK, EXTERNAL_LINK, ANAT_ENTITY, DEV_STAGE,
-            DATA_TYPE_SOURCE, LINK_TO_RAW_DATA_ANNOTS, LINK_TO_PROC_EXPR_VALUES
+            DATA_TYPE_SOURCE, LINK_TO_RAW_DATA_ANNOTS, LINK_TO_PROC_EXPR_VALUES,
+            LINK_CALL_TO_PROC_EXPR_VALUES
         }
         /**
          * To describe how to link from experiment results to assay results,
@@ -219,14 +220,16 @@ public class CommandData extends CommandParent {
             }
             if (!ColumnType.LINK_TO_RAW_DATA_ANNOTS.equals(columnType) &&
                     !ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType) &&
+                    !ColumnType.LINK_CALL_TO_PROC_EXPR_VALUES.equals(columnType) &&
                     filterTargets != null && !filterTargets.isEmpty()) {
                 throw log.throwing(new IllegalArgumentException(
-                        "filterTarget only applicable when columnType is LINK_TO_RAW_DATA_ANNOTS or LINK_TO_PROC_EXPR_VALUES"));
+                        "filterTarget not applicable"));
             } else if ((ColumnType.LINK_TO_RAW_DATA_ANNOTS.equals(columnType) ||
-                    ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType)) &&
+                    ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType) ||
+                    ColumnType.LINK_CALL_TO_PROC_EXPR_VALUES.equals(columnType)) &&
                     (filterTargets == null || filterTargets.isEmpty())) {
                 throw log.throwing(new IllegalArgumentException(
-                        "filterTarget must be defined when columnType is LINK_TO_RAW_DATA_ANNOTS or LINK_TO_PROC_EXPR_VALUES"));
+                        "filterTarget must be defined"));
             }
             if (StringUtils.isBlank(title)) {
                 throw log.throwing(new IllegalArgumentException(
@@ -234,7 +237,8 @@ public class CommandData extends CommandParent {
             }
             if ((attributes == null || attributes.isEmpty()) &&
                     !ColumnType.LINK_TO_RAW_DATA_ANNOTS.equals(columnType) &&
-                    !ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType)) {
+                    !ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType) &&
+                    !ColumnType.LINK_CALL_TO_PROC_EXPR_VALUES.equals(columnType)) {
                 throw log.throwing(new IllegalArgumentException(
                         "a list of attributes is mandatory"));
             }
@@ -1452,6 +1456,9 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.STRING,
                 null, null, true));
 
+        //Link to supporting proc. expr. values
+        colDescr.add(getExprCallsToProcExprValuesColDesc(condParams));
+
         return log.traceExit(colDescr);
     }
 
@@ -1682,6 +1689,48 @@ public class CommandData extends CommandParent {
                 null, filterTargets, false));
     }
 
+    private ColumnDescription getExprCallsToProcExprValuesColDesc(Collection<ConditionParameter<?, ?>> condParams) {
+        log.traceEntry("{}", condParams);
+
+        //First we create the list of FilterTargets
+        List<ColumnDescription.FilterTarget> filterTargets = new ArrayList<>();
+        filterTargets.add(new ColumnDescription.FilterTarget("result.gene.geneId",
+                this.requestParameters.getUrlParametersInstance()
+                .getParamGeneId().getName()));
+        filterTargets.add(new ColumnDescription.FilterTarget("result.gene.species.id",
+                this.requestParameters.getUrlParametersInstance()
+                .getParamSpeciesId().getName()));
+        if (condParams.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+            filterTargets.add(new ColumnDescription.FilterTarget("result.condition.anatEntity.id",
+                    this.requestParameters.getUrlParametersInstance()
+                    .getParamAnatEntity().getName()));
+            filterTargets.add(new ColumnDescription.FilterTarget("result.condition.cellType.id",
+                    this.requestParameters.getUrlParametersInstance()
+                    .getParamCellType().getName()));
+        }
+        if (condParams.contains(ConditionParameter.DEV_STAGE)) {
+            filterTargets.add(new ColumnDescription.FilterTarget("result.condition.devStage.id",
+                    this.requestParameters.getUrlParametersInstance()
+                    .getParamDevStage().getName()));
+        }
+        if (condParams.contains(ConditionParameter.SEX)) {
+            filterTargets.add(new ColumnDescription.FilterTarget("result.condition.sex.id",
+                    this.requestParameters.getUrlParametersInstance()
+                    .getParamSex().getName()));
+        }
+        if (condParams.contains(ConditionParameter.STRAIN)) {
+            filterTargets.add(new ColumnDescription.FilterTarget("result.condition.strain.id",
+                    this.requestParameters.getUrlParametersInstance()
+                    .getParamStrain().getName()));
+        }
+
+        return log.traceExit(new ColumnDescription("See supporting raw data",
+                "See the processed expression values supporting this expression call",
+                null,
+                ColumnDescription.ColumnType.LINK_CALL_TO_PROC_EXPR_VALUES,
+                null, filterTargets, false));
+    }
+
     private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
         log.traceEntry();
         List<ColumnDescription> colDescr = new ArrayList<>();
@@ -1852,7 +1901,7 @@ public class CommandData extends CommandParent {
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true));
-        colDescr.add(getExprToAnnotsColDesc("result.id"));
+        colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
     private List<ColumnDescription> getRnaSeqExperimentsColumnDescriptions() {
@@ -1871,7 +1920,7 @@ public class CommandData extends CommandParent {
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
                 null, null, true));
-        colDescr.add(getExprToAnnotsColDesc("result.id"));
+        colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
     private List<ColumnDescription> getESTExperimentsColumnDescriptions() {
@@ -1910,10 +1959,10 @@ public class CommandData extends CommandParent {
                 List.of("result.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
                 ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
-        colDescr.add(getExprToAnnotsColDesc("result.id"));
+        colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
-    private ColumnDescription getExprToAnnotsColDesc(String expIdAttrName) {
+    private ColumnDescription getExpToAnnotsColDesc(String expIdAttrName) {
         log.traceEntry("{}", expIdAttrName);
         return log.traceExit(new ColumnDescription("Link to raw data annotations",
                 "See the raw data annotation results for this experiment",

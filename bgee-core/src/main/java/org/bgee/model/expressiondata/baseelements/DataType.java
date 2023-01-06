@@ -37,8 +37,9 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 //TODO: why don't we have a "ALL" data type?? This would be much cleaner than having to provide "null" 
 //everywhere...
 public enum DataType implements BgeeEnumField {
-    AFFYMETRIX("Affymetrix", true), EST("EST", false), IN_SITU("in situ hybridization", true),
-    RNA_SEQ("RNA-Seq", true), FULL_LENGTH("full length single cell RNA-Seq", false);
+    AFFYMETRIX("Affymetrix", true, null, true), EST("EST", false, null, false),
+    IN_SITU("in situ hybridization", true, null, true),
+    RNA_SEQ("RNA-Seq", true, false, true), FULL_LENGTH("full length single cell RNA-Seq", false, true, true);
 
     private final static Logger log = LogManager.getLogger(DataType.class.getName());
 
@@ -47,10 +48,18 @@ public enum DataType implements BgeeEnumField {
     
     private final String representation;
     private final boolean trustedForAbsentCalls;
-    
-    private DataType(String representation, boolean trustedForAbsentCalls) {
+    private final Boolean singleCell;
+    private final boolean withExperiments;
+
+    //Important to have the distinction "null" singleCell and true/false singleCell.
+    //Because that would mess up with some internal code if we were using "false" instead of "null"
+    //when not appropriate.
+    private DataType(String representation, boolean trustedForAbsentCalls, Boolean singleCell,
+            boolean withExperiments) {
         this.representation = representation;
         this.trustedForAbsentCalls = trustedForAbsentCalls;
+        this.singleCell = singleCell;
+        this.withExperiments = withExperiments;
     }
 
     @Override
@@ -63,6 +72,25 @@ public enum DataType implements BgeeEnumField {
      */
     public boolean isTrustedForAbsentCalls() {
         return this.trustedForAbsentCalls;
+    }
+    /**
+     * @return  A {@code Boolean} that is {@code null} if there is no notion of "single-cell data"
+     *          for this {@code DataType}, {@code false} if there is a notion of "single-cell data"
+     *          with the related technology but the data are produced as bulk, {@code true}
+     *          if this {@code DataType} produces single-cell data.
+     */
+    //Important to have the distinction "null" singleCell and true/false singleCell.
+    //Because that would mess up with some internal code if we were using "false" instead of "null"
+    //when not appropriate.
+    public Boolean getSingleCell() {
+        return this.singleCell;
+    }
+    /**
+     * @return  A {@code boolean} indicating whether this {@code DataType} has a concept of experiments,
+     *          or only of assays.
+     */
+    public boolean isWithExperiments() {
+        return this.withExperiments;
     }
     
     /**

@@ -27,9 +27,6 @@ public class RnaSeqLibraryAnnotatedSample
         if (library == null) {
             throw log.throwing(new IllegalArgumentException("library can not be null"));
         }
-        if (annotation == null) {
-            throw log.throwing(new IllegalArgumentException("annotation can not be null"));
-        }
         this.library = library;
         this.annotation = annotation;
         this.pipelineSummary = pipelineSummary;
@@ -62,7 +59,7 @@ public class RnaSeqLibraryAnnotatedSample
     //with same condition
     @Override
     public int hashCode() {
-        return Objects.hash(annotation.getRawDataCondition(), library);
+        return Objects.hash(annotation == null? null: annotation.getRawDataCondition(), library);
     }
     @Override
     public boolean equals(Object obj) {
@@ -73,7 +70,9 @@ public class RnaSeqLibraryAnnotatedSample
         if (getClass() != obj.getClass())
             return false;
         RnaSeqLibraryAnnotatedSample other = (RnaSeqLibraryAnnotatedSample) obj;
-        return Objects.equals(annotation.getRawDataCondition(), other.annotation.getRawDataCondition())
+        return Objects.equals(
+                       annotation == null? null: annotation.getRawDataCondition(),
+                       other.annotation == null? null: other.annotation.getRawDataCondition())
                && Objects.equals(library, other.library);
     }
 

@@ -28,16 +28,16 @@ public class RnaSeqTechnology {
     private final Strand strand;
     private final SequencedTranscriptPart sequencedTranscriptPart;
     private final CellCompartment cellCompartment;
-    private final boolean isSampleMultiplexing;
-    private final boolean isLibraryMultiplexing;
+    private final Boolean isSampleMultiplexing;
+    private final Boolean isLibraryMultiplexing;
     private final Integer fragmentation;
     //TODO: create an enum as for RNASeqLibraryDAO.LibraryType
     private final String libraryType;
     
     public RnaSeqTechnology(String protocolName, String sequencingPlatformName,
             Strand strand, SequencedTranscriptPart sequencedTranscriptPart,
-            CellCompartment cellCompartment, boolean isSampleMultiplexing, 
-            boolean isLibraryMultiplexing, Integer fragmentation, String libraryType) {
+            CellCompartment cellCompartment, Boolean isSampleMultiplexing, 
+            Boolean isLibraryMultiplexing, Integer fragmentation, String libraryType) {
         this.protocolName = protocolName;
         this.strand = strand;
         this.sequencedTranscriptPart = sequencedTranscriptPart;
@@ -57,10 +57,10 @@ public class RnaSeqTechnology {
     public CellCompartment getCellCompartment() {
         return cellCompartment;
     }
-    public boolean isSampleMultiplexing() {
+    public Boolean getSampleMultiplexing() {
         return isSampleMultiplexing;
     }
-    public boolean isLibraryMultiplexing() {
+    public Boolean getLibraryMultiplexing() {
         return isLibraryMultiplexing;
     }
     public Integer getFragmentation() {

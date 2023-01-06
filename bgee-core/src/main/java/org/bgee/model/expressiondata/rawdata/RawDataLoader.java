@@ -2,7 +2,6 @@ package org.bgee.model.expressiondata.rawdata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +72,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawCall;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainer;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataContainerWithExperiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCountContainer;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawCall.ExclusionReason;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
@@ -82,9 +82,11 @@ import org.bgee.model.expressiondata.rawdata.baseelements.Strand;
 import org.bgee.model.expressiondata.rawdata.est.EST;
 import org.bgee.model.expressiondata.rawdata.est.ESTContainer;
 import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
+import org.bgee.model.expressiondata.rawdata.est.ESTDataType;
 import org.bgee.model.expressiondata.rawdata.est.ESTLibrary;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituContainer;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituCountContainer;
+import org.bgee.model.expressiondata.rawdata.insitu.InSituDataType;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituEvidence;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituExperiment;
 import org.bgee.model.expressiondata.rawdata.insitu.InSituSpot;
@@ -94,6 +96,7 @@ import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixExperiment;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixProbeset;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqContainer;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqCountContainer;
+import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqDataType;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqExperiment;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibrary;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqLibraryAnnotatedSample;
@@ -103,6 +106,7 @@ import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqTechnology;
 import org.bgee.model.expressiondata.rawdata.rnaseq.RnaSeqResultAnnotatedSample.AbundanceUnit;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixContainer;
 import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixCountContainer;
+import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixDataType;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.source.Source;
@@ -325,6 +329,35 @@ public class RawDataLoader extends CommonService {
             RawDataDataType<T, ?> rawDataDataType, Long offset, Integer limit)
                     throws IllegalArgumentException {
         log.traceEntry("{}, {}, {}, {}", infoType, rawDataDataType, offset, limit);
+
+        if (limit != null && limit > LIMIT_MAX) {
+            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
+                    + LIMIT_MAX));
+        }
+        long newOffset = offset == null? 0L: offset;
+        int newLimit = limit == null? LIMIT_MAX: limit;
+
+        return log.traceExit(this.loadDataInternal(infoType, rawDataDataType, newOffset, newLimit, false));
+    }
+    /**
+     * The difference with the method {@link #loadData(InformationType, RawDataDataType, Long, Integer)}
+     * is that there is no check on the {@code offset} and {@code limit} parameters,
+     * we can internally request all results when necessary. And we can also request to retrieve
+     * only some limited info with the argument {@code partialInfo}.
+     *
+     * @param <T>
+     * @param infoType
+     * @param rawDataDataType
+     * @param offset
+     * @param limit
+     * @param partialInfo
+     * @return
+     * @throws IllegalArgumentException
+     */
+    private <T extends RawDataContainer<?, ?>> T loadDataInternal(InformationType infoType,
+            RawDataDataType<T, ?> rawDataDataType, Long offset, Integer limit, boolean partialInfo)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}, {}", infoType, rawDataDataType, offset, limit, partialInfo);
         if (infoType == null) {
             throw log.throwing(new IllegalArgumentException("An InformationType must be provided"));
         }
@@ -338,12 +371,10 @@ public class RawDataLoader extends CommonService {
             throw log.throwing(new IllegalArgumentException(
                     "limit cannot be less than or equal to 0"));
         }
-        if (limit != null && limit > LIMIT_MAX) {
-            throw log.throwing(new IllegalArgumentException("limit cannot be greater than "
-                    + LIMIT_MAX));
+        if (partialInfo && InformationType.CALL.equals(infoType)) {
+            throw log.throwing(new IllegalArgumentException(
+                    "partialInfo cannot be requested with CALL information type"));
         }
-        long newOffset = offset == null? 0L: offset;
-        int newLimit = limit == null? LIMIT_MAX: limit;
 
         DataType requestedDataType = rawDataDataType.getDataType();
         Class<T> rawDataContainerClass = rawDataDataType.getRawDataContainerClass();
@@ -351,22 +382,22 @@ public class RawDataLoader extends CommonService {
         switch (requestedDataType) {
         case AFFYMETRIX:
             rawDataContainer = rawDataContainerClass.cast(
-                    this.loadAffymetrixData(infoType, newOffset, newLimit, false));
+                    this.loadAffymetrixData(infoType, offset, limit, partialInfo));
             break;
         case RNA_SEQ:
         case FULL_LENGTH:
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadRnaSeqData(infoType,
                             requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
-                            newOffset, newLimit));
+                                    offset, limit, partialInfo));
             break;
         case EST:
             rawDataContainer = rawDataContainerClass.cast(
-                    this.loadESTData(infoType, newOffset, newLimit));
+                    this.loadESTData(infoType, offset, limit, partialInfo));
             break;
         case IN_SITU:
             rawDataContainer = rawDataContainerClass.cast(
-                    this.loadInSituData(infoType, newOffset, newLimit));
+                    this.loadInSituData(infoType, offset, limit, partialInfo));
             break;
         default:
             throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
@@ -421,40 +452,85 @@ public class RawDataLoader extends CommonService {
         return log.traceExit(rawDataCountContainer);
     }
 
+    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType) {
+        log.traceEntry("{}", rawDataDataType);
+        return log.traceExit(this.loadPostFilter(rawDataDataType, true, true, true));
+    }
     /**
      * Load anatomical entities, dev. stages, cell types, sexes and strains for the specified
      * data type using the condition IDs of the {@code DAORawDataFilter}s.
      * 
-     * @param dataType  A {@code DataType} corresponding to the datatype for which
-     *                  post filters have to be loaded
-     * @return          A {@code RawDataPostFilter} containing condition parameters to filter on.
+     * @param dataType              A {@code DataType} corresponding to the datatype for which
+     *                              post filters have to be loaded
+     * @param withConditionFilters  A {@code boolean} to define whether to populate the attributes
+     *                              related to condition parameters in the returned {@code RawDataPostFilter}.
+     * @param withExperimentFilters A {@code boolean} to define whether to populate the attributes
+     *                              related to experiments in the returned {@code RawDataPostFilter}.
+     * @param withAssayFilters      A {@code boolean} to define whether to populate the attributes
+     *                              related to assays in the returned {@code RawDataPostFilter}.
+     * @return                      A {@code RawDataPostFilter} containing condition parameters to filter on.
+     * @throws IllegalArgumentException If {@code rawDataDataType}, or if all the {@code boolean}
+     *                                  arguments are {@code false}.
      */
     //We also use a RawDataDataType, in case we create data-type-specific PostFilters
     //in the future. In that case, we could add a third generic type parameter to RawDataDataType,
     //specifying the type of RawDataPostFilter to return.
-    //XXX: maybe we need to be able to specify the info we want in the filter?
-    //like, experimentFilter, assayFilter, conditionFilters
-    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType) {
-        log.traceEntry("{}", rawDataDataType);
+    public RawDataPostFilter loadPostFilter(RawDataDataType<?, ?> rawDataDataType,
+            boolean withConditionFilters, boolean withExperimentFilters, boolean withAssayFilters)
+                    throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}, {}", rawDataDataType, withConditionFilters, withExperimentFilters,
+                withAssayFilters);
         if (rawDataDataType == null) {
             throw log.throwing(new IllegalArgumentException("dataType can not be null"));
         }
-        DataType requestedDataType = rawDataDataType.getDataType();
-        switch (requestedDataType) {
-        case AFFYMETRIX:
-            return log.traceExit(this.loadAffymetrixPostFilter());
-        case RNA_SEQ:
-        case FULL_LENGTH:
-            return log.traceExit(this.loadRnaSeqPostFilter(
-                    requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
-                    requestedDataType));
-        case EST:
-            return log.traceExit(this.loadESTPostFilter());
-        case IN_SITU:
-            return log.traceExit(this.loadInSituPostFilter());
-        default:
-            throw log.throwing(new IllegalStateException("Unsupported data type: " + requestedDataType));
+        if (!withConditionFilters && !withExperimentFilters && !withAssayFilters) {
+            throw log.throwing(new IllegalArgumentException("Some filters must be requested"));
         }
+
+        //If the DaoRawDataFilters are null it means there was no matching conds
+        //and thus no result for sure
+        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
+            return log.traceExit(new RawDataPostFilter(rawDataDataType));
+        }
+
+        DataType requestedDataType = rawDataDataType.getDataType();
+        DAODataType requestedDAODataType = this.convertRawDataDataTypeToDAODataType(rawDataDataType);
+        //Retrieve info necessary to create the filter.
+        //First, experiment/assay info
+        InformationType infoType = null;
+        if (withAssayFilters) {
+            infoType = InformationType.ASSAY;
+        } else if (withExperimentFilters) {
+            infoType = InformationType.EXPERIMENT;
+        }
+        RawDataPostFilter expAssayFilter = null;
+        if (infoType != null) {
+            RawDataContainer<?, ?> results = this.loadDataInternal(infoType, rawDataDataType,
+                    null, null, true);
+            expAssayFilter = new RawDataPostFilter(null, null, null, null, null, null,
+                    !withExperimentFilters || !RawDataContainerWithExperiment.class.isInstance(results)?
+                            null: ((RawDataContainerWithExperiment<?, ?, ?>) results).getExperiments()
+                            .stream()
+                            .map(e -> (Experiment<?>) e)
+                            .collect(Collectors.toSet()),
+                    !withAssayFilters? null: results.getAssays()
+                            .stream()
+                            .map(a -> (Assay) a)
+                            .collect(Collectors.toSet()),
+                    rawDataDataType);
+        }
+
+        //Now, condition info
+        RawDataPostFilter condFilter = null;
+        if (withConditionFilters) {
+            condFilter = this.loadConditionPostFilter(
+                    (filters, attrs) -> this.rawDataConditionDAO.getRawDataConditionsLinkedToDataType(
+                            filters, requestedDAODataType, requestedDataType.getSingleCell(), attrs),
+                    rawDataDataType);
+        }
+
+        //Merge the experiment/assay filter and condition filter
+        return log.traceExit(RawDataPostFilter.merge(expAssayFilter, condFilter));
     }
 
 //*****************************************************************************************
@@ -501,11 +577,9 @@ public class RawDataLoader extends CommonService {
         //We need to write the test in this way, in case CALLs were requested, but there was
         //no result retrieved
         if (!bgeeChipIds.isEmpty()) {
+            assert !partialInfo;
             chipTORS = this.affymetrixChipDAO.getAffymetrixChipsFromBgeeChipIds(bgeeChipIds,
-                    !partialInfo? null:
-                        Set.of(AffymetrixChipDAO.Attribute.EXPERIMENT_ID,
-                               AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID,
-                               AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID));
+                    null);
         } else if (infoType == InformationType.ASSAY) {
             chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, offset, limit,
                     !partialInfo? null:
@@ -665,36 +739,14 @@ public class RawDataLoader extends CommonService {
                 countTO.getCallCount()));
     }
 
-    private RawDataPostFilter loadAffymetrixPostFilter() {
-        log.traceEntry();
-        //If the DaoRawDataFilters are null it means there was no matching conds
-        //and thus no result for sure
-        if (this.getRawDataProcessedFilter().getDaoFilters() == null) {
-            return log.traceExit(new RawDataPostFilter(DataType.AFFYMETRIX));
-        }
-        AffymetrixContainer results = this.loadAffymetrixData(InformationType.ASSAY, null, null, true);
-        RawDataPostFilter expAssayFilter = new RawDataPostFilter(null, null, null, null, null, null,
-                results.getExperiments().stream().map(e -> (Experiment<?>) e).collect(Collectors.toSet()),
-                results.getAssays().stream()
-                .sorted(Comparator.comparing(a -> a.getId()))
-                .map(a -> (Assay) a)
-                .collect(Collectors.toCollection(() -> new LinkedHashSet<>())),
-                DataType.AFFYMETRIX);
-        RawDataPostFilter condFilter = this.loadConditionPostFilter(
-                (filters, attrs) -> this.rawDataConditionDAO
-                .getRawDataConditionsLinkedToDataType(filters, DAODataType.AFFYMETRIX, null, attrs),
-                DataType.AFFYMETRIX);
-        return log.traceExit(RawDataPostFilter.merge(expAssayFilter, condFilter));
-    }
-
 //*****************************************************************************************
 //                         METHODS LOADING RNA-SEQ RAW DATA
 //*****************************************************************************************
 
     //Long and Integer instead of long and int because used internally to retrieve all results for filtering
     private RnaSeqContainer loadRnaSeqData(InformationType infoType, boolean isSingleCell,
-            Long offset, Integer limit) {
-        log.traceEntry("{}, {}, {}, {}", infoType, isSingleCell, offset, limit);
+            Long offset, Integer limit, boolean partialInfo) {
+        log.traceEntry("{}, {}, {}, {}, {}", infoType, isSingleCell, offset, limit, partialInfo);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
@@ -730,11 +782,16 @@ public class RawDataLoader extends CommonService {
         //We need to write the test in this way, in case CALLs were requested, but there was
         //no result retrieved
         if (!bgeeAnnotatedSampleIds.isEmpty()) {
+            assert !partialInfo;
             assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamplesFromLibraryAnnotatedSampleIds(
-                    bgeeAnnotatedSampleIds, null);
+                    bgeeAnnotatedSampleIds,
+                    null);
         } else if (infoType == InformationType.ASSAY) {
             assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamples(daoRawDataFilters,
-                    isSingleCell, offset, limit, null);
+                    isSingleCell, offset, limit,
+                    !partialInfo? null: Set.of(
+                            RNASeqLibraryAnnotatedSampleDAO.Attribute.ID,
+                            RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID));
         }
         Set<String> libraryIds = new HashSet<>();
         Set<Integer> rawDataCondIds = new HashSet<>();
@@ -742,7 +799,9 @@ public class RawDataLoader extends CommonService {
             while (assayTORS.next()) {
                 RNASeqLibraryAnnotatedSampleTO assayTO = assayTORS.getTO();
                 libraryIds.add(assayTO.getLibraryId());
-                rawDataCondIds.add(assayTO.getConditionId());
+                if (assayTO.getConditionId() != null) {
+                    rawDataCondIds.add(assayTO.getConditionId());
+                }
                 assayTOs.add(assayTO);
             }
         }
@@ -753,7 +812,10 @@ public class RawDataLoader extends CommonService {
             //we can use a new DAORawDataFilter to retrieve the requested libraries
             DAORawDataFilter libFilter = new DAORawDataFilter(null, libraryIds, null);
             RNASeqLibraryTOResultSet libTORS = this.rnaSeqLibraryDAO.getRnaSeqLibrary(
-                    Collections.singleton(libFilter), null, null, null, null);
+                    Collections.singleton(libFilter), null, null, null,
+                    !partialInfo? null: Set.of(
+                            RNASeqLibraryDAO.Attribute.ID,
+                            RNASeqLibraryDAO.Attribute.EXPERIMENT_ID));
 
             while (libTORS.next()) {
                 RNASeqLibraryTO libTO = libTORS.getTO();
@@ -771,11 +833,17 @@ public class RawDataLoader extends CommonService {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             DAORawDataFilter expFilter = new DAORawDataFilter(expIds, null, null);
             expTORS = this.rnaSeqExperimentDAO.getExperiments(
-                    Collections.singleton(expFilter), null, null, null, null);
+                    Collections.singleton(expFilter), null, null, null,
+                    !partialInfo? null: Set.of(
+                            RNASeqExperimentDAO.Attribute.ID,
+                            RNASeqExperimentDAO.Attribute.NAME));
         } else if (infoType == InformationType.EXPERIMENT) {
             //otherwise, it was the information requested originally
             expTORS = this.rnaSeqExperimentDAO.getExperiments(daoRawDataFilters, isSingleCell,
-                    offset, limit, null);
+                    offset, limit,
+                    !partialInfo? null: Set.of(
+                            RNASeqExperimentDAO.Attribute.ID,
+                            RNASeqExperimentDAO.Attribute.NAME));
         }
         LinkedHashMap<String, RnaSeqExperiment> expIdToExp =
                 expTORS == null? new LinkedHashMap<>():
@@ -783,7 +851,9 @@ public class RawDataLoader extends CommonService {
                     .collect(Collectors.toMap(
                             to -> to.getId(),
                             to -> new RnaSeqExperiment(to.getId(), to.getName(),
-                                  to.getDescription(), getSourceById(to.getDataSourceId()), 0),
+                                  to.getDescription(),
+                                  to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
+                                  0),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
 
@@ -817,7 +887,7 @@ public class RawDataLoader extends CommonService {
                             to -> new RnaSeqLibrary(
                                     to.getId(),
 
-                                    new RnaSeqTechnology(
+                                    to.getTechnologyName() == null? null: new RnaSeqTechnology(
                                             to.getTechnologyName(),
                                             to.getSequencerName(),
                                             Strand.convertToStrand(to.getStrandSelection().name()),
@@ -825,8 +895,8 @@ public class RawDataLoader extends CommonService {
                                                     to.getSequencedTranscriptPart().name()),
                                             CellCompartment.convertToCellCompartment(
                                                     to.getCellCompartment().name()),
-                                            to.isSampleMultiplexing(),
-                                            to.isLibraryMultiplexing(),
+                                            to.getSampleMultiplexing(),
+                                            to.getLibraryMultiplexing(),
                                             to.getFragmentation(),
                                             to.getLibraryType().getStringRepresentation()),
 
@@ -851,7 +921,7 @@ public class RawDataLoader extends CommonService {
                                     .orElseThrow(() -> new IllegalStateException(
                                             "Missing library ID " + to.getLibraryId()
                                             + " for annotated sample ID " + to.getId())),
-                                    new RawDataAnnotation(
+                                    to.getConditionId() == null? null: new RawDataAnnotation(
                                             Optional.ofNullable(
                                                     this.rawDataConditionMap.get(
                                                             to.getConditionId()))
@@ -860,7 +930,7 @@ public class RawDataLoader extends CommonService {
                                                     + to.getConditionId()
                                                     + " for annotated sample ID " + to.getId())),
                                             null, null, null),
-                                    new RnaSeqLibraryPipelineSummary(
+                                    to.getDistinctRankCount() == null? null: new RnaSeqLibraryPipelineSummary(
                                             to.getMeanAbundanceRefIntergenicDistribution(),
                                             to.getSdAbundanceRefIntergenicDistribution(),
                                             to.getpValueThreshold(),
@@ -946,21 +1016,14 @@ public class RawDataLoader extends CommonService {
                 countTO.getCallCount()));
     }
 
-    private RawDataPostFilter loadRnaSeqPostFilter(boolean isSingleCell, DataType dataType) {
-        log.traceEntry("{}, {}", isSingleCell, dataType);
-        return log.traceExit(this.loadConditionPostFilter(
-                (filters, attrs) -> this.rawDataConditionDAO
-                .getRawDataConditionsLinkedToDataType(filters, DAODataType.RNA_SEQ, isSingleCell, attrs),
-                dataType));
-    }
-
 //*****************************************************************************************
 //                           METHODS LOADING EST RAW DATA
 //*****************************************************************************************
 
     //Long and Integer instead of long and int because used internally to retrieve all results for filtering
-    private ESTContainer loadESTData(InformationType infoType, Long offset, Integer limit) {
-        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+    private ESTContainer loadESTData(InformationType infoType, Long offset, Integer limit,
+            boolean partialInfo) {
+        log.traceEntry("{}, {}, {}, {}", infoType, offset, limit, partialInfo);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
@@ -994,20 +1057,27 @@ public class RawDataLoader extends CommonService {
         //We need to write the test in this way, in case CALLs were requested, but there was
         //no result retrieved
         if (!estLibraryIds.isEmpty()) {
+            assert !partialInfo;
             //Create a new DAORawDataFilter for retrieving libraries based on their ID
             DAORawDataFilter daoFilter = new DAORawDataFilter(null, estLibraryIds, null);
-            assayTORS = this.estLibraryDAO.getESTLibraries(Set.of(daoFilter), null, null, null);
+            assayTORS = this.estLibraryDAO.getESTLibraries(Set.of(daoFilter), null, null,
+                    null);
 
         // For EST, it is equivalent to request for assays or for experiments,
         //since there are no experiments
         } else if (infoType == InformationType.ASSAY || infoType == InformationType.EXPERIMENT) {
-            assayTORS = this.estLibraryDAO.getESTLibraries(daoRawDataFilters, offset, limit, null);
+            assayTORS = this.estLibraryDAO.getESTLibraries(daoRawDataFilters, offset, limit,
+                    !partialInfo? null: Set.of(
+                            ESTLibraryDAO.Attribute.ID,
+                            ESTLibraryDAO.Attribute.NAME));
         }
         Set<Integer> rawDataCondIds = new HashSet<>();
         if (assayTORS != null) {
             while (assayTORS.next()) {
                 ESTLibraryTO assayTO = assayTORS.getTO();
-                rawDataCondIds.add(assayTO.getConditionId());
+                if (assayTO.getConditionId() != null) {
+                    rawDataCondIds.add(assayTO.getConditionId());
+                }
                 assayTOs.add(assayTO);
             }
         }
@@ -1028,7 +1098,7 @@ public class RawDataLoader extends CommonService {
 
                         to -> new ESTLibrary(
                                 to.getId(), to.getName(), to.getDescription(),
-                                new RawDataAnnotation(
+                                to.getConditionId() == null? null: new RawDataAnnotation(
                                         Optional.ofNullable(
                                                 this.rawDataConditionMap.get(
                                                         to.getConditionId()))
@@ -1037,7 +1107,7 @@ public class RawDataLoader extends CommonService {
                                                 + to.getConditionId()
                                                 + " for annotated sample ID " + to.getId())),
                                         null, null, null),
-                                getSourceById(to.getDataSourceId())),
+                                to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId())),
 
                         (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                         LinkedHashMap::new));
@@ -1102,21 +1172,14 @@ public class RawDataLoader extends CommonService {
                 countTO.getCallCount()));
     }
 
-    private RawDataPostFilter loadESTPostFilter() {
-        log.traceEntry();
-        return log.traceExit(this.loadConditionPostFilter(
-                (filters, attrs) -> this.rawDataConditionDAO
-                .getRawDataConditionsLinkedToDataType(filters, DAODataType.EST, null, attrs),
-                DataType.EST));
-    }
-
 //*****************************************************************************************
 //                             METHODS LOADING IN SITU RAW DATA
 //*****************************************************************************************
 
     //Long and Integer instead of long and int because used internally to retrieve all results for filtering
-    private InSituContainer loadInSituData(InformationType infoType, Long offset, Integer limit) {
-        log.traceEntry("{}, {}, {}", infoType, offset, limit);
+    private InSituContainer loadInSituData(InformationType infoType, Long offset, Integer limit,
+            boolean partialInfo) {
+        log.traceEntry("{}, {}, {}, {}", infoType, offset, limit, partialInfo);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
         //and thus no result for sure
@@ -1138,7 +1201,7 @@ public class RawDataLoader extends CommonService {
         //*********** Calls (and "fake" assays) ***********
         //If ASSAY is requested,
         //We create one evidence for each condition retrieved from a spot
-        if (infoType == InformationType.CALL || infoType == InformationType.ASSAY) {
+        if (infoType == InformationType.CALL || infoType == InformationType.ASSAY && !partialInfo) {
             Collection<InSituSpotDAO.Attribute> attrs = null;
             if (infoType == InformationType.ASSAY) {
                 attrs = EnumSet.of(InSituSpotDAO.Attribute.IN_SITU_EVIDENCE_ID,
@@ -1165,11 +1228,14 @@ public class RawDataLoader extends CommonService {
         Set<String> expIds = new HashSet<>();
         //We need to write the test in this way, in case there was no result retrieved
         if (!assayIds.isEmpty()) {
+            assert !partialInfo;
             assayTORS = this.inSituEvidenceDAO.getInSituEvidenceFromIds(assayIds, null);
         }
-//        else if (infoType == InformationType.ASSAY) {
-//            assayTORS = this.inSituEvidenceDAO.getInSituEvidences(daoRawDataFilters, offset, limit, null);
-//        }
+        else if (infoType == InformationType.ASSAY && partialInfo) {
+            assayTORS = this.inSituEvidenceDAO.getInSituEvidences(daoRawDataFilters, offset, limit,
+                    Set.of(InSituEvidenceDAO.Attribute.IN_SITU_EVIDENCE_ID,
+                           InSituEvidenceDAO.Attribute.EXPERIMENT_ID));
+        }
         if (assayTORS != null) {
             while (assayTORS.next()) {
                 InSituEvidenceTO assayTO = assayTORS.getTO();
@@ -1186,10 +1252,16 @@ public class RawDataLoader extends CommonService {
         if (!expIds.isEmpty()) {
             //we can use a new DAORawDataFilter to retrieve the requested experiments
             expTORS = this.inSituExperimentDAO.getInSituExperiments(
-                    Set.of(new DAORawDataFilter(expIds, null, null)), null, null, null);
+                    Set.of(new DAORawDataFilter(expIds, null, null)), null, null,
+                    !partialInfo? null: Set.of(
+                            InSituExperimentDAO.Attribute.ID,
+                            InSituExperimentDAO.Attribute.NAME));
         } else if (infoType == InformationType.EXPERIMENT) {
             //otherwise, it was the information requested originally
-            expTORS = this.inSituExperimentDAO.getInSituExperiments(daoRawDataFilters, offset, limit, null);
+            expTORS = this.inSituExperimentDAO.getInSituExperiments(daoRawDataFilters, offset, limit,
+                    !partialInfo? null: Set.of(
+                            InSituExperimentDAO.Attribute.ID,
+                            InSituExperimentDAO.Attribute.NAME));
         }
         LinkedHashMap<String, InSituExperiment> expIdToExp =
                 expTORS == null? new LinkedHashMap<>():
@@ -1197,7 +1269,9 @@ public class RawDataLoader extends CommonService {
                     .collect(Collectors.toMap(
                             to -> to.getId(),
                             to -> new InSituExperiment(to.getId(), to.getName(),
-                                    to.getDescription(), getSourceById(to.getDataSourceId()), 0),
+                                    to.getDescription(),
+                                    to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
+                                    0),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
 
@@ -1256,7 +1330,24 @@ public class RawDataLoader extends CommonService {
                                 return v1;
                             },
                             LinkedHashMap::new));
-            assays = new LinkedHashSet<>(assayMap.values());
+
+            assays = !assayMap.isEmpty()? new LinkedHashSet<>(assayMap.values()):
+                //This case, where assayMap is empty but assayTOs is not,
+                //only apply when partialInfo is true,
+                //there is then no condition information to retrieve.
+                assayTOs.stream()
+                .map(to -> new InSituEvidence(
+                        to.getId(),
+                        Optional.ofNullable(expIdToExp.get(
+                                to.getExperimentId()
+                                ))
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Missing experiment ID "
+                                        + idToAssayTO.get(to.getId()).getExperimentId()
+                                        + " for assay ID " + to.getId())),
+                        null))
+                .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+            assert !assayMap.isEmpty() || assayTOs.isEmpty() || partialInfo;
 
             if (infoType == InformationType.CALL) {
                 calls = callTOs.stream()
@@ -1316,21 +1407,13 @@ public class RawDataLoader extends CommonService {
                 countTO.getCallCount()));
     }
 
-    private RawDataPostFilter loadInSituPostFilter() {
-        log.traceEntry();
-        return log.traceExit(this.loadConditionPostFilter(
-                (filters, attrs) -> this.rawDataConditionDAO
-                .getRawDataConditionsLinkedToDataType(filters, DAODataType.IN_SITU, null, attrs),
-                DataType.IN_SITU));
-    }
-
 //*****************************************************************************************
 //                       METHODS NECESSARY FOR ALL DATA TYPES
 //*****************************************************************************************
 
     private RawDataPostFilter loadConditionPostFilter(BiFunction<Collection<DAORawDataFilter>,
             Collection<RawDataConditionDAO.Attribute>, RawDataConditionTOResultSet> condRequest,
-            DataType dataType) {
+            RawDataDataType<?, ?> dataType) {
         log.traceEntry("{}, {}", condRequest, dataType);
 
         //If the DaoRawDataFilters are null it means there was no matching conds
@@ -1472,5 +1555,22 @@ public class RawDataLoader extends CommonService {
      */
     public RawDataProcessedFilter getRawDataProcessedFilter() {
         return this.rawDataProcessedFilter;
+    }
+
+    private DAODataType convertRawDataDataTypeToDAODataType(RawDataDataType<?, ?> dt) {
+        log.traceEntry("{}", dt);
+        if (dt == null) {
+            return log.traceExit((DAODataType) null);
+        }
+        if (dt instanceof AffymetrixDataType) {
+            return log.traceExit(DAODataType.AFFYMETRIX);
+        } else if (dt instanceof RnaSeqDataType) {
+            return log.traceExit(DAODataType.RNA_SEQ);
+        } else if (dt instanceof ESTDataType) {
+            return log.traceExit(DAODataType.EST);
+        } else if (dt instanceof InSituDataType) {
+            return log.traceExit(DAODataType.IN_SITU);
+        }
+        throw log.throwing(new IllegalStateException("Unsupported RawDataDataType: " + dt));
     }
 }

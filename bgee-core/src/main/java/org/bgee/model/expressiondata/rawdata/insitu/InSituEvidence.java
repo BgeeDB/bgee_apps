@@ -28,9 +28,6 @@ implements AssayPartOfExp<InSituExperiment>, RawDataAnnotated {
             throw log.throwing(new IllegalArgumentException("Experiment cannot be null"));
         }
         this.experiment = experiment;
-        if (annotation == null) {
-            throw log.throwing(new IllegalArgumentException("Annotation cannot be null"));
-        }
         this.annotation = annotation;
     }
 

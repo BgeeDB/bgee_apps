@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.microarray;
 
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
 /**
@@ -21,5 +22,33 @@ AffymetrixCountContainer> {
     public AffymetrixDataType() {
         super(DataType.AFFYMETRIX, AffymetrixContainer.class,
                 AffymetrixCountContainer.class);
+    }
+
+    @Override
+    public String getAssayId(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof AffymetrixChip)) {
+            throw new IllegalArgumentException("Assay is not an AffymetrixChip");
+        }
+        return ((AffymetrixChip) a).getId();
+    }
+    @Override
+    public String getAssayName(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof AffymetrixChip)) {
+            throw new IllegalArgumentException("Assay is not an AffymetrixChip");
+        }
+        return ((AffymetrixChip) a).getId();
+    }
+
+    @Override
+    public boolean isInformativeAssayId() {
+        return true;
+    }
+    @Override
+    public boolean isInformativeAssayName() {
+        return false;
+    }
+    @Override
+    public boolean isInformativeExperimentName() {
+        return true;
     }
 }

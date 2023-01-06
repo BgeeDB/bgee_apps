@@ -2,8 +2,6 @@ package org.bgee.view.json.adapters;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,7 +9,9 @@ import org.bgee.controller.URLParameters;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
-import org.bgee.model.expressiondata.rawdata.microarray.AffymetrixChip;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
+import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
@@ -38,6 +38,10 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         }
         out.beginObject();
 
+        //For the filters we could rather do: if (value.getXXX().size() > 1)
+        //But then, the filters won't always be present, and we need them
+        //for linking between the different raw data "pages"
+        //(going from experiments to assays, from assays to proc. expr. values)
         if (!value.getSpecies().isEmpty()) {
             out.name("species");
             this.writePostFilterNamedEntityParameter(out, "Species",
@@ -81,29 +85,38 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         }
 
         if (!value.getExperiments().isEmpty()) {
+            RawDataDataType<?, ?> rawDatDataType = value.getRequestedRawDataDataType();
             out.name("experiments");
-            this.writePostFilterNamedEntityParameter(out, "Experiments",
+            startWritePostFilterParameter(out, "Experiments",
                     this.urlParameters.getParamFilterExperimentId().getName(),
-                    value.getExperiments());
+                    true, rawDatDataType.isInformativeExperimentName());
+            for (Experiment<?> e: value.getExperiments()) {
+                out.beginObject();
+                out.name("id").value(e.getId().toString());
+                out.name("name");
+                if (rawDatDataType.isInformativeExperimentName()) {
+                    out.value(e.getName());
+                } else {
+                    out.value(e.getId().toString());
+                }
+                out.endObject();
+            }
+            endWritePostFilterParameter(out);
         }
 
         if (!value.getAssays().isEmpty()) {
+            RawDataDataType<?, ?> rawDatDataType = value.getRequestedRawDataDataType();
             out.name("assays");
-            if (value.getAssays().iterator().next() instanceof AffymetrixChip) {
-                startWritePostFilterParameter(out, "Assays",
-                        this.urlParameters.getParamFilterAssayId().getName(),
-                        true, false);
-                List<AffymetrixChip> chips = value.getAssays().stream()
-                        .map(a -> AffymetrixChip.class.cast(a))
-                        .collect(Collectors.toList());
-                for (AffymetrixChip c: chips) {
-                    out.beginObject();
-                    out.name("id").value(c.getId());
-                    out.name("name").value(c.getId());
-                    out.endObject();
-                }
-                endWritePostFilterParameter(out);
+            startWritePostFilterParameter(out, "Assays",
+                    this.urlParameters.getParamFilterAssayId().getName(),
+                    rawDatDataType.isInformativeAssayId(), rawDatDataType.isInformativeAssayName());
+            for (Assay a: value.getAssays()) {
+                out.beginObject();
+                out.name("id").value(rawDatDataType.getAssayId(a));
+                out.name("name").value(rawDatDataType.getAssayName(a));
+                out.endObject();
             }
+            endWritePostFilterParameter(out);
         }
 
         out.endObject();

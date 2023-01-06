@@ -96,6 +96,45 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
         this.rawDataCountContainerClass = rawDataCountContainerClass;
     }
 
+    /**
+     * Returns a {@code String} that mimics an ID for the provided {@code Assay}.
+     * We use this method because not all types of {@code Assay}s formally have an ID in the sense
+     * defined by the {@code Entity} class (notably, uniqueness criterion), but other attributes
+     * can be used to generate an ID useful for other use cases.
+     *
+     * @param a     An {@code Assay} for which we want to retrieve a sort of ID.
+     * @return      A {@code String} that mimics an ID for {@code a}.
+     * @throws IllegalArgumentException If {@code a} is not of the type
+     *                                  expected by this {@code RawDataDataType}.
+     */
+    public abstract String getAssayId(Assay a) throws IllegalArgumentException;
+    /**
+     * Returns a {@code String} that mimics an name for the provided {@code Assay}.
+     * We use this method because not all types of {@code Assay}s formally have a name,
+     * but other attributes can be used to generate a name useful for other use cases.
+     *
+     * @param a     An {@code Assay} for which we want to retrieve a sort of name.
+     * @return      A {@code String} that mimics a name for {@code a}.
+     * @throws IllegalArgumentException If {@code a} is not of the type
+     *                                  expected by this {@code RawDataDataType}.
+     */
+    public abstract String getAssayName(Assay a) throws IllegalArgumentException;
+    /**
+     * @return  {@code true} if the ID returned by the method {@link #getAssayId(Assay)}
+     *          is a useful identifying information, {@code false} otherwise.
+     */
+    public abstract boolean isInformativeAssayId();
+    /**
+     * @return  {@code true} if the name returned by the method {@link #getAssayName(Assay)}
+     *          is a useful identifying information, {@code false} otherwise.
+     */
+    public abstract boolean isInformativeAssayName();
+    /**
+     * @return  {@code true} if experiment names are informative for this {@code RawDataDataType},
+     *          {@code false} otherwise.
+     */
+    public abstract boolean isInformativeExperimentName();
+
     //It IS checked
     @SuppressWarnings("unchecked")
     public RawDataDataType<? extends RawDataContainerWithExperiment<?, ?, ?>,

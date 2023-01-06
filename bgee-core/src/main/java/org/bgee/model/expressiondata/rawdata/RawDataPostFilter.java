@@ -9,12 +9,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
+import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 import org.bgee.model.species.Species;
 /**
  * A class containing values of all condition parameters used to create filters
@@ -25,12 +28,25 @@ import org.bgee.model.species.Species;
  *
  */
 public class RawDataPostFilter {
+    private final static Logger log = LogManager.getLogger(RawDataPostFilter.class.getName());
+
     public static RawDataPostFilter merge(RawDataPostFilter f1, RawDataPostFilter f2) {
-        if (!f1.getRequestedDataType().equals(f2.getRequestedDataType())) {
-            throw new IllegalArgumentException(
-                    "Not possible to merge RawDataPostFilter for different data types");
+        log.traceEntry("{}, {}", f1, f2);
+
+        if (f1 == null && f2 == null) {
+            throw log.throwing(new IllegalArgumentException("Nothing to merge"));
         }
-        return new RawDataPostFilter(
+        if (f1 == null) {
+            return log.traceExit(f2);
+        }
+        if (f2 == null) {
+            return log.traceExit(f1);
+        }
+        if (!f1.getRequestedRawDataDataType().equals(f2.getRequestedRawDataDataType())) {
+            throw log.throwing(new IllegalArgumentException(
+                    "Not possible to merge RawDataPostFilter for different data types"));
+        }
+        return log.traceExit(new RawDataPostFilter(
                 Stream.concat(f1.getAnatEntities().stream(), f2.getAnatEntities().stream())
                 .collect(Collectors.toSet()),
                 Stream.concat(f1.getDevStages().stream(), f2.getDevStages().stream())
@@ -47,21 +63,8 @@ public class RawDataPostFilter {
                 .collect(Collectors.toSet()),
                 Stream.concat(f1.getAssays().stream(), f2.getAssays().stream())
                 .collect(Collectors.toCollection(LinkedHashSet::new)),
-                f1.getRequestedDataType()
-                );
-    }
-    public static RawDataPostFilter cloneWithoutAssayFilter(RawDataPostFilter f) {
-        return new RawDataPostFilter(
-                f.getAnatEntities(),
-                f.getDevStages(),
-                f.getCellTypes(),
-                f.getSexes(),
-                f.getStrains(),
-                f.getSpecies(),
-                f.getExperiments(),
-                null,
-                f.getRequestedDataType()
-                );
+                f1.getRequestedRawDataDataType()
+                ));
     }
 
     private final Set<AnatEntity> anatEntities;
@@ -72,10 +75,10 @@ public class RawDataPostFilter {
     private final Set<Species> species;
     private final Set<Experiment<?>> experiments;
     private final Set<Assay> assays;
-    private final DataType requestedDataType;
+    private final RawDataDataType<?, ?> requestedRawDataDataType;
 
-    public RawDataPostFilter(DataType requestedDataType) {
-        this(null, null, null, null, null, null, null, null, requestedDataType);
+    public RawDataPostFilter(RawDataDataType<?, ?> requestedRawDataDataType) {
+        this(null, null, null, null, null, null, null, null, requestedRawDataDataType);
     }
     /**
      * 
@@ -94,17 +97,17 @@ public class RawDataPostFilter {
      * @param experiments       A {@code Collection} of {@code Experiment}s specifying the experiments to use
      *                          in the filtering
      * @param assays            A {@code Collection} of {@code Assay}s specifying the assays to use
-     *                          in the filtering. It is the responsibility of the caller to order them.
-     * @param requestedDataType A {@code DataType} corresponding to the data type for which post
-     *                          fitlers have been retrieved.
+     *                          in the filtering
+     * @param requestedDataType A {@code RawDataDataType} corresponding to the data type for which post
+     *                          filters have been retrieved.
      */
     public RawDataPostFilter(Collection<AnatEntity> anatEntities, Collection<DevStage> devStages,
             Collection<AnatEntity> cellTypes, Collection<RawDataSex> sexes,
             Collection<String> strains, Collection<Species> species,
-            Collection<Experiment<?>> experiments, LinkedHashSet<Assay> assays,
-            DataType requestedDataType) {
-        if (requestedDataType == null) {
-            throw new IllegalArgumentException("requestedDataType cannot be null");
+            Collection<Experiment<?>> experiments, Collection<Assay> assays,
+            RawDataDataType<?, ?> requestedRawDataDataType) {
+        if (requestedRawDataDataType == null) {
+            throw new IllegalArgumentException("requestedRawDataDataType cannot be null");
         }
         this.anatEntities = Collections.unmodifiableSet(anatEntities == null? new LinkedHashSet<>():
             anatEntities.stream()
@@ -134,8 +137,10 @@ public class RawDataPostFilter {
             .sorted(Comparator.comparing(e -> e.getId()))
             .collect(Collectors.<Experiment<?>, LinkedHashSet<Experiment<?>>>toCollection(LinkedHashSet::new)));
         this.assays = Collections.unmodifiableSet(assays == null? new LinkedHashSet<>():
-            new LinkedHashSet<>(assays));
-        this.requestedDataType = requestedDataType;
+            assays.stream()
+            .sorted(Comparator.comparing(a -> requestedRawDataDataType.getAssayId(a)))
+            .collect(Collectors.<Assay, LinkedHashSet<Assay>>toCollection(LinkedHashSet::new)));
+        this.requestedRawDataDataType = requestedRawDataDataType;
     }
 
     /**
@@ -205,16 +210,22 @@ public class RawDataPostFilter {
         return assays;
     }
     /**
+     * @return  The {@code RawDataDataType} for which this {@code RawDataPostFilter} was requested.
+     */
+    public RawDataDataType<?,?> getRequestedRawDataDataType() {
+        return this.requestedRawDataDataType;
+    }
+    /**
      * @return  The {@code DataType} for which this {@code RawDataPostFilter} was requested.
      */
     public DataType getRequestedDataType() {
-        return requestedDataType;
+        return this.requestedRawDataDataType.getDataType();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(anatEntities, cellTypes, devStages, sexes, strains,
-                species, experiments, assays, requestedDataType);
+                species, experiments, assays, requestedRawDataDataType);
     }
     @Override
     public boolean equals(Object obj) {
@@ -233,7 +244,7 @@ public class RawDataPostFilter {
                 && Objects.equals(species, other.species)
                 && Objects.equals(experiments, other.experiments)
                 && Objects.equals(assays, other.assays)
-                && Objects.equals(requestedDataType, other.requestedDataType);
+                && Objects.equals(requestedRawDataDataType, other.requestedRawDataDataType);
     }
 
     @Override
@@ -247,7 +258,7 @@ public class RawDataPostFilter {
                .append(", species=").append(species)
                .append(", experiments=").append(experiments)
                .append(", assays=").append(assays)
-               .append(", requestedDataType=").append(requestedDataType)
+               .append(", requestedRawDataDataType=").append(requestedRawDataDataType)
                .append("]");
         return builder.toString();
     }

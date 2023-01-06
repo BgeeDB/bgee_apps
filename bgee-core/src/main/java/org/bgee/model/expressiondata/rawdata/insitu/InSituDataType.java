@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.insitu;
 
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
 /**
@@ -18,5 +19,33 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 public class InSituDataType extends RawDataDataType<InSituContainer, InSituCountContainer> {
     public InSituDataType() {
         super(DataType.IN_SITU, InSituContainer.class, InSituCountContainer.class);
+    }
+
+    @Override
+    public String getAssayId(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof InSituEvidence)) {
+            throw new IllegalArgumentException("Assay is not an InSituEvidence");
+        }
+        return ((InSituEvidence) a).getId();
+    }
+    @Override
+    public String getAssayName(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof InSituEvidence)) {
+            throw new IllegalArgumentException("Assay is not an InSituEvidence");
+        }
+        return ((InSituEvidence) a).getId();
+    }
+
+    @Override
+    public boolean isInformativeAssayId() {
+        return true;
+    }
+    @Override
+    public boolean isInformativeAssayName() {
+        return false;
+    }
+    @Override
+    public boolean isInformativeExperimentName() {
+        return false;
     }
 }

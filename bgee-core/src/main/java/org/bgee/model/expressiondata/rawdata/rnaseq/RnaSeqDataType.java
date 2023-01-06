@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.rnaseq;
 
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
 /**
@@ -27,5 +28,33 @@ public class RnaSeqDataType extends RawDataDataType<RnaSeqContainer, RnaSeqCount
         if (!dataType.equals(DataType.RNA_SEQ) && !dataType.equals(DataType.FULL_LENGTH)) {
             throw new IllegalArgumentException("dataType has to be either RNA_SEQ or FULL_LENGTH");
         }
+    }
+
+    @Override
+    public String getAssayId(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof RnaSeqLibraryAnnotatedSample)) {
+            throw new IllegalArgumentException("Assay is not a RnaSeqLibraryAnnotatedSample");
+        }
+        return ((RnaSeqLibraryAnnotatedSample) a).getLibrary().getId();
+    }
+    @Override
+    public String getAssayName(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof RnaSeqLibraryAnnotatedSample)) {
+            throw new IllegalArgumentException("Assay is not a RnaSeqLibraryAnnotatedSample");
+        }
+        return ((RnaSeqLibraryAnnotatedSample) a).getLibrary().getId();
+    }
+
+    @Override
+    public boolean isInformativeAssayId() {
+        return true;
+    }
+    @Override
+    public boolean isInformativeAssayName() {
+        return false;
+    }
+    @Override
+    public boolean isInformativeExperimentName() {
+        return true;
     }
 }

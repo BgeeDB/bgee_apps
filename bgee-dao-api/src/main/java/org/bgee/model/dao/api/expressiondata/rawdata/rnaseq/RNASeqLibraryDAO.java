@@ -325,9 +325,9 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
          */
         private final String sequencerName;
         private final String technologyName;
-        private final boolean isSingleCell;
-        private final boolean sampleMultiplexing;
-        private final boolean libraryMultiplexing;
+        private final Boolean singleCell;
+        private final Boolean sampleMultiplexing;
+        private final Boolean libraryMultiplexing;
         private final StrandSelection strandSelection;
         private final CellCompartment cellCompartment;
         private final SequencedTrancriptPart sequencedTranscriptPart;
@@ -336,15 +336,15 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         private final LibraryType libraryType;
 
         public RNASeqLibraryTO(String rnaSeqLibraryId, String rnaSeqExperimentId, String sequencerName,
-                String technologyName, boolean isSingleCell, boolean sampleMultiplexing,
-                boolean libraryMultiplexing, StrandSelection strandSelection,
+                String technologyName, Boolean singleCell, Boolean sampleMultiplexing,
+                Boolean libraryMultiplexing, StrandSelection strandSelection,
                 CellCompartment cellCompartment, SequencedTrancriptPart seqTranscriptPart,
                 Integer fragmentation, String populationCaptureId, LibraryType libType) {
             super(rnaSeqLibraryId);
             this.rnaSeqExperimentId = rnaSeqExperimentId;
             this.sequencerName = sequencerName;
             this.technologyName = technologyName;
-            this.isSingleCell = isSingleCell;
+            this.singleCell = singleCell;
             this.sampleMultiplexing = sampleMultiplexing;
             this.libraryMultiplexing = libraryMultiplexing;
             this.strandSelection = strandSelection;
@@ -364,13 +364,13 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         public String getTechnologyName() {
             return technologyName;
         }
-        public boolean isSingleCell() {
-            return isSingleCell;
+        public Boolean getSingleCell() {
+            return singleCell;
         }
-        public boolean isSampleMultiplexing() {
+        public Boolean getSampleMultiplexing() {
             return sampleMultiplexing;
         }
-        public boolean isLibraryMultiplexing() {
+        public Boolean getLibraryMultiplexing() {
             return libraryMultiplexing;
         }
         public StrandSelection getStrandSelection() {
@@ -395,7 +395,7 @@ public interface RNASeqLibraryDAO extends DAO<RNASeqLibraryDAO.Attribute> {
         @Override
         public String toString() {
             return "RNASeqLibraryTO [rnaSeqLibraryId=" + getId() + ", rnaSeqExperimentId=" + rnaSeqExperimentId + ", sequencerName=" + sequencerName
-                    + ", technologyName=" + technologyName + ", isSingleCell=" + isSingleCell + ", sampleMultiplexing="
+                    + ", technologyName=" + technologyName + ", singleCell=" + singleCell + ", sampleMultiplexing="
                     + sampleMultiplexing + ", libraryMultiplexing=" + libraryMultiplexing + ", strandSelection="
                     + strandSelection + ", cellCompartment=" + cellCompartment + ", sequencedTranscriptPart="
                     + sequencedTranscriptPart + ", fragmentation=" + fragmentation + ", populationCaptureId="

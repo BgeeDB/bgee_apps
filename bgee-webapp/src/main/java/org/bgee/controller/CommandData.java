@@ -1259,16 +1259,12 @@ public class CommandData extends CommandParent {
         return log.traceExit(dataTypes.stream()
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> {
-                            RawDataPostFilter postFilter = rawDataLoader.loadPostFilter(
-                                    RawDataDataType.getRawDataDataType(dt));
-                            //We create a new Filter if only experiments were requested,
-                            //because the assay filter is also always loaded.
-                            if (InformationType.EXPERIMENT.equals(infoType)) {
-                                postFilter = RawDataPostFilter.cloneWithoutAssayFilter(postFilter);
-                            }
-                            return postFilter;
-                        },
+                        dt -> rawDataLoader.loadPostFilter(
+                                    RawDataDataType.getRawDataDataType(dt), true, true,
+                                    InformationType.EXPERIMENT.equals(infoType) &&
+                                            //in case the DataType has no concept of experiments,
+                                            //we need to retrieve the assay info anyway
+                                            dt.isWithExperiments()? false: true),
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
     }

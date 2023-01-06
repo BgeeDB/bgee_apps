@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.est;
 
 import org.bgee.model.expressiondata.baseelements.DataType;
+import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
 /**
@@ -19,5 +20,33 @@ public class ESTDataType extends RawDataDataType<ESTContainer, ESTCountContainer
 
     public ESTDataType() {
         super(DataType.EST, ESTContainer.class, ESTCountContainer.class);
+    }
+
+    @Override
+    public String getAssayId(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof ESTLibrary)) {
+            throw new IllegalArgumentException("Assay is not an ESTLibrary");
+        }
+        return ((ESTLibrary) a).getId();
+    }
+    @Override
+    public String getAssayName(Assay a) throws IllegalArgumentException {
+        if (!(a instanceof ESTLibrary)) {
+            throw new IllegalArgumentException("Assay is not an ESTLibrary");
+        }
+        return ((ESTLibrary) a).getName();
+    }
+
+    @Override
+    public boolean isInformativeAssayId() {
+        return true;
+    }
+    @Override
+    public boolean isInformativeAssayName() {
+        return true;
+    }
+    @Override
+    public boolean isInformativeExperimentName() {
+        return true;
     }
 }

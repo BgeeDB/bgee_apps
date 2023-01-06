@@ -349,21 +349,24 @@ public class URLParameters {
      * A {@code Parameter<String>} that contains the developmental stages to be used.
      * Corresponds to the URL parameter "stage_id".
      */
-    private static final Parameter<String> DEV_STAGE = new Parameter<String>("stage_id",
+    private static final Parameter<String> DEV_STAGE = new Parameter<String>(
+            ConditionParameter.DEV_STAGE.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE, 
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the developmental stages to be used in a filter.
      * Corresponds to the URL parameter "filter_stage_id".
      */
-    private static final Parameter<String> FILTER_DEV_STAGE = new Parameter<String>("filter_stage_id",
+    private static final Parameter<String> FILTER_DEV_STAGE = new Parameter<String>(
+            ConditionParameter.DEV_STAGE.getRequestFilterParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the anatomical entities to be used.
      * Corresponds to the URL parameter "anat_entity_id".
      */
-    private static final Parameter<String> ANAT_ENTITY = new Parameter<>("anat_entity_id",
+    private static final Parameter<String> ANAT_ENTITY = new Parameter<>(
+            ConditionParameter.ANAT_ENTITY_CELL_TYPE.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
@@ -371,7 +374,8 @@ public class URLParameters {
      * Corresponds to the URL parameter "filter_anat_entity_id".
      */
     private static final Parameter<String> FILTER_ANAT_ENTITY = new Parameter<String>(
-            "filter_anat_entity_id", true, false, null, true, DEFAULT_IS_SECURE,
+            ConditionParameter.ANAT_ENTITY_CELL_TYPE.getRequestFilterParameterName(),
+            true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the cell type IDs to be used.
@@ -395,7 +399,8 @@ public class URLParameters {
      * A {@code Parameter<String>} that contains the sexes requested.
      * Corresponds to the URL parameter "sex".
      */
-    private static final Parameter<String> SEX = new Parameter<String>("sex",
+    private static final Parameter<String> SEX = new Parameter<String>(
+            ConditionParameter.SEX.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             Math.max(RequestParameters.ALL_VALUE.length(), EnumSet.allOf(SexEnum.class).stream()
                     .map(e -> e.name().length())
@@ -409,7 +414,8 @@ public class URLParameters {
      * Corresponds to the URL parameter "filter_sex". As opposed to {@link #SEX},
      * raw data sexes can be provided in this filter, not only global condition sexes.
      */
-    private static final Parameter<String> FILTER_SEX = new Parameter<String>("filter_sex",
+    private static final Parameter<String> FILTER_SEX = new Parameter<String>(
+            ConditionParameter.SEX.getRequestFilterParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             Math.max(RequestParameters.ALL_VALUE.length(),
                     Stream.concat(EnumSet.allOf(RawDataSex.class).stream(),
@@ -428,14 +434,16 @@ public class URLParameters {
      * A {@code Parameter<String>} that contains the strains requested.
      * Corresponds to the URL parameter "strain".
      */
-    private static final Parameter<String> STRAIN = new Parameter<>("strain",
+    private static final Parameter<String> STRAIN = new Parameter<>(
+            ConditionParameter.STRAIN.getRequestParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
     /**
      * A {@code Parameter<String>} that contains the strains requested to be used in a filter.
      * Corresponds to the URL parameter "filter_strain".
      */
-    private static final Parameter<String> FILTER_STRAIN = new Parameter<>("filter_strain",
+    private static final Parameter<String> FILTER_STRAIN = new Parameter<>(
+            ConditionParameter.STRAIN.getRequestFilterParameterName(),
             true, false, null, true, DEFAULT_IS_SECURE,
             DEFAULT_MAX_SIZE, DEFAULT_FORMAT, String.class);
 

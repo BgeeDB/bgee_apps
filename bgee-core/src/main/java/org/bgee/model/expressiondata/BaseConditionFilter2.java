@@ -22,6 +22,9 @@ public abstract class BaseConditionFilter2<T extends BaseCondition2> {
         private final Set<T> filterIds;
         private final boolean includeChildTerms;
 
+        public FilterIds() {
+            this(null);
+        }
         public FilterIds(T id) {
             this(id, false);
         }

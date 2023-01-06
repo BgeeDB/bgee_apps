@@ -7,26 +7,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bgee.controller.URLParameters;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
-import org.bgee.model.NamedEntity;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.expressiondata.rawdata.baseelements.Assay;
 import org.bgee.model.expressiondata.rawdata.baseelements.Experiment;
 import org.bgee.model.expressiondata.rawdata.baseelements.RawDataDataType;
 
-import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter> {
+public class RawDataPostFilterTypeAdapter extends PostFilterTypeAdapter<RawDataPostFilter> {
     private static final Logger log = LogManager.getLogger(RawDataPostFilterTypeAdapter.class.getName());
-
-    private final TypeAdaptersUtils utils;
-    private final URLParameters urlParameters;
 
     public RawDataPostFilterTypeAdapter(TypeAdaptersUtils utils,
             URLParameters urlParameters) {
-        this.utils = utils;
-        this.urlParameters = urlParameters;
+        super(utils, urlParameters);
     }
 
     @Override
@@ -129,18 +123,6 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         throw log.throwing(new UnsupportedOperationException("No custom JSON reader for RawDataPostFilter."));
     }
 
-    private void writePostFilterNamedEntityParameter(JsonWriter out, String filterName,
-            String urlParameterName, Collection<? extends NamedEntity<?>> values) throws IOException {
-        log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
-
-        startWritePostFilterParameter(out, filterName, urlParameterName, true, true);
-        for (NamedEntity<?> value: values) {
-            this.utils.writeSimplifiedNamedEntity(out, value);
-        }
-        endWritePostFilterParameter(out);
-
-        log.traceExit();
-    }
     private void writePostFilterEnumParameter(JsonWriter out, String filterName,
             String urlParameterName, Collection<? extends BgeeEnumField> values) throws IOException {
         log.traceEntry("{}, {}, {}, {}", out, filterName, urlParameterName, values);
@@ -169,26 +151,6 @@ public class RawDataPostFilterTypeAdapter extends TypeAdapter<RawDataPostFilter>
         }
         endWritePostFilterParameter(out);
 
-        log.traceExit();
-    }
-
-    private static void startWritePostFilterParameter(JsonWriter out, String filterName,
-            String urlParameterName, boolean informativeId, boolean informativeName) throws IOException {
-        log.traceEntry("{}, {}, {}, {}, {}", out, filterName, urlParameterName,
-                informativeId, informativeName);
-        out.beginObject();
-        out.name("filterName").value(filterName);
-        out.name("urlParameterName").value(urlParameterName);
-        out.name("informativeId").value(informativeId);
-        out.name("informativeName").value(informativeName);
-        out.name("values");
-        out.beginArray();
-        log.traceExit();
-    }
-    private static void endWritePostFilterParameter(JsonWriter out) throws IOException {
-        log.traceEntry("{}", out);
-        out.endArray();
-        out.endObject();
         log.traceExit();
     }
 }

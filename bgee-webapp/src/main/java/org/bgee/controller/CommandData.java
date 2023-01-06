@@ -78,7 +78,7 @@ import javax.servlet.http.HttpServletResponse;
  * Controller that handles requests for the raw data page.
  *
  * @author  Frederic Bastian
- * @version Bgee 15.0, Oct. 2022
+ * @version Bgee 15.0, Jan. 2023
  * @since   Bgee 15.0, Oct. 2022
  */
 public class CommandData extends CommandParent {
@@ -589,6 +589,27 @@ public class CommandData extends CommandParent {
         if (this.requestParameters.isGetResults() || this.requestParameters.isGetResultCount() ||
                 this.requestParameters.isGetFilters()) {
             log.debug("Loading ExpressionCallLoader");
+
+            //Either there is no filtering at all, or some genes must be requested.
+            //Having a null species ID is required to have no filtering at all.
+            //For other parameters than condParams and dataTypes, it is not possible
+            //to set them in a ConditionFilter without providing a species ID,
+            //so we don't have to explicitly check here if some are provided.
+            if (this.requestParameters.getSpeciesId() != null ||
+                    !condParams.isEmpty() && !condParams.containsAll(ConditionParameter.allOf()) ||
+                        !dataTypes.isEmpty() && !dataTypes.equals(EnumSet.allOf(DataType.class))) {
+
+                if (this.requestParameters.getGeneIds() == null ||
+                    this.requestParameters.getGeneIds().isEmpty()) {
+                    throw log.throwing(new InvalidRequestException("Some genes must be selected."));
+                }
+            }
+            //Otherwise, filters are allowed to be requested only when there are some filtering
+            else if (this.requestParameters.isGetFilters()) {
+                throw log.throwing(new InvalidRequestException(
+                        "Post-filters can be requested only if some form filters are defined."));
+            }
+
             //try...finally block to manage number of jobs per users,
             //to limit the concurrent number of queries a user can make
             Job job = null;
@@ -618,17 +639,17 @@ public class CommandData extends CommandParent {
                 }
                 //Filters
                 if (this.requestParameters.isGetFilters()) {
-                    //TODO not yet implemented
-//                    //For requesting getFilters, well, the filter parameters must be ignored
-//                    RawDataLoader loaderToUse = rawDataLoader;
-//                    RawDataFilter noFilterParamFilter = this.loadRawDataFilter(false);
-//                    //We try to avoid requesting a ProcessedFilter if not necessary,
-//                    //by comparing the RawDataFilters
-//                    if (!rawDataLoader.getRawDataProcessedFilter()
-//                            .getSourceFilter().equals(noFilterParamFilter)) {
-//                        loaderToUse = this.loadRawDataLoader(noFilterParamFilter);
-//                    }
-//                    rawDataPostFilters = this.loadRawDataPostFilters(loaderToUse, dataTypes);
+                    //For requesting getFilters, well, the filter parameters must be ignored
+                    ExpressionCallLoader loaderToUse = callLoader;
+                    ExpressionCallFilter2 noFilterParamFilter = this.loadExprCallFilter(
+                            false, condParams, dataTypes);
+                    //We try to avoid requesting a ProcessedFilter if not necessary,
+                    //by comparing the RawDataFilters
+                    if (!callLoader.getProcessedFilter()
+                            .getSourceFilter().equals(noFilterParamFilter)) {
+                        loaderToUse = this.loadExprCallLoader(noFilterParamFilter);
+                    }
+                    postFilter = loaderToUse.loadPostFilter();
                 }
 
                 job.completeWithSuccess();
@@ -642,7 +663,8 @@ public class CommandData extends CommandParent {
             colDescriptions = this.getExprCallColumnDescriptions(condParams);
         }
         DataDisplay display = viewFactory.getDataDisplay();
-        log.debug("Count: {} - Calls: {}", count, calls);
+        log.debug("Count: {}", count);
+        log.trace("Calls: {}", calls);
         display.displayExprCallPage(speciesList, formDetails, colDescriptions,
                 new ExpressionCallResponse(calls, condParams, dataTypes), count, postFilter);
 
@@ -913,11 +935,12 @@ public class CommandData extends CommandParent {
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
             processedFilter = rawDataService.processRawDataFilter(filter);
-            log.debug("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
+            log.trace("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
             RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-            log.debug("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
+            log.trace("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
         } else {
-            log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
+            log.debug("Cache hit for filter: {}", filter);
+            log.trace("Value: {}", processedFilter);
         }
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
@@ -935,11 +958,12 @@ public class CommandData extends CommandParent {
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
             processedFilter = callService.processExpressionCallFilter(filter);
-            log.debug("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+            log.trace("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
             EXPR_CALL_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-            log.debug("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+            log.trace("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
         } else {
-            log.debug("Cache hit for filter: {} - value: {}", filter, processedFilter);
+            log.debug("Cache hit for filter: {}", filter);
+            log.trace("Value: {}", processedFilter);
         }
         return log.traceExit(callService.getCallLoader(processedFilter));
     }
@@ -1031,13 +1055,10 @@ public class CommandData extends CommandParent {
                     throws InvalidRequestException {
         log.traceEntry("{}, {}, {}", consideringFilters, condParams, dataTypes);
 
-        //Either there is no filtering at all, or some genes must be requested
+        //Either there is no filtering at all, or some genes must be requested.
+        //Checks are made in method #processExprCallPage()
         Integer speciesId = this.requestParameters.getSpeciesId();
         if (speciesId == null) {
-            if (!condParams.isEmpty() && !condParams.containsAll(ConditionParameter.allOf()) ||
-                    !dataTypes.isEmpty() && !dataTypes.equals(EnumSet.allOf(DataType.class))) {
-                throw log.throwing(new InvalidRequestException("Some genes must be selected."));
-            }
             log.debug("No filter present, returning an empty ExpressionCallFilter2");
             return log.traceExit(new ExpressionCallFilter2());
         }
@@ -1046,15 +1067,13 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException("Some genes must be selected."));
         }
 
-        List<String> filterAnatEntityIds = !consideringFilters? null:
+        //Currently there is only one filter for both anat. entities and cell types
+        List<String> filterAnatEntityCellTypeIds = !consideringFilters? null:
             this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity());
         List<String> filterDevStageIds = !consideringFilters? null:
             this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamFilterDevStage());
-        List<String> filterCellTypeIds = !consideringFilters? null:
-            this.requestParameters.getValues(
-                this.requestParameters.getUrlParametersInstance().getParamFilterCellType());
         List<String> filterSexIds = !consideringFilters? null:
             this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamFilterSex());
@@ -1078,10 +1097,10 @@ public class CommandData extends CommandParent {
         //ANAT ENTITY AND CELL TYPE
         FilterIds<String> anatEntityFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
-                filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty()?
-                        filterAnatEntityIds: this.requestParameters.getAnatEntity(),
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
+                        filterAnatEntityCellTypeIds: this.requestParameters.getAnatEntity(),
                 //And we never include child terms when the parameter comes from a filter.
-                filterAnatEntityIds != null && !filterAnatEntityIds.isEmpty() ||
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
                 this.requestParameters.getAnatEntity() == null ||
                 this.requestParameters.getAnatEntity().isEmpty()?
                         false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
@@ -1089,17 +1108,23 @@ public class CommandData extends CommandParent {
                                 .getParamAnatEntityDescendant())));
         FilterIds<String> cellTypeFilter = new FilterIds<>(
                 //Filters override the related parameter from the form
-                filterCellTypeIds != null && !filterCellTypeIds.isEmpty()?
-                        filterCellTypeIds: this.requestParameters.getCellType(),
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty()?
+                        filterAnatEntityCellTypeIds: this.requestParameters.getCellType(),
                 //And we never include child terms when the parameter comes from a filter.
-                filterCellTypeIds != null && !filterCellTypeIds.isEmpty() ||
+                filterAnatEntityCellTypeIds != null && !filterAnatEntityCellTypeIds.isEmpty() ||
                 this.requestParameters.getCellType() == null ||
                 this.requestParameters.getCellType().isEmpty()?
                         false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                                 this.requestParameters.getUrlParametersInstance()
                                 .getParamCellTypeDescendant())));
+        List<FilterIds<String>> composedFilterIds = new ArrayList<>(List.of(anatEntityFilter));
+        //In case we used the filters, anatEntityFilter and cellTypeFilter should be equal,
+        //and we thus don't use the cellTypeFilter
+        if (!anatEntityFilter.equals(cellTypeFilter)) {
+            composedFilterIds.add(cellTypeFilter);
+        }
         ComposedFilterIds<String> anatComposedFilter = new ComposedFilterIds<>(
-                List.of(anatEntityFilter, cellTypeFilter).stream()
+                composedFilterIds.stream()
                 .filter(f -> !f.isEmpty())
                 .collect(Collectors.toList()));
         condParamToComposedFilterIds.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatComposedFilter);

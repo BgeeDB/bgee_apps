@@ -31,9 +31,7 @@ public class Condition2 extends BaseCondition2 {
     public Condition2(Map<ConditionParameter<?, ?>, ComposedEntity<?>> conditionParameterObjects,
             Species species, Map<DataType, BigDecimal> maxRanksByDataType,
             Map<DataType, BigDecimal> globalMaxRanksByDataType) {
-        super(// we do this to cast from Map<ConditionParameter<?, ?>, ComposedEntity<?>>
-              //to Map<ConditionParameter<?, ?>, Object>.
-              //we'll check correct types anyway in this constructor.
+        super(//we'll check correct types in this constructor.
               //We also want to have an entry for all condition parameters.
               conditionParameterObjects == null? null:
                   ConditionParameter.allOf().stream()

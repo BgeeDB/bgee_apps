@@ -28,10 +28,10 @@ public abstract class BaseCondition2 implements Comparable<BaseCondition2> {
             .thenComparing(c -> c.getSpecies().getId(), Comparator.nullsLast(Integer::compareTo));
 
 
-    protected final Map<ConditionParameter<?, ?>, Object> conditionParameterObjects;
+    protected final Map<ConditionParameter<?, ?>, ? extends Object> conditionParameterObjects;
     private final Species species;
 
-    public BaseCondition2(Map<ConditionParameter<?, ?>, Object> conditionParameterObjects,
+    public BaseCondition2(Map<ConditionParameter<?, ?>, ? extends Object> conditionParameterObjects,
             Species species) {
         if (conditionParameterObjects == null || conditionParameterObjects.isEmpty()) {
             throw log.throwing(new IllegalArgumentException(

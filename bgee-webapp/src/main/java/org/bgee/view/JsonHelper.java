@@ -13,6 +13,7 @@ import org.bgee.model.expressiondata.rawdata.baseelements.RawDataAnnotation;
 import org.bgee.model.expressiondata.rawdata.est.ESTCountContainer;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
+import org.bgee.model.expressiondata.call.ExpressionCallPostFilter;
 import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
 import org.bgee.model.file.DownloadFile;
 import org.bgee.model.job.Job;
@@ -24,6 +25,7 @@ import org.bgee.view.json.adapters.ConditionParameterTypeAdapter;
 import org.bgee.view.json.adapters.DownloadFileTypeAdapter;
 import org.bgee.view.json.adapters.ESTCountContainerTypeAdapter;
 import org.bgee.view.json.adapters.ExperimentAssayTypeAdapter;
+import org.bgee.view.json.adapters.ExpressionCallPostFilterTypeAdapter;
 import org.bgee.view.json.adapters.XRefTypeAdapter;
 import org.bgee.view.json.adapters.JobTypeAdapter;
 import org.bgee.view.json.adapters.RawCallTypeAdapter;
@@ -157,6 +159,8 @@ public class JsonHelper {
                 .registerTypeAdapter(RawDataAnnotation.class, new RawDataAnnotationTypeAdapter(this.utils))
                 .registerTypeAdapter(RawCall.class, new RawCallTypeAdapter(this.utils))
                 .registerTypeAdapter(RawDataPostFilter.class, new RawDataPostFilterTypeAdapter(
+                        this.utils, this.requestParameters.getUrlParametersInstance()))
+                .registerTypeAdapter(ExpressionCallPostFilter.class, new ExpressionCallPostFilterTypeAdapter(
                         this.utils, this.requestParameters.getUrlParametersInstance()))
                 .registerTypeAdapter(ExperimentAssay.class, new ExperimentAssayTypeAdapter(
                         this.utils))

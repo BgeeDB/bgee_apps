@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,26 +23,21 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
+import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.SexService;
+import org.bgee.model.anatdev.Strain;
 import org.bgee.model.anatdev.StrainService;
 import org.bgee.model.dao.api.DAO;
 import org.bgee.model.dao.api.expressiondata.DAODataType;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.dao.api.expressiondata.call.ConditionDAO.ConditionTOResultSet;
-import org.bgee.model.dao.api.expressiondata.call.DAOCallFilter;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTO;
 import org.bgee.model.dao.api.expressiondata.call.GlobalExpressionCallDAO.GlobalExpressionCallTOResultSet;
-import org.bgee.model.dao.api.expressiondata.rawdata.DAORawDataFilter;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO;
-import org.bgee.model.dao.api.expressiondata.rawdata.RawDataConditionDAO.RawDataConditionTOResultSet;
 import org.bgee.model.dao.api.gene.GeneDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
-import org.bgee.model.expressiondata.baseelements.DataType;
 import org.bgee.model.expressiondata.call.Call.ExpressionCall2;
 import org.bgee.model.expressiondata.call.CallFilter.ExpressionCallFilter2;
-import org.bgee.model.expressiondata.rawdata.RawDataPostFilter;
-import org.bgee.model.expressiondata.rawdata.baseelements.RawDataCondition.RawDataSex;
 import org.bgee.model.gene.Gene;
 import org.bgee.model.gene.GeneBioType;
 import org.bgee.model.species.Species;
@@ -246,6 +241,90 @@ public class ExpressionCallLoader extends CommonService {
         }
         return log.traceExit(this.globalExprCallDAO.getGlobalExpressionCallsCount(
                 this.processedFilter.getDaoFilters()));
+    }
+
+    public ExpressionCallPostFilter loadPostFilter() {
+        log.traceEntry();
+        //If the DAOCallFilters are null (different from: not-null and empty)
+        //it means there was no matching conds and thus no result for sure
+        if (this.processedFilter.getDaoFilters() == null) {
+            return log.traceExit(new ExpressionCallPostFilter());
+        }
+
+        Function<Collection<ConditionDAO.Attribute>, ConditionTOResultSet> condRequestFun = (attrs) ->
+        this.condDAO.getGlobalConditionsFromCallFilters(this.getProcessedFilter().getDaoFilters(), attrs);
+        Map<ConditionParameter<?, ?>, Set<? extends Object>> condParamEntities = new HashMap<>();
+
+        // retrieve anatEntities and cell types
+        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
+                .contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
+            Set<String> anatEntityIds = condRequestFun.apply(
+                    Set.of(ConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
+                    .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
+            Set<String> cellTypeIds = condRequestFun.apply(
+                    Set.of(ConditionDAO.Attribute.CELL_TYPE_ID))
+                    .stream()
+                    .map(c -> c.getCellTypeId())
+                    //cell type is the only condition param that can be NULL,
+                    //we end up requesting an anat. entity with ID "NULL"
+                    .filter(s -> s != null)
+                    .collect(Collectors.toSet());
+            Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
+            anatEntityCellTypeIds.addAll(cellTypeIds);
+            Set<AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
+                    new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
+                    .collect(Collectors.toSet());
+            condParamEntities.put(ConditionParameter.ANAT_ENTITY_CELL_TYPE, anatEntityCellTypes);
+        }
+
+        //retrieve dev. stages
+        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
+                .contains(ConditionParameter.DEV_STAGE)) {
+            Set<String> stageIds = condRequestFun.apply(
+                    Set.of(ConditionDAO.Attribute.STAGE_ID))
+                    .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
+            Set<DevStage> stages = stageIds.isEmpty()?
+                    new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
+                    .collect(Collectors.toSet());
+            condParamEntities.put(ConditionParameter.DEV_STAGE, stages);
+        }
+
+        // retrieve strains
+        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
+                .contains(ConditionParameter.STRAIN)) {
+            Set<String> strainIds = condRequestFun.apply(
+                    Set.of(ConditionDAO.Attribute.STRAIN_ID))
+                    .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
+            Set<Strain> strains = strainIds.isEmpty()? new HashSet<>():
+                this.strainService.loadStrains(strainIds).collect(Collectors.toSet());
+            condParamEntities.put(ConditionParameter.STRAIN, strains);
+        }
+
+        //retrieve sexes
+        if (this.getProcessedFilter().getSourceFilter().getCondParamCombination()
+                .contains(ConditionParameter.SEX)) {
+            Set<String> sexIds = condRequestFun.apply(
+                    Set.of(ConditionDAO.Attribute.SEX_ID))
+                    .stream().map(c -> c.getSex().getStringRepresentation()).collect(Collectors.toSet());
+            Set<Sex> sexes = this.sexService.loadSexes(sexIds).collect(Collectors.toSet());
+            condParamEntities.put(ConditionParameter.SEX, sexes);
+        }
+
+        //Species are unnecessary, we allow filtering only when one species is selected
+//        Set<Integer> speciesIds = condRequestFun.apply(
+//                Set.of(ConditionDAO.Attribute.SPECIES_ID))
+//                .stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
+//        Set<Species> species = speciesIds.isEmpty()?
+//                new HashSet<>() : this.getProcessedFilter().getSpeciesMap().values()
+//                .stream().filter(s -> speciesIds.contains(s.getId()))
+//                .collect(Collectors.toSet());
+//        assert speciesIds.size() == species.size();
+
+        return log.traceExit(new ExpressionCallPostFilter(condParamEntities));
+    }
+
+    public ExpressionCallProcessedFilter getProcessedFilter() {
+        return processedFilter;
     }
 
     //TODO to continue here

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -133,7 +133,7 @@ import org.bgee.model.species.Species;
  *
  * @author Frederic Bastian
  * @author Julien Wollbrett
- * @version Bgee 15.0, Nov. 2022
+ * @version Bgee 15.0, Jan. 2023
  * @since Bgee 15.0, Nov. 2022
  * @see #getRawDataProcessedFilter()
  * @see RawDataService
@@ -524,8 +524,9 @@ public class RawDataLoader extends CommonService {
         RawDataPostFilter condFilter = null;
         if (withConditionFilters) {
             condFilter = this.loadConditionPostFilter(
-                    (filters, attrs) -> this.rawDataConditionDAO.getRawDataConditionsLinkedToDataType(
-                            filters, requestedDAODataType, requestedDataType.getSingleCell(), attrs),
+                    (attrs) -> this.rawDataConditionDAO.getRawDataConditionsLinkedToDataType(
+                            this.getRawDataProcessedFilter().getDaoFilters(),
+                            requestedDAODataType, requestedDataType.getSingleCell(), attrs),
                     rawDataDataType);
         }
 
@@ -1411,7 +1412,7 @@ public class RawDataLoader extends CommonService {
 //                       METHODS NECESSARY FOR ALL DATA TYPES
 //*****************************************************************************************
 
-    private RawDataPostFilter loadConditionPostFilter(BiFunction<Collection<DAORawDataFilter>,
+    private RawDataPostFilter loadConditionPostFilter(Function<
             Collection<RawDataConditionDAO.Attribute>, RawDataConditionTOResultSet> condRequest,
             RawDataDataType<?, ?> dataType) {
         log.traceEntry("{}, {}", condRequest, dataType);
@@ -1422,53 +1423,58 @@ public class RawDataLoader extends CommonService {
             return log.traceExit(new RawDataPostFilter(dataType));
         }
 
-        // retrieve anatEntities
-        Set<String> anatEntityIds = condRequest.apply(this.getRawDataProcessedFilter()
-        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
-        .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
-        Set<AnatEntity> anatEntities = anatEntityIds.isEmpty()?
-                new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityIds, false)
-                .collect(Collectors.toSet());
-
-        // retrieve cellTypes
-        Set<String> cellTypeIds = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
+        // retrieve anatEntities and cell types
+        Set<String> anatEntityIds = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.ANAT_ENTITY_ID)).stream()
+                .map(a -> a.getAnatEntityId()).collect(Collectors.toSet());
+        Set<String> cellTypeIds = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.CELL_TYPE_ID))
                 .stream()
                 .map(c -> c.getCellTypeId())
                 //cell type is the only condition param that can be NULL,
                 //we end up requesting an anat. entity with ID "NULL"
                 .filter(s -> s != null)
                 .collect(Collectors.toSet());
-        Set<AnatEntity> cellTypes = cellTypeIds.isEmpty()?
-                new HashSet<>() : anatEntityService.loadAnatEntities(cellTypeIds, false)
+        //We merge both to make only one request to the anatEntityService
+        Set<String> anatEntityCellTypeIds = new HashSet<>(anatEntityIds);
+        anatEntityCellTypeIds.addAll(cellTypeIds);
+        Set<AnatEntity> anatEntityCellTypes = anatEntityCellTypeIds.isEmpty()?
+                new HashSet<>() : anatEntityService.loadAnatEntities(anatEntityCellTypeIds, false)
+                .collect(Collectors.toSet());
+        Set<AnatEntity> anatEntities = anatEntityCellTypes.stream()
+                .filter(ae -> anatEntityIds.contains(ae.getId()))
+                .collect(Collectors.toSet());
+        Set<AnatEntity> cellTypes = anatEntityCellTypes.stream()
+                .filter(ae -> cellTypeIds.contains(ae.getId()))
                 .collect(Collectors.toSet());
 
         //retrieve dev. stages
-        Set<String> stageIds = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
+        Set<String> stageIds = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.STAGE_ID))
                 .stream().map(c -> c.getStageId()).collect(Collectors.toSet());
         Set<DevStage> stages = stageIds.isEmpty()?
                 new HashSet<>() : devStageService.loadDevStages(null, null, stageIds, false)
                 .collect(Collectors.toSet());
 
         // retrieve strains
-        Set<String> strains = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.STRAIN))
+        Set<String> strains = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.STRAIN))
                 .stream().map(c -> c.getStrainId()).collect(Collectors.toSet());
 
         //retrieve sexes
-        Set<RawDataSex> sexes = condRequest.apply(this.getRawDataProcessedFilter()
-                        .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
+        Set<RawDataSex> sexes = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.SEX)).stream()
                 .map(c -> mapDAORawDataSexToRawDataSex(c.getSex())).collect(Collectors.toSet());
 
         //retrieve species
-        Set<Integer> speciesIds = condRequest.apply(this.getRawDataProcessedFilter()
-                .getDaoFilters(), Set.of(RawDataConditionDAO.Attribute.SPECIES_ID))
+        Set<Integer> speciesIds = condRequest.apply(
+                Set.of(RawDataConditionDAO.Attribute.SPECIES_ID))
                 .stream().map(c -> c.getSpeciesId()).collect(Collectors.toSet());
         Set<Species> species = speciesIds.isEmpty()?
                 new HashSet<>() : this.getRawDataProcessedFilter().getSpeciesMap().values()
                 .stream().filter(s -> speciesIds.contains(s.getId()))
                 .collect(Collectors.toSet());
+        assert speciesIds.size() == species.size();
 
         return log.traceExit(new RawDataPostFilter(anatEntities, stages, cellTypes,
                 sexes, strains, species, null, null, dataType));

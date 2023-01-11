@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.ComposedEntity;
 import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
-import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.expressiondata.baseelements.ConditionParameter;
 import org.bgee.model.expressiondata.call.Condition2;
 
@@ -56,7 +55,9 @@ public class Condition2TypeAdapter extends TypeAdapter<Condition2> {
                     out.value("NA");
                 }
                 out.name("cellType");
-                if (cellType != null && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())) {
+                //We don't write NA anymore instead of the root of the cell types,
+                //because we need all values to link to processed expression values through filters
+                if (cellType != null/* && !ConditionDAO.CELL_TYPE_ROOT_ID.equals(cellType.getId())*/) {
                     this.utils.writeSimplifiedNamedEntity(out, cellType);
                 } else {
                     out.value("NA");

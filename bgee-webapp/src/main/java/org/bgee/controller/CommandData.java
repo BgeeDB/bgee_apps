@@ -608,10 +608,12 @@ public class CommandData extends CommandParent {
                     throw log.throwing(new InvalidRequestException("Some genes must be selected."));
                 }
             }
-            //Otherwise, filters are allowed to be requested only when there are some filtering
+            //Otherwise, filters are allowed to be requested only when there are some filtering.
+            //Rather than throwing an exception, we will return an empty filter
             else if (this.requestParameters.isGetFilters()) {
-                throw log.throwing(new InvalidRequestException(
-                        "Post-filters can be requested only if some form filters are defined."));
+//                throw log.throwing(new InvalidRequestException(
+//                        "Post-filters can be requested only if some form filters are defined."));
+                postFilter = new ExpressionCallPostFilter();
             }
 
             //try...finally block to manage number of jobs per users,
@@ -641,8 +643,9 @@ public class CommandData extends CommandParent {
                 if (this.requestParameters.isGetResultCount()) {
                     count = callLoader.loadDataCount();
                 }
-                //Filters
-                if (this.requestParameters.isGetFilters()) {
+                //Filters. PostFilter is not null and is an empty filter if no genes are specified,
+                //in that case we don't retrieve filters.
+                if (this.requestParameters.isGetFilters() && postFilter == null) {
                     //For requesting getFilters, well, the filter parameters must be ignored
                     ExpressionCallLoader loaderToUse = callLoader;
                     ExpressionCallFilter2 noFilterParamFilter = this.loadExprCallFilter(

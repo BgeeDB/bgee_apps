@@ -85,7 +85,7 @@ import org.bgee.model.expressiondata.baseelements.SummaryQuality;
  * @author  Mathieu Seppey
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
- * @version Bgee 15.0, Oct. 2022
+ * @version Bgee 15.0, Jan. 2023
  * @since   Bgee 1
  */
 public class RequestParameters {
@@ -920,11 +920,7 @@ public class RequestParameters {
                 paramValues.get(this.getUrlParametersInstance().getParamData().getName()))
                 .map(arr -> arr.length > 0? arr[0]: null)
                 .orElse(null);
-        if (StringUtils.isBlank(key)) {
-            log.trace("The key is blank, load params from request");
-            //no key set, get the parameters from the URL
-            this.loadParametersFromRequest(paramValues, true);
-        } else {
+        if (StringUtils.isNotBlank(key)) {
             //a key is set, get the storable parameters from a file
             log.trace("The key is set, load params from the file");
             try {
@@ -933,8 +929,12 @@ public class RequestParameters {
                 // Re throw a custom exception instead
                 throw new RequestParametersNotFoundException(key);
             }
-            // load the non storable params
-            this.loadParametersFromRequest(paramValues, false);
+            // When a key is provided, we want parameters in the URL to override
+            // the values provided by the hash for the same parameters
+            this.loadParametersFromRequest(paramValues, true, true);
+        } else {
+            //Otherwise, just to be sure, we don't override anything
+            this.loadParametersFromRequest(paramValues, true, false);
         }
 
         log.traceExit();
@@ -968,9 +968,10 @@ public class RequestParameters {
      * @see #loadStorableParametersFromKey
      * @see #loadParameters
      */
-    private void loadParametersFromRequest(Map<String, String[]> paramValues, boolean loadStorable) 
+    private void loadParametersFromRequest(Map<String, String[]> paramValues, boolean loadStorable,
+            boolean overrideExistingValues) 
             throws MultipleValuesNotAllowedException, InvalidFormatException {
-        log.traceEntry("{}, {}", paramValues, loadStorable);
+        log.traceEntry("{}, {}, {}", paramValues, loadStorable, overrideExistingValues);
 
         // Browse all available parameters
         for (URLParameters.Parameter<?> parameter : this.urlParametersInstance.getList()) {
@@ -1050,7 +1051,8 @@ public class RequestParameters {
                             throw log.throwing(new InvalidFormatException(parameter, e));
                         }
                     })
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList()),
+                    overrideExistingValues);
             }
         }
 
@@ -1103,7 +1105,7 @@ public class RequestParameters {
                     // this RequestParameters object.
                     HttpServletRequest request = new BgeeHttpServletRequest(
                             retrievedQueryString, this.getCharacterEncoding());
-                    this.loadParametersFromRequest(request.getParameterMap(), true);
+                    this.loadParametersFromRequest(request.getParameterMap(), true, false);
                 }
             }
 
@@ -1900,7 +1902,7 @@ public class RequestParameters {
             throws MultipleValuesNotAllowedException, InvalidFormatException {
         log.traceEntry("{}, {}", parameter, values);
     
-        this.addAnyValues(parameter, values);
+        this.addAnyValues(parameter, values, false);
     
         log.traceExit();
     }
@@ -1909,6 +1911,9 @@ public class RequestParameters {
      *  
      * @param parameter The {@code URLParameters.Parameter} to add the value to.
      * @param values    A {@code List} of {@code Object}s to associate to {@code parameter}.
+     * @param overrideExistingValues    A {@code boolean}, when {@code true}, specifying
+     *                                  to override parameter values stored in this object
+     *                                  for {@code parameter} using {@code values}. 
      * 
      * @throws IllegalArgumentException             If the type of any object in {@code value}s 
      *                                              is different from the type returned by 
@@ -1922,10 +1927,11 @@ public class RequestParameters {
      *                                              the max allowed size, following the addition 
      *                                              of this parameter value.
      */
-    private void addAnyValues(URLParameters.Parameter<?> parameter, List<?> values) 
+    private void addAnyValues(URLParameters.Parameter<?> parameter, List<?> values,
+            boolean overrideExistingValues) 
             throws IllegalArgumentException, InvalidFormatException, MultipleValuesNotAllowedException, 
             RequestSizeExceededException {
-        log.traceEntry("{}, {}", parameter, values);
+        log.traceEntry("{}, {}, {}", parameter, values, overrideExistingValues);
 
         if (values == null || values.isEmpty()) {
             log.traceExit(); return;
@@ -1953,19 +1959,23 @@ public class RequestParameters {
         
         // fetch the existing values for the given parameter and try to add the value
         List<Object> parameterValues = this.values.get(parameter);
+        if (overrideExistingValues || parameterValues == null) {
+            parameterValues = newVals;
+        } else {
+            parameterValues.addAll(newVals);
+        }
         // Throw an exception if the param does not allow 
         // multiple values and has already one, or contains several values
         if (!parameter.allowsMultipleValues() && !parameter.allowsSeparatedValues() && 
-                (parameterValues != null && !parameterValues.isEmpty() || newVals.size() > 1)) {
+                parameterValues.size() > 1) {
             throw(new MultipleValuesNotAllowedException(parameter));
         }
         
         //OK, add value
-        if (parameterValues == null) {
-            parameterValues = new ArrayList<>();
+        if (!parameterValues.isEmpty()) {
             this.values.put(parameter, parameterValues);
         }
-        parameterValues.addAll(newVals);
+        assert !parameterValues.isEmpty() || !this.values.containsKey(parameter);
         
         //Now, we check whether all parameters considered together exceed the global 
         //max request length defined, following the addition of this parameter. 

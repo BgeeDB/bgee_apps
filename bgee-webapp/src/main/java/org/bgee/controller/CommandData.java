@@ -980,6 +980,13 @@ public class CommandData extends CommandParent {
 
         Collection<String> expOrAssayIds = this.requestParameters.getExpAssayId();
         String experimentId = this.requestParameters.getExperimentId();
+        Set<String> experimentIds = experimentId != null? Collections.singleton(experimentId): null;
+        List<String> filterExperimentIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                    this.requestParameters.getUrlParametersInstance().getParamFilterExperimentId());
+        List<String> filterAssayIds = !consideringFilters? null:
+            this.requestParameters.getValues(
+                    this.requestParameters.getUrlParametersInstance().getParamFilterAssayId());
         List<String> filterAnatEntityIds = !consideringFilters? null:
             this.requestParameters.getValues(
                 this.requestParameters.getUrlParametersInstance().getParamFilterAnatEntity());
@@ -1053,8 +1060,10 @@ public class CommandData extends CommandParent {
         return log.traceExit(new RawDataFilter(
                 geneFilter != null? Collections.singleton(geneFilter): null,
                 condFilter != null? Collections.singleton(condFilter): null,
-                experimentId != null? Collections.singleton(experimentId): null,
-                null, //assay IDs
+                filterExperimentIds != null && !filterExperimentIds.isEmpty()?
+                        filterExperimentIds: experimentIds,
+                //there is no for parameter for assayId only, so we always use the filter directly
+                filterAssayIds,
                 expOrAssayIds));
     }
     private ExpressionCallFilter2 loadExprCallFilter(boolean consideringFilters,

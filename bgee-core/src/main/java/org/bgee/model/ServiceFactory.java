@@ -77,6 +77,7 @@ public class ServiceFactory implements AutoCloseable {
      * @see #getDAOManager()
      */
     private final DAOManager daoManager;
+    private final BgeeProperties bgeeProperties;
     
     /**
      * 0-arg constructor that will cause this {@code ServiceFactory} to use 
@@ -104,10 +105,33 @@ public class ServiceFactory implements AutoCloseable {
      * @throws IllegalArgumentException If {@code daoManager} is {@code null} or closed.
      */
     public ServiceFactory(DAOManager daoManager) throws IllegalArgumentException {
-        log.traceEntry("{}", daoManager);
+        this(BgeeProperties.getBgeeProperties(), daoManager);
+    }
+    /**
+     * @param bgeeProperties    The {@code BgeeProperties} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code bgeeProperties} is {@code null}.
+     */
+    public ServiceFactory(BgeeProperties bgeeProperties) throws IllegalArgumentException {
+        this(bgeeProperties, DAOManager.getDAOManager());
+    }
+    /**
+     * @param bgeeProperties    The {@code BgeeProperties} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @param daoManager        The {@code DAOManager} to be used by this {@code ServiceFactory},  
+     *                          to be provided to {@code Service}s it instantiates. 
+     * @throws IllegalArgumentException If {@code bgeeProperties} is {@code null},
+     *                                  or {@code daoManager} is {@code null} or closed.
+     */
+    public ServiceFactory(BgeeProperties bgeeProperties, DAOManager daoManager) throws IllegalArgumentException {
+        log.traceEntry("{}, {}", bgeeProperties, daoManager);
+        if (bgeeProperties == null) {
+            throw log.throwing(new IllegalArgumentException("BgeeProperties cannot be null"));
+        }
         if (daoManager == null || daoManager.isClosed()) {
             throw log.throwing(new IllegalArgumentException("Invalid DAOManager"));
         }
+        this.bgeeProperties = bgeeProperties;
         this.daoManager = daoManager;
         log.traceExit();
     }
@@ -302,6 +326,12 @@ public class ServiceFactory implements AutoCloseable {
      */
     public DAOManager getDAOManager() {
         return this.daoManager;
+    }
+    /**
+     * @return  The {@code BgeeProperties} used by this {@code ServiceFactory} to instantiate services.
+     */
+    public BgeeProperties getBgeeProperties() {
+        return this.bgeeProperties;
     }
     
     /**

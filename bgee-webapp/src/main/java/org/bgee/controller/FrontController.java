@@ -151,7 +151,7 @@ public class FrontController extends HttpServlet {
 
         //If serviceFactoryProvider is null, use default constructor of ServiceFactory
         this.serviceFactoryProvider = serviceFactoryProvider != null? serviceFactoryProvider: 
-            ServiceFactory::new;
+            () -> new ServiceFactory(this.prop);
         
         this.jobService  = jobService != null? jobService: new JobService(this.prop);
         this.userService = userService != null? userService: new UserService();

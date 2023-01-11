@@ -266,7 +266,8 @@ public class RawDataLoader extends CommonService {
     private final Map<Integer, Gene> geneMap;
 
     //Constructor package protected so that only the RawDataService can instantiate this class
-    RawDataLoader(ServiceFactory serviceFactory, RawDataProcessedFilter rawDataProcessedFilter) {
+    RawDataLoader(ServiceFactory serviceFactory,
+            RawDataProcessedFilter rawDataProcessedFilter) {
         super(serviceFactory);
 
         if (rawDataProcessedFilter == null) {
@@ -588,16 +589,52 @@ public class RawDataLoader extends CommonService {
                                AffymetrixChipDAO.Attribute.AFFYMETRIX_CHIP_ID,
                                AffymetrixChipDAO.Attribute.BGEE_AFFYMETRIX_CHIP_ID));
         }
+        //We need to identify the species for providing download links for experiments.
+        //If no gene and no conditions were retrieved, we have to make a special query for it.
+        else if (infoType == InformationType.EXPERIMENT && !partialInfo) {
+            chipTORS = this.affymetrixChipDAO.getAffymetrixChips(daoRawDataFilters, 0L, 1,
+                    Set.of(AffymetrixChipDAO.Attribute.CONDITION_ID));
+        }
         if (chipTORS != null) {
             while (chipTORS.next()) {
                 AffymetrixChipTO chipTO = chipTORS.getTO();
-                affyExpIds.add(chipTO.getExperimentId());
+                if (chipTO.getExperimentId() != null) {
+                    affyExpIds.add(chipTO.getExperimentId());
+                }
                 if (chipTO.getConditionId() != null) {
                     rawDataCondIds.add(chipTO.getConditionId());
                 }
-                affyChipTOs.add(chipTO);
+                if (infoType != InformationType.EXPERIMENT) {
+                    affyChipTOs.add(chipTO);
+                }
             }
         }
+
+
+        //************************************************************
+        // Now, we load missing Genes and RawDataConditions
+        //************************************************************
+        this.updateRawDataConditionMap(rawDataCondIds);
+        this.updateGeneMap(bgeeGeneIds);
+
+        //We load the speciesId of the experiment either from a condition or a gene
+        Integer speciesId = null;
+        if (!rawDataCondIds.isEmpty()) {
+            int condId = rawDataCondIds.iterator().next();
+            speciesId = Optional.ofNullable(
+                    this.rawDataConditionMap.get(condId))
+            .orElseThrow(() -> new IllegalStateException(
+                    "Missing RawDataCondition ID " + condId))
+            .getSpeciesId();
+        } else if (!bgeeGeneIds.isEmpty()) {
+            int bgeeGeneid = bgeeGeneIds.iterator().next();
+            speciesId = Optional.ofNullable(geneMap.get(bgeeGeneid))
+            .orElseThrow(() -> new IllegalStateException(
+                    "Missing gene ID " + bgeeGeneid))
+            .getSpecies().getId();
+        }
+        Integer finalExpSpeciesId = speciesId;
+
 
         //*********** Experiments ***********
         MicroarrayExperimentTOResultSet expTORS = null;
@@ -626,15 +663,11 @@ public class RawDataLoader extends CommonService {
                             to -> new AffymetrixExperiment(to.getId(), to.getName(),
                                     to.getDescription(),
                                     to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
+                                    finalExpSpeciesId == null? null: getAffymetrixExperimentDownloadURL(
+                                            finalExpSpeciesId, to.getId()),
                                     0),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
-
-        //************************************************************
-        // Now, we load missing Genes and RawDataConditions
-        //************************************************************
-        this.updateRawDataConditionMap(rawDataCondIds);
-        this.updateGeneMap(bgeeGeneIds);
 
 
         //************************************************************
@@ -705,6 +738,17 @@ public class RawDataLoader extends CommonService {
 
         return log.traceExit(new AffymetrixContainer(
                 affymetrixExperiments, affymetrixAssays, affymetrixCalls));
+    }
+    private String getAffymetrixExperimentDownloadURL(int speciesId, String experimentId) {
+        log.traceEntry("{}, {}", speciesId, experimentId);
+        Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
+                .get(speciesId)).orElseThrow(() -> new IllegalStateException(
+                        "Missing species for speciesId " + speciesId));
+        String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
+        return log.traceExit(this.getServiceFactory().getBgeeProperties()
+                .getDownloadAffyProcExprValueFilesRootDirectory()
+                + speciesLinkPart + "/"
+                + speciesLinkPart + "_Affymetrix_probesets_" + experimentId + ".tar.gz");
     }
     private AffymetrixContainer getNoResultAffymetrixContainer(InformationType infoType) {
         log.traceEntry("{}", infoType);
@@ -794,18 +838,54 @@ public class RawDataLoader extends CommonService {
                             RNASeqLibraryAnnotatedSampleDAO.Attribute.ID,
                             RNASeqLibraryAnnotatedSampleDAO.Attribute.RNASEQ_LIBRARY_ID));
         }
+        //We need to identify the species for providing download links for experiments.
+        //If no gene and no conditions were retrieved, we have to make a special query for it.
+        else if (infoType == InformationType.EXPERIMENT && !partialInfo) {
+            assayTORS = this.rnaSeqAssayDAO.getLibraryAnnotatedSamples(daoRawDataFilters,
+                    isSingleCell, 0L, 1,
+                    Set.of(RNASeqLibraryAnnotatedSampleDAO.Attribute.CONDITION_ID));
+        }
         Set<String> libraryIds = new HashSet<>();
         Set<Integer> rawDataCondIds = new HashSet<>();
         if (assayTORS != null) {
             while (assayTORS.next()) {
                 RNASeqLibraryAnnotatedSampleTO assayTO = assayTORS.getTO();
-                libraryIds.add(assayTO.getLibraryId());
+                if (assayTO.getLibraryId() != null) {
+                    libraryIds.add(assayTO.getLibraryId());
+                }
                 if (assayTO.getConditionId() != null) {
                     rawDataCondIds.add(assayTO.getConditionId());
                 }
-                assayTOs.add(assayTO);
+                if (infoType != InformationType.EXPERIMENT) {
+                    assayTOs.add(assayTO);
+                }
             }
         }
+
+        //************************************************************
+        // Now, we load missing Genes and RawDataConditions
+        //************************************************************
+        this.updateRawDataConditionMap(rawDataCondIds);
+        this.updateGeneMap(bgeeGeneIds);
+
+        //We load the speciesId of the experiment either from a condition or a gene
+        Integer speciesId = null;
+        if (!rawDataCondIds.isEmpty()) {
+            int condId = rawDataCondIds.iterator().next();
+            speciesId = Optional.ofNullable(
+                    this.rawDataConditionMap.get(condId))
+            .orElseThrow(() -> new IllegalStateException(
+                    "Missing RawDataCondition ID " + condId))
+            .getSpeciesId();
+        } else if (!bgeeGeneIds.isEmpty()) {
+            int bgeeGeneid = bgeeGeneIds.iterator().next();
+            speciesId = Optional.ofNullable(geneMap.get(bgeeGeneid))
+            .orElseThrow(() -> new IllegalStateException(
+                    "Missing gene ID " + bgeeGeneid))
+            .getSpecies().getId();
+        }
+        Integer finalExpSpeciesId = speciesId;
+
 
         //*********** Libraries ***********
         Set<String> expIds = new HashSet<>();
@@ -854,15 +934,11 @@ public class RawDataLoader extends CommonService {
                             to -> new RnaSeqExperiment(to.getId(), to.getName(),
                                   to.getDescription(),
                                   to.getDataSourceId() == null? null: getSourceById(to.getDataSourceId()),
+                                  finalExpSpeciesId == null? null:
+                                      getRNASeqExperimentDownloadURL(isSingleCell, finalExpSpeciesId, to.getId()),
                                   0),
                             (v1, v2) -> {throw new IllegalStateException("No key collision possible");},
                             LinkedHashMap::new));
-
-        //************************************************************
-        // Now, we load missing Genes and RawDataConditions
-        //************************************************************
-        this.updateRawDataConditionMap(rawDataCondIds);
-        this.updateGeneMap(bgeeGeneIds);
 
 
         //************************************************************
@@ -979,6 +1055,24 @@ public class RawDataLoader extends CommonService {
         }
 
         return log.traceExit(new RnaSeqContainer(experiments, libs, assays, calls));
+    }
+    private String getRNASeqExperimentDownloadURL(boolean isSingleCell, int speciesId, String experimentId) {
+        log.traceEntry("{}, {}, {}", isSingleCell, speciesId, experimentId);
+        Species species = Optional.ofNullable(this.getRawDataProcessedFilter().getSpeciesMap()
+                .get(speciesId)).orElseThrow(() -> new IllegalStateException(
+                        "Missing species for speciesId " + speciesId));
+        String speciesLinkPart = species.getGenus() + "_" + species.getSpeciesName();
+        String urlStart = isSingleCell?
+                this.getServiceFactory().getBgeeProperties()
+                    .getDownloadSingleCellRNASeqFullLengthProcExprValueFilesRootDirectory():
+                this.getServiceFactory().getBgeeProperties()
+                    .getDownloadRNASeqProcExprValueFilesRootDirectory();
+        String fileNamePart = isSingleCell?
+                "_Full-Length_SC_RNA-Seq_read_counts_TPM_FPKM_":
+                "_RNA-Seq_read_counts_TPM_FPKM_";
+        return log.traceExit(urlStart
+                + speciesLinkPart + "/"
+                + speciesLinkPart + fileNamePart + experimentId + ".tsv.gz");
     }
     private RnaSeqContainer getNoResultRnaSeqContainer(InformationType infoType) {
         log.traceEntry("{}", infoType);

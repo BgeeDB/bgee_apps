@@ -356,7 +356,8 @@ public class RawDataService extends ExpressionDataService {
      */
     public RawDataLoader getRawDataLoader(RawDataProcessedFilter preProcessedInfo) {
         log.traceEntry("{}", preProcessedInfo);
-        return log.traceExit(new RawDataLoader(this.getServiceFactory(), preProcessedInfo));
+        return log.traceExit(new RawDataLoader(this.getServiceFactory(),
+                preProcessedInfo));
     }
 
     public RawDataProcessedFilter processRawDataFilter(RawDataFilter filter) {

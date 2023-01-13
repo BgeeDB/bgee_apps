@@ -30,8 +30,6 @@ import org.bgee.model.species.Species;
  * @see RawDataService#getRawDataLoader(RawDataProcessedFilter)
  * @see RawDataService#loadRawDataLoader(RawDataFilter)
  */
-//Most methods and constructors are protected, so that only the {@link RawDataService}
-//can instantiate this class, and only {@link RawDataLoader} use it.
 public class RawDataProcessedFilter extends ProcessedFilter<RawDataFilter,
 DAORawDataFilter, RawDataCondition> {
     RawDataProcessedFilter(RawDataFilter sourceFilter,
@@ -43,6 +41,7 @@ DAORawDataFilter, RawDataCondition> {
                 speciesMap, geneBioTypeMap, sourceMap);
     }
 
+    //We override the methods to make them visible to RawDataLoader in the same package
     @Override
     protected Set<DAORawDataFilter> getDaoFilters() {
         return super.getDaoFilters();

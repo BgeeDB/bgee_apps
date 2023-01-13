@@ -266,8 +266,8 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(includeSubAnatEntities, includeSubCellTypes,
-                includeSubDevStages, includeSubSexes, includeSubStrains, sexes, speciesId, strains);
+        result = prime * result + Objects.hash(includeSubAnatEntities, includeSubCellTypes, includeSubDevStages,
+                includeSubSexes, includeSubStrains, sexes, speciesId, strains);
         return result;
     }
     @Override
@@ -285,7 +285,7 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
                 && includeSubSexes == other.includeSubSexes
                 && includeSubStrains == other.includeSubStrains
                 && Objects.equals(sexes, other.sexes)
-                && speciesId == other.speciesId
+                && Objects.equals(speciesId, other.speciesId)
                 && Objects.equals(strains, other.strains);
     }
 

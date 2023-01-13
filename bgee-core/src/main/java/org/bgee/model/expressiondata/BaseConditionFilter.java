@@ -3,6 +3,7 @@ package org.bgee.model.expressiondata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -83,45 +84,6 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
 
     public abstract boolean areAllCondParamFiltersEmpty();
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((anatEntityIds == null) ? 0 : anatEntityIds.hashCode());
-        result = prime * result + ((devStageIds == null) ? 0 : devStageIds.hashCode());
-        result = prime * result + ((cellTypeIds == null) ? 0 : cellTypeIds.hashCode());
-        return result;
-    }
-
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;
-        if (anatEntityIds == null) {
-            if (other.anatEntityIds != null)
-                return false;
-        } else if (!anatEntityIds.equals(other.anatEntityIds))
-            return false;
-        if (devStageIds == null) {
-            if (other.devStageIds != null)
-                return false;
-        } else if (!devStageIds.equals(other.devStageIds))
-            return false;
-        if (cellTypeIds == null) {
-            if (other.cellTypeIds != null)
-                return false;
-        } else if (!cellTypeIds.equals(other.cellTypeIds))
-            return false;
-        return true;
-    }
-
-
     /**
      * Evaluates this {@code BaseConditionFilter} on the given {@code BaseCondition}.
      * 
@@ -160,5 +122,23 @@ public abstract class BaseConditionFilter<T extends BaseCondition<?>> implements
         }
         
         return log.traceExit(true);
+    }
+
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(anatEntityIds, cellTypeIds, devStageIds);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BaseConditionFilter<?> other = (BaseConditionFilter<?>) obj;
+        return Objects.equals(anatEntityIds, other.anatEntityIds) && Objects.equals(cellTypeIds, other.cellTypeIds)
+                && Objects.equals(devStageIds, other.devStageIds);
     }
 }

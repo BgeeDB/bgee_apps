@@ -939,6 +939,7 @@ public class CommandData extends CommandParent {
         //It is a simple optimization, we don't care so much if several threads
         //are computing the same RawDataProcessedFilter.
         RawDataProcessedFilter processedFilter = RAW_DATA_PROCESSED_FILTER_CACHE.get(filter);
+        log.debug("Entries in the cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE.size());
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
             processedFilter = rawDataService.processRawDataFilter(filter);
@@ -949,6 +950,7 @@ public class CommandData extends CommandParent {
             log.debug("Cache hit for filter: {}", filter);
             log.trace("Value: {}", processedFilter);
         }
+        log.debug("Entries in the cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE.size());
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
     private ExpressionCallLoader loadExprCallLoader(ExpressionCallFilter2 filter) {

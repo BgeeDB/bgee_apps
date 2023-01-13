@@ -1,6 +1,7 @@
 package org.bgee.model.expressiondata.rawdata.baseelements;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,31 +94,19 @@ public class RawDataCondition extends BaseCondition<RawDataCondition> implements
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((sex == null) ? 0 : sex.hashCode());
-        result = prime * result + ((strain == null) ? 0 : strain.hashCode());
+        result = prime * result + Objects.hash(sex, strain);
         return result;
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (!super.equals(obj)) {
+        if (!super.equals(obj))
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         RawDataCondition other = (RawDataCondition) obj;
-        if (sex != other.sex) {
-            return false;
-        }
-        if (strain == null) {
-            if (other.strain != null)
-                return false;
-        } else if (!strain.equals(other.strain))
-            return false;
-        return true;
+        return sex == other.sex && Objects.equals(strain, other.strain);
     }
 
     @Override

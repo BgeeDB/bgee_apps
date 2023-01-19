@@ -64,6 +64,7 @@
       <filter.org.bgee.webapp.sparqlStableUrl>http://test.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
       <filter.org.bgee.webapp.sparqlStableGraph>http://test.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
       <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
+      <filter.org.bgee.webapp.initializeCommandDataCaches>false</filter.org.bgee.webapp.initializeCommandDataCaches>
     </properties>
   </profile>
   <!-- Profile used to configure bgee-webapp, defining the properties to be used for a normal build of the WAR file, 
@@ -108,6 +109,7 @@
       <filter.org.bgee.webapp.sparqlStableUrl>http://production.com/sparql14/</filter.org.bgee.webapp.sparqlStableUrl>
       <filter.org.bgee.webapp.sparqlStableGraph>http://production.com/rdf_v14</filter.org.bgee.webapp.sparqlStableGraph>
       <filter.org.bgee.webapp.archive>false</filter.org.bgee.webapp.archive>
+      <filter.org.bgee.webapp.initializeCommandDataCaches>true</filter.org.bgee.webapp.initializeCommandDataCaches>
     </properties>
   </profile>
   <!-- Profile used for Bgee integration tests-->

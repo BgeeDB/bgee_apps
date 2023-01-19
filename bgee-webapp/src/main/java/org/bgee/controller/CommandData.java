@@ -2142,4 +2142,51 @@ public class CommandData extends CommandParent {
                 null, null, true));
         return log.traceExit(colDescr);
     }
+
+    public static void initializeCaches(long sleepBetweenCallsInMs) throws InterruptedException {
+        log.traceEntry("{}", sleepBetweenCallsInMs);
+        BgeeProperties props = BgeeProperties.getBgeeProperties();
+        log.info("Initializing CommandData caches: {}", props.isInitializeCommandDataCachesOnStartup());
+
+        if (props.isInitializeCommandDataCachesOnStartup()) {
+            RequestParameters rp = new RequestParameters();
+            rp.setPage(RequestParameters.PAGE_DATA);
+            rp.setAction(RequestParameters.ACTION_PROC_EXPR_VALUES);
+            ServiceFactory serviceFactory = new ServiceFactory(props);
+            RawDataService rawDataService = serviceFactory.getRawDataService();
+            EnumSet<DataType> dataTypes = EnumSet.allOf(DataType.class);
+
+            CommandData controller = new CommandData(null, rp, props, null, serviceFactory, null, null);
+
+            //First we make one call for the counts without any parameter
+            RawDataFilter filter = new RawDataFilter(null, null);
+            RawDataLoader loader = rawDataService.loadRawDataLoader(filter);
+            controller.loadRawDataCounts(loader, dataTypes);
+
+            //Then we make one call per species without any other parameters
+            Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false);
+            for (Species species: allSpecies) {
+                // Put the thread to sleep so the other threads do not starve
+                if (sleepBetweenCallsInMs > 0L) {
+                    Thread.sleep(sleepBetweenCallsInMs);
+                }
+                RawDataFilter speciesFilter = new RawDataFilter(
+                        Collections.singleton(new GeneFilter(species.getId())),
+                        null);
+                RawDataLoader loaderForSpecies = rawDataService.loadRawDataLoader(speciesFilter);
+                controller.loadRawDataCounts(loaderForSpecies, dataTypes);
+            }
+        }
+        log.info("Initializing CommandData caches done.");
+        log.traceExit();
+    }
+    public static void releaseCaches() {
+        log.traceEntry();
+        log.info("Releasing CommandData caches...");
+        RAW_DATA_PROCESSED_FILTER_CACHE.clear();
+        EXPR_CALL_PROCESSED_FILTER_CACHE.clear();
+        RAW_DATA_COUNT_CACHE.clear();
+        log.info("Releasing CommandData caches done.");
+        log.traceExit();
+    }
 }

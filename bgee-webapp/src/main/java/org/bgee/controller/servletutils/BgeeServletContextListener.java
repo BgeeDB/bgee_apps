@@ -5,6 +5,7 @@ import javax.servlet.ServletContextListener;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.controller.CommandData;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.dao.api.DAOManager;
 
@@ -23,27 +24,43 @@ import org.bgee.model.dao.api.DAOManager;
  * }</pre>
  * 
  * @author Frederic Bastian
- * @version Bgee 13 Oct. 2015
+ * @version Bgee 15.0, Jan. 2023
  * @since Bgee 11
  *
  */
 public class BgeeServletContextListener implements ServletContextListener {
-    
     private final static Logger log = LogManager.getLogger(BgeeServletContextListener.class.getName());
+
+    @Override
+    public void contextInitialized(ServletContextEvent servletContextEvent) {
+        log.traceEntry();
+
+        Runnable commandDataCacheInitializer = () -> {
+            try {
+                CommandData.initializeCaches(1000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        Thread commandDataInitializerThread = new Thread(commandDataCacheInitializer);
+
+        try {
+            commandDataInitializerThread.start();
+        } catch (Throwable e) {
+            //Nothing much we can do here
+            log.error("################ Initialization error ################");
+            log.catching(e);
+        }
+
+        log.traceExit();
+    }
 
 	@Override
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
 	    log.traceEntry();
 		DAOManager.closeAll();
 		BgeeProperties.releaseAll();
+		CommandData.releaseCaches();
 		log.traceExit();
 	}
-
-	@Override
-	public void contextInitialized(ServletContextEvent servletContextEvent) {
-		log.traceEntry();
-		//nothing for now. Should launch the cache and the data source in the future. 
-		log.traceExit();
-	}
-
 }

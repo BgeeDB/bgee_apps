@@ -526,6 +526,21 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
             ExpressionCall.DEFAULT_DISTANCE_THRESHOLD; 
 
     /**
+     * A {@code String} that is the key to access to the property containing 
+     * the {@code boolean} defining whether caches stored in {@code CommandData}
+     * should be initialized on webapp startup.
+     * 
+     * @see #INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT
+     * @see #isInitializeCommandDataCachesOnStartup()
+     */
+    public final static String INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY =
+            "org.bgee.webapp.initializeCommandDataCaches";
+    /**
+     * The default {@code boolean} value for the property {@link #INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY}.
+     */
+    public final static boolean INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT = false;
+
+    /**
      * @return  An instance of {@code BgeeProperties} with values based on the System properties
      *          or the properties file present in the classpath or the default properties if 
      *          nothing else is available. The method will create an instance only once for 
@@ -707,7 +722,7 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see org.bgee.model.BgeeProperties#topAnatResultsWritingDirectory
      * @see org.bgee.model.BgeeProperties#topAnatRWorkingDirectory
      */
-    private final String topAnatResultsUrlDirectory; 
+    private final String topAnatResultsUrlDirectory;
     
     /**
      * @see #getMailUri()
@@ -735,6 +750,11 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      * @see #getGeneScoreClusteringThreshold()
      */
     private final Double geneScoreClusteringThreshold;
+
+    /**
+     * @see isInitializeCommandDataCachesOnStartup()
+     */
+    private final boolean initializeCommandDataCachesOnStartup;
 
     /**
      * Private constructor, can be only called through the use of one of the
@@ -812,6 +832,8 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
                 GENE_SCORE_CLUSTERING_METHOD_KEY, GENE_SCORE_CLUSTERING_METHOD_DEFAULT);
         geneScoreClusteringThreshold = getDoubleOption(prop, SYS_PROPS, FILE_PROPS, 
                 GENE_SCORE_CLUSTERING_THRESHOLD_KEY, GENE_SCORE_CLUSTERING_THRESHOLD_DEFAULT);
+        initializeCommandDataCachesOnStartup = getBooleanOption(prop, SYS_PROPS, FILE_PROPS,
+                INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_KEY, INITIALIZE_COMMANDDATA_CACHES_ON_STARTUP_DEFAULT);
         log.debug("Initialization done.");
         log.traceExit();
     }
@@ -1087,5 +1109,14 @@ public class BgeeProperties extends org.bgee.model.BgeeProperties
      */
     public Double getGeneScoreClusteringThreshold() {
         return geneScoreClusteringThreshold;
+    }
+
+    /**
+     * @return  A {@code boolean} defining, when {@code true}, that internal caches
+     *          used by the controller {@code CommandData} should be initialized
+     *          on webapp startup.
+     */
+    public boolean isInitializeCommandDataCachesOnStartup() {
+        return initializeCommandDataCachesOnStartup;
     }
 }

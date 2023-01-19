@@ -1707,8 +1707,8 @@ public class CommandData extends CommandParent {
         List<ColumnDescription> colDescr = new ArrayList<>();
         colDescr.add(new ColumnDescription("Library ID", null,
                 List.of("result.id"),
-                ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.ColumnType.STRING,
+                null, null, true));
         colDescr.add(new ColumnDescription("Library name", null,
                 List.of("result.name"),
                 ColumnDescription.ColumnType.STRING,

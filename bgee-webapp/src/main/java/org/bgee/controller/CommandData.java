@@ -367,6 +367,58 @@ public class CommandData extends CommandParent {
         }
     }
 
+    public static class CountCacheKey {
+        private final RawDataProcessedFilter processedFilter;
+        private final DataType dataType;
+        private final EnumSet<InformationType> informationTypes;
+
+        public CountCacheKey(RawDataProcessedFilter processedFilter, DataType dataType,
+                EnumSet<InformationType> informationTypes) {
+            this.processedFilter = processedFilter;
+            this.dataType = dataType;
+            this.informationTypes = informationTypes;
+        }
+
+        public RawDataProcessedFilter getProcessedFilter() {
+            return processedFilter;
+        }
+        public DataType getDataType() {
+            return dataType;
+        }
+        public EnumSet<InformationType> getInformationTypes() {
+            return informationTypes;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dataType, informationTypes, processedFilter);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CountCacheKey other = (CountCacheKey) obj;
+            return dataType == other.dataType
+                    && Objects.equals(informationTypes, other.informationTypes)
+                    && Objects.equals(processedFilter, other.processedFilter);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("CountCacheKey [")
+                   .append("dataType=").append(dataType)
+                   .append(", informationTypes=").append(informationTypes)
+                   .append(", processedFilter=").append(processedFilter)
+                   .append("]");
+            return builder.toString();
+        }
+    }
+
     /**
      * An {@code int} that is the maximum allowed number of results
      * to retrieve in one request, for each requested data type independently.
@@ -379,6 +431,14 @@ public class CommandData extends CommandParent {
      * Value: 100.
      */
     private final static int DEFAULT_LIMIT = 100;
+    /**
+     * A {@code long} that is the execution time in milliseconds of a raw data count query
+     * that triggers storing the result in {@link #RAW_DATA_COUNT_CACHE}. Defined as {@code long}
+     * for convenience when comparing to start and end times provided as {@code long}.
+     *
+     * @see #loadRawDataCounts(RawDataLoader, EnumSet)
+     */
+    private final static long QUERY_TIME_COUNT_CACHE_MS = 1000L;
     /**
      * A {@code String} to recognize the action of requesting an experiment page
      * (there is no corresponding action in {@code RequestParameter}, it is triggered
@@ -403,6 +463,20 @@ public class CommandData extends CommandParent {
      */
     private final static Map<ExpressionCallFilter2, ExpressionCallProcessedFilter> EXPR_CALL_PROCESSED_FILTER_CACHE =
             Collections.synchronizedMap(new LRUCache<ExpressionCallFilter2, ExpressionCallProcessedFilter>(20));
+    /**
+     * A {@code Map} used as a LRU cache to retrieve a {@code RawDataCountContainer} from an
+     * {@code CountCacheKey}. The {@code Map} can hold max 200 entries.
+     * <p>
+     * We need this cache because for processed expression values, counting results for all species,
+     * or for a species with no other parameter, can be very slow. We store entries in this cache
+     * only when a query has been too slow.
+     * <p>
+     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
+     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
+     * Maybe we should use a Guava cache instead.
+     */
+    private final static Map<CountCacheKey, RawDataCountContainer> RAW_DATA_COUNT_CACHE =
+            Collections.synchronizedMap(new LRUCache<CountCacheKey, RawDataCountContainer>(300));
 
     //Static initializer
     {
@@ -1286,13 +1360,40 @@ public class CommandData extends CommandParent {
         if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             infoTypes.add(InformationType.CALL);
         }
-        return log.traceExit(dataTypes.stream()
-                .collect(Collectors.toMap(
-                        dt -> dt,
-                        dt -> rawDataLoader.loadDataCount(infoTypes,
-                                RawDataDataType.getRawDataDataType(dt)),
-                        (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
-                        () -> new EnumMap<>(DataType.class))));
+
+        //we will check whether count results are in cache,
+        //otherwise we'll add them to the cache when the query is too slow
+        EnumMap<DataType, RawDataCountContainer> counts = new EnumMap<>(DataType.class);
+        RawDataProcessedFilter procFilter = rawDataLoader.getRawDataProcessedFilter();
+        for (DataType dt: dataTypes) {
+            CountCacheKey cacheKey = new CountCacheKey(procFilter, dt, infoTypes);
+            log.debug("Entries in the count cache before: {}", RAW_DATA_COUNT_CACHE.size());
+            RawDataCountContainer countResult = RAW_DATA_COUNT_CACHE.get(cacheKey);
+
+            if (countResult == null) {
+                log.debug("Cache miss for search: {}", cacheKey);
+                long startTime = System.currentTimeMillis();
+                countResult = rawDataLoader.loadDataCount(infoTypes,
+                        RawDataDataType.getRawDataDataType(dt));
+                long executionTime = System.currentTimeMillis() - startTime;
+                if (executionTime > QUERY_TIME_COUNT_CACHE_MS) {
+                    log.debug("Slow count query to store in cache, execution time: {}", executionTime);
+                    log.trace("Cache before: {}", RAW_DATA_COUNT_CACHE);
+                    RAW_DATA_COUNT_CACHE.putIfAbsent(cacheKey, countResult);
+                    log.trace("Cache after: {}", RAW_DATA_COUNT_CACHE);
+                } else {
+                    log.debug("Count query fast enough, not stored in cache, execution time: {}", executionTime);
+                }
+            } else {
+                log.debug("Cache hit for search: {}", cacheKey);
+                log.trace("Value: {}", countResult);
+            }
+            log.debug("Entries in the count cache after: {}", RAW_DATA_COUNT_CACHE.size());
+
+            counts.put(dt, countResult);
+        }
+
+        return log.traceExit(counts);
     }
 
     private EnumMap<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,

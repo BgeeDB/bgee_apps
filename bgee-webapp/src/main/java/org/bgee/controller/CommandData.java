@@ -1360,18 +1360,36 @@ public class CommandData extends CommandParent {
         if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
             infoTypes.add(InformationType.CALL);
         }
+        int currentMaxInfoTypeIndex = infoTypes.size() - 1;
+        int absoluteMaxInfoTypeIndex = EnumSet.allOf(InformationType.class).size() - 1;
 
         //we will check whether count results are in cache,
         //otherwise we'll add them to the cache when the query is too slow
         EnumMap<DataType, RawDataCountContainer> counts = new EnumMap<>(DataType.class);
         RawDataProcessedFilter procFilter = rawDataLoader.getRawDataProcessedFilter();
         for (DataType dt: dataTypes) {
-            CountCacheKey cacheKey = new CountCacheKey(procFilter, dt, infoTypes);
+            //We will also search for cached info with MORE information
+            List<CountCacheKey> cacheKeys = new ArrayList<>();
+            cacheKeys.add(new CountCacheKey(procFilter, dt, infoTypes));
+            log.debug("Original cacheKey: {}", cacheKeys.get(0));
+            EnumSet<InformationType> addedInfoTypes = EnumSet.copyOf(infoTypes);
+            for (int i = currentMaxInfoTypeIndex + 1; i <= absoluteMaxInfoTypeIndex; i++) {
+                addedInfoTypes.add(InformationType.values()[i]);
+                cacheKeys.add(new CountCacheKey(procFilter, dt, EnumSet.copyOf(addedInfoTypes)));
+            }
+            log.debug("All cacheKeys that will be requested: {}", cacheKeys);
+
             log.debug("Entries in the count cache before: {}", RAW_DATA_COUNT_CACHE.size());
-            RawDataCountContainer countResult = RAW_DATA_COUNT_CACHE.get(cacheKey);
+            //We start from -1 to have the correct index after the loop
+            int cacheKeyIndex = -1;
+            RawDataCountContainer countResult = null;
+            while (countResult == null && cacheKeyIndex < cacheKeys.size() - 1) {
+                cacheKeyIndex++;
+                countResult = RAW_DATA_COUNT_CACHE.get(cacheKeys.get(cacheKeyIndex));
+            }
 
             if (countResult == null) {
-                log.debug("Cache miss for search: {}", cacheKey);
+                log.debug("Cache miss for search: {}", cacheKeys);
                 long startTime = System.currentTimeMillis();
                 countResult = rawDataLoader.loadDataCount(infoTypes,
                         RawDataDataType.getRawDataDataType(dt));
@@ -1379,13 +1397,13 @@ public class CommandData extends CommandParent {
                 if (executionTime > QUERY_TIME_COUNT_CACHE_MS) {
                     log.debug("Slow count query to store in cache, execution time: {}", executionTime);
                     log.trace("Cache before: {}", RAW_DATA_COUNT_CACHE);
-                    RAW_DATA_COUNT_CACHE.putIfAbsent(cacheKey, countResult);
+                    RAW_DATA_COUNT_CACHE.putIfAbsent(cacheKeys.get(0), countResult);
                     log.trace("Cache after: {}", RAW_DATA_COUNT_CACHE);
                 } else {
                     log.debug("Count query fast enough, not stored in cache, execution time: {}", executionTime);
                 }
             } else {
-                log.debug("Cache hit for search: {}", cacheKey);
+                log.debug("Cache hit for search: {}", cacheKeys.get(cacheKeyIndex));
                 log.trace("Value: {}", countResult);
             }
             log.debug("Entries in the count cache after: {}", RAW_DATA_COUNT_CACHE.size());

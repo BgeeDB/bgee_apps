@@ -175,6 +175,8 @@ public class RawDataLoader extends CommonService {
      * @since Bgee 15.0, Nov. 2022
      */
     public static enum InformationType implements BgeeEnumField {
+        // THE ORDER OF THE ELEMENTS IS IMPORTANT!
+        // (it goes from more general to more specific, and this order is used in some code)
         EXPERIMENT("experiment"), ASSAY("assay"), CALL("result");
 
         private final String representation;

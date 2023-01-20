@@ -126,7 +126,7 @@ public class ControllerTest extends TestAncestor {
         final List<ServiceFactory> mockFactories = new ArrayList<ServiceFactory>();
         MailSender mailSender = mock(MailSender.class);
         FrontController front = new FrontController(this.testProperties, new TestURLParameters(), 
-                new JobService(this.testProperties), new UserService(),
+                new JobService(this.testProperties), null, new UserService(),
                 () -> {
                     ServiceFactory mockFactory = mock(ServiceFactory.class); 
                     mockFactories.add(mockFactory);

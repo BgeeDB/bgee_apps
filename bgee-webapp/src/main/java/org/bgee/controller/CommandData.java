@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.controller.exception.InvalidRequestException;
 import org.bgee.controller.exception.PageNotFoundException;
 import org.bgee.controller.user.User;
-import org.bgee.controller.utils.LRUCache;
+import org.bgee.controller.utils.BgeeCacheService;
+import org.bgee.controller.utils.BgeeCacheService.CacheDefinition;
+import org.bgee.controller.utils.BgeeCacheService.CacheType;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.ServiceFactory;
 import org.bgee.model.anatdev.AnatEntity;
@@ -418,6 +420,107 @@ public class CommandData extends CommandParent {
             return builder.toString();
         }
     }
+    public static class RawDataResultCacheKey extends RawDataCacheKey {
+
+        private final Long offset;
+        private final Integer limit;
+
+        public RawDataResultCacheKey(RawDataFilter processedFilter, DataType dataType,
+                EnumSet<InformationType> informationTypes, Long offset, Integer limit) {
+            super(processedFilter, dataType, informationTypes);
+            this.offset = offset;
+            this.limit = limit;
+        }
+
+        public Long getOffset() {
+            return offset;
+        }
+        public Integer getLimit() {
+            return limit;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + Objects.hash(limit, offset);
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            RawDataResultCacheKey other = (RawDataResultCacheKey) obj;
+            return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("RawDataResultCacheKey [")
+                   .append("dataType=").append(getDataType())
+                   .append(", informationTypes=").append(getInformationTypes())
+                   .append(", offset=").append(offset)
+                   .append(", limit=").append(limit)
+                   .append(", sourceFilter=").append(getSourceFilter())
+                   .append("]");
+            return builder.toString();
+        }
+    }
+    public static class ExprCallResultCacheKey {
+
+        private final ExpressionCallFilter2 sourceFilter;
+        private final Long offset;
+        private final Integer limit;
+
+        public ExprCallResultCacheKey(ExpressionCallFilter2 sourceFilter, Long offset, Integer limit) {
+            this.sourceFilter = sourceFilter;
+            this.offset = offset;
+            this.limit = limit;
+        }
+
+        public ExpressionCallFilter2 getSourceFilter() {
+            return sourceFilter;
+        }
+        public Long getOffset() {
+            return offset;
+        }
+        public Integer getLimit() {
+            return limit;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(limit, offset, sourceFilter);
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ExprCallResultCacheKey other = (ExprCallResultCacheKey) obj;
+            return Objects.equals(limit, other.limit) && Objects.equals(offset, other.offset)
+                    && Objects.equals(sourceFilter, other.sourceFilter);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("ExprCallResultCacheKey [")
+                   .append("offset=").append(offset)
+                   .append(", limit=").append(limit)
+                   .append(", sourceFilter=").append(sourceFilter)
+                   .append("]");
+            return builder.toString();
+        }
+    }
 
     /**
      * An {@code int} that is the maximum allowed number of results
@@ -432,61 +535,89 @@ public class CommandData extends CommandParent {
      */
     private final static int DEFAULT_LIMIT = 100;
     /**
-     * A {@code long} that is the execution time in milliseconds of a raw data count query
-     * that triggers storing the result in {@link #RAW_DATA_COUNT_CACHE}. Defined as {@code long}
+     * A {@code long} that is the execution time in milliseconds of a count query
+     * that triggers storing the result in cache. Defined as {@code long}
      * for convenience when comparing to start and end times provided as {@code long}.
      *
      * @see #loadRawDataCounts(RawDataLoader, EnumSet)
+     * @see #loadExprCallCounts(ExpressionCallLoader)
      */
     private final static long COMPUTE_TIME_COUNT_CACHE_MS = 1000L;
+
+    private final static CacheDefinition<RawDataCacheKey, RawDataCountContainer>
+    RAW_DATA_COUNT_CACHE_DEF = new CacheDefinition<>("rawDataCountCache",
+            RawDataCacheKey.class, RawDataCountContainer.class, CacheType.LRU, 300);
+
+    private final static CacheDefinition<ExpressionCallFilter2, Long>
+    EXPR_CALL_COUNT_CACHE_DEF = new CacheDefinition<>("exprCallCountCache",
+            ExpressionCallFilter2.class, Long.class, CacheType.LRU, 60);
+
     /**
      * A {@code long} that is the execution time in milliseconds of the processing of a filter
-     * that triggers storing the result in {@link #RAW_DATA_PROCESSED_FILTER_CACHE} or
-     * {@link #EXPR_CALL_PROCESSED_FILTER_CACHE}. Defined as {@code long}
+     * that triggers storing the result in cache. Defined as {@code long}
      * for convenience when comparing to start and end times provided as {@code long}.
      *
      * @see #loadRawDataLoader(RawDataFilter)
      * @see #loadExprCallLoader(ExpressionCallFilter2)
      */
     private final static long COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS = 1000L;
+
+    private final static CacheDefinition<RawDataFilter, RawDataProcessedFilter>
+    RAW_DATA_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("rawDataProcessedFilterCache",
+            RawDataFilter.class, RawDataProcessedFilter.class, CacheType.LRU, 20);
+
+    private final static CacheDefinition<ExpressionCallFilter2, ExpressionCallProcessedFilter>
+    EXPR_CALL_PROCESSED_FILTER_CACHE_DEF = new CacheDefinition<>("exprCallProcessedFilterCache",
+            ExpressionCallFilter2.class, ExpressionCallProcessedFilter.class, CacheType.LRU, 20);
+
+    /**
+     * A {@code long} that is the execution time in milliseconds of the processing of results
+     * that triggers storing the result in cache. Defined as {@code long}
+     * for convenience when comparing to start and end times provided as {@code long}.
+     *
+     * @see #loadRawDataResults(RawDataLoader, EnumSet, InformationType)
+     * @see #loadExprCallResults(ExpressionCallLoader)
+     */
+    private final static long COMPUTE_TIME_RESULT_CACHE_MS = 2000L;
+
+    //Suppress warning for RawDataContainer generic type to have inference
+    //working with 'RawDataContainer.class'
+    @SuppressWarnings("rawtypes")
+    private final static CacheDefinition<RawDataResultCacheKey, RawDataContainer>
+    RAW_DATA_RESULT_CACHE_DEF = new CacheDefinition<>("rawDataResultCache",
+            RawDataResultCacheKey.class, RawDataContainer.class, CacheType.LRU, 100);
+
+    //Suppress warning for List generic type to have inference
+    //working with 'List.class'
+    @SuppressWarnings("rawtypes")
+    private final static CacheDefinition<ExprCallResultCacheKey, List>
+    EXPR_CALL_RESULT_CACHE_DEF = new CacheDefinition<>("exprCallResultCache",
+            ExprCallResultCacheKey.class, List.class, CacheType.LRU, 20);
+
+    /**
+     * A {@code long} that is the execution time in milliseconds of the generation of post-filters
+     * that triggers storing the result in cache. Defined as {@code long}
+     * for convenience when comparing to start and end times provided as {@code long}.
+     *
+     * @see #loadRawDataPostFilters(RawDataLoader, EnumSet, InformationType)
+     * @see #loadExprCallPostFilters(ExpressionCallLoader)
+     */
+    private final static long COMPUTE_TIME_POST_FILTER_CACHE_MS = 1000L;
+
+    private final static CacheDefinition<RawDataCacheKey, RawDataPostFilter>
+    RAW_DATA_POST_FILTER_CACHE_DEF = new CacheDefinition<>("rawDataPostFilterCache",
+            RawDataCacheKey.class, RawDataPostFilter.class, CacheType.LRU, 100);
+
+    private final static CacheDefinition<ExpressionCallFilter2, ExpressionCallPostFilter>
+    EXPR_CALL_POST_FILTER_CACHE_DEF = new CacheDefinition<>("exprCallPostFilterCache",
+            ExpressionCallFilter2.class, ExpressionCallPostFilter.class, CacheType.LRU, 20);
+
     /**
      * A {@code String} to recognize the action of requesting an experiment page
      * (there is no corresponding action in {@code RequestParameter}, it is triggered
      * when the URL parameter {@code exp_id} is provided).
      */
     private final static String EXPERIMENT_PAGE_ACTION = "experiment";
-    /**
-     * A {@code Map} used as a LRU cache to retrieve {@code RawDataProcessedFilter} from a
-     * {@code RawDataFilter}. The {@code Map} can hold max 20 entries.
-     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
-     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
-     * Maybe we should use a Guava cache instead.
-     */
-    private final static Map<RawDataFilter, RawDataProcessedFilter> RAW_DATA_PROCESSED_FILTER_CACHE =
-            Collections.synchronizedMap(new LRUCache<RawDataFilter, RawDataProcessedFilter>(20));
-    /**
-     * A {@code Map} used as a LRU cache to retrieve {@code ExpressionCallProcessedFilter} from a
-     * {@code ExpressionCallFilter2}. The {@code Map} can hold max 20 entries.
-     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
-     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
-     * Maybe we should use a Guava cache instead.
-     */
-    private final static Map<ExpressionCallFilter2, ExpressionCallProcessedFilter> EXPR_CALL_PROCESSED_FILTER_CACHE =
-            Collections.synchronizedMap(new LRUCache<ExpressionCallFilter2, ExpressionCallProcessedFilter>(20));
-    /**
-     * A {@code Map} used as a LRU cache to retrieve a {@code RawDataCountContainer} from an
-     * {@code RawDataCacheKey}. The {@code Map} can hold max 200 entries.
-     * <p>
-     * We need this cache because for processed expression values, counting results for all species,
-     * or for a species with no other parameter, can be very slow. We store entries in this cache
-     * only when a query has been too slow.
-     * <p>
-     * The {@code Map} is thread-safe by using the method {@code Collections.synchronizedMap},
-     * and is backed-up by a {@link org.bgee.controller.utils.LRUCache LRUCache}.
-     * Maybe we should use a Guava cache instead.
-     */
-    private final static Map<RawDataCacheKey, RawDataCountContainer> RAW_DATA_COUNT_CACHE =
-            Collections.synchronizedMap(new LRUCache<RawDataCacheKey, RawDataCountContainer>(300));
 
     //Static initializer
     {
@@ -503,24 +634,18 @@ public class CommandData extends CommandParent {
         }
     }
 
+
+ // ***************************************************
+ // INSTANCE ATTRIBUTES AND METHODS
+ // ***************************************************
+
     private final SpeciesService speciesService;
 
-    /**
-     * Constructor
-     *
-     * @param response          A {@code HttpServletResponse} that will be used to display the 
-     *                          page to the client
-     * @param requestParameters The {@code RequestParameters} that handles the parameters of the 
-     *                          current request.
-     * @param prop              A {@code BgeeProperties} instance that contains the properties to use.
-     * @param viewFactory       A {@code ViewFactory} that provides the display type to be used.
-     * @param serviceFactory    A {@code ServiceFactory} that provides the services to be used.
-     */
     public CommandData(HttpServletResponse response, RequestParameters requestParameters,
                           BgeeProperties prop, ViewFactory viewFactory, ServiceFactory serviceFactory,
-                          JobService jobService, User user) {
-        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService, user,
-                null, null);
+                          JobService jobService, BgeeCacheService cacheService, User user) {
+        super(response, requestParameters, prop, viewFactory, serviceFactory, jobService,
+                cacheService, user, null, null);
         this.speciesService = this.serviceFactory.getSpeciesService();
     }
 
@@ -611,7 +736,15 @@ public class CommandData extends CommandParent {
                 }
                 //Raw data counts
                 if (this.requestParameters.isGetResultCount()) {
-                    rawDataCountContainers = this.loadRawDataCounts(rawDataLoader, dataTypes);
+                    EnumSet<InformationType> infoTypes = EnumSet.of(InformationType.EXPERIMENT);
+                    if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
+                            RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+                        infoTypes.add(InformationType.ASSAY);
+                    }
+                    if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
+                        infoTypes.add(InformationType.CALL);
+                    }
+                    rawDataCountContainers = this.loadRawDataCounts(rawDataLoader, dataTypes, infoTypes);
                 }
                 //Filters
                 if (this.requestParameters.isGetFilters()) {
@@ -711,21 +844,11 @@ public class CommandData extends CommandParent {
 
                 //results
                 if (this.requestParameters.isGetResults()) {
-                    Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
-                        this.requestParameters.getLimit();
-                    if (limit > LIMIT_MAX) {
-                        throw log.throwing(new InvalidRequestException("It is not possible to request more than "
-                                + LIMIT_MAX + " results."));
-                    }
-                    Long offset = this.requestParameters.getOffset();
-                    if (offset != null && offset < 0) {
-                        throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
-                    }
-                    calls = callLoader.loadData(offset, limit);
+                    calls = this.loadExprCallResults(callLoader);
                 }
                 //Raw data counts
                 if (this.requestParameters.isGetResultCount()) {
-                    count = callLoader.loadDataCount();
+                    count = this.loadExprCallCount(callLoader);
                 }
                 //Filters. PostFilter is not null and is an empty filter if no genes are specified,
                 //in that case we don't retrieve filters.
@@ -740,7 +863,7 @@ public class CommandData extends CommandParent {
                             .getSourceFilter().equals(noFilterParamFilter)) {
                         loaderToUse = this.loadExprCallLoader(noFilterParamFilter);
                     }
-                    postFilter = loaderToUse.loadPostFilter();
+                    postFilter = this.loadExprCallPostFilters(loaderToUse);
                 }
 
                 job.completeWithSuccess();
@@ -1017,33 +1140,11 @@ public class CommandData extends CommandParent {
 
         RawDataService rawDataService = this.serviceFactory.getRawDataService();
         //Try to get the processed filter from the cache.
-        //We don't use the method computeIfAbsent, because that would probably block
-        //the whole cache while the computation of RawDataProcessedFilter is done,
-        //since we simply used Collections.synchronizedMap to make the cache thread-safe.
-        //It is a simple optimization, we don't care so much if several threads
-        //are computing the same RawDataProcessedFilter.
-        RawDataProcessedFilter processedFilter = RAW_DATA_PROCESSED_FILTER_CACHE.get(filter);
-        log.debug("Entries in the cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE.size());
-        if (processedFilter == null) {
-            log.debug("Cache miss for filter: {}", filter);
-            long startTime = System.currentTimeMillis();
-            processedFilter = rawDataService.processRawDataFilter(filter);
-            long executionTime = System.currentTimeMillis() - startTime;
-            if (executionTime > COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS) {
-                log.debug("Slow RawDataProcessedFilter generation, to store in cache, execution time: {}",
-                        executionTime);
-                log.trace("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
-                RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-                log.trace("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
-            } else {
-                log.debug("RawDataProcessedFilter generation fast enough, not stored in cache, execution time: {}",
-                        executionTime);
-            }
-        } else {
-            log.debug("Cache hit for filter: {}", filter);
-            log.trace("Value: {}", processedFilter);
-        }
-        log.debug("Entries in the cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE.size());
+        RawDataProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
+                RAW_DATA_PROCESSED_FILTER_CACHE_DEF,
+                filter,
+                () -> rawDataService.processRawDataFilter(filter),
+                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
         return log.traceExit(rawDataService.getRawDataLoader(processedFilter));
     }
     private ExpressionCallLoader loadExprCallLoader(ExpressionCallFilter2 filter) {
@@ -1051,31 +1152,11 @@ public class CommandData extends CommandParent {
 
         ExpressionCallService callService = this.serviceFactory.getExpressionCallService();
         //Try to get the processed filter from the cache.
-        //We don't use the method computeIfAbsent, because that would probably block
-        //the whole cache while the computation of ExpressionCallProcessedFilter is done,
-        //since we simply used Collections.synchronizedMap to make the cache thread-safe.
-        //It is a simple optimization, we don't care so much if several threads
-        //are computing the same ExpressionCallProcessedFilter.
-        ExpressionCallProcessedFilter processedFilter = EXPR_CALL_PROCESSED_FILTER_CACHE.get(filter);
-        if (processedFilter == null) {
-            log.debug("Cache miss for filter: {}", filter);
-            long startTime = System.currentTimeMillis();
-            processedFilter = callService.processExpressionCallFilter(filter);
-            long executionTime = System.currentTimeMillis() - startTime;
-            if (executionTime > COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS) {
-                log.debug("Slow ExpressionCallProcessedFilter generation, to store in cache, execution time: {}",
-                        executionTime);
-                log.trace("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
-                EXPR_CALL_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-                log.trace("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
-            } else {
-                log.debug("ExpressionCallProcessedFilter generation fast enough, not stored in cache, execution time: {}",
-                        executionTime);
-            }
-        } else {
-            log.debug("Cache hit for filter: {}", filter);
-            log.trace("Value: {}", processedFilter);
-        }
+        ExpressionCallProcessedFilter processedFilter = this.cacheService.useCacheNonAtomic(
+                EXPR_CALL_PROCESSED_FILTER_CACHE_DEF,
+                filter,
+                () -> callService.processExpressionCallFilter(filter),
+                COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS);
         return log.traceExit(callService.getCallLoader(processedFilter));
     }
 
@@ -1356,45 +1437,77 @@ public class CommandData extends CommandParent {
             throw log.throwing(new InvalidRequestException("It is not possible to request more than "
                     + LIMIT_MAX + " results."));
         }
-        Long offset = this.requestParameters.getOffset();
+        Long offset = this.requestParameters.getOffset() == null? 0:
+            this.requestParameters.getOffset();
         if (offset != null && offset < 0) {
             throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }
-
         if (this.requestParameters.getAction() == null) {
             throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
         }
+
+        RawDataFilter sourceFilter = rawDataLoader.getRawDataProcessedFilter().getSourceFilter();
         return log.traceExit(dataTypes.stream()
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> rawDataLoader.loadData(infoType,
-                                RawDataDataType.getRawDataDataType(dt), offset, limit),
+                        dt -> {
+                            RawDataResultCacheKey cacheKey = new RawDataResultCacheKey(
+                                    sourceFilter, dt,
+                                    EnumSet.of(infoType), offset, limit);
+
+                            return this.cacheService.useCacheNonAtomic(
+                                    RAW_DATA_RESULT_CACHE_DEF,
+                                    cacheKey,
+                                    () -> rawDataLoader.loadData(infoType,
+                                            RawDataDataType.getRawDataDataType(dt),
+                                            offset, limit),
+                                    COMPUTE_TIME_RESULT_CACHE_MS);
+                        },
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
     }
 
-    private EnumMap<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,
-            EnumSet<DataType> dataTypes) {
-        log.traceEntry("{}, {}", rawDataLoader, dataTypes);
+    private List<ExpressionCall2> loadExprCallResults(ExpressionCallLoader callLoader)
+            throws InvalidRequestException {
+        log.traceEntry("{}", callLoader);
 
-        if (this.requestParameters.getAction() == null) {
-            throw log.throwing(new IllegalStateException("Wrong null value for parameter action"));
+        Integer limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+            this.requestParameters.getLimit();
+        if (limit > LIMIT_MAX) {
+            throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                    + LIMIT_MAX + " results."));
         }
-        EnumSet<InformationType> infoTypes = EnumSet.of(InformationType.EXPERIMENT);
-        if (RequestParameters.ACTION_RAW_DATA_ANNOTS.equals(this.requestParameters.getAction()) ||
-                RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
-            infoTypes.add(InformationType.ASSAY);
+        Long offset = this.requestParameters.getOffset() == null? 0:
+            this.requestParameters.getOffset();
+        if (offset != null && offset < 0) {
+            throw log.throwing(new InvalidRequestException("Offset cannot be less than 0."));
         }
-        if (RequestParameters.ACTION_PROC_EXPR_VALUES.equals(this.requestParameters.getAction())) {
-            infoTypes.add(InformationType.CALL);
-        }
+        ExprCallResultCacheKey cacheKey = new ExprCallResultCacheKey(
+                callLoader.getProcessedFilter().getSourceFilter(),
+                offset, limit);
+        //Suppress warnings because we are responsible for the insertion and know the generic type
+        @SuppressWarnings("unchecked")
+        List<ExpressionCall2> results = this.cacheService.useCacheNonAtomic(
+                EXPR_CALL_RESULT_CACHE_DEF,
+                cacheKey,
+                () -> callLoader.loadData(offset, limit),
+                COMPUTE_TIME_RESULT_CACHE_MS);
+        return log.traceExit(results);
+    }
+
+    private EnumMap<DataType, RawDataCountContainer> loadRawDataCounts(RawDataLoader rawDataLoader,
+            EnumSet<DataType> dataTypes, EnumSet<InformationType> infoTypes) {
+        log.traceEntry("{}, {}, {}", rawDataLoader, dataTypes, infoTypes);
+
         int currentMaxInfoTypeIndex = infoTypes.size() - 1;
         int absoluteMaxInfoTypeIndex = EnumSet.allOf(InformationType.class).size() - 1;
-
         //we will check whether count results are in cache,
         //otherwise we'll add them to the cache when the query is too slow
         EnumMap<DataType, RawDataCountContainer> counts = new EnumMap<>(DataType.class);
         RawDataFilter sourceFilter = rawDataLoader.getRawDataProcessedFilter().getSourceFilter();
+        Map<RawDataCacheKey, RawDataCountContainer> cache =
+                this.cacheService.registerCache(RAW_DATA_COUNT_CACHE_DEF);
+
         for (DataType dt: dataTypes) {
             //We will also search for cached info with MORE information
             List<RawDataCacheKey> cacheKeys = new ArrayList<>();
@@ -1407,13 +1520,13 @@ public class CommandData extends CommandParent {
             }
             log.debug("All cacheKeys that will be requested: {}", cacheKeys);
 
-            log.debug("Entries in the count cache before: {}", RAW_DATA_COUNT_CACHE.size());
+            log.debug("Entries in the count cache before: {}", cache.size());
             //We start from -1 to have the correct index after the loop
             int cacheKeyIndex = -1;
             RawDataCountContainer countResult = null;
             while (countResult == null && cacheKeyIndex < cacheKeys.size() - 1) {
                 cacheKeyIndex++;
-                countResult = RAW_DATA_COUNT_CACHE.get(cacheKeys.get(cacheKeyIndex));
+                countResult = cache.get(cacheKeys.get(cacheKeyIndex));
             }
 
             if (countResult == null) {
@@ -1424,9 +1537,9 @@ public class CommandData extends CommandParent {
                 long executionTime = System.currentTimeMillis() - startTime;
                 if (executionTime > COMPUTE_TIME_COUNT_CACHE_MS) {
                     log.debug("Slow count query to store in cache, execution time: {}", executionTime);
-                    log.trace("Cache before: {}", RAW_DATA_COUNT_CACHE);
-                    RAW_DATA_COUNT_CACHE.putIfAbsent(cacheKeys.get(0), countResult);
-                    log.trace("Cache after: {}", RAW_DATA_COUNT_CACHE);
+                    log.trace("Cache before: {}", cache);
+                    cache.putIfAbsent(cacheKeys.get(0), countResult);
+                    log.trace("Cache after: {}", cache);
                 } else {
                     log.debug("Count query fast enough, not stored in cache, execution time: {}", executionTime);
                 }
@@ -1434,12 +1547,20 @@ public class CommandData extends CommandParent {
                 log.debug("Cache hit for search: {}", cacheKeys.get(cacheKeyIndex));
                 log.trace("Value: {}", countResult);
             }
-            log.debug("Entries in the count cache after: {}", RAW_DATA_COUNT_CACHE.size());
+            log.debug("Entries in the count cache after: {}", cache.size());
 
             counts.put(dt, countResult);
         }
 
         return log.traceExit(counts);
+    }
+    private long loadExprCallCount(ExpressionCallLoader callLoader) {
+        log.traceEntry("{}", callLoader);
+        return log.traceExit(this.cacheService.useCacheNonAtomic(
+                EXPR_CALL_COUNT_CACHE_DEF,
+                callLoader.getProcessedFilter().getSourceFilter(),
+                () -> callLoader.loadDataCount(),
+                COMPUTE_TIME_COUNT_CACHE_MS));
     }
 
     private EnumMap<DataType, RawDataPostFilter> loadRawDataPostFilters(RawDataLoader rawDataLoader,
@@ -1449,14 +1570,32 @@ public class CommandData extends CommandParent {
         return log.traceExit(dataTypes.stream()
                 .collect(Collectors.toMap(
                         dt -> dt,
-                        dt -> rawDataLoader.loadPostFilter(
-                                    RawDataDataType.getRawDataDataType(dt), true, true,
-                                    InformationType.EXPERIMENT.equals(infoType) &&
+                        dt -> {
+                            RawDataCacheKey cacheKey = new RawDataCacheKey(
+                                    rawDataLoader.getRawDataProcessedFilter().getSourceFilter(),
+                                    dt, EnumSet.of(infoType));
+                            return this.cacheService.useCacheNonAtomic(
+                                    RAW_DATA_POST_FILTER_CACHE_DEF,
+                                    cacheKey,
+                                    () -> rawDataLoader.loadPostFilter(
+                                            RawDataDataType.getRawDataDataType(dt), true, true,
+                                            InformationType.EXPERIMENT.equals(infoType) &&
                                             //in case the DataType has no concept of experiments,
                                             //we need to retrieve the assay info anyway
                                             dt.isWithExperiments()? false: true),
+                                    COMPUTE_TIME_POST_FILTER_CACHE_MS);
+                        },
                         (v1, v2) -> {throw new IllegalStateException("Key collision impossible");},
                         () -> new EnumMap<>(DataType.class))));
+    }
+    private ExpressionCallPostFilter loadExprCallPostFilters(ExpressionCallLoader callLoader) {
+        log.traceEntry("{}", callLoader);
+        return log.traceExit(this.cacheService.useCacheNonAtomic(
+                EXPR_CALL_POST_FILTER_CACHE_DEF,
+                callLoader.getProcessedFilter().getSourceFilter(),
+                () -> callLoader.loadPostFilter(),
+                COMPUTE_TIME_POST_FILTER_CACHE_MS
+                ));
     }
 
     private EnumMap<DataType, List<ColumnDescription>> getColumnDescriptions(String action,
@@ -2189,25 +2328,20 @@ public class CommandData extends CommandParent {
         return log.traceExit(colDescr);
     }
 
-    public static void initializeCaches(long sleepBetweenCallsInMs) throws InterruptedException {
-        log.traceEntry("{}", sleepBetweenCallsInMs);
-        BgeeProperties props = BgeeProperties.getBgeeProperties();
-        log.info("Initializing CommandData caches: {}", props.isInitializeCommandDataCachesOnStartup());
 
-        if (props.isInitializeCommandDataCachesOnStartup()) {
-            RequestParameters rp = new RequestParameters();
-            rp.setPage(RequestParameters.PAGE_DATA);
-            rp.setAction(RequestParameters.ACTION_PROC_EXPR_VALUES);
-            ServiceFactory serviceFactory = new ServiceFactory(props);
+    public void initializeCaches(long sleepBetweenCallsInMs) throws InterruptedException {
+        log.traceEntry("{}", sleepBetweenCallsInMs);
+        log.info("Initializing CommandData caches: {}", this.prop.isInitializeCommandDataCachesOnStartup());
+
+        if (this.prop.isInitializeCommandDataCachesOnStartup()) {
             RawDataService rawDataService = serviceFactory.getRawDataService();
             EnumSet<DataType> dataTypes = EnumSet.allOf(DataType.class);
 
-            CommandData controller = new CommandData(null, rp, props, null, serviceFactory, null, null);
-
             //First we make one call for the counts without any parameter
             RawDataFilter filter = new RawDataFilter(null, null);
+            EnumSet<InformationType> infoTypes = EnumSet.allOf(InformationType.class);
             RawDataLoader loader = rawDataService.loadRawDataLoader(filter);
-            controller.loadRawDataCounts(loader, dataTypes);
+            this.loadRawDataCounts(loader, dataTypes, infoTypes);
 
             //Then we make one call per species without any other parameters
             Set<Species> allSpecies = serviceFactory.getSpeciesService().loadSpeciesByIds(null, false);
@@ -2220,19 +2354,10 @@ public class CommandData extends CommandParent {
                         Collections.singleton(new GeneFilter(species.getId())),
                         null);
                 RawDataLoader loaderForSpecies = rawDataService.loadRawDataLoader(speciesFilter);
-                controller.loadRawDataCounts(loaderForSpecies, dataTypes);
+                this.loadRawDataCounts(loaderForSpecies, dataTypes, infoTypes);
             }
         }
         log.info("Initializing CommandData caches done.");
-        log.traceExit();
-    }
-    public static void releaseCaches() {
-        log.traceEntry();
-        log.info("Releasing CommandData caches...");
-        RAW_DATA_PROCESSED_FILTER_CACHE.clear();
-        EXPR_CALL_PROCESSED_FILTER_CACHE.clear();
-        RAW_DATA_COUNT_CACHE.clear();
-        log.info("Releasing CommandData caches done.");
         log.traceExit();
     }
 }

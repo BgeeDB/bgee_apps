@@ -5,7 +5,8 @@ import javax.servlet.ServletContextListener;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bgee.controller.CommandData;
+import org.bgee.controller.FrontController;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.model.BgeeProperties;
 import org.bgee.model.dao.api.DAOManager;
 
@@ -35,9 +36,11 @@ public class BgeeServletContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         log.traceEntry();
 
+        FrontController frontController = new FrontController();
+
         Runnable commandDataCacheInitializer = () -> {
             try {
-                CommandData.initializeCaches(1000L);
+                frontController.initializeCaches(1000L);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -60,7 +63,7 @@ public class BgeeServletContextListener implements ServletContextListener {
 	    log.traceEntry();
 		DAOManager.closeAll();
 		BgeeProperties.releaseAll();
-		CommandData.releaseCaches();
+		BgeeCacheService.releaseAll();
 		log.traceExit();
 	}
 }

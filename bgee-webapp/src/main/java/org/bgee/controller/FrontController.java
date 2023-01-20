@@ -20,6 +20,7 @@ import org.bgee.controller.exception.ValueSizeExceededException;
 import org.bgee.controller.servletutils.BgeeHttpServletRequest;
 import org.bgee.controller.user.User;
 import org.bgee.controller.user.UserService;
+import org.bgee.controller.utils.BgeeCacheService;
 import org.bgee.controller.utils.MailSender;
 import org.bgee.controller.exception.InvalidFormatException;
 import org.bgee.controller.exception.InvalidRequestException;
@@ -70,6 +71,11 @@ public class FrontController extends HttpServlet {
      */
     private final JobService jobService;
     /**
+     * The {@code BgeeCacheService} instance allowing to manage caches between threads 
+     * across the entire webapp. 
+     */
+    protected final BgeeCacheService cacheService;
+    /**
      * The {@link UserService} instance allowing to create {@code User} objects to identify 
      * and track users in the webapp.
      */
@@ -109,7 +115,7 @@ public class FrontController extends HttpServlet {
      *              {@code BgeeProperties}
      */
     public FrontController(Properties prop) {
-        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null);
+        this(BgeeProperties.getBgeeProperties(prop), null, null, null, null, null, null, null);
     }
 
     /**
@@ -137,7 +143,7 @@ public class FrontController extends HttpServlet {
      * @param mailSender                A {@code MailSender} instance used to send mails to users.
      */
     public FrontController(BgeeProperties prop, URLParameters urlParameters, 
-            JobService jobService, UserService userService,
+            JobService jobService, BgeeCacheService cacheService, UserService userService,
             Supplier<ServiceFactory> serviceFactoryProvider, ViewFactoryProvider viewFactoryProvider, 
             MailSender mailSender) {
         log.traceEntry("{}, {}, {}, {}, {}, {}, {}",prop, urlParameters, jobService, userService, 
@@ -154,6 +160,7 @@ public class FrontController extends HttpServlet {
             () -> new ServiceFactory(this.prop);
         
         this.jobService  = jobService != null? jobService: new JobService(this.prop);
+        this.cacheService = cacheService != null? cacheService: new BgeeCacheService();
         this.userService = userService != null? userService: new UserService();
         
         // If the viewFactoryProvider object is null, just use a new instance, 
@@ -268,7 +275,7 @@ public class FrontController extends HttpServlet {
 
             } else if (requestParameters.isADataPageCategory()){
                 controller = new CommandData(response, requestParameters, this.prop, factory, serviceFactory,
-                        this.jobService, user);
+                        this.jobService, this.cacheService, user);
 
             } else if (requestParameters.isASourcePageCategory()){
                 controller = new CommandSource(response, requestParameters, this.prop, factory, serviceFactory);
@@ -403,6 +410,21 @@ public class FrontController extends HttpServlet {
         log.traceEntry("{}, {}", request, response);
         doRequest(request, response, true);
         log.traceExit();
+    }
+
+    public void initializeCaches(long sleepBetweenComputeMs) throws InterruptedException {
+        log.traceEntry("{}", sleepBetweenComputeMs);
+
+        CommandData commandData = this.getPartialCommandData();
+        commandData.initializeCaches(sleepBetweenComputeMs);
+
+        log.traceExit();
+    }
+    public CommandData getPartialCommandData() {
+        log.traceEntry();
+        return log.traceExit(new CommandData(null, null, this.prop, null,
+                this.serviceFactoryProvider.get(),
+                null, this.cacheService, null));
     }
 
     /**

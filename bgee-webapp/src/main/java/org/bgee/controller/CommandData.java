@@ -440,6 +440,16 @@ public class CommandData extends CommandParent {
      */
     private final static long COMPUTE_TIME_COUNT_CACHE_MS = 1000L;
     /**
+     * A {@code long} that is the execution time in milliseconds of the processing of a filter
+     * that triggers storing the result in {@link #RAW_DATA_PROCESSED_FILTER_CACHE} or
+     * {@link #EXPR_CALL_PROCESSED_FILTER_CACHE}. Defined as {@code long}
+     * for convenience when comparing to start and end times provided as {@code long}.
+     *
+     * @see #loadRawDataLoader(RawDataFilter)
+     * @see #loadExprCallLoader(ExpressionCallFilter2)
+     */
+    private final static long COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS = 1000L;
+    /**
      * A {@code String} to recognize the action of requesting an experiment page
      * (there is no corresponding action in {@code RequestParameter}, it is triggered
      * when the URL parameter {@code exp_id} is provided).
@@ -1016,10 +1026,19 @@ public class CommandData extends CommandParent {
         log.debug("Entries in the cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE.size());
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
+            long startTime = System.currentTimeMillis();
             processedFilter = rawDataService.processRawDataFilter(filter);
-            log.trace("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
-            RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-            log.trace("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
+            long executionTime = System.currentTimeMillis() - startTime;
+            if (executionTime > COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS) {
+                log.debug("Slow RawDataProcessedFilter generation, to store in cache, execution time: {}",
+                        executionTime);
+                log.trace("Cache before: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
+                RAW_DATA_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+                log.trace("Cache after: {}", RAW_DATA_PROCESSED_FILTER_CACHE);
+            } else {
+                log.debug("RawDataProcessedFilter generation fast enough, not stored in cache, execution time: {}",
+                        executionTime);
+            }
         } else {
             log.debug("Cache hit for filter: {}", filter);
             log.trace("Value: {}", processedFilter);
@@ -1040,10 +1059,19 @@ public class CommandData extends CommandParent {
         ExpressionCallProcessedFilter processedFilter = EXPR_CALL_PROCESSED_FILTER_CACHE.get(filter);
         if (processedFilter == null) {
             log.debug("Cache miss for filter: {}", filter);
+            long startTime = System.currentTimeMillis();
             processedFilter = callService.processExpressionCallFilter(filter);
-            log.trace("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
-            EXPR_CALL_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
-            log.trace("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+            long executionTime = System.currentTimeMillis() - startTime;
+            if (executionTime > COMPUTE_TIME_PROCESSED_FILTER_CACHE_MS) {
+                log.debug("Slow ExpressionCallProcessedFilter generation, to store in cache, execution time: {}",
+                        executionTime);
+                log.trace("Cache before: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+                EXPR_CALL_PROCESSED_FILTER_CACHE.putIfAbsent(filter, processedFilter);
+                log.trace("Cache after: {}", EXPR_CALL_PROCESSED_FILTER_CACHE);
+            } else {
+                log.debug("ExpressionCallProcessedFilter generation fast enough, not stored in cache, execution time: {}",
+                        executionTime);
+            }
         } else {
             log.debug("Cache hit for filter: {}", filter);
             log.trace("Value: {}", processedFilter);

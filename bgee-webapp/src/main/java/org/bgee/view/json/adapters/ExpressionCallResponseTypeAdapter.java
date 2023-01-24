@@ -55,62 +55,62 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
         out.endArray();
 
 
-        EnumSet<DataType> dataTypesWithData = EnumSet.noneOf(DataType.class);
-        out.name("expressionCalls");
-        out.beginArray();
-        for (ExpressionCall2 call: value.getCalls()) {
-            EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-            dataTypesWithData.addAll(dataTypes);
-            boolean highQualScore = false;
-            if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) && 
-                    (dataTypes.contains(DataType.AFFYMETRIX) ||
-                            dataTypes.contains(DataType.RNA_SEQ) ||
-                            dataTypes.contains(DataType.FULL_LENGTH) ||
-                            call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
-                highQualScore = true;
+        if (value.getCalls() != null) {
+            out.name("expressionCalls");
+            out.beginArray();
+            for (ExpressionCall2 call: value.getCalls()) {
+                EnumSet<DataType> dataTypes = call.getCallData().stream().map(ExpressionCallData2::getDataType)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                boolean highQualScore = false;
+                if (!SummaryQuality.BRONZE.equals(call.getSummaryQuality()) &&
+                        (dataTypes.contains(DataType.AFFYMETRIX) ||
+                                dataTypes.contains(DataType.RNA_SEQ) ||
+                                dataTypes.contains(DataType.FULL_LENGTH) ||
+                                call.getMeanRank().compareTo(BigDecimal.valueOf(20000)) < 0)) {
+                    highQualScore = true;
+                }
+                out.beginObject();
+
+                out.name("gene");
+                this.utils.writeSimplifiedGene(out, call.getGene(), true, false, null);
+                out.name("condition");
+                this.gson.getAdapter(Condition2.class).write(out, call.getCondition());
+
+                out.name("expressionScore");
+                out.beginObject();
+                out.name("expressionScore").value(call.getFormattedExpressionScore());
+                out.name("expressionScoreConfidence");
+                if (highQualScore) {
+                    out.value("high");
+                } else {
+                    out.value("low");
+                }
+                out.endObject();
+
+                String fdr = call.getPValueWithEqualDataTypes(value.getRequestedDataTypes())
+                        .getFormatedFDRPValue();
+                out.name("fdr").value(fdr);
+
+                out.name("dataTypesWithData");
+                //        EnumSet<DataType> dtWithData = call.getCallData().stream()
+                //                .filter(c -> c.getDataPropagation() != null &&
+                //                    c.getDataPropagation().getCondParamCombinations().stream()
+                //                    .anyMatch(comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0))
+                //                .map(c -> c.getDataType())
+                //                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
+                out.beginObject();
+                for (DataType d: EnumSet.allOf(DataType.class)) {
+                    out.name(d.name()).value(dataTypes.contains(d));
+                }
+                out.endObject();
+
+                out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
+                out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
+
+                out.endObject();
             }
-            out.beginObject();
-
-            out.name("gene");
-            this.utils.writeSimplifiedGene(out, call.getGene(), true, false, null);
-            out.name("condition");
-            this.gson.getAdapter(Condition2.class).write(out, call.getCondition());
-
-            out.name("expressionScore");
-            out.beginObject();
-            out.name("expressionScore").value(call.getFormattedExpressionScore());
-            out.name("expressionScoreConfidence");
-            if (highQualScore) {
-                out.value("high");
-            } else {
-                out.value("low");
-            }
-            out.endObject();
-
-            String fdr = call.getPValueWithEqualDataTypes(value.getRequestedDataTypes())
-                    .getFormatedFDRPValue();
-            out.name("fdr").value(fdr);
-
-            out.name("dataTypesWithData");
-            //        EnumSet<DataType> dtWithData = call.getCallData().stream()
-            //                .filter(c -> c.getDataPropagation() != null &&
-            //                    c.getDataPropagation().getCondParamCombinations().stream()
-            //                    .anyMatch(comb -> c.getDataPropagation().getTotalObservationCount(comb) > 0))
-            //                .map(c -> c.getDataType())
-            //                .collect(Collectors.toCollection(() -> EnumSet.noneOf(DataType.class)));
-            out.beginObject();
-            for (DataType d: EnumSet.allOf(DataType.class)) {
-                out.name(d.name()).value(dataTypes.contains(d));
-            }
-            out.endObject();
-
-            out.name("expressionState").value(call.getSummaryCallType().toString().toLowerCase());
-            out.name("expressionQuality").value(call.getSummaryQuality().toString().toLowerCase());
-
-            out.endObject();
+            out.endArray();
         }
-        out.endArray();
 
         out.endObject();
         log.traceExit();

@@ -2061,7 +2061,7 @@ public class CommandData extends CommandParent {
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.expressionCall.pValue"),
-                ColumnDescription.ColumnType.NUMERIC,
+                ColumnDescription.ColumnType.STRING,
                 null, null, true));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
@@ -2112,7 +2112,7 @@ public class CommandData extends CommandParent {
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.rawCall.pValue"),
-                ColumnDescription.ColumnType.NUMERIC,
+                ColumnDescription.ColumnType.STRING,
                 null, null, true));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
@@ -2146,7 +2146,7 @@ public class CommandData extends CommandParent {
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.rawCall.pValue"),
-                ColumnDescription.ColumnType.NUMERIC,
+                ColumnDescription.ColumnType.STRING,
                 null, null, true));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
@@ -2175,7 +2175,7 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Expression p-value",
                 "P-value are defined based on the staining intensity reported from the source database",
                 List.of("result.rawCall.pValue"),
-                ColumnDescription.ColumnType.NUMERIC,
+                ColumnDescription.ColumnType.STRING,
                 null, null, true));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));

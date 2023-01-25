@@ -26,7 +26,7 @@ import org.bgee.view.ViewFactory;
  *
  * @author  Valentine Rech de Laval
  * @author  Frederic Bastian
- * @version Bgee 15.0, Nov. 2022
+ * @version Bgee 15.0, Jan. 2023
  * @since   Bgee 13, Feb. 2016
  */
 public class CommandSearch extends CommandParent {
@@ -35,6 +35,17 @@ public class CommandSearch extends CommandParent {
      * {@code Logger} of the class. 
      */
     private final static Logger log = LogManager.getLogger(CommandSearch.class.getName());
+
+    /**
+     * An {@code int} that is the maximum allowed number of results
+     * to retrieve in one request. Value: 10,000.
+     */
+    private final static int LIMIT_MAX = 10000;
+    /**
+     * An {@code int} that is the default number of results
+     * to retrieve in one request. Value: 100.
+     */
+    private final static int DEFAULT_LIMIT = 100;
 
     /**
      * Default constructor.
@@ -59,12 +70,17 @@ public class CommandSearch extends CommandParent {
         
         SearchDisplay display = this.viewFactory.getSearchDisplay();
         SearchMatchResultService searchMatchService = serviceFactory.getSearchMatchResultService(this.prop);
+        int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+            this.requestParameters.getLimit();
+        if (limit > LIMIT_MAX) {
+            throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                    + LIMIT_MAX + " results."));
+        }
         
         if (this.requestParameters.getAction() != null &&
         		this.requestParameters.getAction().equals(RequestParameters.ACTION_AUTO_COMPLETE_GENE_SEARCH)) {
             String searchTerm = this.getSearchTerm();
-            List<String> result = searchMatchService.autocomplete(searchTerm,
-                    this.requestParameters.getLimit());
+            List<String> result = searchMatchService.autocomplete(searchTerm, limit);
             display.displayMatchesForGeneCompletion(result);
             
         } else if (this.requestParameters.getAction() != null &&
@@ -80,7 +96,7 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            true, false, 0, this.requestParameters.getLimit());
+                            true, false, 0, limit);
             display.displayDefaultSphinxSearchResult(searchTerm, result);
 
         } else if (this.requestParameters.getAction() != null &&
@@ -90,7 +106,7 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<String> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchStrainsByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            0, this.requestParameters.getLimit());
+                            0, limit);
             display.displayDefaultSphinxSearchResult(searchTerm, result);
 
         } else if (this.requestParameters.getAction() != null &&
@@ -100,14 +116,14 @@ public class CommandSearch extends CommandParent {
             SearchMatchResult<AnatEntity> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
                     .searchAnatEntitiesByTerm(searchTerm, speciesId == null? null: Set.of(speciesId),
-                            false, true, 0, this.requestParameters.getLimit());
+                            false, true, 0, limit);
             display.displayDefaultSphinxSearchResult(searchTerm, result);
         } else if (this.requestParameters.getAction() != null &&
                 this.requestParameters.getAction().equals(RequestParameters.ACTION_SEARCH_EXPERIMENTS_ASSAYS)) {
             String searchTerm = this.getSearchTerm();
             SearchMatchResult<ExperimentAssay> result = serviceFactory
                     .getSearchMatchResultService(this.prop)
-                    .searchExperimentsAndAssaysByTerm(searchTerm, 0, this.requestParameters.getLimit());
+                    .searchExperimentsAndAssaysByTerm(searchTerm, 0, limit);
             display.displayDefaultSphinxSearchResult(searchTerm, result);
         } else {
             throw log.throwing(new PageNotFoundException("Incorrect " + 

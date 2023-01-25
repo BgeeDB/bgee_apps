@@ -629,9 +629,7 @@ public class CommandData extends CommandParent {
             throw log.throwing(new IllegalStateException("The maximum limit allowed by this controller "
                     + "is greater than the maximum limit allowed by the ExpressionCallLoader."));
         }
-        if (DEFAULT_LIMIT > LIMIT_MAX) {
-            throw log.throwing(new IllegalStateException("The default limit is greater than the max. limit."));
-        }
+        assert DEFAULT_LIMIT <= LIMIT_MAX;
     }
 
 

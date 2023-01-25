@@ -42,12 +42,23 @@ import org.bgee.view.ViewFactory;
  * @author  Frederic Bastian
  * @author  Valentine Rech de Laval
  * @author  Julien Wollbrett
- * @version Bgee 15.0, Dec. 2021
+ * @version Bgee 15.0, Jan. 2023
  * @since   Bgee 13, Nov. 2015
  */
 public class CommandGene extends CommandParent {
 
     private final static Logger log = LogManager.getLogger(CommandGene.class.getName());
+
+    /**
+     * An {@code int} that is the maximum allowed number of results
+     * to retrieve in one request. Value: 10,000.
+     */
+    private final static int LIMIT_MAX = 10000;
+    /**
+     * An {@code int} that is the default number of results
+     * to retrieve in one request. Value: 100.
+     */
+    private final static int DEFAULT_LIMIT = 100;
 
     public static class GeneExpressionResponse {
         //Deactivated as long as we don't retrieve the Gene when there is no expression data
@@ -205,9 +216,14 @@ public class CommandGene extends CommandParent {
         CallService callService = serviceFactory.getCallService();
 
         if (StringUtils.isNotBlank(search)) {
+            int limit = this.requestParameters.getLimit() == null? DEFAULT_LIMIT:
+                this.requestParameters.getLimit();
+            if (limit > LIMIT_MAX) {
+                throw log.throwing(new InvalidRequestException("It is not possible to request more than "
+                        + LIMIT_MAX + " results."));
+            }
             SearchMatchResult<Gene> result = serviceFactory.getSearchMatchResultService(this.prop)
-                    .searchGenesByTerm(search, speciesId == null? null : Set.of(speciesId), 0,
-                            this.requestParameters.getLimit());
+                    .searchGenesByTerm(search, speciesId == null? null : Set.of(speciesId), 0, limit);
             display.displayGeneSearchResult(search, result);
             log.traceExit(); return;
         } else if (geneId == null) {

@@ -111,7 +111,13 @@ public class RawCall {
     public RawCall(Gene gene, BigDecimal pValue, DataState expressionConfidence,
             ExclusionReason exclusionReason) {
         super();
-        this.pValue = new PValue(pValue);
+        if (ExclusionReason.NOT_EXCLUDED.equals(exclusionReason)) {
+            //In that case we always check the pValue (in PValue constructor)
+            this.pValue = new PValue(pValue);
+        } else {
+            //otherwise we accept null p-values
+            this.pValue = pValue == null? null: new PValue(pValue);
+        }
         this.gene = gene;
         this.expressionConfidence = expressionConfidence;
         this.exclusionReason = exclusionReason;
@@ -131,6 +137,9 @@ public class RawCall {
      * @return  A {@code BigDecimal} defining the pValue of this raw call.
      */
     public BigDecimal getPValue() {
+        if (this.pValue == null) {
+            return null;
+        }
         return this.pValue.getPValue();
     }
     /**
@@ -139,6 +148,9 @@ public class RawCall {
      * @return  The formatted {code String} representation of the p-value 
      */
     public String getFormattedPValue() {
+        if (this.pValue == null) {
+            return null;
+        }
         return this.pValue.getFormattedPValue();
     }
 

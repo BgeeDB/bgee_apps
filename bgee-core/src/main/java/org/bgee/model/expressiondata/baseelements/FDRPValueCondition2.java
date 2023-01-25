@@ -29,7 +29,7 @@ public class FDRPValueCondition2 extends FDRPValue {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("FDRPValueCondition [fdrPValue=").append(getFDRPValue())
+        builder.append("FDRPValueCondition [fdrPValue=").append(getPValue())
         .append(", condition=").append(getCondition())
         .append(", dataTypes=").append(getDataTypes())
         .append("]");

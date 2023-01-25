@@ -199,14 +199,14 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
                     sb.append(")");
                 }
 
-                if (callFilter.getFDRPValueFilters() != null &&
-                        !callFilter.getFDRPValueFilters().isEmpty()) {
+                if (callFilter.getPValueFilters() != null &&
+                        !callFilter.getPValueFilters().isEmpty()) {
                     if (!firstCond) {
                         sb.append(" AND ");
                     }
                     sb.append("(");
                     firstCond = false;
-                    sb.append(generatePValueFilters2(callFilter.getFDRPValueFilters()));
+                    sb.append(generatePValueFilters2(callFilter.getPValueFilters()));
                     sb.append(")");
                 }
 
@@ -295,9 +295,9 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
                                     + pValFilter.getPropagationState()));
                         }
                         EnumSet<DAODataType> dataTypes =
-                                pValFilter.getFDRPValue().getDataTypes().isEmpty()?
+                                pValFilter.getPValue().getDataTypes().isEmpty()?
                                 EnumSet.allOf(DAODataType.class):
-                                pValFilter.getFDRPValue().getDataTypes();
+                                pValFilter.getPValue().getDataTypes();
                         sb.append(getFieldNamePartFromDataTypes(dataTypes))
                           .append(" ").append(pValFilter.getQualifier().getSymbol())
                           .append(" ?");
@@ -365,9 +365,9 @@ public abstract class MySQLCallDAO <T extends Enum<T> & DAO.Attribute> extends M
                 offsetParamIndex += callFilter.getGeneIds().size();
             }
 
-            for (LinkedHashSet<DAOFDRPValueFilter2> pValOrFilter: callFilter.getFDRPValueFilters()) {
+            for (LinkedHashSet<DAOFDRPValueFilter2> pValOrFilter: callFilter.getPValueFilters()) {
                 for (DAOFDRPValueFilter2 pValFilter : pValOrFilter) {
-                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getFDRPValue().getFdrPValue());
+                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getPValue().getFdrPValue());
                     offsetParamIndex++;
                 }
             }

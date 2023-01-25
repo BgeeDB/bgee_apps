@@ -957,8 +957,8 @@ public class TOComparator {
         if (Objects.equals(to1.getDataType(), to2.getDataType()) &&
                 Objects.equals(to1.getSelfObservationCount(), to2.getSelfObservationCount()) &&
                 Objects.equals(to1.getDescendantObservationCount(), to2.getDescendantObservationCount()) &&
-                Objects.equals(to1.getFDRPValue(), to2.getFDRPValue()) &&
-                Objects.equals(to1.getBestDescendantFDRPValue(), to2.getBestDescendantFDRPValue()) &&
+                Objects.equals(to1.getPValue(), to2.getPValue()) &&
+                Objects.equals(to1.getBestDescendantPValue(), to2.getBestDescendantPValue()) &&
                 areBigDecimalEquals(to1.getRank(), to2.getRank()) &&
                 areBigDecimalEquals(to1.getRankNorm(), to2.getRankNorm()) &&
                 areBigDecimalEquals(to1.getWeightForMeanRank(), to2.getWeightForMeanRank())) {

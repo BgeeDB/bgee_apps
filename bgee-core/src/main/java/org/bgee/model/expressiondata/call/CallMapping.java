@@ -229,8 +229,8 @@ class CallMapping {
                     cdTO.getDescendantObservationCount() != null;
 
             return new ExpressionCallData2(dt,
-                    getPValues? cdTO.getFDRPValue(): null,
-                    getPValues? cdTO.getBestDescendantFDRPValue(): null,
+                    getPValues? cdTO.getPValue(): null,
+                    getPValues? cdTO.getBestDescendantPValue(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
@@ -397,13 +397,13 @@ class CallMapping {
             if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
                 assert dataTypesPVal == null:
                     "There should be only one FDR p-value matching data type selection";
-                dataTypesPVal = pVal.getFDRPValue();
+                dataTypesPVal = pVal.getPValue();
             }
             if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
                     pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
                 assert dataTypesTrustedForAbsentPVal == null:
                     "There should be only one FDR p-value matching data type selection";
-                dataTypesTrustedForAbsentPVal = pVal.getFDRPValue();
+                dataTypesTrustedForAbsentPVal = pVal.getPValue();
             }
         }
         BigDecimal dataTypesBestDescendantPVal = null;
@@ -413,13 +413,13 @@ class CallMapping {
                 if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
                     assert dataTypesBestDescendantPVal == null:
                         "There should be only one FDR p-value matching data type selection";
-                    dataTypesBestDescendantPVal = pVal.getFDRPValue();
+                    dataTypesBestDescendantPVal = pVal.getPValue();
                 }
                 if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
                         pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
                     assert dataTypesTrustedForAbsentBestDescendantPVal == null:
                         "There should be only one FDR p-value matching data type selection";
-                    dataTypesTrustedForAbsentBestDescendantPVal = pVal.getFDRPValue();
+                    dataTypesTrustedForAbsentBestDescendantPVal = pVal.getPValue();
                 }
             }
         }

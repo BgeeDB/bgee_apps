@@ -61,7 +61,7 @@ public class DAOCallFilter extends DAODataFilter2 {
         //defensive copying, no unmodifiable LinkedHashSet
         return new LinkedHashSet<>(callObservedDataFilters);
     }
-    public LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter2>> getFDRPValueFilters() {
+    public LinkedHashSet<LinkedHashSet<DAOFDRPValueFilter2>> getPValueFilters() {
         //defensive copying, no unmodifiable LinkedHashSet
         return pValueFilters.stream().map(s -> new LinkedHashSet<>(s))
                 .collect(Collectors.toCollection(LinkedHashSet::new));

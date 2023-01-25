@@ -297,7 +297,7 @@ public class MySQLConditionDAO extends MySQLCallDAO<ConditionDAO.Attribute> impl
         // observedDataFilters or FDRPValueFilters
         boolean globalExpTableName = clonedCallFilters.stream()
                 .anyMatch(e -> !e.getCallObservedDataFilters()
-                .isEmpty() || !e.getFDRPValueFilters().isEmpty() || !e.getGeneIds().isEmpty());
+                .isEmpty() || !e.getPValueFilters().isEmpty() || !e.getGeneIds().isEmpty());
         // no need to join on gene table if no filtering on globalExpression and species Id
         String geneTableName = globalExpTableName && clonedCallFilters.stream()
                 .anyMatch(e -> !e.getSpeciesIds().isEmpty())? MySQLGeneDAO.TABLE_NAME: null;

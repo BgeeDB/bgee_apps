@@ -138,19 +138,19 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
      *          in conjunction with the {@code Qualifier} returned by {@link #getQualifier()},
      *          and the {@code DAOPropagationState} returned by {@link #getPropagationState()}.
      */
-    public DAOFDRPValue getFDRPValue() {
+    public DAOFDRPValue getPValue() {
         return this.fdrPValue;
     }
     /**
      * @return  A {@code Qualifier} specifying how the FDR p-values of retrieved calls
-     *          should be relative to the FDR p-value returned by {@link #getFDRPValue()}.
+     *          should be relative to the FDR p-value returned by {@link #getPValue()}.
      */
     public Qualifier getQualifier() {
         return qualifier;
     }
     /**
      * @return  A {@code DAOPropagationState} representing the propagation state of the FDR p-values
-     *          that should be compared to the FDR p-value returned by {@link #getFDRPValue()}
+     *          that should be compared to the FDR p-value returned by {@link #getPValue()}
      *          with {@code Qualifier} returned by {@link #getQualifier()}: either FDR p-values
      *          computed from all p-values for the gene in the condition itself
      *          and all its sub-conditions (if equal to {@code SELF_AND_DESCENDANT}),
@@ -162,7 +162,7 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
     }
     /**
      * @return  A {@code boolean} defining whether observations from the requested data types
-     *          returned by {@link #getFDRPValue()}#{@link DAOBigDecimalLinkedToDataTypes#getDataTypes()}
+     *          returned by {@link #getPValue()}#{@link DAOBigDecimalLinkedToDataTypes#getDataTypes()}
      *          must include observations in the condition itself. If {@link #getPropagationState()}
      *          is equal to {@code DAOPropagationState.DESCENDANT}, this {@code boolean} can only
      *          be equal to {@code false}.
@@ -222,7 +222,7 @@ public class DAOFDRPValueFilterBase<T extends Enum<T>> implements Comparable<DAO
         if (this.equals(o)) {
             return log.traceExit(0);
         }
-        int compareFDR = this.getFDRPValue().compareTo(o.getFDRPValue());
+        int compareFDR = this.getPValue().compareTo(o.getPValue());
         if (compareFDR != 0) {
             return log.traceExit(compareFDR);
         }

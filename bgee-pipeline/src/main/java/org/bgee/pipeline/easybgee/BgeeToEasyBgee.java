@@ -588,7 +588,7 @@ public class BgeeToEasyBgee extends MySQLDAOUser{
             headerToValuePerCall.put(GLOBAL_EXPRESSION_ORIGIN, dataPropagationToString(
                     call.getDataPropagation(), condParamComb));
             headerToValuePerCall.put(GLOBAL_EXPRESSION_SUMMARY_CALL_TYPE, call.getSummaryCallType().getStringRepresentation());
-            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getFDRPValue().toString());
+            headerToValuePerCall.put(GLOBAL_EXPRESSION_FDR_PVALUE, call.getFirstPValue().getPValue().toString());
             headerToValuePerGene.add(headerToValuePerCall);
         });
         try {

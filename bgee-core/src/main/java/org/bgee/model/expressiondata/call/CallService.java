@@ -147,8 +147,8 @@ public class CallService extends CallServiceParent {
      *   {@link ExpressionCallData#getDescendantObservationCount()} will be populated
      *   (as when using the attribute {@code P_VALUE_INFO_ALL_DATA_TYPES}).
      *   This is notably useful to determine which data types had data supporting the call.
-     *   <li>{@link ExpressionCallData#getFDRPValue()} and
-     *   {@link ExpressionCallData#getBestDescendantFDRPValue()} will be populated
+     *   <li>{@link ExpressionCallData#getPValue()} and
+     *   {@link ExpressionCallData#getBestDescendantPValue()} will be populated
      *   (unlike when using the attribute {@code P_VALUE_INFO_ALL_DATA_TYPES})
      *   </ul>
      * <li>{@code GENE_QUAL_EXPR_LEVEL}: corresponds to {@link
@@ -1894,8 +1894,8 @@ public class CallService extends CallServiceParent {
 
         ExpressionSummary exprSummary = null;
         SummaryQuality summaryQual = null;
-        Set<FDRPValue> fdrPValues = callData.getFDRPValue() == null? null: Collections.singleton(
-                    new FDRPValue(callData.getFDRPValue(), EnumSet.of(dataType)));
+        Set<FDRPValue> fdrPValues = callData.getPValue() == null? null: Collections.singleton(
+                    new FDRPValue(callData.getPValue(), EnumSet.of(dataType)));
         //Unless the call was produced by requested only this data type,
         //it won't be possible to retrieve the ID of the sub-condition with the best p-value
         if (log.isWarnEnabled() && call.getBestDescendantPValues().stream()
@@ -1904,19 +1904,19 @@ public class CallService extends CallServiceParent {
                     + "with the best descendant FDR p-value when deriving a call for a data type.");
         }
         Set<FDRPValueCondition> bestDescendantFdrPValues =
-                callData.getBestDescendantFDRPValue() == null? null: Collections.singleton(
-                    new FDRPValueCondition(callData.getBestDescendantFDRPValue(),
+                callData.getBestDescendantPValue() == null? null: Collections.singleton(
+                    new FDRPValueCondition(callData.getBestDescendantPValue(),
                             EnumSet.of(dataType), null));
 
         if (call.getSummaryCallType() != null || call.getSummaryQuality() != null) {
             if (call.getPValues() == null && call.getBestDescendantPValues() == null) {
                 throw log.throwing(new IllegalArgumentException(
-                        "Cannot derive call, no getFDRPValue or getBestDescendantFDRPValue stored "
+                        "Cannot derive call, no getPValue or getBestDescendantPValue stored "
                         + "in the CallData for data type " + dataType + ". You must request "
                         + "the Attribute P_VALUE_INFO_EACH_DATA_TYPE when retrieving calls "
                         + "to have access to them."));
             }
-            if (callData.getFDRPValue() == null && callData.getBestDescendantFDRPValue() == null) {
+            if (callData.getPValue() == null && callData.getBestDescendantPValue() == null) {
                 return log.traceExit((ExpressionCall) null);
             }
             Entry<ExpressionSummary, SummaryQuality> callQual = inferSummaryCallTypeAndQuality(
@@ -2155,8 +2155,8 @@ public class CallService extends CallServiceParent {
                     cdTO.getDescendantObservationCount() != null;
 
             return new ExpressionCallData(dt,
-                    getPValues? cdTO.getFDRPValue(): null,
-                    getPValues? cdTO.getBestDescendantFDRPValue(): null,
+                    getPValues? cdTO.getPValue(): null,
+                    getPValues? cdTO.getBestDescendantPValue(): null,
                     getRankInfo? cdTO.getRank(): null,
                     getRankInfo? cdTO.getRankNorm(): null,
                     getRankInfo? cdTO.getWeightForMeanRank(): null,
@@ -2394,13 +2394,13 @@ public class CallService extends CallServiceParent {
             if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
                 assert dataTypesPVal == null:
                     "There should be only one FDR p-value matching data type selection";
-                dataTypesPVal = pVal.getFDRPValue();
+                dataTypesPVal = pVal.getPValue();
             }
             if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
                     pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
                 assert dataTypesTrustedForAbsentPVal == null:
                     "There should be only one FDR p-value matching data type selection";
-                dataTypesTrustedForAbsentPVal = pVal.getFDRPValue();
+                dataTypesTrustedForAbsentPVal = pVal.getPValue();
             }
         }
         BigDecimal dataTypesBestDescendantPVal = null;
@@ -2410,13 +2410,13 @@ public class CallService extends CallServiceParent {
                 if (pVal.getDataTypes().equals(realRequestedDataTypes)) {
                     assert dataTypesBestDescendantPVal == null:
                         "There should be only one FDR p-value matching data type selection";
-                    dataTypesBestDescendantPVal = pVal.getFDRPValue();
+                    dataTypesBestDescendantPVal = pVal.getPValue();
                 }
                 if (!requestedDataTypesTrustedForAbsentCalls.isEmpty() &&
                         pVal.getDataTypes().equals(requestedDataTypesTrustedForAbsentCalls)) {
                     assert dataTypesTrustedForAbsentBestDescendantPVal == null:
                         "There should be only one FDR p-value matching data type selection";
-                    dataTypesTrustedForAbsentBestDescendantPVal = pVal.getFDRPValue();
+                    dataTypesTrustedForAbsentBestDescendantPVal = pVal.getPValue();
                 }
             }
         }

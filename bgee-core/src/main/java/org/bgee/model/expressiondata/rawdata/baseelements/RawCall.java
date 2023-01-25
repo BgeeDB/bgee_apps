@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.bgee.model.BgeeEnum;
 import org.bgee.model.BgeeEnum.BgeeEnumField;
 import org.bgee.model.dao.api.expressiondata.call.CallDAO.CallTO.DataState;
+import org.bgee.model.expressiondata.baseelements.PValue;
 import org.bgee.model.gene.Gene;
 
 public class RawCall {
@@ -93,9 +94,9 @@ public class RawCall {
     private final Gene gene;
     
     /**
-     * A {@code BigDecimal} defining the pValue of this call.
+     * A {@code PValue} defining the pValue of this call.
      */
-    private final BigDecimal pValue;
+    private final PValue pValue;
     
     /**
      * A {@code DataState} defining the contribution of data type to the generation of this raw call.
@@ -110,7 +111,7 @@ public class RawCall {
     public RawCall(Gene gene, BigDecimal pValue, DataState expressionConfidence,
             ExclusionReason exclusionReason) {
         super();
-        this.pValue = pValue;
+        this.pValue = new PValue(pValue);
         this.gene = gene;
         this.expressionConfidence = expressionConfidence;
         this.exclusionReason = exclusionReason;
@@ -130,7 +131,15 @@ public class RawCall {
      * @return  A {@code BigDecimal} defining the pValue of this raw call.
      */
     public BigDecimal getPValue() {
-        return this.pValue;
+        return this.pValue.getPValue();
+    }
+    /**
+     * Format the p-value returned by {@link #getPValue()}.
+     *
+     * @return  The formatted {code String} representation of the p-value 
+     */
+    public String getFormattedPValue() {
+        return this.pValue.getFormattedPValue();
     }
 
     /**

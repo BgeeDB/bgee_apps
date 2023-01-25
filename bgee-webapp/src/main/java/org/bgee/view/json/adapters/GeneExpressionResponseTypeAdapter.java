@@ -92,7 +92,7 @@ public final class GeneExpressionResponseTypeAdapter extends TypeAdapter<GeneExp
             out.endObject();
 
             String fdr = call.getPValueWithEqualDataTypes(value.getDataTypes())
-                    .getFormatedFDRPValue();
+                    .getFormattedPValue();
             out.name("fdr").value(fdr);
 
             out.name("dataTypesWithData");

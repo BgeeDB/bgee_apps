@@ -294,14 +294,14 @@ public abstract class CallData<T extends Enum<T> & CallType> {
          *          all the p-values obtained by this data type in a condition
          *          and all its sub-conditions for a gene.
          */
-        public BigDecimal getFDRPValue() {
+        public BigDecimal getPValue() {
             return fdrPValue;
         }
         /**
          * @return  A {@code BigDecimal} that is the best FDR corrected p-value obtained by
          *          this data type among the sub-conditions of the condition of a call for a gene.
          */
-        public BigDecimal getBestDescendantFDRPValue() {
+        public BigDecimal getBestDescendantPValue() {
             return bestDescendantFDRPValue;
         }
 

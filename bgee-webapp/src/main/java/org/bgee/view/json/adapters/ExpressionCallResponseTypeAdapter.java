@@ -88,7 +88,7 @@ public class ExpressionCallResponseTypeAdapter extends TypeAdapter<ExpressionCal
                 out.endObject();
 
                 String fdr = call.getPValueWithEqualDataTypes(value.getRequestedDataTypes())
-                        .getFormatedFDRPValue();
+                        .getFormattedPValue();
                 out.name("fdr").value(fdr);
 
                 out.name("dataTypesWithData");

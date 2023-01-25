@@ -1304,7 +1304,7 @@ public class InsertPropagatedCalls extends CallService {
         private static <F extends FDRPValue> Set<DAOFDRPValue> convertFDRPValuesToDAOFDRPValues(
                 Set<F> pValues, Map<Condition, Integer> condMap) {
             log.traceEntry("{}", pValues);
-            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getFDRPValue(),
+            return log.traceExit(pValues.stream().map( p -> new DAOFDRPValue(p.getPValue(),
                     (p instanceof FDRPValueCondition)?
                             condMap.get(((FDRPValueCondition) p).getCondition()): null,
                     p.getDataTypes().stream().map( dt -> { 
@@ -2438,9 +2438,9 @@ public class InsertPropagatedCalls extends CallService {
                             if (bestMatchComb != null) {
                                 FDRPValue existingPVal = pValuePerDataTypeComb.get(bestMatchComb);
                                 FDRPValueCondition newPVal = new FDRPValueCondition(
-                                        existingPVal.getFDRPValue(), comb, descendantCall.getCondition());
+                                        existingPVal.getPValue(), comb, descendantCall.getCondition());
                                 bestPValuePerDataTypeComb.merge(comb, newPVal,
-                                        (p1, p2) -> p1.getFDRPValue().compareTo(p2.getFDRPValue()) == -1?
+                                        (p1, p2) -> p1.getPValue().compareTo(p2.getPValue()) == -1?
                                             p1: p2);
                             }
                         }
@@ -3009,7 +3009,7 @@ public class InsertPropagatedCalls extends CallService {
                        return null;
                    }
                    return new FDRPValue(pValuePerDataTypeComb.get(mostMatchedDataTypesCombination)
-                           .getFDRPValue(), otherDTComb);
+                           .getPValue(), otherDTComb);
                })
                //If we couldn't find any overlap with a computed combination, the previous mapping
                //returned null, we filter that out.

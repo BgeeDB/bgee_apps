@@ -1271,7 +1271,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                 String expressionScore = call.getExpressionScore() == null ? NA_VALUE :
                     call.getFormattedExpressionScore();
                 String fdr = call.getPValueWithEqualDataTypes(Arrays.asList(DataType.values()))
-                        .getFDRPValue().toString();
+                        .getPValue().toString();
                 //For Bgee 15.0 calls files only contain observed calls
                 Boolean includingObservedData = true; //call.getCallData().stream()
 //                        .map(ExpressionCallData::getSelfObservationCount).reduce(0, Integer::sum) > 0 ? true : false;
@@ -1339,7 +1339,7 @@ public class GenerateExprFile2 extends GenerateDownloadFile {
                     convertExpressionSummaryToString(callFromDataType.getSummaryCallType()),
                     convertSummaryQualityToString(callFromDataType.getSummaryQuality()),
                     callFromDataType.getFirstPValue() == null ? NA_VALUE : callFromDataType.getFirstPValue()
-                            .getFDRPValue().toString(),
+                            .getPValue().toString(),
                     convertObservedDataToString(true),
                     Long.valueOf(callFromDataType.getDataPropagation()
                             .getSelfObservationCount(condParamCombination)),

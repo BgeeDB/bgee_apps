@@ -412,14 +412,14 @@ implements GlobalExpressionCallDAO {
                     sb.append(")");
                 }
 
-                if (callFilter.getFDRPValueFilters() != null &&
-                        !callFilter.getFDRPValueFilters().isEmpty()) {
+                if (callFilter.getPValueFilters() != null &&
+                        !callFilter.getPValueFilters().isEmpty()) {
                     if (!firstCond) {
                         sb.append(" AND ");
                     }
                     sb.append("(");
                     firstCond = false;
-                    sb.append(generatePValueFilters(callFilter.getFDRPValueFilters(),
+                    sb.append(generatePValueFilters(callFilter.getPValueFilters(),
                             globalExprTableName));
                     sb.append(")");
                 }
@@ -510,9 +510,9 @@ implements GlobalExpressionCallDAO {
                                     + pValFilter.getPropagationState()));
                         }
                         EnumSet<DAODataType> dataTypes =
-                                pValFilter.getFDRPValue().getDataTypes().isEmpty()?
+                                pValFilter.getPValue().getDataTypes().isEmpty()?
                                 EnumSet.allOf(DAODataType.class):
-                                pValFilter.getFDRPValue().getDataTypes();
+                                pValFilter.getPValue().getDataTypes();
                         sb.append(getFieldNamePartFromDataTypes(dataTypes))
                           .append(" ").append(pValFilter.getQualifier().getSymbol())
                           .append(" ?");
@@ -560,9 +560,9 @@ implements GlobalExpressionCallDAO {
                         callFilter.getConditionFilters(), offsetParamIndex);
             }
 
-            for (LinkedHashSet<DAOFDRPValueFilter> pValOrFilter: callFilter.getFDRPValueFilters()) {
+            for (LinkedHashSet<DAOFDRPValueFilter> pValOrFilter: callFilter.getPValueFilters()) {
                 for (DAOFDRPValueFilter pValFilter : pValOrFilter) {
-                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getFDRPValue().getFdrPValue());
+                    stmt.setBigDecimal(offsetParamIndex, pValFilter.getPValue().getFdrPValue());
                     offsetParamIndex++;
                 }
             }

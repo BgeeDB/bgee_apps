@@ -689,7 +689,7 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
                         + " be a mandatory table if filterToCallTableAssayIds is not null";
         boolean assayTable = necessaryTables.contains(MySQLESTLibraryDAO.TABLE_NAME) ||
                 !condTable && processedFilters.isNeedConditionId() ||
-                condTable && callTable;
+                condTable && callTable || processedFilters.isNeedAssayId();
         log.debug("geneTable: {}, condTable: {}, estTable: {}, estLibraryTable: {}",
                 geneTable, condTable, callTable, assayTable);
 

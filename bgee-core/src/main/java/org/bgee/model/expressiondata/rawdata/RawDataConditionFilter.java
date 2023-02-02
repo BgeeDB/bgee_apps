@@ -134,36 +134,46 @@ public class RawDataConditionFilter extends BaseConditionFilter<RawDataCondition
               cellTypeIds.contains(ConditionDAO.CELL_TYPE_ROOT_ID) &&
               includeSubCellTypes? null: cellTypeIds);
 
+        //To have a consistent hashCode/equals, we set these booleans only
+        //if the corresponding parameter is defined
+        this.includeSubAnatEntities = this.getAnatEntityIds().isEmpty()? false: includeSubAnatEntities;
+        this.includeSubDevStages = this.getDevStageIds().isEmpty()? false: includeSubDevStages;
+        this.includeSubCellTypes = this.getCellTypeIds().isEmpty()? false: includeSubCellTypes;
+
         EnumSet<RawDataSex> mappedSexes = (sexes == null? Stream.<String>empty(): sexes.stream())
                 .filter(s -> StringUtils.isNotBlank(s))
                 //special value that does not correspond to any annotation in raw data
                 .filter(s -> !s.equalsIgnoreCase(ConditionDAO.SEX_ROOT_ID))
                 .map(s -> BgeeEnum.convert(RawDataSex.class, s))
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(RawDataSex.class)));
-        this.sexes = Collections.unmodifiableSet(
-                sexes == null ||
+
+        boolean anySex = sexes == null ||
                 //Requesting the sex root + includeSubSexes is equivalent to
                 //requesting any sex
                 includeSubSexes &&
                         sexes.stream().anyMatch(s -> s.equalsIgnoreCase(ConditionDAO.SEX_ROOT_ID)) ||
-                mappedSexes.equals(EnumSet.allOf(RawDataSex.class))?
+                mappedSexes.equals(EnumSet.allOf(RawDataSex.class));
+        this.sexes = Collections.unmodifiableSet(anySex?
                         new HashSet<>():
                         mappedSexes.stream()
                                    .map(s -> s.getStringRepresentation())
                                    .collect(Collectors.toSet()));
-        this.strains = Collections.unmodifiableSet(
-                strains == null ||
+        //To have a consistent hashCode/equals, we set includeSubSexes only
+        //if not any sexes were requested
+        this.includeSubSexes = anySex? false: includeSubSexes;
+
+        boolean anyStrain = strains == null ||
                 //Requesting the strain root + includeStrains is equivalent to
                 //requesting any strain
-                strains.contains(ConditionDAO.STRAIN_ROOT_ID) && includeSubStrains?
+                strains.contains(ConditionDAO.STRAIN_ROOT_ID) && includeSubStrains;
+        this.strains = Collections.unmodifiableSet(anyStrain?
                         new HashSet<>():
-                        strains.stream().filter(id -> StringUtils.isNotBlank(id)).collect(Collectors.toSet()));
-
-        this.includeSubAnatEntities = includeSubAnatEntities;
-        this.includeSubDevStages = includeSubDevStages;
-        this.includeSubCellTypes = includeSubCellTypes;
-        this.includeSubSexes = includeSubSexes;
-        this.includeSubStrains = includeSubStrains;
+                        strains.stream()
+                               .filter(id -> StringUtils.isNotBlank(id))
+                               .collect(Collectors.toSet()));
+        //To have a consistent hashCode/equals, we set includeSubStrains only
+        //if not any strains were requested
+        this.includeSubStrains = anyStrain? false: includeSubStrains;
 
         if (this.areAllCondParamFiltersEmpty()) {
             throw log.throwing(new IllegalArgumentException("Some parameters must be provided"));

@@ -1228,12 +1228,14 @@ public class CommandData extends CommandParent {
                             false: Boolean.TRUE.equals(this.requestParameters.getFirstValue(
                                     this.requestParameters.getUrlParametersInstance()
                                     .getParamCellTypeDescendant())),
-                    //sex descendant always false: requesting descendants of the root is equivalent
-                    //to request all sexes, in which case we don't provide requested sex IDs
-                    false,
-                    //strain descendant always false: requesting descendants of the root is equivalent
-                    //to request all strains, in which case we don't provide requested strains
-                    false);
+                    //we don't really have an ontology of sexes, only one root with one level down
+                    //for sub-terms. Selecting the root should mean "select all terms", so we include
+                    //sub-terms by default.
+                    true,
+                    //we don't really have an ontology of strains, only one root with one level down
+                    //for sub-terms. Selecting the root should mean "select all terms", so we include
+                    //sub-terms by default.
+                    true);
         } catch (IllegalArgumentException e) {
             //nothing to do, we just did not have the appropriate parameters to create
             //a condition filter

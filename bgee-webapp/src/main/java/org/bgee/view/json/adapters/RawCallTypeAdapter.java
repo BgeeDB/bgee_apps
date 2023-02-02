@@ -30,7 +30,7 @@ public class RawCallTypeAdapter extends TypeAdapter<RawCall> {
         out.beginObject();
 
         out.name("gene");
-        this.utils.writeSimplifiedGene(out, value.getGene(), false, false, null);
+        this.utils.writeSimplifiedGene(out, value.getGene(), true, false, null);
         out.name("pValue");
         if (ExclusionReason.NOT_EXCLUDED != value.getExclusionReason()) {
             out.value("NA");

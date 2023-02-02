@@ -200,11 +200,22 @@ public class CommandData extends CommandParent {
          * A {@code boolean} defining whether the column should be exported in TSV files.
          */
         private final boolean export;
+        /**
+         * Only applicable when {@code columnType} is {@code INTERNAL_LINK}
+         * and {@code linkTarget} is {@code INTERNAL_LINK_TARGET_GENE}.
+         */
+        private final String geneMappedToSameGeneIdCountResultAttribute;
+        /**
+         * Only applicable when {@code columnType} is {@code INTERNAL_LINK}
+         * and {@code linkTarget} is {@code INTERNAL_LINK_TARGET_GENE}.
+         */
+        private final String geneSpeciesIdResultAttribute;
 
 
         public ColumnDescription(String title, String infoBubble, List<String> attributes,
                 ColumnType columnType, String linkTarget, Collection<FilterTarget> filterTargets,
-                boolean export) {
+                boolean export, String geneMappedToSameGeneIdCountResultAttribute,
+                String geneSpeciesIdResultAttribute) {
             if (columnType == null) {
                 throw log.throwing(new IllegalArgumentException(
                         "a column type is mandatory"));
@@ -219,6 +230,19 @@ public class CommandData extends CommandParent {
             if (StringUtils.isNotBlank(linkTarget) && !INTERNAL_LINK_TARGETS.contains(linkTarget)) {
                 throw log.throwing(new IllegalArgumentException(
                         "Invalid value for linkTarget: " + linkTarget));
+            }
+            if (ColumnType.INTERNAL_LINK.equals(columnType) &&
+                    INTERNAL_LINK_TARGET_GENE.equals(linkTarget) &&
+                    (StringUtils.isBlank(geneMappedToSameGeneIdCountResultAttribute) ||
+                            StringUtils.isBlank(geneSpeciesIdResultAttribute))) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Result attributes missing for gene internal link"));
+            } else if ((!ColumnType.INTERNAL_LINK.equals(columnType) ||
+                    !INTERNAL_LINK_TARGET_GENE.equals(linkTarget)) &&
+                    (StringUtils.isNotBlank(geneMappedToSameGeneIdCountResultAttribute) ||
+                            StringUtils.isNotBlank(geneSpeciesIdResultAttribute))) {
+                throw log.throwing(new IllegalArgumentException(
+                        "Gene result attributes to be provided only for gene internal links"));
             }
             if (!ColumnType.LINK_TO_RAW_DATA_ANNOTS.equals(columnType) &&
                     !ColumnType.LINK_TO_PROC_EXPR_VALUES.equals(columnType) &&
@@ -251,6 +275,8 @@ public class CommandData extends CommandParent {
             this.linkTarget = linkTarget;
             this.filterTargets = filterTargets == null? null: List.copyOf(filterTargets);
             this.export = export;
+            this.geneMappedToSameGeneIdCountResultAttribute = geneMappedToSameGeneIdCountResultAttribute;
+            this.geneSpeciesIdResultAttribute = geneSpeciesIdResultAttribute;
         }
 
         public String getTitle() {
@@ -268,16 +294,23 @@ public class CommandData extends CommandParent {
         public String getLinkTarget() {
             return linkTarget;
         }
-        public List<FilterTarget> getFilterTarget() {
+        public List<FilterTarget> getFilterTargets() {
             return filterTargets;
         }
         public boolean isExport() {
             return export;
         }
+        public String getGeneMappedToSameGeneIdCountResultAttribute() {
+            return geneMappedToSameGeneIdCountResultAttribute;
+        }
+        public String getGeneSpeciesIdResultAttribute() {
+            return geneSpeciesIdResultAttribute;
+        }
 
         @Override
         public int hashCode() {
             return Objects.hash(attributes, columnType, export, filterTargets,
+                    geneMappedToSameGeneIdCountResultAttribute, geneSpeciesIdResultAttribute,
                     infoBubble, linkTarget, title);
         }
         @Override
@@ -293,6 +326,9 @@ public class CommandData extends CommandParent {
                     && columnType == other.columnType
                     && export == other.export
                     && Objects.equals(filterTargets, other.filterTargets)
+                    && Objects.equals(geneMappedToSameGeneIdCountResultAttribute,
+                            other.geneMappedToSameGeneIdCountResultAttribute)
+                    && Objects.equals(geneSpeciesIdResultAttribute, other.geneSpeciesIdResultAttribute)
                     && Objects.equals(infoBubble, other.infoBubble)
                     && Objects.equals(linkTarget, other.linkTarget)
                     && Objects.equals(title, other.title);
@@ -309,6 +345,9 @@ public class CommandData extends CommandParent {
                    .append(", linkTarget=").append(linkTarget)
                    .append(", filterTargets=").append(filterTargets)
                    .append(", export=").append(export)
+                   .append(", geneMappedToSameGeneIdCountResultAttribute=")
+                       .append(geneMappedToSameGeneIdCountResultAttribute)
+                   .append(", geneSpeciesIdResultAttribute=").append(geneSpeciesIdResultAttribute)
                    .append("]");
             return builder.toString();
         }
@@ -1665,41 +1704,43 @@ public class CommandData extends CommandParent {
                 List.of("result.gene.geneId"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
                 ColumnDescription.INTERNAL_LINK_TARGET_GENE,
-                null, true));
+                null, true,
+                "result.gene.geneMappedToSameGeneIdCount",
+                "result.gene.species.id"));
         colDescr.add(new ColumnDescription("Gene name", null,
                 List.of("result.gene.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         //Call information
         colDescr.add(new ColumnDescription("Present/absent call", null,
                 List.of("result.expressionState"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Call quality", null,
                 List.of("result.expressionQuality"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("FDR",
                 "FDR-corrected p-value of the test of significance of the gene being expressed in the condition.",
                 List.of("result.fdr"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression score",
                 "Normalized expression level information. Highest expression level: 100; lowest expression level: 0.",
                 List.of("result.expressionScore.expressionScore"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression score confidence",
                 "Confidence in the validity of the expression score. Two values possible: \"low\" and \"high\".",
                 List.of("result.expressionScore.expressionScoreConfidence"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Supporting data types",
                 "Data types used to produce the present/absent expression call.",
                 List.of("result.dataTypesWithData"),
                 ColumnDescription.ColumnType.DATA_TYPE_SOURCE,
-                null, null, true));
+                null, null, true, null, null));
 
         //Condition
         if (condParams.contains(ConditionParameter.ANAT_ENTITY_CELL_TYPE)) {
@@ -1707,54 +1748,54 @@ public class CommandData extends CommandParent {
                     "ID of the anatomical localization of the sample",
                     List.of("result.condition.anatEntity.id"),
                     ColumnDescription.ColumnType.ANAT_ENTITY,
-                    null, null, true));
+                    null, null, true, null, null));
             colDescr.add(new ColumnDescription("Anat. entity name",
                     "Name of the anatomical localization of the sample",
                     List.of("result.condition.anatEntity.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
             colDescr.add(new ColumnDescription("Cell type ID",
                     "ID of the cell type of the sample",
                     List.of("result.condition.cellType.id"),
                     ColumnDescription.ColumnType.ANAT_ENTITY,
-                    null, null, true));
+                    null, null, true, null, null));
             colDescr.add(new ColumnDescription("Cell type name",
                     "Name of the cell type of the sample",
                     List.of("result.condition.cellType.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         if (condParams.contains(ConditionParameter.DEV_STAGE)) {
             colDescr.add(new ColumnDescription("Stage ID",
                     "ID of the developmental and life stage of the sample",
                     List.of("result.condition.devStage.id"),
                     ColumnDescription.ColumnType.DEV_STAGE,
-                    null, null, true));
+                    null, null, true, null, null));
             colDescr.add(new ColumnDescription("Stage name",
                     "Name of the developmental and life stage of the sample",
                     List.of("result.condition.devStage.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         if (condParams.contains(ConditionParameter.SEX)) {
             colDescr.add(new ColumnDescription("Sex",
                     "Annotation of the sex of the sample",
                     List.of("result.condition.sex.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         if (condParams.contains(ConditionParameter.STRAIN)) {
             colDescr.add(new ColumnDescription("Strain",
                     "Annotation of the strain of the sample",
                     List.of("result.condition.strain.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Species", null,
                 List.of("result.condition.species.genus",
                         "result.condition.species.speciesName"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         //Link to supporting proc. expr. values
         colDescr.add(getExprCallsToProcExprValuesColDesc(condParams));
@@ -1770,16 +1811,16 @@ public class CommandData extends CommandParent {
             colDescr.add(new ColumnDescription("Experiment ID", null,
                     List.of("result.experiment.id"),
                     ColumnDescription.ColumnType.INTERNAL_LINK,
-                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
             colDescr.add(new ColumnDescription("Experiment name", null,
                     List.of("result.experiment.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result", false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
@@ -1795,75 +1836,75 @@ public class CommandData extends CommandParent {
             colDescr.add(new ColumnDescription("Experiment ID", null,
                     List.of("result.library.experiment.id"),
                     ColumnDescription.ColumnType.INTERNAL_LINK,
-                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
             colDescr.add(new ColumnDescription("Experiment name", null,
                     List.of("result.library.experiment.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Library ID", "Identifier of the RNA-Seq library",
                 List.of("result.library.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result", isSingleCell));
 
         colDescr.add(new ColumnDescription("Technology", null,
                 List.of("result.library.technology.protocolName"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Sequencing platform", null,
                 List.of("result.library.technology.sequencingPlatfomName"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Sequenced transcript part",
                 "Possible values are: full length, all parts of the transcript are sequenced; "
                 + "3': only the 3' end of the transcript is sequenced; "
                 + "5': only the 5' end of the transcript is sequenced.",
                 List.of("result.library.technology.sequencedTranscriptPart"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         if (isSingleCell) {
             colDescr.add(new ColumnDescription("Fractionation",
                     "Possible values are: cell, transcripts are extracted from the cell; "
                     + "nuclei, transcripts are extracted from the nucleus.",
                             List.of("result.library.technology.cellCompartment"),
                             ColumnDescription.ColumnType.STRING,
-                            null, null, true));
+                            null, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Fragmentation",
                 "Size of the RNA fragmentation",
                 List.of("result.library.technology.fragmentation"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Run sequencing type",
                 "Paired-end or single-read run",
                 List.of("result.library.technology.libraryType"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Total read count",
                 "Total number of reads for the annotated sample.",
                 List.of("result.pipelineSummary.allReadsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Mapped read count",
                 "Number of reads that could be mapped to the transcriptome.",
                 List.of("result.pipelineSummary.mappedReadsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Total UMI count",
                 "Total number of individual RNA molecules (UMI) for the annotated sample. "
                 + "Only applicable for libraries producing UMIs.",
                 List.of("result.pipelineSummary.allUMIsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Mapped UMI count",
                 "Number of UMIs that could be mapped to the transcriptome. "
                 + "Only applicable for libraries producing UMIs.",
                 List.of("result.pipelineSummary.mappedUMIsCount"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.add(new ColumnDescription("Distinct rank count",
                 "When performing a fractional ranking of the genes in the annotated sample, "
@@ -1873,14 +1914,14 @@ public class CommandData extends CommandParent {
                 + "compute expression scores in Bgee.",
                 List.of("result.pipelineSummary.distinctRankCount"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Max rank",
                 "When performing a fractional ranking of the genes in the annotated sample, "
                 + "based on their expression level, maximum rank attained in the sample. "
                 + "Used to normalize ranks accross samples and compute expression scores in Bgee.",
                 List.of("result.pipelineSummary.maxRank"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.library.experiment.id", "result.library.id",
                 "result", isSingleCell));
@@ -1893,15 +1934,15 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Library ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Library name", null,
                 List.of("result.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result", false));
         colDescr.add(getAnnotsToProcExprValuesColDesc(null, "result.id",
@@ -1917,12 +1958,12 @@ public class CommandData extends CommandParent {
             colDescr.add(new ColumnDescription("Experiment ID", null,
                     List.of("result.experiment.id"),
                     ColumnDescription.ColumnType.INTERNAL_LINK,
-                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                    ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Evidence ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result", false));
         colDescr.add(getAnnotsToProcExprValuesColDesc("result.experiment.id", "result.id",
@@ -1986,7 +2027,7 @@ public class CommandData extends CommandParent {
                 "See the processed expression value results for this assay",
                 null,
                 ColumnDescription.ColumnType.LINK_TO_PROC_EXPR_VALUES,
-                null, filterTargets, false));
+                null, filterTargets, false, null, null));
     }
 
     private ColumnDescription getExprCallsToProcExprValuesColDesc(Collection<ConditionParameter<?, ?>> condParams) {
@@ -2028,7 +2069,7 @@ public class CommandData extends CommandParent {
                 "See the processed expression values supporting this expression call",
                 null,
                 ColumnDescription.ColumnType.LINK_CALL_TO_PROC_EXPR_VALUES,
-                null, filterTargets, false));
+                null, filterTargets, false, null, null));
     }
 
     private List<ColumnDescription> getAffymetrixProcExprValuesColumnDescriptions() {
@@ -2037,34 +2078,36 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.assay.experiment.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Chip ID", "Identifier of the Affymetrix chip",
                 List.of("result.assay.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Probeset ID", "Identifier of the probeset for the chip type",
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Gene ID", null,
                 List.of("result.expressionCall.gene.geneId"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
+                "result.expressionCall.gene.geneMappedToSameGeneIdCount",
+                "result.expressionCall.gene.species.id"));
         colDescr.add(new ColumnDescription("Gene name", null,
                 List.of("result.expressionCall.gene.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Signal intensity",
                 "Normalized signal intensity of the probeset",
                 List.of("result.normalizedSignalIntensity"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression p-value",
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.expressionCall.pValue"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
@@ -2076,46 +2119,48 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.assay.library.experiment.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Library ID", null,
                 List.of("result.assay.library.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Gene ID", null,
                 List.of("result.rawCall.gene.geneId"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
+                "result.rawCall.gene.geneMappedToSameGeneIdCount",
+                "result.rawCall.gene.species.id"));
         colDescr.add(new ColumnDescription("Gene name", null,
                 List.of("result.rawCall.gene.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression level",
                 "Expression level in the unit specified.",
                 List.of("result.abundance"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression level unit",
                 "Unit to apply to the expression levels.",
                 List.of("result.abundanceUnit"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Read count",
                 "Number of reads mapped to this gene.",
                 List.of("result.readCounts"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("UMI count",
                 "Number of UMIs mapped to this gene. "
                 + "Only applicable for libraries producing UMIs.",
                 List.of("result.umiCounts"),
                 ColumnDescription.ColumnType.NUMERIC,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression p-value",
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.rawCall.pValue"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", isSingleCell));
 
@@ -2127,29 +2172,31 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Library ID", null,
                 List.of("result.assay.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Library name", null,
                 List.of("result.assay.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("EST ID", "Identifier of the Expressed Sequence Tag",
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Gene ID", null,
                 List.of("result.rawCall.gene.geneId"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
+                "result.rawCall.gene.geneMappedToSameGeneIdCount",
+                "result.rawCall.gene.species.id"));
         colDescr.add(new ColumnDescription("Gene name", null,
                 List.of("result.rawCall.gene.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression p-value",
                 "P-value for the test of expression signal of the gene "
                 + "significantly different from background expression",
                 List.of("result.rawCall.pValue"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
@@ -2161,24 +2208,26 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.assay.experiment.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Evidence ID", null,
                 List.of("result.assay.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Gene ID", null,
                 List.of("result.rawCall.gene.geneId"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_GENE, null, true,
+                "result.rawCall.gene.geneMappedToSameGeneIdCount",
+                "result.rawCall.gene.species.id"));
         colDescr.add(new ColumnDescription("Gene name", null,
                 List.of("result.rawCall.gene.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Expression p-value",
                 "P-value are defined based on the staining intensity reported from the source database",
                 List.of("result.rawCall.pValue"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
 
         colDescr.addAll(getConditionColumnDescriptions("result.assay", false));
 
@@ -2192,15 +2241,15 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Experiment name", null,
                 List.of("result.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
@@ -2211,15 +2260,15 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(new ColumnDescription("Experiment name", null,
                 List.of("result.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
@@ -2230,15 +2279,15 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Library ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Library name", null,
                 List.of("result.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Description", null,
                 List.of("result.description"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         //We don't use the method getExprToAnnotsColDesc here,
         //because EST data have no concept of experiment.
         colDescr.add(new ColumnDescription("Link to raw data annotations",
@@ -2247,7 +2296,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.LINK_TO_RAW_DATA_ANNOTS,
                 null, List.of(new ColumnDescription.FilterTarget("result.id",
                         this.requestParameters.getUrlParametersInstance()
-                        .getParamFilterAssayId().getName())), false));
+                        .getParamFilterAssayId().getName())), false, null, null));
 
         return log.traceExit(colDescr);
     }
@@ -2258,7 +2307,7 @@ public class CommandData extends CommandParent {
         colDescr.add(new ColumnDescription("Experiment ID", null,
                 List.of("result.id"),
                 ColumnDescription.ColumnType.INTERNAL_LINK,
-                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true));
+                ColumnDescription.INTERNAL_LINK_TARGET_EXP, null, true, null, null));
         colDescr.add(getExpToAnnotsColDesc("result.id"));
         return log.traceExit(colDescr);
     }
@@ -2270,7 +2319,7 @@ public class CommandData extends CommandParent {
                 ColumnDescription.ColumnType.LINK_TO_RAW_DATA_ANNOTS,
                 null, List.of(new ColumnDescription.FilterTarget(expIdAttrName,
                         this.requestParameters.getUrlParametersInstance()
-                        .getParamFilterExperimentId().getName())), false));
+                        .getParamFilterExperimentId().getName())), false, null, null));
     }
 
     private static List<ColumnDescription> getConditionColumnDescriptions(String attributeStart,
@@ -2283,48 +2332,48 @@ public class CommandData extends CommandParent {
                     "ID of the cell type of the sample",
                     List.of(attributeStart + ".annotation.rawDataCondition.cellType.id"),
                     ColumnDescription.ColumnType.ANAT_ENTITY,
-                    null, null, true));
+                    null, null, true, null, null));
             colDescr.add(new ColumnDescription("Cell type name",
                     "Name of the cell type of the sample",
                     List.of(attributeStart + ".annotation.rawDataCondition.cellType.name"),
                     ColumnDescription.ColumnType.STRING,
-                    null, null, true));
+                    null, null, true, null, null));
         }
         colDescr.add(new ColumnDescription("Anat. entity ID",
                 "ID of the anatomical localization of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.id"),
                 ColumnDescription.ColumnType.ANAT_ENTITY,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Anat. entity name",
                 "Name of the anatomical localization of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.anatEntity.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Stage ID",
                 "ID of the developmental and life stage of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.id"),
                 ColumnDescription.ColumnType.DEV_STAGE,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Stage name",
                 "Name of the developmental and life stage of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.devStage.name"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Sex",
                 "Annotation of the sex of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.sex"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Strain",
                 "Annotation of the strain of the sample",
                 List.of(attributeStart + ".annotation.rawDataCondition.strain"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         colDescr.add(new ColumnDescription("Species", null,
                 List.of(attributeStart + ".annotation.rawDataCondition.species.genus",
                         attributeStart + ".annotation.rawDataCondition.species.speciesName"),
                 ColumnDescription.ColumnType.STRING,
-                null, null, true));
+                null, null, true, null, null));
         return log.traceExit(colDescr);
     }
 

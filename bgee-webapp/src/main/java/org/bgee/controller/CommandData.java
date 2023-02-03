@@ -1121,7 +1121,14 @@ public class CommandData extends CommandParent {
                 .flatMap(id -> service.searchExperimentsAndAssaysByTerm(id, null, null)
                         .getSearchMatches().stream().map(sm -> sm.getSearchedObject()))
                 .filter(ea -> expAssayIds.contains(ea.getId()))
+                //There can be different assays or experiments with the same IDs
+                //(either because assay IDs are not unique inside a data type,
+                //or because exp/assay IDs exist in different data types).
+                //We select the first one arbitrarily
+                .collect(Collectors.groupingBy(ea -> ea.getId())).values().stream()
+                .map(l -> l.iterator().next())
                 .collect(Collectors.toList());
+        log.debug("Results for expAssayIds {}: {}", expAssayIds, results);
         if (results.size() != expAssayIds.size()) {
             Set<String> retrievedIds = results.stream()
                     .map(ea -> ea.getId())

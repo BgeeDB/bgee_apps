@@ -40,7 +40,7 @@ public abstract class RawDataDataType<T extends RawDataContainer<?, ?>, U extend
 
     public final static AffymetrixDataType AFFYMETRIX = new AffymetrixDataType();
     public final static RnaSeqDataType BULK_RNA_SEQ = new RnaSeqDataType(DataType.RNA_SEQ);
-    public final static RnaSeqDataType SC_RNA_SEQ = new RnaSeqDataType(DataType.FULL_LENGTH);
+    public final static RnaSeqDataType SC_RNA_SEQ = new RnaSeqDataType(DataType.SC_RNA_SEQ);
     public final static ESTDataType EST = new ESTDataType();
     public final static InSituDataType IN_SITU = new InSituDataType();
 

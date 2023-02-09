@@ -69,7 +69,7 @@ public class CallServiceUtils {
                         return log.traceExit(DAODataType.IN_SITU);
                     case RNA_SEQ: 
                         return log.traceExit(DAODataType.RNA_SEQ);
-                    case FULL_LENGTH: 
+                    case SC_RNA_SEQ: 
                         return log.traceExit(DAODataType.FULL_LENGTH);
                     default: 
                         throw log.throwing(new IllegalStateException("Unsupported DAODataType: " + dt));

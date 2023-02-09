@@ -194,7 +194,7 @@ public class CsvRPackageDisplay extends CsvParentDisplay implements RPackageDisp
                         break;
                     case CommandRPackage.SPECIES_FULL_LENGTH_PARAM:
                         if (species.getDataTypesByDataSourcesForData().values().stream().flatMap(dt -> dt.stream())
-                                .filter(dt -> dt.equals(DataType.FULL_LENGTH)).collect(Collectors.toSet()).size() > 0) {
+                                .filter(dt -> dt.equals(DataType.SC_RNA_SEQ)).collect(Collectors.toSet()).size() > 0) {
                             speMap.put(header[columnNumber], "T");
                             columnNumber++;
                             break;

@@ -329,57 +329,57 @@ public abstract class GenerateDownloadFile extends MySQLDAOUser {
      * A {@code String} that is the name of the column containing expression, no-expression or
      * differential expression found with RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_DATA_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation()
+    public final static String SC_RNA_SEQ_DATA_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation()
             + CALL_TYPE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing call quality found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_QUAL_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation() 
+    public final static String SC_RNA_SEQ_QUAL_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation() 
             + CALL_QUALITY_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing FDR pvalue found with
      * RNA-Seq experiment, in the download file.
      */
-    public final static String FULL_LENGTH_FDR_COLUMN_NAME = DataType.FULL_LENGTH.getStringRepresentation()
+    public final static String SC_RNA_SEQ_FDR_COLUMN_NAME = DataType.SC_RNA_SEQ.getStringRepresentation()
             + FDR_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing if a RNA-Seq experiment 
      * is observed, in the download file.
      */
-    public final static String FULL_LENGTH_OBSERVED_DATA_COLUMN_NAME =
-            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.FULL_LENGTH.getStringRepresentation() 
+    public final static String SC_RNA_SEQ_OBSERVED_DATA_COLUMN_NAME =
+            OBSERVED_DATA_COLUMN_NAME_PREFIX + DataType.SC_RNA_SEQ.getStringRepresentation() 
             + OBSERVED_DATA_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * self observed RNA-Seq data, in the download file.
      */
-    public final static String FULL_LENGTH_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
-            SELF_OBSERVATION_COUNT_PREFIX  + DataType.FULL_LENGTH.getStringRepresentation();
+    public final static String SC_RNA_SEQ_SELF_OBSERVATION_COUNT_COLUMN_NAME = 
+            SELF_OBSERVATION_COUNT_PREFIX  + DataType.SC_RNA_SEQ.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing number of pvalues coming from 
      * descendant observed RNA-Seq data, in the download file.
      */
-    public final static String FULL_LENGTH_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
-            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.FULL_LENGTH.getStringRepresentation();
+    public final static String SC_RNA_SEQ_DESCENDANT_OBSERVATION_COUNT_COLUMN_NAME = 
+            DESCENDANT_OBSERVATION_COUNT_PREFIX + DataType.SC_RNA_SEQ.getStringRepresentation();
     /**
      * A {@code String} that is the name of the column containing
      * the expression rank from RNA-Seq data in the download file.
      */
-    public final static String FULL_LENGTH_EXPRESSION_RANK_COLUMN_NAME = 
-            DataType.FULL_LENGTH.getStringRepresentation() + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
+    public final static String SC_RNA_SEQ_EXPRESSION_RANK_COLUMN_NAME = 
+            DataType.SC_RNA_SEQ.getStringRepresentation() + EXPRESSION_RANK_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing
      * the expression score from RNA-Seq data in the download file.
      */
-    public final static String FULL_LENGTH_EXPRESSION_SCORE_COLUMN_NAME = 
-            DataType.FULL_LENGTH.getStringRepresentation() + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
+    public final static String SC_RNA_SEQ_EXPRESSION_SCORE_COLUMN_NAME = 
+            DataType.SC_RNA_SEQ.getStringRepresentation() + EXPRESSION_SCORE_COLUMN_NAME_SUFFIX;
     /**
      * A {@code String} that is the name of the column containing in the download file
      * the weight for RNA-Seq data when computing mean rank/score.
      */
-    public final static String FULL_LENGTH_WEIGHT_COLUMN_NAME = 
-            DataType.FULL_LENGTH.getStringRepresentation() + WEIGHT_COLUMN_NAME_SUFFIX;
+    public final static String SC_RNA_SEQ_WEIGHT_COLUMN_NAME = 
+            DataType.SC_RNA_SEQ.getStringRepresentation() + WEIGHT_COLUMN_NAME_SUFFIX;
 
     /**
      * A {@code String} that is the name of the column containing whether the call include

@@ -1317,7 +1317,7 @@ public class InsertPropagatedCalls extends CallService {
                             return DAODataType.RNA_SEQ;
                         case IN_SITU:
                             return DAODataType.IN_SITU;
-                        case FULL_LENGTH:
+                        case SC_RNA_SEQ:
                             return DAODataType.FULL_LENGTH;
                         default:
                             throw log.throwing(new IllegalStateException(
@@ -2542,7 +2542,7 @@ public class InsertPropagatedCalls extends CallService {
                     map.put(dt, dao.getRNASeqPValuesOrderedByGeneIdAndExprId(geneIds).stream()
                             .map(p -> p));
                     break;
-                case FULL_LENGTH:
+                case SC_RNA_SEQ:
                     map.put(dt, dao.getscRNASeqFullLengthPValuesOrderedByGeneIdAndExprId(geneIds)
                             .stream().map(p -> p));
                     break;
@@ -2811,7 +2811,7 @@ public class InsertPropagatedCalls extends CallService {
                 case EST:
                 case IN_SITU:
                 case RNA_SEQ:
-                case FULL_LENGTH:
+                case SC_RNA_SEQ:
                     //We know the generic types depending on the data types
                     @SuppressWarnings("unchecked")
                     Set<SamplePValueTO<String, String>> localPValues = pipelineData
@@ -3216,7 +3216,7 @@ public class InsertPropagatedCalls extends CallService {
 //                case EST:
 //                case IN_SITU:
 //                case RNA_SEQ:
-//                case FULL_LENGTH:
+//                case SC_RNA_SEQ:
 //                    //The cast of the generic types of SamplePValueTOs can be determined by the data type
 //                    @SuppressWarnings("unchecked")
 //                    PipelineCallData<String, String> pipelineCallData = new PipelineCallData<>(

@@ -388,10 +388,10 @@ public class RawDataLoader extends CommonService {
                     this.loadAffymetrixData(infoType, offset, limit, partialInfo));
             break;
         case RNA_SEQ:
-        case FULL_LENGTH:
+        case SC_RNA_SEQ:
             rawDataContainer = rawDataContainerClass.cast(
                     this.loadRnaSeqData(infoType,
-                            requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
+                            requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
                                     offset, limit, partialInfo));
             break;
         case EST:
@@ -434,10 +434,10 @@ public class RawDataLoader extends CommonService {
                     this.loadAffymetrixCount(withExperiment, withAssay, withCall));
             break;
         case RNA_SEQ:
-        case FULL_LENGTH:
+        case SC_RNA_SEQ:
             rawDataCountContainer = rawDataCountContainerClass.cast(
                     this.loadRnaSeqCount(
-                            requestedDataType.equals(DataType.FULL_LENGTH)? true: false,
+                            requestedDataType.equals(DataType.SC_RNA_SEQ)? true: false,
                             withExperiment, withAssay, withCall));
             break;
         case EST:

@@ -25,8 +25,8 @@ public class RnaSeqDataType extends RawDataDataType<RnaSeqContainer, RnaSeqCount
         if (dataType == null) {
             throw new IllegalArgumentException("dataType cannot be null");
         }
-        if (!dataType.equals(DataType.RNA_SEQ) && !dataType.equals(DataType.FULL_LENGTH)) {
-            throw new IllegalArgumentException("dataType has to be either RNA_SEQ or FULL_LENGTH");
+        if (!dataType.equals(DataType.RNA_SEQ) && !dataType.equals(DataType.SC_RNA_SEQ)) {
+            throw new IllegalArgumentException("dataType has to be either RNA_SEQ or SC_RNA_SEQ");
         }
     }
 

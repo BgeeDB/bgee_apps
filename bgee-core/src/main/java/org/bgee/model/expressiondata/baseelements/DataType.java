@@ -27,7 +27,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
  * at the developmental stage studied in the <em>in situ</em>, with no report of 
  * expression by any data type, in the organ itself, or any substructure. 
  * <li>{@code RNA_SEQ}: RNA-Seq data.
- * <li>{@code FULL_LENGTH}: Full length single cell RNA-Seq data.
+ * <li>{@code SC_RNA_SEQ}: Full length single cell RNA-Seq data.
  * </ul>
  * 
  * @author Frederic Bastian
@@ -39,7 +39,7 @@ import org.bgee.model.BgeeEnum.BgeeEnumField;
 public enum DataType implements BgeeEnumField {
     AFFYMETRIX("Affymetrix", true, null, true), EST("EST", false, null, false),
     IN_SITU("in situ hybridization", true, null, true),
-    RNA_SEQ("RNA-Seq", true, false, true), FULL_LENGTH("full length single cell RNA-Seq", false, true, true);
+    RNA_SEQ("RNA-Seq", true, false, true), SC_RNA_SEQ("single-cell RNA-Seq", false, true, true);
 
     private final static Logger log = LogManager.getLogger(DataType.class.getName());
 

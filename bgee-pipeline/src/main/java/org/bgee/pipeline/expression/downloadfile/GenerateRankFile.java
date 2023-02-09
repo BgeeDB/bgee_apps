@@ -843,7 +843,7 @@ public class GenerateRankFile {
                 dataTypeToStatus.get(DataType.EST), 
                 dataTypeToStatus.get(DataType.IN_SITU), 
                 dataTypeToStatus.get(DataType.RNA_SEQ),
-                dataTypeToStatus.get(DataType.FULL_LENGTH), 
+                dataTypeToStatus.get(DataType.SC_RNA_SEQ), 
                 /*redundantCalls.contains(c)*/ false, 
                 this.getBTOXRefs(c));
         }));

@@ -62,7 +62,7 @@ public class RawDataCountContainer extends DataContainer {
                 singleCellRnaSeqAssayCount != null ||
                 singleCellRnaSeqLibraryCount != null ||
                 singleCellRnaSeqCallCount != null) {
-            requestedDataTypes.add(DataType.FULL_LENGTH);
+            requestedDataTypes.add(DataType.SC_RNA_SEQ);
         }
 
         return log.traceExit(requestedDataTypes);
@@ -109,7 +109,7 @@ public class RawDataCountContainer extends DataContainer {
                 singleCellRnaSeqAssayCount != null && singleCellRnaSeqAssayCount != 0 ||
                 singleCellRnaSeqLibraryCount != null && singleCellRnaSeqLibraryCount != 0 ||
                 singleCellRnaSeqCallCount != null && singleCellRnaSeqCallCount != 0) {
-            dataTypesWithResults.add(DataType.FULL_LENGTH);
+            dataTypesWithResults.add(DataType.SC_RNA_SEQ);
         }
 
         return log.traceExit(dataTypesWithResults);

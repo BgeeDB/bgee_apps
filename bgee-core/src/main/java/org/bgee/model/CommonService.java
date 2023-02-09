@@ -325,7 +325,7 @@ public class CommonService extends Service {
             case RNA_SEQ:
                 return log.traceExit(DataType.RNA_SEQ);
             case FULL_LENGTH:
-                return log.traceExit(DataType.FULL_LENGTH);
+                return log.traceExit(DataType.SC_RNA_SEQ);
         default:
             throw log.throwing(new IllegalStateException("Unsupported SourceToSpeciesTO.DataType: " + dt));
         }

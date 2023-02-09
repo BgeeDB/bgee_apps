@@ -1658,7 +1658,7 @@ public class CommandData extends CommandParent {
                     () -> getAffymetrixRawDataAnnotsColumnDescriptions(withExpInfo));
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(false, withExpInfo));
-            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+            dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqRawDataAnnotsColumnDescriptions(true, withExpInfo));
             //Of note, there's no experiment page for EST
             dataTypeTolDescrSupplier.put(DataType.EST,
@@ -1670,7 +1670,7 @@ public class CommandData extends CommandParent {
                     () -> getAffymetrixProcExprValuesColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqProcExprValuesColumnDescriptions(false));
-            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+            dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqProcExprValuesColumnDescriptions(true));
             dataTypeTolDescrSupplier.put(DataType.EST,
                     () -> getESTProcExprValuesColumnDescriptions());
@@ -1681,7 +1681,7 @@ public class CommandData extends CommandParent {
                     () -> getAffymetrixExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.RNA_SEQ,
                     () -> getRnaSeqExperimentsColumnDescriptions());
-            dataTypeTolDescrSupplier.put(DataType.FULL_LENGTH,
+            dataTypeTolDescrSupplier.put(DataType.SC_RNA_SEQ,
                     () -> getRnaSeqExperimentsColumnDescriptions());
             dataTypeTolDescrSupplier.put(DataType.EST,
                     () -> getESTExperimentsColumnDescriptions());

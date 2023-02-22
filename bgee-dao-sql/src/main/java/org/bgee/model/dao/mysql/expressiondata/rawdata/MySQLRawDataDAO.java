@@ -215,80 +215,97 @@ public abstract class MySQLRawDataDAO <T extends Enum<T> & DAO.Attribute> extend
     //parameterize query with rnaSeqTechnologyIds
     protected <U extends Comparable<U>> BgeePreparedStatement parameterizeQuery(String query,
             DAOProcessedRawDataFilter<U> processedFilters, Boolean isSingleCell,
-            DAODataType datatype, Long offset, Integer limit)
+            DAODataType dataType, Long offset, Integer limit)
                     throws SQLException {
         log.traceEntry("{}, {}, {}, {}, {}, {}", query, processedFilters, isSingleCell,
-                datatype, offset, limit);
-        if (datatype == null) {
+                dataType, offset, limit);
+        if (dataType == null) {
             throw log.throwing(new IllegalArgumentException("datatype can not be null"));
         }
         BgeePreparedStatement stmt = this.getManager().getConnection()
                 .prepareStatement(query);
         int paramIndex = 1;
-        for(DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
-            Set<Integer> geneIds = rawDataFilter.getGeneIds();
-            Set<Integer> speciesIds = rawDataFilter.getSpeciesIds();
-            Set<Integer> rawDataCondIds = rawDataFilter.getConditionIds();
-            Set<String> expIds = rawDataFilter.getExperimentIds();
-            Set<String> assayIds = rawDataFilter.getAssayIds();
-            Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
-            Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
-                    null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
-            assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
+        //ESTs can't have results if an experiment ID is requested
+        //(ESTs don't have experiments).
+        //If all filters request an experiment, we returned a FALSE clause,
+        //thus we have no parameters to set here;
+        //otherwise, we will discard the filters that have an experiment ID,
+        //because the method generateOneFilterWhereClause will skip the experimentId field
+        //for ESTs, and we would obtain some results why we should not
+        if (!DAODataType.EST.equals(dataType) ||
+                !processedFilters.isAlwaysExactlyExperimentId()) {
 
-            // parameterize assayIds for call table
-            if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
-                stmt.setObjects(paramIndex, callTableAssayIds, true,
-                        processedFilters.getCallTableAssayIdType());
-                paramIndex += callTableAssayIds.size();
-            }
+            for (DAORawDataFilter rawDataFilter : processedFilters.getRawDataFilters()) {
+                //discard the filters that have an experiment ID for EST
+                if (DAODataType.EST.equals(dataType) && !rawDataFilter.getExperimentIds().isEmpty()) {
+                    log.debug("Skipping DAORawDataFilter for EST because experiment IDs: {}", rawDataFilter);
+                    continue;
+                }
 
-            if (callTableAssayIds == null) {
-                // parameterize expIds
-                // ESTs does not have experimentIds
-                if (!datatype.equals(DAODataType.EST) && !expIds.isEmpty()) {
-                    stmt.setStrings(paramIndex, expIds, true);
-                    paramIndex += expIds.size();
+                Set<Integer> geneIds = rawDataFilter.getGeneIds();
+                Set<Integer> speciesIds = rawDataFilter.getSpeciesIds();
+                Set<Integer> rawDataCondIds = rawDataFilter.getConditionIds();
+                Set<String> expIds = rawDataFilter.getExperimentIds();
+                Set<String> assayIds = rawDataFilter.getAssayIds();
+                Set<String> expOrAssayIds = rawDataFilter.getExprOrAssayIds();
+                Set<U> callTableAssayIds = processedFilters.getFilterToCallTableAssayIds() == null?
+                        null: processedFilters.getFilterToCallTableAssayIds().get(rawDataFilter);
+                assert(processedFilters.getFilterToCallTableAssayIds() == null || callTableAssayIds != null);
+
+                // parameterize assayIds for call table
+                if (callTableAssayIds != null && !callTableAssayIds.isEmpty()) {
+                    stmt.setObjects(paramIndex, callTableAssayIds, true,
+                            processedFilters.getCallTableAssayIdType());
+                    paramIndex += callTableAssayIds.size();
                 }
-                //parameterize assayIds
-                if (!assayIds.isEmpty()) {
-                    stmt.setStrings(paramIndex, assayIds, true);
-                    paramIndex += assayIds.size();
-                }
-                //parameterize assay or experiment IDs
-                if (!expOrAssayIds.isEmpty()) {
+
+                if (callTableAssayIds == null) {
+                    // parameterize expIds
                     // ESTs does not have experimentIds
-                    if (!datatype.equals(DAODataType.EST)) {
+                    if (!dataType.equals(DAODataType.EST) && !expIds.isEmpty()) {
+                        stmt.setStrings(paramIndex, expIds, true);
+                        paramIndex += expIds.size();
+                    }
+                    //parameterize assayIds
+                    if (!assayIds.isEmpty()) {
+                        stmt.setStrings(paramIndex, assayIds, true);
+                        paramIndex += assayIds.size();
+                    }
+                    //parameterize assay or experiment IDs
+                    if (!expOrAssayIds.isEmpty()) {
+                        // ESTs does not have experimentIds
+                        if (!dataType.equals(DAODataType.EST)) {
+                            stmt.setStrings(paramIndex, expOrAssayIds, true);
+                            paramIndex += expOrAssayIds.size();
+                        }
                         stmt.setStrings(paramIndex, expOrAssayIds, true);
                         paramIndex += expOrAssayIds.size();
                     }
-                    stmt.setStrings(paramIndex, expOrAssayIds, true);
-                    paramIndex += expOrAssayIds.size();
+                    //parameterize speciesId
+                    if (!speciesIds.isEmpty()) {
+                        stmt.setIntegers(paramIndex, speciesIds, true);
+                        paramIndex += speciesIds.size();
+                    }
                 }
-                //parameterize speciesId
-                if (!speciesIds.isEmpty()) {
-                    stmt.setIntegers(paramIndex, speciesIds, true);
-                    paramIndex += speciesIds.size();
+                //parameterize rawDataCondIds
+                //For in situ data, condIds are not used to produce callTableAssayIds,
+                //so even if callTableAssayIds were provided, they did not override
+                //the rawDataCondIds for in situ data
+                if ((callTableAssayIds == null || !dataType.isAssayRelatedToCondition())
+                        && !rawDataCondIds.isEmpty()) {
+                    stmt.setIntegers(paramIndex, rawDataCondIds, true);
+                    paramIndex += rawDataCondIds.size();
                 }
-            }
-            //parameterize rawDataCondIds
-            //For in situ data, condIds are not used to produce callTableAssayIds,
-            //so even if callTableAssayIds were provided, they did not override
-            //the rawDataCondIds for in situ data
-            if ((callTableAssayIds == null || !datatype.isAssayRelatedToCondition())
-                    && !rawDataCondIds.isEmpty()) {
-                stmt.setIntegers(paramIndex, rawDataCondIds, true);
-                paramIndex += rawDataCondIds.size();
-            }
-            //parameterize geneIds
-            if (!geneIds.isEmpty()) {
-                stmt.setIntegers(paramIndex, geneIds, true);
-                paramIndex += geneIds.size();
-            }
-            // parameterize technologyIds only for rnaseq
-            if (callTableAssayIds == null && isSingleCell != null) {
-                stmt.setBoolean(paramIndex, isSingleCell);
-                paramIndex++;
+                //parameterize geneIds
+                if (!geneIds.isEmpty()) {
+                    stmt.setIntegers(paramIndex, geneIds, true);
+                    paramIndex += geneIds.size();
+                }
+                // parameterize technologyIds only for rnaseq
+                if (callTableAssayIds == null && isSingleCell != null) {
+                    stmt.setBoolean(paramIndex, isSingleCell);
+                    paramIndex++;
+                }
             }
         }
 

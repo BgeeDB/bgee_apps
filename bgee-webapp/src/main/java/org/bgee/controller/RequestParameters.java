@@ -1261,6 +1261,26 @@ public class RequestParameters {
     }
 
     /**
+     * When receiving request parameters, when the URL is too long it is replaced
+     * with a data hash (see {@link #getDataKey()}), and the parameters are stored
+     * in a file named as the data hash. But this file generation is triggered only when needed,
+     * basically, when calling {@code #getRequestURL()} and if the URL is too long.
+     * If you need to trigger generation of a hash, and store the parameters in a file,
+     * without needing the URL, or independently of the URL length, you can call this method instead.
+     */
+    public void generateKeyAndStore() {
+        log.traceEntry();
+        // Always use & as separator to generate the key, so the key is the same for
+        // the same parameters, no matter the separator provided.
+        // Also, never use searchOrHashParams provided, so that all the parameters are always
+        // in the search part of the URL to generate the key.
+        String storableParametersUrlPartForKey = this.generateParametersQuery(
+                null, true, false, "&", null, false);
+        this.generateKey(storableParametersUrlPartForKey);
+        this.store();
+        log.traceExit();
+    }
+    /**
      * Generate the search and hash parts of URLs. This method takes care 
      * of checking whether the generated URL is too long, and if it is, 
      * of launching the generation of the key needed to store the storable parameters, 

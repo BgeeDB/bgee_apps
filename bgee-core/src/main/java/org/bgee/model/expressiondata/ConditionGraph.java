@@ -2,20 +2,21 @@ package org.bgee.model.expressiondata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bgee.model.NamedEntity;
 import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.Sex;
 import org.bgee.model.anatdev.Strain;
 import org.bgee.model.expressiondata.Condition.ConditionEntities;
 import org.bgee.model.ontology.Ontology;
+import org.bgee.model.ontology.OntologyElement;
 
 /**
  * Class providing convenience operations on {@link Condition}s.
@@ -337,12 +338,11 @@ public class ConditionGraph {
     }
 
     //TODO: unit tests
-    //TODO: refactor this method, constructor and getDescendantConditions
     /**
      * Get all the {@code Condition}s that are less precise than {@code cond}, 
      * among the {@code Condition}s provided at instantiation. 
      * 
-     * @param cond          A {@code Condition} for which we want to retrieve ancestors {@code Condition}s.
+     * @param cond          A {@code Condition} for which we want to retrieve ancestor {@code Condition}s.
      * @param directRelOnly A {@code boolean} defining whether only direct parents 
      *                      or children of {@code element} should be returned.
      * @return              A {@code Set} of {@code Condition}s that are ancestors of {@code cond}.
@@ -351,57 +351,44 @@ public class ConditionGraph {
     public Set<Condition> getAncestorConditions(Condition cond, boolean directRelOnly) 
             throws IllegalArgumentException {
         log.traceEntry("{}, {}", cond, directRelOnly);
-        log.trace("Start retrieving ancestral conditions for {}", cond);
+        return log.traceExit(this.getRelativeConditions(cond, true, directRelOnly));
+    }
+
+    /**
+     * Notes on implementation of this method: because we do not insert all possible conditions
+     * in the database, but only those that have some parameters observed in annotations,
+     * the graph is disconnected, and some conditions might not always have "real" direct parents or descendants.
+     * For this reason, when direct parents or descendants are requested
+     * ({@code directRelOnly} is {@code true}), actually we retrieve all parents (or descendants),
+     * and filter out those that are themselves parents of these parents (or descendants of these descendants).
+     * This way, we properly reconnect the graph, and can infer the "new" "direct" relatives.
+     * <p>
+     * It is not perfect: it would fail if there was a cycle in the graph; or some of the relatives discarded
+     * could actually have had a real direct relation (for this reason we also check the direct relations
+     * from the underlying ontologies). But it is probably the best we can do.
+     *
+     * @param cond          A {@code Condition} for which we want to retrieve ancestor or descendant {@code Condition}s.
+     * @param ancestors     A {@code boolean} defining whether ancestors should be retrieved
+     *                      (if {@code true}), or descendants (if {@code false}).
+     * @param directRelOnly A {@code boolean} defining whether only direct parents
+     *                      or children of {@code element} should be returned.
+     * @return              A {@code Set} of {@code Condition}s that are ancestors or descendants of {@code cond}.
+     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
+     */
+    private Set<Condition> getRelativeConditions(Condition cond, boolean ancestors, boolean directRelOnly)
+            throws IllegalArgumentException {
+        log.traceEntry("{}, {}, {}", cond, ancestors, directRelOnly);
+        log.trace("Start retrieving relative conditions for {}", cond);
         if (!this.getConditions().contains(cond)) {
             throw log.throwing(new IllegalArgumentException("The provided condition "
                     + "is not registered to this ConditionGraph: " + cond));
         }
 
-        //TODO: these blocks of code should be refactored
-        Set<DevStage> devStages = new HashSet<>();
-        devStages.add(cond.getDevStage());
-        if (this.devStageOnt != null && cond.getDevStage() != null) {
-            log.trace("Retrieving dev. stage IDs from ontology for stageId {} - relOnly {}}.", 
-                    cond.getDevStageId(), directRelOnly);
-            devStages.addAll(this.devStageOnt.getAncestors(
-                    this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly));
-        }
-        
-        Set<AnatEntity> anatEntities = new HashSet<>();
-        anatEntities.add(cond.getAnatEntity());
-        if (this.anatEntityOnt != null && cond.getAnatEntity() != null) {
-            log.trace("Retrieving anat. entity IDs from ontology for anatEntityId {} - relOnly {}.", 
-                    cond.getAnatEntityId(), directRelOnly);
-            anatEntities.addAll(this.anatEntityOnt.getAncestors(
-                    this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly));
-        }
-
-        Set<AnatEntity> cellTypes = new HashSet<>();
-        cellTypes.add(cond.getCellType());
-        if (this.cellTypeOnt != null && cond.getCellType() != null) {
-            log.trace("Retrieving cell type IDs from ontology for cellTypeId {} - relOnly {}}.", 
-                    cond.getCellTypeId(), directRelOnly);
-            cellTypes.addAll(this.cellTypeOnt.getAncestors(
-                    this.cellTypeOnt.getElement(cond.getCellTypeId()), directRelOnly));
-        }
-
-        Set<Sex> sexes = new HashSet<>();
-        sexes.add(cond.getSex());
-        if (this.sexOnt != null && cond.getSex() != null) {
-            log.trace("Retrieving sex IDs from ontology for sexId {} - relOnly {}}.", 
-                    cond.getSexId(), directRelOnly);
-            sexes.addAll(this.sexOnt.getAncestors(
-                    this.sexOnt.getElement(cond.getSexId()), directRelOnly));
-        }
-
-        Set<Strain> strains = new HashSet<>();
-        strains.add(cond.getStrain());
-        if (this.strainOnt != null && cond.getStrain() != null) {
-            log.trace("Retrieving strain IDs from ontology for strainId {} - relOnly {}}.", 
-                    cond.getStrainId(), directRelOnly);
-            strains.addAll(this.strainOnt.getAncestors(
-                    this.strainOnt.getElement(cond.getStrainId()), directRelOnly));
-        }
+        Set<DevStage> devStages = getRelativeElements(this.devStageOnt, cond.getDevStage(), ancestors, false);
+        Set<AnatEntity> anatEntities = getRelativeElements(this.anatEntityOnt, cond.getAnatEntity(), ancestors, false);
+        Set<AnatEntity> cellTypes = getRelativeElements(this.cellTypeOnt, cond.getCellType(), ancestors, false);
+        Set<Sex> sexes = getRelativeElements(this.sexOnt, cond.getSex(), ancestors, false);
+        Set<Strain> strains = getRelativeElements(this.strainOnt, cond.getStrain(), ancestors, false);
 
         log.trace("Stages retrieved: {}", devStages);
         log.trace("Anat. entities retrieved: {}", anatEntities);
@@ -409,7 +396,7 @@ public class ConditionGraph {
         log.trace("Sexes retrieved: {}", sexes);
         log.trace("Strains retrieved: {}", strains);
         
-        Set<Condition> conds = this.conditions.stream()
+        Set<Condition> relativeConds = this.conditions.stream()
                 .filter(e -> !e.equals(cond) &&
                         devStages.contains(e.getDevStage()) &&
                         anatEntities.contains(e.getAnatEntity()) &&
@@ -417,8 +404,56 @@ public class ConditionGraph {
                         sexes.contains(e.getSex()) &&
                         strains.contains(e.getStrain()))
            .collect(Collectors.toSet());
-        log.trace("Done retrieving ancestral conditions for {}: {}", cond, conds.size());
-        return log.traceExit(conds);
+
+        if (directRelOnly) {
+            Set<DevStage> directDevStages = getRelativeElements(this.devStageOnt, cond.getDevStage(),
+                    ancestors, true);
+            Set<AnatEntity> directAnatEntities = getRelativeElements(this.anatEntityOnt, cond.getAnatEntity(),
+                    ancestors, true);
+            Set<AnatEntity> directCellTypes = getRelativeElements(this.cellTypeOnt, cond.getCellType(),
+                    ancestors, true);
+            Set<Sex> directSexes = getRelativeElements(this.sexOnt, cond.getSex(),
+                    ancestors, true);
+            Set<Strain> directStrains = getRelativeElements(this.strainOnt, cond.getStrain(),
+                    ancestors, true);
+            Set<Condition> relativesOfRelatives = relativeConds.stream()
+                    .flatMap(c -> this.getRelativeConditions(c, ancestors, false).stream())
+                    .collect(Collectors.toSet());
+
+            relativeConds = relativeConds.stream()
+                    .filter(e ->
+                        //Either the relative conditions is really a direct relative
+                        //by the relations in the ontologies
+                        directDevStages.contains(e.getDevStage()) &&
+                        directAnatEntities.contains(e.getAnatEntity()) &&
+                        directCellTypes.contains(e.getCellType()) &&
+                        directSexes.contains(e.getSex()) &&
+                        directStrains.contains(e.getStrain()) ||
+                        //Or it is a disconnected relative (because of condition filtering),
+                        //not reachable by any other relatives, so we consider it as "direct".
+                        !relativesOfRelatives.contains(e))
+                    .collect(Collectors.toSet());
+        }
+        log.trace("Done retrieving relative conditions for {}: {}", cond, relativeConds.size());
+        return log.traceExit(relativeConds);
+    }
+
+    private static <T extends NamedEntity<?> & OntologyElement<T, ?>> Set<T>
+    getRelativeElements(Ontology<T, ?> ont, T startElement, boolean ancestors, boolean directRelsOnly) {
+        log.traceEntry("{}, {}, {}", ont, startElement, directRelsOnly);
+        if (ont == null || startElement == null) {
+            //Set.of does not accept null elements and startElement can be null
+            Set<T> result = new HashSet<>();
+            result.add(startElement);
+            return log.traceExit(result);
+        }
+        return log.traceExit(
+                Stream.concat(
+                    Stream.of(startElement),
+                    ancestors?
+                        ont.getAncestors(startElement, directRelsOnly).stream():
+                        ont.getDescendants(startElement, directRelsOnly).stream()
+                ).collect(Collectors.toSet()));
     }
 
     /**
@@ -446,156 +481,7 @@ public class ConditionGraph {
      */
     public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly) {
         log.traceEntry("{}, {}", cond, directRelOnly);
-        
-        return getDescendantConditions(cond, directRelOnly, null, null);
-    }
-
-    /**
-     * Get all the {@code Condition}s that are more precise than {@code cond} 
-     * among the {@code Condition}s provided at instantiation.
-     * 
-     * @param cond              A {@code Condition} for which we want to retrieve descendant {@code Condition}s.
-     * @param directRelOnly     A {@code boolean} defining whether only direct parents 
-     *                          or children of {@code element} should be returned.
-     * @param includeSubstages  A {@code boolean} defining whether conditions with child stages
-     *                          should be returned.
-     * @param substageMaxLevel  An {@code Integer} that is the maximal sub-level in which child stages
-     *                          should be retrieved. If less than 1, there is no limitation.
-     * @return                  A {@code Set} of {@code Condition}s that are descendants of {@code cond}.
-     * @throws IllegalArgumentException If {@code cond} is not registered to this {@code ConditionGraph}.
-     */
-    //TODO : javadoc. Notably, only condition parameters are allowed in the maps
-    // TODO: refactor this method with constructor and getAncestorConditions
-    public Set<Condition> getDescendantConditions(Condition cond, boolean directRelOnly,
-            Map<CallService.Attribute, Boolean> includeSubPerCondParameter,
-            Map<CallService.Attribute, Integer> subCondMaxLevelPerCondParameter) {
-        log.traceEntry("{}, {}, {}, {}", cond, directRelOnly, includeSubPerCondParameter, 
-                subCondMaxLevelPerCondParameter);
-
-        if (!this.getConditions().contains(cond)) {
-            throw log.throwing(new IllegalArgumentException("The provided condition "
-                    + "is not registered to this ConditionGraph: " + cond));
-        }
-        if (includeSubPerCondParameter != null &&
-                includeSubPerCondParameter.keySet().stream().anyMatch(c -> !c.isConditionParameter()) ||
-            subCondMaxLevelPerCondParameter != null &&
-                subCondMaxLevelPerCondParameter.keySet().stream().anyMatch(c -> !c.isConditionParameter())) {
-            throw log.throwing(new IllegalArgumentException(
-                    "Only condition paramters are allowed in the Maps"));
-        }
-        Map<CallService.Attribute, Boolean> include = includeSubPerCondParameter;
-        if (includeSubPerCondParameter == null) {
-            include = EnumSet.allOf(CallService.Attribute.class).stream()
-                    .filter(c -> c.isConditionParameter())
-                    .collect(Collectors.toMap(c -> c, c -> true));
-        }
-        Map<CallService.Attribute, Integer> level = subCondMaxLevelPerCondParameter;
-        if (subCondMaxLevelPerCondParameter == null) {
-            level = EnumSet.allOf(CallService.Attribute.class).stream()
-                    .filter(c -> c.isConditionParameter())
-                    .collect(Collectors.toMap(c -> c, c -> 0));
-        }
-
-        //TODO: refactor
-        Set<DevStage> devStages = new HashSet<>();
-        devStages.add(cond.getDevStage());
-        CallService.Attribute condParam = CallService.Attribute.DEV_STAGE_ID;
-        if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.devStageOnt != null && cond.getDevStage() != null) {
-            Set<DevStage> descendants;
-            Integer maxLevel = level.get(condParam);
-            if (maxLevel == null || maxLevel < 1) {
-                descendants = this.devStageOnt.getDescendants(
-                        this.devStageOnt.getElement(cond.getDevStageId()), directRelOnly);
-            } else {
-                descendants = this.devStageOnt.getDescendantsUntilSubLevel(
-                        this.devStageOnt.getElement(cond.getDevStageId()), maxLevel);
-            }
-            devStages.addAll(descendants);
-        }
-
-        Set<AnatEntity> anatEntities = new HashSet<>();
-        anatEntities.add(cond.getAnatEntity());
-        condParam = CallService.Attribute.ANAT_ENTITY_ID;
-        if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.anatEntityOnt != null && cond.getAnatEntity() != null) {
-            Set<AnatEntity> descendants;
-            Integer maxLevel = level.get(condParam);
-            if (maxLevel == null || maxLevel < 1) {
-                descendants = this.anatEntityOnt.getDescendants(
-                        this.anatEntityOnt.getElement(cond.getAnatEntityId()), directRelOnly);
-            } else {
-                descendants = this.anatEntityOnt.getDescendantsUntilSubLevel(
-                        this.anatEntityOnt.getElement(cond.getAnatEntityId()), maxLevel);
-            }
-            anatEntities.addAll(descendants);
-        }
-
-        Set<AnatEntity> cellTypes = new HashSet<>();
-        cellTypes.add(cond.getCellType());
-        condParam = CallService.Attribute.CELL_TYPE_ID;
-        if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.cellTypeOnt != null && cond.getCellType() != null) {
-            Set<AnatEntity> descendants;
-            Integer maxLevel = level.get(condParam);
-            if (maxLevel == null || maxLevel < 1) {
-                descendants = this.cellTypeOnt.getDescendants(
-                        this.cellTypeOnt.getElement(cond.getCellTypeId()), directRelOnly);
-            } else {
-                descendants = this.cellTypeOnt.getDescendantsUntilSubLevel(
-                        this.cellTypeOnt.getElement(cond.getCellTypeId()), maxLevel);
-            }
-            cellTypes.addAll(descendants);
-        }
-
-        Set<Sex> sexes = new HashSet<>();
-        sexes.add(cond.getSex());
-        condParam = CallService.Attribute.SEX_ID;
-        if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.sexOnt != null && cond.getSex() != null) {
-            Set<Sex> descendants;
-            Integer maxLevel = level.get(condParam);
-            if (maxLevel == null || maxLevel < 1) {
-                descendants = this.sexOnt.getDescendants(
-                        this.sexOnt.getElement(cond.getSexId()), directRelOnly);
-            } else {
-                descendants = this.sexOnt.getDescendantsUntilSubLevel(
-                        this.sexOnt.getElement(cond.getSexId()), maxLevel);
-            }
-            sexes.addAll(descendants);
-        }
-
-        Set<Strain> strains = new HashSet<>();
-        strains.add(cond.getStrain());
-        condParam = CallService.Attribute.STRAIN_ID;
-        if (Boolean.TRUE.equals(include.get(condParam)) &&
-                this.strainOnt != null && cond.getStrain() != null) {
-            Set<Strain> descendants;
-            Integer maxLevel = level.get(condParam);
-            if (maxLevel == null || maxLevel < 1) {
-                descendants = this.strainOnt.getDescendants(
-                        this.strainOnt.getElement(cond.getStrainId()), directRelOnly);
-            } else {
-                descendants = this.strainOnt.getDescendantsUntilSubLevel(
-                        this.strainOnt.getElement(cond.getStrainId()), maxLevel);
-            }
-            strains.addAll(descendants);
-        }
-
-        log.trace("Stages retrieved: {}", devStages);
-        log.trace("Anat. entities retrieved: {}", anatEntities);
-        log.trace("Cell types retrieved: {}", cellTypes);
-        log.trace("Sexes retrieved: {}", sexes);
-        log.trace("Strains retrieved: {}", strains);
-        
-        return log.traceExit(this.conditions.stream()
-                .filter(e -> !e.equals(cond) &&
-                             devStages.contains(e.getDevStage()) &&
-                             anatEntities.contains(e.getAnatEntity()) &&
-                             cellTypes.contains(e.getCellType()) &&
-                             sexes.contains(e.getSex()) &&
-                             strains.contains(e.getStrain()))
-                .collect(Collectors.toSet()));
+        return log.traceExit(this.getRelativeConditions(cond, false, directRelOnly));
     }
     
     //*********************************

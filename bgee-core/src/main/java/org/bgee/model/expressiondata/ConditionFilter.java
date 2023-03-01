@@ -38,7 +38,6 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final EnumSet<CallService.Attribute> observedCondForParams;
 
     /**
-     * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
      * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities that this {@code ConditionFilter} 
      *                              will specify to use.

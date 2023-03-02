@@ -8,10 +8,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,9 +23,7 @@ import org.bgee.model.anatdev.AnatEntity;
 import org.bgee.model.anatdev.AnatEntityService;
 import org.bgee.model.anatdev.DevStage;
 import org.bgee.model.anatdev.DevStageService;
-import org.bgee.model.expressiondata.call.Condition;
-import org.bgee.model.expressiondata.call.ConditionGraph;
-import org.bgee.model.expressiondata.call.ConditionGraphService;
+import org.bgee.model.dao.api.expressiondata.call.ConditionDAO;
 import org.bgee.model.ontology.OntologyService;
 import org.bgee.model.ontology.RelationType;
 import org.bgee.model.species.Species;
@@ -297,5 +297,47 @@ public class ConditionGraphTest extends TestAncestor {
                 this.conditions.get(0), this.conditions.get(2), this.conditions.get(4)));
         assertEquals("Incorrect ancestors retrieved", expectedAncestors, 
                 this.conditionGraph.getAncestorConditions(this.conditions.get(7), false));
+    }
+
+    @Test
+    public void shouldPerformRealTest() {
+        ConditionGraphService condGraphService = new ConditionGraphService(new ServiceFactory());
+        ConditionGraph conditionGraph = condGraphService.loadConditionGraphFromSpeciesIds(
+                Collections.singleton(9606),
+                Collections.singleton(new ConditionFilter(
+                        null,
+                        Collections.singleton(ConditionDAO.DEV_STAGE_ROOT_ID),
+                        null,
+                        Collections.singleton(ConditionDAO.SEX_ROOT_ID),
+                        Collections.singleton(ConditionDAO.STRAIN_ROOT_ID),
+                        null)),
+                EnumSet.of(CallService.Attribute.ANAT_ENTITY_ID,
+                        CallService.Attribute.CELL_TYPE_ID));
+        Condition cond = conditionGraph.getConditions().stream()
+                .filter(c -> c.getAnatEntityId().equals("UBERON:0000996"))
+                .findAny().get();
+        log.info("Selected condition: {}", cond);
+        Set<Condition> directParents = conditionGraph.getAncestorConditions(cond, true);
+        log.info("Direct parents: {}", directParents);
+        Set<Condition> allParents = conditionGraph.getAncestorConditions(cond, false);
+        log.info("All parents: {}", allParents);
+
+        Set<Condition> conditionsWithNoDirectAncestors = conditionGraph.getConditions().stream()
+                .filter(c -> conditionGraph.getAncestorConditions(c, true).isEmpty())
+                .collect(Collectors.toSet());
+        log.info("{} conditions with no direct parents: {}",
+                conditionsWithNoDirectAncestors.size(), conditionsWithNoDirectAncestors);
+
+        Condition rootCondition = conditionGraph.getConditions().stream()
+                .filter(c -> c.getAnatEntityId().equals("BGEE:0000000") && c.getCellTypeId().equals("GO:0005575"))
+                .findAny().get();
+        log.info("Root: {} - empty parents? {}", rootCondition, conditionGraph.getAncestorConditions(rootCondition, true).isEmpty());
+
+
+        Condition parentCond = conditionGraph.getConditions().stream()
+                .filter(c -> c.getAnatEntityId().equals("UBERON:0000993"))
+                .findAny().get();
+        Set<Condition> directChildren = conditionGraph.getDescendantConditions(parentCond, true);
+        log.info("Direct descendants: {}", directChildren);
     }
 }

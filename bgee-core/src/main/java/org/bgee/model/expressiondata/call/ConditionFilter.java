@@ -26,8 +26,6 @@ import org.bgee.model.expressiondata.call.Condition.ConditionEntities;
 public class ConditionFilter extends BaseConditionFilter<Condition> {
     private final static Logger log = LogManager.getLogger(ConditionFilter.class.getName());
 
-    private final EnumSet<CallService.Attribute> observedCondForParams;
-
     private final Set<Integer> speciesIds;
     /**
      * @see #getSexeIds()
@@ -38,7 +36,11 @@ public class ConditionFilter extends BaseConditionFilter<Condition> {
      */
     private final Set<String> strainIds;
     /**
-     * @param anatEntityIds        A {@code Collection} of {@code String}s that are the IDs 
+     * @see #getObservedCondForParams()
+     */
+    private final EnumSet<CallService.Attribute> observedCondForParams;
+
+    /**
      * @param anatEntityIds         A {@code Collection} of {@code String}s that are the IDs 
      *                              of the anatomical entities that this {@code ConditionFilter} 
      *                              will specify to use.

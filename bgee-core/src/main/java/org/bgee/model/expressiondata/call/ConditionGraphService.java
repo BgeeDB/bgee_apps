@@ -254,7 +254,6 @@ public class ConditionGraphService extends CommonService {
     //XXX: we'll see what we'll do for multi-species later, for now we only accept a single species. 
     //I guess multi-species would need a separate class, e.g., MultiSpeciesConditionUtils.
     //TODO: unit test for ancestral condition inferences
-    //TODO: refactor this constructor, methods getAncestorConditions and getDescendantConditions
     private ConditionGraph loadConditionGraphFromMultipleArgs(Collection<Condition> conditions, 
             boolean inferAncestralConds, boolean inferDescendantConds,
             Ontology<AnatEntity, String> anatEntityOnt, Ontology<DevStage, String> devStageOnt,

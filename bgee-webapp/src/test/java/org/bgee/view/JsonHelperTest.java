@@ -57,7 +57,7 @@ public class JsonHelperTest extends TestAncestor {
     @Test
     public void testSpeciesToJson() {
         Species species = new Species(12, "SpeciesName", "A string description of that species",
-                null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         String json = new JsonHelper().toJson(species);
         String expected = "{\n  \"name\": \"SpeciesName\",\n  " +
@@ -71,9 +71,8 @@ public class JsonHelperTest extends TestAncestor {
      */
     @Test
     public void testSpeciesDataGroupToJson() {
-        SpeciesDataGroup group = new SpeciesDataGroup(1, "single spe g1", null,
-                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens",
-                        "hsap1", "assemblyHsap1", new Source(1), null, null, null, null, null)),
+        SpeciesDataGroup group = new SpeciesDataGroup(1, "single spe g1", null, 
+                Arrays.asList(new Species(9606, "human", null, "Homo", "sapiens", "hsap1", new Source(1), null, null, null, null, null)), 
                 new HashSet<>(Arrays.asList(
                         new DownloadFile("my/path/fileg1_1.tsv.zip", "fileg1_1.tsv.zip", 
                         CategoryEnum.EXPR_CALLS_SIMPLE, 5000L, 1))));
@@ -161,9 +160,9 @@ public class JsonHelperTest extends TestAncestor {
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("speciesList", Arrays.asList(
                 new Species(12, "SpeciesName", "A string description of that species",
-                        null, null, null, null, null, null, null, null, null, null),
+                        null, null, null, null, null, null, null, null, null), 
                 new Species(13, "SpeciesName", "A string description of that species",
-                        null, null, null, null, null, null, null, null, null, null)));
+                        null, null, null, null, null, null, null, null, null)));
         
         LinkedHashMap<String, Object> response = new LinkedHashMap<>();
         response.put("code", 200);

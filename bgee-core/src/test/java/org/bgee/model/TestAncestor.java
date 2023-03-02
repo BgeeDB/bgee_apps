@@ -149,13 +149,22 @@ public abstract class TestAncestor {
     //*************************
     protected static final Map<Integer, SpeciesTO> SPECIES_TOS = unmodifiableLinkedHashMap(List.of(
             Map.entry(1, new SpeciesTO(1, "spe1", "spe", "1", 1, 100, "genomeFilePath1",
-                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1)),
+                    "genomeVersion1", 1, 1)),
             Map.entry(2, new SpeciesTO(2, "spe2", "spe", "2", 2, 100, "genomeFilePath2",
-                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2)),
+                    "genomeVersion2", 2, 2)),
             Map.entry(3, new SpeciesTO(3, "spe3", "spe", "3", 3, 200, "genomeFilePath3",
-                    "genomeVersion2", "genomeAssemblyXRef2", 2,
+                    "genomeVersion2", 2,
                     2 //use the same genome as species 2
                     ))));
+//    protected static final Map<Integer, SpeciesTO> SPECIES_TOS = unmodifiableLinkedHashMap(List.of(
+//            Map.entry(1, new SpeciesTO(1, "spe1", "spe", "1", 1, 100, "genomeFilePath1",
+//                    "genomeVersion1", "genomeAssemblyXRef1", 1, 1)),
+//            Map.entry(2, new SpeciesTO(2, "spe2", "spe", "2", 2, 100, "genomeFilePath2",
+//                    "genomeVersion2", "genomeAssemblyXRef2", 2, 2)),
+//            Map.entry(3, new SpeciesTO(3, "spe3", "spe", "3", 3, 200, "genomeFilePath3",
+//                    "genomeVersion2", "genomeAssemblyXRef2", 2,
+//                    2 //use the same genome as species 2
+//                    ))));
     protected static Map<Integer, Species> loadSpeciesMap(boolean withSpeciesSourceInfo) {
         return unmodifiableLinkedHashMap(SPECIES_TOS.values().stream().map(speciesTO ->
                 Map.entry(speciesTO.getId(), new Species(speciesTO.getId(),
@@ -164,7 +173,7 @@ public abstract class TestAncestor {
                         speciesTO.getGenus(),
                         speciesTO.getSpeciesName(),
                         speciesTO.getGenomeVersion(),
-                        speciesTO.getGenomeAssemblyXRef(),
+//                        speciesTO.getGenomeAssemblyXRef(),
                         withSpeciesSourceInfo? SOURCES.get(speciesTO.getDataSourceId()): null,
                         speciesTO.getGenomeSpeciesId(),
                         speciesTO.getParentTaxonId(),

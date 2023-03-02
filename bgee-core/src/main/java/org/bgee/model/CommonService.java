@@ -470,7 +470,6 @@ public class CommonService extends Service {
 
             return new Species(speciesTO.getId(), speciesTO.getName(), speciesTO.getDescription(),
                     speciesTO.getGenus(), speciesTO.getSpeciesName(), speciesTO.getGenomeVersion(),
-                    speciesTO.getGenomeAssemblyXRef(),
                     //Genome source
                     sourceMapToUse.get(speciesTO.getDataSourceId()),
                     speciesTO.getGenomeSpeciesId(),

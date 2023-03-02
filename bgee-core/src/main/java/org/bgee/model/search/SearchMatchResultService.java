@@ -517,7 +517,7 @@ public class SearchMatchResultService extends CommonService {
                 String.valueOf(match.attrValues.get(attrIndexMap.get("speciescommonname"))),
                 null, String.valueOf(match.attrValues.get(attrIndexMap.get("speciesgenus"))),
                 String.valueOf(match.attrValues.get(attrIndexMap.get("speciesname"))),
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null,
                 ((Long) match.attrValues.get(attrIndexMap.get("speciesdisplayorder"))).intValue());
 
         Gene gene = new Gene(String.valueOf(match.attrValues.get(attrIndexMap.get("geneid"))),
